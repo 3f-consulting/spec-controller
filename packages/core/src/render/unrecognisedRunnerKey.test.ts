@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { entryOf } from "./inputErrorEntry.test-utils.js";
 import { renderMarkdown } from "../assemble/composers.js";
 import { sectionCtx as ctx } from "./runContext.test-utils.js";
@@ -29,8 +30,8 @@ function reportLines(runners: Record<string, string | null>, otherKeys: Record<s
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 }
 
-const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
-const section = (lines: readonly string[]): string[] => sectionUnder(heading)(lines);
+const heading = (): string => markdownHeading(3, coreMessage(CoreMessage.ConfigurationNotReadHeading));
+const section = (lines: readonly string[]): string[] => sectionUnder(heading())(lines);
 
 const notALayer = (key: string): string =>
   entryOf(coreMessage(CoreMessage.RunnerKeyNotALayer, { key: `\`specController.runners.${key}\`` }));
@@ -43,7 +44,7 @@ describe("[SCN-RPT-053] each runners key outside the four layers is named under 
     const lines = reportLines({ unit: "jest", integration: "cucumber-js", e2e: "playwright", performance: "k6", lint: "eslint" });
 
     expect(section(lines)).toStrictEqual([
-      heading,
+      heading(),
       "",
       coreMessage(CoreMessage.ConfigurationNotReadIntro),
       "",

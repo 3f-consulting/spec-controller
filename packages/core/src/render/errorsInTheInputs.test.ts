@@ -6,14 +6,14 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import type { ScenarioCodeError } from "../domain/scnTags.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
 import { isEntryOf } from "./inputErrorEntry.test-utils.js";
 
-const SECTION = CORE_MESSAGES[CoreMessage.ErrorsInTheInputsHeading];
-const SCENARIO_CODE_ERRORS = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
-const CONFIGURATION_NOT_READ = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
+const SECTION = (): string => markdownHeading(2, coreMessage(CoreMessage.ErrorsInTheInputsHeading));
+const SCENARIO_CODE_ERRORS = (): string => markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading));
+const CONFIGURATION_NOT_READ = (): string => markdownHeading(3, coreMessage(CoreMessage.ConfigurationNotReadHeading));
 const runProvenance = (): string => markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading));
 const summary = (): string => markdownHeading(2, coreMessage(CoreMessage.SummaryHeading));
 
@@ -56,7 +56,7 @@ interface ErrorSection {
 }
 
 function errorSectionOf(lines: readonly string[]): ErrorSection {
-  const start = lines.indexOf(SECTION);
+  const start = lines.indexOf(SECTION());
   expect(start).toBeGreaterThanOrEqual(0);
   const end = lines.findIndex((line, i) => i > start && isSectionHeading(line));
   return {
@@ -70,7 +70,7 @@ const partsOf = (body: readonly string[]): string[] => body.filter((line) => lin
 
 const withoutErrorSection = (lines: readonly string[]): string[] => {
   const { body } = errorSectionOf(lines);
-  const start = lines.indexOf(SECTION);
+  const start = lines.indexOf(SECTION());
   return [...lines.slice(0, start), ...lines.slice(start + body.length)];
 };
 
@@ -79,7 +79,7 @@ describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in 
     const { before, body, after } = errorSectionOf(reportLines({ codeErrors: [FOREIGN] }));
     expect(before).toBe(runProvenance());
     expect(after).toBe(summary());
-    expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS]);
+    expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS()]);
     expect(body.filter((line) => line.startsWith("- `foreign-scn-code` — "))).toHaveLength(1);
   });
 
@@ -87,7 +87,7 @@ describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in 
     const { before, body, after } = errorSectionOf(reportLines({ configuration: KEY_NOT_READ }));
     expect(before).toBe(runProvenance());
     expect(after).toBe(summary());
-    expect(partsOf(body)).toEqual([CONFIGURATION_NOT_READ]);
+    expect(partsOf(body)).toEqual([CONFIGURATION_NOT_READ()]);
     expect(body.filter(isEntryOf(coreMessage(CoreMessage.ConfigurationUnknownKey, { key: "`specController.zzz`" })))).toHaveLength(1);
   });
 
@@ -96,14 +96,14 @@ describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in 
     const { before, body, after } = errorSectionOf(lines);
     expect(before).toBe(runProvenance());
     expect(after).toBe(markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)));
-    expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS, CONFIGURATION_NOT_READ]);
-    expect(lines.filter((line) => line === SECTION)).toHaveLength(1);
+    expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS(), CONFIGURATION_NOT_READ()]);
+    expect(lines.filter((line) => line === SECTION())).toHaveLength(1);
   });
 
   it("prints no such section when the inputs hold no fault, and nothing in its place", () => {
     const clean = reportLines({});
-    expect(clean).not.toContain(SECTION);
-    const partWords = [SCENARIO_CODE_ERRORS, CONFIGURATION_NOT_READ].map((part) => part.replace(/^#+ /, ""));
+    expect(clean).not.toContain(SECTION());
+    const partWords = [SCENARIO_CODE_ERRORS(), CONFIGURATION_NOT_READ()].map((part) => part.replace(/^#+ /, ""));
     expect(clean.filter((line) => /^#+ /.test(line) && partWords.includes(line.replace(/^#+ /, "")))).toEqual([]);
     expect(withoutErrorSection(reportLines({ configuration: KEY_NOT_READ }))).toEqual(clean);
   });

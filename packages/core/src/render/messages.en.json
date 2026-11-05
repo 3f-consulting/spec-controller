@@ -1,4 +1,7 @@
 {
+  "errors-in-the-inputs-heading": "Errors in the inputs",
+  "configuration-not-read-heading": "Configuration not read",
+  "scenario-code-errors-heading": "Scenario code errors",
   "configuration-not-read-intro": "The target's package.json holds configuration this run could not use. Each line below says what this run did with its entry, and every account in this report is the one the target gives without it.",
   "configuration-wrong-kind": "{entry} is {is} where {reads} is read, so this run read it as absent.",
   "configuration-unknown-key": "{key} is not a key the specController block reads, so this run read nothing from it.",
@@ -150,5 +153,7 @@
   "unnamed-claim-group-counts": "{ran} ran, {passed} passed, {failed} failed",
   "unnamed-claim-failed-names": "(failed: {names})",
   "several-scn-codes-cited": "{count} scenario codes cite {codes} — a test cites exactly one scenario, so this one credits none of them.",
-  "shared-scn-code": "{code} is carried by more than one scenario, so evidence citing it credits none of them."
+  "shared-scn-code": "{code} is carried by more than one scenario, so evidence citing it credits none of them.",
+  "evidence-obligation-diverges-from-outcome": "QualityCheckReconciliation invariant (@SCN-LDG-030): outcome \"{outcome}\" has the evidence obligation (debit) side {presenceForOutcome} for that outcome, but it was {presenceFound}.",
+  "evidence-observation-diverges-from-outcome": "QualityCheckReconciliation invariant (@SCN-LDG-030): outcome \"{outcome}\" has the evidence observation side {presenceForOutcome} for that outcome, but it was {presenceFound}."
 }

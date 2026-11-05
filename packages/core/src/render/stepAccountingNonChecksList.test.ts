@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
 import { codeSpan } from "./codeSpan.js";
@@ -214,7 +214,7 @@ describe("[SCN-RPT-089] a well-formed notChecks entry naming a workflow the run 
 });
 
 const configurationNotRead = (lines: readonly string[]): string[] =>
-  sectionUnder(CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading])(lines);
+  sectionUnder(markdownHeading(3, coreMessage(CoreMessage.ConfigurationNotReadHeading)))(lines);
 
 describe("[SCN-RPT-091] a run that reads no CI step lists each notChecks entry naming a workflow it did not read under the step accounting as not applied, with no table, under a label naming the workflows it read or saying it read none", () => {
   it.each<{ case: string; workflows: Readonly<Record<string, string>>; notChecks: readonly string[]; malformed: readonly string[] }>([
@@ -267,6 +267,6 @@ describe("[SCN-RPT-090] a notChecks entry naming a workflow whose name holds a c
     expect(nonCheckItem).toContain(entry);
     expect(afterItem).toBe("");
     expect(lines.filter((line) => line.includes(entry) || line.includes(nonCheckMark()))).toStrictEqual([nonCheckItem]);
-    expect(lines).not.toContain(CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading]);
+    expect(lines).not.toContain(markdownHeading(3, coreMessage(CoreMessage.ConfigurationNotReadHeading)));
   });
 });

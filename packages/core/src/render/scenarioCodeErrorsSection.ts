@@ -7,8 +7,9 @@ import {
   type ScenarioCodeCleanliness,
   type ScenarioCodeError,
 } from "../domain/scnTags.js";
-import { CORE_MESSAGES, CoreError, CoreMessage } from "./messages.js";
+import { CoreError, CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { errorEntry } from "./errorEntry.js";
 
 const CODE_OF: Readonly<Record<ScenarioCodeError["kind"], CoreError>> = {
@@ -87,7 +88,7 @@ export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
   if (errors === undefined) return [];
   const count = coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: errors.length });
   return [
-    CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading],
+    markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading)),
     "",
     scenarioCodeErrorsFraming(errors, count),
     "",

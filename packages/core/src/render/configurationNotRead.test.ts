@@ -6,7 +6,7 @@ import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconcil
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
 import { entryOf } from "./inputErrorEntry.test-utils.js";
@@ -34,7 +34,7 @@ const render = (extra: Partial<Summary>): string => {
   return renderMarkdown(er, ctx, publishedExitCodeOf);
 };
 
-const heading = CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading];
+const heading = (): string => markdownHeading(3, coreMessage(CoreMessage.ConfigurationNotReadHeading));
 const wrongKind = (entry: string, is: string, reads: string): string =>
   coreMessage(CoreMessage.ConfigurationWrongKind, { entry, is, reads });
 const unknownKey = (key: string): string => coreMessage(CoreMessage.ConfigurationUnknownKey, { key });
@@ -43,7 +43,7 @@ const notChecksAsAString = (): string =>
 
 const section = (md: string): string[] => {
   const lines = md.split("\n");
-  const start = lines.indexOf(heading);
+  const start = lines.indexOf(heading());
   if (start === -1) return [];
   const end = lines.findIndex((line, i) => i > start && line.startsWith("#"));
   return lines.slice(start, end);
@@ -58,7 +58,7 @@ describe("[SCN-RPT-045] the report names a specController entry of a kind its re
       ],
     });
     expect(section(md)).toEqual([
-      heading,
+      heading(),
       "",
       coreMessage(CoreMessage.ConfigurationNotReadIntro),
       "",
@@ -66,8 +66,8 @@ describe("[SCN-RPT-045] the report names a specController entry of a kind its re
       entryOf(wrongKind("`specController.runners.unit`", coreMessage(CoreMessage.ManifestKindOfType, { type: "number" }), coreMessage(CoreMessage.ManifestKindStringOrNull))),
       "",
     ]);
-    expect(md.indexOf(markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading)))).toBeLessThan(md.indexOf(heading));
-    expect(md.indexOf(heading)).toBeLessThan(md.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))));
+    expect(md.indexOf(markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading)))).toBeLessThan(md.indexOf(heading()));
+    expect(md.indexOf(heading())).toBeLessThan(md.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))));
   });
 });
 

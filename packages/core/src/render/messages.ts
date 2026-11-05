@@ -1,20 +1,7 @@
-import { QualityCheckFaultCode, type QualityCheckFault } from "../domain/qualityCheckFault.js";
-
-export type QualityCheckFaultMessages = {
-  readonly [C in QualityCheckFaultCode]: (fault: Extract<QualityCheckFault, { readonly code: C }>) => string;
-};
-
-export const QUALITY_CHECK_FAULT_MESSAGES: QualityCheckFaultMessages = {
-  [QualityCheckFaultCode.EvidenceDivergesFromOutcome]: (fault) =>
-    `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fault.outcome}" has the ` +
-    `${fault.evidence === "evidence-obligation" ? "evidence obligation (debit)" : "evidence observation"} ` +
-    `side ${fault.presenceForOutcome} for that outcome, but it was ${fault.presenceFound}.`,
-};
-
 export enum CoreMessage {
-  ErrorsInTheInputsHeading,
-  ConfigurationNotReadHeading,
-  ScenarioCodeErrorsHeading,
+  ErrorsInTheInputsHeading = "errors-in-the-inputs-heading",
+  ConfigurationNotReadHeading = "configuration-not-read-heading",
+  ScenarioCodeErrorsHeading = "scenario-code-errors-heading",
   ConfigurationNotReadIntro = "configuration-not-read-intro",
   ConfigurationWrongKind = "configuration-wrong-kind",
   ConfigurationUnknownKey = "configuration-unknown-key",
@@ -167,6 +154,8 @@ export enum CoreMessage {
   UnnamedClaimFailedNames = "unnamed-claim-failed-names",
   SeveralScnCodesCited = "several-scn-codes-cited",
   SharedScnCode = "shared-scn-code",
+  EvidenceObligationDivergesFromOutcome = "evidence-obligation-diverges-from-outcome",
+  EvidenceObservationDivergesFromOutcome = "evidence-observation-diverges-from-outcome",
 }
 
 // Each error named under Errors in the inputs, by its code: a handle's value is the code its entry opens with.
@@ -183,10 +172,7 @@ export enum CoreError {
 }
 
 
-// A handle whose value is a string is worded by the data file; the others, by the table below.
 export type WordedCoreMessage = Extract<CoreMessage, string>;
-
-type TabledCoreMessage = Extract<CoreMessage, number>;
 
 export interface CoreMessageValues {
   readonly [CoreMessage.ConfigurationWrongKind]: { readonly entry: string; readonly is: string; readonly reads: string };
@@ -261,12 +247,14 @@ export interface CoreMessageValues {
   readonly [CoreMessage.UnnamedClaimFailedNames]: { readonly names: string };
   readonly [CoreMessage.SeveralScnCodesCited]: { readonly count: number; readonly codes: string };
   readonly [CoreMessage.SharedScnCode]: { readonly code: string };
+  readonly [CoreMessage.EvidenceObligationDivergesFromOutcome]: {
+    readonly outcome: string;
+    readonly presenceForOutcome: string;
+    readonly presenceFound: string;
+  };
+  readonly [CoreMessage.EvidenceObservationDivergesFromOutcome]: {
+    readonly outcome: string;
+    readonly presenceForOutcome: string;
+    readonly presenceFound: string;
+  };
 }
-
-export type CoreMessages = { readonly [C in TabledCoreMessage]: string };
-
-export const CORE_MESSAGES: CoreMessages = {
-  [CoreMessage.ErrorsInTheInputsHeading]: "## Errors in the inputs",
-  [CoreMessage.ConfigurationNotReadHeading]: "### Configuration not read",
-  [CoreMessage.ScenarioCodeErrorsHeading]: "### Scenario code errors",
-};

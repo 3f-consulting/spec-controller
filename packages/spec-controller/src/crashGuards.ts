@@ -1,5 +1,6 @@
 import { endRunOn, forgetRunEnding, UNEXPECTED_ERROR, usageRefusalSet, type ExitCodeHolder } from "./exitCode.js";
-import { APP_MESSAGES, AppError } from "./messages.js";
+import APP_TEXTS from "./messages.en.json" with { type: "json" };
+import { AppError, type AppErrorValues, type CrashError } from "./messages.js";
 import { standardError, type CodedLine, type LineWriter } from "./standardError.js";
 
 interface CrashingProcess extends ExitCodeHolder {
@@ -86,9 +87,16 @@ function settleExitCode(proc: ExitCodeHolder): void {
   endRunOn(UNEXPECTED_ERROR, proc);
 }
 
+const CRASH_TEXTS: Readonly<Record<CrashError, string>> = APP_TEXTS;
+
 function unexpectedErrorLine(err: unknown, afterVerdict: boolean): CodedLine {
-  const message = afterVerdict ? AppError.UnexpectedErrorAfterVerdict : AppError.UnexpectedError;
-  return APP_MESSAGES[message](nameOf(err), firstLineOf(err)) as CodedLine;
+  const code = afterVerdict ? AppError.UnexpectedErrorAfterVerdict : AppError.UnexpectedError;
+  return filled(CRASH_TEXTS[code], { name: nameOf(err), firstLine: firstLineOf(err) }) as CodedLine;
+}
+
+// Both placeholders are filled in one pass, so a value holding a placeholder or a brace is printed as given.
+function filled(text: string, values: AppErrorValues[CrashError]): string {
+  return text.replace(/\{(name|firstLine)\}/g, (_, key: keyof typeof values) => values[key]);
 }
 
 function nameOf(err: unknown): string {

@@ -85,6 +85,7 @@ describe("[SCN-CLI-103] an error that cannot be formatted still ends the run at 
     { thrown: "an Error whose message getter throws", make: messageGetterThrows, name: "Error", firstLine: "" },
     { thrown: "an Error whose message is not a string", make: (): unknown => Object.assign(new Error(), { message: 42 }), name: "Error", firstLine: "" },
     { thrown: "an Error whose name is a symbol", make: (): unknown => Object.assign(new Error("boom"), { name: Symbol("planted") }), name: "Error", firstLine: "boom" },
+    { thrown: "an Error whose name holds a placeholder", make: (): unknown => Object.assign(new Error("boom"), { name: "{firstLine}" }), name: "{firstLine}", firstLine: "boom" },
   ])("a balance run whose report throws $thrown", ({ make, name, firstLine }) => {
     const throwing = (): never => {
       throw make();

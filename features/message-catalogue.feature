@@ -12,40 +12,37 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
 
   THE CURE IS TO MOVE THE QUESTION, NOT TO ANSWER IT. A fault gets a CODE at the throw site and
   carries its parameters as fields; the prose that renders it moves to a catalogue held as data,
-  and the catalogue is excluded from the mutate glob. What remains on the mutated surface is the
+  which mutation never reads, because it mutates code. What remains on the mutated surface is the
   logic — which fault, and what its parameters are — and that logic is exactly what the suite can
   and should pin. The sixteen mutants do not become killed; they cease to exist, and the ones
   that replace them are the ternaries deciding `Exists` against `None`, now asserted as fields.
 
   ONE CATALOGUE PER PACKAGE, AND THE RULE HOLDS FOR EVERY ONE. The domain's faults are not the only
   prose in this tree: every human-facing message is reached by a code, through a catalogue held as
-  data and excluded by name from the mutate glob of the scope that contains it. Each adapter that
-  prints text owns its catalogue as a JSON data file, named for its language, keyed by each code's
-  stable value and written in the ICU message format, so a message names the values it prints as
-  placeholders. There is one catalogue per package, because the import rules let core import
+  data. Each adapter that prints text owns its catalogue as a JSON data file, named for its
+  language, keyed by each code's stable value and written in the ICU message format, so a
+  message names the values it prints as placeholders. There is one catalogue per package, because the import rules let core import
   nothing of the app and let the app reach core only through its published entry point, so no
   single catalogue can serve both. Core's lives in `render`, keyed by the values the domain
   reports. The app's lives beside the app package's own messages module, keyed by an app-wide
   code, and every app scope extends it. Whichever catalogue a code belongs to, the same rule
   holds: every code has exactly one entry, nothing else does, and no entry renders blank.
 
-  THE EXCLUSION IS THE PART THAT COULD BE A HOLE. "Do not mutate this file" is one edit away from
-  "do not mutate this directory", and nothing would go red. What closes half of it is not a promise
-  but the compiler: each data file is typed against its codes, so a code cannot exist without a
-  message, the way `OUTCOME_DESCRIPTION` already forces an outcome to have a gloss. A code given
-  two entries is what the compiler cannot see, because the data file keeps only the last, so the
-  linter refuses a key given twice. The exclusion ITSELF is held by
-  review alone, and that is said here rather than left to be found. No check reads the Stryker
-  config back: its subject would be this repository's own Stryker configuration, which a reader
-  who copies this corpus does not have. A widened exclusion reds nothing — what it still
-  cannot do is make a catalogue lie. An accepted residual, not an oversight, and the same trade
-  the Stryker configuration already carries in writing for the lost kill its own threshold cannot see.
+  NOTHING IS EXCLUDED BY NAME. Each package's messages module holds its codes and the types of the
+  values each code is given, and no sentence. It is source like any other: mutation testing mutates
+  it in the scope that contains it, and the lint that refuses prose in production code reads it.
+  A sentence written there is refused like a sentence written anywhere else, so no logic and no
+  prose can hide in a file the gates were told to skip. The data file holds the words, and it is
+  held to its codes not by a promise but by the compiler: each data file is typed against its
+  codes, so a code cannot exist without a message, the way `OUTCOME_DESCRIPTION` already forces an
+  outcome to have a gloss. A code given two entries is what the compiler cannot see, because the
+  data file keeps only the last, so the linter refuses a key given twice.
 
   WHERE IT LIVES. The domain says what happened as a typed value — a fault's code and its
   parameters, an outcome, a kind — and holds no sentence for a reader. The words are presentation,
-  so core's catalogue lives in `render`, the adapter that writes the report, and holds an entry only
-  for what the report reads. It leaves the mutated surface by config: the mutate glob is a statement
-  about what mutation testing can usefully ask, not about where the words may live.
+  so core's catalogue lives in `render`, the adapter that writes the report, and holds an entry for
+  each sentence core words. It is off the mutated surface because it is data, not because a mutate
+  glob names it.
 
   TWO THINGS STAY OUT OF THE CATALOGUE. A runner's own words are passed through verbatim, never
   rewritten into a catalogue entry, and a message with parameters keeps its

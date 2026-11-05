@@ -16,25 +16,21 @@ import { ESLint } from "eslint";
 import { describe, it, expect } from "vitest";
 
 import {
-  CORE_MESSAGES,
   CORE_TEXTS,
   CoreMessage,
-  QUALITY_CHECK_FAULT_MESSAGES,
   QualityCheckFaultCode,
   coreMessage,
+  qualityCheckFaultWords,
   type CoreMessageValues,
-  type CoreMessages,
   type QualityCheckFault,
   type WordedCoreMessage,
 } from "@3f-consulting/spec-controller-core/internal";
 import type { MessageValues } from "@3f-consulting/spec-controller-core";
 import APP_TEXTS from "./messages.en.json" with { type: "json" };
 import {
-  APP_MESSAGES,
   AppError,
   AppMessage,
   Unreadable,
-  type AppMessages,
   type AppErrorValues,
   type AppMessageValues,
   type WordedAppMessage,
@@ -239,19 +235,14 @@ const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessage
   [CoreMessage.UnnamedClaimFailedNames]: { names: "spawns yarn / reads the lockfile" },
   [CoreMessage.SeveralScnCodesCited]: { count: 2, codes: "SCN-ABC-001, SCN-ABC-002" },
   [CoreMessage.SharedScnCode]: { code: "SCN-ABC-001" },
+  [CoreMessage.EvidenceObligationDivergesFromOutcome]: { outcome: "satisfied", presenceForOutcome: "Exists", presenceFound: "None" },
+  [CoreMessage.EvidenceObservationDivergesFromOutcome]: { outcome: "missing", presenceForOutcome: "None", presenceFound: "Exists" },
 };
 
 function renderedCore(code: CoreMessage): string {
-  if (code in CORE_MESSAGES) return CORE_MESSAGES[code as keyof CoreMessages];
-  const worded = code as WordedCoreMessage;
-  const values = (SAMPLE_CORE_VALUES as Partial<Record<WordedCoreMessage, MessageValues>>)[worded];
-  return (coreMessage as (code: WordedCoreMessage, values?: MessageValues) => string)(worded, values);
+  const values = (SAMPLE_CORE_VALUES as Partial<Record<WordedCoreMessage, MessageValues>>)[code];
+  return (coreMessage as (code: WordedCoreMessage, values?: MessageValues) => string)(code, values);
 }
-
-const SAMPLE_APP_PARAMS: { readonly [C in keyof AppMessages]: Parameters<AppMessages[C]> } = {
-  [AppError.UnexpectedError]: ["Error", "write EPIPE"],
-  [AppError.UnexpectedErrorAfterVerdict]: ["Error", "write EPIPE"],
-};
 
 type AppValues = AppMessageValues & AppErrorValues;
 
@@ -339,13 +330,11 @@ const SAMPLE_APP_VALUES: { readonly [C in keyof AppValues]: AppValues[C] } = {
   [AppMessage.ShapeKindOfType]: { type: "number" },
   [AppMessage.ShapeWrongKind]: { where: "testResults", found: "an object", expected: "a list" },
   [AppMessage.ShapeFieldMissing]: { path: RECONCILIATION_TOTALS_PATH },
+  [AppError.UnexpectedError]: { name: "Error", firstLine: "write EPIPE" },
+  [AppError.UnexpectedErrorAfterVerdict]: { name: "Error", firstLine: "write EPIPE" },
 };
 
 function renderedApp(code: AppMessage | AppError): string {
-  if (code in APP_MESSAGES) {
-    const tabled = code as keyof AppMessages;
-    return (APP_MESSAGES[tabled] as (...params: unknown[]) => string)(...SAMPLE_APP_PARAMS[tabled]);
-  }
   const worded = code as WordedAppMessage | AppError;
   const values = (SAMPLE_APP_VALUES as Partial<Record<WordedAppMessage | AppError, MessageValues>>)[worded];
   return (message as (code: WordedAppMessage | AppError, values?: MessageValues) => string)(worded, values);
@@ -362,20 +351,20 @@ const SAMPLE_FAULTS: { readonly [C in QualityCheckFaultCode]: Extract<QualityChe
 };
 
 function renderedFault(code: QualityCheckFaultCode): string {
-  return (QUALITY_CHECK_FAULT_MESSAGES[code] as (fault: QualityCheckFault) => string)(SAMPLE_FAULTS[code]);
+  return qualityCheckFaultWords(SAMPLE_FAULTS[code]);
 }
 
 describe("[SCN-MSG-002] every code has exactly one message", () => {
   it("holds core's report catalogue to every core message code and nothing else", () => {
     const codes = codesOf(CoreMessage);
     expect(codes.length).toBeGreaterThan(0);
-    expect(keysOf({ ...CORE_MESSAGES, ...CORE_TEXTS })).toEqual(codes);
+    expect(keysOf(CORE_TEXTS)).toEqual(codes);
   });
 
   it("holds the app's catalogue to every app message code and nothing else", () => {
     const codes = [...codesOf(AppMessage), ...codesOf(AppError)].sort(byCode);
     expect(codes.length).toBeGreaterThan(0);
-    expect(keysOf({ ...APP_MESSAGES, ...APP_TEXTS })).toEqual(codes);
+    expect(keysOf(APP_TEXTS)).toEqual(codes);
   });
 
   it("names a handle that has no entry in its catalogue", () => {
@@ -394,10 +383,9 @@ describe("[SCN-MSG-002] every code has exactly one message", () => {
     }
   });
 
-  it("holds core's fault catalogue to every fault code and nothing else, with no fault rendering blank", () => {
+  it("words every fault code from core's data file, with no fault rendering blank", () => {
     const codes = codesOf(QualityCheckFaultCode);
     expect(codes.length).toBeGreaterThan(0);
-    expect(keysOf(QUALITY_CHECK_FAULT_MESSAGES)).toEqual(codes);
 
     for (const code of codes as QualityCheckFaultCode[]) expect(renderedFault(code).trim()).not.toBe("");
   });

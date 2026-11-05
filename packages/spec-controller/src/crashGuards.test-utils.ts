@@ -1,5 +1,7 @@
 import { EventEmitter } from "node:events";
-import { APP_MESSAGES, AppError } from "./messages.js";
+import { messagesFrom } from "@3f-consulting/spec-controller-core";
+import APP_TEXTS from "./messages.en.json" with { type: "json" };
+import { AppError, type AppErrorValues, type CrashError } from "./messages.js";
 
 export interface StandInStream extends EventEmitter {
   readonly written: string[];
@@ -22,7 +24,10 @@ export function closedPipe(): Error {
 }
 
 export const crashLine = (name: string, firstLine: string, afterVerdict: boolean): string =>
-  APP_MESSAGES[afterVerdict ? AppError.UnexpectedErrorAfterVerdict : AppError.UnexpectedError](name, firstLine);
+  messagesFrom<CrashError, Pick<AppErrorValues, CrashError>>(APP_TEXTS)(
+    afterVerdict ? AppError.UnexpectedErrorAfterVerdict : AppError.UnexpectedError,
+    { name, firstLine },
+  );
 
 export const noVerdictLine = (): string => `${crashLine("Error", FIRST_LINE, false)}\n`;
 

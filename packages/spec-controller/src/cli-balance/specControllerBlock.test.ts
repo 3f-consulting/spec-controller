@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CORE_MESSAGES, CoreMessage, coreMessage, markdownHeading } from "@3f-consulting/spec-controller-core/internal";
+import { CoreMessage, coreMessage, markdownHeading } from "@3f-consulting/spec-controller-core/internal";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
@@ -13,7 +13,7 @@ const wrongKindOpening = (entry: string): string => wrongKindWords(`\`${entry}\`
 const wrongKindClosing = (): string => wrongKindWords(CUT).at(-1) ?? CUT;
 const configurationEntries = (report: string): string[] => {
   const lines = report.split("\n");
-  const start = lines.indexOf(CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading]);
+  const start = lines.indexOf(markdownHeading(3, coreMessage(CoreMessage.ConfigurationNotReadHeading)));
   if (start === -1) return [];
   const end = lines.findIndex((line, at) => at > start && line.startsWith("#"));
   return lines.slice(start, end === -1 ? undefined : end).filter((line) => line.startsWith("- "));

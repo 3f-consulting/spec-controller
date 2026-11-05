@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFault.js";
-import { QUALITY_CHECK_FAULT_MESSAGES } from "../render/messages.js";
+import { qualityCheckFaultWords } from "../render/qualityCheckFaultWords.js";
 import {
   makeQualityCheckReconciliation,
   OUTCOME_SIDE_PROFILE,
@@ -25,7 +25,7 @@ function attemptMint(mint: () => unknown): Refusal {
 }
 
 function catalogueMessage(fault: QualityCheckFault): string {
-  return (QUALITY_CHECK_FAULT_MESSAGES[fault.code] as (f: QualityCheckFault) => string)(fault);
+  return qualityCheckFaultWords(fault);
 }
 
 function expectCodedFaultWordedByTheCatalogue(refusal: Refusal): void {

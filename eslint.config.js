@@ -401,12 +401,7 @@ export default [
 
   {
     files: [PRODUCTION_FILES],
-    ignores: [
-      ...TEST_FILES,
-      // The catalogues are where message prose belongs.
-      "packages/core/src/render/messages.ts",
-      "packages/spec-controller/src/messages.ts",
-    ],
+    ignores: TEST_FILES,
     languageOptions: tsLanguageOptions,
     rules: {
       // Over core no-restricted-syntax: it already walks literals and template parts and exempts imports, enum members,

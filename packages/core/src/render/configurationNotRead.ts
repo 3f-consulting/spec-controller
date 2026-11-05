@@ -1,7 +1,8 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import type { ConfigurationKind } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreError, CoreMessage } from "./messages.js";
+import { CoreError, CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
+import { markdownHeading } from "./heading.js";
 import { codeSpan } from "./codeSpan.js";
 import { errorEntry } from "./errorEntry.js";
 
@@ -37,7 +38,7 @@ export const configurationNotReadSection = (report: RenderInput): string[] => {
   )
     return [];
   return [
-    CORE_MESSAGES[CoreMessage.ConfigurationNotReadHeading],
+    markdownHeading(3, coreMessage(CoreMessage.ConfigurationNotReadHeading)),
     "",
     coreMessage(CoreMessage.ConfigurationNotReadIntro),
     "",

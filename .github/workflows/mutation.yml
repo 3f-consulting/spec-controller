@@ -45,11 +45,11 @@ jobs:
           - scope: spec-controller-cli-allocate
             mutate: "packages/spec-controller/src/cli-allocate/**/*.ts,!packages/spec-controller/src/cli-allocate/**/*.test.ts,!packages/spec-controller/src/cli-allocate/**/*.test-utils.ts"
           - scope: core-render
-            mutate: "packages/core/src/render/**/*.ts,!packages/core/src/render/**/*.test.ts,!packages/core/src/render/**/*.test-utils.ts,!packages/core/src/render/messages.ts"
+            mutate: "packages/core/src/render/**/*.ts,!packages/core/src/render/**/*.test.ts,!packages/core/src/render/**/*.test-utils.ts"
           - scope: spec-controller-run-management
             mutate: "packages/spec-controller/src/run-management/**/*.ts,!packages/spec-controller/src/run-management/**/*.test.ts,!packages/spec-controller/src/run-management/**/*.test-utils.ts"
           - scope: spec-controller-shell
-            mutate: "packages/spec-controller/src/*.ts,!packages/spec-controller/src/*.test.ts,!packages/spec-controller/src/*.test-utils.ts,!packages/spec-controller/src/messages.ts"
+            mutate: "packages/spec-controller/src/*.ts,!packages/spec-controller/src/*.test.ts,!packages/spec-controller/src/*.test-utils.ts"
           - scope: spec-controller-ingest
             mutate: "packages/spec-controller/src/ingest/**/*.ts,!packages/spec-controller/src/ingest/**/*.test.ts,!packages/spec-controller/src/ingest/**/*.test-utils.ts"
           - scope: spec-controller-cli-balance

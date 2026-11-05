@@ -90,6 +90,8 @@
   "corpus-file-unparseable": "{corpus} contains a feature file that could not be parsed: {file}\n{message}",
   "workflow-not-yaml": "{workflows} contain a workflow that is not valid YAML: {file}\n{message}",
   "report-not-written": "The {format} report could not be written: {path} ({reason})",
+  "unexpected-error": "spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: {name}: {firstLine}",
+  "unexpected-error-after-verdict": "spec-controller hit an unexpected error [unexpected-error-after-verdict] after its verdict: {name}: {firstLine}",
   "shape-kind-list": "a list",
   "shape-kind-object": "an object",
   "shape-kind-of-type": "a {type}",

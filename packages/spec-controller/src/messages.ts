@@ -148,17 +148,11 @@ export enum AppError {
   UnexpectedErrorAfterVerdict = "unexpected-error-after-verdict",
 }
 
-// A crash line is worded by the table below, so the crash guards read it without loading the data file's formatter.
-type CrashError = AppError.UnexpectedError | AppError.UnexpectedErrorAfterVerdict;
+// A crash line is filled by the crash guards from the data file's entry, so they word it without loading the formatter.
+export type CrashError = AppError.UnexpectedError | AppError.UnexpectedErrorAfterVerdict;
 
 export type RefusalError = Exclude<AppError, CrashError>;
 
-interface AppMessageParams {
-  [AppError.UnexpectedError]: [name: string, firstLine: string];
-  [AppError.UnexpectedErrorAfterVerdict]: [name: string, firstLine: string];
-}
-
-// Every message handle is worded by the data file; only the crash lines, by the table below.
 export type WordedAppMessage = AppMessage;
 
 export type PlainWordedAppMessage = Exclude<WordedAppMessage, keyof AppMessageValues>;
@@ -240,18 +234,9 @@ export interface AppErrorValues {
   [AppError.CorpusFileUnparseable]: { corpus: string; file: string; message: string };
   [AppError.WorkflowNotYaml]: { workflows: string; file: string; message: string };
   [AppError.ReportNotWritten]: { format: string; path: string; reason: string };
+  [AppError.UnexpectedError]: { name: string; firstLine: string };
+  [AppError.UnexpectedErrorAfterVerdict]: { name: string; firstLine: string };
 }
-
-export type AppMessages = {
-  readonly [C in CrashError]: (...params: AppMessageParams[C]) => string;
-};
-
-export const APP_MESSAGES: AppMessages = {
-  [AppError.UnexpectedError]: (name, firstLine) =>
-    `spec-controller stopped on an unexpected error [${AppError.UnexpectedError}], and gives no verdict: ${name}: ${firstLine}`,
-  [AppError.UnexpectedErrorAfterVerdict]: (name, firstLine) =>
-    `spec-controller hit an unexpected error [${AppError.UnexpectedErrorAfterVerdict}] after its verdict: ${name}: ${firstLine}`,
-};
 
 export const Unreadable = {
   History: AppMessage.History,

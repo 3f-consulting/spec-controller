@@ -15,13 +15,11 @@ export {
 
 export { QualityCheckFaultCode, type QualityCheckFault } from "./domain/qualityCheckFault.js";
 export {
-  CORE_MESSAGES,
   CoreMessage,
-  QUALITY_CHECK_FAULT_MESSAGES,
-  type CoreMessages,
   type CoreMessageValues,
   type WordedCoreMessage,
 } from "./render/messages.js";
+export { qualityCheckFaultWords } from "./render/qualityCheckFaultWords.js";
 export { CORE_TEXTS, coreMessage } from "./render/coreText.js";
 export { markdownHeading } from "./render/heading.js";
 

@@ -3,14 +3,14 @@ import type { Ledger } from "../model.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
 import { scenarioCodeErrorsAre, type ScenarioCodeError } from "../domain/scnTags.js";
 import type { RunVerdict } from "../domain/runVerdict.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 
 type VerdictLine = { readonly headline: string; readonly gloss: string };
 
 function scenarioCodeErrorsGloss(errors: readonly ScenarioCodeError[], alsoOutOfBalance: string): string {
-  const values = { heading: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading], alsoOutOfBalance };
+  const values = { heading: markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading)), alsoOutOfBalance };
   switch (scenarioCodeErrorsAre(errors)) {
     case "misfilings":
       return coreMessage(CoreMessage.ScenarioCodeErrorsGloss, values);

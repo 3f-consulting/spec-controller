@@ -3,7 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { CORE_MESSAGES, CoreMessage, type CoreMessageValues, type WordedCoreMessage } from "./messages.js";
+import { CoreMessage, type CoreMessageValues, type WordedCoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 import type { EvidenceObservation, Ledger } from "../model.js";
@@ -117,7 +117,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
       expect(verdictSectionOf(md)).toEqual([
         heading(),
         "",
-        verdictLine(CoreMessage.ScenarioCodeErrorsHeadline, coreMessage(CoreMessage.ScenarioCodeErrorsGloss, { heading: CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading], alsoOutOfBalance: "" }), 1),
+        verdictLine(CoreMessage.ScenarioCodeErrorsHeadline, coreMessage(CoreMessage.ScenarioCodeErrorsGloss, { heading: markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading)), alsoOutOfBalance: "" }), 1),
         "",
       ]);
     });

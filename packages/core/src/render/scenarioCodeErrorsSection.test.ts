@@ -4,7 +4,7 @@ import { renderReportFromJson } from "../assemble/composers.js";
 import { assembleRenderInput } from "../assemble/renderInput.js";
 import type { RenderInput } from "../domain/renderInput.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
-import { CORE_MESSAGES, CoreMessage } from "./messages.js";
+import { CoreMessage } from "./messages.js";
 import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
@@ -57,7 +57,7 @@ describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors,
   });
 
   it("lists the error by its handle under the Scenario code errors heading", () => {
-    expect(md.split("\n")).toContain(HEADING);
+    expect(md.split("\n")).toContain(HEADING());
     expect(md.split("\n").filter((line) => line.startsWith("- `foreign-scn-code` — "))).toHaveLength(1);
   });
 
@@ -93,8 +93,8 @@ describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors,
   it("sits before the Summary, as a caveat on every cut beneath it", () => {
     const lines = md.split("\n");
     const summary = lines.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading)));
-    expect(lines.indexOf(HEADING)).toBeGreaterThanOrEqual(0);
-    expect(lines.indexOf(HEADING)).toBeLessThan(summary);
+    expect(lines.indexOf(HEADING())).toBeGreaterThanOrEqual(0);
+    expect(lines.indexOf(HEADING())).toBeLessThan(summary);
   });
 });
 
@@ -158,7 +158,7 @@ describe("[SCN-RPT-059] a several-scn-codes error is worded from its file, its s
 const duplicateLine = (): string =>
   coreMessage(CoreMessage.DuplicateScnCodeNotListed, { outcome: coreMessage(CoreMessage.OutcomeDuplicateScnCode) });
 
-const HEADING = CORE_MESSAGES[CoreMessage.ScenarioCodeErrorsHeading];
+const HEADING = (): string => markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading));
 
 function codedFeature(code: string): string {
   return `@${code}\nFeature: ${code.toLowerCase()}\n\n  @unit @SCN-${code}-001\n  Scenario: s\n    Given a thing\n`;
@@ -184,7 +184,7 @@ function newShapeReport(reconciliation: EvidenceReconciliation): RenderInput {
 
 function errorsSectionOf(md: string): string[] {
   const lines = md.split("\n");
-  const start = lines.indexOf(HEADING);
+  const start = lines.indexOf(HEADING());
   expect(start).toBeGreaterThanOrEqual(0);
   const next = lines.findIndex((line, i) => i > start && line.startsWith("#"));
   return lines.slice(start, next === -1 ? lines.length : next);
@@ -214,7 +214,7 @@ function statedAloneAfterRunVerdict(report: RenderInput, statement: string): str
 }
 
 function printsNoScenarioCodeErrorsSection(md: string): void {
-  expect(md).not.toContain(HEADING);
+  expect(md).not.toContain(HEADING());
   expect(md).not.toContain(duplicateLine());
 }
 
@@ -274,7 +274,7 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
     const cleanHead = `${cleanOpening()} over `;
     expect(cleanHead).not.toBe("");
-    expect(md).not.toContain(HEADING);
+    expect(md).not.toContain(HEADING());
     expect(md).not.toContain(cleanHead);
     expect(md).not.toContain(coreMessage(CoreMessage.NoFeatureFileJudged));
   });
@@ -299,7 +299,7 @@ describe("[SCN-RPT-094] nothing is stated about scenario codes when no corpus wa
     expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
     expect(scenarioCodesOnReport(report)).toBeUndefined();
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
-    expect(md).not.toContain(HEADING);
+    expect(md).not.toContain(HEADING());
     expect(afterRunVerdictOf(md)).toEqual([""]);
   });
 });
@@ -350,7 +350,7 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
 
     it("counts one error in the singular, then lists it on one line by its kind and the catalogue's words for it", () => {
       expect(errorsSectionOf(md)).toEqual([
-        HEADING,
+        HEADING(),
         "",
         framing(coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: 1 })),
         "",
@@ -386,7 +386,7 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
 
     it("counts the errors in the plural with their number, then lists each on its own line in the order judged", () => {
       expect(errorsSectionOf(md)).toEqual([
-        HEADING,
+        HEADING(),
         "",
         framing(coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: 2 })),
         "",
