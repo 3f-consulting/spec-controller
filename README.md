@@ -195,7 +195,7 @@ Coverage and mutation testing tell you how much of the application the unit test
   - Ruby's RSpec JSON report (`--rspec`).
 - **Integration and end-to-end evidence:** the JSON report of any Cucumber implementation, in any language.
 - **Fitness evidence:** any check your pipeline runs, in any language.
-- **The scenarios:** a list of named behaviours in `.feature` files. Unit-level scenarios need no step definitions: a title and its tags are the whole scenario. A test cites a scenario as `[SCN-<FFF>-<NNN>]`, in brackets:
+- **The scenarios:** a list of named behaviours in `.feature` files. A `@unit` scenario needs no step definitions: a title and its tags are the whole scenario. A test cites a scenario as `[SCN-<FFF>-<NNN>]`, in brackets:
   - a Vitest or Jest test, in its title;
   - a Go test, in a subtest's name;
   - a JUnit 5 test in Java or Kotlin, in its `@DisplayName`;

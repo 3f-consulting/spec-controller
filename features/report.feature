@@ -305,7 +305,7 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the report's evidence-observation views level a behavioural observation at each layer it was posted at
 
-    The report's views level a behavioural observation as the reconciliation does. A Cucumber run
+    The report's views count a behavioural observation at its layer, as the reconciliation does. A Cucumber run
     of an @e2e scenario counts at e2e in Evidence observations and in the scenario's E2e cell. A
     Cucumber run of a scenario tagged both @integration and @e2e counts in both layers.
 

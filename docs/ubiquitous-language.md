@@ -189,7 +189,7 @@ There is one form per runner, and nothing else. The `scenario`'s tag line (`@SCN
 | Term | Meaning |
 |---|---|
 | corpus | The feature files under `--features`, whose scenarios one run reconciles. |
-| corpus census | The count of the corpus's scenarios, read from the Ledger summary. |
+| corpus census | The count of the corpus's scenarios, read from the `Summary`. |
 | Out-of-balance by feature | The Summary subsection that groups out-of-balance Claim Reconciliations by feature, opening with an *N of M* total line. |
 | harness | What produces the evidence `balance` reads: the test runners, the step definitions and the reports they write. The report does not use the word: it names what stopped each proof from running, and stamps the run Unsound. |
 | term | A hand-typed value naming a check: a check step's `id:` or a deferral tag. It is stored and looked up bare, without its leading `@` or surrounding space. |

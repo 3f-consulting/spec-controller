@@ -94,7 +94,7 @@ A scenario's tag line says what it needs proved. `@SCN-<FFF>-<NNN> @unit @e2e` a
 
 `SCN-<FFF>-<NNN>` is the scenario's **code**. `<FFF>` is a feature part of two to five uppercase letters or digits, and `<NNN>` is a number. Each feature file carries a header code, `@<FFF>`, and its scenarios' codes must match it. A misfiled code fails the run. [Scenario code errors](./user-guide.md#scenario-code-errors) explains the header code and the four ways a code can be misfiled.
 
-A unit-level scenario needs no step definitions. A title and its tags are the whole scenario.
+A `@unit` scenario needs no step definitions. A title and its tags are the whole scenario.
 
 Ask the tool for each code instead of inventing one. A feature part is known only when a feature file in `features/` at the top of the repository is headed with it. So in a project with no feature files yet, run `allocate` with `--new` for your first code. After that, `allocate <FFF>` gives the next one:
 

@@ -70,7 +70,7 @@ Feature: Ledger over obligation-vs-observation evidence
 
     The bidirectional reconciler also consumes evidence observations that cite a REAL
     scenario at a layer that scenario NEVER raised — a behavioural result attributed to
-    a scenario, but at a level the scenario has no evidence obligation for. Such an evidence observation posts
+    a scenario, but at a kind of quality check the scenario has no evidence obligation for. Such an evidence observation posts
     to a real account, but against no evidence obligation on it: outcome no-evidence-obligation (the GENERAL case —
     it applies whether or not the scenario carries other evidence obligations). It becomes an evidence-observation
     Quality Check Reconciliation ON THE REAL scenario's row (carrying the evidence observation locator as
