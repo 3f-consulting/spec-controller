@@ -10,7 +10,8 @@ import {
   type FlagSpec,
 } from "./cliRegistry.js";
 import { BUILT_IN_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { AppMessage } from "./messages.js";
+import { message } from "./appText.js";
 
 describe("[SCN-CLI-006] renderCommandHelp renders a line per flag the registry gives that command", () => {
   let balanceFlags: FlagSpec[];
@@ -89,9 +90,9 @@ describe("[SCN-CLI-006] renderCommandHelp renders a line per flag the registry g
     expect(configHelp.length).toBeGreaterThan(0);
     const lines = renderCommandHelp(balanceCommand).split("\n");
     expect(lines.slice(0, 3)).toEqual([
-      `spec-controller balance — ${APP_MESSAGES[AppMessage.BalanceSummary]()}`,
+      `spec-controller balance — ${message(AppMessage.BalanceSummary)}`,
       "",
-      APP_MESSAGES[AppMessage.HelpOptions](),
+      message(AppMessage.HelpOptions),
     ]);
     expectFlagRows(lines.slice(3, 3 + balance.flags.length), balance.flags);
     expect(lines.slice(3 + balance.flags.length)).toEqual(["", ...configHelp]);
@@ -110,7 +111,7 @@ describe("[SCN-CLI-006] renderCommandHelp renders a line per flag the registry g
 
   it("indents balance's configuration key by two spaces and each line explaining it by six", () => {
     const lines = renderCommandHelp(balanceCommand).split("\n");
-    const headingAt = lines.indexOf(APP_MESSAGES[AppMessage.ConfigurationHeading]());
+    const headingAt = lines.indexOf(message(AppMessage.ConfigurationHeading));
     expect(headingAt).toBeGreaterThan(0);
     const [key, ...explanation] = lines.slice(headingAt + 1);
     expect(key).toMatch(/^ {2}\S/);
@@ -128,8 +129,8 @@ describe("[SCN-CLI-006] renderCommandHelp renders a line per flag the registry g
     const allocate = commandOf("allocate");
     expect(allocate.configHelp).toBeUndefined();
     const lines = renderCommandHelp(allocateCommand).split("\n");
-    expect(lines[0]).toBe(`spec-controller allocate — ${APP_MESSAGES[AppMessage.AllocateSummary]()}`);
-    const optionsAt = lines.indexOf(APP_MESSAGES[AppMessage.HelpOptions]());
+    expect(lines[0]).toBe(`spec-controller allocate — ${message(AppMessage.AllocateSummary)}`);
+    const optionsAt = lines.indexOf(message(AppMessage.HelpOptions));
     expect(optionsAt).toBeGreaterThan(0);
     expect(lines[optionsAt - 1]).toBe("");
     expectFlagRows(lines.slice(optionsAt + 1), allocate.flags);
@@ -163,16 +164,16 @@ describe("[SCN-CLI-007] renderTopLevelHelp renders the commands and the global s
     const commandsAt = 6;
     const modifiersAt = commandsAt + cliRegistry.commands.length + 2;
     expect(lines.slice(0, commandsAt)).toEqual([
-      APP_MESSAGES[AppMessage.HelpTitle](),
+      message(AppMessage.HelpTitle),
       "",
-      APP_MESSAGES[AppMessage.HelpUsage](),
+      message(AppMessage.HelpUsage),
       lines[3],
       "",
-      APP_MESSAGES[AppMessage.HelpCommands](),
+      message(AppMessage.HelpCommands),
     ]);
     expect(lines[modifiersAt - 2]).toBe("");
-    expect(lines[modifiersAt - 1]).toBe(APP_MESSAGES[AppMessage.HelpHostModifiers]());
-    expect(lines.slice(modifiersAt + cliRegistry.global.length)).toEqual(["", APP_MESSAGES[AppMessage.HelpPointer]()]);
+    expect(lines[modifiersAt - 1]).toBe(message(AppMessage.HelpHostModifiers));
+    expect(lines.slice(modifiersAt + cliRegistry.global.length)).toEqual(["", message(AppMessage.HelpPointer)]);
   });
 
   it("lists every host modifier on the usage line in brackets, in registry order, before the command", () => {

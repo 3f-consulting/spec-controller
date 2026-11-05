@@ -1,50 +1,48 @@
 export enum AppMessage {
-  HelpTitle,
-  HelpUsage,
-  HelpCommands,
-  HelpHostModifiers,
-  HelpOptions,
-  HelpArguments,
-  HelpPointer,
-  HelpFlag,
-  StoreModifier,
-  RunIdModifier,
-  BalanceSummary,
-  FeaturesFlag,
-  VitestFlag,
-  PytestFlag,
-  JestFlag,
-  JunitFlag,
-  RspecFlag,
-  CucumberFlag,
-  CiFlag,
-  PackageJsonFlag,
-  CiStepsFlag,
-  TargetFlag,
-  SourceShaFlag,
-  FormatFlag,
-  RenderFromJsonFlag,
-  StrictFlag,
-  ExitZeroFlag,
-  ConfigurationHeading,
-  DeferralTagsKey,
-  DeferralTagsExtend,
-  DeferralTagsNeverReplace,
-  BuiltInDeferralTags,
-  MeasurementsReplacement,
-  AllocateSummary,
-  FeaturePartArgument,
-  NewFlag,
-  HistoryBoundary,
-  ShallowHistoryUnread,
-  NoRepositoryHistoryRead,
-  RiskOfPartCode,
-  RiskAboveCode,
-  HighestSeenNone,
-  HighestSeenInTree,
-  HighestSeenInCommit,
-  PartAlreadyHeaded,
-  HelpUsageLine,
+  HelpTitle = "help-title",
+  HelpUsage = "help-usage",
+  HelpCommands = "help-commands",
+  HelpHostModifiers = "help-host-modifiers",
+  HelpOptions = "help-options",
+  HelpArguments = "help-arguments",
+  HelpPointer = "help-pointer",
+  HelpFlag = "help-flag",
+  StoreModifier = "store-modifier",
+  RunIdModifier = "run-id-modifier",
+  BalanceSummary = "balance-summary",
+  FeaturesFlag = "features-flag",
+  VitestFlag = "vitest-flag",
+  PytestFlag = "pytest-flag",
+  JestFlag = "jest-flag",
+  JunitFlag = "junit-flag",
+  RspecFlag = "rspec-flag",
+  CucumberFlag = "cucumber-flag",
+  CiFlag = "ci-flag",
+  PackageJsonFlag = "package-json-flag",
+  CiStepsFlag = "ci-steps-flag",
+  TargetFlag = "target-flag",
+  SourceShaFlag = "source-sha-flag",
+  FormatFlag = "format-flag",
+  RenderFromJsonFlag = "render-from-json-flag",
+  StrictFlag = "strict-flag",
+  ExitZeroFlag = "exit-zero-flag",
+  ConfigurationHeading = "configuration-heading",
+  DeferralTagsKey = "deferral-tags-key",
+  DeferralTagsExplanation = "deferral-tags-explanation",
+  BuiltInDeferralTags = "built-in-deferral-tags",
+  MeasurementsReplacement = "measurements-replacement",
+  AllocateSummary = "allocate-summary",
+  FeaturePartArgument = "feature-part-argument",
+  NewFlag = "new-flag",
+  ShallowHistoryRisksPartCode = "shallow-history-risks-part-code",
+  ShallowHistoryRisksCodeAbove = "shallow-history-risks-code-above",
+  NoRepositoryRisksPartCode = "no-repository-risks-part-code",
+  NoRepositoryRisksCodeAbove = "no-repository-risks-code-above",
+  HighestSeenNone = "highest-seen-none",
+  HighestSeenInTree = "highest-seen-in-tree",
+  HighestSeenInCommit = "highest-seen-in-commit",
+  PartAlreadyHeaded = "part-already-headed",
+  HelpUsageLine = "help-usage-line",
   SeeCommandsAndModifiers = "see-commands-and-modifiers",
   SeeModifiers = "see-modifiers",
   SeeFlags = "see-flags",
@@ -156,27 +154,25 @@ type CrashError = AppError.UnexpectedError | AppError.UnexpectedErrorAfterVerdic
 export type RefusalError = Exclude<AppError, CrashError>;
 
 interface AppMessageParams {
-  [AppMessage.BuiltInDeferralTags]: [tags: string];
-  [AppMessage.HistoryBoundary]: [unread: string, risk: string];
-  [AppMessage.ShallowHistoryUnread]: [before: string];
-  [AppMessage.RiskOfPartCode]: [part: string];
-  [AppMessage.RiskAboveCode]: [code: string];
-  [AppMessage.HighestSeenInTree]: [code: string, path: string, line: number];
-  [AppMessage.HighestSeenInCommit]: [code: string, path: string, line: number, commit: string];
-  [AppMessage.PartAlreadyHeaded]: [part: string];
-  [AppMessage.HelpUsageLine]: [modifierUsage: string];
   [AppError.UnexpectedError]: [name: string, firstLine: string];
   [AppError.UnexpectedErrorAfterVerdict]: [name: string, firstLine: string];
 }
 
-// A handle whose value is a string is worded by the data file; the others, by the table below.
-export type WordedAppMessage = Extract<AppMessage, string>;
-
-type TabledAppMessage = Extract<AppMessage, number> | CrashError;
+// Every message handle is worded by the data file; only the crash lines, by the table below.
+export type WordedAppMessage = AppMessage;
 
 export type PlainWordedAppMessage = Exclude<WordedAppMessage, keyof AppMessageValues>;
 
 export interface AppMessageValues {
+  [AppMessage.BuiltInDeferralTags]: { tags: string };
+  [AppMessage.ShallowHistoryRisksPartCode]: { before: string; part: string };
+  [AppMessage.ShallowHistoryRisksCodeAbove]: { before: string; code: string };
+  [AppMessage.NoRepositoryRisksPartCode]: { part: string };
+  [AppMessage.NoRepositoryRisksCodeAbove]: { code: string };
+  [AppMessage.HighestSeenInTree]: { code: string; path: string; line: number };
+  [AppMessage.HighestSeenInCommit]: { code: string; path: string; line: number; commit: string };
+  [AppMessage.PartAlreadyHeaded]: { part: string };
+  [AppMessage.HelpUsageLine]: { modifierUsage: string };
   [AppMessage.SeeFlags]: { scope: string };
   [AppMessage.SeeFlagsAndValues]: { scope: string };
   [AppMessage.SeeArguments]: { scope: string };
@@ -246,93 +242,11 @@ export interface AppErrorValues {
   [AppError.ReportNotWritten]: { format: string; path: string; reason: string };
 }
 
-export type PlainAppMessage = Exclude<TabledAppMessage, keyof AppMessageParams>;
-
 export type AppMessages = {
-  readonly [C in TabledAppMessage]: (...params: C extends keyof AppMessageParams ? AppMessageParams[C] : []) => string;
+  readonly [C in CrashError]: (...params: AppMessageParams[C]) => string;
 };
 
 export const APP_MESSAGES: AppMessages = {
-  [AppMessage.HelpTitle]: () => "spec-controller — reconcile scenarios against observed evidence",
-  [AppMessage.HelpUsage]: () => "Usage:",
-  [AppMessage.HelpCommands]: () => "Commands:",
-  [AppMessage.HelpHostModifiers]: () => "Host modifiers (before the command):",
-  [AppMessage.HelpOptions]: () => "Options:",
-  [AppMessage.HelpArguments]: () => "Arguments:",
-  [AppMessage.HelpPointer]: () => "Full flags, examples, and CI wiring: docs/user-guide.md.",
-  [AppMessage.HelpFlag]: () => "Show this help and exit.",
-  [AppMessage.StoreModifier]: () =>
-    "Store the run: write <root>/<target>/<run-id>/ with the reconciliation outputs + a run.yaml manifest. " +
-    "Required to store; there is no default (a default would write inside the repo).",
-  [AppMessage.RunIdModifier]: () =>
-    "Name the stored run (default: an ISO-8601 UTC timestamp). Read only with --store: " +
-    "given without it, the run is refused, since no run would be kept under the name.",
-  [AppMessage.BalanceSummary]: () =>
-    "Reconcile Gherkin scenarios against test/CI evidence and emit the Evidence Reconciliation " +
-    "(Markdown to stdout by default).",
-  [AppMessage.FeaturesFlag]: () =>
-    "Directory of Gherkin .feature files — the scenarios, and the `@`-tags naming what each must prove " +
-    "(@unit, @integration, @fitness, …).",
-  [AppMessage.VitestFlag]: () => "A Vitest JSON report — runtime test evidence.",
-  [AppMessage.PytestFlag]: () => "A pytest JUnit XML report (pytest --junitxml) — runtime unit test evidence.",
-  [AppMessage.JestFlag]: () => "A Jest JSON report (jest --json --outputFile) — runtime unit test evidence.",
-  [AppMessage.JunitFlag]: () =>
-    "A JUnit XML report from any test runner that writes one, such as gotestsum --junitfile, or a directory of them, such as Maven Surefire's — runtime unit test evidence.",
-  [AppMessage.RspecFlag]: () =>
-    "An RSpec JSON report (rspec --format json --out) — runtime unit test evidence.",
-  [AppMessage.CucumberFlag]: () => "A Cucumber JSON report — runtime test evidence.",
-  [AppMessage.CiFlag]: () =>
-    "Your CI workflows — a file, or a directory of them (default .github/workflows). " +
-    "Where a fitness function you have not converted is found running over the real source, " +
-    "and where a check step's `id:` supplies the @SCN its result cites.",
-  [AppMessage.PackageJsonFlag]: () =>
-    "The target's package.json — its `scripts`, and its specController.runners, specController.notChecks " +
-    "and specController.deferralTags. A fitness function is named by its @fitness scenario and the CI step " +
-    "whose id: is that scenario's @SCN; no manifest key names one.",
-  [AppMessage.CiStepsFlag]: () =>
-    "The CI run's own record of what each of its steps did — your pipeline's `toJSON(steps)` dump, " +
-    "evidence for the converted fitness functions. Omit it if you have converted none.",
-  [AppMessage.TargetFlag]: () =>
-    "A name recorded verbatim in the report's provenance (which project this run reconciled).",
-  [AppMessage.SourceShaFlag]: () =>
-    "Override the git commit SHA recorded in provenance (defaults to the resolved HEAD).",
-  [AppMessage.FormatFlag]: () =>
-    "Where to send output (md or json, optionally :<path> to write to a file). Repeatable.",
-  [AppMessage.RenderFromJsonFlag]: () =>
-    "Re-render Markdown from a previously saved Evidence Reconciliation JSON — no reconcile, no live inputs.",
-  [AppMessage.StrictFlag]: () =>
-    "Fail the run (exit 3) when it carries Pending Items — the opt-in that escalates " +
-    "otherwise-run-neutral deferred obligations.",
-  [AppMessage.ExitZeroFlag]: () =>
-    "Print the same report but exit 0 on an out-of-balance or scenario-code-error (1) or --strict pending (3) " +
-    "verdict — the on-ramp before gating. Usage (2), unsound (4) and nothing-to-reconcile (5) still fail.",
-  [AppMessage.ConfigurationHeading]: () => "Configuration (in the target repo's package.json):",
-  [AppMessage.DeferralTagsKey]: () => "specController.deferralTags: string[]",
-  [AppMessage.DeferralTagsExtend]: () =>
-    "Extra recognised deferral tags. A scenario carrying one defers every obligation it",
-  [AppMessage.DeferralTagsNeverReplace]: () =>
-    "names to a Pending Item, extending (never replacing) the built-in set.",
-  [AppMessage.BuiltInDeferralTags]: (tags) => `Built-in deferral tags: ${tags}`,
-  [AppMessage.MeasurementsReplacement]: () =>
-    "A fitness function's evidence observation is the outcome of its own CI step: put the check's @SCN on that step's `id:` " +
-    "and hand balance the run's step record with --ci-steps.",
-  [AppMessage.AllocateSummary]: () =>
-    "Print the next @SCN code for a feature part: one past the highest the repository has ever carried, " +
-    "the code alone on stdout.",
-  [AppMessage.FeaturePartArgument]: () => "The feature part: a feature file's header code, two to five of A-Z and 0-9.",
-  [AppMessage.NewFlag]: () =>
-    "Start a part no feature file's header carries yet: its first code, " +
-    "or one past any number the repository already carries for it.",
-  [AppMessage.HistoryBoundary]: (unread, risk) => `history: ${unread}; ${risk} may have been used before`,
-  [AppMessage.ShallowHistoryUnread]: (before) => `shallow clone — history before ${before} unread`,
-  [AppMessage.NoRepositoryHistoryRead]: () => "not a git repository — none read",
-  [AppMessage.RiskOfPartCode]: (part) => `a code of ${part}`,
-  [AppMessage.RiskAboveCode]: (code) => `a code above ${code}`,
-  [AppMessage.HighestSeenNone]: () => "highest seen: none",
-  [AppMessage.HighestSeenInTree]: (code, path, line) => `highest seen: ${code}, ${path}:${line}`,
-  [AppMessage.HighestSeenInCommit]: (code, path, line, commit) => `highest seen: ${code}, ${path}:${line} in ${commit}`,
-  [AppMessage.PartAlreadyHeaded]: (part) => `note: a feature file's header already carries ${part}, so --new was not needed`,
-  [AppMessage.HelpUsageLine]: (modifierUsage) => `spec-controller ${modifierUsage} <command> [command-args]`,
   [AppError.UnexpectedError]: (name, firstLine) =>
     `spec-controller stopped on an unexpected error [${AppError.UnexpectedError}], and gives no verdict: ${name}: ${firstLine}`,
   [AppError.UnexpectedErrorAfterVerdict]: (name, firstLine) =>

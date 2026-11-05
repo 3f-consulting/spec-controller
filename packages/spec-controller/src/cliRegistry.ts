@@ -1,5 +1,6 @@
 import { BUILT_IN_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
-import { APP_MESSAGES, AppMessage } from "./messages.js";
+import { AppMessage } from "./messages.js";
+import { message } from "./appText.js";
 import { EVIDENCE_INPUTS } from "./cli-balance/evidenceInputs.js";
 
 export interface FlagSpec {
@@ -37,56 +38,59 @@ export interface CliRegistry {
 }
 
 const balanceFlags: FlagSpec[] = [
-  ...EVIDENCE_INPUTS.map(({ flag, arg, description }) => ({ name: `--${flag}`, arg, description: APP_MESSAGES[description]() })),
+  ...EVIDENCE_INPUTS.map(({ flag, arg, description }) => ({ name: `--${flag}`, arg, description: message(description) })),
   {
     name: "--target",
     arg: "<name>",
-    description: APP_MESSAGES[AppMessage.TargetFlag](),
+    description: message(AppMessage.TargetFlag),
   },
   {
     name: "--source-sha",
     arg: "<sha>",
-    description: APP_MESSAGES[AppMessage.SourceShaFlag](),
+    description: message(AppMessage.SourceShaFlag),
   },
   {
     name: "--format",
     arg: "<fmt>[:<path>]",
     repeatable: true,
-    description: APP_MESSAGES[AppMessage.FormatFlag](),
+    description: message(AppMessage.FormatFlag),
   },
   {
     name: "--render-from-json",
     arg: "<path>",
-    description: APP_MESSAGES[AppMessage.RenderFromJsonFlag](),
+    description: message(AppMessage.RenderFromJsonFlag),
   },
   {
     name: "--strict",
-    description: APP_MESSAGES[AppMessage.StrictFlag](),
+    description: message(AppMessage.StrictFlag),
   },
   {
     name: "--exit-zero",
-    description: APP_MESSAGES[AppMessage.ExitZeroFlag](),
+    description: message(AppMessage.ExitZeroFlag),
   },
   {
     name: "--help",
     aliases: ["-h"],
-    description: APP_MESSAGES[AppMessage.HelpFlag](),
+    description: message(AppMessage.HelpFlag),
   },
 ];
 
+function explainingLines(entry: string): string[] {
+  return entry.split("\n").map((line) => `      ${line}`);
+}
+
 const balanceConfigHelp: string[] = [
-  APP_MESSAGES[AppMessage.ConfigurationHeading](),
-  `  ${APP_MESSAGES[AppMessage.DeferralTagsKey]()}`,
-  `      ${APP_MESSAGES[AppMessage.DeferralTagsExtend]()}`,
-  `      ${APP_MESSAGES[AppMessage.DeferralTagsNeverReplace]()}`,
-  `      ${APP_MESSAGES[AppMessage.BuiltInDeferralTags](BUILT_IN_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", "))}`,
+  message(AppMessage.ConfigurationHeading),
+  `  ${message(AppMessage.DeferralTagsKey)}`,
+  ...explainingLines(message(AppMessage.DeferralTagsExplanation)),
+  ...explainingLines(message(AppMessage.BuiltInDeferralTags, { tags: BUILT_IN_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", ") })),
 ];
 
 const balanceRetiredFlags: RetiredFlagSpec[] = [
   {
     name: "--measurements",
     retiredIn: "0.1.0-alpha.5",
-    replacement: APP_MESSAGES[AppMessage.MeasurementsReplacement](),
+    replacement: message(AppMessage.MeasurementsReplacement),
   },
 ];
 
@@ -94,18 +98,18 @@ const globalFlags: FlagSpec[] = [
   {
     name: "--store",
     arg: "<root>",
-    description: APP_MESSAGES[AppMessage.StoreModifier](),
+    description: message(AppMessage.StoreModifier),
   },
   {
     name: "--run-id",
     arg: "<id>",
-    description: APP_MESSAGES[AppMessage.RunIdModifier](),
+    description: message(AppMessage.RunIdModifier),
   },
 ];
 
 export const balanceCommand: CommandSpec = {
   name: "balance",
-  summary: APP_MESSAGES[AppMessage.BalanceSummary](),
+  summary: message(AppMessage.BalanceSummary),
   flags: balanceFlags,
   configHelp: balanceConfigHelp,
   retiredFlags: balanceRetiredFlags,
@@ -113,17 +117,17 @@ export const balanceCommand: CommandSpec = {
 
 export const allocateCommand: CommandSpec = {
   name: "allocate",
-  summary: APP_MESSAGES[AppMessage.AllocateSummary](),
+  summary: message(AppMessage.AllocateSummary),
   acceptsHostModifiers: false,
   positionals: [
-    { name: "<FFF>", description: APP_MESSAGES[AppMessage.FeaturePartArgument]() },
+    { name: "<FFF>", description: message(AppMessage.FeaturePartArgument) },
   ],
   flags: [
     {
       name: "--new",
-      description: APP_MESSAGES[AppMessage.NewFlag](),
+      description: message(AppMessage.NewFlag),
     },
-    { name: "--help", aliases: ["-h"], description: APP_MESSAGES[AppMessage.HelpFlag]() },
+    { name: "--help", aliases: ["-h"], description: message(AppMessage.HelpFlag) },
   ],
 };
 
@@ -149,7 +153,7 @@ export function renderCommandHelp(command: CommandSpec): string {
     `spec-controller ${command.name} — ${command.summary}`,
     ...positionalHelp(command.name, command.positionals ?? []),
     "",
-    APP_MESSAGES[AppMessage.HelpOptions](),
+    message(AppMessage.HelpOptions),
     ...lines,
     ...(configHelp.length > 0 ? ["", ...configHelp] : []),
   ].join("\n");
@@ -160,9 +164,9 @@ function positionalHelp(command: string, positionals: readonly PositionalSpec[])
   const width = Math.max(...positionals.map((positional) => positional.name.length));
   return [
     "",
-    `${APP_MESSAGES[AppMessage.HelpUsage]()} spec-controller ${command} ${positionals.map((positional) => positional.name).join(" ")} [options]`,
+    `${message(AppMessage.HelpUsage)} spec-controller ${command} ${positionals.map((positional) => positional.name).join(" ")} [options]`,
     "",
-    APP_MESSAGES[AppMessage.HelpArguments](),
+    message(AppMessage.HelpArguments),
     ...positionals.map((positional) => `  ${positional.name.padEnd(width + 2)}${positional.description}`),
   ];
 }
@@ -180,17 +184,17 @@ export function renderTopLevelHelp(registry: CliRegistry): string {
   );
   const modifierUsage = registry.global.map((flag) => `[${flagLabel(flag)}]`).join(" ");
   return [
-    APP_MESSAGES[AppMessage.HelpTitle](),
+    message(AppMessage.HelpTitle),
     "",
-    APP_MESSAGES[AppMessage.HelpUsage](),
-    `  ${APP_MESSAGES[AppMessage.HelpUsageLine](modifierUsage)}`,
+    message(AppMessage.HelpUsage),
+    `  ${message(AppMessage.HelpUsageLine, { modifierUsage })}`,
     "",
-    APP_MESSAGES[AppMessage.HelpCommands](),
+    message(AppMessage.HelpCommands),
     ...commandLines,
     "",
-    APP_MESSAGES[AppMessage.HelpHostModifiers](),
+    message(AppMessage.HelpHostModifiers),
     ...modifierLines,
     "",
-    APP_MESSAGES[AppMessage.HelpPointer](),
+    message(AppMessage.HelpPointer),
   ].join("\n");
 }

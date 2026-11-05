@@ -7,7 +7,8 @@ import {
   type CommandSpec,
   type PositionalSpec,
 } from "../cliRegistry.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 import { withAllocatePositional } from "./registry.test-utils.js";
 
 describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new", () => {
@@ -33,16 +34,16 @@ describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new",
 
   function argumentsBlockOf(registry: CliRegistry, positionals: readonly PositionalSpec[]): string[] {
     const lines = renderCommandHelp(registry.commands.find((c) => c.name === "allocate") as CommandSpec).split("\n");
-    expect(lines[0]).toBe(`spec-controller allocate — ${APP_MESSAGES[AppMessage.AllocateSummary]()}`);
+    expect(lines[0]).toBe(`spec-controller allocate — ${message(AppMessage.AllocateSummary)}`);
     expect(lines.slice(1, 5)).toEqual([
       "",
-      `${APP_MESSAGES[AppMessage.HelpUsage]()} spec-controller allocate ${positionals.map((p) => p.name).join(" ")} [options]`,
+      `${message(AppMessage.HelpUsage)} spec-controller allocate ${positionals.map((p) => p.name).join(" ")} [options]`,
       "",
-      APP_MESSAGES[AppMessage.HelpArguments](),
+      message(AppMessage.HelpArguments),
     ]);
     const rows = lines.slice(5, 5 + positionals.length);
     expect(lines[5 + positionals.length]).toBe("");
-    expect(lines[6 + positionals.length]).toBe(APP_MESSAGES[AppMessage.HelpOptions]());
+    expect(lines[6 + positionals.length]).toBe(message(AppMessage.HelpOptions));
     return rows;
   }
 

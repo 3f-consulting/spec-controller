@@ -1,4 +1,4 @@
-import { AppMessage, type PlainAppMessage, type PlainWordedAppMessage } from "../messages.js";
+import { AppMessage, type PlainWordedAppMessage } from "../messages.js";
 import {
   CI_STEP_RECORD,
   CUCUMBER_REPORT,
@@ -26,7 +26,7 @@ export interface EvidenceInput {
   // Held, not derived from the flag: it keys the saved report's JSON, a published format.
   readonly key: string;
   readonly arg: string;
-  readonly description: PlainAppMessage;
+  readonly description: PlainWordedAppMessage;
   readonly report?: ReportInput;
 }
 

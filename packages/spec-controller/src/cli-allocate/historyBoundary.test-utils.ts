@@ -2,7 +2,8 @@ import { expect } from "vitest";
 import { spawnSync } from "node:child_process";
 import { git } from "./repository.test-utils.js";
 import { allocateIn } from "./answered.test-utils.js";
-import { APP_MESSAGES, AppMessage } from "../messages.js";
+import { AppMessage } from "../messages.js";
+import { message } from "../appText.js";
 
 export function expectAnsweredWithNoHistoryRead(copy: string): void {
   expect(spawnSync("git", ["rev-parse", "--git-dir"], { cwd: copy }).status).not.toBe(0);
@@ -12,8 +13,8 @@ export function expectAnsweredWithNoHistoryRead(copy: string): void {
   expect(answered.stdout).toBe("SCN-ONE-002\n");
   expect(answered.exitCode).toBeUndefined();
   expect(answered.stderr).toBe(
-    `${APP_MESSAGES[AppMessage.HistoryBoundary](APP_MESSAGES[AppMessage.NoRepositoryHistoryRead](), APP_MESSAGES[AppMessage.RiskAboveCode]("SCN-ONE-001"))}\n` +
-      `${APP_MESSAGES[AppMessage.HighestSeenInTree]("SCN-ONE-001", "features/one.feature", 4)}\n`,
+    `${message(AppMessage.NoRepositoryRisksCodeAbove, { code: "SCN-ONE-001" })}\n` +
+      `${message(AppMessage.HighestSeenInTree, { code: "SCN-ONE-001", path: "features/one.feature", line: 4 })}\n`,
   );
 }
 
@@ -25,9 +26,6 @@ export function expectAnsweredWithHistoryUnreadBeforeItsFirstCommit(clone: strin
   expect(answered.stdout).toBe("SCN-ONE-002\n");
   expect(answered.exitCode).toBeUndefined();
   expect(answered.stderr.split("\n")[0]).toBe(
-    APP_MESSAGES[AppMessage.HistoryBoundary](
-      APP_MESSAGES[AppMessage.ShallowHistoryUnread](edge),
-      APP_MESSAGES[AppMessage.RiskAboveCode]("SCN-ONE-001"),
-    ),
+    message(AppMessage.ShallowHistoryRisksCodeAbove, { before: edge, code: "SCN-ONE-001" }),
   );
 }

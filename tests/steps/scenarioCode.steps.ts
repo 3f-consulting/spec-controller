@@ -13,6 +13,15 @@ import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js"
 import { scenarioCodesOnReport } from "./support/reportScenarioCodes.js";
 import { publishedSchemaNamesScenarioCodeErrors, scenarioCodeErrorsOnReport } from "./support/reportErrorsInTheInputs.js";
 
+// A whole line of the output is the entry, worded with the values given and, for any it is not given,
+// the values the line shows.
+function showsLine(text: string, code: string, known: Readonly<Record<string, string>> = {}): boolean {
+  return text.split("\n").some((line) => {
+    const shown = shownEntry(line, code, known);
+    return shown !== undefined && line === entryText(code, { ...shown, ...known });
+  });
+}
+
 function newRepository(world: SpecControllerWorld): string {
   const repo = temporaryDirectory(world, "allocate-");
   git(repo, ["init", "-q", "-b", "main"]);
@@ -116,7 +125,7 @@ Given("a repository whose highest ONE code, {word}, is deleted by a later commit
 
 Then("beside the answer it names where {word} was seen: the file and line that carry it", function (this: SpecControllerWorld, code: string) {
   assert.equal(this.answer.status, 0, this.answer.stderr);
-  assert.match(this.answer.stderr, new RegExp(`^highest seen: ${code}, features/one\\.feature:8$`, "m"));
+  assert.ok(showsLine(this.answer.stderr, "highest-seen-in-tree", { code, path: "features/one.feature", line: "8" }), this.answer.stderr);
 });
 
 Then(
@@ -124,7 +133,10 @@ Then(
   function (this: SpecControllerWorld, code: string) {
     const deleting = git(this.repository, ["log", "-1", "--format=%h"]).trim();
     assert.equal(this.answer.status, 0, this.answer.stderr);
-    assert.match(this.answer.stderr, new RegExp(`^highest seen: ${code}, features/one\\.feature:8 in ${deleting}$`, "m"));
+    assert.ok(
+      showsLine(this.answer.stderr, "highest-seen-in-commit", { code, path: "features/one.feature", line: "8", commit: deleting }),
+      this.answer.stderr,
+    );
   },
 );
 
@@ -164,12 +176,18 @@ When("the author asks for the next code for {word} in that copy", function (this
 });
 
 Then("beside the answer it states that no history was read, because the copy is not a git repository", function (this: SpecControllerWorld) {
-  assert.match(this.answer.stderr, /^history: not a git repository — none read;/m);
+  assert.ok(
+    ["no-repository-risks-code-above", "no-repository-risks-part-code"].some((code) => showsLine(this.answer.stderr, code)),
+    this.answer.stderr,
+  );
 });
 
 Then("beside the answer it states that history before the clone's first commit was not read", function (this: SpecControllerWorld) {
   const edge = git(this.copy, ["rev-parse", "--short", "HEAD"]).trim();
-  assert.match(this.answer.stderr, new RegExp(`^history: shallow clone — history before ${edge} unread;`, "m"));
+  assert.ok(
+    ["shallow-history-risks-code-above", "shallow-history-risks-part-code"].some((code) => showsLine(this.answer.stderr, code, { before: edge })),
+    this.answer.stderr,
+  );
 });
 
 Given("the author has since tagged a new scenario {word} in that file, not yet committed", function (this: SpecControllerWorld, code: string) {
@@ -239,11 +257,11 @@ When("the author asks for the next code for {word}, as a new part", function (th
 
 Then("beside the answer it says nothing of the part being carried already", function (this: SpecControllerWorld) {
   assert.equal(this.answer.status, 0, this.answer.stderr);
-  assert.doesNotMatch(this.answer.stderr, /already carries/);
+  assert.ok(!showsEntry(this.answer.stderr, "part-already-headed"), this.answer.stderr);
 });
 
 Then("beside the answer it notes that a feature file's header already carries {word}", function (this: SpecControllerWorld, part: string) {
-  assert.match(this.answer.stderr, new RegExp(`^note: a feature file's header already carries ${part}, so --new was not needed$`, "m"));
+  assert.ok(showsLine(this.answer.stderr, "part-already-headed", { part }), this.answer.stderr);
 });
 
 const WRONG_KIND: Record<string, (path: string) => void> = {

@@ -5,31 +5,45 @@ import {
   type UnknownPart,
   type UnknownPartCarried,
 } from "@3f-consulting/spec-controller-core";
-import { APP_MESSAGES, AppError, AppMessage } from "../messages.js";
+import { AppError, AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 import { refusal, type Refusal } from "../refusal.js";
 import type { HistoryBoundary } from "./readHistory.js";
 
 export function historyBoundaryLine(boundary: HistoryBoundary, allocation: Allocation): string | null {
-  if (boundary.kind === "complete") return null;
-  const unread =
-    boundary.kind === "shallow"
-      ? APP_MESSAGES[AppMessage.ShallowHistoryUnread](boundary.before)
-      : APP_MESSAGES[AppMessage.NoRepositoryHistoryRead]();
-  const risk =
-    allocation.highest === null
-      ? APP_MESSAGES[AppMessage.RiskOfPartCode](featureCodeOf(allocation.code) ?? "")
-      : APP_MESSAGES[AppMessage.RiskAboveCode](allocation.highest.code);
-  return APP_MESSAGES[AppMessage.HistoryBoundary](unread, risk);
+  switch (boundary.kind) {
+    case "complete":
+      return null;
+    case "shallow":
+      return shallowHistoryLine(boundary.before, allocation);
+    case "not-a-repository":
+      return noRepositoryLine(allocation);
+  }
+}
+
+function shallowHistoryLine(before: string, allocation: Allocation): string {
+  return allocation.highest === null
+    ? message(AppMessage.ShallowHistoryRisksPartCode, { before, part: partOf(allocation) })
+    : message(AppMessage.ShallowHistoryRisksCodeAbove, { before, code: allocation.highest.code });
+}
+
+function noRepositoryLine(allocation: Allocation): string {
+  return allocation.highest === null
+    ? message(AppMessage.NoRepositoryRisksPartCode, { part: partOf(allocation) })
+    : message(AppMessage.NoRepositoryRisksCodeAbove, { code: allocation.highest.code });
+}
+
+function partOf(allocation: Allocation): string {
+  return featureCodeOf(allocation.code) ?? "";
 }
 
 export function highestSeenLine(allocation: Allocation): string {
   const highest = allocation.highest;
-  if (highest === null) return APP_MESSAGES[AppMessage.HighestSeenNone]();
+  if (highest === null) return message(AppMessage.HighestSeenNone);
   const { path, line, commit } = highest.occurrence;
   return commit === undefined
-    ? APP_MESSAGES[AppMessage.HighestSeenInTree](highest.code, path, line)
-    : APP_MESSAGES[AppMessage.HighestSeenInCommit](highest.code, path, line, commit);
+    ? message(AppMessage.HighestSeenInTree, { code: highest.code, path, line })
+    : message(AppMessage.HighestSeenInCommit, { code: highest.code, path, line, commit });
 }
 
 type CarriedPartsWording = {
@@ -51,5 +65,5 @@ export function unknownPartRefusal(unknown: UnknownPart): Refusal {
 
 export function alreadyHeadedNote(allocation: Allocation): string | null {
   if (allocation.alreadyHeaded !== true) return null;
-  return APP_MESSAGES[AppMessage.PartAlreadyHeaded](featureCodeOf(allocation.code) ?? "");
+  return message(AppMessage.PartAlreadyHeaded, { part: partOf(allocation) });
 }
