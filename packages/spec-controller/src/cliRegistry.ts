@@ -150,7 +150,7 @@ export function renderCommandHelp(command: CommandSpec): string {
   );
   const configHelp = command.configHelp ?? [];
   return [
-    `spec-controller ${command.name} — ${command.summary}`,
+    message(AppMessage.HelpCommandTitle, { command: command.name, summary: command.summary }),
     ...positionalHelp(command.name, command.positionals ?? []),
     "",
     message(AppMessage.HelpOptions),
@@ -164,7 +164,7 @@ function positionalHelp(command: string, positionals: readonly PositionalSpec[])
   const width = Math.max(...positionals.map((positional) => positional.name.length));
   return [
     "",
-    `${message(AppMessage.HelpUsage)} spec-controller ${command} ${positionals.map((positional) => positional.name).join(" ")} [options]`,
+    `${message(AppMessage.HelpUsage)} ${message(AppMessage.HelpCommandUsageLine, { command, arguments: positionals.map((positional) => positional.name).join(" ") })}`,
     "",
     message(AppMessage.HelpArguments),
     ...positionals.map((positional) => `  ${positional.name.padEnd(width + 2)}${positional.description}`),

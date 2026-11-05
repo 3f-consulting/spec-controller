@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
-import { entryText, shownEntry } from "./support/catalogue.js";
+import { entryText, shownEntry, showsEntry } from "./support/catalogue.js";
 import { claimReconciliationCell } from "./support/claimReconciliationsTable.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
@@ -109,6 +109,12 @@ function uncitedOutcomeCount(world: SpecControllerWorld): number {
 
 // An entry's counts of its own tests, read from the part after its last dash.
 const groupCounts = (item: string) => shownEntry(item.split(" — ").at(-1) ?? "", "unnamed-claim-group-counts");
+
+// A count left a slot selects the entry's plural form, so the singular is asked for by its count.
+function ciStepsCount(item: string): string | undefined {
+  const steps = item.split(" — ").at(-1) ?? "";
+  return shownEntry(steps, "unnamed-claim-ci-steps-named")?.["count"] ?? (showsEntry(steps, "unnamed-claim-ci-steps-named", { count: "1" }) ? "1" : undefined);
+}
 
 function argsFor(target: Record<"features" | "vitest" | "packageJson" | "ci", string>): string[] {
   const root = process.cwd();
@@ -268,7 +274,7 @@ Then("the unnamed claim's row lists the CI steps together once, after the test's
 Then("the CI steps' entry names each of the two checks", function (this: SpecControllerWorld) {
   const entry = unnamedClaimItems(this)[stepsEntryIndex(this)];
   assert.ok(
-    entry?.endsWith(` — ${UNCITED_STEPS.length} CI steps: ${UNCITED_STEPS.join(", ")}`),
+    entry?.endsWith(` — ${entryText("unnamed-claim-ci-steps-named", { count: String(UNCITED_STEPS.length), list: UNCITED_STEPS.join(", ") })}`),
     `expected the CI steps' entry to name ${UNCITED_STEPS.join(" and ")}; got:\n${entry}`,
   );
 });
@@ -276,7 +282,7 @@ Then("the CI steps' entry names each of the two checks", function (this: SpecCon
 Then("what the unnamed claim's row counts adds up to the count of evidence observations that cite no scenario", function (this: SpecControllerWorld) {
   const uncited = uncitedOutcomeCount(this);
   const counted = unnamedClaimItems(this).reduce(
-    (sum, item) => sum + Number(groupCounts(item)?.["ran"] ?? / — (\d+) CI steps?:/.exec(item)?.[1] ?? Number.NaN),
+    (sum, item) => sum + Number(groupCounts(item)?.["ran"] ?? ciStepsCount(item) ?? Number.NaN),
     0,
   );
   assert.equal(counted, uncited, `the unnamed claim's row's counts must add up to ${uncited}; got:\n${unnamedClaimItems(this).join("\n")}`);

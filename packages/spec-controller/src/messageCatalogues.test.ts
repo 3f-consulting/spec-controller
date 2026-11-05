@@ -256,6 +256,8 @@ const SAMPLE_APP_VALUES: { readonly [C in keyof AppValues]: AppValues[C] } = {
   [AppMessage.HighestSeenInCommit]: { code: "SCN-ONE-005", path: "features/one.feature", line: 8, commit: "abc1234" },
   [AppMessage.PartAlreadyHeaded]: { part: "ONE" },
   [AppMessage.HelpUsageLine]: { modifierUsage: "[--store <dir>] [--run-id <id>]" },
+  [AppMessage.HelpCommandTitle]: { command: "allocate", summary: "Print the next @SCN code for a feature part." },
+  [AppMessage.HelpCommandUsageLine]: { command: "allocate", arguments: "<FFF>" },
   [AppError.FormatNamesStoredRunManifest]: { formatPath: "store/t/r1/run.yaml", manifestPath: "store/t/r1/run.yaml", runDir: "store/t/r1" },
   [AppError.StoredRunReadsItsManifest]: { manifestPath: "store/t/r1/run.yaml", inputPath: "store/t/r1/run.yaml", inputSubject: "the cucumber report" },
   [AppMessage.SeeFlags]: { scope: "spec-controller balance" },
@@ -372,7 +374,7 @@ describe("[SCN-MSG-002] every code has exactly one message", () => {
     expect(handlesWithoutEntry(handles, { kept: "Kept." })).toEqual(["Lost"]);
   });
 
-  it("names a code given two entries in an app data file, linted by the repository's own ESLint configuration", async () => {
+  it("names a code given two entries in the app's or core's data file, linted by the repository's own ESLint configuration", async () => {
     const root = fileURLToPath(new URL("../../..", import.meta.url));
     const eslint = new ESLint({ cwd: root });
     const text = '{\n  "unknown-flag": "One.",\n  "unknown-flag": "Two."\n}\n';
@@ -402,7 +404,7 @@ describe("[SCN-MSG-002] every code has exactly one message", () => {
 });
 
 describe("[SCN-MSG-003] every message belongs to a code", () => {
-  it("holds the app's data file to entries an app message or error code uses, naming any other", () => {
+  it("holds the app's data file to entries an app message or error code uses, and core's to entries a core message code uses, naming any other", () => {
     const codes = [...codesOf(AppMessage), ...codesOf(AppError)].filter((code) => typeof code === "string");
     expect(codes.length).toBeGreaterThan(0);
     expect(entriesWithoutCode(codes, APP_TEXTS)).toEqual([]);
@@ -417,7 +419,7 @@ describe("[SCN-MSG-004] no message is empty", () => {
     expect(blankEntries({ kept: "Kept.", empty: "", spaces: " \t\n" })).toEqual(["empty", "spaces"]);
   });
 
-  it("holds the app's data file to messages that are not blank", () => {
+  it("holds the app's and core's data files to messages that are not blank", () => {
     expect(blankEntries(APP_TEXTS)).toEqual([]);
     expect(blankEntries(CORE_TEXTS)).toEqual([]);
   });
@@ -438,7 +440,7 @@ describe("[SCN-MSG-005] a message uses only the values its code gives it", () =>
     ]);
   });
 
-  it("holds every message in the app's data file to the values its code's sample values give", () => {
+  it("holds every message in the app's and core's data files to the values its code's sample values give", () => {
     expect(placeholdersNotGiven(APP_TEXTS, SAMPLE_APP_VALUES as Readonly<Record<string, MessageValues>>)).toEqual([]);
     expect(placeholdersNotGiven(CORE_TEXTS, SAMPLE_CORE_VALUES as Readonly<Record<string, MessageValues>>)).toEqual([]);
   });
@@ -454,7 +456,7 @@ describe("[SCN-MSG-006] a message uses every value its code gives it", () => {
     ]);
   });
 
-  it("holds every message in the app's data file to use every value its code's sample values give", () => {
+  it("holds every message in the app's and core's data files to use every value its code's sample values give", () => {
     expect(valuesNotUsed(APP_TEXTS, SAMPLE_APP_VALUES as Readonly<Record<string, MessageValues>>)).toEqual([]);
     expect(valuesNotUsed(CORE_TEXTS, SAMPLE_CORE_VALUES as Readonly<Record<string, MessageValues>>)).toEqual([]);
   });
@@ -466,7 +468,7 @@ describe("[SCN-MSG-007] every message parses", () => {
     expect(unparseable(texts)).toEqual([{ message: "unclosed", error: "MALFORMED_ARGUMENT", offset: 16 }]);
   });
 
-  it("holds every message in the app's data file to parse", () => {
+  it("holds every message in the app's and core's data files to parse", () => {
     expect(unparseable(APP_TEXTS)).toEqual([]);
     expect(unparseable(CORE_TEXTS)).toEqual([]);
   });
@@ -489,7 +491,7 @@ describe("[SCN-MSG-008] every message prints its words as written", () => {
     expect(notAsWritten(texts)).toEqual(["beforePlaceholder", "swallowsText", "swallowsBrace", "inPlural", "hashOutside", "hashInside", "localeNumber"]);
   });
 
-  it("holds every message in the app's data file to print its words as written", () => {
+  it("holds every message in the app's and core's data files to print its words as written", () => {
     expect(notAsWritten(APP_TEXTS)).toEqual([]);
     expect(notAsWritten(CORE_TEXTS)).toEqual([]);
   });
@@ -507,7 +509,7 @@ describe("[SCN-MSG-009] no message chooses between words other than by a count's
     expect(choosingWords(texts)).toEqual(["selected", "exact", "selectedInPlural", "exactInPlural"]);
   });
 
-  it("holds every message in the app's data file to choose between words only by a count's plural forms", () => {
+  it("holds every message in the app's and core's data files to choose between words only by a count's plural forms", () => {
     expect(choosingWords(APP_TEXTS)).toEqual([]);
     expect(choosingWords(CORE_TEXTS)).toEqual([]);
   });

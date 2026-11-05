@@ -43,6 +43,8 @@ export enum AppMessage {
   HighestSeenInCommit = "highest-seen-in-commit",
   PartAlreadyHeaded = "part-already-headed",
   HelpUsageLine = "help-usage-line",
+  HelpCommandTitle = "help-command-title",
+  HelpCommandUsageLine = "help-command-usage-line",
   SeeCommandsAndModifiers = "see-commands-and-modifiers",
   SeeModifiers = "see-modifiers",
   SeeFlags = "see-flags",
@@ -167,6 +169,8 @@ export interface AppMessageValues {
   [AppMessage.HighestSeenInCommit]: { code: string; path: string; line: number; commit: string };
   [AppMessage.PartAlreadyHeaded]: { part: string };
   [AppMessage.HelpUsageLine]: { modifierUsage: string };
+  [AppMessage.HelpCommandTitle]: { command: string; summary: string };
+  [AppMessage.HelpCommandUsageLine]: { command: string; arguments: string };
   [AppMessage.SeeFlags]: { scope: string };
   [AppMessage.SeeFlagsAndValues]: { scope: string };
   [AppMessage.SeeArguments]: { scope: string };

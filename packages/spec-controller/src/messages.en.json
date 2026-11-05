@@ -141,5 +141,7 @@
   "highest-seen-in-tree": "highest seen: {code}, {path}:{line}",
   "highest-seen-in-commit": "highest seen: {code}, {path}:{line} in {commit}",
   "part-already-headed": "note: a feature file's header already carries {part}, so --new was not needed",
-  "help-usage-line": "spec-controller {modifierUsage} <command> [command-args]"
+  "help-usage-line": "spec-controller {modifierUsage} <command> [command-args]",
+  "help-command-title": "spec-controller {command} — {summary}",
+  "help-command-usage-line": "spec-controller {command} {arguments} [options]"
 }

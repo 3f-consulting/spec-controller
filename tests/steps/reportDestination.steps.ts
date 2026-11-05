@@ -388,8 +388,9 @@ Then("the run is refused as a usage error, never reported as a verdict", functio
 Then(/^the refusal names the destination and says (.+)$/, function (this: SpecControllerWorld, reason: string) {
   const code = REASON_CODE[reason];
   assert.ok(code, `no operating-system code is named for "${reason}"`);
-  assert.ok(this.run.stderr.includes(this.destination), `the refusal does not name ${this.destination}:\n${this.run.stderr}`);
-  assert.ok(this.run.stderr.includes(code), `the refusal does not give ${code}:\n${this.run.stderr}`);
+  const refusal = shownEntry(this.run.stderr, "report-not-written", { path: this.destination });
+  assert.ok(refusal, `the refusal does not name ${this.destination}:\n${this.run.stderr}`);
+  assert.ok(refusal["reason"]?.includes(code), `the refusal does not give ${code}:\n${this.run.stderr}`);
 });
 
 Then("the refusal carries no stack trace", function (this: SpecControllerWorld) {

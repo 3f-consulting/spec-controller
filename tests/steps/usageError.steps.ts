@@ -740,7 +740,7 @@ When("the author asks for the next code giving {}", function (this: SpecControll
 Then("it is refused as a usage error, never as an unknown part, and no code is given", function (this: SpecControllerWorld) {
   assert.equal(this.answer.status, 2, `expected the usage status, got ${this.answer.status}\n${this.answer.stderr}`);
   assert.equal(this.answer.stdout, "");
-  assert.ok(firstShown(this.answer.stderr, ["coded-usage-error", "usage-error"]) !== undefined, this.answer.stderr);
+  assert.ok(showsEntry(this.answer.stderr, "coded-usage-error"), this.answer.stderr);
   assert.equal(firstShown(this.answer.stderr, ["unknown-part-refused"]), undefined, this.answer.stderr);
 });
 
@@ -752,6 +752,10 @@ const HELP_REQUEST: Record<string, readonly string[]> = {
   "beside a flag the command does not take": ["--bogus", "--help"],
 };
 
+function opensWithAllocateHelpTitle(stdout: string): boolean {
+  return stdout.startsWith(`${entryText("help-command-title", { command: "allocate", summary: entryText("allocate-summary") })}\n`);
+}
+
 When("the author asks allocate for its help {}", function (this: SpecControllerWorld, request: string) {
   const args = HELP_REQUEST[request];
   assert.ok(args !== undefined, `no arguments for: ${request}`);
@@ -760,7 +764,7 @@ When("the author asks allocate for its help {}", function (this: SpecControllerW
 
 Then("it answers with allocate's help, naming the feature part it takes and the new-part option, and gives no code", function (this: SpecControllerWorld) {
   assert.equal(this.answer.status, 0, `expected success, got ${this.answer.status}\n${this.answer.stderr}`);
-  assert.match(this.answer.stdout, /^spec-controller allocate — /);
+  assert.ok(opensWithAllocateHelpTitle(this.answer.stdout), this.answer.stdout);
   assert.match(this.answer.stdout, /<FFF>/);
   assert.match(this.answer.stdout, /--new/);
   assert.doesNotMatch(this.answer.stdout, /^SCN-/m);
@@ -823,7 +827,7 @@ When("the author gives {} before allocate and asks it for its help {}", function
 
 Then("it answers with allocate's help, exactly as it does with nothing before it, and gives no code", function (this: SpecControllerWorld) {
   assert.equal(this.answerAlone.status, 0, `allocate alone did not answer its help\n${this.answerAlone.stderr}`);
-  assert.match(this.answerAlone.stdout, /^spec-controller allocate — /);
+  assert.ok(opensWithAllocateHelpTitle(this.answerAlone.stdout), this.answerAlone.stdout);
   assert.equal(this.answer.status, 0, `expected success, got ${this.answer.status}\n${this.answer.stderr}`);
   assert.equal(this.answer.stderr, "");
   assert.equal(this.answer.stdout, this.answerAlone.stdout);

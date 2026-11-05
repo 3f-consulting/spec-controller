@@ -2,9 +2,10 @@ import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, symlinkSync, writeFileSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 import { parse } from "yaml";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
+import { shownEntry, showsEntry } from "./support/catalogue.js";
 import { entriesUnder } from "./support/entriesUnder.js";
 import { assertTargetOutOfBalance, BALANCED_ARGS, TARGET, TARGET_ARGS } from "./support/outOfBalanceTarget.js";
 import { REASON_CODE } from "./support/refusalReason.js";
@@ -115,7 +116,7 @@ When("the operator stores a balance run under that run-id with a flag balance do
 
 Then("the stored run is refused as a usage error, never reported as a verdict", function (this: SpecControllerWorld) {
   assert.equal(this.run.status, USAGE, `expected the usage code; got ${this.run.status}\n${this.run.stderr}`);
-  assert.match(this.run.stderr, /--bogus/, `the refusal does not name the flag:\n${this.run.stderr}`);
+  assert.ok(showsEntry(this.run.stderr, "unknown-flag", { flag: "--bogus" }), `the refusal does not name the flag:\n${this.run.stderr}`);
 });
 
 Then("the stored run announces no run directory", function (this: SpecControllerWorld) {
@@ -172,6 +173,23 @@ const INPUT: Readonly<Record<string, { readonly flag: string; readonly content: 
   "workflow file": { flag: "--ci", content: () => WORKFLOW },
 };
 
+// The refusal an input or a --format output gets for landing on a file the stored run writes, by that file's name.
+const INPUT_REFUSAL: Readonly<Record<string, string>> = {
+  "spec-reconciliation.md": "output-overwrites-input",
+  "spec-reconciliation.json": "output-overwrites-input",
+  "run.yaml": "stored-run-reads-its-manifest",
+};
+
+const OUTPUT_REFUSAL: Readonly<Record<string, string>> = {
+  "spec-reconciliation.md": "outputs-share-file",
+  "spec-reconciliation.json": "outputs-share-file",
+  "run.yaml": "format-names-stored-run-manifest",
+};
+
+function refusalNames(stderr: string, code: string, path: string): boolean {
+  return Object.values(shownEntry(stderr, code) ?? {}).some((value) => value.includes(path));
+}
+
 function specControllerInTarget(world: SpecControllerWorld, argv: readonly string[]): CommandRun {
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: world.storedRunTargetDir, encoding: "utf8" });
   assert.equal(result.error, undefined, `the CLI failed to spawn: ${result.error?.message}`);
@@ -226,7 +244,9 @@ When("the operator stores a run of it reading that input", function (this: SpecC
 
 Then("the stored run is refused as a usage error, naming that file", function (this: SpecControllerWorld) {
   assert.equal(this.run.status, USAGE, `expected the usage code; got ${this.run.status}\n${this.run.stderr}`);
-  assert.ok(this.run.stderr.includes(this.namedInput), `the refusal does not name ${this.namedInput}:\n${this.run.stderr}`);
+  const code = INPUT_REFUSAL[basename(this.namedInput)];
+  assert.ok(code, `no refusal is named for an input at ${this.namedInput}`);
+  assert.ok(refusalNames(this.run.stderr, code, this.namedInput), `the refusal does not name ${this.namedInput}:\n${this.run.stderr}`);
 });
 
 Then("its refusal is a single line with no stack trace", function (this: SpecControllerWorld) {
@@ -290,8 +310,9 @@ Then(/^the refusal names the run directory and says (.+)$/, function (this: Spec
   const code = REASON_CODE[reason];
   assert.ok(code, `no operating-system code is named for "${reason}"`);
   const runDir = join(this.storeRoot, TARGET, RUN_ID);
-  assert.ok(this.run.stderr.includes(runDir), `the refusal does not name ${runDir}:\n${this.run.stderr}`);
-  assert.ok(this.run.stderr.includes(code), `the refusal does not give ${code}:\n${this.run.stderr}`);
+  const refusal = shownEntry(this.run.stderr, "stored-run-directory-not-created", { path: runDir });
+  assert.ok(refusal, `the refusal does not name ${runDir}:\n${this.run.stderr}`);
+  assert.ok(refusal["reason"]?.includes(code), `the refusal does not give ${code}:\n${this.run.stderr}`);
 });
 
 Then("no run directory is announced", function (this: SpecControllerWorld) {
@@ -313,8 +334,9 @@ Then(new RegExp(`^the refusal names (${STORED_RUN_FILE_INTENT}) in the run direc
   const code = REASON_CODE[reason];
   assert.ok(code, `no operating-system code is named for "${reason}"`);
   const path = join(this.storeRoot, TARGET, RUN_ID, storedRunFile(file));
-  assert.ok(this.run.stderr.includes(path), `the refusal does not name ${path}:\n${this.run.stderr}`);
-  assert.ok(this.run.stderr.includes(code), `the refusal does not give ${code}:\n${this.run.stderr}`);
+  const refusal = shownEntry(this.run.stderr, "report-not-written", { path });
+  assert.ok(refusal, `the refusal does not name ${path}:\n${this.run.stderr}`);
+  assert.ok(refusal["reason"]?.includes(code), `the refusal does not give ${code}:\n${this.run.stderr}`);
 });
 
 function filesByPathUnder(root: string): Map<string, string> {
@@ -346,7 +368,9 @@ When(new RegExp(`^the operator stores a run of it and also asks for the (markdow
 
 Then(new RegExp(`^the refusal names (${STORED_RUN_FILE_INTENT}) in the run directory$`), function (this: SpecControllerWorld, file: string) {
   const path = join(this.storeRoot, TARGET, RUN_ID, storedRunFile(file));
-  assert.ok(this.run.stderr.includes(path), `the refusal does not name ${path}:\n${this.run.stderr}`);
+  const code = OUTPUT_REFUSAL[storedRunFile(file)];
+  assert.ok(code, `no refusal is named for an output at ${path}`);
+  assert.ok(refusalNames(this.run.stderr, code, path), `the refusal does not name ${path}:\n${this.run.stderr}`);
 });
 
 Then("no file under the run store was added, changed or removed", function (this: SpecControllerWorld) {
@@ -382,7 +406,7 @@ When(
 
 Then(new RegExp(`^the refusal names (${STORED_RUN_FILE_INTENT}) in the earlier run's directory$`), function (this: SpecControllerWorld, file: string) {
   const path = inEarlierRun(this, file);
-  assert.ok(this.run.stderr.includes(path), `the refusal does not name ${path}:\n${this.run.stderr}`);
+  assert.ok(showsEntry(this.run.stderr, "output-overwrites-stored-run", { path }), `the refusal does not name ${path}:\n${this.run.stderr}`);
 });
 
 Given(new RegExp(`^a link to (${STORED_RUN_FILE_INTENT}) in the earlier run's directory$`), function (this: SpecControllerWorld, file: string) {
@@ -393,6 +417,7 @@ Given(new RegExp(`^a link to (${STORED_RUN_FILE_INTENT}) in the earlier run's di
 
 Then("the refusal names the link and the earlier run's directory", function (this: SpecControllerWorld) {
   const earlierRunDir = realpathSync(join(this.storeRoot, EARLIER_TARGET, EARLIER_RUN_ID));
-  assert.ok(this.run.stderr.includes(this.earlierRunLink), `the refusal does not name ${this.earlierRunLink}:\n${this.run.stderr}`);
-  assert.ok(this.run.stderr.includes(earlierRunDir), `the refusal does not name ${earlierRunDir}:\n${this.run.stderr}`);
+  const refusal = shownEntry(this.run.stderr, "output-overwrites-stored-run", { path: this.earlierRunLink });
+  assert.ok(refusal, `the refusal does not name ${this.earlierRunLink}:\n${this.run.stderr}`);
+  assert.equal(refusal["runDir"], earlierRunDir, `the refusal does not name ${earlierRunDir}:\n${this.run.stderr}`);
 });
