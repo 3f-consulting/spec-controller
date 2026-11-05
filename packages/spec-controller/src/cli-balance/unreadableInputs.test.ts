@@ -655,6 +655,10 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
       `${CLAIM_RECONCILIATIONS_PATH}[0].qualityCheckReconciliations[0].evidenceObligation.qualityCheckKind is missing`,
       (s: Saved) => withClaimReconciliations(s, [{ qualityCheckReconciliations: [{ outcome: "no-scn-code", evidenceObligation: {} }] }]),
     ],
+    [
+      `${CLAIM_RECONCILIATIONS_PATH}[0].pendingItems[0].qualityCheckKind is missing`,
+      (s: Saved) => withClaimReconciliations(s, [{ pendingItems: [{}] }]),
+    ],
     ["errorsInTheInputs.scenarioCodeErrors is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { scenarioCodeErrors: "x" } })],
     ["errorsInTheInputs.configurationNotRead.keysNotRead is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { keysNotRead: "x" } } })],
     ["errorsInTheInputs.configurationNotRead.ofWrongKind is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { ofWrongKind: "x" } } })],

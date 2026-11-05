@@ -71,7 +71,7 @@ export function evidenceObligationsOf<T extends { readonly pending?: boolean }>(
 export function pendingItemsOf(scenario: Scenario): PendingItem[] {
   return scenario.evidenceObligations
     .filter((obligation) => obligation.pending)
-    .map((obligation) => ({ qualityCheckKind: obligation.qualityCheckKind }));
+    .map((obligation) => ({ qualityCheckKind: obligation.qualityCheckKind ?? null }));
 }
 
 export type EvidenceStatus = "passed" | "failed";
@@ -151,5 +151,5 @@ export function ranAsFitnessFunction(observation: EvidenceObservation): observat
 export type EvidenceObservation = BehaviouralEvidenceObservation | FitnessEvidenceObservation;
 
 export interface PendingItem {
-  readonly qualityCheckKind?: QualityCheckKind;
+  readonly qualityCheckKind: QualityCheckKind | null;
 }

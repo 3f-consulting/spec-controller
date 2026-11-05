@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+import type { Ledger } from "../domain/ledger.js";
+import type { PendingItem } from "../domain/journal.js";
 import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { outcomeDescription } from "./outcomeDescription.js";
 import type { EvidenceObservation } from "../model.js";
@@ -44,11 +46,18 @@ const OBSERVATIONS: EvidenceObservation[] = [
   { qualityCheckKind: "unit", scnId: "SCN-PIR-005", status: "passed", locator: "src/e.test.ts" },
 ];
 
-function render(): string {
-  const ledger = reconcile(parseScenarios(FEATURE, [DEFERRAL_TAG.slice(1)]), OBSERVATIONS);
+function render(rewrite: (ledger: Ledger) => Ledger = (ledger) => ledger): string {
+  const ledger = rewrite(reconcile(parseScenarios(FEATURE, [DEFERRAL_TAG.slice(1)]), OBSERVATIONS));
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
+
+const noKindAbsent = (ledger: Ledger): Ledger => ({
+  claimReconciliations: ledger.claimReconciliations.map((row) => ({
+    ...row,
+    pendingItems: row.pendingItems.map((item) => (item.qualityCheckKind === null ? ({} as PendingItem) : item)),
+  })),
+});
 
 const pendingFor = (qualityCheckKind: string): string => `pending: ${qualityCheckKind}`;
 const missing = (qualityCheckKind: string): string => `${qualityCheckKind}: ${outcomeDescription("missing")}`;
@@ -56,6 +65,10 @@ const missing = (qualityCheckKind: string): string => `${qualityCheckKind}: ${ou
 describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item", () => {
   it("a Pending Item with no kind of quality check carries the bare pending label, and its row still balances", () => {
     expect(rowFor(render(), "SCN-PIR-001")).toEqual({
+      verdict: "balanced",
+      items: "pending",
+    });
+    expect(rowFor(render(noKindAbsent), "SCN-PIR-001")).toEqual({
       verdict: "balanced",
       items: "pending",
     });

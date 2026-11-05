@@ -113,6 +113,7 @@ export const SAVED_RECONCILIATION: Shape = {
           qualityCheckReconciliations: {
             list: { fields: { evidenceObligation: { fields: { qualityCheckKind: "anything" }, required: ["qualityCheckKind"] } } },
           },
+          pendingItems: { list: { fields: { qualityCheckKind: "anything" }, required: ["qualityCheckKind"] } },
         },
       },
     },

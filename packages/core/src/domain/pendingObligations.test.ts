@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { obligationsRaisedBy } from "./scenarioObligations.js";
+import { reconcile } from "./evidenceReconciliation.js";
 
 describe("[SCN-PND-001] a <quality-check-kind>pending tag raises a pending obligation of its kind of quality check", () => {
   it.each([
@@ -89,5 +90,10 @@ describe("[SCN-PND-022] a deferred scenario naming no obligations synthesises on
 
   it("a bare wip scenario (no evidence tag) derives ONE scenario-scope pending obligation with no qualityCheckKind", () => {
     expect(obligationsRaisedBy(["wip"], DEFERRAL_TAGS)).toEqual([{ pending: true }]);
+  });
+
+  it("a bare wip scenario reconciled raises one Pending Item whose qualityCheckKind is null", () => {
+    const balance = reconcile([{ scnId: "SCN-PND-022", evidenceObligations: obligationsRaisedBy(["wip"], DEFERRAL_TAGS) }], []);
+    expect(balance.claimReconciliations.find((row) => row.claim === "SCN-PND-022")?.pendingItems).toEqual([{ qualityCheckKind: null }]);
   });
 });

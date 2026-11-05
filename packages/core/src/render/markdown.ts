@@ -85,9 +85,10 @@ function resultOf(o: EvidenceObservation): string {
 }
 
 function renderPendingItem(item: PendingItem): string {
-  return item.qualityCheckKind === undefined
+  const kind = item.qualityCheckKind;
+  return kind === undefined || kind === null
     ? coreMessage(CoreMessage.PendingItem)
-    : coreMessage(CoreMessage.PendingItemFor, { qualityCheckKind: item.qualityCheckKind });
+    : coreMessage(CoreMessage.PendingItemFor, { qualityCheckKind: kind });
 }
 
 function renderFileGroup(group: UnnamedClaimFileGroup): string {
