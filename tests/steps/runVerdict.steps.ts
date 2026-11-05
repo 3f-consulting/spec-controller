@@ -327,7 +327,7 @@ function assertListsMisfiled(report: string, scnId: string): void {
 }
 
 Then("the report lists the scenario code error", function (this: SpecControllerWorld) {
-  assert.match(this.balanceResult.stdout, /^#+ Scenario code errors$/m);
+  assert.ok(showsHeading(this.balanceResult.stdout, 3, "scenario-code-errors-heading"), `expected the heading over the misfiled codes; got:\n${this.balanceResult.stdout}`);
   assertListsMisfiled(this.balanceResult.stdout, "SCN-CEA-002");
 });
 
@@ -365,6 +365,6 @@ Given("a target whose collection-failed suite sits beside a misfiled scenario co
 });
 
 Then("the report still lists the scenario code error", function (this: SpecControllerWorld) {
-  assert.match(this.balanceResult.stdout, /^#+ Scenario code errors$/m);
+  assert.ok(showsHeading(this.balanceResult.stdout, 3, "scenario-code-errors-heading"), `expected the heading over the misfiled codes; got:\n${this.balanceResult.stdout}`);
   assertListsMisfiled(this.balanceResult.stdout, "SCN-UCA-002");
 });

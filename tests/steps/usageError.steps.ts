@@ -195,7 +195,7 @@ Then("the refusal names the flag as retired, with the version that retired it", 
 
 Then("the refusal names what replaced it", function (this: SpecControllerWorld) {
   assert.ok(
-    this.retiredFlagResult.stderr.includes("--ci-steps") && /outcome/i.test(this.retiredFlagResult.stderr),
+    showsEntry(this.retiredFlagResult.stderr, "measurements-replacement"),
     `expected stderr to name the step-outcome route through --ci-steps; got:\n${this.retiredFlagResult.stderr}`,
   );
 });
