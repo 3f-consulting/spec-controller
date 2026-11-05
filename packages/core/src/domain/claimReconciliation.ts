@@ -2,7 +2,7 @@ import type {
   PendingItem,
   QualityCheckKind,
 } from "./journal.js";
-import { QUALITY_CHECK_KINDS, evidenceObligationsOf, isFitnessObservation } from "./journal.js";
+import { QUALITY_CHECK_KINDS, isFitnessObservation } from "./journal.js";
 import type { ClaimKind } from "./claimKind.js";
 import type {
   Outcome,
@@ -136,7 +136,7 @@ export function carriesQualityCheckKind(row: ClaimReconciliation, qualityCheckKi
 }
 
 export function namesQualityCheckKind(row: ClaimReconciliation, qualityCheckKind: QualityCheckKind): boolean {
-  return evidenceObligationsOf(obligationsOf(row)).some((o) => o.qualityCheckKind === qualityCheckKind);
+  return obligationsOf(row).some((o) => o.qualityCheckKind === qualityCheckKind);
 }
 
 export function observationCountOf(row: ClaimReconciliation, qualityCheckKind: QualityCheckKind): number {

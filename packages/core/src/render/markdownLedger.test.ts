@@ -146,10 +146,10 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     }
   });
 
-  it("adds a Fitness column with a blank cell for the shared code's row whose scenario's fitness obligation is pending", () => {
+  it("letters the Fitness cell of a shared code's row that raises a fitness obligation, as the key reads any obligation", () => {
     const shared = reconcile(
       [
-        { scnId: "SCN-D", evidenceObligations: [{ qualityCheckKind: "fitness", pending: true }] },
+        { scnId: "SCN-D", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
         { scnId: "SCN-D", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [{ qualityCheckKind: "unit", scnId: "SCN-D", status: "passed" }]
@@ -157,7 +157,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     const table = claimReconciliationsTable(renderMarkdown(__er(shared, true), ctx, publishedExitCodeOf));
     expect(table.evidenceColumns).toEqual(["Fitness", "Unit"]);
     expect(evidenceRowsOf(table)).toEqual([
-      ["SCN-D", "", ""],
+      ["SCN-D", "F/-", ""],
       ["SCN-D", "", "U/-"],
       ["(unnamed claim)", "—", "—"],
     ]);

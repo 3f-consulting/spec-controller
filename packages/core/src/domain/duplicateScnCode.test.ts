@@ -4,6 +4,7 @@ import { isBalanced } from "./ledger.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { readTargetCorpus } from "../parse/targetCorpus.js";
 import type { Ledger, ClaimReconciliation } from "../model.js";
+import type { EvidenceObligation } from "./journal.js";
 
 function accountsFor(ledger: Ledger, scnId: string): ClaimReconciliation[] {
   return ledger.claimReconciliations.filter((r) => r.claim === scnId);
@@ -120,5 +121,29 @@ describe("[SCN-STG-015] scenarios sharing a code but naming disjoint kinds of qu
         account.qualityCheckReconciliations.map((q) => [q.qualityCheckKind, q.outcome])
       )
     ).toEqual([[["unit", "duplicate-scn-code"]], [["integration", "duplicate-scn-code"]]]);
+  });
+});
+
+describe("[SCN-STG-035] the Evidence Obligation a scenario sharing its @SCN raises is never deferred, whatever pending or deferral tag it carries", () => {
+  type Obligations = readonly EvidenceObligation[];
+  it.each<[string, Obligations, Obligations]>([
+    ["a pending tag beside a bare kind tag", [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }], [{ qualityCheckKind: "unit" }]],
+    ["a pending tag alone", [{ qualityCheckKind: "integration", pending: true }], [{ qualityCheckKind: "unit" }]],
+    ["several pending tags", [{ qualityCheckKind: "unit", pending: true }, { qualityCheckKind: "e2e", pending: true }], [{ qualityCheckKind: "unit" }]],
+    ["a pending tag on both sharers", [{ qualityCheckKind: "unit", pending: true }], [{ qualityCheckKind: "integration", pending: true }]],
+    ["a deferral tag beside kind tags", [{ qualityCheckKind: "unit", pending: true }, { qualityCheckKind: "integration", pending: true }], [{ qualityCheckKind: "unit" }]],
+  ])("with %s, every sharer's obligation names its kind of quality check and no claim carries a Pending Item", (_shape, first, second) => {
+    const ledger = reconcile(
+      [
+        { scnId: "SCN-PEN-001", evidenceObligations: first },
+        { scnId: "SCN-PEN-001", evidenceObligations: second },
+      ],
+      []
+    );
+    const accounts = accountsFor(ledger, "SCN-PEN-001");
+    expect(accounts.map((account) => account.qualityCheckReconciliations.map((q) => q.evidenceObligation))).toEqual(
+      [first, second].map((obligations) => obligations.map(({ qualityCheckKind }) => ({ qualityCheckKind })))
+    );
+    expect(accounts.map((account) => account.pendingItems)).toEqual([[], []]);
   });
 });

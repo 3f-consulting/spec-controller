@@ -21,7 +21,6 @@ export type ReconciledEvidenceObservation = EvidenceObservation & { readonly out
 /** The evidence obligation a Quality Check Reconciliation holds: an obligation that states no kind of quality check holds null. */
 export interface ReconciledEvidenceObligation {
   readonly qualityCheckKind: QualityCheckKind | null;
-  readonly pending?: boolean;
 }
 
 interface QualityCheckReconciliationFields {
@@ -236,20 +235,18 @@ export function duplicateScnCodeReconciliationsOf(
   scenario?: ScenarioName
 ): QualityCheckReconciliation[] {
   const naming = scenario === undefined ? {} : { scenario };
-  const firstNaming = new Map<QualityCheckKind, EvidenceObligation>();
+  const kinds = new Set<QualityCheckKind>();
   for (const obligation of obligations) {
-    if (obligation.qualityCheckKind !== undefined && !firstNaming.has(obligation.qualityCheckKind)) {
-      firstNaming.set(obligation.qualityCheckKind, obligation);
-    }
+    if (obligation.qualityCheckKind !== undefined) kinds.add(obligation.qualityCheckKind);
   }
-  if (firstNaming.size === 0) {
+  if (kinds.size === 0) {
     return [makeQualityCheckReconciliation({ outcome: "duplicate-scn-code", evidenceObligation: { qualityCheckKind: null }, ...naming })];
   }
-  return [...firstNaming].map(([qualityCheckKind, evidenceObligation]) =>
+  return [...kinds].map((qualityCheckKind) =>
     makeQualityCheckReconciliation({
       qualityCheckKind,
       outcome: "duplicate-scn-code",
-      evidenceObligation: { ...evidenceObligation, qualityCheckKind },
+      evidenceObligation: { qualityCheckKind },
       ...naming,
     })
   );

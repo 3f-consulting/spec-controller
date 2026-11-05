@@ -65,6 +65,9 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     @unit @SCN-STG-015
     Scenario: scenarios sharing a code but naming disjoint kinds of quality check still never balance, on either claim
 
+    @unit @SCN-STG-035
+    Scenario: the Evidence Obligation a scenario sharing its @SCN raises is never deferred, whatever pending or deferral tag it carries
+
   Rule: an @SCN is read by one grammar in every role — a feature part of two to five characters, and a number of any width
 
     A scenario id is SCN-<FFF>-<NNN>, the feature part two to five
