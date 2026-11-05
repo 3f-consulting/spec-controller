@@ -23,8 +23,8 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   language, keyed by each code's stable value and written in the ICU message format, so a
   message names the values it prints as placeholders. There is one catalogue per package, because the import rules let core import
   nothing of the app and let the app reach core only through its published entry point, so no
-  single catalogue can serve both. Core's lives in `render`, keyed by the values the domain
-  reports. The app's lives beside the app package's own messages module, keyed by an app-wide
+  single catalogue can serve both. Core's lives in `render`, keyed by a code of its own. The
+  app's lives beside the app package's own messages module, keyed by an app-wide
   code, and every app scope extends it. Whichever catalogue a code belongs to, the same rule
   holds: every code has exactly one entry, nothing else does, and no entry renders blank.
 
