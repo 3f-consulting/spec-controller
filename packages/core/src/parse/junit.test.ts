@@ -176,6 +176,51 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
   });
 });
 
+describe("[SCN-PYT-010] parsePytestEvidenceObservations credits a claim only when a testcase's scn and clm properties name one code", () => {
+  it.each([
+    {
+      case: "clm alone",
+      property: [{ name: "clm", value: "CLM-ONE-001" }],
+      claimCode: "CLM-ONE-001",
+      severalCodes: undefined,
+    },
+    {
+      case: "clm and scn, two codes",
+      property: [
+        { name: "clm", value: "CLM-ONE-001" },
+        { name: "scn", value: "SCN-ONE-002" },
+      ],
+      claimCode: null,
+      severalCodes: ["CLM-ONE-001", "SCN-ONE-002"],
+    },
+    {
+      case: "two clm properties",
+      property: [
+        { name: "clm", value: "CLM-ONE-001" },
+        { name: "clm", value: "CLM-ONE-002" },
+      ],
+      claimCode: null,
+      severalCodes: ["CLM-ONE-001", "CLM-ONE-002"],
+    },
+  ])("$case: credits $claimCode", ({ property, claimCode, severalCodes }) => {
+    const report: JunitXmlReport = {
+      testsuites: {
+        testsuite: [{ testcase: [{ classname: "tests.test_widget", name: "test_the_widget_spins", properties: { property } }] }],
+      },
+    };
+
+    expect(parsePytestEvidenceObservations(report)).toEqual([
+      {
+        qualityCheckKind: "unit",
+        claimCode,
+        status: "passed",
+        locator: "tests.test_widget::test_the_widget_spins",
+        ...(severalCodes ? { notes: [{ kind: "several-claim-codes", codes: severalCodes }] } : {}),
+      },
+    ]);
+  });
+});
+
 describe("[SCN-PYT-007] parsePytestEvidenceObservations posts a collection failure as broken evidence citing no scenario", () => {
   const report: JunitXmlReport = {
     testsuites: {

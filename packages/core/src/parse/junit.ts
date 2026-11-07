@@ -26,7 +26,7 @@ interface JunitTestcase {
   readonly skipped?: unknown;
 }
 
-const SCN_PROPERTY = "scn";
+const SCN_PROPERTY: ReadonlySet<string | undefined> = new Set(["scn", "clm"]);
 const GO_BUILD_FAILURE_TESTCASE = "TestMain";
 const GO_BUILD_FAILURE_MARK = "[build failed]";
 
@@ -93,7 +93,7 @@ function nameCitationsOf(name: string): string[] {
 
 function scnPropertyValues(testcase: JunitTestcase): string[] {
   return (testcase.properties?.property ?? [])
-    .filter((property) => property.name === SCN_PROPERTY)
+    .filter((property) => SCN_PROPERTY.has(property.name))
     .map((property) => property.value ?? "");
 }
 

@@ -33,6 +33,11 @@ Feature: A pytest suite's results answer unit evidence obligations
     @unit @SCN-PYT-006
     Scenario: a pytest test whose testcase carries two scn properties credits neither scenario, and the unnamed claim's row names both codes
 
+  Rule: a pytest test cites its claim code by a clm property, as it does by scn
+
+    @unit @SCN-PYT-010
+    Scenario Outline: a pytest test credits a claim only when its properties name one code
+
   Rule: a pytest run whose proof never ran is broken evidence, never missing or failing
 
     @unit @SCN-PYT-007
