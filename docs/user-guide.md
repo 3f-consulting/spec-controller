@@ -161,7 +161,7 @@ Each piece of evidence names the scenario it answers, **in the one form its runn
 | `@unit` | a JUnit 5 test in Java | `[SCN-…]` in square brackets in the test's `@DisplayName`, carried into the report by Surefire's phrased reporter (see [Citing a scenario from Java](#citing-a-scenario-from-java)) |
 | `@unit` | a JUnit 5 test in Kotlin | `[SCN-…]` in square brackets in the test's `@DisplayName`, which Gradle writes into the report (see [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin)) |
 | `@unit` | an RSpec example | `[SCN-…]` in square brackets in the example's description, given to `it`, or in an enclosing `describe` or `context` description (see [Citing a scenario from RSpec](#citing-a-scenario-from-rspec)) |
-| `@unit` | a pytest test | exactly one `scn` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.scn("SCN-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
+| `@unit` | a pytest test | one claim code in a `clm` or `scn` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.clm("CLM-…")` or `@pytest.mark.scn("SCN-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
 | `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag, and a row of an Outline with a `clm` column is credited by Cucumber's result for that row |
 | `@fitness` | a CI step | the step's `id:` is the code (see [Fitness functions](#fitness-functions)) |
 
@@ -234,17 +234,19 @@ def test_offers_the_next_code():
 <testcase classname="test_cases" name="test_offers_the_next_code" time="0.001"><properties><property name="scn" value="SCN-<FFF>-<NNN>" /></properties></testcase>
 ```
 
+**A `clm` property is read as a `scn` property is.** To cite a code written under `CLM`, use `clm` wherever the steps above say `scn`: `item.iter_markers("clm")` and `("clm", code)` in the hook, `clm(code)` in `pytest.ini`, and `@pytest.mark.clm("CLM-<FFF>-<NNN>")` on the test. `pytest --junitxml` then writes `<property name="clm" value="CLM-<FFF>-<NNN>" />`.
+
 **No hook?** Calling `record_property("scn", "SCN-<FFF>-<NNN>")` inside the test writes the same element. Under pytest's default `junit_family`, though, each such test raises a `PytestWarning`, so a suite run with `filterwarnings = error` fails them.
 
 **What a pytest report posts:**
 
 | The test | What it posts |
 |---|---|
-| exactly one `scn` property | answers that scenario: passing, or failing when it carries a `<failure>` |
+| `clm` or `scn` properties naming exactly one claim code | answers that scenario: passing, or failing when it carries a `<failure>` |
 | skipped | nothing, as a skipped Vitest test posts nothing |
 | a code no feature file carries | makes a phantom claim |
-| no `scn` property, or a value that is not a claim code | lands on the unnamed claim |
-| two or more `scn` properties | **credits none of them**; the unnamed claim's row names every code, because one test proves exactly one scenario |
+| no `clm` or `scn` property, or a value that is not a claim code | lands on the unnamed claim |
+| `clm` or `scn` properties naming two or more different codes | **credits none of them**; the unnamed claim's row names every code, because one test proves exactly one scenario |
 | a module that fails to collect, or a test whose setup or teardown errors | never ran its proof: it posts a broken item, the run is unsound (exit `4`), and the scenario it cites reads `missing` |
 
 ### Citing a scenario from Jest

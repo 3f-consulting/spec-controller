@@ -6,8 +6,9 @@ Feature: A pytest suite's results answer unit evidence obligations
   scenario in the team's feature files is reconciled against the pytest test that cites it,
   exactly as a Vitest suite's is.
 
-  A pytest test cites its scenario by a `scn` property on its testcase: a `@pytest.mark.scn`
-  marker that a `conftest.py` hook copies into the test's properties, or `record_property`.
+  A pytest test cites its scenario by a `clm` or `scn` property on its testcase: a
+  `@pytest.mark.clm` or `@pytest.mark.scn` marker that a `conftest.py` hook copies into the
+  test's properties, or `record_property`.
 
   Rule: a pytest test answers the scenario its testcase cites by exactly one scn property
 

@@ -201,7 +201,7 @@ Coverage and mutation testing tell you how much of the application the unit test
   - a JUnit 5 test in Java or Kotlin, in its `@DisplayName`;
   - an RSpec example, in its description.
 
-  A pytest test cites it with `@pytest.mark.scn` instead.
+  A pytest test cites it with `@pytest.mark.clm` or `@pytest.mark.scn` instead.
 
 ## Try it
 
