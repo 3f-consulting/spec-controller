@@ -174,7 +174,7 @@ There is one form per runner, and nothing else. The `scenario`'s tag line (`@SCN
 
 | Term | Meaning |
 |---|---|
-| feature part | The `<FFF>` in `@SCN-<FFF>-<NNN>`: two to five uppercase letters or digits. |
+| feature part | The `<FFF>` in `@SCN-<FFF>-<NNN>` or `@CLM-<FFF>-<NNN>`: two to five uppercase letters or digits. |
 | header code | A feature file's own code tag, the feature part its scenarios' codes are filed under. |
 | account class | A feature file, as the class its scenarios' codes are filed under. |
 | by-feature cut | The report's grouping by feature part, which a misfiled code falsifies. |

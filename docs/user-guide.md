@@ -137,7 +137,7 @@ A test cites a scenario that asks for no evidence of its kind. Move the test's c
 
 ## How your evidence finds its scenario
 
-A scenario's tag line says what it needs proved. `@SCN-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-<FFF>-<NNN>`. A tag naming a kind of quality check says which kind of run answers the obligation. Whether that run really is end-to-end is the test's job.
+A scenario's tag line says what it needs proved. `@SCN-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-<FFF>-<NNN>`. A code may be written under `CLM` as well as `SCN`, and the two forms with one feature part and number are different codes: a scenario tagged under `CLM` is answered only by evidence citing its code under `CLM`. A tag naming a kind of quality check says which kind of run answers the obligation. Whether that run really is end-to-end is the test's job.
 
 A feature file has a header code on the line above `Feature:`, then its Rules and scenarios. Each scenario carries its own code:
 

@@ -4,7 +4,7 @@
 
 `balance` fails your build when your scenarios and your tests stop agreeing.
 
-You write each behaviour as a scenario in a `.feature` file. You give the scenario two kinds of tag: the evidence it needs, such as `@unit` or `@e2e`, and a scenario code of the form `@SCN-<FFF>-<NNN>`. Each test cites the code of the scenario it proves.
+You write each behaviour as a scenario in a `.feature` file. You give the scenario two kinds of tag: the evidence it needs, such as `@unit` or `@e2e`, and a scenario code of the form `@SCN-<FFF>-<NNN>` or `@CLM-<FFF>-<NNN>`. Each test cites the code of the scenario it proves.
 
 On every CI run, `balance` reconciles the scenarios against the test reports and CI steps that actually ran. Every check a scenario asks for must have run, be credited to that scenario, pass, and be able to fail. Any disagreement turns the build red.
 
