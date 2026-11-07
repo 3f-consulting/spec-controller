@@ -57,7 +57,7 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
   });
 });
 
-describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count together on one row named by that file", () => {
+describe("[SCN-RPT-031] a feature file's scenarios carrying no claim code count together on one row named by that file", () => {
   function byFeatureRows(md: string): string[][] {
     const section = md.slice(md.indexOf(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading))));
     const end = section.indexOf("\n#", 1);

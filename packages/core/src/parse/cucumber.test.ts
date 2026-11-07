@@ -208,7 +208,7 @@ describe("[SCN-RPT-037] parseCucumberEvidenceObservations names each scenario's 
   });
 });
 
-describe("[SCN-CUC-001] a Cucumber scenario tagged with two scenario codes credits neither, and the unnamed claim's row names both codes", () => {
+describe("[SCN-CUC-001] a Cucumber scenario tagged with two claim codes credits neither, and the unnamed claim's row names both codes", () => {
   const severalNote = { kind: "several-claim-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] };
   const reportOf = (tagNames: readonly string[], status: string): CucumberJsonReport => [
     {

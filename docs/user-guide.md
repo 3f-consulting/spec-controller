@@ -814,19 +814,19 @@ The JSON names each outcome by its handle, and the Markdown prints the outcome's
 
 The outcome to watch for is the **watermelon**: a fitness function that is green, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run. That makes a green CI lie. A watermelon is what the workflow file shows on its own. Given the run's step record (`--ci-steps`), the step's own outcome answers the row instead, and a swallowed red reads `failing`.
 
-### What counts as an `@SCN` code
+### What counts as a claim code
 
 A claim code has the form `SCN-<FFF>-<NNN>` or `CLM-<FFF>-<NNN>`: a prefix, a feature part of two to five uppercase letters or digits, then a number of any width. The two prefixes give two different codes. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[SCN-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
 
-So an id such as `@SCN-TOOLONGCODE-001` is not an `@SCN` code. It opens no account and cites nothing. A scenario tagged only with it has no claim code, and reconciles as `no-claim-code`.
+So an id such as `@SCN-TOOLONGCODE-001` is not a claim code. It opens no account and cites nothing. A scenario tagged only with it has no claim code, and reconciles as `no-claim-code`.
 
 The tool judges claim code errors only over the corpus that `--features` names.
 
 **An Outline can make each of its rows a claim of its own.** Give its Examples table a column named `clm`, and put each row's claim code in it. Each row is then a claim under its own code, raising the Evidence Obligations its Outline's tags name, and evidence cites the row's code as it would a scenario's. Such an Outline carries no code of its own. A row whose `clm` cell is empty, or not a claim code, has no claim code, and two rows with one code are duplicates, as two scenarios would be. An Outline with no `clm` column is one claim, under the code its tags carry. When Cucumber runs an Outline with a `clm` column, each row is credited by Cucumber's own result for that row, so a passing row and a failing row reconcile apart. `balance` finds the row from the line and the feature file the Cucumber report names, whichever folder Cucumber ran from.
 
-### Duplicate `@SCN` codes
+### Duplicate claim codes
 
-**An `@SCN` code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry can arise from the same id written twice, or from an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
+**A claim code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry can arise from the same id written twice, or from an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
 
 - Each scenario reconciles as a Claim Reconciliation of its own, under the code, and every Quality Check Reconciliation on it reads `duplicate-claim-code`: *Evidence Obligation's claim code is carried by another Scenario*. Each row's reconciling item names the scenario it reconciles (*this one is login.feature : a user with the right password is let in*), and the JSON carries it as `scenario: { feature, title }`.
 - No evidence citing that code can be attributed to either scenario, so both claims are out of balance whatever the evidence says. An evidence observation citing the code credits neither and posts to the unnamed claim, naming the code.
@@ -834,7 +834,7 @@ The tool judges claim code errors only over the corpus that `--features` names.
 - The report names each shared code with the file and the name of every scenario carrying it (`summary.claimCodes.sharedClaimCodes` in the JSON).
 - The run exits `1`, the out-of-balance verdict, and the report is printed.
 
-### Scenario code errors
+### Claim code errors
 
 **A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a claim code error.** Every `balance` run judges the corpus it read. When the corpus holds an error, the run lists it under `### Claim code errors` (`errorsInTheInputs.claimCodeErrors` in the JSON), in `## Errors in the inputs` right after the run provenance. Its entry opens with its code, as in `` - `foreign-claim-code` — … ``. There are four errors:
 
@@ -870,7 +870,7 @@ An error after the run reaches its verdict does not change the exit code. One li
 
 ### Error codes
 
-**A refusal of a flag, a command, an argument or an input carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong, and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one. Each error below but the two unexpected errors refuses the command as given, a usage error, and the run exits `2`. An unexpected error's line carries its code too, as in `spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: …`. An error in the inputs is not a refusal: its entry in the report opens with its code, listed under [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped) and [Scenario code errors](#scenario-code-errors).
+**A refusal of a flag, a command, an argument or an input carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong, and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one. Each error below but the two unexpected errors refuses the command as given, a usage error, and the run exits `2`. An unexpected error's line carries its code too, as in `spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: …`. An error in the inputs is not a refusal: its entry in the report opens with its code, listed under [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped) and [Claim code errors](#claim-code-errors).
 
 | Code | Meaning |
 |---|---|
@@ -1093,7 +1093,7 @@ The code is written under `CLM`, one past the highest number the repository has 
 
 **A step I know is my test suite is reported as a check.** Runner recognition did not reach it. It recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. These are not reached: a suite run through a `uses:` action, one started by a launcher not on the list (`tox`, `nox`), one run as a project script (`hatch run test`), one with an option between a launcher and the runner (`uv run --frozen pytest`), one passed as an argument to a wrapper, or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
 
-**The verdict reads CLAIM CODE ERRORS.** The corpus files a claim code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one claim code. `### Claim code errors` names each by its handle and file, and says which fix it wants. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes has no account raised for it under any of them, and the verdict says so. The run exits `1` until the codes are filed correctly. See [Scenario code errors](#scenario-code-errors).
+**The verdict reads CLAIM CODE ERRORS.** The corpus files a claim code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one claim code. `### Claim code errors` names each by its handle and file, and says which fix it wants. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes has no account raised for it under any of them, and the verdict says so. The run exits `1` until the codes are filed correctly. See [Claim code errors](#claim-code-errors).
 
 **A row reads `duplicate-claim-code`.** Two scenarios carry that claim code, and each has a row of its own whose reconciling item names it by its file and title. Give one of them a code of its own. An `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. While two scenarios share it, the run exits `1`.
 

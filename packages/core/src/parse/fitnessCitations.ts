@@ -1,5 +1,5 @@
 import { bareTerm } from "../lib/bareTerm.js";
-import { SCN_CODE } from "../domain/featureCode.js";
+import { CLAIM_CODE } from "../domain/featureCode.js";
 
 export interface ScriptCitation {
   readonly claimCode: string;
@@ -8,5 +8,5 @@ export interface ScriptCitation {
 export function citationOfCitedRow(citedClaimCode: string | undefined): ScriptCitation | null {
   if (citedClaimCode === undefined) return null;
   const claimCode = bareTerm(citedClaimCode);
-  return SCN_CODE.test(claimCode) ? { claimCode } : null;
+  return CLAIM_CODE.test(claimCode) ? { claimCode } : null;
 }

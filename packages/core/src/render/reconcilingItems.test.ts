@@ -49,7 +49,7 @@ describe("[SCN-RPT-004] the markdown report renders the reconciliation totals as
       });
     });
 
-    it("a scenario with no @SCN code renders the no-claim-code sentence alone, under its feature and title", () => {
+    it("a scenario with no claim code renders the no-claim-code sentence alone, under its feature and title", () => {
       const untagged = "features/checkout.feature : a scenario with no code";
       const md = render([], [], [untagged]);
       expect(rowFor(md, untagged)).toEqual({
@@ -244,7 +244,7 @@ describe("[SCN-RPT-084] every reconciling item quotes what the run reported whol
   });
 
   it.each([
-    ["several scenario codes", { kind: "several-claim-codes", codes: ["SCN-A", "SCN-B"] }, { kind: "several-claim-codes", codes: ["SCN-A", "SCN-B"] }],
+    ["several claim codes", { kind: "several-claim-codes", codes: ["SCN-A", "SCN-B"] }, { kind: "several-claim-codes", codes: ["SCN-A", "SCN-B"] }],
     ["an ambiguous step whose name holds a line break", { kind: "ambiguous-step", step: "run\n  lint" }, { kind: "ambiguous-step", step: "run lint" }],
   ] as const)("a broken item's message holding no separator, with a note on %s, reads as written and leaves the note's words outside any code span", (_title, note, shown) => {
     const md = render([], [{ qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, locator: "src/a.test.ts", message: "gone", notes: [note] }]);

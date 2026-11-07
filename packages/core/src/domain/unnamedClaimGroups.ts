@@ -10,7 +10,7 @@ interface UnnamedClaimRemark {
 export interface UnnamedClaimFileGroup {
   readonly qualityCheckKind: Layer;
   readonly locator: string | undefined;
-  readonly sharedScnCode?: string;
+  readonly sharedClaimCode?: string;
   readonly remarks: readonly UnnamedClaimRemark[];
   readonly ran: number;
   readonly passed: number;
@@ -20,7 +20,7 @@ export interface UnnamedClaimFileGroup {
 
 interface UnnamedClaimStepsGroup {
   readonly names: readonly string[];
-  readonly sharedScnCode?: string;
+  readonly sharedClaimCode?: string;
 }
 
 export type UnnamedClaimGroup = UnnamedClaimFileGroup | UnnamedClaimStepsGroup;
@@ -31,7 +31,7 @@ function citingNoScenario(lines: readonly ReconciliationLine[]): EvidenceObserva
     .flatMap((line) => line.evidenceObservation ?? []);
 }
 
-function sharedScnCodeOf(observation: EvidenceObservation): string | null {
+function sharedClaimCodeOf(observation: EvidenceObservation): string | null {
   const [code = null] = (observation.notes ?? []).flatMap((note) => (note.kind === "shared-claim-code" ? [note.code] : []));
   return code;
 }
@@ -45,13 +45,13 @@ function remarksOf(observations: readonly BehaviouralEvidenceObservation[]): Unn
   });
 }
 
-function groupOf(sharedScnCode: string | null, observations: readonly BehaviouralEvidenceObservation[]): UnnamedClaimFileGroup {
+function groupOf(sharedClaimCode: string | null, observations: readonly BehaviouralEvidenceObservation[]): UnnamedClaimFileGroup {
   const [first] = observations as [BehaviouralEvidenceObservation, ...BehaviouralEvidenceObservation[]];
   const passed = observations.filter((o) => o.status === "passed").length;
   return {
     qualityCheckKind: first.qualityCheckKind,
     locator: first.locator,
-    ...(sharedScnCode === null ? {} : { sharedScnCode }),
+    ...(sharedClaimCode === null ? {} : { sharedClaimCode }),
     remarks: remarksOf(observations),
     ran: observations.length,
     passed,
@@ -66,10 +66,10 @@ function stepsGroupsOf(observations: readonly EvidenceObservation[]): UnnamedCla
   const byCode = new Map<string | null, string[]>();
   for (const o of observations) {
     if (!isFitnessObservation(o)) continue;
-    const code = sharedScnCodeOf(o);
+    const code = sharedClaimCodeOf(o);
     byCode.set(code, [...(byCode.get(code) ?? []), o.step ?? o.fitnessFunction]);
   }
-  return [...byCode].map(([code, names]) => (code === null ? { names } : { names, sharedScnCode: code }));
+  return [...byCode].map(([code, names]) => (code === null ? { names } : { names, sharedClaimCode: code }));
 }
 
 export function unnamedClaimGroupsOf(lines: readonly ReconciliationLine[]): UnnamedClaimGroup[] {
@@ -77,7 +77,7 @@ export function unnamedClaimGroupsOf(lines: readonly ReconciliationLine[]): Unna
   const byFile = new Map<string, { code: string | null; members: BehaviouralEvidenceObservation[] }>();
   for (const o of observations) {
     if (isFitnessObservation(o)) continue;
-    const code = sharedScnCodeOf(o);
+    const code = sharedClaimCodeOf(o);
     const key = JSON.stringify([o.qualityCheckKind, o.locator ?? null, code]);
     byFile.set(key, { code, members: [...(byFile.get(key)?.members ?? []), o] });
   }

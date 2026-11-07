@@ -91,7 +91,7 @@ describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no
     ]);
   });
 
-  it("emits one unit observation citing no scenario for a scn property whose value is not a scenario code", () => {
+  it("emits one unit observation citing no scenario for a scn property whose value is not a claim code", () => {
     expect(
       parsePytestEvidenceObservations(reportOf({ property: [{ name: "scn", value: "FOO-005" }] }))
     ).toEqual([
@@ -99,7 +99,7 @@ describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no
     ]);
   });
 
-  it("emits one unit observation citing no scenario for a testcase whose only property of another name holds a scenario code", () => {
+  it("emits one unit observation citing no scenario for a testcase whose only property of another name holds a claim code", () => {
     expect(
       parsePytestEvidenceObservations(reportOf({ property: [{ name: "owner", value: "SCN-PYT-001" }] }))
     ).toEqual([
@@ -142,7 +142,7 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
     ]);
   });
 
-  it("words its note as every reader words it, in scenario codes rather than scn properties", () => {
+  it("words its note as every reader words it, in claim codes rather than scn properties", () => {
     const [observation] = parsePytestEvidenceObservations(report);
 
     expect(remarkWordsOf(observation ?? {})).toContain("2 claim codes cite SCN-FOO-004, SCN-FOO-005");

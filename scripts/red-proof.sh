@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: red-proof.sh <unit | integration | e2e> <scenario code, such as CLM-ABC-001 or SCN-ABC-001>" >&2
+  echo "usage: red-proof.sh <unit | integration | e2e> <claim code, such as CLM-ABC-001 or SCN-ABC-001>" >&2
   echo "       red-proof.sh judge <unit | integration | e2e> <the run's JSON report>" >&2
   exit 2
 }

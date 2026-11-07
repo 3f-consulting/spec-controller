@@ -1,7 +1,7 @@
 import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { Ledger } from "../model.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
-import { scenarioCodeErrorsAre, type ClaimCodeError } from "../domain/scnTags.js";
+import { claimCodeErrorsAre, type ClaimCodeError } from "../domain/scnTags.js";
 import type { RunVerdict } from "../domain/runVerdict.js";
 import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
@@ -9,9 +9,9 @@ import { markdownHeading } from "./heading.js";
 
 type VerdictLine = { readonly headline: string; readonly gloss: string };
 
-function scenarioCodeErrorsGloss(errors: readonly ClaimCodeError[], alsoOutOfBalance: string): string {
+function claimCodeErrorsGloss(errors: readonly ClaimCodeError[], alsoOutOfBalance: string): string {
   const values = { heading: markdownHeading(3, coreMessage(CoreMessage.ClaimCodeErrorsHeading)), alsoOutOfBalance };
-  switch (scenarioCodeErrorsAre(errors)) {
+  switch (claimCodeErrorsAre(errors)) {
     case "misfilings":
       return coreMessage(CoreMessage.ClaimCodeErrorsGloss, values);
     case "several-codes":
@@ -21,11 +21,11 @@ function scenarioCodeErrorsGloss(errors: readonly ClaimCodeError[], alsoOutOfBal
   }
 }
 
-function scenarioCodeErrorsVerdict(ledger: Ledger, errors: readonly ClaimCodeError[]): VerdictLine {
+function claimCodeErrorsVerdict(ledger: Ledger, errors: readonly ClaimCodeError[]): VerdictLine {
   const alsoOutOfBalance = isBalanced(ledger) ? "" : coreMessage(CoreMessage.AlsoOutOfBalance);
   return {
     headline: coreMessage(CoreMessage.ClaimCodeErrorsHeadline),
-    gloss: scenarioCodeErrorsGloss(errors, alsoOutOfBalance),
+    gloss: claimCodeErrorsGloss(errors, alsoOutOfBalance),
   };
 }
 
@@ -63,7 +63,7 @@ function verdictFor(verdict: RunVerdict, ledger: Ledger, corpusDir: string, code
     case "unsound":
       return UNSOUND;
     case "claim-code-errors":
-      return scenarioCodeErrorsVerdict(ledger, codeErrors);
+      return claimCodeErrorsVerdict(ledger, codeErrors);
     case "out-of-balance":
       return OUT_OF_BALANCE;
     case "pending":

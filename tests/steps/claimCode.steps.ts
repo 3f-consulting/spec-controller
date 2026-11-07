@@ -10,8 +10,8 @@ import { exitOn } from "./support/runExit.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { GrammarRow, GrammarRun, ClaimReconciliation, ReconciledRun, SpecControllerWorld } from "./support/world.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
-import { scenarioCodesOnReport } from "./support/reportScenarioCodes.js";
-import { publishedSchemaNamesScenarioCodeErrors, scenarioCodeErrorsOnReport } from "./support/reportErrorsInTheInputs.js";
+import { claimCodesOnReport } from "./support/reportClaimCodes.js";
+import { publishedSchemaNamesClaimCodeErrors, claimCodeErrorsOnReport } from "./support/reportErrorsInTheInputs.js";
 
 // A whole line of the output is the entry, worded with the values given and, for any it is not given,
 // the values the line shows.
@@ -525,9 +525,9 @@ When("balance reconciles that grammar target", function (this: SpecControllerWor
 });
 
 Then("the grammar target lists no scenario code error", function (this: SpecControllerWorld) {
-  assert.ok(publishedSchemaNamesScenarioCodeErrors(), "expected the published schema to name the place scenario code errors are read from; it does not");
-  const errors = scenarioCodeErrorsOnReport(this.grammarRun.report);
-  assert.deepEqual(errors ?? [], [], `expected no scenario code error; got ${JSON.stringify(errors)}`);
+  assert.ok(publishedSchemaNamesClaimCodeErrors(), "expected the published schema to name the place claim code errors are read from; it does not");
+  const errors = claimCodeErrorsOnReport(this.grammarRun.report);
+  assert.deepEqual(errors ?? [], [], `expected no claim code error; got ${JSON.stringify(errors)}`);
 });
 
 const OWN = "SCN-OWN-001";
@@ -610,9 +610,9 @@ Then("the one- and six-character step ids post no evidence observation at all", 
   assert.deepEqual(rows.sort(), [OWN, ...INSIDE].sort(), `expected only the target's own row and the two phantom claims; got ${JSON.stringify(rows)}`);
 });
 
-const INHERITED = "tests/fixtures/inherited-scenario-code";
+const INHERITED = "tests/fixtures/inherited-claim-code";
 
-const SCENARIO_CODE_INHERITED_FROM: Readonly<Record<string, string>> = {
+const CLAIM_CODE_INHERITED_FROM: Readonly<Record<string, string>> = {
   Feature: "SCN-INF-001",
   Rule: "SCN-INR-001",
 };
@@ -622,7 +622,7 @@ const THE_ONE_SCENARIO = "the one scenario beneath it";
 Given(
   "a target whose one scenario carries no scenario code of its own, inherits one from its {word}, and has passing evidence citing that code",
   function (this: SpecControllerWorld, from: string) {
-    assert.ok(SCENARIO_CODE_INHERITED_FROM[from], `no fixture inherits a scenario code from its ${from}`);
+    assert.ok(CLAIM_CODE_INHERITED_FROM[from], `no fixture inherits a claim code from its ${from}`);
     this.ancestor = from;
     const target = `${INHERITED}/${from.toLowerCase()}`;
     this.reconciledTarget = {
@@ -653,16 +653,16 @@ Then("the scenario is reconciled once, balanced, on its scenario code's row", fu
   const rows = claimReconciliationsOf<ClaimReconciliation>(reconciled(this).report).filter(({ kind }) => kind === "scenario");
   assert.deepEqual(
     rows.map(({ claim, verdict }) => ({ claim, verdict })),
-    [{ claim: SCENARIO_CODE_INHERITED_FROM[this.ancestor], verdict: "balanced" }],
+    [{ claim: CLAIM_CODE_INHERITED_FROM[this.ancestor], verdict: "balanced" }],
     "the scenario was not reconciled exactly once, balanced, on its inherited code's row",
   );
 });
 
 Then("no reconciliation names it as a scenario with no scenario code", function (this: SpecControllerWorld) {
   const { report } = reconciled(this);
-  assert.deepEqual(scenarioCodesOnReport(report).untaggedScenarios, [], "the scenario was also listed as carrying no scenario code");
+  assert.deepEqual(claimCodesOnReport(report).untaggedScenarios, [], "the scenario was also listed as carrying no claim code");
   const named = claimReconciliationsOf<ClaimReconciliation>(report).filter(({ claim }) => claim.endsWith(THE_ONE_SCENARIO));
-  assert.deepEqual(named, [], "a reconciliation row names the scenario by its title, as one with no scenario code");
+  assert.deepEqual(named, [], "a reconciliation row names the scenario by its title, as one with no claim code");
 });
 
 Then("the run balances", function (this: SpecControllerWorld) {

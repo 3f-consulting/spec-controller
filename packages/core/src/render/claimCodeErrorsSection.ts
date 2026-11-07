@@ -1,10 +1,10 @@
 import type { RenderInput } from "../domain/renderInput.js";
 import {
   foreignCodeCarriersOf,
-  scenarioCodeCleanlinessOf,
-  scenarioCodeErrorsAre,
+  claimCodeCleanlinessOf,
+  claimCodeErrorsAre,
   type ForeignClaimCodeError,
-  type ScenarioCodeCleanliness,
+  type ClaimCodeCleanliness,
   type ClaimCodeError,
 } from "../domain/scnTags.js";
 import { CoreError, CoreMessage } from "./messages.js";
@@ -19,8 +19,8 @@ const CODE_OF: Readonly<Record<ClaimCodeError["kind"], CoreError>> = {
   "several-claim-codes": CoreError.SeveralClaimCodes,
 };
 
-function scenarioCodeErrorsFraming(errors: readonly ClaimCodeError[], count: string): string {
-  switch (scenarioCodeErrorsAre(errors)) {
+function claimCodeErrorsFraming(errors: readonly ClaimCodeError[], count: string): string {
+  switch (claimCodeErrorsAre(errors)) {
     case "misfilings":
       return coreMessage(CoreMessage.ClaimCodeErrorsFraming, { count });
     case "several-codes":
@@ -30,7 +30,7 @@ function scenarioCodeErrorsFraming(errors: readonly ClaimCodeError[], count: str
   }
 }
 
-function cleanStatement(cleanliness: ScenarioCodeCleanliness): string {
+function cleanStatement(cleanliness: ClaimCodeCleanliness): string {
   switch (cleanliness.kind) {
     case "no-feature-file":
       return coreMessage(CoreMessage.NoFeatureFileJudged);
@@ -83,14 +83,14 @@ function foreignWorded(error: ForeignClaimCodeError): string {
   }
 }
 
-export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
+export const claimCodeErrorsSection = (report: RenderInput): string[] => {
   const errors = report.errorsInTheInputs?.claimCodeErrors;
   if (errors === undefined) return [];
   const count = coreMessage(CoreMessage.ClaimCodeErrorCount, { count: errors.length });
   return [
     markdownHeading(3, coreMessage(CoreMessage.ClaimCodeErrorsHeading)),
     "",
-    scenarioCodeErrorsFraming(errors, count),
+    claimCodeErrorsFraming(errors, count),
     "",
     ...errors.map((error) => errorEntry(CODE_OF[error.kind], worded(error))),
     "",
@@ -99,9 +99,9 @@ export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
   ];
 };
 
-export const scenarioCodesCleanStatement = (report: RenderInput): string[] => {
+export const claimCodesCleanStatement = (report: RenderInput): string[] => {
   if (report.errorsInTheInputs?.claimCodeErrors !== undefined) return [];
   const { featureFiles, featureCodes } = report.summary.claimCodes ?? {};
   if (typeof featureFiles !== "number" || typeof featureCodes !== "number") return [];
-  return [cleanStatement(scenarioCodeCleanlinessOf({ featureFiles, featureCodes })), ""];
+  return [cleanStatement(claimCodeCleanlinessOf({ featureFiles, featureCodes })), ""];
 };

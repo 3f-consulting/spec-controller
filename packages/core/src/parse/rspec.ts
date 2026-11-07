@@ -1,6 +1,6 @@
 import type { Layer, EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
-import { scnCitationsOf } from "../lib/scnCitation.js";
+import { claimCodeCitationsOf } from "../lib/claimCodeCitation.js";
 import { attributionOf } from "../domain/attribution.js";
 import { evidenceOfRunResult, fallbackLayerOf, type RunResult } from "../domain/journal.js";
 
@@ -59,8 +59,8 @@ function locatorOf(filePath: string, root?: string): string {
 }
 
 function citingCodesOf(example: { readonly description?: string; readonly full_description?: string }): string[] {
-  const ownCodes = scnCitationsOf(example.description ?? "");
-  return ownCodes.length > 0 ? ownCodes : scnCitationsOf(example.full_description ?? "");
+  const ownCodes = claimCodeCitationsOf(example.description ?? "");
+  return ownCodes.length > 0 ? ownCodes : claimCodeCitationsOf(example.full_description ?? "");
 }
 
 function runResultOf(status: string | undefined): RunResult {

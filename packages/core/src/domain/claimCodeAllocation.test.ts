@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { nextScnCode, unknownPartCarried, type Allocation, type AllocationRequest, type ScnOccurrence } from "./scnAllocation.js";
+import { nextClaimCode, unknownPartCarried, type Allocation, type AllocationRequest, type ClaimCodeOccurrence } from "./claimCodeAllocation.js";
 
-function next(request: AllocationRequest, occurrences: readonly ScnOccurrence[]): Allocation {
-  const answer = nextScnCode(request, occurrences);
+function next(request: AllocationRequest, occurrences: readonly ClaimCodeOccurrence[]): Allocation {
+  const answer = nextClaimCode(request, occurrences);
   if (answer.kind !== "allocated") throw new Error(`refused ${request.part} as an unknown part`);
   return answer;
 }
 
-function seen(text: string, path = "features/one.feature", line = 1): ScnOccurrence {
+function seen(text: string, path = "features/one.feature", line = 1): ClaimCodeOccurrence {
   return { text, path, line };
 }
 
@@ -101,7 +101,7 @@ describe("[SCN-ALC-010] a part no feature file's header carries is refused as an
   const headerCodes = ["TWO", "ONE"];
 
   it("refuses a part no header carries, naming the header codes in order", () => {
-    expect(nextScnCode({ part: "ZZZ", headerCodes }, [])).toEqual({ kind: "unknown-part", part: "ZZZ", headerCodes: ["ONE", "TWO"] });
+    expect(nextClaimCode({ part: "ZZZ", headerCodes }, [])).toEqual({ kind: "unknown-part", part: "ZZZ", headerCodes: ["ONE", "TWO"] });
   });
 
   it.each([
@@ -124,6 +124,6 @@ describe("[SCN-ALC-011] --new admits a part no feature file's header carries, an
   });
 
   it("says nothing of a header when the part was not asked for as new", () => {
-    expect(nextScnCode({ part: "ONE", headerCodes: ["ONE"] }, [seen("@SCN-ONE-003")])).not.toMatchObject({ alreadyHeaded: true });
+    expect(nextClaimCode({ part: "ONE", headerCodes: ["ONE"] }, [seen("@SCN-ONE-003")])).not.toMatchObject({ alreadyHeaded: true });
   });
 });

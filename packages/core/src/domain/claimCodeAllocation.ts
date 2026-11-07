@@ -1,6 +1,6 @@
-import { SCN_ID_SOURCE, featureCodeOf } from "./featureCode.js";
+import { CLAIM_CODE_SOURCE, featureCodeOf } from "./featureCode.js";
 
-export interface ScnOccurrence {
+export interface ClaimCodeOccurrence {
   readonly text: string;
   readonly path: string;
   readonly line: number;
@@ -26,27 +26,27 @@ export type UnknownPartCarried =
 export interface Allocation {
   readonly kind: "allocated";
   readonly code: string;
-  readonly highest: { readonly code: string; readonly occurrence: ScnOccurrence } | null;
+  readonly highest: { readonly code: string; readonly occurrence: ClaimCodeOccurrence } | null;
   readonly alreadyHeaded?: boolean;
 }
 
 const NUMBER_WIDTH = 3;
 
-const SCN_CODES = new RegExp(SCN_ID_SOURCE, "g");
+const CLAIM_CODES = new RegExp(CLAIM_CODE_SOURCE, "g");
 
 function numberOf(code: string): number {
   return Number(code.slice(code.lastIndexOf("-") + 1));
 }
 
-function outranks(code: string, occurrence: ScnOccurrence, highest: NonNullable<Allocation["highest"]>): boolean {
+function outranks(code: string, occurrence: ClaimCodeOccurrence, highest: NonNullable<Allocation["highest"]>): boolean {
   const difference = numberOf(code) - numberOf(highest.code);
   return difference > 0 || (difference === 0 && occurrence.commit === undefined && highest.occurrence.commit !== undefined);
 }
 
-function highestOf(part: string, occurrences: readonly ScnOccurrence[]): Allocation["highest"] {
+function highestOf(part: string, occurrences: readonly ClaimCodeOccurrence[]): Allocation["highest"] {
   let highest: Allocation["highest"] = null;
   for (const occurrence of occurrences) {
-    for (const [code] of occurrence.text.matchAll(SCN_CODES)) {
+    for (const [code] of occurrence.text.matchAll(CLAIM_CODES)) {
       if (featureCodeOf(code) !== part) continue;
       if (highest === null || outranks(code, occurrence, highest)) highest = { code, occurrence };
     }
@@ -54,7 +54,7 @@ function highestOf(part: string, occurrences: readonly ScnOccurrence[]): Allocat
   return highest;
 }
 
-export function nextScnCode(request: AllocationRequest, occurrences: readonly ScnOccurrence[]): Allocation | UnknownPart {
+export function nextClaimCode(request: AllocationRequest, occurrences: readonly ClaimCodeOccurrence[]): Allocation | UnknownPart {
   const headed = request.headerCodes.includes(request.part);
   if (!headed && request.isNew !== true) {
     return { kind: "unknown-part", part: request.part, headerCodes: [...new Set(request.headerCodes)].sort() };

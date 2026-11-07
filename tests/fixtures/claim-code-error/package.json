@@ -1,5 +1,5 @@
 {
-  "name": "scenario-code-error-fixture-target",
+  "name": "claim-code-error-fixture-target",
   "private": true,
   "scripts": {
     "test": "vitest run"

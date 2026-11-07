@@ -13,7 +13,7 @@ import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 
 const ctx: RunContext = {
-  target: "by-feature-no-scn-code",
+  target: "by-feature-no-claim-code",
   inputs: [{ ...FEATURES, path: "features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "features",
   runStart: new Date("2026-09-27T09:00:00.000Z"),
@@ -22,7 +22,7 @@ const ctx: RunContext = {
 
 const reconciliationOf = (ledger: Ledger): EvidenceReconciliation => ({ summary: summaryOf(ledger, false), ledger });
 
-function noScnCodeCorpus(untagged: ScenarioName[]): { reconciliation: EvidenceReconciliation; census: ReturnType<typeof evidenceObligations> } {
+function noClaimCodeCorpus(untagged: ScenarioName[]): { reconciliation: EvidenceReconciliation; census: ReturnType<typeof evidenceObligations> } {
   const ledger = reconcile([], [], untagged.map((u) => `${u.feature} : ${scenarioTitleOf(u)}`));
   return { reconciliation: reconciliationOf(ledger), census: evidenceObligations(0, 0, untagged) };
 }
@@ -41,22 +41,22 @@ function byFeatureRowOf(rows: string[][], code: string): { row: string[][]; othe
   return { row: rows.filter(isCodes).map(([, ...cells]) => cells), others: rows.filter((cells) => !isCodes(cells)) };
 }
 
-describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count together on one row named by that file", () => {
+describe("[SCN-RPT-031] a feature file's scenarios carrying no claim code count together on one row named by that file", () => {
   let checkout: ScenarioName[];
   beforeEach(() => {
     checkout = ["pay by card", "pay by voucher", "pay on account"].map((title) => scenarioName("checkout.feature", title));
   });
 
-  it("renders one row named by the file, counting all three as carrying no @SCN code", () => {
-    const { reconciliation, census } = noScnCodeCorpus(checkout);
+  it("renders one row named by the file, counting all three as carrying no claim code", () => {
+    const { reconciliation, census } = noClaimCodeCorpus(checkout);
     const rows = byFeatureRows(renderMarkdown(reconciliation, ctx, publishedExitCodeOf, census));
     expect(rows).toEqual([["checkout.feature", "3", "3 with no claim code"]]);
   });
 });
 
-describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a feature code counts on that feature's row", () => {
+describe("[SCN-RPT-032] a scenario carrying no claim code in a file headed by a feature code counts on that feature's row", () => {
   it("counts a headed file's no-claim-code scenarios on its feature's row when none carries the code", () => {
-    const { reconciliation, census } = noScnCodeCorpus([
+    const { reconciliation, census } = noClaimCodeCorpus([
       scenarioName("one.feature", "a no-claim-code scenario"),
       scenarioName("one.feature", "an over-long code"),
     ]);

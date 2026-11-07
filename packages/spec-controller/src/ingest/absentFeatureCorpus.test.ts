@@ -42,7 +42,7 @@ describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every re
     const obligations = readEvidenceObligations(features);
 
     expect(obligations.scenarioCount).toBe(0);
-    expect(obligations.rawScnOccurrences).toBe(0);
+    expect(obligations.rawClaimCodeOccurrences).toBe(0);
     expect(obligations.untaggedScenarios).toEqual([]);
   });
 

@@ -1,4 +1,4 @@
-import { SCN_CODE } from "../domain/featureCode.js";
+import { CLAIM_CODE } from "../domain/featureCode.js";
 import {
   recordedObservationOf,
   type RecordedCheckStep,
@@ -25,7 +25,7 @@ function reportOf(outcome: string | undefined): StepReport {
 export function recordedCheckStepsOf(record: StepRecord | undefined): RecordedCheckStep[] | undefined {
   if (record === undefined) return undefined;
   return Object.entries(record)
-    .filter(([citedClaimCode]) => SCN_CODE.test(citedClaimCode))
+    .filter(([citedClaimCode]) => CLAIM_CODE.test(citedClaimCode))
     .map(([citedClaimCode, step]) => ({
       citedClaimCode,
       report: reportOf(step.outcome),

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parseRspecEvidenceObservations, type RspecJsonReport } from "./rspec.js";
 
 describe("[SCN-RSP-003] parseRspecEvidenceObservations reads an example's own code before its groups' codes", () => {
-  const scnIdOf = (description: string, full_description: string) => {
+  const claimCodeOf = (description: string, full_description: string) => {
     const report: RspecJsonReport = {
       examples: [{ description, full_description, status: "passed", file_path: "./spec/a_spec.rb" }],
     };
@@ -10,19 +10,19 @@ describe("[SCN-RSP-003] parseRspecEvidenceObservations reads an example's own co
   };
 
   it("credits the example's own code inside a group that cites another", () => {
-    expect(scnIdOf("[SCN-AAA-002] leaf", "[SCN-AAA-001] group [SCN-AAA-002] leaf")).toBe("SCN-AAA-002");
+    expect(claimCodeOf("[SCN-AAA-002] leaf", "[SCN-AAA-001] group [SCN-AAA-002] leaf")).toBe("SCN-AAA-002");
   });
 
   it("credits the group's code to an example whose own description cites nothing", () => {
-    expect(scnIdOf("leaf", "[SCN-AAA-001] group leaf")).toBe("SCN-AAA-001");
+    expect(claimCodeOf("leaf", "[SCN-AAA-001] group leaf")).toBe("SCN-AAA-001");
   });
 
   it("reads two citing groups' codes together, so an example citing nothing inside both credits neither", () => {
-    expect(scnIdOf("leaf", "[SCN-AAA-001] outer [SCN-AAA-002] inner leaf")).toBeNull();
+    expect(claimCodeOf("leaf", "[SCN-AAA-001] outer [SCN-AAA-002] inner leaf")).toBeNull();
   });
 
   it("credits nothing to an example citing nothing inside groups citing nothing", () => {
-    expect(scnIdOf("leaf", "group leaf")).toBeNull();
+    expect(claimCodeOf("leaf", "group leaf")).toBeNull();
   });
 });
 

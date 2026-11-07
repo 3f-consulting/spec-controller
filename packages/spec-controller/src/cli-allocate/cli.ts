@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { nextScnCode, type ScnOccurrence } from "@3f-consulting/spec-controller-core";
+import { nextClaimCode, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { allocateCommand, cliRegistry, renderCommandHelp } from "../cliRegistry.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { readHeaderCodes } from "./readParts.js";
@@ -51,7 +51,7 @@ function answerRequest({ part, isNew }: AllocateRequest): void {
   const cwd = readOrRefuse(AppMessage.WorkingDirectory, "", () => process.cwd());
   const top = repositoryTop(cwd);
   const headerCodes = readHeaderCodes(join(top ?? cwd, DEFAULT_FEATURES_DIR));
-  const answer = nextScnCode({ part, headerCodes, isNew }, occurrencesFrom(cwd, part, top));
+  const answer = nextClaimCode({ part, headerCodes, isNew }, occurrencesFrom(cwd, part, top));
   if (answer.kind === "unknown-part") {
     refuseUsage(unknownPartRefusal(answer));
     return;
@@ -66,6 +66,6 @@ function writeLineIfAny(line: string | null): void {
   if (line !== null) shown().note(line);
 }
 
-function occurrencesFrom(cwd: string, part: string, top: string | null): ScnOccurrence[] {
+function occurrencesFrom(cwd: string, part: string, top: string | null): ClaimCodeOccurrence[] {
   return top !== null ? [...readTree(top, part), ...readHistory(cwd, part)] : walkTree(cwd, part);
 }

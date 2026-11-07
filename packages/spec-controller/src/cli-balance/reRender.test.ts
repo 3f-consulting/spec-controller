@@ -29,7 +29,7 @@ describe("[SCN-CLI-069] a re-render of a saved reconciliation exits the code its
   const VERDICTS = [
     { verdict: "all-balanced", fixture: "balanced", code: 0 },
     { verdict: "out-of-balance", fixture: "evidence-observation", code: 1 },
-    { verdict: "balanced-with-claim-code-errors", fixture: "scenario-code-error", code: 1 },
+    { verdict: "balanced-with-claim-code-errors", fixture: "claim-code-error", code: 1 },
     { verdict: "unsound", fixture: "broken", code: 4 },
     { verdict: "nothing to reconcile", fixture: "nothing-to-reconcile", code: 5 },
   ] as const;

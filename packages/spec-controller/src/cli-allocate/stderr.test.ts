@@ -1,11 +1,11 @@
 import { beforeEach, describe, it, expect } from "vitest";
-import { nextScnCode as answerFor, type Allocation, type AllocationRequest, type ScnOccurrence } from "@3f-consulting/spec-controller-core";
+import { nextClaimCode as answerFor, type Allocation, type AllocationRequest, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
 import { AppError, AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 import { shownText } from "../shownText.test-utils.js";
 
-function nextScnCode(request: AllocationRequest, occurrences: readonly ScnOccurrence[]): Allocation {
+function nextClaimCode(request: AllocationRequest, occurrences: readonly ClaimCodeOccurrence[]): Allocation {
   const answer = answerFor(request, occurrences);
   if (answer.kind !== "allocated") throw new Error(`refused ${request.part} as an unknown part`);
   return answer;
@@ -13,19 +13,19 @@ function nextScnCode(request: AllocationRequest, occurrences: readonly ScnOccurr
 
 describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
   it("names a file and line in the tree", () => {
-    const allocation = nextScnCode({ part: "ONE", headerCodes: ["ONE"] }, [{ text: "  @SCN-ONE-005", path: "features/one.feature", line: 8 }]);
+    const allocation = nextClaimCode({ part: "ONE", headerCodes: ["ONE"] }, [{ text: "  @SCN-ONE-005", path: "features/one.feature", line: 8 }]);
     expect(highestSeenLine(allocation)).toBe(message(AppMessage.HighestSeenInTree, { code: "SCN-ONE-005", path: "features/one.feature", line: 8 }));
   });
 
   it("names the file, line and commit when only history carries it", () => {
     const occurrence = { text: "-  @SCN-ONE-005", path: "features/one.feature", line: 8, commit: "abc1234" };
-    expect(highestSeenLine(nextScnCode({ part: "ONE", headerCodes: ["ONE"] }, [occurrence]))).toBe(
+    expect(highestSeenLine(nextClaimCode({ part: "ONE", headerCodes: ["ONE"] }, [occurrence]))).toBe(
       message(AppMessage.HighestSeenInCommit, { code: "SCN-ONE-005", path: "features/one.feature", line: 8, commit: "abc1234" }),
     );
   });
 
   it("says none when the part carries no code", () => {
-    expect(highestSeenLine(nextScnCode({ part: "ONE", headerCodes: ["ONE"] }, []))).toBe(message(AppMessage.HighestSeenNone));
+    expect(highestSeenLine(nextClaimCode({ part: "ONE", headerCodes: ["ONE"] }, []))).toBe(message(AppMessage.HighestSeenNone));
   });
 });
 
@@ -33,7 +33,7 @@ describe("[SCN-ALC-004] with no history to read, a code is still offered and the
   let allocation: Allocation;
 
   beforeEach(() => {
-    allocation = nextScnCode({ part: "ONE", headerCodes: ["ONE"] }, [{ text: "@SCN-ONE-001", path: "features/one.feature", line: 4 }]);
+    allocation = nextClaimCode({ part: "ONE", headerCodes: ["ONE"] }, [{ text: "@SCN-ONE-001", path: "features/one.feature", line: 4 }]);
   });
 
   it("states that no history was read outside a git repository, and what that risks", () => {
@@ -62,7 +62,7 @@ describe("[SCN-ALC-004] with no history to read, a code is still offered and the
       line: (): string => "history: shallow clone — history before abc1234 unread; a code of ONE may have been used before",
     },
   ])("names the risk from nothing when the part carries no code", ({ boundary, line }) => {
-    expect(historyBoundaryLine(boundary, nextScnCode({ part: "ONE", headerCodes: ["ONE"] }, []))).toBe(line());
+    expect(historyBoundaryLine(boundary, nextClaimCode({ part: "ONE", headerCodes: ["ONE"] }, []))).toBe(line());
   });
 });
 
@@ -82,11 +82,11 @@ describe("[SCN-ALC-010] a part no feature file's header carries is refused as an
 
 describe("[SCN-ALC-011] --new admits a part no feature file's header carries, and notes a part a header carries", () => {
   it("notes that a header already carries a part asked for as new", () => {
-    const allocation = nextScnCode({ part: "ONE", headerCodes: ["ONE"], isNew: true }, []);
+    const allocation = nextClaimCode({ part: "ONE", headerCodes: ["ONE"], isNew: true }, []);
     expect(alreadyHeadedNote(allocation)).toBe(message(AppMessage.PartAlreadyHeaded, { part: "ONE" }));
   });
 
   it("notes nothing for a new part no header carries", () => {
-    expect(alreadyHeadedNote(nextScnCode({ part: "ZZ", headerCodes: ["ONE"], isNew: true }, []))).toBeNull();
+    expect(alreadyHeadedNote(nextClaimCode({ part: "ZZ", headerCodes: ["ONE"], isNew: true }, []))).toBeNull();
   });
 });

@@ -3,7 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { renderJson } from "../assemble/composers.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { __er as er } from "../evidenceReconciliation.test-utils.js";
-import { evidenceObligations, sharedScnCodesOf } from "../domain/corpusCounts.js";
+import { evidenceObligations, sharedClaimCodesOf } from "../domain/corpusCounts.js";
 import { scenarioName } from "../domain/scenarioName.test-utils.js";
 import { parseFeatureCounts, readCorpus } from "../parse/scenarioReaders.test-utils.js";
 import { censusBlock as censusBlockOf } from "./renderedSection.test-utils.js";
@@ -13,7 +13,7 @@ import type { Ledger } from "../model.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
-import { scenarioCodesOnReport } from "../assemble/scenarioCodesOnReport.test-utils.js";
+import { claimCodesOnReport } from "../assemble/claimCodesOnReport.test-utils.js";
 import {
   RECONCILING_ITEMS_COLUMN,
   VERDICT_COLUMN,
@@ -94,7 +94,7 @@ function censusBlock(corpus: readonly { feature: string; source: string }[]): st
     er(reconcile(scenarios, [])),
     ctx,
     publishedExitCodeOf,
-    evidenceObligations(raw, scenarios.length, untagged, sharedScnCodesOf(corpus.map(({ feature, source }) => ({ feature, ...parseFeatureCounts(source) }))))
+    evidenceObligations(raw, scenarios.length, untagged, sharedClaimCodesOf(corpus.map(({ feature, source }) => ({ feature, ...parseFeatureCounts(source) }))))
   );
   return censusBlockOf(md);
 }
@@ -116,9 +116,9 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
 
   it("carries the shared codes in the JSON census, and nothing when no code is shared", () => {
     const shared = JSON.parse(renderJson(er(ledger), ctx, census));
-    expect(scenarioCodesOnReport(shared)?.sharedClaimCodes).toEqual(census.sharedClaimCodes);
+    expect(claimCodesOnReport(shared)?.sharedClaimCodes).toEqual(census.sharedClaimCodes);
     const clean = JSON.parse(renderJson(er(ledger), ctx, evidenceObligations(3, 3)));
-    expect(scenarioCodesOnReport(clean)).not.toHaveProperty("sharedClaimCodes");
+    expect(claimCodesOnReport(clean)).not.toHaveProperty("sharedClaimCodes");
     expect(renderMarkdown(er(ledger), ctx, publishedExitCodeOf, evidenceObligations(3, 3))).not.toContain("The corpus holds");
   });
 

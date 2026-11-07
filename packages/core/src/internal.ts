@@ -1,4 +1,4 @@
-export { SCN_ID_SOURCE } from "./domain/featureCode.js";
+export { CLAIM_CODE_SOURCE } from "./domain/featureCode.js";
 
 export { bareTerm } from "./lib/bareTerm.js";
 

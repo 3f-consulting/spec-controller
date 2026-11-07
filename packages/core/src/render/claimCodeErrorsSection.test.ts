@@ -12,11 +12,11 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 import * as scnTags from "../domain/scnTags.js";
 import type { FeatureFileScenarios, ClaimCodeError } from "../domain/scnTags.js";
 import { parseScenarioTags } from "../parse/scenarioReaders.test-utils.js";
-import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
+import { codeErrorsCtx as ctx, FOREIGN } from "./claimCodeError.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
-import { scenarioCodesOnReport, withScenarioCodesOnReport } from "../assemble/scenarioCodesOnReport.test-utils.js";
-import { scenarioCodeErrorsOnReport } from "../assemble/reportErrors.test-utils.js";
+import { claimCodesOnReport, withClaimCodesOnReport } from "../assemble/claimCodesOnReport.test-utils.js";
+import { claimCodeErrorsOnReport } from "../assemble/reportErrors.test-utils.js";
 
 interface CorpusFile {
   readonly slug: string;
@@ -30,10 +30,10 @@ function scenariosOf(files: readonly CorpusFile[]): FeatureFileScenarios[] {
 
 const duplicateFeatureCodes = (files: readonly CorpusFile[]): ClaimCodeError[] =>
   scnTags.duplicateFeatureCodes(scenariosOf(files));
-const foreignScenarioCodes = (files: readonly CorpusFile[]): ClaimCodeError[] =>
-  scnTags.foreignScenarioCodes(scenariosOf(files));
-const scenarioCodeErrorsOf = (files: readonly CorpusFile[]): ClaimCodeError[] =>
-  scnTags.scenarioCodeErrorsOf(scenariosOf(files));
+const foreignClaimCodes = (files: readonly CorpusFile[]): ClaimCodeError[] =>
+  scnTags.foreignClaimCodes(scenariosOf(files));
+const claimCodeErrorsOf = (files: readonly CorpusFile[]): ClaimCodeError[] =>
+  scnTags.claimCodeErrorsOf(scenariosOf(files));
 
 function balancedWith(claimCodeErrors: readonly ClaimCodeError[]): EvidenceReconciliation {
   const reconciliation = evidenceReconciliationOf(
@@ -62,7 +62,7 @@ describe("[SCN-RPT-055] a foreign-claim-code is listed under Claim code errors, 
   });
 
   function foreignLines(files: readonly CorpusFile[]): string[] {
-    return renderMarkdown(balancedWith(foreignScenarioCodes(files)), ctx, publishedExitCodeOf)
+    return renderMarkdown(balancedWith(foreignClaimCodes(files)), ctx, publishedExitCodeOf)
       .split("\n")
       .filter((line) => line.startsWith("- `foreign-claim-code` — "));
   }
@@ -122,7 +122,7 @@ describe("[SCN-RPT-057] a no-feature-code is worded from the file that carries n
 
 describe("[SCN-RPT-058] a foreign-claim-code whose named code no file carries is worded with no file to move to", () => {
   it("lists the error by its handle and the catalogue's words for no carrier, naming no header tag or file the corpus lacks", () => {
-    const errors = foreignScenarioCodes([
+    const errors = foreignClaimCodes([
       { slug: "one", featureCode: "ONE", source: "@ONE\nFeature: one\n" },
       { slug: "two", featureCode: "TWO", source: "@TWO\nFeature: two\n\n  @unit @SCN-THR-002\n  Scenario: s\n    Given a thing\n" },
     ]);
@@ -141,7 +141,7 @@ describe("[SCN-RPT-058] a foreign-claim-code whose named code no file carries is
 
 describe("[SCN-RPT-059] a several-claim-codes error is worded from its file, its scenario and its codes", () => {
   it("lists the error by its handle and the catalogue's words for its file, scenario and codes", () => {
-    const errors = scenarioCodeErrorsOf([
+    const errors = claimCodeErrorsOf([
       {
         slug: "two",
         featureCode: "TWO",
@@ -213,7 +213,7 @@ function statedAloneAfterRunVerdict(report: RenderInput, statement: string): str
   return md;
 }
 
-function printsNoScenarioCodeErrorsSection(md: string): void {
+function printsNoClaimCodeErrorsSection(md: string): void {
   expect(md).not.toContain(HEADING());
   expect(md).not.toContain(duplicateLine());
 }
@@ -236,7 +236,7 @@ const CLEAN_CORPORA = [
   { codes: [], plain: 2 },
 ];
 
-describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict under the Summary, with the run's count of feature files and of feature codes", () => {
+describe("[SCN-RPT-062] clean claim codes are stated after the run verdict under the Summary, with the run's count of feature files and of feature codes", () => {
   const ownCode = (featureFiles: number, featureCodes: number): string =>
     coreMessage(CoreMessage.CleanEachFileOwnCode, { featureFiles, featureCodes });
   const othersNoFeatureCode = (featureFiles: number, featureCodes: number, noFeatureCode: number): string =>
@@ -262,15 +262,15 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
       const statement = statements()[row]!;
       expect(statement).toContain(cleanGloss());
       const report = newShapeReport(judgedCorpus(codes, plain));
-      expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
-      expect(scenarioCodesOnReport(report)).toEqual({ featureFiles: files, featureCodes: codes.length });
+      expect(claimCodeErrorsOnReport(report)).toBeUndefined();
+      expect(claimCodesOnReport(report)).toEqual({ featureFiles: files, featureCodes: codes.length });
       statedAloneAfterRunVerdict(report, statement);
     });
   }
 
   it("states no clean line when the corpus's facts carry no count of feature files", () => {
-    const report = withScenarioCodesOnReport(newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), { excludedOccurrences: 0, untaggedScenarios: [] });
-    expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
+    const report = withClaimCodesOnReport(newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), { excludedOccurrences: 0, untaggedScenarios: [] });
+    expect(claimCodeErrorsOnReport(report)).toBeUndefined();
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
     const cleanHead = `${cleanOpening()} over `;
     expect(cleanHead).not.toBe("");
@@ -280,24 +280,24 @@ describe("[SCN-RPT-062] clean scenario codes are stated after the run verdict un
   });
 });
 
-describe("[SCN-RPT-093] no scenario code errors section prints when the scenario codes are clean", () => {
+describe("[SCN-RPT-093] no claim code errors section prints when the claim codes are clean", () => {
   for (const { codes, plain } of CLEAN_CORPORA) {
-    it(`prints no scenario code errors section over ${codes.length + plain} files carrying ${codes.length} codes`, () => {
+    it(`prints no claim code errors section over ${codes.length + plain} files carrying ${codes.length} codes`, () => {
       const report = newShapeReport(judgedCorpus(codes, plain));
-      expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
+      expect(claimCodeErrorsOnReport(report)).toBeUndefined();
       const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
-      printsNoScenarioCodeErrorsSection(md);
+      printsNoClaimCodeErrorsSection(md);
       expect(md).not.toContain(coreMessage(CoreMessage.ClaimCodeErrorsHeadline));
     });
   }
 });
 
-describe("[SCN-RPT-094] nothing is stated about scenario codes when no corpus was judged", () => {
+describe("[SCN-RPT-094] nothing is stated about claim codes when no corpus was judged", () => {
   it("says nothing when no corpus was judged", () => {
     const { claimCodeErrors: _judged, ...unjudged } = balancedWith([]);
     const report = newShapeReport(unjudged);
-    expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
-    expect(scenarioCodesOnReport(report)).toBeUndefined();
+    expect(claimCodeErrorsOnReport(report)).toBeUndefined();
+    expect(claimCodesOnReport(report)).toBeUndefined();
     const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
     expect(md).not.toContain(HEADING());
     expect(afterRunVerdictOf(md)).toEqual([""]);
@@ -305,20 +305,20 @@ describe("[SCN-RPT-094] nothing is stated about scenario codes when no corpus wa
 });
 
 describe("[SCN-RPT-063] a corpus with no feature file is stated, after the run verdict, as no feature file judged, never as clean", () => {
-  it("says no feature file was judged after the run verdict, prints no scenario code errors section, and states nothing clean", () => {
+  it("says no feature file was judged after the run verdict, prints no claim code errors section, and states nothing clean", () => {
     const statement = coreMessage(CoreMessage.NoFeatureFileJudged);
     const report = newShapeReport(judgedCorpus([], 0));
-    expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
-    expect(scenarioCodesOnReport(report)).toMatchObject({ featureFiles: 0, featureCodes: 0 });
+    expect(claimCodeErrorsOnReport(report)).toBeUndefined();
+    expect(claimCodesOnReport(report)).toMatchObject({ featureFiles: 0, featureCodes: 0 });
     const md = statedAloneAfterRunVerdict(report, statement);
-    printsNoScenarioCodeErrorsSection(md);
+    printsNoClaimCodeErrorsSection(md);
     expect(md.split("\n").filter((line) => line.startsWith(cleanOpening()))).toEqual([]);
   });
 });
 
-describe("[SCN-RPT-060] the scenario code errors section counts the errors the corpus holds and lists each by its kind", () => {
-  function featureFile(slug: string, featureCode: string, scnIds: readonly string[]): CorpusFile {
-    const scenarios = scnIds.map((id) => `  @unit @${id}\n  Scenario: ${id.toLowerCase()}\n    Given a thing\n`);
+describe("[SCN-RPT-060] the claim code errors section counts the errors the corpus holds and lists each by its kind", () => {
+  function featureFile(slug: string, featureCode: string, claimCodes: readonly string[]): CorpusFile {
+    const scenarios = claimCodes.map((id) => `  @unit @${id}\n  Scenario: ${id.toLowerCase()}\n    Given a thing\n`);
     return { slug, featureCode, source: `@${featureCode}\nFeature: ${slug}\n\n${scenarios.join("\n")}` };
   }
 
@@ -365,7 +365,7 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
     });
   });
 
-  describe("a second file also headed @ONE, so the corpus holds a duplicate feature code and a foreign scenario code", () => {
+  describe("a second file also headed @ONE, so the corpus holds a duplicate feature code and a foreign claim code", () => {
     let files: CorpusFile[];
     let parsed: ClaimCodeError[];
     let md: string;
@@ -375,7 +375,7 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
         featureFile("two", "TWO", ["SCN-ONE-002", "SCN-TWO-001"]),
         featureFile("uno", "ONE", ["SCN-ONE-003"]),
       ];
-      parsed = [...duplicateFeatureCodes(files), ...foreignScenarioCodes(files)];
+      parsed = [...duplicateFeatureCodes(files), ...foreignClaimCodes(files)];
       md = renderMarkdown(reconciled(files), ctx, publishedExitCodeOf);
     });
 
@@ -446,7 +446,7 @@ describe("[SCN-MSG-010] an error shows its reader the error code of what went wr
   });
 });
 
-describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SCN code and the codes several scenarios share are stated after the run verdict, whether the codes are clean, hold errors or come from no feature file", () => {
+describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no claim code and the codes several scenarios share are stated after the run verdict, whether the codes are clean, hold errors or come from no feature file", () => {
   const CODES = {
     clean: { judged: () => newShapeReport(judgedCorpus(["ONE", "TWO"], 0)), scenarios: 2 },
     "holding an error": { judged: () => newShapeReport(balancedWith([FOREIGN])), scenarios: 2 },
@@ -467,9 +467,9 @@ describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SC
     { codes: "from no feature file", excluded: 0, others: false, lines: "the excluded line alone, at zero" },
   ] as const)("states $lines after the run verdict when the codes are $codes", ({ codes, excluded, others }) => {
     const judged = CODES[codes].judged();
-    expect(scenarioCodeErrorsOnReport(judged) === undefined).toBe(codes !== "holding an error");
-    const report = withScenarioCodesOnReport(judged, {
-      ...scenarioCodesOnReport(judged),
+    expect(claimCodeErrorsOnReport(judged) === undefined).toBe(codes !== "holding an error");
+    const report = withClaimCodesOnReport(judged, {
+      ...claimCodesOnReport(judged),
       excludedOccurrences: excluded,
       untaggedScenarios: others ? [{ feature: "three.feature", title: "the scenario with no code" }] : [],
       ...(others

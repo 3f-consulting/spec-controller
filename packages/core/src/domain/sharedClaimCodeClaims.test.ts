@@ -32,7 +32,7 @@ const broken: EvidenceObservation = {
 
 const rowsFor = (rows: readonly ClaimReconciliation[], claim: string) => rows.filter((row) => row.claim === claim);
 
-describe("[SCN-LDG-046] two scenarios sharing one @SCN code are two claims, and evidence citing the code posts to the unnamed claim", () => {
+describe("[SCN-LDG-046] two scenarios sharing one claim code are two claims, and evidence citing the code posts to the unnamed claim", () => {
   it("gives each of two sharers its own row under the shared code", () => {
     const rows = reconcile([letIn, turnedAway], []).claimReconciliations;
     expect(rowsFor(rows, CODE).map((row) => [row.claim, row.kind])).toEqual([

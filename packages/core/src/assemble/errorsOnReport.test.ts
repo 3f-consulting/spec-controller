@@ -45,19 +45,19 @@ describe("[SCN-RMD-021] the JSON report carries a top-level errors key only when
     expect(reportOver(coded, sound)).not.toHaveProperty("errorsInTheInputs");
   });
 
-  it("carries only the scenario code errors when the inputs hold no configuration fault", () => {
+  it("carries only the claim code errors when the inputs hold no configuration fault", () => {
     expect(reportOver(uncoded, sound).errorsInTheInputs).toEqual({
       claimCodeErrors: [{ kind: "no-feature-code", files: ["fixture.feature"] }],
     });
   });
 
-  it("carries only the configuration fault when the inputs hold no scenario code error", () => {
+  it("carries only the configuration fault when the inputs hold no claim code error", () => {
     expect(reportOver(coded, { ...sound, zzz: true }).errorsInTheInputs).toEqual({
       configurationNotRead: { keysNotRead: ["zzz"] },
     });
   });
 
-  it("carries the scenario code errors and each kind of configuration fault together", () => {
+  it("carries the claim code errors and each kind of configuration fault together", () => {
     expect(reportOver(uncoded, everyConfigurationFault).errorsInTheInputs).toEqual({
       claimCodeErrors: [{ kind: "no-feature-code", files: ["fixture.feature"] }],
       configurationNotRead: {

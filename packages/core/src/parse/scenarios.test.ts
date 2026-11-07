@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { corpusCountsOfFeatures, countScnOccurrences } from "./scenarios.js";
+import { corpusCountsOfFeatures, countClaimCodeOccurrences } from "./scenarios.js";
 import { parseScenarioTags, parseScenarios, parseUntaggedScenarios } from "./scenarioReaders.test-utils.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { parsedFeatures } from "./parsedFeatures.test-utils.js";
 
-describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence including non-tag context", () => {
+describe("[SCN-RPT-008] countClaimCodeOccurrences counts every @SCN occurrence including non-tag context", () => {
   let source: string;
   beforeEach(() => {
     source = [
@@ -19,15 +19,15 @@ describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence includi
   });
 
   it("counts @SCN occurrences across tag lines AND non-tag context (prose, comments)", () => {
-    expect(countScnOccurrences(source)).toBe(4);
+    expect(countClaimCodeOccurrences(source)).toBe(4);
   });
 
   it("returns 0 for a source with no @SCN occurrences", () => {
-    expect(countScnOccurrences("Feature: nothing\n  Scenario: blank")).toBe(0);
+    expect(countClaimCodeOccurrences("Feature: nothing\n  Scenario: blank")).toBe(0);
   });
 });
 
-describe("[SCN-RPT-008] the excluded figure counts only the @SCN codes not written as tags", () => {
+describe("[SCN-RPT-008] the excluded figure counts only the claim codes not written as tags", () => {
   it.each([
     {
       shape: "a scenario carrying several codes, none in prose",
@@ -160,7 +160,7 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
   });
 });
 
-describe("[SCN-GRD-004] a scenario tagged with two scenario codes raises no evidence obligation under either", () => {
+describe("[SCN-GRD-004] a scenario tagged with two claim codes raises no evidence obligation under either", () => {
   const source = (ids: string): string =>
     `@AAA\nFeature: a\n\n  @unit @SCN-AAA-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`;
 

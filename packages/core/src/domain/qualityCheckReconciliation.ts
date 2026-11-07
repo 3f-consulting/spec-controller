@@ -226,11 +226,11 @@ export function unnamedClaimReconciliationsOf(
   return reconciliationsByQualityCheckKind(observations, "unnamed-claim");
 }
 
-export function noScnCodeReconciliations(): QualityCheckReconciliation[] {
+export function noClaimCodeReconciliations(): QualityCheckReconciliation[] {
   return [makeQualityCheckReconciliation({ outcome: "no-claim-code", evidenceObligation: { qualityCheckKind: null } })];
 }
 
-export function duplicateScnCodeReconciliationsOf(
+export function duplicateClaimCodeReconciliationsOf(
   obligations: readonly EvidenceObligation[],
   scenario?: ScenarioName
 ): QualityCheckReconciliation[] {

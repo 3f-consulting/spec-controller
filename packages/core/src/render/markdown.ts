@@ -26,7 +26,7 @@ import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { RunInputName } from "../domain/runProvenance.js";
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
-import { scenarioCodesCleanStatement } from "./scenarioCodeErrorsSection.js";
+import { claimCodesCleanStatement } from "./claimCodeErrorsSection.js";
 import { provenanceSection } from "./provenanceSection.js";
 import { errorsInTheInputsSection } from "./errorsInTheInputs.js";
 import { stepAccountingSection } from "./stepAccounting.js";
@@ -93,7 +93,7 @@ function renderPendingItem(item: PendingItem): string {
 
 function renderFileGroup(group: UnnamedClaimFileGroup): string {
   const remarks = group.remarks.flatMap((remark) => remarkHeadlineOf(remark, reportedName) ?? []);
-  const code = group.sharedScnCode === undefined ? [] : [coreMessage(CoreMessage.SharedClaimCode, { code: group.sharedScnCode })];
+  const code = group.sharedClaimCode === undefined ? [] : [coreMessage(CoreMessage.SharedClaimCode, { code: group.sharedClaimCode })];
   const said = [...new Set([...code, ...remarks])].filter((part) => part !== "").join(" / ");
   const counts = coreMessage(CoreMessage.UnnamedClaimGroupCounts, { ran: group.ran, passed: group.passed, failed: group.failed });
   const names = group.failedNames.map(reportedName).filter((name) => name !== "");
@@ -124,7 +124,7 @@ function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
   if (!("names" in group)) return renderFileGroup(group);
   const steps = unnamedClaimCiSteps(unnamedClaimCiStepsViewOf(group.names.map(reportedName)));
   const remark =
-    group.sharedScnCode === undefined ? "" : ` (${coreMessage(CoreMessage.SharedClaimCode, { code: group.sharedScnCode })})`;
+    group.sharedClaimCode === undefined ? "" : ` (${coreMessage(CoreMessage.SharedClaimCode, { code: group.sharedClaimCode })})`;
   return `fitness: ${outcomeDescription("cites-no-scenario")}${remark} — ${steps}`;
 }
 
@@ -273,14 +273,14 @@ const outOfBalanceCodesOf = ({ claims }: FeatureOutOfBalance): OutOfBalanceCodes
 const codeList = (codes: readonly string[]): string => codes.join(", ");
 
 function idsCell(group: FeatureOutOfBalance): string {
-  const noScnCodeCount = group.scenariosWithNoClaimCode ?? 0;
-  if (noScnCodeCount === 0) return codeList(group.claims);
+  const noClaimCodeCount = group.scenariosWithNoClaimCode ?? 0;
+  if (noClaimCodeCount === 0) return codeList(group.claims);
   const view = outOfBalanceCodesOf(group);
   switch (view.kind) {
     case "none":
-      return coreMessage(CoreMessage.NoClaimCodeScenarios, { count: noScnCodeCount });
+      return coreMessage(CoreMessage.NoClaimCodeScenarios, { count: noClaimCodeCount });
     case "some":
-      return coreMessage(CoreMessage.CodesAndNoClaimCodeScenarios, { codes: codeList(view.codes), count: noScnCodeCount });
+      return coreMessage(CoreMessage.CodesAndNoClaimCodeScenarios, { codes: codeList(view.codes), count: noClaimCodeCount });
   }
 }
 
@@ -334,17 +334,17 @@ function ledgerTallyLines(totals: ClaimReconciliationTotals): string[] {
   return lines;
 }
 
-const scenarioCodeFactsSection: SectionEmitter = (report) => {
+const claimCodeFactsSection: SectionEmitter = (report) => {
   const codes = report.summary.claimCodes;
   if (codes?.excludedOccurrences === undefined) return [];
   const lines = [`- ${coreMessage(CoreMessage.ExcludedClaimOccurrences, { count: codes.excludedOccurrences })}`];
   const untagged = (codes.untaggedScenarios ?? []).length;
   if (untagged > 0) lines.push(`- ${coreMessage(CoreMessage.UntaggedScenarios, { count: untagged })}`);
-  lines.push(...sharedScnCodeLines(codes.sharedClaimCodes ?? [], report.claimReconciliations.filter(isScenario).length));
+  lines.push(...sharedClaimCodeLines(codes.sharedClaimCodes ?? [], report.claimReconciliations.filter(isScenario).length));
   return [...lines, ""];
 };
 
-function sharedScnCodeLines(shared: readonly SharedClaimCode[], scenarios: number): string[] {
+function sharedClaimCodeLines(shared: readonly SharedClaimCode[], scenarios: number): string[] {
   if (shared.length === 0) return [];
   return [
     `- ${coreMessage(CoreMessage.SharedClaimCodes, { scenarios, codes: shared.length })}`,
@@ -386,8 +386,8 @@ const SECTIONS: readonly SectionEmitter[] = [
   runIntegritySection,
   summarySection,
   (report, _inputNames, exitCodeOf) => runVerdictSection(report, exitCodeOf),
-  scenarioCodesCleanStatement,
-  scenarioCodeFactsSection,
+  claimCodesCleanStatement,
+  claimCodeFactsSection,
   reconciliationTotalsSection,
   evidenceObservationsSection,
   stepAccountingSection,

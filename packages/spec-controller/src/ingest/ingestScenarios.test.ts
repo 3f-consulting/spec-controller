@@ -111,7 +111,7 @@ describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus, at any d
     );
     expect(nested.ledger).toEqual(flat.ledger);
     expect(nested.summary).toEqual(flat.summary);
-    expect(nested.scenarioCodePopulation).toEqual(flat.scenarioCodePopulation);
+    expect(nested.claimCodePopulation).toEqual(flat.claimCodePopulation);
   });
 
   it("does not enter a symlinked directory, and reads a symlinked feature file", () => {

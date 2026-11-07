@@ -4,7 +4,7 @@ import { evidenceReconciliationFromSources } from "../assemble/evidenceReconcili
 import { CoreMessage } from "./messages.js";
 import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
-import { codeErrorsCtx as ctx } from "./scenarioCodeError.test-utils.js";
+import { codeErrorsCtx as ctx } from "./claimCodeError.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 

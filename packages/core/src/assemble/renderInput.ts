@@ -1,7 +1,7 @@
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { provenanceObject } from "../provenance/provenance.js";
 import type { RunContext } from "../domain/runProvenance.js";
-import { errorsOf, scenarioCodesOf, summaryStatingNoFault, type RenderInput } from "../domain/renderInput.js";
+import { errorsOf, claimCodesOf, summaryStatingNoFault, type RenderInput } from "../domain/renderInput.js";
 import type { EvidenceObligations } from "../domain/corpusCounts.js";
 import { runVerdict, type RunVerdict, type VerdictInputs } from "../domain/runVerdict.js";
 import { outOfBalanceByFeature } from "../domain/outOfBalanceByFeature.js";
@@ -29,7 +29,7 @@ export function assembleRenderInput(
   featureNames?: ReadonlyMap<string, string>
 ): RenderInput {
   const errorsInTheInputs = errorsOf(evidenceReconciliation.claimCodeErrors, evidenceReconciliation.summary);
-  const claimCodes = scenarioCodesOf(evidenceReconciliation.scenarioCodePopulation, evidenceObligations);
+  const claimCodes = claimCodesOf(evidenceReconciliation.claimCodePopulation, evidenceObligations);
   const byFeature = outOfBalanceByFeature(
     evidenceReconciliation.ledger.claimReconciliations,
     claimCodes?.untaggedScenarios ?? [],

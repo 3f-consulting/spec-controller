@@ -1,6 +1,6 @@
 import type { EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
-import { scnCitationsOf } from "../lib/scnCitation.js";
+import { claimCodeCitationsOf } from "../lib/claimCodeCitation.js";
 import { attributionOf } from "../domain/attribution.js";
 import { evidenceOfRunResult, fallbackLayerOf, type RunResult } from "../domain/journal.js";
 
@@ -53,8 +53,8 @@ export function parseVitestEvidenceObservations(report: VitestJsonReport, root?:
 }
 
 function citingCodesOf(assertion: { readonly title?: string; readonly fullName?: string }): string[] {
-  const leafCodes = scnCitationsOf(assertion.title ?? "");
-  return leafCodes.length > 0 ? leafCodes : scnCitationsOf(assertion.fullName ?? "");
+  const leafCodes = claimCodeCitationsOf(assertion.title ?? "");
+  return leafCodes.length > 0 ? leafCodes : claimCodeCitationsOf(assertion.fullName ?? "");
 }
 
 function runResultOf(status: string | undefined): RunResult {

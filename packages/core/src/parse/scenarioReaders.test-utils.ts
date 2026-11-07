@@ -4,7 +4,7 @@ import type { ScenarioTags } from "../domain/scnTags.js";
 import type { Scenario } from "../model.js";
 import { parsedFeatures } from "./parsedFeatures.test-utils.js";
 import { scenarioName } from "../domain/scenarioName.test-utils.js";
-import { countScnOccurrences, featureCountsOf, scenariosOf, untaggedScenariosOf, type ParsedFeatureFile } from "./scenarios.js";
+import { countClaimCodeOccurrences, featureCountsOf, scenariosOf, untaggedScenariosOf, type ParsedFeatureFile } from "./scenarios.js";
 
 function parsedFeature(source: string): ParsedFeatureFile {
   return parsedFeatures([source])[0]!;
@@ -34,7 +34,7 @@ export function readCorpus(corpus: readonly { feature: string; source: string }[
   const untagged = corpus.flatMap(({ feature, source }) =>
     parseUntaggedScenarios(source).map((title) => scenarioName(feature, title))
   );
-  const raw = corpus.reduce((n, { source }) => n + countScnOccurrences(source), 0);
+  const raw = corpus.reduce((n, { source }) => n + countClaimCodeOccurrences(source), 0);
   const scenarios = corpus.flatMap(({ source }) => parseScenarios(source));
   return { untagged, raw, scenarios };
 }

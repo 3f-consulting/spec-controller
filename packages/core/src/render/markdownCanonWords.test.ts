@@ -73,12 +73,12 @@ describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentenc
     expect(md).not.toContain("`missing`");
   });
 
-  it("the scenario code errors section's note quotes the duplicated code's outcome sentence on a run with a scenario code error", () => {
+  it("the claim code errors section's note quotes the duplicated code's outcome sentence on a run with a claim code error", () => {
     const md = renderMarkdown(
       {
         ...__er(reconcile([proven], [provenObservation])),
         claimCodeErrors: [{ kind: "no-feature-code", files: ["unc.feature"] }],
-        scenarioCodePopulation: { featureFiles: 1, featureCodes: 0 },
+        claimCodePopulation: { featureFiles: 1, featureCodes: 0 },
       },
       ctx,
       publishedExitCodeOf

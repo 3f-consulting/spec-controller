@@ -41,7 +41,7 @@ const ctx: RunContext = {
 };
 
 const evidenceObligations: EvidenceObligations = {
-  rawScnOccurrences: 4,
+  rawClaimCodeOccurrences: 4,
   scenarioCount: 2,
   excludedOccurrences: 2,
   untaggedScenarios: [],

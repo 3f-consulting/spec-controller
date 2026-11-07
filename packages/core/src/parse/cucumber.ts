@@ -1,7 +1,7 @@
 import type { EvidenceObservation, ObservationNote } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 import { withoutSigil } from "../lib/bareTerm.js";
-import { SCN_ID_SOURCE } from "../domain/featureCode.js";
+import { CLAIM_CODE_SOURCE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
 import type { ClaimCodesAt } from "./scenarios.js";
 import { evidenceOfRunResult, fallbackLayerOf, layersPostedAt, type RunResult } from "../domain/journal.js";
@@ -22,7 +22,7 @@ export type CucumberJsonReport = ReadonlyArray<{
   }>;
 }>;
 
-const SCN_TAG = new RegExp(`^(${SCN_ID_SOURCE})$`);
+const CLAIM_CODE_TAG = new RegExp(`^(${CLAIM_CODE_SOURCE})$`);
 
 function ambiguousNote(step: { keyword?: string; name?: string }): ObservationNote {
   const text = `${(step.keyword ?? "").trim()} ${step.name ?? ""}`.trim();
@@ -50,7 +50,7 @@ type CucumberScenario = NonNullable<CucumberJsonReport[number]["elements"]>[numb
 
 function citedCodesOf(tagNames: readonly string[]): string[] {
   return tagNames
-    .map((name) => SCN_TAG.exec(name))
+    .map((name) => CLAIM_CODE_TAG.exec(name))
     .filter((m): m is RegExpExecArray => m !== null)
     .map((m) => m[1]!);
 }

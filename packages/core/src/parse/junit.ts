@@ -1,7 +1,7 @@
 import type { Layer, EvidenceObservation } from "../model.js";
-import { SCN_CODE } from "../domain/featureCode.js";
+import { CLAIM_CODE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
-import { scnCitationsOf } from "../lib/scnCitation.js";
+import { claimCodeCitationsOf } from "../lib/claimCodeCitation.js";
 import { evidenceOfRunResult, fallbackLayerOf, type RunEvidence, type RunResult } from "../domain/journal.js";
 
 export interface JunitXmlReport {
@@ -26,7 +26,7 @@ interface JunitTestcase {
   readonly skipped?: unknown;
 }
 
-const SCN_PROPERTY: ReadonlySet<string | undefined> = new Set(["scn", "clm"]);
+const CLAIM_CODE_PROPERTY: ReadonlySet<string | undefined> = new Set(["scn", "clm"]);
 const GO_BUILD_FAILURE_TESTCASE = "TestMain";
 const GO_BUILD_FAILURE_MARK = "[build failed]";
 
@@ -82,23 +82,23 @@ function observationOf(
 }
 
 function citingCodesOf(testcase: JunitTestcase): string[] {
-  const ownCodes = [...scnPropertyValues(testcase), ...nameCitationsOf(testcase.name ?? "")];
-  return ownCodes.length > 0 ? ownCodes : scnCitationsOf(testcase.classname ?? "").slice(-1);
+  const ownCodes = [...claimCodePropertyValues(testcase), ...nameCitationsOf(testcase.name ?? "")];
+  return ownCodes.length > 0 ? ownCodes : claimCodeCitationsOf(testcase.classname ?? "").slice(-1);
 }
 
 function nameCitationsOf(name: string): string[] {
   const segmentsLeafFirst = name.split("/").reverse();
-  return segmentsLeafFirst.map((segment) => scnCitationsOf(segment)).find((codes) => codes.length > 0) ?? [];
+  return segmentsLeafFirst.map((segment) => claimCodeCitationsOf(segment)).find((codes) => codes.length > 0) ?? [];
 }
 
-function scnPropertyValues(testcase: JunitTestcase): string[] {
+function claimCodePropertyValues(testcase: JunitTestcase): string[] {
   return (testcase.properties?.property ?? [])
-    .filter((property) => SCN_PROPERTY.has(property.name))
+    .filter((property) => CLAIM_CODE_PROPERTY.has(property.name))
     .map((property) => property.value ?? "");
 }
 
 function citedCode(value: string): string | null {
-  return SCN_CODE.test(value) ? value : null;
+  return CLAIM_CODE.test(value) ? value : null;
 }
 
 function isCollectionFailure(testcase: JunitTestcase): boolean {

@@ -1,4 +1,4 @@
-import type { ClaimCodeError, ScenarioCodePopulation } from "./scnTags.js";
+import type { ClaimCodeError, ClaimCodePopulation } from "./scnTags.js";
 import type { ClaimReconciliation } from "./claimReconciliation.js";
 import type { Summary, WrongKindEntry } from "./evidenceReconciliation.js";
 import type { ProvenanceObject } from "./runProvenance.js";
@@ -15,8 +15,8 @@ export interface ClaimCodesSection {
   readonly sharedClaimCodes?: readonly SharedClaimCode[];
 }
 
-export function scenarioCodesOf(
-  population: ScenarioCodePopulation | undefined,
+export function claimCodesOf(
+  population: ClaimCodePopulation | undefined,
   obligations: EvidenceObligations | undefined
 ): ClaimCodesSection | undefined {
   if (!population && !obligations) return undefined;

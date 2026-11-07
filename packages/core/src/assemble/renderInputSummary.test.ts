@@ -115,7 +115,7 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
       scenarioName("loose.feature", "a loose scenario"),
       scenarioName("loose.feature", "another loose scenario"),
     ];
-    evidenceObligations = { rawScnOccurrences: 5, scenarioCount: 8, excludedOccurrences: 0, untaggedScenarios };
+    evidenceObligations = { rawClaimCodeOccurrences: 5, scenarioCount: 8, excludedOccurrences: 0, untaggedScenarios };
     ledger = reconcile(scenarios, observations, untaggedScenarios.map(untaggedScenarioId));
   });
 

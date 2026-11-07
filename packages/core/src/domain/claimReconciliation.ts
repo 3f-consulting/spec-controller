@@ -112,7 +112,7 @@ export function outOfBalanceCountOf(rows: readonly ClaimReconciliation[]): numbe
   return rows.filter(isOutOfBalance).length;
 }
 
-export function carriesNoScnCode(row: ClaimReconciliation): boolean {
+export function carriesNoClaimCode(row: ClaimReconciliation): boolean {
   return reconcilingItemsOf(row).some((item) => item.outcome === "no-claim-code");
 }
 

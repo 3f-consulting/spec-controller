@@ -1,5 +1,5 @@
 extends: existence
-message: "'%s' is a scenario code; the scenario's tag line carries it, and nothing else does."
+message: "'%s' is a claim code; the scenario's tag line carries it, and nothing else does."
 level: error
 nonword: true
 tokens:

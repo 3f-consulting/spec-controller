@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { lstatSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { CLAIM_CODE_PREFIXES, type ScnOccurrence } from "@3f-consulting/spec-controller-core";
+import { CLAIM_CODE_PREFIXES, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { proveRefsReadable } from "./refStore.js";
 import { AppMessage } from "../messages.js";
 import { gitExited, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
@@ -12,7 +12,7 @@ const MAX_OUTPUT_BYTES = 1024 * 1024 * 1024;
 
 const COMMIT_MARKER = "\u0001";
 
-export function readHistory(cwd: string, part: string): ScnOccurrence[] {
+export function readHistory(cwd: string, part: string): ClaimCodeOccurrence[] {
   proveRefsReadable(cwd);
   const args = ["log", "--all", "-p", "-U0", "--no-color", "--no-ext-diff", "--format=%x01%h", "-G", `(${CLAIM_CODE_PREFIXES.join("|")})-${part}-`];
   const result = spawnSync("git", args, { cwd, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES });
@@ -76,9 +76,9 @@ interface PatchPosition {
   newLine: number;
 }
 
-export function diffLineOccurrences(logOutput: string): ScnOccurrence[] {
+export function diffLineOccurrences(logOutput: string): ClaimCodeOccurrence[] {
   const at: PatchPosition = { inFileHeader: false, oldPath: "", newPath: "", oldLine: 0, newLine: 0 };
-  const occurrences: ScnOccurrence[] = [];
+  const occurrences: ClaimCodeOccurrence[] = [];
   for (const line of logOutput.split("\n")) {
     const occurrence = readLine(line, at);
     if (occurrence !== undefined) occurrences.push(occurrence);
@@ -86,7 +86,7 @@ export function diffLineOccurrences(logOutput: string): ScnOccurrence[] {
   return occurrences;
 }
 
-function readLine(line: string, at: PatchPosition): ScnOccurrence | undefined {
+function readLine(line: string, at: PatchPosition): ClaimCodeOccurrence | undefined {
   if (line.startsWith(COMMIT_MARKER)) at.commit = line.slice(COMMIT_MARKER.length);
   else if (line.startsWith("diff --git ")) at.inFileHeader = true;
   else if (at.inFileHeader) readFileHeader(line, at);
@@ -115,6 +115,6 @@ function readHunkHeader(line: string, at: PatchPosition): void {
   at.newLine = Number(match?.[2] ?? 0);
 }
 
-function occurrenceAt(text: string, path: string, line: number, commit: string | undefined): ScnOccurrence {
+function occurrenceAt(text: string, path: string, line: number, commit: string | undefined): ClaimCodeOccurrence {
   return { text, path, line, commit };
 }

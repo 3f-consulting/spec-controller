@@ -6,7 +6,7 @@ import { fitnessObservationsOf, recordedAtSteps } from "../domain/fitnessReconci
 import { recordedCheckStepsOf, type StepRecord } from "../parse/ciStepRecord.js";
 import { fitnessFunctionsAmong } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
-import { scenarioCodeErrorsOf, scenarioCodePopulationOf } from "../domain/scnTags.js";
+import { claimCodeErrorsOf, claimCodePopulationOf } from "../domain/scnTags.js";
 import { untaggedScenariosOf, type ParsedFeatureFile } from "../parse/scenarios.js";
 import { untaggedScenarioId } from "../domain/corpusCounts.js";
 import { qualifiedStepName } from "../parse/stepNames.js";
@@ -137,7 +137,7 @@ export function evidenceReconciliationFromSources(
     observationStreams(input, steps, corpus, packageJson, isCandidate),
     untaggedScenariosAmong(input.features)
   );
-  return withScenarioCodeErrors(
+  return withClaimCodeErrors(
     withConfigurationAccount(
       withReaderAccounts(reconciliation, packageJson, readings),
       packageJson
@@ -161,14 +161,14 @@ function withConfigurationAccount(
   };
 }
 
-function withScenarioCodeErrors(
+function withClaimCodeErrors(
   reconciliation: EvidenceReconciliation,
   input: EvidenceReconciliationSources
 ): EvidenceReconciliation {
   return {
     ...reconciliation,
-    claimCodeErrors: scenarioCodeErrorsOf(input.features),
-    scenarioCodePopulation: scenarioCodePopulationOf(input.features),
+    claimCodeErrors: claimCodeErrorsOf(input.features),
+    claimCodePopulation: claimCodePopulationOf(input.features),
   };
 }
 

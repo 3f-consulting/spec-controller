@@ -46,7 +46,7 @@ Everything else the package exports is a variation on these three steps.
 The package publishes exactly one entrypoint, a barrel that exports the following.
 
 - **Parse**:
-  - scenarios: `parseFeatureCorpus`, which parses the feature files once; `scenariosOf`, `untaggedScenariosOf` and `featureCountsOf` over a parsed file; `corpusCountsOfFeatures` over the parsed files; and `countScnOccurrences` over a file's text;
+  - scenarios: `parseFeatureCorpus`, which parses the feature files once; `scenariosOf`, `untaggedScenariosOf` and `featureCountsOf` over a parsed file; `corpusCountsOfFeatures` over the parsed files; and `countClaimCodeOccurrences` over a file's text;
   - evidence: `parseVitestEvidenceObservations`; `parseJunitEvidenceObservations` and `parsePytestEvidenceObservations`, both over a JUnit XML report you have already parsed into objects, from pytest, gotestsum or another runner; `parseRspecEvidenceObservations`, over RSpec's JSON report; and `parseCucumberEvidenceObservations`;
   - workflows: `parseWorkflows`, which parses the CI workflows once;
   - the readers for fitness functions, and for what a pipeline's steps actually ran.

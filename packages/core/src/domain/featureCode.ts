@@ -9,9 +9,9 @@ export const CLAIM_CODE_PREFIXES: readonly string[] = ["CLM", "SCN"];
 
 const PREFIX_SOURCE = `(?:${CLAIM_CODE_PREFIXES.join("|")})`;
 
-export const SCN_ID_SOURCE = `${PREFIX_SOURCE}-${FEATURE_PART_SOURCE}-\\d+`;
+export const CLAIM_CODE_SOURCE = `${PREFIX_SOURCE}-${FEATURE_PART_SOURCE}-\\d+`;
 
-export const SCN_CODE = new RegExp(`^${SCN_ID_SOURCE}$`);
+export const CLAIM_CODE = new RegExp(`^${CLAIM_CODE_SOURCE}$`);
 
 const FEATURE_CODE_OF = new RegExp(`^${PREFIX_SOURCE}-(${FEATURE_PART_SOURCE})-\\d+$`);
 

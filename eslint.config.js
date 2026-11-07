@@ -181,7 +181,7 @@ const clmCellsOf = (scenario) =>
     const column = examples.tableHeader?.cells.findIndex((cell) => cell.value === "clm") ?? -1;
     return column === -1 ? [] : examples.tableBody.map((row) => row.cells[column]?.value ?? "");
   });
-const scenarioCodesIn = (text) => {
+const claimCodesIn = (text) => {
   const { feature } = new Parser(new AstBuilder(() => ""), new GherkinClassicTokenMatcher()).parse(text);
   return scenariosIn(feature?.children ?? [])
     .flatMap((scenario) => [...scenario.tags.map((tag) => tag.name.slice(1)), ...clmCellsOf(scenario)])
@@ -193,7 +193,7 @@ const CONCEPT_CODES = [
     readdirSync(FEATURES)
       .filter((file) => file.endsWith(".feature"))
       .filter((file) => existsSync(new URL(`${camelCase(basename(file, ".feature"))}.ts`, DOMAIN)))
-      .flatMap((file) => scenarioCodesIn(readFileSync(new URL(file, FEATURES), "utf8"))),
+      .flatMap((file) => claimCodesIn(readFileSync(new URL(file, FEATURES), "utf8"))),
   ),
 ].sort();
 if (CONCEPT_CODES.length === 0) {

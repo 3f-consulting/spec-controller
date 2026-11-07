@@ -293,11 +293,11 @@ jobs:
       # Each probe pipes one line that breaks one rule into Vale and reds the step unless Vale names that rule, so a dead
       # rule fails before the tree is read. The probe's tokens are built at run time, so this file holds none of them.
       # The runner's default bash has no pipefail, so the probe's verdict is grep's, not Vale's exit.
-      - name: Vale — no ticket ID, scenario code or narrated history in a comment, description or document it reads
+      - name: Vale — no ticket ID, claim code or narrated history in a comment, description or document it reads
         id: SCN-FIT-075
         if: always()
         run: |
-          for probe in "Identifiers.TicketId:$(printf '%s-%s' 3F 1234)" "Identifiers.ScenarioCode:$(printf '%s-%s-%s' SCN ABC 001)" "Identifiers.ScenarioCode:$(printf '%s-%s-%s' CLM ABC 001)" "History.Narrated:$(printf '%s %s' used to)"; do
+          for probe in "Identifiers.TicketId:$(printf '%s-%s' 3F 1234)" "Identifiers.ClaimCode:$(printf '%s-%s-%s' SCN ABC 001)" "Identifiers.ClaimCode:$(printf '%s-%s-%s' CLM ABC 001)" "History.Narrated:$(printf '%s %s' used to)"; do
             rule=${probe%%:*}
             printf '%s\n' "${probe#*:}" | vale --ext=.md --output=line | grep -q ":$rule:" || { echo "Vale's $rule rule did not fire on a line that breaks it"; exit 1; }
           done

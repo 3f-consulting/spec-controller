@@ -17,7 +17,7 @@ function reportOver(
   given: Given = { population: true, census: true }
 ): RenderInput {
   const features = parsedFeatures(sources, files);
-  const { scenarioCodePopulation, ...judged } = evidenceReconciliationFromSources({
+  const { claimCodePopulation, ...judged } = evidenceReconciliationFromSources({
     features,
     packageJson: {},
     ciWorkflows: [],
@@ -25,7 +25,7 @@ function reportOver(
     deferralTags: [],
   });
   return assembleRenderInput(
-    given.population ? { ...judged, scenarioCodePopulation } : judged,
+    given.population ? { ...judged, claimCodePopulation } : judged,
     ctx,
     given.census ? corpusCountsOfFeatures(features) : undefined
   );

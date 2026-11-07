@@ -16,8 +16,8 @@ import { corpusCountsOfFeatures } from "../parse/scenarios.js";
 import { everyOutcomeCorpusJson } from "./everyOutcomeCorpus.test-utils.js";
 import { claimReconciliationsOf } from "./reportClaimReconciliations.test-utils.js";
 import { RECONCILIATION_TOTALS_KEY, reconciliationTotalsOf } from "./reportReconciliationTotals.test-utils.js";
-import { configurationFaultsKey, configurationFaultsOf, errorsInTheInputsOf, scenarioCodeErrorsKey } from "./reportErrors.test-utils.js";
-import { scenarioCodesOnReport } from "./scenarioCodesOnReport.test-utils.js";
+import { configurationFaultsKey, configurationFaultsOf, errorsInTheInputsOf, claimCodeErrorsKey } from "./reportErrors.test-utils.js";
+import { claimCodesOnReport } from "./claimCodesOnReport.test-utils.js";
 import { scenarioName } from "../domain/scenarioName.test-utils.js";
 
 function reportLedger(): Ledger {
@@ -31,7 +31,7 @@ function reportLedger(): Ledger {
 }
 
 const evidenceObligations: EvidenceObligations = {
-  rawScnOccurrences: 10,
+  rawClaimCodeOccurrences: 10,
   scenarioCount: 7,
   excludedOccurrences: 3,
   untaggedScenarios: [],
@@ -59,7 +59,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       "claimReconciliations",
     ]);
     expect(report).not.toHaveProperty("metadata");
-    expect(scenarioCodesOnReport(report)).toEqual({
+    expect(claimCodesOnReport(report)).toEqual({
       featureFiles: 2,
       featureCodes: 1,
       excludedOccurrences: 3,
@@ -95,14 +95,14 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       unknown
     >;
     const errors = errorsInTheInputsOf(report);
-    expect(Object.keys({ ...errors })).toEqual([scenarioCodeErrorsKey, configurationFaultsKey]);
+    expect(Object.keys({ ...errors })).toEqual([claimCodeErrorsKey, configurationFaultsKey]);
     expect(Object.keys({ ...configurationFaultsOf(errors) })).toEqual([
       "keysNotRead",
       "ofWrongKind",
       "runnerKeysNotALayer",
       "nonChecksMatchingNoStep",
     ]);
-    expect(scenarioCodesOnReport(report)).toHaveProperty("sharedClaimCodes");
+    expect(claimCodesOnReport(report)).toHaveProperty("sharedClaimCodes");
     for (const oldPlace of ["claimCodeErrors", "scenarioCodePopulation", "evidenceObligations"]) {
       expect(report).not.toHaveProperty(oldPlace);
     }

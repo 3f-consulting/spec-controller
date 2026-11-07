@@ -4,7 +4,7 @@ import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 import type { ClaimCodeError } from "../domain/scnTags.js";
-import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
+import { codeErrorsCtx as ctx, FOREIGN } from "./claimCodeError.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CoreMessage } from "./messages.js";
 import { markdownHeading } from "./heading.js";
@@ -75,7 +75,7 @@ const withoutErrorSection = (lines: readonly string[]): string[] => {
 };
 
 describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in the inputs section after the run provenance", () => {
-  it("states scenario code errors alone under Claim code errors, right after the run provenance and before the Summary", () => {
+  it("states claim code errors alone under Claim code errors, right after the run provenance and before the Summary", () => {
     const { before, body, after } = errorSectionOf(reportLines({ codeErrors: [FOREIGN] }));
     expect(before).toBe(runProvenance());
     expect(after).toBe(summary());
@@ -91,7 +91,7 @@ describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in 
     expect(body.filter(isEntryOf(coreMessage(CoreMessage.ConfigurationUnknownKey, { key: "`specController.zzz`" })))).toHaveLength(1);
   });
 
-  it("states scenario code errors before configuration faults, in one section ahead of the run integrity stamp", () => {
+  it("states claim code errors before configuration faults, in one section ahead of the run integrity stamp", () => {
     const lines = reportLines({ codeErrors: [FOREIGN], configuration: KEY_NOT_READ, unsound: true });
     const { before, body, after } = errorSectionOf(lines);
     expect(before).toBe(runProvenance());

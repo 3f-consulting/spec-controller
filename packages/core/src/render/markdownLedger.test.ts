@@ -58,9 +58,9 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
       s.qualityCheckReconciliations.flatMap(linesOf).filter((line) => line.outcome === "no-evidence-obligation")
     );
     expect(noEvidenceObligation).toHaveLength(2);
-    const scnC = balance.claimReconciliations.find((s) => s.claim === "SCN-C")!;
-    expect(scnC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheckKind === "integration" && line.outcome === "no-evidence-obligation")).toBe(true);
-    expect(scnC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheckKind === "integration" && line.outcome === "satisfied")).toBe(false);
+    const claimC = balance.claimReconciliations.find((s) => s.claim === "SCN-C")!;
+    expect(claimC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheckKind === "integration" && line.outcome === "no-evidence-obligation")).toBe(true);
+    expect(claimC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheckKind === "integration" && line.outcome === "satisfied")).toBe(false);
   });
 
   it("renders corpus-driven columns — Fitness first, then the behavioural levels present (e2e/performance absent)", () => {

@@ -29,7 +29,7 @@ describe("[SCN-CLI-096] a feature part no file's header carries has no file behi
 });
 
 describe("[SCN-CLI-097] a corpus with no feature file is judged, never skipped", () => {
-  it("reads an empty feature directory as a corpus of no file and no code, with no scenario code error", () => {
+  it("reads an empty feature directory as a corpus of no file and no code, with no claim code error", () => {
     const root = targetIn(EMPTY_CORPUS);
     const balance = runReconcile({
       features: join(root, CORPUS_DIR),
@@ -38,7 +38,7 @@ describe("[SCN-CLI-097] a corpus with no feature file is judged, never skipped",
     }, resolveTargetRoot({ features: join(root, CORPUS_DIR) }));
 
     expect(balance.claimCodeErrors).toEqual([]);
-    expect(balance.scenarioCodePopulation).toEqual({ featureFiles: 0, featureCodes: 0 });
+    expect(balance.claimCodePopulation).toEqual({ featureFiles: 0, featureCodes: 0 });
   });
 });
 

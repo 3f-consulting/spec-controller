@@ -5,11 +5,11 @@ import { inEvidenceOrder } from "./evidenceOrder.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 
-const SCN = "SCN-ORD-001";
+const CLAIM_CODE = "SCN-ORD-001";
 
 const scenarios: Scenario[] = [
   {
-    claimCode: SCN,
+    claimCode: CLAIM_CODE,
     evidenceObligations: [
       { qualityCheckKind: "unit" },
       { qualityCheckKind: "integration" },
@@ -20,15 +20,15 @@ const scenarios: Scenario[] = [
   },
 ];
 
-const unitZ: EvidenceObservation = { qualityCheckKind: "unit", claimCode: SCN, status: "passed", locator: "z.test.ts" };
-const unitA: EvidenceObservation = { qualityCheckKind: "unit", claimCode: SCN, status: "passed", locator: "a.test.ts" };
-const integration: EvidenceObservation = { qualityCheckKind: "integration", claimCode: SCN, status: "passed", locator: "f.feature" };
-const e2e: EvidenceObservation = { qualityCheckKind: "e2e", claimCode: SCN, status: "passed", locator: "b.feature" };
-const performance: EvidenceObservation = { qualityCheckKind: "performance", claimCode: SCN, status: "passed", locator: "a.feature" };
+const unitZ: EvidenceObservation = { qualityCheckKind: "unit", claimCode: CLAIM_CODE, status: "passed", locator: "z.test.ts" };
+const unitA: EvidenceObservation = { qualityCheckKind: "unit", claimCode: CLAIM_CODE, status: "passed", locator: "a.test.ts" };
+const integration: EvidenceObservation = { qualityCheckKind: "integration", claimCode: CLAIM_CODE, status: "passed", locator: "f.feature" };
+const e2e: EvidenceObservation = { qualityCheckKind: "e2e", claimCode: CLAIM_CODE, status: "passed", locator: "b.feature" };
+const performance: EvidenceObservation = { qualityCheckKind: "performance", claimCode: CLAIM_CODE, status: "passed", locator: "a.feature" };
 const fitness: EvidenceObservation = {
   qualityCheckKind: "fitness",
   fitnessFunction: "tidy",
-  claimCode: SCN,
+  claimCode: CLAIM_CODE,
   exists: true,
   enforcedOverRealSource: true,
 };
@@ -40,7 +40,7 @@ function permutations<T>(items: readonly T[]): T[][] {
   );
 }
 
-const rowOf = (observations: EvidenceObservation[], claimCode = SCN) =>
+const rowOf = (observations: EvidenceObservation[], claimCode = CLAIM_CODE) =>
   reconcile(scenarios, observations).claimReconciliations.find((r) => r.claim === claimCode)!;
 
 const coordinates = (observations: readonly EvidenceObservation[]) =>
@@ -65,7 +65,7 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
   });
 
   it("reads an evidence observation with no location before every located evidence observation of its kind of quality check", () => {
-    const unlocated: EvidenceObservation = { qualityCheckKind: "unit", claimCode: SCN, status: "passed" };
+    const unlocated: EvidenceObservation = { qualityCheckKind: "unit", claimCode: CLAIM_CODE, status: "passed" };
     const capitalised: EvidenceObservation = { ...unitA, locator: "A.test.ts" };
     expect(coordinates(observationsOf(rowOf([unitA, capitalised, unlocated])))).toEqual([
       ["unit", null],
@@ -91,15 +91,15 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
   });
 
   it("orders evidence observations alike in kind of quality check, location and scenario by what else they say, however their objects were built", () => {
-    const saysA: EvidenceObservation = { qualityCheckKind: "unit", claimCode: SCN, status: "failed", locator: "a.test.ts", message: "a" };
-    const saysB: EvidenceObservation = { message: "b", locator: "a.test.ts", status: "failed", claimCode: SCN, qualityCheckKind: "unit" };
+    const saysA: EvidenceObservation = { qualityCheckKind: "unit", claimCode: CLAIM_CODE, status: "failed", locator: "a.test.ts", message: "a" };
+    const saysB: EvidenceObservation = { message: "b", locator: "a.test.ts", status: "failed", claimCode: CLAIM_CODE, qualityCheckKind: "unit" };
     expect(observationsOf(rowOf([saysB, saysA])).map((o) => (o as { message?: string }).message)).toEqual(["a", "b"]);
   });
 
   it("orders evidence observations alike but for their notes by what the notes say, however the notes were built", () => {
     const notesA = [{ kind: "several-claim-codes" as const, codes: ["SCN-AAA-001", "SCN-BBB-001"] }];
     const notesB = [{ codes: ["SCN-AAA-002", "SCN-BBB-001"], kind: "several-claim-codes" as const }];
-    const saysA: EvidenceObservation = { qualityCheckKind: "unit", claimCode: SCN, status: "failed", locator: "a.test.ts", notes: notesA };
+    const saysA: EvidenceObservation = { qualityCheckKind: "unit", claimCode: CLAIM_CODE, status: "failed", locator: "a.test.ts", notes: notesA };
     const saysB: EvidenceObservation = { ...saysA, notes: notesB };
     for (const order of [[saysA, saysB], [saysB, saysA]]) {
       expect(observationsOf(rowOf(order)).map((o) => ("notes" in o ? o.notes : undefined))).toEqual([notesA, notesB]);

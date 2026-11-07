@@ -54,7 +54,7 @@ Then("nothing is rendered", function (this: SpecControllerWorld) {
 const SAVED_VERDICTS: Record<string, { fixture: string; flags: string[] }> = {
   "all-balanced": { fixture: "balanced", flags: [] },
   "out-of-balance": { fixture: "evidence-observation", flags: [] },
-  "balanced-with-claim-code-errors": { fixture: "scenario-code-error", flags: [] },
+  "balanced-with-claim-code-errors": { fixture: "claim-code-error", flags: [] },
   unsound: { fixture: "broken", flags: [] },
   "nothing to reconcile": { fixture: "nothing-to-reconcile", flags: [] },
   "only-Pending-Items under the strict option": { fixture: "pending-only", flags: ["--strict"] },

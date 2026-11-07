@@ -46,7 +46,7 @@ function documentationFindings(guide: string, catalogues: ErrorCatalogues = ERRO
   return [
     ...check(guide, "Exit codes", exitCodes),
     ...check(guide, "Error codes", Object.values(catalogues.app)),
-    ...check(guide, "Errors in the inputs", Object.values(catalogues.core), ["Configuration the run cannot use is named, never dropped", "Scenario code errors"]),
+    ...check(guide, "Errors in the inputs", Object.values(catalogues.core), ["Configuration the run cannot use is named, never dropped", "Claim code errors"]),
     ...Object.values(catalogues.app)
       .filter((code) => Object.values(catalogues.core).includes(code))
       .map((code) => ({ section: "Error codes, Errors in the inputs", code, fault: "stands for two errors" as const })),

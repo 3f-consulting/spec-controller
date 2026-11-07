@@ -342,14 +342,14 @@ Then("the verdict headline names both the scenario code error and the accounts o
   assert.equal(headline.exit, 1);
 });
 
-const SCENARIO_CODE_ERROR = "tests/fixtures/scenario-code-error";
+const CLAIM_CODE_ERROR = "tests/fixtures/claim-code-error";
 
 Given("a target that reconciles balanced-with-claim-code-errors", function (this: SpecControllerWorld) {
   this.invocationArgs = [
-    "--features", `${SCENARIO_CODE_ERROR}/features`,
-    "--vitest", `${SCENARIO_CODE_ERROR}/vitest.json`,
-    "--package-json", `${SCENARIO_CODE_ERROR}/package.json`,
-    ...NO_WORKFLOWS(SCENARIO_CODE_ERROR),
+    "--features", `${CLAIM_CODE_ERROR}/features`,
+    "--vitest", `${CLAIM_CODE_ERROR}/vitest.json`,
+    "--package-json", `${CLAIM_CODE_ERROR}/package.json`,
+    ...NO_WORKFLOWS(CLAIM_CODE_ERROR),
   ];
 });
 

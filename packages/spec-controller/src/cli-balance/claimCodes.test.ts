@@ -4,8 +4,8 @@ import { join } from "node:path";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { claimReconciliationsOf } from "../../../../tests/steps/support/reportClaimReconciliations.js";
-import { scenarioCodesOnReport } from "../../../../tests/steps/support/reportScenarioCodes.js";
-import { errorsInTheInputsOf, scenarioCodeErrorsOnReport } from "../../../../tests/steps/support/reportErrorsInTheInputs.js";
+import { claimCodesOnReport } from "../../../../tests/steps/support/reportClaimCodes.js";
+import { errorsInTheInputsOf, claimCodeErrorsOnReport } from "../../../../tests/steps/support/reportErrorsInTheInputs.js";
 
 // A whole balance run takes longer than Vitest's default limit.
 const wholeRun = { timeout: 30_000 };
@@ -65,7 +65,7 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
 });
 
 describe("[SCN-CLI-094] a prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context", () => {
-  it("counts the two- and five-character prose mentions as excluded, and lists no scenario code error", wholeRun, () => {
+  it("counts the two- and five-character prose mentions as excluded, and lists no claim code error", wholeRun, () => {
     const dir = temporaryDirectory("scn-stg-028-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
@@ -76,12 +76,12 @@ describe("[SCN-CLI-094] a prose mention of a feature part outside two to five ch
     );
     const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--format", "json"]);
     const report = JSON.parse(stdout);
-    expect(scenarioCodesOnReport(report).excludedOccurrences).toBe(2);
+    expect(claimCodesOnReport(report).excludedOccurrences).toBe(2);
     expect(errorsInTheInputsOf(report)).toBeUndefined();
   });
 });
 
-describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evidence obligation under either, and is listed as a scenario code error naming both", () => {
+describe("[SCN-CLI-095] a scenario tagged with two claim codes raises no evidence obligation under either, and is listed as a claim code error naming both", () => {
   function target(ids: string): string {
     const dir = temporaryDirectory("scn-stg-029-unit-");
     mkdirSync(join(dir, "features"));
@@ -127,13 +127,13 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
     expect(rows.filter((r) => r.kind === "scenario").map((r) => r.claim)).toEqual(["SCN-TWO-001"]);
     expect(rows.find((r) => r.claim === "SCN-TWO-002")?.kind).toBe("phantom-claim");
     expect(rows.find((r) => r.claim === "SCN-TWO-003")).toBeUndefined();
-    expect(scenarioCodesOnReport(report).untaggedScenarios).toEqual([]);
+    expect(claimCodesOnReport(report).untaggedScenarios).toEqual([]);
   });
 
   it("lists several-claim-codes in the JSON and under Claim code errors, naming the file, the scenario and both codes, and exits 1", wholeRun, () => {
     const dir = target("@SCN-TWO-002 @SCN-TWO-003");
     const json = balance(dir, "json");
-    expect(scenarioCodeErrorsOnReport(JSON.parse(json.stdout))).toEqual([
+    expect(claimCodeErrorsOnReport(JSON.parse(json.stdout))).toEqual([
       expect.objectContaining({
         kind: "several-claim-codes",
         files: ["two.feature"],
@@ -153,7 +153,7 @@ describe("[SCN-CLI-095] a scenario tagged with two scenario codes raises no evid
     expect(md.exitCode).toBe(1);
   });
 
-  it("reconciles a scenario with one code as today, listing no scenario code error", wholeRun, () => {
+  it("reconciles a scenario with one code as today, listing no claim code error", wholeRun, () => {
     const json = balance(target("@SCN-TWO-002"), "json");
     const report = JSON.parse(json.stdout);
     const row = claimReconciliationsOf<Row>(report).find((r) => r.claim === "SCN-TWO-002");

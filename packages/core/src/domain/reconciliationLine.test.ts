@@ -7,17 +7,17 @@ import type { Ledger } from "./ledger.js";
 import type { EvidenceObservation, QualityCheckKind, Scenario } from "./journal.js";
 import type { QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 
-const SCN = "SCN-AAA-001";
+const CLAIM_CODE = "SCN-AAA-001";
 
 const unit = (status: "passed" | "failed", locator: string): EvidenceObservation => ({
   qualityCheckKind: "unit",
-  claimCode: SCN,
+  claimCode: CLAIM_CODE,
   status,
   locator,
 });
 const brokenUnit = (locator: string): EvidenceObservation => ({
   qualityCheckKind: "unit",
-  claimCode: SCN,
+  claimCode: CLAIM_CODE,
   status: "failed",
   broken: true,
   locator,
@@ -40,8 +40,8 @@ function lineOutcomesOf(qcr: QualityCheckReconciliation): (string | undefined)[]
 }
 
 function reconciledOneScenario(observations: EvidenceObservation[], obligations: Scenario["evidenceObligations"] = [{ qualityCheckKind: "unit" }]) {
-  const ledger = reconcile([{ claimCode: SCN, evidenceObligations: obligations }], observations);
-  return { ledger, row: rowOf(ledger, SCN) };
+  const ledger = reconcile([{ claimCode: CLAIM_CODE, evidenceObligations: obligations }], observations);
+  return { ledger, row: rowOf(ledger, CLAIM_CODE) };
 }
 
 describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation holds reads its own outcome, every one counting toward the claim's verdict, and an obligation with none reads one missing line", () => {
@@ -101,7 +101,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   const fitness = (run: { exists: boolean; enforcedOverRealSource: boolean; status?: "passed" | "failed"; broken?: true }): EvidenceObservation => ({
     qualityCheckKind: "fitness",
     fitnessFunction: "lint:a",
-    claimCode: SCN,
+    claimCode: CLAIM_CODE,
     ...run,
   });
 
@@ -129,7 +129,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   it("reads each observation no obligation asks for as its own no-evidence-obligation line, and a broken one as broken", () => {
     const integration = (status: "passed" | "failed", locator: string, broken?: true): EvidenceObservation => ({
       qualityCheckKind: "integration",
-      claimCode: SCN,
+      claimCode: CLAIM_CODE,
       status,
       locator,
       ...(broken ? { broken } : {}),
@@ -171,7 +171,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   });
 
   it("reads a pending kind of quality check's observation as one no-evidence-obligation line beside the Pending Item", () => {
-    const observation: EvidenceObservation = { qualityCheckKind: "integration", claimCode: SCN, status: "passed", locator: "a.feature" };
+    const observation: EvidenceObservation = { qualityCheckKind: "integration", claimCode: CLAIM_CODE, status: "passed", locator: "a.feature" };
     const { row } = reconciledOneScenario([observation], [{ qualityCheckKind: "integration", pending: true }]);
 
     expect(row.pendingItems).toEqual([{ qualityCheckKind: "integration" }]);
@@ -203,7 +203,7 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   it("counts lines, not reconciliations, in the summary's total and by-outcome tally", () => {
     const ledger = reconcile(
       [
-        { claimCode: SCN, evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: CLAIM_CODE, evidenceObligations: [{ qualityCheckKind: "unit" }] },
         { claimCode: "SCN-BBB-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [

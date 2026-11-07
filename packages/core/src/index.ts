@@ -16,7 +16,7 @@ export type {
 } from "./model.js";
 
 export {
-  countScnOccurrences,
+  countClaimCodeOccurrences,
   parseFeatureCorpus,
   scenariosOf,
   untaggedScenariosOf,
@@ -27,13 +27,13 @@ export {
 export type { ClaimCodesAt } from "./parse/scenarios.js";
 export type { ParsedFeatureFile } from "./parse/scenarios.js";
 
-export { evidenceObligations, corpusCountsOf, sharedScnCodesOf, untaggedScenarioId } from "./domain/corpusCounts.js";
+export { evidenceObligations, corpusCountsOf, sharedClaimCodesOf, untaggedScenarioId } from "./domain/corpusCounts.js";
 export type { EvidenceObligations, SharedClaimCode } from "./domain/corpusCounts.js";
 export type { ScenarioName } from "./domain/qualityCheckReconciliation.js";
 
 export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
-export { hasScenarioCodeErrors } from "./domain/scnTags.js";
-export type { ClaimCodeError, ClaimCodeErrorKind, ScenarioCodePopulation } from "./domain/scnTags.js";
+export { hasClaimCodeErrors } from "./domain/scnTags.js";
+export type { ClaimCodeError, ClaimCodeErrorKind, ClaimCodePopulation } from "./domain/scnTags.js";
 export {
   isBalanced,
   hasPendingItems,
@@ -43,8 +43,8 @@ export {
 export { BUILT_IN_DEFERRAL_TAGS } from "./domain/pendingItems.js";
 export type { RunVerdict } from "./domain/runVerdict.js";
 
-export { nextScnCode, unknownPartCarried } from "./domain/scnAllocation.js";
-export type { Allocation, AllocationRequest, ScnOccurrence, UnknownPart, UnknownPartCarried } from "./domain/scnAllocation.js";
+export { nextClaimCode, unknownPartCarried } from "./domain/claimCodeAllocation.js";
+export type { Allocation, AllocationRequest, ClaimCodeOccurrence, UnknownPart, UnknownPartCarried } from "./domain/claimCodeAllocation.js";
 
 export { parseVitestEvidenceObservations } from "./parse/vitest.js";
 export type { VitestJsonReport } from "./parse/vitest.js";

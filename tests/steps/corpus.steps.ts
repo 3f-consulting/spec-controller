@@ -9,7 +9,7 @@ import { entryText } from "./support/catalogue.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
 import { showsHeading, verdictLineOf as verdictShownIn } from "./support/reportLines.js";
 import { reconciliationTotalsOf } from "./support/reportReconciliationTotals.js";
-import { scenarioCodesOnReport } from "./support/reportScenarioCodes.js";
+import { claimCodesOnReport } from "./support/reportClaimCodes.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import { scenarioName } from "./support/scenarioName.js";
 import type { CorpusRun, SpecControllerWorld } from "./support/world.js";
@@ -297,7 +297,7 @@ function judgement({ report }: CorpusRun): Record<string, unknown> {
   return { ...judged, summary: { ...summary, ...(byFeature ? { outOfBalanceByFeature: byFeature } : {}) } };
 }
 
-function scenarioCodesOf({ report }: CorpusRun): string[] {
+function claimCodesOf({ report }: CorpusRun): string[] {
   return claimReconciliationsOf<{ claim: string; kind: string }>(report)
     .filter(({ kind }) => kind === "scenario")
     .map(({ claim }) => claim)
@@ -323,7 +323,7 @@ When("balance is asked to reconcile both of those targets", function (this: Spec
 Then("the nested target's reconciliation reports the scenarios of every one of its feature files", function (this: SpecControllerWorld) {
   assert.ok(this.nestedRun, "the nested target was not reconciled");
   assert.deepEqual(
-    scenarioCodesOf(this.nestedRun),
+    claimCodesOf(this.nestedRun),
     SCENARIOS_OF_EVERY_FILE,
     "a feature file below the top level of the corpus was not read",
   );
@@ -331,7 +331,7 @@ Then("the nested target's reconciliation reports the scenarios of every one of i
 
 Then("both targets reach the same verdict over the same Claim Reconciliations", function (this: SpecControllerWorld) {
   assert.ok(this.nestedRun && this.flatRun, "both targets must have been reconciled");
-  assert.deepEqual(scenarioCodesOf(this.flatRun), SCENARIOS_OF_EVERY_FILE, "fixture invariant: the flat corpus reads every file");
+  assert.deepEqual(claimCodesOf(this.flatRun), SCENARIOS_OF_EVERY_FILE, "fixture invariant: the flat corpus reads every file");
   assert.equal(this.nestedRun.status, this.flatRun.status, "the nested target reached a different verdict from the flat one");
   assert.deepEqual(judgement(this.nestedRun), judgement(this.flatRun));
 });
@@ -382,7 +382,7 @@ When("balance is asked to reconcile that corpus", function (this: SpecController
 Then("the reconciliation names each of those scenarios by its feature file's path under the corpus", function (this: SpecControllerWorld) {
   assert.ok(this.sameNameJson, "the corpus was not reconciled");
   assert.deepEqual(
-    scenarioCodesOnReport(this.sameNameJson).untaggedScenarios,
+    claimCodesOnReport(this.sameNameJson).untaggedScenarios,
     SAME_NAME_FILES.map((feature) => scenarioName(feature, UNTAGGED_TITLE)),
     "an untagged scenario's name does not hold its feature file's path under the corpus",
   );
