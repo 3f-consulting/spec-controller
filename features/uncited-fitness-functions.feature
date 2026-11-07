@@ -19,7 +19,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     A step whose `id:` names a code no scenario carries posts to a phantom claim's row under that code,
     not to the unnamed claim's row.
 
-    @unit @SCN-USG-001
+    @unit @CLM-USG-001
     Scenario: a CI check no scenario cites is reported as an uncited fitness function
 
   Rule: a check a scenario cites is attributed, not an uncited fitness function
@@ -27,7 +27,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     The check posts to the cited scenario's row and counts among the running fitness functions.
     The citation comes from the step's `id:` alone.
 
-    @integration @SCN-USG-002
+    @integration @CLM-USG-002
     Scenario: a check a scenario cites is attributed, not an uncited fitness function
       Given a target whose CI runs the lint:foo and lint:bar checks
       And only lint:foo is cited by a scenario
@@ -39,7 +39,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     The manifest names one runner per layer. A step that invokes that runner, directly or through
     a manifest script, is that layer's runner and is not a fitness function.
 
-    @unit @SCN-USG-003
+    @unit @CLM-USG-003
     Scenario: test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners
 
   Rule: a CI check whose script name matches no convention of the tool's is reported as an uncited fitness function
@@ -47,7 +47,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     A check is found whatever its script is called, and reported uncited when its step cites no
     scenario.
 
-    @unit @SCN-USG-004
+    @unit @CLM-USG-004
     Scenario: an uncited check whose script name carries no prefix of ours is an uncited fitness function
 
   Rule: a fitness function is observed wherever in the workflows it runs
@@ -56,14 +56,14 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     running in a sibling workflow is satisfied, and no watermelon is raised against it. An uncited
     check running in a sibling workflow is reported uncited.
 
-    @integration @SCN-USG-006
+    @integration @CLM-USG-006
     Scenario: a cited fitness function enforced from a sibling workflow is satisfied, with no watermelon raised against it
       Given a target whose ci.yml runs no fitness function and whose nightly.yml runs lint:nightly
       And a scenario cites lint:nightly
       When the reconciliation report is rendered over the target's workflow directory
       Then lint:nightly reconciles satisfied, with no watermelon raised against it
 
-    @unit @SCN-USG-007
+    @unit @CLM-USG-007
     Scenario: an uncited fitness function running in a sibling workflow is reported uncited
 
   Rule: an explicitly supplied CI file narrows observation to that file
@@ -71,7 +71,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     Naming one CI file reads that file alone. Runs are observed only from the CI files read; a
     manifest script that CI does not run is not counted.
 
-    @integration @SCN-USG-008
+    @integration @CLM-USG-008
     Scenario: an explicitly supplied CI file narrows observation to that file alone
       Given a target whose nightly.yml runs lint:sweep and whose ci.yml does not
       When the reconciliation report is rendered for that target's ci.yml alone
@@ -81,7 +81,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     The check posts to the cited scenario's row. Its name plays no part.
 
-    @unit @SCN-USG-005
+    @unit @CLM-USG-005
     Scenario: a cited check whose script name carries no prefix of ours is attributed, not an uncited fitness function
 
   Rule: a step the manifest names a non-check is not a candidate, and the report says so
@@ -93,10 +93,10 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     the workflows the run read. In a run that read any CI step, an entry naming a workflow the run
     did not read is listed as not applied, beside the workflows the run read.
 
-    @unit @SCN-USG-015
+    @unit @CLM-USG-015
     Scenario: a step named in `notChecks` is not a candidate
 
-    @unit @SCN-USG-038
+    @unit @CLM-USG-038
     Scenario: a step named in `notChecks` is reported as a non-check rather than dropped
 
   Rule: the reconciler is not one of the reconciled rows
@@ -108,7 +108,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     lists neither as a non-check. The same tool run for another purpose stays a candidate, and
     neither step is recognised by its title.
 
-    @unit @SCN-USG-014
+    @unit @CLM-USG-014
     Scenario: the balance step and its step-record dump are not candidates, and no configuration says so
 
   Rule: a step is a candidate whatever form it takes
@@ -117,7 +117,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     script it invokes; a `uses:` step by its step name, or by its `uses:` value when it has no
     name.
 
-    @unit @SCN-USG-013
+    @unit @CLM-USG-013
     Scenario: a `uses:` step is a candidate fitness function, reported by the action it uses
 
   Rule: a step whose only work is one of GitHub's own plumbing actions is not a check
@@ -127,22 +127,22 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     repository of its `uses:` value; the ref after the at sign and any sub-path do not change the
     answer.
 
-    @unit @SCN-USG-030
+    @unit @CLM-USG-030
     Scenario: a step that only uses one of GitHub's plumbing actions is not a candidate fitness function, whatever ref pins it
 
     Any other action stays a candidate: another of GitHub's own actions, another owner's checkout,
     a repository whose name only begins with checkout, a local action and a docker image.
 
-    @unit @SCN-USG-031
+    @unit @CLM-USG-031
     Scenario: an action outside the closed list stays a candidate — dependency review, another owner's look-alike and a local action
 
     A plumbing step the manifest names a non-check is a non-check, named as the manifest says, and
     its entry is not stale.
 
-    @unit @SCN-USG-032
+    @unit @CLM-USG-032
     Scenario: a plumbing step the manifest names a non-check is a non-check, as the manifest says
 
-    @unit @SCN-USG-037
+    @unit @CLM-USG-037
     Scenario: a notChecks entry naming a plumbing step is not stale
 
   Rule: a manifest naming no runners makes every step a candidate
@@ -152,7 +152,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     configuration. A candidate citing nothing posts to the unnamed claim, so the run reds; --exit-zero
     changes only the exit status, never the report.
 
-    @unit @SCN-USG-017
+    @unit @CLM-USG-017
     Scenario: a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate
 
   Rule: the report names the scope it read
@@ -161,7 +161,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     which add up to the steps read, in each job, sorted. It makes no judgement
     about whether that scope is plausible.
 
-    @unit @SCN-USG-020
+    @unit @CLM-USG-020
     Scenario: the step account's rows, one per workflow and job read, carry each disposition's count beside the steps read, and those counts add up to the steps read
 
   Rule: every step the reader saw is accounted for
@@ -171,5 +171,5 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
     for, and the two are equal. The JSON report and the Markdown report both name the steps behind
     each count other than the candidates, plumbing steps included.
 
-    @unit @SCN-USG-018
+    @unit @CLM-USG-018
     Scenario: the step account's total sums each count over its rows, and the steps its dispositions account for equal the steps read

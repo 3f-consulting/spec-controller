@@ -4,7 +4,7 @@ import { reconcile } from "./evidenceReconciliation.js";
 import { isBalanced, hasPendingItems, hasBrokenEvidence } from "./ledger.js";
 import type { EvidenceObservation } from "../model.js";
 
-describe("[SCN-LDG-018] hasBrokenEvidence — the whole-run soundness predicate", () => {
+describe("[CLM-LDG-018] hasBrokenEvidence — the whole-run soundness predicate", () => {
   const brokenObservation: EvidenceObservation = {
     qualityCheckKind: "unit",
     claimCode: null,
@@ -16,14 +16,14 @@ describe("[SCN-LDG-018] hasBrokenEvidence — the whole-run soundness predicate"
 
   it("the three whole-run predicates are INDEPENDENT: pending-without-broken is sound; broken-without-pending is unsound", () => {
     const pendingOnly = reconcile(
-      [{ claimCode: "SCN-HNS-019", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] }],
+      [{ claimCode: "CLM-HNS-019", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] }],
       [],
     );
     expect(hasPendingItems(pendingOnly)).toBe(true);
     expect(hasBrokenEvidence(pendingOnly)).toBe(false);
 
     const brokenOnly = reconcile(
-      [{ claimCode: "SCN-HNS-018", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "CLM-HNS-018", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [brokenObservation],
     );
     expect(hasBrokenEvidence(brokenOnly)).toBe(true);

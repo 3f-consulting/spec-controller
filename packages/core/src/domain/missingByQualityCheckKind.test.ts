@@ -3,12 +3,12 @@ import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import { ledgerTally } from "./ledger.js";
 
-describe("[SCN-RMD-008] the missing split counts the missing Reconciliation lines by kind of quality check, in canonical order", () => {
+describe("[CLM-RMD-008] the missing split counts the missing Reconciliation lines by kind of quality check, in canonical order", () => {
   const featureLines = [
     "@RMD",
     "Feature: fixture",
     "  Rule: a fixture rule",
-    "    @unit @integration @e2e @performance @fitness @SCN-RMD-008",
+    "    @unit @integration @e2e @performance @fitness @CLM-RMD-008",
     "    Scenario: a fixture scenario",
   ];
 
@@ -30,10 +30,10 @@ describe("[SCN-RMD-008] the missing split counts the missing Reconciliation line
   it("counts an obligation answered only by a broken observation as one missing line, beside its broken line", () => {
     const tally = ledgerTally(
       reconcile(
-        [{ claimCode: "SCN-RMD-008", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] }],
+        [{ claimCode: "CLM-RMD-008", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] }],
         [
-          { qualityCheckKind: "unit", claimCode: "SCN-RMD-008", status: "failed", broken: true, message: "the test file failed to load" },
-          { qualityCheckKind: "integration", claimCode: "SCN-RMD-008", status: "passed" },
+          { qualityCheckKind: "unit", claimCode: "CLM-RMD-008", status: "failed", broken: true, message: "the test file failed to load" },
+          { qualityCheckKind: "integration", claimCode: "CLM-RMD-008", status: "passed" },
         ]
       )
     );

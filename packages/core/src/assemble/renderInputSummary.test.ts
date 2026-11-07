@@ -12,16 +12,16 @@ import { reconciliationTotalsOf } from "./reportReconciliationTotals.test-utils.
 import { untaggedScenarioId, type EvidenceObligations } from "../domain/corpusCounts.js";
 import { scenarioName } from "../domain/scenarioName.test-utils.js";
 
-describe("[SCN-RMD-005] the summary states its reconciliation totals: its Claim Reconciliations, Reconciliation lines and pending items counted", () => {
+describe("[CLM-RMD-005] the summary states its reconciliation totals: its Claim Reconciliations, Reconciliation lines and pending items counted", () => {
   const rmd005Scenarios: Scenario[] = [
-    { claimCode: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { claimCode: "SCN-RMD-002", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }] },
-    { claimCode: "SCN-RMD-012", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "CLM-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "CLM-RMD-002", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }] },
+    { claimCode: "CLM-RMD-012", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ];
   const rmd005Observations: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", claimCode: "SCN-RMD-001", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "SCN-RMD-002", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "SCN-PHX-999", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-RMD-002", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-PHX-999", status: "passed" },
     { qualityCheckKind: "integration", claimCode: null, status: "passed" },
   ];
   const reconciliationTotals = {
@@ -55,12 +55,12 @@ describe("[SCN-RMD-005] the summary states its reconciliation totals: its Claim 
     rmd005Balance = reconcile(rmd005Scenarios, rmd005Observations);
     lintBalance = reconcile(
       [
-        { claimCode: "SCN-RMD-010", evidenceObligations: [{ qualityCheckKind: "fitness" }, { qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-RMD-011", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "CLM-RMD-010", evidenceObligations: [{ qualityCheckKind: "fitness" }, { qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-RMD-011", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
       ],
       [
-        { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-        { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", claimCode: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "CLM-RMD-010", exists: true, enforcedOverRealSource: true },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", claimCode: "CLM-RMD-011", exists: true, enforcedOverRealSource: false },
       ],
     );
   });
@@ -82,19 +82,19 @@ describe("[SCN-RMD-005] the summary states its reconciliation totals: its Claim 
   });
 });
 
-describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and feature file", () => {
+describe("[CLM-RMD-006] the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and feature file", () => {
   const scenarios: Scenario[] = [
-    { claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { claimCode: "SCN-LDG-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { claimCode: "SCN-XYZ-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { claimCode: "SCN-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-    { claimCode: "SCN-LDG-007", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+    { claimCode: "CLM-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "CLM-LDG-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "CLM-XYZ-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "CLM-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "CLM-LDG-007", evidenceObligations: [{ qualityCheckKind: "integration" }] },
   ];
   const observations: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" },
-    { qualityCheckKind: "integration", claimCode: "SCN-LDG-007", status: "failed" },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:guard", claimCode: "SCN-LNT-002", exists: true, enforcedOverRealSource: true },
-    { qualityCheckKind: "unit", claimCode: "SCN-PHX-999", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-LDG-001", status: "passed" },
+    { qualityCheckKind: "integration", claimCode: "CLM-LDG-007", status: "failed" },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:guard", claimCode: "CLM-LNT-002", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "unit", claimCode: "CLM-PHX-999", status: "passed" },
     { qualityCheckKind: "unit", claimCode: null, status: "passed" },
   ];
   let evidenceObligations: EvidenceObligations;
@@ -104,8 +104,8 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
     ["XYZ", "billing/checkout"],
   ]);
   const byNamedFeature = [
-    { feature: "LDG", featureFile: "ledger.feature", count: 3, claims: ["SCN-LDG-003", "SCN-LDG-007"], scenariosWithNoClaimCode: 1 },
-    { feature: "XYZ", featureFile: "billing/checkout.feature", count: 1, claims: ["SCN-XYZ-001"] },
+    { feature: "LDG", featureFile: "ledger.feature", count: 3, claims: ["CLM-LDG-003", "CLM-LDG-007"], scenariosWithNoClaimCode: 1 },
+    { feature: "XYZ", featureFile: "billing/checkout.feature", count: 1, claims: ["CLM-XYZ-001"] },
     { feature: "loose.feature", count: 2, claims: [], scenariosWithNoClaimCode: 2 },
   ];
   let ledger: Ledger;
@@ -124,11 +124,11 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
     expect(report.summary.outOfBalanceByFeature).toEqual(byNamedFeature);
   });
 
-  it("names no entry's feature file and keys each scenario with no @SCN by its file when no feature files are named", () => {
+  it("names no entry's feature file and keys each scenario with no claim code by its file when no feature files are named", () => {
     const report = assembleRenderInput(__er(ledger), ctx, evidenceObligations);
     expect(report.summary.outOfBalanceByFeature).toEqual([
-      { feature: "LDG", count: 2, claims: ["SCN-LDG-003", "SCN-LDG-007"] },
-      { feature: "XYZ", count: 1, claims: ["SCN-XYZ-001"] },
+      { feature: "LDG", count: 2, claims: ["CLM-LDG-003", "CLM-LDG-007"] },
+      { feature: "XYZ", count: 1, claims: ["CLM-XYZ-001"] },
       { feature: "ledger.feature", count: 1, claims: [], scenariosWithNoClaimCode: 1 },
       { feature: "loose.feature", count: 2, claims: [], scenariosWithNoClaimCode: 2 },
     ]);
@@ -147,18 +147,18 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
   });
 });
 
-describe("[SCN-RMD-008] each quality-check reconciliation carries a single kind of quality check as its coordinate, and the missing split counts the missing Reconciliation lines by it", () => {
+describe("[CLM-RMD-008] each quality-check reconciliation carries a single kind of quality check as its coordinate, and the missing split counts the missing Reconciliation lines by it", () => {
   const featureLines = [
     "@RMD",
     "Feature: fixture",
     "  Rule: a fixture rule",
-    "    @unit @fitness @SCN-RMD-008",
+    "    @unit @fitness @CLM-RMD-008",
     "    Scenario: a fixture scenario",
   ];
   const brokenFitness: EvidenceObservation = {
     qualityCheckKind: "fitness",
     fitnessFunction: "lint:rmd",
-    claimCode: "SCN-RMD-008",
+    claimCode: "CLM-RMD-008",
     exists: false,
     enforcedOverRealSource: false,
     broken: true,
@@ -182,7 +182,7 @@ describe("[SCN-RMD-008] each quality-check reconciliation carries a single kind 
           {
             qualityCheckKind: "fitness",
             fitnessFunction: "lint:rmd",
-            claimCode: "SCN-RMD-008",
+            claimCode: "CLM-RMD-008",
             exists: false,
             enforcedOverRealSource: false,
             broken: true,

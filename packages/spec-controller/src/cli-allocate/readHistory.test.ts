@@ -7,7 +7,7 @@ import { thrownBy } from "./answered.test-utils.js";
 import { AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 
-describe("[SCN-ALC-015] a code that appears only in a commit message is not retired", () => {
+describe("[CLM-ALC-015] a code that appears only in a commit message is not retired", () => {
   let logWithMessage: string;
 
   beforeEach(() => {
@@ -18,31 +18,31 @@ describe("[SCN-ALC-015] a code that appears only in a commit message is not reti
       "",
       "    Retag the scenario",
       "",
-      "    See SCN-ONE-900 for why.",
+      "    See CLM-ONE-900 for why.",
       "",
       "diff --git a/features/one.feature b/features/one.feature",
       "index 1111111..2222222 100644",
       "--- a/features/one.feature",
       "+++ b/features/one.feature",
       "@@ -4 +4 @@ Feature: part ONE",
-      "-  @SCN-ONE-001 @unit",
-      "+  @SCN-ONE-001 @unit @smoke",
+      "-  @CLM-ONE-001 @unit",
+      "+  @CLM-ONE-001 @unit @smoke",
     ].join("\n");
   });
 
   it("never sights a message line, whatever it mentions", () => {
     const texts = diffLineOccurrences(logWithMessage).map((occurrence) => occurrence.text);
-    expect(texts.some((text) => text.includes("SCN-ONE-900"))).toBe(false);
+    expect(texts.some((text) => text.includes("CLM-ONE-900"))).toBe(false);
   });
 });
 
 function repositoryWithHistory(): string {
   const repo = freshDirectory("allocate-history-");
   git(repo, ["init", "-q", "-b", "main"]);
-  writeFileSync(join(repo, "one.md"), "SCN-ONE-001\nSCN-ONE-005\n");
+  writeFileSync(join(repo, "one.md"), "CLM-ONE-001\nCLM-ONE-005\n");
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-q", "-m", "both"]);
-  writeFileSync(join(repo, "one.md"), "SCN-ONE-001\n");
+  writeFileSync(join(repo, "one.md"), "CLM-ONE-001\n");
   git(repo, ["commit", "-q", "-am", "retire 005"]);
   return repo;
 }
@@ -51,7 +51,7 @@ afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
 });
 
-describe("[SCN-ALC-021] history git cannot read is refused, never answered below a code it carries", () => {
+describe("[CLM-ALC-021] history git cannot read is refused, never answered below a code it carries", () => {
   it("refuses history whose loose objects it may not read", () => {
     const repo = repositoryWithHistory();
     const objects = join(repo, ".git", "objects");
@@ -70,7 +70,7 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
   });
 });
 
-describe("[SCN-ALC-022] a repository git cannot open is refused, never read as no repository", () => {
+describe("[CLM-ALC-022] a repository git cannot open is refused, never read as no repository", () => {
   it("refuses a repository whose .git it may not read, naming the .git", () => {
     const repo = repositoryWithHistory();
     withhold(join(repo, ".git"), 0o000);

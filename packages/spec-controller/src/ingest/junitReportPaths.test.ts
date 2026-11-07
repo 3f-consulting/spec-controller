@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { junitReportPathsOf } from "./junitReportPaths.js";
 import { readerOf } from "./ciPathReader.test-utils.js";
 
-describe("[SCN-JAV-001] --junit names one JUnit XML report file or a directory of Surefire's reports", () => {
+describe("[CLM-JAV-001] --junit names one JUnit XML report file or a directory of Surefire's reports", () => {
   it("resolves a directory to every report file Surefire wrote in it, in name order", () => {
     const reader = readerOf({ "target/surefire-reports": ["TEST-example.ZTest.xml", "TEST-example.ATest.xml"] }, []);
 

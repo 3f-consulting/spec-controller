@@ -4,7 +4,7 @@ import { projectProvenance } from "../assemble/composers.js";
 import type { RunContext, RunInputs } from "../domain/runProvenance.js";
 import { handedInputs } from "../runInputs.test-utils.js";
 
-describe("[SCN-RPT-001] provenance records input paths portably (relative to the run root)", () => {
+describe("[CLM-RPT-001] provenance records input paths portably (relative to the run root)", () => {
   const mk = (inputs: RunInputs, root?: string): RunContext => ({
     target: "demo",
     inputs: handedInputs(inputs),
@@ -44,7 +44,7 @@ describe("[SCN-RPT-001] provenance records input paths portably (relative to the
   });
 });
 
-describe("[SCN-RPT-027] the provenance projection names the optional CI step record", () => {
+describe("[CLM-RPT-027] the provenance projection names the optional CI step record", () => {
   const handed = (inputs: RunInputs): RunContext => ({
     target: "streams-target",
     inputs: handedInputs(inputs),
@@ -87,7 +87,7 @@ describe("[SCN-RPT-027] the provenance projection names the optional CI step rec
   });
 });
 
-describe("[SCN-RPT-028] the provenance projection names the canonical inputs the run did not receive", () => {
+describe("[CLM-RPT-028] the provenance projection names the canonical inputs the run did not receive", () => {
   const handed = (inputs: RunInputs): RunContext => ({
     target: "partly-handed-target",
     inputs: handedInputs(inputs),

@@ -9,10 +9,10 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { claimReconciliationsOf } from "../assemble/reportClaimReconciliations.test-utils.js";
 import { UNNAMED_CLAIM_ID } from "../domain/claimReconciliation.js";
 
-describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows by the reconciliation model's definitions of them, while the JSON keeps the terms", () => {
-  const proven = { claimCode: "SCN-CWD-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
-  const provenObservation = { qualityCheckKind: "unit" as const, claimCode: "SCN-CWD-001", status: "passed" as const };
-  const strandedObservation = { qualityCheckKind: "unit" as const, claimCode: "SCN-GONE-001", status: "passed" as const };
+describe("[CLM-RPT-039] the markdown counts phantom-claim and unnamed-claim rows by the reconciliation model's definitions of them, while the JSON keeps the terms", () => {
+  const proven = { claimCode: "CLM-CWD-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
+  const provenObservation = { qualityCheckKind: "unit" as const, claimCode: "CLM-CWD-001", status: "passed" as const };
+  const strandedObservation = { qualityCheckKind: "unit" as const, claimCode: "CLM-GONE-001", status: "passed" as const };
   const uncitedObservation = { qualityCheckKind: "unit" as const, claimCode: null, status: "passed" as const };
   const unbalanced = () => reconcile([proven], [provenObservation, strandedObservation, uncitedObservation]);
 
@@ -54,16 +54,16 @@ describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
   });
 });
 
-describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentence, never by its handle", () => {
-  const proven = { claimCode: "SCN-CWD-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
+describe("[CLM-RPT-040] the markdown's prose refers to an outcome by its sentence, never by its handle", () => {
+  const proven = { claimCode: "CLM-CWD-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
   const brokenObservation = {
     qualityCheckKind: "unit" as const,
-    claimCode: "SCN-CWD-001",
+    claimCode: "CLM-CWD-001",
     status: "failed" as const,
     broken: true as const,
     locator: "src/collect.test.ts",
   };
-  const provenObservation = { qualityCheckKind: "unit" as const, claimCode: "SCN-CWD-001", status: "passed" as const };
+  const provenObservation = { qualityCheckKind: "unit" as const, claimCode: "CLM-CWD-001", status: "passed" as const };
 
   it("the unsound stamp quotes the missing outcome's sentence", () => {
     const md = renderMarkdown(__er(reconcile([proven], [brokenObservation])), ctx, publishedExitCodeOf);

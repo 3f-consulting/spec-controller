@@ -11,7 +11,7 @@ const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, 
 const heldObservationsOf = (row: { qualityCheckReconciliations: { evidenceObservations?: { outcome: unknown }[] }[] }) =>
   row.qualityCheckReconciliations.flatMap((reconciliation) => reconciliation.evidenceObservations ?? []).map(postedOf);
 
-describe("[SCN-RPT-001] sourceTarget sources the provenance target from --target verbatim", () => {
+describe("[CLM-RPT-001] sourceTarget sources the provenance target from --target verbatim", () => {
   it("returns the --target value verbatim when given", () => {
     expect(sourceTarget({ target: "sample-target" })).toBe("sample-target");
     expect(sourceTarget({ target: "some/scoped-name" })).toBe("some/scoped-name");
@@ -22,7 +22,7 @@ describe("[SCN-RPT-001] sourceTarget sources the provenance target from --target
   });
 });
 
-describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
+describe("[CLM-RPT-002] the JSON report carries a provenance object", () => {
   it("runBalance's written JSON states the Cucumber report and the CI step record among its inputs, and reads the Cucumber report's scenario as an integration evidence observation", () => {
     const dir = temporaryDirectory("scn-rpt-002-unit-");
     cpSync("tests/fixtures/evidence-observation/features", join(dir, "features"), { recursive: true });
@@ -46,18 +46,18 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
 
     const report = JSON.parse(readFileSync(reportPath, "utf8"));
     const integrationRow = claimReconciliationsOf<Parameters<typeof heldObservationsOf>[0] & { claim: string }>(report).find(
-      (row) => row.claim === "SCN-TGT-002",
+      (row) => row.claim === "CLM-TGT-002",
     );
     expect({ inputs: report.runProvenance.inputs, observations: heldObservationsOf(integrationRow!) }).toEqual({
       inputs: { features: "features", cucumber: "cucumber.json", ci: "workflows", ciSteps: "ci-steps.json" },
       observations: [
-        { qualityCheckKind: "integration", claimCode: "SCN-TGT-002", status: "passed", locator: "features/widget.feature" },
+        { qualityCheckKind: "integration", claimCode: "CLM-TGT-002", status: "passed", locator: "features/widget.feature" },
       ],
     });
   });
 });
 
-describe("[SCN-RPT-031] a feature file's scenarios carrying no claim code count together on one row named by that file", () => {
+describe("[CLM-RPT-031] a feature file's scenarios carrying no claim code count together on one row named by that file", () => {
   function byFeatureRows(md: string): string[][] {
     const section = md.slice(md.indexOf(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading))));
     const end = section.indexOf("\n#", 1);

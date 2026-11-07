@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { citationOfCitedRow } from "../parse/fitnessCitations.js";
 import { resolveDeferralTags } from "../parse/targetManifest.js";
 
-describe("[SCN-TRM-001] a configured deferral tag names the term the target authored", () => {
+describe("[CLM-TRM-001] a configured deferral tag names the term the target authored", () => {
   const configured = (tag: string): readonly string[] =>
     resolveDeferralTags({ specController: { deferralTags: [tag] } }, []);
 
@@ -22,13 +22,13 @@ describe("[SCN-TRM-001] a configured deferral tag names the term the target auth
   });
 });
 
-describe("[SCN-TRM-001] a check step's id: names the scenario the target authored", () => {
+describe("[CLM-TRM-001] a check step's id: names the scenario the target authored", () => {
   it.each([
-    ["bares a step's id: padded in front of its sigil", "  @SCN-MSD-001"],
-    ["bares a step's id: spelled with a space between the sigil and the term", "@ SCN-MSD-001"],
+    ["bares a step's id: padded in front of its sigil", "  @CLM-MSD-001"],
+    ["bares a step's id: spelled with a space between the sigil and the term", "@ CLM-MSD-001"],
   ] as const)("%s", (_title, id) => {
     expect(citationOfCitedRow(id)).toStrictEqual({
-      claimCode: "SCN-MSD-001",
+      claimCode: "CLM-MSD-001",
     });
   });
 
@@ -36,7 +36,7 @@ describe("[SCN-TRM-001] a check step's id: names the scenario the target authore
     ["cites nothing for a step's id: that is nothing but whitespace and a sigil", "  @  "],
     [
       "keeps a doubled sigil exactly as the step's id: spelled it, citing no un-doubled scenario",
-      "  @@SCN-MSD-001",
+      "  @@CLM-MSD-001",
     ],
   ] as const)("%s", (_title, id) => {
     expect(citationOfCitedRow(id)).toBeNull();

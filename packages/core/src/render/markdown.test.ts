@@ -14,12 +14,12 @@ const SUBJECT = (): string => coreMessage(CoreMessage.ClaimReconciliationSubject
 let balance: Ledger;
 beforeEach(() => {
   balance = reconcile(
-    [{ claimCode: "SCN-RPT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-    [{ qualityCheckKind: "unit", claimCode: "SCN-RPT-001", status: "passed" }],
+    [{ claimCode: "CLM-RPT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", claimCode: "CLM-RPT-001", status: "passed" }],
   );
 });
 
-describe("[SCN-RPT-001] the markdown report opens with a Run provenance header", () => {
+describe("[CLM-RPT-001] the markdown report opens with a Run provenance header", () => {
   it("renders all four provenance facts: target repo, inputs used, UTC timestamp, source SHA", () => {
     const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
 
@@ -52,24 +52,24 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
     const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
     expect(md).toContain("| Claim | Verdict | Reconciling items |");
     expect(md).toContain("| --- | --- | --- |");
-    expect(md).toContain("| SCN-RPT-001 | balanced | — |");
+    expect(md).toContain("| CLM-RPT-001 | balanced | — |");
   });
 });
 
-describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reconciliation outcome", () => {
+describe("[CLM-RPT-004] the markdown report tallies Reconciliation lines by reconciliation outcome", () => {
   let spanning: Ledger;
   beforeEach(() => {
     spanning = reconcile(
       [
-        { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
-        { claimCode: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
-        { claimCode: "SCN-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-A", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+        { claimCode: "CLM-B", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+        { claimCode: "CLM-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
-        { qualityCheckKind: "integration", claimCode: "SCN-A", status: "failed" },
-        { qualityCheckKind: "unit", claimCode: "SCN-C", status: "passed" },
-        { qualityCheckKind: "integration", claimCode: "SCN-C", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
+        { qualityCheckKind: "integration", claimCode: "CLM-A", status: "failed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-C", status: "passed" },
+        { qualityCheckKind: "integration", claimCode: "CLM-C", status: "passed" },
       ]
     );
   });
@@ -95,7 +95,7 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
     const lintAndBehavioural: Ledger = reconcile(
       [
         {
-          claimCode: "SCN-LNT-099",
+          claimCode: "CLM-LNT-099",
           evidenceObligations: [{ qualityCheckKind: "integration" }, { qualityCheckKind: "fitness" }],
         },
       ],
@@ -113,14 +113,14 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
   beforeEach(() => {
     threeScenarioRowsPlusUnnamedClaimRow = reconcile(
       [
-        { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-B", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
-        { qualityCheckKind: "unit", claimCode: "SCN-B", status: "passed" },
-        { qualityCheckKind: "unit", claimCode: "SCN-C", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-B", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-C", status: "passed" },
         { qualityCheckKind: "unit", claimCode: null, status: "passed" },
         { qualityCheckKind: "integration", claimCode: null, status: "passed" },
       ]

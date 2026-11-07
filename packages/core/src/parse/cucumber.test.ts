@@ -12,43 +12,43 @@ import { handedInputs } from "../runInputs.test-utils.js";
 import { publishedExitCodeOf } from "../render/publishedExitCodes.test-utils.js";
 import { coreMessage } from "../render/coreText.js";
 
-describe("[SCN-CUC-002] a Cucumber scenario tagged @e2e, by its own tag or one it inherits, is posted at e2e, and one tagged only @unit, or with no layer tag, at integration", () => {
+describe("[CLM-CUC-002] a Cucumber scenario tagged @e2e, by its own tag or one it inherits, is posted at e2e, and one tagged only @unit, or with no layer tag, at integration", () => {
   const report: CucumberJsonReport = [
     {
       uri: "features/x.feature",
       elements: [
-        { tags: [{ name: "@SCN-FOO-003" }], steps: [{ result: { status: "passed" } }] },
+        { tags: [{ name: "@CLM-FOO-003" }], steps: [{ result: { status: "passed" } }] },
       ],
     },
   ];
 
   it("posts an untagged scenario's observation at integration, with no layer handed in", () => {
     expect(parseCucumberEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "integration", claimCode: "SCN-FOO-003", status: "passed", locator: "features/x.feature" },
+      { qualityCheckKind: "integration", claimCode: "CLM-FOO-003", status: "passed", locator: "features/x.feature" },
     ]);
   });
 });
 
-describe("[SCN-CUC-002] parseCucumberEvidenceObservations derives the layer from the scenario's named layer tag", () => {
+describe("[CLM-CUC-002] parseCucumberEvidenceObservations derives the layer from the scenario's named layer tag", () => {
   it("stamps an @e2e-tagged scenario's observation e2e — the tag, not the report's fallback", () => {
     const report: CucumberJsonReport = [
       {
         uri: "features/e2e.feature",
         elements: [
           {
-            tags: [{ name: "@e2e" }, { name: "@SCN-LDG-011" }],
+            tags: [{ name: "@e2e" }, { name: "@CLM-LDG-011" }],
             steps: [{ result: { status: "passed" } }],
           },
         ],
       },
     ];
     expect(parseCucumberEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "e2e", claimCode: "SCN-LDG-011", status: "passed", locator: "features/e2e.feature" },
+      { qualityCheckKind: "e2e", claimCode: "CLM-LDG-011", status: "passed", locator: "features/e2e.feature" },
     ]);
   });
 });
 
-describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts at the layer its tag names, not the report's fallback", () => {
+describe("[CLM-CUC-002] parseCucumberEvidenceObservations posts at the layer its tag names, not the report's fallback", () => {
 
   it("reads an @e2e scenario failed when one step failed, whatever its other steps did", () => {
     const report: CucumberJsonReport = [
@@ -56,7 +56,7 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts at the layer its
         uri: "features/e2e.feature",
         elements: [
           {
-            tags: [{ name: "@e2e" }, { name: "@SCN-LDG-012" }],
+            tags: [{ name: "@e2e" }, { name: "@CLM-LDG-012" }],
             steps: [
               { keyword: "Given ", name: "a ledger", result: { status: "passed" } },
               { keyword: "When ", name: "it reconciles", result: { status: "failed" } },
@@ -67,7 +67,7 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts at the layer its
       },
     ];
     expect(parseCucumberEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "e2e", claimCode: "SCN-LDG-012", status: "failed", locator: "features/e2e.feature" },
+      { qualityCheckKind: "e2e", claimCode: "CLM-LDG-012", status: "failed", locator: "features/e2e.feature" },
     ]);
   });
 
@@ -75,7 +75,7 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts at the layer its
     const report: CucumberJsonReport = [
       {
         uri: "features/e2e.feature",
-        elements: [{ tags: [{ name: "@e2e" }, { name: "@SCN-LDG-012" }], steps: [] }],
+        elements: [{ tags: [{ name: "@e2e" }, { name: "@CLM-LDG-012" }], steps: [] }],
       },
     ];
     expect(parseCucumberEvidenceObservations(report)).toEqual([]);
@@ -87,58 +87,58 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts at the layer its
         uri: "features/e2e.feature",
         elements: [
           {
-            tags: [{ name: "@e2e" }, { name: "@e2e" }, { name: "@SCN-LDG-012" }],
+            tags: [{ name: "@e2e" }, { name: "@e2e" }, { name: "@CLM-LDG-012" }],
             steps: [{ result: { status: "passed" } }],
           },
         ],
       },
     ];
     expect(parseCucumberEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "e2e", claimCode: "SCN-LDG-012", status: "passed", locator: "features/e2e.feature" },
+      { qualityCheckKind: "e2e", claimCode: "CLM-LDG-012", status: "passed", locator: "features/e2e.feature" },
     ]);
   });
 });
 
-describe("[SCN-CUC-002] parseCucumberEvidenceObservations emits one observation per named non-unit layer", () => {
+describe("[CLM-CUC-002] parseCucumberEvidenceObservations emits one observation per named non-unit layer", () => {
   it("emits BOTH an integration and an e2e observation from ONE cucumber pass of an @integration @e2e scenario", () => {
     const report: CucumberJsonReport = [
       {
         uri: "features/both.feature",
         elements: [
           {
-            tags: [{ name: "@integration" }, { name: "@e2e" }, { name: "@SCN-LDG-014" }],
+            tags: [{ name: "@integration" }, { name: "@e2e" }, { name: "@CLM-LDG-014" }],
             steps: [{ result: { status: "passed" } }],
           },
         ],
       },
     ];
     expect(parseCucumberEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "integration", claimCode: "SCN-LDG-014", status: "passed", locator: "features/both.feature" },
-      { qualityCheckKind: "e2e", claimCode: "SCN-LDG-014", status: "passed", locator: "features/both.feature" },
+      { qualityCheckKind: "integration", claimCode: "CLM-LDG-014", status: "passed", locator: "features/both.feature" },
+      { qualityCheckKind: "e2e", claimCode: "CLM-LDG-014", status: "passed", locator: "features/both.feature" },
     ]);
   });
 });
 
-describe("[SCN-CUC-002] parseCucumberEvidenceObservations derives NO non-unit level from a @unit-only scenario and never manufactures a unit discharge", () => {
+describe("[CLM-CUC-002] parseCucumberEvidenceObservations derives NO non-unit level from a @unit-only scenario and never manufactures a unit discharge", () => {
   it("posts a @unit-only scenario at integration, the fallback of a report of scenario runs — never a unit observation (unit is vitest's substrate, not cucumber-derivable)", () => {
     const report: CucumberJsonReport = [
       {
         uri: "features/unitOnly.feature",
         elements: [
           {
-            tags: [{ name: "@unit" }, { name: "@SCN-LDG-015" }],
+            tags: [{ name: "@unit" }, { name: "@CLM-LDG-015" }],
             steps: [{ result: { status: "passed" } }],
           },
         ],
       },
     ];
     expect(parseCucumberEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "integration", claimCode: "SCN-LDG-015", status: "passed", locator: "features/unitOnly.feature" },
+      { qualityCheckKind: "integration", claimCode: "CLM-LDG-015", status: "passed", locator: "features/unitOnly.feature" },
     ]);
   });
 });
 
-describe("[SCN-CUC-003] parseCucumberEvidenceObservations emits a broken observation for an ambiguous step — a broken harness, not an absent test", () => {
+describe("[CLM-CUC-003] parseCucumberEvidenceObservations emits a broken observation for an ambiguous step — a broken harness, not an absent test", () => {
   const ambiguousReport = (tags: Array<{ name?: string }>): CucumberJsonReport => [
     {
       uri: "features/ldg019.feature",
@@ -155,13 +155,13 @@ describe("[SCN-CUC-003] parseCucumberEvidenceObservations emits a broken observa
 
   it("emits ONE broken observation carrying the scenario's claimCode, the feature-file locator, and a note naming the ambiguous step", () => {
     const observations = parseCucumberEvidenceObservations(
-      ambiguousReport([{ name: "@integration" }, { name: "@SCN-HNS-020" }])
+      ambiguousReport([{ name: "@integration" }, { name: "@CLM-HNS-020" }])
     );
 
     expect(observations).toEqual([
       {
         qualityCheckKind: "integration",
-        claimCode: "SCN-HNS-020",
+        claimCode: "CLM-HNS-020",
         status: "failed",
         locator: "features/ldg019.feature",
         broken: true,
@@ -190,7 +190,7 @@ describe("[SCN-CUC-003] parseCucumberEvidenceObservations emits a broken observa
   });
 });
 
-describe("[SCN-RPT-037] parseCucumberEvidenceObservations names each scenario's observations by the scenario's name", () => {
+describe("[CLM-RPT-037] parseCucumberEvidenceObservations names each scenario's observations by the scenario's name", () => {
   it("carries the scenario's name on each of its evidence observations, at every layer it ran at", () => {
     const report: CucumberJsonReport = [
       {
@@ -208,8 +208,8 @@ describe("[SCN-RPT-037] parseCucumberEvidenceObservations names each scenario's 
   });
 });
 
-describe("[SCN-CUC-001] a Cucumber scenario tagged with two claim codes credits neither, and the unnamed claim's row names both codes", () => {
-  const severalNote = { kind: "several-claim-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] };
+describe("[CLM-CUC-001] a Cucumber scenario tagged with two claim codes credits neither, and the unnamed claim's row names both codes", () => {
+  const severalNote = { kind: "several-claim-codes", codes: ["CLM-AAA-001", "CLM-AAA-002"] };
   const reportOf = (tagNames: readonly string[], status: string): CucumberJsonReport => [
     {
       uri: "features/several.feature",
@@ -224,7 +224,7 @@ describe("[SCN-CUC-001] a Cucumber scenario tagged with two claim codes credits 
   ];
 
   it("emits every layer's evidence observation citing no scenario, each with a note of both codes and no message", () => {
-    const report = reportOf(["@integration", "@e2e", "@SCN-AAA-001", "@SCN-AAA-002"], "passed");
+    const report = reportOf(["@integration", "@e2e", "@CLM-AAA-001", "@CLM-AAA-002"], "passed");
 
     expect(parseCucumberEvidenceObservations(report)).toEqual(
       ["integration", "e2e"].map((qualityCheckKind) => ({
@@ -239,7 +239,7 @@ describe("[SCN-CUC-001] a Cucumber scenario tagged with two claim codes credits 
   });
 
   it("carries the ambiguous step as a note on the broken observation, then the note naming both codes", () => {
-    const report = reportOf(["@integration", "@SCN-AAA-001", "@SCN-AAA-002"], "ambiguous");
+    const report = reportOf(["@integration", "@CLM-AAA-001", "@CLM-AAA-002"], "ambiguous");
 
     expect(parseCucumberEvidenceObservations(report)).toEqual([
       {
@@ -256,13 +256,13 @@ describe("[SCN-CUC-001] a Cucumber scenario tagged with two claim codes credits 
   it("leaves both scenarios missing, and the unnamed claim's row names both codes", () => {
     const ledger = reconcile(
       [
-        { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "integration" }] },
-        { claimCode: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+        { claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+        { claimCode: "CLM-AAA-002", evidenceObligations: [{ qualityCheckKind: "integration" }] },
       ],
-      parseCucumberEvidenceObservations(reportOf(["@integration", "@SCN-AAA-001", "@SCN-AAA-002"], "passed")),
+      parseCucumberEvidenceObservations(reportOf(["@integration", "@CLM-AAA-001", "@CLM-AAA-002"], "passed")),
       []
     );
-    const outcomes = ["SCN-AAA-001", "SCN-AAA-002"].map(
+    const outcomes = ["CLM-AAA-001", "CLM-AAA-002"].map(
       (claimCode) =>
         ledger.claimReconciliations
           .find((row) => row.claim === claimCode)
@@ -274,21 +274,21 @@ describe("[SCN-CUC-001] a Cucumber scenario tagged with two claim codes credits 
       .find((line) => line.startsWith("| (unnamed claim) | "));
 
     expect(outcomes).toEqual(["missing", "missing"]);
-    expect(unnamedClaimRow ?? "").toContain("SCN-AAA-001");
-    expect(unnamedClaimRow ?? "").toContain("SCN-AAA-002");
+    expect(unnamedClaimRow ?? "").toContain("CLM-AAA-001");
+    expect(unnamedClaimRow ?? "").toContain("CLM-AAA-002");
   });
 
   it.each([
-    ["one code", ["@integration", "@SCN-AAA-001"]],
-    ["one code repeated", ["@integration", "@SCN-AAA-001", "@SCN-AAA-001"]],
+    ["one code", ["@integration", "@CLM-AAA-001"]],
+    ["one code repeated", ["@integration", "@CLM-AAA-001", "@CLM-AAA-001"]],
   ])("CONTROL: a scenario tagged with %s credits it, with no note and no message", (_, tagNames) => {
     expect(parseCucumberEvidenceObservations(reportOf(tagNames, "passed"))).toEqual([
-      { qualityCheckKind: "integration", claimCode: "SCN-AAA-001", status: "passed", locator: "features/several.feature", testName: "two codes" },
+      { qualityCheckKind: "integration", claimCode: "CLM-AAA-001", status: "passed", locator: "features/several.feature", testName: "two codes" },
     ]);
   });
 });
 
-describe("[SCN-CUC-006] a passing row and a failing row of one Outline reconcile apart", () => {
+describe("[CLM-CUC-006] a passing row and a failing row of one Outline reconcile apart", () => {
   const outline = [
     "@ONE",
     "Feature: one",
@@ -344,7 +344,7 @@ describe("[SCN-CUC-006] a passing row and a failing row of one Outline reconcile
   });
 });
 
-describe("[SCN-CUC-006] a Cucumber scenario the lookup cannot place reads its tags alone", () => {
+describe("[CLM-CUC-006] a Cucumber scenario the lookup cannot place reads its tags alone", () => {
   const answersAnyRow = () => ["CLM-ONE-009"];
   const passed = { tags: [{ name: "@CLM-ONE-001" }], steps: [{ result: { status: "passed" } }] };
 

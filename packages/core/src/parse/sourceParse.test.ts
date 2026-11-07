@@ -9,7 +9,7 @@ function throwing(value: unknown): (source: string) => object {
   };
 }
 
-describe("[SCN-GPG-001] the shared parse reports every feature file the parser rejects, with the parser's own words, and returns no corpus in its place", () => {
+describe("[CLM-GPG-001] the shared parse reports every feature file the parser rejects, with the parser's own words, and returns no corpus in its place", () => {
   it("keeps the parser's own words as the reason when the parser throws something other than an error", () => {
     expect(parseSources([{ file: "a.feature", source: "" }], throwing("unexpected end of input"), readNothing)).toStrictEqual({
       kind: "unparseable",
@@ -22,7 +22,7 @@ describe("[SCN-GPG-001] the shared parse reports every feature file the parser r
   });
 });
 
-describe("[SCN-CLI-111] an error in reading a feature file or workflow the parser accepted ends the run at 6, and is never refused as that file failing to parse", () => {
+describe("[CLM-CLI-111] an error in reading a feature file or workflow the parser accepted ends the run at 6, and is never refused as that file failing to parse", () => {
   const parsed = (source: string): { readonly text: string } => ({ text: source });
 
   it("lets a throw from reading a parsed file pass through, never reporting the file as unparseable", () => {

@@ -10,15 +10,15 @@ import { errorsInTheInputsOf, claimCodeErrorsOnReport } from "../../../../tests/
 // A whole balance run takes longer than Vitest's default limit.
 const wholeRun = { timeout: 30_000 };
 
-describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the report in full, never refusing the corpus", () => {
+describe("[CLM-CLI-093] runBalance over a duplicated claim code exits 1 with the report in full, never refusing the corpus", () => {
   function duplicateTarget(withDuplicate = true): string {
     const dir = temporaryDirectory("scn-stg-018-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "dup.feature"),
-      "@DUP\nFeature: dup\n\n  @unit @SCN-DUP-001\n  Scenario: first\n    Given a thing\n\n" +
-        (withDuplicate ? "  @unit @SCN-DUP-001\n  Scenario: second\n    Given a thing\n\n" : "") +
-        "  @unit @SCN-DUP-002\n  Scenario: its own\n    Given a thing\n"
+      "@DUP\nFeature: dup\n\n  @unit @CLM-DUP-001\n  Scenario: first\n    Given a thing\n\n" +
+        (withDuplicate ? "  @unit @CLM-DUP-001\n  Scenario: second\n    Given a thing\n\n" : "") +
+        "  @unit @CLM-DUP-002\n  Scenario: its own\n    Given a thing\n"
     );
     writeFileSync(
       join(dir, "vitest.json"),
@@ -27,8 +27,8 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
           {
             name: "dup.test.ts",
             assertionResults: [
-              { fullName: "[SCN-DUP-001] proven", status: "passed" },
-              { fullName: "[SCN-DUP-002] proven", status: "passed" },
+              { fullName: "[CLM-DUP-001] proven", status: "passed" },
+              { fullName: "[CLM-DUP-002] proven", status: "passed" },
             ],
           },
         ],
@@ -42,7 +42,7 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
   function ownRowOf(dir: string): unknown {
     const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--vitest", join(dir, "vitest.json"), "--format", "json"]);
     const rows = claimReconciliationsOf<{ claim: string }>(JSON.parse(stdout));
-    return rows.find((r) => r.claim === "SCN-DUP-002");
+    return rows.find((r) => r.claim === "CLM-DUP-002");
   }
 
   it("emits the whole report, one claim per sharer, reconciles the other account, and sets process.exitCode = 1", wholeRun, () => {
@@ -56,23 +56,23 @@ describe("[SCN-CLI-093] runBalance over a duplicated @SCN exits 1 with the repor
     ]);
     const report = JSON.parse(stdout);
     const rows = claimReconciliationsOf<{ claim: string; verdict: string }>(report);
-    expect(rows.filter((r) => r.claim === "SCN-DUP-001")).toHaveLength(2);
-    expect(rows.find((r) => r.claim === "SCN-DUP-002")?.verdict).toBe("balanced");
+    expect(rows.filter((r) => r.claim === "CLM-DUP-001")).toHaveLength(2);
+    expect(rows.find((r) => r.claim === "CLM-DUP-002")?.verdict).toBe("balanced");
     expect(exitCode).toBe(1);
     expect(stderr).not.toMatch(/names the same @SCN on more than one scenario/);
     expect(ownRowOf(dir)).toEqual(ownRowOf(duplicateTarget(false)));
   });
 });
 
-describe("[SCN-CLI-094] a prose mention of a feature part outside two to five characters is not an @SCN seen in non-tag context", () => {
+describe("[CLM-CLI-094] a prose mention of a feature part outside two to five characters is not a claim code seen in non-tag context", () => {
   it("counts the two- and five-character prose mentions as excluded, and lists no claim code error", wholeRun, () => {
     const dir = temporaryDirectory("scn-stg-028-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "own.feature"),
-      "@OWN\nFeature: own\n\n  @unit @SCN-OWN-001\n  Scenario: own scenario\n" +
-        "    Given the prose mentions @SCN-A-001 and @SCN-AB-001\n" +
-        "    # and a comment mentions @SCN-FIVEC-001 and @SCN-SIXCHR-001\n    And a thing\n"
+      "@OWN\nFeature: own\n\n  @unit @CLM-OWN-001\n  Scenario: own scenario\n" +
+        "    Given the prose mentions @CLM-A-001 and @CLM-AB-001\n" +
+        "    # and a comment mentions @CLM-FIVEC-001 and @CLM-SIXCHR-001\n    And a thing\n"
     );
     const { stdout } = runBalanceCaptured(["--features", join(dir, "features"), "--format", "json"]);
     const report = JSON.parse(stdout);
@@ -81,13 +81,13 @@ describe("[SCN-CLI-094] a prose mention of a feature part outside two to five ch
   });
 });
 
-describe("[SCN-CLI-095] a scenario tagged with two claim codes raises no evidence obligation under either, and is listed as a claim code error naming both", () => {
+describe("[CLM-CLI-095] a scenario tagged with two claim codes raises no evidence obligation under either, and is listed as a claim code error naming both", () => {
   function target(ids: string): string {
     const dir = temporaryDirectory("scn-stg-029-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "two.feature"),
-      "@TWO\nFeature: two\n\n  @unit @SCN-TWO-001\n  Scenario: its own\n    Given a thing\n\n" +
+      "@TWO\nFeature: two\n\n  @unit @CLM-TWO-001\n  Scenario: its own\n    Given a thing\n\n" +
         `  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`
     );
     writeFileSync(
@@ -97,8 +97,8 @@ describe("[SCN-CLI-095] a scenario tagged with two claim codes raises no evidenc
           {
             name: "two.test.ts",
             assertionResults: [
-              { fullName: "[SCN-TWO-001] proven", status: "passed" },
-              { fullName: "[SCN-TWO-002] proven", status: "passed" },
+              { fullName: "[CLM-TWO-001] proven", status: "passed" },
+              { fullName: "[CLM-TWO-002] proven", status: "passed" },
             ],
           },
         ],
@@ -122,23 +122,23 @@ describe("[SCN-CLI-095] a scenario tagged with two claim codes raises no evidenc
   type Row = { claim: string; kind: string; verdict: string };
 
   it("opens no account under either code, so a test citing one reads as citing an unknown scenario, and counts nothing untagged", wholeRun, () => {
-    const report = JSON.parse(balance(target("@SCN-TWO-002 @SCN-TWO-003"), "json").stdout);
+    const report = JSON.parse(balance(target("@CLM-TWO-002 @CLM-TWO-003"), "json").stdout);
     const rows = claimReconciliationsOf<Row>(report);
-    expect(rows.filter((r) => r.kind === "scenario").map((r) => r.claim)).toEqual(["SCN-TWO-001"]);
-    expect(rows.find((r) => r.claim === "SCN-TWO-002")?.kind).toBe("phantom-claim");
-    expect(rows.find((r) => r.claim === "SCN-TWO-003")).toBeUndefined();
+    expect(rows.filter((r) => r.kind === "scenario").map((r) => r.claim)).toEqual(["CLM-TWO-001"]);
+    expect(rows.find((r) => r.claim === "CLM-TWO-002")?.kind).toBe("phantom-claim");
+    expect(rows.find((r) => r.claim === "CLM-TWO-003")).toBeUndefined();
     expect(claimCodesOnReport(report).untaggedScenarios).toEqual([]);
   });
 
   it("lists several-claim-codes in the JSON and under Claim code errors, naming the file, the scenario and both codes, and exits 1", wholeRun, () => {
-    const dir = target("@SCN-TWO-002 @SCN-TWO-003");
+    const dir = target("@CLM-TWO-002 @CLM-TWO-003");
     const json = balance(dir, "json");
     expect(claimCodeErrorsOnReport(JSON.parse(json.stdout))).toEqual([
       expect.objectContaining({
         kind: "several-claim-codes",
         files: ["two.feature"],
         scenario: "carries codes",
-        codes: ["SCN-TWO-002", "SCN-TWO-003"],
+        codes: ["CLM-TWO-002", "CLM-TWO-003"],
       }),
     ]);
     expect(json.exitCode).toBe(1);
@@ -147,16 +147,16 @@ describe("[SCN-CLI-095] a scenario tagged with two claim codes raises no evidenc
     const section = md.stdout.split("## Claim code errors")[1]?.split("\n## ")[0] ?? "";
     const lines = section.split("\n").filter((line) => line.startsWith("- `several-claim-codes` — "));
     expect(lines).toHaveLength(1);
-    for (const named of ["two.feature", "carries codes", "SCN-TWO-002", "SCN-TWO-003"]) {
+    for (const named of ["two.feature", "carries codes", "CLM-TWO-002", "CLM-TWO-003"]) {
       expect(lines[0]).toContain(named);
     }
     expect(md.exitCode).toBe(1);
   });
 
   it("reconciles a scenario with one code as today, listing no claim code error", wholeRun, () => {
-    const json = balance(target("@SCN-TWO-002"), "json");
+    const json = balance(target("@CLM-TWO-002"), "json");
     const report = JSON.parse(json.stdout);
-    const row = claimReconciliationsOf<Row>(report).find((r) => r.claim === "SCN-TWO-002");
+    const row = claimReconciliationsOf<Row>(report).find((r) => r.claim === "CLM-TWO-002");
     expect(row).toMatchObject({ kind: "scenario", verdict: "balanced" });
     expect(errorsInTheInputsOf(report)).toBeUndefined();
     expect(json.exitCode).toBe(0);

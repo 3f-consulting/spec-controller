@@ -47,7 +47,7 @@ const reconcilerList = (lines: readonly string[]): string[] => {
   return lines.slice(start, start + 4);
 };
 
-describe("[SCN-RPT-050] the step-accounting section lists each reconciler step beneath its table with what it does, and lists none for a pipeline that runs no reconciliation", () => {
+describe("[CLM-RPT-050] the step-accounting section lists each reconciler step beneath its table with what it does, and lists none for a pipeline that runs no reconciliation", () => {
   it("lists each reconciler step under a Reconciler label beneath the table, with what that step does, in the order the steps were read", () => {
     const section = stepAccounting(reportLines(ci));
     const tableEnd = endOfTable(section);

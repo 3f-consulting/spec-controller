@@ -32,7 +32,7 @@ beforeEach(() => {
 
 recordWhatTheProgramWrites();
 
-describe("[SCN-RMG-011] executeKeptRun refuses a run whose own run.yaml is one of the files it reads, before the command runs", () => {
+describe("[CLM-RMG-011] executeKeptRun refuses a run whose own run.yaml is one of the files it reads, before the command runs", () => {
   it("refuses, naming the file and the input it is, and leaves the input as it was", () => {
     mkdirSync(runDir, { recursive: true });
     writeFileSync(runYaml, WORKFLOW);

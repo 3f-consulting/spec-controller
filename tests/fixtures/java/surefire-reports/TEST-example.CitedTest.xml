@@ -53,9 +53,9 @@
     <property name="java.class.version" value="61.0"/>
     <property name="maven.test.failure.ignore" value="true"/>
   </properties>
-  <testcase name="[SCN-JVF-005] [SCN-JVF-006] a test that cites two scenarios" classname="example.CitedTest" time="0.013"/>
-  <testcase name="[SCN-JVF-001] a passing test cites its scenario" classname="example.CitedTest" time="0.004"/>
-  <testcase name="[SCN-JVF-010] a test that throws cites its scenario" classname="example.CitedTest" time="0.008">
+  <testcase name="[CLM-JVF-005] [CLM-JVF-006] a test that cites two scenarios" classname="example.CitedTest" time="0.013"/>
+  <testcase name="[CLM-JVF-001] a passing test cites its scenario" classname="example.CitedTest" time="0.004"/>
+  <testcase name="[CLM-JVF-010] a test that throws cites its scenario" classname="example.CitedTest" time="0.008">
     <error message="the resource could not be reached" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: the resource could not be reached
 	at example.CitedTest.throwsInItsBody(CitedTest.java:54)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
@@ -63,9 +63,9 @@
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
 ]]></error>
   </testcase>
-  <testcase name="parameterised(int)[SCN-JVF-007] a parameterised test cites its scenario with 1" classname="example.CitedTest" time="0.011"/>
-  <testcase name="parameterised(int)[SCN-JVF-007] a parameterised test cites its scenario with 2" classname="example.CitedTest" time="0.003"/>
-  <testcase name="[SCN-JVF-009] a test whose assumption fails cites its scenario" classname="example.CitedTest" time="0.0">
+  <testcase name="parameterised(int)[CLM-JVF-007] a parameterised test cites its scenario with 1" classname="example.CitedTest" time="0.011"/>
+  <testcase name="parameterised(int)[CLM-JVF-007] a parameterised test cites its scenario with 2" classname="example.CitedTest" time="0.003"/>
+  <testcase name="[CLM-JVF-009] a test whose assumption fails cites its scenario" classname="example.CitedTest" time="0.0">
     <skipped type="org.opentest4j.TestAbortedException"><![CDATA[org.opentest4j.TestAbortedException: Assumption failed: the environment is not ready
 	at org.junit.jupiter.api.Assumptions.throwAssumptionFailed(Assumptions.java:316)
 	at org.junit.jupiter.api.Assumptions.assumeTrue(Assumptions.java:115)
@@ -75,7 +75,7 @@
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
 ]]></skipped>
   </testcase>
-  <testcase name="[SCN-JVF-002] a failing test cites its scenario" classname="example.CitedTest" time="0.005">
+  <testcase name="[CLM-JVF-002] a failing test cites its scenario" classname="example.CitedTest" time="0.005">
     <failure message="expected: &lt;2&gt; but was: &lt;1&gt;" type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: expected: <2> but was: <1>
 	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
 	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
@@ -89,7 +89,7 @@
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
 ]]></failure>
   </testcase>
-  <testcase name="[SCN-JVF-008] a disabled test cites its scenario" classname="example.CitedTest" time="0.0">
+  <testcase name="[CLM-JVF-008] a disabled test cites its scenario" classname="example.CitedTest" time="0.0">
     <skipped message="not yet written"/>
   </testcase>
 </testsuite>

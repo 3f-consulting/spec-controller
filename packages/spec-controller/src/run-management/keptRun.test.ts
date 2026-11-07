@@ -13,7 +13,7 @@ import {
 } from "./keptRun.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
-describe("[SCN-RMG-001] planKeptRun: yields the nested run dir + the two file-dest paths from { storeRoot, target, runId }", () => {
+describe("[CLM-RMG-001] planKeptRun: yields the nested run dir + the two file-dest paths from { storeRoot, target, runId }", () => {
 
   it("nests target THEN run-id (1086's owned substructure), not a flat <root>/<run-id> or <root>/<target>", () => {
     const plan = planKeptRun({ storeRoot: "/root", target: "t", runId: "r" });
@@ -24,7 +24,7 @@ describe("[SCN-RMG-001] planKeptRun: yields the nested run dir + the two file-de
   });
 });
 
-describe("[SCN-RMG-002] planRunManifest: builds the run.yaml manifest from run metadata (empty purpose, the artefacts map)", () => {
+describe("[CLM-RMG-002] planRunManifest: builds the run.yaml manifest from run metadata (empty purpose, the artefacts map)", () => {
   const input: RunManifestInput = {
     runId: "2026-07-01T09-30-00Z",
     target: "acme-web",
@@ -103,7 +103,7 @@ describe("[SCN-RMG-002] planRunManifest: builds the run.yaml manifest from run m
   });
 });
 
-describe("[SCN-RMG-003] resolveRunId: the run-id defaults to an injected-clock ISO timestamp; an operator --run-id mnemonic overrides it", () => {
+describe("[CLM-RMG-003] resolveRunId: the run-id defaults to an injected-clock ISO timestamp; an operator --run-id mnemonic overrides it", () => {
   it("defaults (no --run-id) to the INJECTED instant as a filesystem-safe ISO-8601 UTC timestamp — no colons, no millis", () => {
     const now = new Date("2026-06-30T10:04:01.123Z");
 

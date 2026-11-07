@@ -3,26 +3,26 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { ledgerTally } from "./ledger.js";
 
-describe("[SCN-PND-011] the ledger's tally counts Pending Items apart from balanced and out-of-balance", () => {
+describe("[CLM-PND-011] the ledger's tally counts Pending Items apart from balanced and out-of-balance", () => {
   it("counts each Pending Item in pending, while every row keeps its own balanced or out-of-balance verdict", () => {
     const tally = ledgerTally(
       reconcile(
         [
-          { claimCode: "SCN-PDR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { claimCode: "CLM-PDR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
           {
-            claimCode: "SCN-PDR-002",
+            claimCode: "CLM-PDR-002",
             evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
           },
-          { claimCode: "SCN-PDR-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { claimCode: "CLM-PDR-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
           {
-            claimCode: "SCN-PDR-004",
+            claimCode: "CLM-PDR-004",
             evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
           },
         ],
         [
-          { qualityCheckKind: "unit", claimCode: "SCN-PDR-001", status: "passed" },
-          { qualityCheckKind: "unit", claimCode: "SCN-PDR-002", status: "passed" },
-          { qualityCheckKind: "unit", claimCode: "SCN-PDR-004", status: "failed" },
+          { qualityCheckKind: "unit", claimCode: "CLM-PDR-001", status: "passed" },
+          { qualityCheckKind: "unit", claimCode: "CLM-PDR-002", status: "passed" },
+          { qualityCheckKind: "unit", claimCode: "CLM-PDR-004", status: "failed" },
         ]
       )
     );
@@ -36,7 +36,7 @@ describe("[SCN-PND-011] the ledger's tally counts Pending Items apart from balan
       reconcile(
         [
           {
-            claimCode: "SCN-PDR-001",
+            claimCode: "CLM-PDR-001",
             evidenceObligations: [
               { qualityCheckKind: "unit", pending: true },
               { qualityCheckKind: "integration", pending: true },

@@ -6,7 +6,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: pnpm install
-      - id: SCN-TOC-004
+      - id: CLM-TOC-004
         continue-on-error: true
         run: pnpm guard:wm
       - run: pnpm test

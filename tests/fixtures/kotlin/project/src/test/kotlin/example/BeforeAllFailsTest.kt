@@ -16,7 +16,7 @@ class BeforeAllFailsTest {
     }
 
     @Test
-    @DisplayName("[SCN-KOF-005] a test in a class whose setup before all its tests fails cites its scenario")
+    @DisplayName("[CLM-KOF-005] a test in a class whose setup before all its tests fails cites its scenario")
     fun underAFailingClassSetUp() {
         assertEquals(2, 1 + 1)
     }

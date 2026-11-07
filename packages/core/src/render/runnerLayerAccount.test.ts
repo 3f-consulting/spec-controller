@@ -10,13 +10,13 @@ import { markdownHeading } from "./heading.js";
 
 const feature = `Feature: fixture
 
-  @unit @SCN-FIX-001
+  @unit @CLM-FIX-001
   Scenario: a behaviour proved by a unit test
 
-  @e2e @SCN-FIX-002
+  @e2e @CLM-FIX-002
   Scenario: a behaviour proved end to end
 
-  @performance @SCN-FIX-003
+  @performance @CLM-FIX-003
   Scenario: a behaviour proved under load
 `;
 
@@ -31,9 +31,9 @@ jobs:
 `;
 
 const behaviouralObservations: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", claimCode: "SCN-FIX-001", status: "passed" },
-  { qualityCheckKind: "e2e", claimCode: "SCN-FIX-002", status: "passed" },
-  { qualityCheckKind: "performance", claimCode: "SCN-FIX-003", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "CLM-FIX-001", status: "passed" },
+  { qualityCheckKind: "e2e", claimCode: "CLM-FIX-002", status: "passed" },
+  { qualityCheckKind: "performance", claimCode: "CLM-FIX-003", status: "passed" },
 ];
 
 const NO_RUNNER = (): string => coreMessage(CoreMessage.RunnerLayerNamesNone);
@@ -62,7 +62,7 @@ function rowsByCheck(runners: unknown): Map<string, string[]> {
   return rowsOf({ runners });
 }
 
-describe("[SCN-RPT-051] a layer the target gives no runner's name says in its runner cell whether the target declared that the layer has none or left its runner undeclared, and where a target names a layer's runner, whatever its count", () => {
+describe("[CLM-RPT-051] a layer the target gives no runner's name says in its runner cell whether the target declared that the layer has none or left its runner undeclared, and where a target names a layer's runner, whatever its count", () => {
   it("says in the runner cell of a layer the target sets to null that the target declares it has none, and where, with a blank CI step cell", () => {
     const rows = rowsByCheck({ unit: "vitest", performance: null });
     expect(rows.get("performance")).toStrictEqual(["performance", "1", NO_RUNNER(), ""]);

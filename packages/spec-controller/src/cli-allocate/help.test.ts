@@ -11,7 +11,7 @@ import { AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 import { withAllocatePositional } from "./registry.test-utils.js";
 
-describe("[SCN-ALC-013] allocate --help answers first, listing <FFF> and --new", () => {
+describe("[CLM-ALC-013] allocate --help answers first, listing <FFF> and --new", () => {
   let help: string;
   let allocatePositionals: readonly PositionalSpec[];
 

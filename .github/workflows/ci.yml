@@ -101,7 +101,7 @@ jobs:
           restore-keys: tools-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
       - name: Test
-        id: SCN-FIT-012
+        id: CLM-FIT-012
         # One worker per core: vitest's default leaves one core idle, which on a 2-core runner is half of it.
         # One module graph per worker, not one per file: re-importing it for every file was most of the step's time. Local runs and Stryker still isolate.
         # The suite's time is printed against its limit on every run, a killed run included, so headroom is read before it runs out.
@@ -113,8 +113,8 @@ jobs:
           exit "$status"
 
       - name: Cucumber
-        id: SCN-FIT-013
-        if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
+        id: CLM-FIT-013
+        if: ${{ !cancelled() && steps.CLM-FIT-012.outcome != 'skipped' }}
         # `pnpm cucumber` builds the packages first, the run's one build; the steps after it that pack or hand on dist use it.
         run: |
           start=$SECONDS
@@ -124,7 +124,7 @@ jobs:
           exit "$status"
 
       - name: ESLint — every rule of eslint.config.js over the tree, and its warnings in the files the push touches
-        id: SCN-FIT-073
+        id: CLM-FIT-073
         if: always()
         shell: bash
         # The loop reds, naming the population, when the configuration enforces no rule (none, or all off) on one file of each population the tree line lints; ESLint lints the tree green with none.
@@ -139,15 +139,15 @@ jobs:
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | xargs -0 -r node_modules/.bin/eslint --max-warnings 0 --no-warn-ignored --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/"
 
       - name: CRAP — complex code must be tested
-        id: SCN-FIT-022
-        if: ${{ !cancelled() && steps.SCN-FIT-012.outcome != 'skipped' }}
+        id: CLM-FIT-022
+        if: ${{ !cancelled() && steps.CLM-FIT-012.outcome != 'skipped' }}
         shell: bash
         run: |
           node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}" packages || [ $? -eq 2 ]
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}"
 
       - name: Duplication — no clone in production code
-        id: SCN-FIT-032
+        id: CLM-FIT-032
         if: always()
         shell: bash
         # jscpd, pinned in package.json, reads its settings from .jscpd.json, named so that one it cannot parse stops the run rather than falling back to defaults; the file takes no comments, so their reasons are here.
@@ -159,7 +159,7 @@ jobs:
         run: node_modules/.bin/jscpd --config .jscpd.json --exit-code --fail-on-empty
 
       - name: Unused code — no unused file, export or dependency outside the test code
-        id: SCN-FIT-033
+        id: CLM-FIT-033
         if: always()
         shell: bash
         # knip, pinned in package.json and configured in knip.jsonc, where each setting carries its reason.
@@ -168,12 +168,12 @@ jobs:
         run: node_modules/.bin/knip --include files,exports,types,dependencies --treat-config-hints-as-errors
 
       - name: Import boundaries
-        id: SCN-FIT-009
+        id: CLM-FIT-009
         if: always()
         run: node_modules/.bin/depcruise packages --cache "$RUNNER_TEMP/tool-cache/depcruise/boundaries" --cache-strategy content
 
       - name: Every production source file is in a mutation scope or on the recorded list
-        id: SCN-FIT-040
+        id: CLM-FIT-040
         if: always()
         shell: bash
         run: |
@@ -187,7 +187,7 @@ jobs:
             | awk '{ print $0 ": in no mutation scope and not on the recorded list of files no scope mutates" } END { exit NR > 0 }'
 
       - name: Test code stays within the declared ceiling ratio to production code
-        id: SCN-FIT-043
+        id: CLM-FIT-043
         if: always()
         run: node scripts/test-ratio.mjs
 
@@ -197,7 +197,7 @@ jobs:
       # Both scripts run whatever the first returns, so one run prints every broken reference.
       # A docs-only push to main skips this step and the Vale steps; pnpm docs:check runs them all before such a push.
       - name: Every reference in a current-state document resolves
-        id: SCN-FIT-059
+        id: CLM-FIT-059
         if: always()
         shell: bash
         run: |
@@ -210,36 +210,36 @@ jobs:
           exit "$status"
 
       - name: No step on a scenario Cucumber does not run
-        id: SCN-FIT-028
+        id: CLM-FIT-028
         if: always()
         shell: bash
         run: |
           node_modules/.bin/cucumber-js --profile outside --dry-run --format message | jq -rn '[inputs] | (map(.testCase.pickleId // empty)) as $run | .[] | .pickle // empty | select((.steps | length) > 0 and (.id | IN($run[]))) | "\(.uri): \(.name) carries \(.steps | length) step(s)"' | awk '{ print } END { exit NR > 0 }'
 
       - name: No unused step definition
-        id: SCN-FIT-029
+        id: CLM-FIT-029
         if: always()
         shell: bash
         run: |
           node_modules/.bin/cucumber-js --dry-run --format usage-json | jq -r '.[] | select((.matches | length) == 0) | "\(.uri):\(.line): \(.pattern) matches no step Cucumber runs"' | awk '{ print } END { exit NR > 0 }'
 
       - name: Typecheck
-        id: SCN-FIT-011
+        id: CLM-FIT-011
         if: always()
         run: pnpm typecheck --incremental --tsBuildInfoFile "$RUNNER_TEMP/tool-cache/tsc/typecheck.tsbuildinfo"
 
       - name: Published packages
-        id: SCN-FIT-018
+        id: CLM-FIT-018
         if: always()
         run: pnpm lint:publint
 
       - name: Published types
-        id: SCN-FIT-019
+        id: CLM-FIT-019
         if: always()
         run: pnpm lint:published-types
 
       - name: Workflow correctness
-        id: SCN-FIT-020
+        id: CLM-FIT-020
         if: always()
         shell: bash
         # The version and checksum move together; the checksum is the linux_amd64 line of the
@@ -257,7 +257,7 @@ jobs:
           "$RUNNER_TEMP/actionlint"
 
       - name: Workflow security
-        id: SCN-FIT-021
+        id: CLM-FIT-021
         if: always()
         uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
         with:
@@ -268,7 +268,7 @@ jobs:
 
       # --verbose names each file Semgrep could not read in full; a one-entry log list folds its list of rule ids.
       - name: Semgrep — every rule under .semgrep/ over the packages
-        id: SCN-FIT-074
+        id: CLM-FIT-074
         if: always()
         run: |
           semgrep scan --config .semgrep/ --error --strict --metrics=off --disable-version-check --verbose --max-log-list-entries 1 --json-output="$RUNNER_TEMP/semgrep.json" packages
@@ -276,14 +276,14 @@ jobs:
 
       # The printer's other half is the type check: it refuses an error handed to the printer, or an input error entry, that no catalogue holds.
       - name: Semgrep — nothing in the packages writes to standard error but the printer
-        id: SCN-FIT-076
+        id: CLM-FIT-076
         if: always()
         run: |
           semgrep scan --config .semgrep-errors/ --error --strict --metrics=off --disable-version-check --verbose --max-log-list-entries 1 --json-output="$RUNNER_TEMP/semgrep-errors.json" packages
           jq -e '.paths.scanned | length > 0' "$RUNNER_TEMP/semgrep-errors.json" > /dev/null || { echo "Semgrep scanned no file under packages"; exit 1; }
 
       - name: Comment share — no file cloc counts over its comment-line ceiling
-        id: SCN-FIT-023
+        id: CLM-FIT-023
         if: always()
         shell: bash
         # Alternative: cloc counts each file's comment and code lines but applies no ceiling, so this awk is the ceiling.
@@ -294,7 +294,7 @@ jobs:
       # rule fails before the tree is read. The probe's tokens are built at run time, so this file holds none of them.
       # The runner's default bash has no pipefail, so the probe's verdict is grep's, not Vale's exit.
       - name: Vale — no ticket ID, claim code or narrated history in a comment, description or document it reads
-        id: SCN-FIT-075
+        id: CLM-FIT-075
         if: always()
         run: |
           for probe in "Identifiers.TicketId:$(printf '%s-%s' 3F 1234)" "Identifiers.ClaimCode:$(printf '%s-%s-%s' SCN ABC 001)" "Identifiers.ClaimCode:$(printf '%s-%s-%s' CLM ABC 001)" "History.Narrated:$(printf '%s %s' used to)"; do
@@ -304,27 +304,27 @@ jobs:
           pnpm docs:current-state
 
       - name: No title or description names a code identifier or a source file
-        id: SCN-FIT-038
+        id: CLM-FIT-038
         if: always()
         run: pnpm docs:code-identifier
 
       - name: No Given, When or Then names an interface mechanic
-        id: SCN-FIT-030
+        id: CLM-FIT-030
         if: always()
         run: pnpm docs:interface-mechanic
 
       - name: A lowercase step line in a scenario is held to the step rules
-        id: SCN-FIT-077
+        id: CLM-FIT-077
         if: always()
         run: pnpm docs:lowercase-step
 
       - name: The description gates leave a lowercase step line in a scenario alone
-        id: SCN-FIT-078
+        id: CLM-FIT-078
         if: always()
         run: pnpm docs:lowercase-description
 
       - name: A scenario Cucumber does not run, with lowercase lines, still has no step
-        id: SCN-FIT-079
+        id: CLM-FIT-079
         if: always()
         shell: bash
         run: |
@@ -351,7 +351,7 @@ jobs:
 
       # The planted code is built at run time, so this file carries no claim code of its own.
       - name: A test citing a code from a domain concept's clm cell is refused outside core's domain
-        id: SCN-FIT-080
+        id: CLM-FIT-080
         if: always()
         shell: bash
         run: |

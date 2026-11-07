@@ -5,13 +5,13 @@
       "status": "passed",
       "assertionResults": [
         {
-          "fullName": "[SCN-PLT-001] a returning customer's basket is restored",
-          "title": "[SCN-PLT-001] a returning customer's basket is restored",
+          "fullName": "[CLM-PLT-001] a returning customer's basket is restored",
+          "title": "[CLM-PLT-001] a returning customer's basket is restored",
           "status": "passed"
         },
         {
-          "fullName": "[SCN-PLT-002] an empty basket cannot be checked out",
-          "title": "[SCN-PLT-002] an empty basket cannot be checked out",
+          "fullName": "[CLM-PLT-002] an empty basket cannot be checked out",
+          "title": "[CLM-PLT-002] an empty basket cannot be checked out",
           "status": "passed"
         }
       ]

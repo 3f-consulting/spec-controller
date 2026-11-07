@@ -18,16 +18,16 @@ const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
   integration: "cucumber-js",
 };
 
-describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function evidence observations, filtered to what ran", () => {
+describe("[CLM-USG-001] fitnessFunctionTally folds the posted fitness-function evidence observations, filtered to what ran", () => {
   const scenarios: Scenario[] = [
-    { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-    { claimCode: "SCN-C", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-    { claimCode: "SCN-D", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "CLM-A", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "CLM-C", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "CLM-D", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
   const observations: EvidenceObservation[] = [
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "SCN-A", exists: true, enforcedOverRealSource: true },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:water", claimCode: "SCN-C", exists: true, enforcedOverRealSource: false },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:absent", claimCode: "SCN-D", exists: false, enforcedOverRealSource: false },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "CLM-A", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:water", claimCode: "CLM-C", exists: true, enforcedOverRealSource: false },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:absent", claimCode: "CLM-D", exists: false, enforcedOverRealSource: false },
     { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
   ];
   let tally: ReturnType<typeof fitnessFunctionTally>;
@@ -46,7 +46,7 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function e
   it("counts no behavioural evidence observation, whatever fields it arrives carrying", () => {
     const behaviouralCarryingGuardFields = {
       qualityCheckKind: "unit" as const,
-      claimCode: "SCN-A",
+      claimCode: "CLM-A",
       status: "passed" as const,
       exists: true,
       enforcedOverRealSource: true,
@@ -56,7 +56,7 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function e
   });
 });
 
-describe("[SCN-USG-001] a fitness function no scenario cites is banked on the unnamed claim's row and counted uncited", () => {
+describe("[CLM-USG-001] a fitness function no scenario cites is banked on the unnamed claim's row and counted uncited", () => {
   const rowFor = (ledger: Ledger, claimCode: string): ClaimReconciliation | undefined =>
     ledger.claimReconciliations.find((r) => r.claim === claimCode);
 
@@ -79,11 +79,11 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
   ];
 
   const fitness: Scenario[] = [
-    { claimCode: "SCN-TGT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "CLM-TGT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
 
   const citedClaimCode = (script: string): ScriptCitation | null =>
-    script === "lint:foo" ? { claimCode: "SCN-TGT-001" } : null;
+    script === "lint:foo" ? { claimCode: "CLM-TGT-001" } : null;
 
   let citedObservations: ReturnType<typeof runningFitnessFunctions>;
   let uncitedObservations: ReturnType<typeof runningFitnessFunctions>;
@@ -103,7 +103,7 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
         fitnessFunction: "lint:foo",
         exists: true,
         enforcedOverRealSource: true,
-        claimCode: "SCN-TGT-001",
+        claimCode: "CLM-TGT-001",
       },
     ]);
     expect(uncitedObservations.map(withoutStep)).toEqual([
@@ -121,7 +121,7 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
   });
 });
 
-describe("[SCN-USG-005] a cited fitness function under no convention of ours is attributed to its scenario, never an uncited fitness function", () => {
+describe("[CLM-USG-005] a cited fitness function under no convention of ours is attributed to its scenario, never an uncited fitness function", () => {
   const guardPkg: PackageJsonScripts = {
     scripts: {
       "domain-purity": "echo domain-purity",
@@ -140,11 +140,11 @@ describe("[SCN-USG-005] a cited fitness function under no convention of ours is 
   ];
 
   const citedClaimCode = (script: string): ScriptCitation | null =>
-    script === "domain-purity" ? { claimCode: "SCN-GRD-001" } : null;
+    script === "domain-purity" ? { claimCode: "CLM-GRD-001" } : null;
 
   const fitness: Scenario[] = [
     {
-      claimCode: "SCN-GRD-001",
+      claimCode: "CLM-GRD-001",
       evidenceObligations: [{ qualityCheckKind: "fitness" }],
     },
   ];

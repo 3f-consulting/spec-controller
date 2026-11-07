@@ -44,7 +44,7 @@ const STEPS = [CHECKOUT, DUMP, BALANCE, SWEEP];
 const runsTheReconciler = (command: string): boolean => command.includes(INVOCATION);
 const noInvocationKnown = (command: string): boolean => commandRuns(command, "", {});
 
-describe("[SCN-USG-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
+describe("[CLM-USG-014] the balance step and its step-record dump are not candidates, and no configuration says so", () => {
   it("gives the step that runs the reconciler's invocation the role reconciles, and the step that writes the step record the role records", () => {
     expect(reconcilerSteps(STEPS, namedInItsWorkflow, runsTheReconciler).steps).toStrictEqual([
       { step: "ci.yml:ci:Dump this run's step record", role: "records" },

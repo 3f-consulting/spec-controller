@@ -5,7 +5,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   document as data — and the machine file is that model serialised glue-free:
   the JSON file is the assembled model handed straight to the serialiser, with no per-key hand-assembly.
   Its top-level keys, in document order, are runProvenance, then errorsInTheInputs when the inputs
-  hold a fault, then summary and claimReconciliations. The scenario codes sit in the summary, straight
+  hold a fault, then summary and claimReconciliations. The claim codes sit in the summary, straight
   after its run verdict. There is no
   `warnings` key: a zero-evidence scenario is a both-missing row on the ledger, not a separate
   axis. The machine file is spec-reconciliation.json, the machine form of the WHOLE document
@@ -32,10 +32,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     out-of-balance: a headline that reads as a pass. Counting every row keeps the tally and the
     exit code in agreement.
 
-    @unit @SCN-RMD-001
+    @unit @CLM-RMD-001
     Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model that states each fact once, whose summary totals count every Claim Reconciliation
 
-    @unit @SCN-RMD-029
+    @unit @CLM-RMD-029
     Scenario: the JSON report's summary states the run verdict first, on a fresh run and on a saved report concluded again
 
   Rule: the ledger is the detail beside the summary's totals
@@ -44,21 +44,21 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Reconciliations: the summary has the totals and the Claim Reconciliations the detail. They
     are not called scenarios, because a phantom claim or the unnamed claim is not a scenario.
 
-    @unit @SCN-RMD-002
+    @unit @CLM-RMD-002
     Scenario: the Claim Reconciliations sit at the report's top level beside the Summary
 
-    @unit @SCN-RMD-030
+    @unit @CLM-RMD-030
     Scenario: each Claim Reconciliation carries its claim, kind, verdict, Quality Check Reconciliations and pending items and nothing else
 
   Rule: a Claim Reconciliation carries each of its entries once, inside its Quality Check Reconciliations, named by the claim it reconciles
 
     A Claim Reconciliation carries its claim, its kind, its verdict, its Quality Check
     Reconciliations and its pending items, and nothing else. Its claim names what the row
-    reconciles: a scenario's @SCN code, the unknown code a phantom claim's evidence cites, the
-    unnamed claim, or, for a scenario carrying no @SCN, its feature file and title.
+    reconciles: a scenario's claim code, the unknown code a phantom claim's evidence cites, the
+    unnamed claim, or, for a scenario carrying no claim code, its feature file and title.
 
-    @unit @SCN-RMD-020
-    Scenario: each Claim Reconciliation names the claim it reconciles: a scenario's @SCN, a phantom claim's cited code, the unnamed claim, and a scenario with no @SCN by its feature and title
+    @unit @CLM-RMD-020
+    Scenario: each Claim Reconciliation names the claim it reconciles: a scenario's claim code, a phantom claim's cited code, the unnamed claim, and a scenario with no claim code by its feature and title
 
   Rule: the summary states its reconciliation totals, and its evidence observations over every kind of quality check
 
@@ -81,30 +81,30 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     target names none, and no runner where it has not said. Its unit tests hold the assembled summary and the persisted
     file in isolation.
 
-    @unit @SCN-RMD-005
+    @unit @CLM-RMD-005
     Scenario: the summary states its reconciliation totals: its Claim Reconciliations, Reconciliation lines and pending items counted
 
-    @unit @SCN-RMD-003
+    @unit @CLM-RMD-003
     Scenario: the summary counts the evidence observations of each of the five kinds of quality check, fitness included, by the kind of claim each posts to, and their total is the five counts' sum
 
-    @unit @SCN-RMD-015
+    @unit @CLM-RMD-015
     Scenario: each kind of quality check in the summary's evidence observations names its CI steps in the step accounting's order, one entry for each step: a layer the steps the step accounting counts as its runners, never a non-check or the reconciler's own, and the runner the target declares for it, or none where the target names none, whatever its count; fitness the step behind each fitness function that ran
 
-    @unit @SCN-RMD-027
+    @unit @CLM-RMD-027
     Scenario: each fitness evidence observation names the CI step it was observed at, as workflow, job and step, and names none where no single step carries its code
 
   Rule: the summary states the out-of-balance view by feature, each feature named by its feature file
 
     The summary groups each out-of-balance scenario under its feature, in ledger order. An entry
-    names its feature by the feature code, or by the feature file for a scenario with no @SCN in
+    names its feature by the feature code, or by the feature file for a scenario with no claim code in
     a file that carries no code. It carries its feature file, the file's path under the corpus as
-    the rest of the report names a file, where its file has a code, the out-of-balance @SCN codes,
-    the count of scenarios with no @SCN where there are any, and its total. A phantom claim and
+    the rest of the report names a file, where its file has a code, the out-of-balance claim codes,
+    the count of scenarios with no claim code where there are any, and its total. A phantom claim and
     the unnamed claim belong to no feature and sit in no entry. The view is absent when no
     scenario is out of balance. Its unit tests hold the assembled summary and the JSON the CLI
     writes.
 
-    @unit @SCN-RMD-006
+    @unit @CLM-RMD-006
     Scenario: the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and feature file
 
   Rule: the markdown regenerates from a saved spec-reconciliation.json alone
@@ -122,7 +122,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     fixture whose by-feature cut names a coded feature, reconciles, saves the JSON, and regenerates
     from it the markdown it rendered directly, exiting the code the saved run exited.
 
-    @unit @SCN-RMD-007
+    @unit @CLM-RMD-007
     Scenario: the markdown regenerates from a saved spec-reconciliation.json byte-identical to the direct render, and exits the code its saved verdict names
 
   Rule: each evidence sub-row is keyed by one flat coordinate, its kind of quality check
@@ -140,7 +140,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     value, so the round-trip holds. Its unit tests hold the reconcile → assemble shape in
     isolation.
 
-    @unit @SCN-RMD-008
+    @unit @CLM-RMD-008
     Scenario: each quality-check reconciliation carries a single kind of quality check as its coordinate, and the missing split counts the missing Reconciliation lines by it
 
   Rule: a row reads its evidence in one order, whatever order the runner reported it in
@@ -152,7 +152,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     names (the first FAILED evidence observation in evidence order or, where none failed, the first), are then
     a function of what was observed, never of the order it arrived in.
 
-    @unit @SCN-RMD-009
+    @unit @CLM-RMD-009
     Scenario: two runs whose runner listed its files in different orders write the same report, each row's evidence ordered by kind of quality check then by location
 
   Rule: a behavioural evidence observation carries the name its runner gave the test
@@ -166,7 +166,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     observation's name back off the JSON; the CLI, run over a target that ran both, saves the JSON
     with each observation named.
 
-    @SCN-RMD-010 @unit @e2e
+    @CLM-RMD-010 @unit @e2e
     Scenario: the JSON report carries each test's name on its evidence observation, from Vitest and Cucumber alike
       Given a target whose tests that cite no scenario ran under Vitest and under Cucumber
       When the target's evidence is reconciled and saved as the JSON report
@@ -187,41 +187,41 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     A run that reads no CI step has a step accounting only when a notChecks entry names a workflow
     it did not read. It then holds those entries, the workflows read, no row and a zero total.
 
-    @unit @SCN-RMD-012
+    @unit @CLM-RMD-012
     Scenario: the step accounting carries a row per workflow and job read, with its steps read and each disposition's count, ordered by workflow and then job compared character by character whatever the locale, and none for a run that reads no CI step and has no notChecks entry naming a workflow it did not read
 
-    @unit @SCN-RMD-028
+    @unit @CLM-RMD-028
     Scenario: a run that reads no CI step carries each notChecks entry naming a workflow it did not read in its step accounting, with every workflow it read, no row and a zero total
 
-    @unit @SCN-RMD-023
+    @unit @CLM-RMD-023
     Scenario: the step accounting's total sums each count over its rows, one per workflow and job
 
-    @unit @SCN-RMD-013
+    @unit @CLM-RMD-013
     Scenario: the step accounting names the steps the target calls non-checks, and none for a target that names no step a non-check
 
-    @unit @SCN-RMD-014
+    @unit @CLM-RMD-014
     Scenario: the step accounting names each reconciler step with its role, and none for a pipeline that runs no reconciliation
 
-    @unit @SCN-RMD-024
+    @unit @CLM-RMD-024
     Scenario: the step accounting names the steps behind its runners and plumbing counts, each list holding exactly the steps its count counts
 
-    @unit @SCN-RMD-025
+    @unit @CLM-RMD-025
     Scenario: the summary states the CI steps the run read in its step accounting alone, carrying no discovery scope, reconciler or non-check steps beside it
 
-    @unit @SCN-RMD-026
+    @unit @CLM-RMD-026
     Scenario: every list of the steps behind a count follows the step accounting's rows, so reading the workflows in another order changes neither the rows nor the lists
 
-  Rule: the summary carries scenario code errors beside the ledger, and they never alter it
+  Rule: the summary carries claim code errors beside the ledger, and they never alter it
 
-    @unit @SCN-RMD-016
-    Scenario: a corpus with a misfiled code reconciles to the same ledger and summary as its correctly filed twin, and differs only in its scenario code errors
+    @unit @CLM-RMD-016
+    Scenario: a corpus with a misfiled code reconciles to the same ledger and summary as its correctly filed twin, and differs only in its claim code errors
 
   Rule: the JSON report carries the run's conclusions as the Markdown states them
 
     The JSON report is the run's result, so it names the run verdict. A machine reading it
     never works the verdict out from the ledger.
 
-    @unit @SCN-RMD-017
+    @unit @CLM-RMD-017
     Scenario Outline: the JSON report's summary names the <verdict> run verdict, the one the Markdown's verdict headline states
 
       Examples:
@@ -237,7 +237,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The published package carries spec-reconciliation.schema.json, which states every key the JSON report may carry. A report balance writes validates against it with a JSON Schema validator, whichever outcomes, claims and accounts its inputs give it. A report missing a key the schema requires, or carrying a key it does not name, does not.
 
-    @e2e @SCN-RMD-019
+    @e2e @CLM-RMD-019
     Scenario Outline: real balance runs' JSON reports validate against the JSON Schema the package ships, the every-outcome corpus's and a pipeline target's, and one missing a required key or carrying an unnamed one does not
       Given <target>
       When the target's evidence is reconciled and saved as the JSON report
@@ -253,8 +253,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: the JSON report states every fault in its inputs in one place, present only when there is one, and the corpus's own facts in another
 
-    @unit @SCN-RMD-021
-    Scenario: the JSON report carries a top-level errors key only when its inputs hold a fault, with the scenario code errors and each kind of configuration fault beneath it
+    @unit @CLM-RMD-021
+    Scenario: the JSON report carries a top-level errors key only when its inputs hold a fault, with the claim code errors and each kind of configuration fault beneath it
 
-    @unit @SCN-RMD-022
-    Scenario: the JSON report carries the corpus's own facts in one place: its feature files and codes, the @SCN occurrences it excludes, the scenarios carrying no code and the codes scenarios share
+    @unit @CLM-RMD-022
+    Scenario: the JSON report carries the corpus's own facts in one place: its feature files and codes, the claim code occurrences it excludes, the scenarios carrying no code and the codes scenarios share

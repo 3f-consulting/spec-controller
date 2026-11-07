@@ -22,7 +22,7 @@ function resolvedTemporaryDirectory(): string {
 function repositoryWithACode(): string {
   const repo = resolvedTemporaryDirectory();
   git(repo, ["init", "-q"]);
-  writeFileSync(join(repo, "one.feature"), "  @SCN-ONE-001 @unit\n  Scenario: one\n");
+  writeFileSync(join(repo, "one.feature"), "  @CLM-ONE-001 @unit\n  Scenario: one\n");
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-q", "-m", "one"]);
   return repo;
@@ -32,7 +32,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("[SCN-ALC-020] a file in the repository git cannot read is refused, never left out of the answer", () => {
+describe("[CLM-ALC-020] a file in the repository git cannot read is refused, never left out of the answer", () => {
   it("refuses the tree, naming git, when there is no git to ask", () => {
     const repo = repositoryWithACode();
     vi.stubEnv("PATH", resolvedTemporaryDirectory());

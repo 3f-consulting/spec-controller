@@ -17,7 +17,7 @@ const TABLE_HEADER = (): string => coreMessage(CoreMessage.StepAccountingTableHe
 
 const section = (lines: readonly string[]): string[] => sectionUnder(heading())(lines);
 
-describe("[SCN-RPT-052] the step-accounting section tables a row per workflow and job read, and a total row when more than one job was read", () => {
+describe("[CLM-RPT-052] the step-accounting section tables a row per workflow and job read, and a total row when more than one job was read", () => {
   const throughTable = (reconciliation: ReturnType<typeof reconcile>): string[] => {
     const lines = section(renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n"));
     const header = lines.indexOf(TABLE_HEADER());

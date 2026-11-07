@@ -11,39 +11,39 @@ Feature: A Go suite's results answer unit evidence obligations
 
   Rule: a Go test answers the scenario its subtest's name cites
 
-    @unit @e2e @SCN-GOT-001
+    @unit @e2e @CLM-GOT-001
     Scenario: a passing Go subtest that cites its scenario in its name answers that scenario's unit evidence obligation, and the scenario reconciles satisfied
       Given a target whose unit tests are a Go suite and whose scenario raises a unit evidence obligation
       And a gotestsum report in which a passing subtest cites that scenario in its name
       When balance is asked to reconcile that target with the gotestsum report
       Then the scenario that Go subtest cites reconciles satisfied, by that subtest
 
-    @unit @SCN-GOT-002
+    @unit @CLM-GOT-002
     Scenario: a failing Go subtest that cites its scenario posts a failing observation, and the scenario reconciles failing
 
-    @unit @SCN-GOT-003
+    @unit @CLM-GOT-003
     Scenario: a code in a Go subtest's own name is read before a code in the names of the tests around it
 
-    @unit @SCN-GOT-004
+    @unit @CLM-GOT-004
     Scenario: a Go subtest whose name cites two scenarios credits neither, and the unnamed claim's row names both codes
 
   Rule: a Go test that did not run proves nothing
 
-    @unit @SCN-GOT-005
+    @unit @CLM-GOT-005
     Scenario: a skipped Go subtest posts no evidence observation, so the scenario it cites reads missing
 
-    @unit @SCN-GOT-006
+    @unit @CLM-GOT-006
     Scenario: a Go subtest whose enclosing test fails before starting it posts nothing, so the scenario it cites reads missing
 
-    @unit @SCN-GOT-007
+    @unit @CLM-GOT-007
     Scenario: a Go package that fails to compile posts a broken item and the run is unsound
 
-    @unit @SCN-GOT-008
+    @unit @CLM-GOT-008
     Scenario: a Go subtest that panics posts a failing observation
 
   Rule: the report given to --junit is read only in the shape a JUnit XML report takes
 
-    @unit @e2e @SCN-GOT-009
+    @unit @e2e @CLM-GOT-009
     Scenario Outline: a file given to --junit that is not a JUnit XML report is refused as unreadable at exit 2, naming that shape
       Given a target whose JUnit report is <defect>
       When the balance run reads that input

@@ -22,9 +22,9 @@ function tallyBlockOf(scenarios: Scenario[]): (observations: EvidenceObservation
   };
 }
 
-const scenarios: Scenario[] = [{ claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
-const known: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "passed" };
-const phantomClaimObservation: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-PHM-901", status: "passed", locator: "src/phm.test.ts" };
+const scenarios: Scenario[] = [{ claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
+const known: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "passed" };
+const phantomClaimObservation: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "CLM-PHM-901", status: "passed", locator: "src/phm.test.ts" };
 
 function uncitedObservation(locator: string): EvidenceObservation {
   return { qualityCheckKind: "unit", claimCode: null, status: "passed", locator };
@@ -32,7 +32,7 @@ function uncitedObservation(locator: string): EvidenceObservation {
 
 const tallyBlock = (observations: EvidenceObservation[]): string[] => tallyBlockOf(scenarios)(observations);
 
-describe('[SCN-RPT-024] the verdict tally names the collection "Claim Reconciliation(s)" and counts every row: scenario, phantom claim and unnamed claim', () => {
+describe('[CLM-RPT-024] the verdict tally names the collection "Claim Reconciliation(s)" and counts every row: scenario, phantom claim and unnamed claim', () => {
   it("states only the total when every evidence observation cites a scenario", () => {
     expect(tallyBlock([known])).toEqual([`- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 1, balanced: 1, outOfBalance: 0 })}`]);
   });

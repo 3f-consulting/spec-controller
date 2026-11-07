@@ -8,7 +8,7 @@ function freshDirectory(): string {
   return dir;
 }
 
-describe("[SCN-ALC-017] a path allocate reads that is not the kind it reads is refused, naming the path", () => {
+describe("[CLM-ALC-017] a path allocate reads that is not the kind it reads is refused, naming the path", () => {
 
   it("still reads a missing features directory as no corpus", () => {
     expect(readHeaderCodes(join(freshDirectory(), "features"))).toEqual([]);

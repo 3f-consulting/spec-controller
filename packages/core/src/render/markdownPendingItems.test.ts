@@ -9,7 +9,7 @@ import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 
-describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending Items on a line of their own after its table", () => {
+describe("[CLM-RPT-042] the Reconciliation totals section tallies the Pending Items on a line of their own after its table", () => {
   const reconciliationTotalsSection = (md: string): string => {
     const heading = markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading));
     const i = md.indexOf(heading);
@@ -24,11 +24,11 @@ describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending It
     pendingBalance = reconcile(
       [
         {
-          claimCode: "SCN-PDX-001",
+          claimCode: "CLM-PDX-001",
           evidenceObligations: [{ qualityCheckKind: "unit", pending: true }, { qualityCheckKind: "integration", pending: true }],
         },
         {
-          claimCode: "SCN-PDX-002",
+          claimCode: "CLM-PDX-002",
           evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
         },
       ],
@@ -43,7 +43,7 @@ describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending It
   });
 });
 
-describe("[SCN-RPT-043] a balanced-with-pending row is visibly distinguished from a clean-balanced one", () => {
+describe("[CLM-RPT-043] a balanced-with-pending row is visibly distinguished from a clean-balanced one", () => {
   const rowFor = (md: string, claimCode: string): string => {
     const row = md.split("\n").find((line) => line.startsWith(`| ${claimCode} `));
     expect(row, `expected a rendered row for ${claimCode}`).toBeTruthy();
@@ -55,17 +55,17 @@ describe("[SCN-RPT-043] a balanced-with-pending row is visibly distinguished fro
   beforeEach(() => {
     contrastBalance = reconcile(
       [
-        { claimCode: "SCN-PDD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-PDD-002", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
+        { claimCode: "CLM-PDD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-PDD-002", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
       ],
-      [{ qualityCheckKind: "unit", claimCode: "SCN-PDD-001", status: "passed" }]
+      [{ qualityCheckKind: "unit", claimCode: "CLM-PDD-001", status: "passed" }]
     );
   });
 
   it("makes the two balanced rows read differently at a glance — the pending cell is not the clean em-dash", () => {
     const md = renderMarkdown(__er(contrastBalance), ctx, publishedExitCodeOf);
-    const cleanCell = exceptionsCell(rowFor(md, "SCN-PDD-001"));
-    const pendingCell = exceptionsCell(rowFor(md, "SCN-PDD-002"));
+    const cleanCell = exceptionsCell(rowFor(md, "CLM-PDD-001"));
+    const pendingCell = exceptionsCell(rowFor(md, "CLM-PDD-002"));
     expect(cleanCell).toBe("—");
     expect(pendingCell).not.toBe(cleanCell);
     expect(pendingCell).toBe("pending: integration");

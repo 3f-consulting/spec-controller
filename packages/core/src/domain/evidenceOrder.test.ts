@@ -5,7 +5,7 @@ import { inEvidenceOrder } from "./evidenceOrder.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 
-const CLAIM_CODE = "SCN-ORD-001";
+const CLAIM_CODE = "CLM-ORD-001";
 
 const scenarios: Scenario[] = [
   {
@@ -46,7 +46,7 @@ const rowOf = (observations: EvidenceObservation[], claimCode = CLAIM_CODE) =>
 const coordinates = (observations: readonly EvidenceObservation[]) =>
   observations.map((o) => [o.qualityCheckKind, o.locator ?? null]);
 
-describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order the runner reported it in", () => {
+describe("[CLM-RMD-009] a row reads its evidence in one order, whatever order the runner reported it in", () => {
   it("reconciles every arrival order of one evidence set to the same ledger", () => {
     const evidence = [fitness, integration, unitZ, e2e, unitA, performance];
     const ledgers = new Set(permutations(evidence).map((order) => JSON.stringify(reconcile(scenarios, order))));
@@ -75,19 +75,19 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
   });
 
   it("orders evidence observations at one location by the scenario they cite — the phantom claims' rows they mint follow it", () => {
-    const ghost2: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-GHOST-002", status: "passed", locator: "p.test.ts" };
-    const ghost1: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-GHOST-001", status: "passed", locator: "p.test.ts" };
+    const ghost2: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "CLM-GHOST-002", status: "passed", locator: "p.test.ts" };
+    const ghost1: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "CLM-GHOST-001", status: "passed", locator: "p.test.ts" };
     const phantomClaimIds = reconcile(scenarios, [ghost2, ghost1])
       .claimReconciliations.filter((r) => r.kind === "phantom-claim")
       .map((r) => r.claim);
-    expect(phantomClaimIds).toEqual(["SCN-GHOST-001", "SCN-GHOST-002"]);
+    expect(phantomClaimIds).toEqual(["CLM-GHOST-001", "CLM-GHOST-002"]);
   });
 
   it("reads an evidence observation citing no scenario before the evidence observations at its location that cite one", () => {
     const atLocation = { qualityCheckKind: "unit", status: "passed", locator: "a.test.ts" } as const;
-    const citing: EvidenceObservation = { ...atLocation, claimCode: "SCN-CITED-001" };
+    const citing: EvidenceObservation = { ...atLocation, claimCode: "CLM-CITED-001" };
     const citingNone: EvidenceObservation = { ...atLocation, claimCode: null };
-    expect(inEvidenceOrder([citing, citingNone]).map((o) => o.claimCode)).toEqual([null, "SCN-CITED-001"]);
+    expect(inEvidenceOrder([citing, citingNone]).map((o) => o.claimCode)).toEqual([null, "CLM-CITED-001"]);
   });
 
   it("orders evidence observations alike in kind of quality check, location and scenario by what else they say, however their objects were built", () => {
@@ -97,8 +97,8 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
   });
 
   it("orders evidence observations alike but for their notes by what the notes say, however the notes were built", () => {
-    const notesA = [{ kind: "several-claim-codes" as const, codes: ["SCN-AAA-001", "SCN-BBB-001"] }];
-    const notesB = [{ codes: ["SCN-AAA-002", "SCN-BBB-001"], kind: "several-claim-codes" as const }];
+    const notesA = [{ kind: "several-claim-codes" as const, codes: ["CLM-AAA-001", "CLM-BBB-001"] }];
+    const notesB = [{ codes: ["CLM-AAA-002", "CLM-BBB-001"], kind: "several-claim-codes" as const }];
     const saysA: EvidenceObservation = { qualityCheckKind: "unit", claimCode: CLAIM_CODE, status: "failed", locator: "a.test.ts", notes: notesA };
     const saysB: EvidenceObservation = { ...saysA, notes: notesB };
     for (const order of [[saysA, saysB], [saysB, saysA]]) {

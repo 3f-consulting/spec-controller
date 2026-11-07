@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
 
-describe("[SCN-CUC-004] parseCucumberEvidenceObservations classifies a scenario three-way — pending is never inferred from status", () => {
+describe("[CLM-CUC-004] parseCucumberEvidenceObservations classifies a scenario three-way — pending is never inferred from status", () => {
   const reportWithStep = (status: string): CucumberJsonReport => [
     {
       uri: "features/pnd013.feature",
       elements: [
         {
-          tags: [{ name: "@integration" }, { name: "@SCN-PDN-001" }],
+          tags: [{ name: "@integration" }, { name: "@CLM-PDN-001" }],
           steps: [{ result: { status } }],
         },
       ],
@@ -19,7 +19,7 @@ describe("[SCN-CUC-004] parseCucumberEvidenceObservations classifies a scenario 
     ["emits a `failed` observation when a step failed (→ failing downstream)", "failed"],
   ] as const)("%s", (_title, status) => {
     expect(parseCucumberEvidenceObservations(reportWithStep(status))).toEqual([
-      { qualityCheckKind: "integration", claimCode: "SCN-PDN-001", status, locator: "features/pnd013.feature" },
+      { qualityCheckKind: "integration", claimCode: "CLM-PDN-001", status, locator: "features/pnd013.feature" },
     ]);
   });
 
@@ -29,7 +29,7 @@ describe("[SCN-CUC-004] parseCucumberEvidenceObservations classifies a scenario 
         uri: "features/multi.feature",
         elements: [
           {
-            tags: [{ name: "@integration" }, { name: "@e2e" }, { name: "@SCN-PDN-002" }],
+            tags: [{ name: "@integration" }, { name: "@e2e" }, { name: "@CLM-PDN-002" }],
             steps: [{ result: { status: "passed" } }, { result: { status: "skipped" } }],
           },
         ],
@@ -39,7 +39,7 @@ describe("[SCN-CUC-004] parseCucumberEvidenceObservations classifies a scenario 
   });
 });
 
-describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationpending scenario at integration, the fallback of a report of scenario runs, since a pending tag is no layer tag", () => {
+describe("[CLM-CUC-002] parseCucumberEvidenceObservations posts an @integrationpending scenario at integration, the fallback of a report of scenario runs, since a pending tag is no layer tag", () => {
   it("a passing Cucumber scenario tagged @integrationpending emits its evidence observation at the report's fallback, integration, with no layer handed in", () => {
     const observations = parseCucumberEvidenceObservations(
       [
@@ -47,7 +47,7 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationp
           uri: "features/deferred.feature",
           elements: [
             {
-              tags: [{ name: "@integrationpending" }, { name: "@SCN-XXX-002" }],
+              tags: [{ name: "@integrationpending" }, { name: "@CLM-XXX-002" }],
               steps: [{ result: { status: "passed" } }],
             },
           ],
@@ -55,7 +55,7 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationp
       ]
     );
     expect(observations).toEqual([
-      { qualityCheckKind: "integration", claimCode: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
+      { qualityCheckKind: "integration", claimCode: "CLM-XXX-002", status: "passed", locator: "features/deferred.feature" },
     ]);
   });
 
@@ -65,14 +65,14 @@ describe("[SCN-CUC-002] parseCucumberEvidenceObservations posts an @integrationp
         uri: "features/deferred.feature",
         elements: [
           {
-            tags: [{ name: "@integrationpending" }, { name: "@e2e" }, { name: "@SCN-XXX-002" }],
+            tags: [{ name: "@integrationpending" }, { name: "@e2e" }, { name: "@CLM-XXX-002" }],
             steps: [{ result: { status: "passed" } }],
           },
         ],
       },
     ]);
     expect(observations).toEqual([
-      { qualityCheckKind: "e2e", claimCode: "SCN-XXX-002", status: "passed", locator: "features/deferred.feature" },
+      { qualityCheckKind: "e2e", claimCode: "CLM-XXX-002", status: "passed", locator: "features/deferred.feature" },
     ]);
   });
 });

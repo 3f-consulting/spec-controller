@@ -12,7 +12,7 @@ const STEPS = [TYPES, TESTS];
 const EXCLUDED_STEP = "ci.yml:quality:Types";
 const STRAY_ENTRY = "ci.yml:quality:Lint";
 
-describe("[SCN-USG-015] a step named in `notChecks` is not a candidate", () => {
+describe("[CLM-USG-015] a step named in `notChecks` is not a candidate", () => {
   it("excludes the step an entry names", () => {
     const { isExcluded } = nonChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
     expect(isExcluded(TYPES)).toBe(true);
@@ -29,7 +29,7 @@ describe("[SCN-USG-015] a step named in `notChecks` is not a candidate", () => {
   });
 });
 
-describe("[SCN-USG-038] a step named in `notChecks` is reported as a non-check rather than dropped", () => {
+describe("[CLM-USG-038] a step named in `notChecks` is reported as a non-check rather than dropped", () => {
   it("reports the step an entry names as a non-check", () => {
     const { excluded } = nonChecksApplied(STEPS, namedInItsWorkflow, [EXCLUDED_STEP, STRAY_ENTRY]);
     expect(excluded).toStrictEqual([EXCLUDED_STEP]);

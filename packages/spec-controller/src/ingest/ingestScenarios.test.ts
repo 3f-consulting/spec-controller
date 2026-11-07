@@ -13,7 +13,7 @@ import { scenarioName } from "../../../../tests/steps/support/scenarioName.js";
 const WELL_FORMED = `@AAA
 Feature: alpha
 
-  @unit @SCN-AAA-001
+  @unit @CLM-AAA-001
   Scenario: alpha works
     Given a thing
 `;
@@ -21,7 +21,7 @@ Feature: alpha
 const CORRUPT_TAG_LINE = `@BBB
 Feature: beta
 
-  @unit @SCN-BBB-001 x
+  @unit @CLM-BBB-001 x
   Scenario: beta works
     Given a thing
 `;
@@ -29,7 +29,7 @@ Feature: beta
 const CORRUPT_SCENARIO_KEYWORD = `@CCC
 Feature: gamma
 
-  @unit @SCN-CCC-001
+  @unit @CLM-CCC-001
   Scenari0: gamma works
     Given a thing
 `;
@@ -58,7 +58,7 @@ function parserWordsFor(source: string): string {
   return parse.kind === "unparseable" ? parse.faults[0]!.message : "";
 }
 
-describe("[SCN-GPG-001] the shared parse reports every feature file the parser rejects, with the parser's own words, and returns no corpus in its place", () => {
+describe("[CLM-GPG-001] the shared parse reports every feature file the parser rejects, with the parser's own words, and returns no corpus in its place", () => {
   it("returns no corpus, and names every file the parser rejects with the parser's own words, in path order", () => {
     const { dir, firstBad, secondBad } = corpusWithTwoUnreadableFiles();
 
@@ -77,7 +77,7 @@ const NESTED_FEATURES = `${NESTED}/features`;
 const NESTED_FILES = ["area/deeper/deep.feature", "area/middle.feature", "top.feature"];
 
 function featureNamed(code: string): string {
-  return `@${code}\nFeature: ${code}\n\n  @unit @SCN-${code}-001\n  Scenario: ${code} works\n    Given a thing\n`;
+  return `@${code}\nFeature: ${code}\n\n  @unit @CLM-${code}-001\n  Scenario: ${code} works\n    Given a thing\n`;
 }
 
 function flatCopyOfNested(): string {
@@ -91,7 +91,7 @@ function reconciled(features: string): ReturnType<typeof runReconcile> {
   return runReconcile({ features, vitest: join(NESTED, "vitest.json"), packageJson: join(NESTED, "package.json"), ci: NESTED }, resolveTargetRoot({ features }));
 }
 
-describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus, at any depth, is read and judged as at the top level", () => {
+describe("[CLM-CLI-085] a feature file in a subdirectory of the corpus, at any depth, is read and judged as at the top level", () => {
   it("reads every feature file under the corpus, in the order of its path under the corpus", () => {
     expect(readFeatureSources(NESTED_FEATURES).map(({ path }) => path)).toEqual(
       NESTED_FILES.map((file) => join(NESTED_FEATURES, file)),
@@ -107,7 +107,7 @@ describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus, at any d
     const flat = reconciled(flatCopyOfNested());
 
     expect(nested.ledger.claimReconciliations.flatMap((row) => (row.kind === "scenario" ? [row.claim] : [])).sort()).toEqual(
-      ["SCN-NTA-001", "SCN-NTB-001", "SCN-NTC-001", "SCN-NTC-002"],
+      ["CLM-NTA-001", "CLM-NTB-001", "CLM-NTC-001", "CLM-NTC-002"],
     );
     expect(nested.ledger).toEqual(flat.ledger);
     expect(nested.summary).toEqual(flat.summary);
@@ -135,7 +135,7 @@ describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus, at any d
 const SAME_NAME = "tests/fixtures/same-name-corpus";
 const SAME_NAME_FEATURES = `${SAME_NAME}/features`;
 
-describe("[SCN-CLI-086] a feature file in a subdirectory is named by its path under the corpus, so two files of one name are told apart", () => {
+describe("[CLM-CLI-086] a feature file in a subdirectory is named by its path under the corpus, so two files of one name are told apart", () => {
   it("names each feature file by its path under the corpus, without its extension", () => {
     expect(readFeatureCorpus(SAME_NAME_FEATURES).map(({ file }) => slugOf(file))).toEqual(["alpha/run", "beta/run"]);
   });
@@ -149,8 +149,8 @@ describe("[SCN-CLI-086] a feature file in a subdirectory is named by its path un
 
   it("names each untagged scenario's feature file by its path under the corpus", () => {
     expect(readEvidenceObligations(SAME_NAME_FEATURES).untaggedScenarios).toEqual([
-      scenarioName("alpha/run.feature", "the run has no scenario code"),
-      scenarioName("beta/run.feature", "the run has no scenario code"),
+      scenarioName("alpha/run.feature", "the run has no claim code"),
+      scenarioName("beta/run.feature", "the run has no claim code"),
     ]);
   });
 
@@ -163,10 +163,10 @@ describe("[SCN-CLI-086] a feature file in a subdirectory is named by its path un
     }, resolveTargetRoot({ features: SAME_NAME_FEATURES }));
 
     expect(ledger.claimReconciliations.map(({ claim }) => claim)).toEqual([
-      "SCN-SNA-001",
-      "SCN-SNB-001",
-      "alpha/run.feature : the run has no scenario code",
-      "beta/run.feature : the run has no scenario code",
+      "CLM-SNA-001",
+      "CLM-SNB-001",
+      "alpha/run.feature : the run has no claim code",
+      "beta/run.feature : the run has no claim code",
     ]);
   });
 });

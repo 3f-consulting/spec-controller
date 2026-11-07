@@ -13,7 +13,7 @@ const handed = (paths: InputPaths): RunContext => ({
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
 });
 
-describe("[SCN-RPT-028] a run names the canonical inputs it did not receive, in the canonical order", () => {
+describe("[CLM-RPT-028] a run names the canonical inputs it did not receive, in the canonical order", () => {
   it("names the canonical flags with no value, in canonical order", () => {
     const facts = projectProvenance(handed({ features: "features", ciSteps: "ci-steps.json" }));
 

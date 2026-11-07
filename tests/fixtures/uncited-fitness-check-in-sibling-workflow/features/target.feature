@@ -20,6 +20,6 @@ Feature: a fixture target whose uncited fitness function runs in a sibling workf
 
   Rule: a rule nothing cites
 
-    @unit @SCN-TGU-001
+    @unit @CLM-TGU-001
     Scenario: the target behaves
       Given the target source

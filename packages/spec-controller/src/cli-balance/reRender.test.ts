@@ -25,7 +25,7 @@ function fixtureArgv(fixture: string): string[] {
   return argv;
 }
 
-describe("[SCN-CLI-069] a re-render of a saved reconciliation exits the code its verdict names, and its headline names the same code", () => {
+describe("[CLM-CLI-069] a re-render of a saved reconciliation exits the code its verdict names, and its headline names the same code", () => {
   const VERDICTS = [
     { verdict: "all-balanced", fixture: "balanced", code: 0 },
     { verdict: "out-of-balance", fixture: "evidence-observation", code: 1 },
@@ -46,7 +46,7 @@ describe("[SCN-CLI-069] a re-render of a saved reconciliation exits the code its
   }
 });
 
-describe("[SCN-CLI-070] a re-render is strict when the saved run was strict or the re-render is given --strict", () => {
+describe("[CLM-CLI-070] a re-render is strict when the saved run was strict or the re-render is given --strict", () => {
   function unrecorded(path: string): string {
     const report = JSON.parse(readFileSync(path, "utf8")) as { runProvenance: Record<string, unknown> };
     delete report.runProvenance["strict"];
@@ -73,7 +73,7 @@ describe("[SCN-CLI-070] a re-render is strict when the saved run was strict or t
   }
 });
 
-describe("[SCN-CLI-071] under --exit-zero a re-render moves 1 and 3 to 0 and never 4 or 5, printing the same report", () => {
+describe("[CLM-CLI-071] under --exit-zero a re-render moves 1 and 3 to 0 and never 4 or 5, printing the same report", () => {
   const ROWS = [
     { verdict: "out-of-balance", fixture: "evidence-observation", liveFlags: [], code: 1, zeroed: 0 },
     { verdict: "only-Pending-Items under --strict", fixture: "pending-only", liveFlags: ["--strict"], code: 3, zeroed: 0 },
@@ -93,7 +93,7 @@ describe("[SCN-CLI-071] under --exit-zero a re-render moves 1 and 3 to 0 and nev
   }
 });
 
-describe("[SCN-CLI-072] a flag given beside --render-from-json that the re-render does not read exits 2 naming the flag, and nothing is rendered", () => {
+describe("[CLM-CLI-072] a flag given beside --render-from-json that the re-render does not read exits 2 naming the flag, and nothing is rendered", () => {
   function runRefusable(argv: readonly string[]): { exitCode: number; stdout: string; stderr: string } {
     const { exitCode, stdout, stderr } = runBalanceCaptured(argv);
     return { exitCode, stdout, stderr };
@@ -116,7 +116,7 @@ describe("[SCN-CLI-072] a flag given beside --render-from-json that the re-rende
   }
 });
 
-describe("[SCN-MSG-011] a balanced run shows no error code", () => {
+describe("[CLM-MSG-011] a balanced run shows no error code", () => {
   const NONE = { opening: [], after: [] };
   const VERDICTS = [
     { verdict: "balanced", fixture: "balanced", code: 0 },

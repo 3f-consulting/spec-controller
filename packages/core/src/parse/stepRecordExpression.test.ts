@@ -19,7 +19,7 @@ function stepNamed(ci: string, identity: string) {
   return step;
 }
 
-describe("[SCN-WFS-013] reconcilerSteps — how the step-record expression is read", () => {
+describe("[CLM-WFS-013] reconcilerSteps — how the step-record expression is read", () => {
   const dumpWith = (env: string): unknown[] => [
     ...reconcilerSteps(
       workflowSteps([`jobs:\n  ci:\n    steps:\n      - name: Dump\n        env:\n          J: ${env}\n        run: echo done`], NAMES),

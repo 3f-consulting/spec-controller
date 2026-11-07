@@ -12,17 +12,17 @@ function corpus(files: Record<string, string>): string {
   return dir;
 }
 
-describe("[SCN-CLI-099] readEvidenceObligations names the scenarios sharing each code", () => {
+describe("[CLM-CLI-099] readEvidenceObligations names the scenarios sharing each code", () => {
   it("lists a code carried in two files with the file and the name of each scenario", () => {
     const features = corpus({
-      "one.feature": "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: the scenario in one\n    Given a thing\n",
+      "one.feature": "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: the scenario in one\n    Given a thing\n",
       "two.feature":
-        "@TWO\nFeature: two\n\n  @unit @SCN-ONE-001\n  Scenario: the scenario in two\n    Given a thing\n\n" +
-        "  @unit @SCN-TWO-001\n  Scenario: its own\n    Given a thing\n",
+        "@TWO\nFeature: two\n\n  @unit @CLM-ONE-001\n  Scenario: the scenario in two\n    Given a thing\n\n" +
+        "  @unit @CLM-TWO-001\n  Scenario: its own\n    Given a thing\n",
     });
     expect(readEvidenceObligations(features).sharedClaimCodes).toEqual([
       {
-        claimCode: "SCN-ONE-001",
+        claimCode: "CLM-ONE-001",
         scenarios: [
           scenarioName("one.feature", "the scenario in one"),
           scenarioName("two.feature", "the scenario in two"),

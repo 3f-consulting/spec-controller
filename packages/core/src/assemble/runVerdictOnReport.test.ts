@@ -41,16 +41,16 @@ const misfiledCorpus = (): EvidenceReconciliation =>
   evidenceReconciliationFromSources({
     features: parsedFeatures(
       [
-        "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: one\n    Given a thing\n",
-        "@TWO\nFeature: two\n\n  @unit @SCN-ONE-002\n  Scenario: two\n    Given a thing\n",
+        "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n    Given a thing\n",
+        "@TWO\nFeature: two\n\n  @unit @CLM-ONE-002\n  Scenario: two\n    Given a thing\n",
       ],
       ["one.feature", "two.feature"]
     ),
     packageJson: {},
     ciWorkflows: [],
     behaviouralObservations: [
-      { qualityCheckKind: "unit", claimCode: "SCN-ONE-001", status: "passed" },
-      { qualityCheckKind: "unit", claimCode: "SCN-ONE-002", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "CLM-ONE-001", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "CLM-ONE-002", status: "passed" },
     ],
     deferralTags: [],
   });
@@ -83,7 +83,7 @@ const verdictHeadlineOf = (md: string): string => {
   return lines[heading + 2]!.split(" — ")[0]!;
 };
 
-describe("[SCN-RMD-017] the JSON report's summary names the run verdict, the one the Markdown's verdict headline states", () => {
+describe("[CLM-RMD-017] the JSON report's summary names the run verdict, the one the Markdown's verdict headline states", () => {
   for (const row of ROWS) {
     it(`${row.verdict}: ${row.run}`, () => {
       const reconciliation = row.reconciliation();

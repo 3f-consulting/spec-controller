@@ -44,7 +44,7 @@ const MALFORMED_REQUEST: readonly Malformed[] = [
   ],
 ];
 
-describe("[SCN-ALC-012] A request not in the claim-code form is refused as a usage error, never as an unknown part", () => {
+describe("[CLM-ALC-012] A request not in the claim-code form is refused as a usage error, never as an unknown part", () => {
   it.each(MALFORMED_REQUEST)("refuses %s at the usage status, giving no code", (_request, argv, code, why) => {
     const answered = allocateIn(repositoryHeadedOneCarrying003("allocate-usage-error-"), argv);
 
@@ -56,7 +56,7 @@ describe("[SCN-ALC-012] A request not in the claim-code form is refused as a usa
   });
 });
 
-describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — a request for a claim code not in its form", () => {
+describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — a request for a claim code not in its form", () => {
   it.each([
     ["the part fit, in lower case", "fit"],
     ["the part F, one character long", "F"],

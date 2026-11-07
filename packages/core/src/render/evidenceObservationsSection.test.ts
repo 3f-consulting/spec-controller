@@ -8,19 +8,19 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import { sectionUnder, linesOf } from "./renderedSection.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { claimCode: "SCN-VOL-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+  { claimCode: "CLM-VOL-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
 ];
 
 const observations: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", claimCode: "SCN-VOL-001", status: "passed" },
-  { qualityCheckKind: "unit", claimCode: "SCN-VOL-001", status: "passed" },
-  { qualityCheckKind: "integration", claimCode: "SCN-VOL-001", status: "passed" },
-  { qualityCheckKind: "unit", claimCode: "SCN-VOL-404", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "CLM-VOL-001", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "CLM-VOL-001", status: "passed" },
+  { qualityCheckKind: "integration", claimCode: "CLM-VOL-001", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "CLM-VOL-404", status: "passed" },
   { qualityCheckKind: "e2e", claimCode: null, status: "passed" },
   { qualityCheckKind: "e2e", claimCode: null, status: "failed" },
-  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", claimCode: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", claimCode: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", claimCode: "SCN-VOL-001", exists: false, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", claimCode: "CLM-VOL-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", claimCode: "CLM-VOL-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", claimCode: "CLM-VOL-001", exists: false, enforcedOverRealSource: true },
 ];
 
 const heading = (): string => markdownHeading(3, coreMessage(CoreMessage.EvidenceObservationsHeading));
@@ -42,7 +42,7 @@ function expectNoSectionAndNothingInItsPlace(reconciliation: EvidenceReconciliat
   for (const i of headings) expect(lines[i - 1]).toBe("");
 }
 
-describe("[SCN-RPT-010] the report renders the Evidence observations cut over every kind of quality check, fitness included, and the evidence observation identity balances by construction", () => {
+describe("[CLM-RPT-010] the report renders the Evidence observations cut over every kind of quality check, fitness included, and the evidence observation identity balances by construction", () => {
   it("renders heading, blank, the identity line, blank, the four-column table with a row per kind of quality check and fitness last at the running count, then one blank", () => {
     const reconciliation = evidenceReconciliationOf(scenarios, observations, []);
     expect(reconciliation.summary.evidenceObservations).toMatchObject({

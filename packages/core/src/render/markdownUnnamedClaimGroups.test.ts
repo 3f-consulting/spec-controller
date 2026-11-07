@@ -13,8 +13,8 @@ const CITES_NO_SCENARIO = (): string => coreMessage(CoreMessage.OutcomeCitesNoSc
 
 function reportOf(observations: readonly EvidenceObservation[]): string {
   const ledger = reconcile(
-    [{ claimCode: "SCN-SGR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-    [{ qualityCheckKind: "unit", claimCode: "SCN-SGR-001", status: "passed", locator: "src/proven.test.ts" }, ...observations]
+    [{ claimCode: "CLM-SGR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", claimCode: "CLM-SGR-001", status: "passed", locator: "src/proven.test.ts" }, ...observations]
   );
   return renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
 }
@@ -43,7 +43,7 @@ function named(status: "passed" | "failed", testName: string | undefined): Behav
   return { ...unit(status, "src/a.test.ts"), ...(testName === undefined ? {} : { testName }) };
 }
 
-describe("[SCN-RPT-033] tests that cite no scenario are grouped on the unnamed claim's row by the file they ran in, each group counting how many ran, passed and failed", () => {
+describe("[CLM-RPT-033] tests that cite no scenario are grouped on the unnamed claim's row by the file they ran in, each group counting how many ran, passed and failed", () => {
   const mixedReport = (): string =>
     reportOf([unit("passed", "src/b.test.ts"), unit("failed", "src/a.test.ts"), unit("passed", "src/a.test.ts")]);
 
@@ -71,14 +71,14 @@ describe("[SCN-RPT-033] tests that cite no scenario are grouped on the unnamed c
   });
 
   it("keeps each distinct message once, after the file", () => {
-    const several = "2 scn properties cite SCN-A and SCN-B — a test cites exactly one scenario.\nmore detail";
+    const several = "2 scn properties cite CLM-A and CLM-B — a test cites exactly one scenario.\nmore detail";
     const items = unnamedClaimItemsOf(reportOf([
       unit("failed", "tests/p.py::test_x", several),
       unit("failed", "tests/p.py::test_x", several),
       unit("passed", "tests/p.py::test_x", "a | piped note"),
     ]));
     expect(items).toEqual([
-      `unit: ${CITES_NO_SCENARIO()} (tests/p.py::test_x: 2 scn properties cite SCN-A and SCN-B — a test cites exactly one scenario. / a \\| piped note) — 3 ran, 1 passed, 2 failed`,
+      `unit: ${CITES_NO_SCENARIO()} (tests/p.py::test_x: 2 scn properties cite CLM-A and CLM-B — a test cites exactly one scenario. / a \\| piped note) — 3 ran, 1 passed, 2 failed`,
     ]);
   });
 
@@ -98,7 +98,7 @@ describe("[SCN-RPT-033] tests that cite no scenario are grouped on the unnamed c
   });
 });
 
-describe("[SCN-RPT-036] a failed test that cites no scenario is named on the unnamed claim's row by its test title", () => {
+describe("[CLM-RPT-036] a failed test that cites no scenario is named on the unnamed claim's row by its test title", () => {
   it("names the test that failed by its title, and not the test that passed", () => {
     expect(unnamedClaimItemsOf(reportOf([named("failed", "spawns yarn"), named("passed", "reads the lockfile")]))).toEqual([
       `unit: ${CITES_NO_SCENARIO()} (src/a.test.ts) — 2 ran, 1 passed, 1 failed (failed: spawns yarn)`,
@@ -122,7 +122,7 @@ function step(fitnessFunction: string, at: string): FitnessEvidenceObservation {
   return { qualityCheckKind: "fitness", fitnessFunction, step: at, exists: true, enforcedOverRealSource: true };
 }
 
-describe("[SCN-RPT-038] the CI steps that cite no scenario are grouped together on the unnamed claim's row, each named", () => {
+describe("[CLM-RPT-038] the CI steps that cite no scenario are grouped together on the unnamed claim's row, each named", () => {
   it("lists the CI steps once, after the file groups, naming each", () => {
     expect(unnamedClaimItemsOf(reportOf([step("lint:bar", "ci.yml:ci:pnpm lint:bar"), step("lint:foo", "ci.yml:ci:pnpm lint:foo"), unit("passed", "src/a.test.ts")]))).toEqual([
       `unit: ${CITES_NO_SCENARIO()} (src/a.test.ts) — 1 ran, 1 passed, 0 failed`,

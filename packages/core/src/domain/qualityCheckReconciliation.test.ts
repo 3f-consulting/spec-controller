@@ -12,10 +12,10 @@ import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFau
 import { QualityCheckReconciliationFault } from "./qualityCheckReconciliationFault.js";
 import type { EvidenceObligation, EvidenceObservation } from "./journal.js";
 
-describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)", () => {
+describe("[CLM-LDG-026] a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)", () => {
   it("a missing behavioural reconciliation is its kind of quality check, its evidence obligation and the missing outcome, with no observation list", () => {
     const obligation: EvidenceObligation = { qualityCheckKind: "unit" };
-    const reconciliation = reconcileEvidenceObligation("SCN-LDG-026", obligation, []);
+    const reconciliation = reconcileEvidenceObligation("CLM-LDG-026", obligation, []);
 
     expect(reconciliation).toStrictEqual({
       qualityCheckKind: "unit",
@@ -25,7 +25,7 @@ describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obli
   });
 });
 
-describe("[SCN-LDG-028] a fitness missing reconciliation carries its obligation and no observation — an absent guard is an absence", () => {
+describe("[CLM-LDG-028] a fitness missing reconciliation carries its obligation and no observation — an absent guard is an absence", () => {
   it("a fitness missing reconciliation is the fitness kind of quality check, its evidence obligation and the missing outcome, with no observation list", () => {
     const obligation: EvidenceObligation = { qualityCheckKind: "fitness" };
     const absentGuard: EvidenceObservation = {
@@ -34,7 +34,7 @@ describe("[SCN-LDG-028] a fitness missing reconciliation carries its obligation 
       exists: false,
       enforcedOverRealSource: false,
     };
-    const reconciliation = reconcileEvidenceObligation("SCN-LDG-028", obligation, [absentGuard]);
+    const reconciliation = reconcileEvidenceObligation("CLM-LDG-028", obligation, [absentGuard]);
 
     expect(reconciliation).toStrictEqual({
       qualityCheckKind: "fitness",
@@ -78,7 +78,7 @@ type Fields = Parameters<typeof makeQualityCheckReconciliation>[0];
 const sampleObligation: ReconciledEvidenceObligation = { qualityCheckKind: "unit" };
 
 function observationLine(outcome: Outcome, ran: boolean): ReconciledEvidenceObservation {
-  return { qualityCheckKind: "unit", claimCode: "SCN-LDG-030", status: "passed", ...(ran ? {} : { broken: true as const }), outcome };
+  return { qualityCheckKind: "unit", claimCode: "CLM-LDG-030", status: "passed", ...(ran ? {} : { broken: true as const }), outcome };
 }
 
 /** The outcomes only an evidence observation's line reads; a reconciliation's own outcome is never one of them. */
@@ -150,7 +150,7 @@ function corpusReportLines(): ReconciliationLine[] {
   return rows.flatMap((row) => row.qualityCheckReconciliations.flatMap(linesOf));
 }
 
-describe("[SCN-LDG-030] every Reconciliation line's sides match its outcome's definition, a divergent pair is unconstructible, and the emitted report agrees", () => {
+describe("[CLM-LDG-030] every Reconciliation line's sides match its outcome's definition, a divergent pair is unconstructible, and the emitted report agrees", () => {
   for (const [outcomeKey, profile] of Object.entries(OUTCOME_SIDE_PROFILE)) {
     const outcome = outcomeKey as Outcome;
 
@@ -226,19 +226,19 @@ describe("[SCN-LDG-030] every Reconciliation line's sides match its outcome's de
   });
 });
 
-describe("[SCN-LDG-035] a fitness-function evidence observation discharges only the obligation on the row whose @SCN it cites", () => {
+describe("[CLM-LDG-035] a fitness-function evidence observation discharges only the obligation on the row whose claim code it cites", () => {
   it("two rows share one checkTag; the cited row is satisfied and the other stays missing", () => {
     const obligation: EvidenceObligation = { qualityCheckKind: "fitness" };
     const observation: EvidenceObservation = {
       qualityCheckKind: "fitness",
       fitnessFunction: "lint:complexity",
-      claimCode: "SCN-AAA-001",
+      claimCode: "CLM-AAA-001",
       exists: true,
       enforcedOverRealSource: true,
     };
 
-    const cited = reconcileEvidenceObligation("SCN-AAA-001", obligation, [observation]);
-    const other = reconcileEvidenceObligation("SCN-AAA-002", obligation, [observation]);
+    const cited = reconcileEvidenceObligation("CLM-AAA-001", obligation, [observation]);
+    const other = reconcileEvidenceObligation("CLM-AAA-002", obligation, [observation]);
 
     expect(cited).not.toHaveProperty("outcome");
     expect(cited.evidenceObservations).toEqual([{ ...observation, outcome: "satisfied" }]);

@@ -29,7 +29,7 @@ function committedRepo(prefix: string, message: string): { repo: string; head: s
   return { repo, head: git("rev-parse", "HEAD") };
 }
 
-describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
+describe("[CLM-RPT-026] the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version", () => {
   it("reads the TOOL's own repo HEAD (via -C toolDir, never cwd) with the version present, when run from the checkout", () => {
     const toolDir = process.cwd();
     const realHead = execFileSync("git", ["-C", toolDir, "rev-parse", "HEAD"], {
@@ -112,7 +112,7 @@ describe("[SCN-RPT-026] the tool names its own checkout's commit, and where it i
   });
 });
 
-describe("[SCN-RPT-029] resolveToolIdentity: a tool resolved out of node_modules has no SHA of its own, though the tree it sits in is a git repository", () => {
+describe("[CLM-RPT-029] resolveToolIdentity: a tool resolved out of node_modules has no SHA of its own, though the tree it sits in is a git repository", () => {
   function consumerRepo(): { repo: string; head: string } {
     const committed = committedRepo("spec-controller-rpt029-", "the consumer's own commit");
     writeFileSync(
@@ -139,7 +139,7 @@ describe("[SCN-RPT-029] resolveToolIdentity: a tool resolved out of node_modules
   });
 });
 
-describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git target resolves to unknown", () => {
+describe("[CLM-RPT-003] resolveSourceSha: an explicit override wins, a non-git target resolves to unknown", () => {
   function targetRepo(message = "the target's own commit"): { repo: string; head: string } {
     return committedRepo("spec-controller-rpt003-", message);
   }
@@ -247,7 +247,7 @@ describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git t
   });
 });
 
-describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --features, independent of the run cwd", () => {
+describe("[CLM-RPT-016] resolveTargetRoot derives the target repo root from --features, independent of the run cwd", () => {
   it("derives a non-git target's root as dirname(--features), NOT the run cwd", () => {
     const targetRepo = realpathSync(temporaryDirectory("spec-controller-tgtroot-"));
     const features = join(targetRepo, "features");
@@ -286,7 +286,7 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
       mkdirSync(join(target, "features"));
       writeFileSync(
         join(target, "features", "widget.feature"),
-        "@WGT\nFeature: widget\n\n  @unit @SCN-WGT-001\n  Scenario: the widget is proven\n"
+        "@WGT\nFeature: widget\n\n  @unit @CLM-WGT-001\n  Scenario: the widget is proven\n"
       );
       writeFileSync(
         join(target, "vitest.json"),
@@ -297,8 +297,8 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
               status: "passed",
               assertionResults: [
                 {
-                  ancestorTitles: ["[SCN-WGT-001] the widget is proven"],
-                  fullName: "[SCN-WGT-001] the widget is proven works",
+                  ancestorTitles: ["[CLM-WGT-001] the widget is proven"],
+                  fullName: "[CLM-WGT-001] the widget is proven works",
                   status: "passed",
                   title: "works",
                 },
@@ -314,10 +314,10 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
         ci: target,
         vitest: join(target, "vitest.json"),
       }, resolveTargetRoot({ features: join(target, "features") }));
-      const scenario = balance.ledger.claimReconciliations.find((s) => s.claim === "SCN-WGT-001");
+      const scenario = balance.ledger.claimReconciliations.find((s) => s.claim === "CLM-WGT-001");
 
       expect(observationsOf(scenario!).map(postedOf)).toEqual([
-        { qualityCheckKind: "unit", claimCode: "SCN-WGT-001", status: "passed", locator: "src/widget.test.ts", testName: "[SCN-WGT-001] the widget is proven works" },
+        { qualityCheckKind: "unit", claimCode: "CLM-WGT-001", status: "passed", locator: "src/widget.test.ts", testName: "[CLM-WGT-001] the widget is proven works" },
       ]);
       expect(JSON.stringify(balance)).not.toContain(target);
     } finally {
@@ -371,7 +371,7 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
   });
 });
 
-describe("[SCN-RPT-001] a run with no --target names the target's git origin beside unknown-target", () => {
+describe("[CLM-RPT-001] a run with no --target names the target's git origin beside unknown-target", () => {
   function targetRepo(md: string): string | undefined {
     return md.split("\n").find((line) => line.startsWith("- Target repo:"));
   }

@@ -35,7 +35,7 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-CLI-105] an error raised after the run's own call, on stdout, on stderr or as an uncaught exception, ends a run with no verdict at 6", () => {
+describe("[CLM-CLI-105] an error raised after the run's own call, on stdout, on stderr or as an uncaught exception, ends a run with no verdict at 6", () => {
   describe.each(ARRIVALS)("$arrival, with no verdict reached", ({ raise }) => {
     it("is heard by a listener the guards installed", () => {
       expect(raise(guarded())).toBe(true);

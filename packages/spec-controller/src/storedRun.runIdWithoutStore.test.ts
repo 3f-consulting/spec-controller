@@ -3,7 +3,7 @@ import { parseHostInvocation } from "./host.js";
 import { unstoredRunIdRefusal } from "./storedRun.js";
 import { shownText } from "./shownText.test-utils.js";
 
-describe("[SCN-CLI-083] the host refuses --run-id given without --store as a usage fault, naming it", () => {
+describe("[CLM-CLI-083] the host refuses --run-id given without --store as a usage fault, naming it", () => {
   const LIVE = ["balance", "--features", "f"];
 
   it.each([[[]], [["--exit-zero"]], [["--strict"]], [["--format", "json:report.json"]]])(

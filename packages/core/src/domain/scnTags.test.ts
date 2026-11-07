@@ -14,35 +14,35 @@ function file(slug: string, code: string | null, ids: readonly string[]): Featur
   return { file: `${slug}.feature`, featureCode: code, scenarios: parseScenarioTags(`${header}Feature: ${slug}\n\n${scenarios}`) };
 }
 
-describe("[SCN-STG-011] a scenario whose feature part is another file's header code is listed as foreign-claim-code, naming that file", () => {
+describe("[CLM-STG-011] a scenario whose feature part is another file's header code is listed as foreign-claim-code, naming that file", () => {
   let one: FeatureFileScenarios;
   beforeEach(() => {
-    one = file("one", "ONE", ["SCN-ONE-001"]);
+    one = file("one", "ONE", ["CLM-ONE-001"]);
   });
 
   it("lists the foreign id with the file that holds it and the code that file carries", () => {
-    const errors = claimCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-002"])]);
+    const errors = claimCodeErrorsOf([one, file("two", "TWO", ["CLM-TWO-001", "CLM-ONE-002"])]);
     expect(errors).toEqual([
-      expect.objectContaining({ kind: "foreign-claim-code", files: ["two.feature"], featureCode: "TWO", claimCode: "SCN-ONE-002" }),
+      expect.objectContaining({ kind: "foreign-claim-code", files: ["two.feature"], featureCode: "TWO", claimCode: "CLM-ONE-002" }),
     ]);
   });
 
   it("names the code the id's feature part names, and the one file carrying it", () => {
-    const errors = claimCodeErrorsOf([one, file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-002"])]);
+    const errors = claimCodeErrorsOf([one, file("two", "TWO", ["CLM-TWO-001", "CLM-ONE-002"])]);
     expect(errors).toEqual([expect.objectContaining({ namedFeatureCode: "ONE", namedFeatureFiles: ["one.feature"] })]);
   });
 
   it("names every file carrying the named code when two carry it", () => {
     const errors = claimCodeErrorsOf([
       one,
-      file("one-b", "ONE", ["SCN-ONE-003"]),
-      file("two", "TWO", ["SCN-TWO-001", "SCN-ONE-002"]),
+      file("one-b", "ONE", ["CLM-ONE-003"]),
+      file("two", "TWO", ["CLM-TWO-001", "CLM-ONE-002"]),
     ]);
     expect(errors.filter((e) => e.kind === "foreign-claim-code")).toEqual([
       expect.objectContaining({
         files: ["two.feature"],
         featureCode: "TWO",
-        claimCode: "SCN-ONE-002",
+        claimCode: "CLM-ONE-002",
         namedFeatureCode: "ONE",
         namedFeatureFiles: ["one.feature", "one-b.feature"],
       }),
@@ -50,20 +50,20 @@ describe("[SCN-STG-011] a scenario whose feature part is another file's header c
   });
 });
 
-describe("[SCN-STG-022] a scenario whose feature part no file's header carries offers no move to a file the corpus lacks", () => {
+describe("[CLM-STG-022] a scenario whose feature part no file's header carries offers no move to a file the corpus lacks", () => {
   function foreignOf(files: readonly FeatureFileScenarios[]): ForeignClaimCodeError {
     return claimCodeErrorsOf(files).find((e): e is ForeignClaimCodeError => e.kind === "foreign-claim-code")!;
   }
 
   it("carries no file for the named code, beside the file holding the scenario, its code and the misfiled code", () => {
     const foreign = foreignOf([
-      file("one", "ONE", ["SCN-ONE-001"]),
-      file("two", "TWO", ["SCN-TWO-001", "SCN-THR-002"]),
+      file("one", "ONE", ["CLM-ONE-001"]),
+      file("two", "TWO", ["CLM-TWO-001", "CLM-THR-002"]),
     ]);
     expect(foreign).toMatchObject({
       files: ["two.feature"],
       featureCode: "TWO",
-      claimCode: "SCN-THR-002",
+      claimCode: "CLM-THR-002",
       namedFeatureCode: "THR",
       namedFeatureFiles: [],
     });
@@ -71,19 +71,19 @@ describe("[SCN-STG-022] a scenario whose feature part no file's header carries o
 
   it("carries no file for the named code when the only other file using the code carries no header", () => {
     const foreign = foreignOf([
-      file("thr", null, ["SCN-THR-001"]),
-      file("two", "TWO", ["SCN-THR-002"]),
+      file("thr", null, ["CLM-THR-001"]),
+      file("two", "TWO", ["CLM-THR-002"]),
     ]);
     expect(foreign).toMatchObject({ files: ["two.feature"], namedFeatureCode: "THR", namedFeatureFiles: [] });
   });
 });
 
-describe("[SCN-RPT-055] a foreign code's carriers are none, or the files carrying the named code", () => {
+describe("[CLM-RPT-055] a foreign code's carriers are none, or the files carrying the named code", () => {
   const foreign = (namedFeatureFiles: readonly string[]): ForeignClaimCodeError => ({
     kind: "foreign-claim-code",
     files: ["two.feature"],
     featureCode: "TWO",
-    claimCode: "SCN-ONE-002",
+    claimCode: "CLM-ONE-002",
     namedFeatureCode: "ONE",
     namedFeatureFiles,
   });
@@ -97,11 +97,11 @@ describe("[SCN-RPT-055] a foreign code's carriers are none, or the files carryin
   });
 });
 
-describe("[SCN-STG-010] two feature files carrying one header code are listed as duplicate-feature-code", () => {
+describe("[CLM-STG-010] two feature files carrying one header code are listed as duplicate-feature-code", () => {
   it("lists the code once, naming both files that carry it", () => {
     const errors = claimCodeErrorsOf([
-      file("one", "ONE", ["SCN-ONE-001"]),
-      file("one-b", "ONE", ["SCN-ONE-002"]),
+      file("one", "ONE", ["CLM-ONE-001"]),
+      file("one-b", "ONE", ["CLM-ONE-002"]),
     ]);
     expect(errors).toEqual([
       expect.objectContaining({ kind: "duplicate-feature-code", featureCode: "ONE", files: ["one.feature", "one-b.feature"] }),
@@ -109,11 +109,11 @@ describe("[SCN-STG-010] two feature files carrying one header code are listed as
   });
 });
 
-describe("[SCN-STG-019] a feature file with no header code whose scenarios carry codes is listed as no-feature-code", () => {
+describe("[CLM-STG-019] a feature file with no header code whose scenarios carry codes is listed as no-feature-code", () => {
   it("lists the no-feature-code file once, however many coded scenarios it holds", () => {
     const errors = claimCodeErrorsOf([
-      file("one", "ONE", ["SCN-ONE-001"]),
-      file("unc", null, ["SCN-UNC-001", "SCN-UNC-002"]),
+      file("one", "ONE", ["CLM-ONE-001"]),
+      file("unc", null, ["CLM-UNC-001", "CLM-UNC-002"]),
     ]);
     expect(errors).toEqual([expect.objectContaining({ kind: "no-feature-code", files: ["unc.feature"] })]);
   });
@@ -124,40 +124,40 @@ describe("[SCN-STG-019] a feature file with no header code whose scenarios carry
       featureCode: null,
       scenarios: parseScenarioTags(`@TOOLONGCODE\nFeature: long\n\n  @unit @${claimCode}\n  Scenario: s\n    Given a thing\n`),
     });
-    expect(claimCodeErrorsOf([headedTooLong("SCN-TOOLONGCODE-001")])).toEqual([]);
-    expect(claimCodeErrorsOf([headedTooLong("SCN-FIVEC-001")]).map((e) => e.kind)).toEqual(["no-feature-code"]);
+    expect(claimCodeErrorsOf([headedTooLong("CLM-TOOLONGCODE-001")])).toEqual([]);
+    expect(claimCodeErrorsOf([headedTooLong("CLM-FIVEC-001")]).map((e) => e.kind)).toEqual(["no-feature-code"]);
   });
 });
 
-describe("[SCN-STG-029] a scenario tagged with two claim codes is listed as a claim code error naming both", () => {
+describe("[CLM-STG-029] a scenario tagged with two claim codes is listed as a claim code error naming both", () => {
   const twoCodes = (ids: string): FeatureFileScenarios => ({
     file: "two.feature",
     featureCode: "TWO",
-    scenarios: parseScenarioTags(`@TWO\nFeature: two\n\n  @unit @SCN-TWO-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`),
+    scenarios: parseScenarioTags(`@TWO\nFeature: two\n\n  @unit @CLM-TWO-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`),
   });
 
   it("lists one several-claim-codes error carrying the file, the scenario and both codes", () => {
-    const errors = claimCodeErrorsOf([twoCodes("@SCN-TWO-002 @SCN-TWO-003")]);
+    const errors = claimCodeErrorsOf([twoCodes("@CLM-TWO-002 @CLM-TWO-003")]);
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatchObject({
       kind: "several-claim-codes",
       files: ["two.feature"],
       scenario: "carries codes",
-      codes: ["SCN-TWO-002", "SCN-TWO-003"],
+      codes: ["CLM-TWO-002", "CLM-TWO-003"],
     });
   });
 
   it("lists nothing for one code, or the same code repeated", () => {
-    expect(claimCodeErrorsOf([twoCodes("@SCN-TWO-002")])).toEqual([]);
-    expect(claimCodeErrorsOf([twoCodes("@SCN-TWO-002 @SCN-TWO-002")])).toEqual([]);
+    expect(claimCodeErrorsOf([twoCodes("@CLM-TWO-002")])).toEqual([]);
+    expect(claimCodeErrorsOf([twoCodes("@CLM-TWO-002 @CLM-TWO-002")])).toEqual([]);
   });
 });
 
-describe("[SCN-STG-030] a code a scenario inherits from its Rule or Feature is one of its codes, so a different code of its own makes two, and the same code makes one", () => {
+describe("[CLM-STG-030] a code a scenario inherits from its Rule or Feature is one of its codes, so a different code of its own makes two, and the same code makes one", () => {
   const sources = {
     Rule: (own: string) =>
-      `@AAA\nFeature: alpha\n\n  @SCN-AAA-001\n  Rule: alpha behaves\n\n    @unit ${own}\n    Scenario: carries codes\n      Given a thing\n`,
-    Feature: (own: string) => `@AAA @SCN-AAA-001\nFeature: alpha\n\n  @unit ${own}\n  Scenario: carries codes\n    Given a thing\n`,
+      `@AAA\nFeature: alpha\n\n  @CLM-AAA-001\n  Rule: alpha behaves\n\n    @unit ${own}\n    Scenario: carries codes\n      Given a thing\n`,
+    Feature: (own: string) => `@AAA @CLM-AAA-001\nFeature: alpha\n\n  @unit ${own}\n  Scenario: carries codes\n    Given a thing\n`,
   } as const;
   const underAncestor = (ancestor: keyof typeof sources, own: string): FeatureFileScenarios => ({
     file: "alpha.feature",
@@ -168,28 +168,28 @@ describe("[SCN-STG-030] a code a scenario inherits from its Rule or Feature is o
   it.each(["Rule", "Feature"] as const)(
     "a different code of its own under a %s code is one several-claim-codes error naming the file, the scenario and both codes",
     (ancestor) => {
-      const errors = claimCodeErrorsOf([underAncestor(ancestor, "@SCN-AAA-002")]);
+      const errors = claimCodeErrorsOf([underAncestor(ancestor, "@CLM-AAA-002")]);
       expect(errors).toEqual([
         {
           kind: "several-claim-codes",
           files: ["alpha.feature"],
           scenario: "carries codes",
-          codes: ["SCN-AAA-002", "SCN-AAA-001"],
+          codes: ["CLM-AAA-002", "CLM-AAA-001"],
         },
       ]);
     },
   );
 
   it.each(["Rule", "Feature"] as const)("the same code of its own as its %s's lists nothing", (ancestor) => {
-    expect(claimCodeErrorsOf([underAncestor(ancestor, "@SCN-AAA-001")])).toEqual([]);
+    expect(claimCodeErrorsOf([underAncestor(ancestor, "@CLM-AAA-001")])).toEqual([]);
   });
 });
 
-describe("[SCN-STG-034] a corpus's feature files are each counted, and a header code is counted once however many files carry it", () => {
+describe("[CLM-STG-034] a corpus's feature files are each counted, and a header code is counted once however many files carry it", () => {
   it("counts every feature file, a file with no header code among them", () => {
     const population = claimCodePopulationOf([
-      file("one", "ONE", ["SCN-ONE-001"]),
-      file("two", "TWO", ["SCN-TWO-001"]),
+      file("one", "ONE", ["CLM-ONE-001"]),
+      file("two", "TWO", ["CLM-TWO-001"]),
       file("unc", null, []),
     ]);
     expect(population).toEqual({ featureFiles: 3, featureCodes: 2 });
@@ -197,9 +197,9 @@ describe("[SCN-STG-034] a corpus's feature files are each counted, and a header 
 
   it("counts a header code two files carry once, beside a third file's own", () => {
     const population = claimCodePopulationOf([
-      file("one", "ONE", ["SCN-ONE-001"]),
-      file("one-b", "ONE", ["SCN-ONE-002"]),
-      file("two", "TWO", ["SCN-TWO-001"]),
+      file("one", "ONE", ["CLM-ONE-001"]),
+      file("one-b", "ONE", ["CLM-ONE-002"]),
+      file("two", "TWO", ["CLM-TWO-001"]),
     ]);
     expect(population).toEqual({ featureFiles: 3, featureCodes: 2 });
   });

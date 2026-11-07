@@ -10,7 +10,7 @@ const HOST_SCOPE = "spec-controller";
 const givenTwice = (flag: string): string =>
   `${message(AppError.GivenTwice, { flag, scope: HOST_SCOPE })}\n${message(AppMessage.SeeFlags, { scope: HOST_SCOPE })}`;
 
-describe("[SCN-CLI-064] a flag that does not repeat, given twice, is refused naming the flag, never read as its last value", () => {
+describe("[CLM-CLI-064] a flag that does not repeat, given twice, is refused naming the flag, never read as its last value", () => {
   for (const { name: modifier } of cliRegistry.global) {
     it(`refuses ${modifier} given twice, equal values and all, naming it at the host's scope, and takes no command`, () => {
       expect(withShownRefusal(parseHostInvocation([modifier, "a", modifier, "a", "balance"]))).toEqual({

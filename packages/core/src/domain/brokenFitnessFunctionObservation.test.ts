@@ -4,11 +4,11 @@ import { linesOf } from "./claimReconciliation.js";
 import { brokenItemsOf, hasBrokenEvidence, fitnessFunctionTally } from "./ledger.js";
 import type { Scenario, EvidenceObservation } from "./journal.js";
 
-describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is excluded from the obligation match whatever else it carries", () => {
+describe("[CLM-LNT-026] a BROKEN fitness-function evidence observation is excluded from the obligation match whatever else it carries", () => {
   it("leaves the obligation missing and stamps the run unsound even when the evidence observation says the check exists and ran", () => {
     const scenarios: Scenario[] = [
       {
-        claimCode: "SCN-LNT-026",
+        claimCode: "CLM-LNT-026",
         evidenceObligations: [
           { qualityCheckKind: "fitness" },
         ],
@@ -18,7 +18,7 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
       {
         qualityCheckKind: "fitness",
         fitnessFunction: "traceability",
-        claimCode: "SCN-LNT-026",
+        claimCode: "CLM-LNT-026",
         exists: true,
         enforcedOverRealSource: true,
         broken: true,
@@ -29,7 +29,7 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
     const balance = reconcile(scenarios, evidenceObservations);
 
     const row = balance.claimReconciliations.find(
-      (s) => s.claim === "SCN-LNT-026",
+      (s) => s.claim === "CLM-LNT-026",
     );
     expect(row?.verdict).toBe("out-of-balance");
     expect(

@@ -19,7 +19,7 @@ const RUNNERS = { unit: "vitest" };
 
 const candidates = (pipeline: readonly PipelineStep[]): string[] => candidatesAmong(pipeline, SCRIPTS, RUNNERS);
 
-describe("[SCN-USG-013] a `uses:` step is a candidate fitness function, reported by the action it uses", () => {
+describe("[CLM-USG-013] a `uses:` step is a candidate fitness function, reported by the action it uses", () => {
   it("keeps a `run:` step running no runner among the candidates", () => {
     expect(candidates([DOMAIN_PURITY])).toStrictEqual(["domain-purity"]);
   });

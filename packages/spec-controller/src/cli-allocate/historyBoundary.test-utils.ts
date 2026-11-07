@@ -12,8 +12,8 @@ export function expectAnsweredWithNoHistoryRead(copy: string): void {
 
   expectAnsweredEnding(answered, "ONE-002");
   expect(answered.stderr).toBe(
-    `${message(AppMessage.NoRepositoryRisksCodeAbove, { code: "SCN-ONE-001" })}\n` +
-      `${message(AppMessage.HighestSeenInTree, { code: "SCN-ONE-001", path: "features/one.feature", line: 4 })}\n`,
+    `${message(AppMessage.NoRepositoryRisksCodeAbove, { code: "CLM-ONE-001" })}\n` +
+      `${message(AppMessage.HighestSeenInTree, { code: "CLM-ONE-001", path: "features/one.feature", line: 4 })}\n`,
   );
 }
 
@@ -24,6 +24,6 @@ export function expectAnsweredWithHistoryUnreadBeforeItsFirstCommit(clone: strin
 
   expectAnsweredEnding(answered, "ONE-002");
   expect(answered.stderr.split("\n")[0]).toBe(
-    message(AppMessage.ShallowHistoryRisksCodeAbove, { before: edge, code: "SCN-ONE-001" }),
+    message(AppMessage.ShallowHistoryRisksCodeAbove, { before: edge, code: "CLM-ONE-001" }),
   );
 }

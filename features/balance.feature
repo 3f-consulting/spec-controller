@@ -5,7 +5,7 @@ Feature: spec-controller balance runs standalone
   reports the Evidence Reconciliation. It is complete on its own: point it at a feature corpus
   and test reports and it gives the reconciliation.
 
-  @SCN-CLI-001 @e2e
+  @CLM-CLI-001 @e2e
   Scenario: balance reconciles a target and emits the Evidence Reconciliation to stdout
     Given a target with scenarios and a Vitest report of what ran
     When balance is asked to reconcile that target
@@ -20,7 +20,7 @@ Feature: spec-controller balance runs standalone
     run exits 2, the usage status, and names the flag and the missing path on stderr. This rule
     checks existence only.
 
-    @SCN-CLI-002 @unit @e2e
+    @CLM-CLI-002 @unit @e2e
     Scenario Outline: a supplied-but-missing <flag> exits non-zero and names the path
       Given a target, and the <flag> pointing at a path that does not exist
       When balance is asked to reconcile that target
@@ -40,7 +40,7 @@ Feature: spec-controller balance runs standalone
         | CI workflows option    |
         | manifest option        |
 
-    @SCN-CLI-003 @unit @e2e
+    @CLM-CLI-003 @unit @e2e
     Scenario: an omitted optional input flag is not an error
       Given a target with scenarios and a Vitest report
       When balance is asked to reconcile that target without the Cucumber report option
@@ -57,14 +57,14 @@ Feature: spec-controller balance runs standalone
     The exit codes are: 0 balanced, 1 out of balance, 2 usage error, 3 pending under --strict,
     4 unsound, 5 nothing to reconcile, 6 unexpected error.
 
-    @SCN-CLI-004 @unit @e2e
+    @CLM-CLI-004 @unit @e2e
     Scenario: an out-of-balance reconciliation exits 1
       Given a target that reconciles out-of-balance
       When balance is asked to reconcile that target
       Then the run ends on the out-of-balance verdict
       And it reports the Evidence Reconciliation
 
-    @SCN-CLI-005 @unit @e2e
+    @CLM-CLI-005 @unit @e2e
     Scenario: an all-balanced reconciliation exits 0
       Given a target that reconciles all-balanced
       When balance is asked to reconcile that target
@@ -74,7 +74,7 @@ Feature: spec-controller balance runs standalone
 
     A run whose evidence did not fully materialise exits 4, even when it is also out of balance.
 
-    @unit @e2e @SCN-CLI-012
+    @unit @e2e @CLM-CLI-012
     Scenario: a run whose vitest report carries a collection-failed suite exits 4, not 1
       Given a target whose vitest report carries a collection-failed suite
       When balance is asked to reconcile that target
@@ -86,7 +86,7 @@ Feature: spec-controller balance runs standalone
     Pending Items do not fail a run by default: a run balanced except for Pending Items exits
     0. Under --strict the same run exits 3.
 
-    @unit @e2e @SCN-CLI-010
+    @unit @e2e @CLM-CLI-010
     Scenario: an only-Pending-Items reconciliation with no --strict → balance exits 0
       Given a target whose only exception is Pending Items
       When balance is asked to reconcile that target
@@ -94,7 +94,7 @@ Feature: spec-controller balance runs standalone
       And it reports the Evidence Reconciliation
       And the reconciliation reports a Pending Item
 
-    @unit @e2e @SCN-CLI-011
+    @unit @e2e @CLM-CLI-011
     Scenario: an only-Pending-Items reconciliation with --strict → balance exits 3, and its verdict headline names exit 3
       Given a target whose only exception is Pending Items
       When balance is asked to reconcile that target under the strict option
@@ -108,7 +108,7 @@ Feature: spec-controller balance runs standalone
     The tally counts every Claim Reconciliation. The tally, the verdict headline and the
     exit code always state the same outcome.
 
-    @unit @e2e @SCN-CLI-013
+    @unit @e2e @CLM-CLI-013
     Scenario: the tally, the verdict headline and the process exit code name the same outcome
       Given a target whose only out-of-balance row is the unnamed claim's reconciliation
       When balance is asked to reconcile that target
@@ -119,12 +119,12 @@ Feature: spec-controller balance runs standalone
 
   Rule: a re-render exits the verdict its saved reconciliation carries
 
-    A saved reconciliation carries its verdict: the ledger, the scenario code errors, and
+    A saved reconciliation carries its verdict: the ledger, the claim code errors, and
     whether the run was strict. A re-render reads that verdict rather than recomputing it, and
     exits the code it names. The re-rendered headline and the exit agree as they do on a live
     run.
 
-    @unit @e2e @SCN-CLI-069
+    @unit @e2e @CLM-CLI-069
     Scenario Outline: a re-render of a saved <verdict> reconciliation ends on <code>, and its verdict headline names the exit for <code>
       Given a saved reconciliation of a target that reconciles <verdict>
       When balance is asked to re-render the saved reconciliation
@@ -139,7 +139,7 @@ Feature: spec-controller balance runs standalone
         | unsound                         | the unsound verdict              |
         | nothing to reconcile            | the nothing-to-reconcile verdict |
 
-    @unit @e2e @SCN-CLI-070
+    @unit @e2e @CLM-CLI-070
     Scenario Outline: a re-render is strict when the saved run was strict or the re-render is given --strict
       Given a saved reconciliation of a target whose only exception is Pending Items, saved <saved>
       When balance is asked to re-render the saved reconciliation <given>
@@ -153,7 +153,7 @@ Feature: spec-controller balance runs standalone
         | without the strict option      | with no options         | the balanced verdict |
         | before strictness was recorded | with no options         | the balanced verdict |
 
-    @unit @e2e @SCN-CLI-071
+    @unit @e2e @CLM-CLI-071
     Scenario Outline: under --exit-zero a re-render moves 1 and 3 to 0 and never 4 or 5, printing the same report
       Given a saved reconciliation of a target that reconciles <verdict>
       When balance is asked to re-render the saved reconciliation, once without the report-only option and once under it
@@ -175,7 +175,7 @@ Feature: spec-controller balance runs standalone
     naming the flag, before anything is rendered. --help still answers first. A re-render
     under --store is refused before the run starts, naming --store.
 
-    @unit @e2e @SCN-CLI-072
+    @unit @e2e @CLM-CLI-072
     Scenario Outline: a <flag> given beside --render-from-json exits 2 naming the flag, and nothing is rendered
       Given a saved reconciliation of a target that reconciles out-of-balance
       When balance is asked to re-render the saved reconciliation with the <flag> given <value>
@@ -214,7 +214,7 @@ Feature: spec-controller balance runs standalone
     A workflow that parses but declares no jobs is read, and adds no steps. A valid report
     whose evidence did not fully materialise is unsound (exit 4), not unreadable.
 
-    @unit @e2e @SCN-CLI-014
+    @unit @e2e @CLM-CLI-014
     Scenario: a present-but-unparseable evidence report exits 2, naming the file and the parse failure
       Given a target, and the Vitest report option pointing at a report that exists but is not valid JSON
       When balance is asked to reconcile that target
@@ -222,7 +222,7 @@ Feature: spec-controller balance runs standalone
       And the refusal names the unparseable report and the parse failure
       And nothing is reconciled
 
-    @unit @e2e @SCN-CLI-015
+    @unit @e2e @CLM-CLI-015
     Scenario Outline: a --render-from-json report the tool cannot read exits 2, naming the file
       Given the re-render option pointing at a saved report that is <defect>
       When balance is asked to re-render that saved report
@@ -235,7 +235,7 @@ Feature: spec-controller balance runs standalone
         | missing     |
         | unparseable |
 
-    @unit @e2e @SCN-CLI-016
+    @unit @e2e @CLM-CLI-016
     Scenario Outline: a feature file the tool cannot parse exits 2, naming the file and the parse failure
       Given a feature corpus containing a feature file that is <defect>
       When balance is asked to reconcile that target
@@ -249,7 +249,7 @@ Feature: spec-controller balance runs standalone
         | a corrupt scenario keyword |
         | wholly unparseable         |
 
-    @unit @e2e @SCN-CLI-076
+    @unit @e2e @CLM-CLI-076
     Scenario Outline: a Vitest report not in the Vitest reporter's shape is refused as unreadable, naming where its shape is wrong
       Given a target whose Vitest report parses but holds <defect>
       When the balance run reads that input
@@ -265,7 +265,7 @@ Feature: spec-controller balance runs standalone
         | a test file whose assertions are not a list  |
         | a test file whose name is not a string       |
 
-    @unit @e2e @SCN-CLI-077
+    @unit @e2e @CLM-CLI-077
     Scenario Outline: a Cucumber report not in the Cucumber formatter's shape is refused as unreadable, naming where its shape is wrong
       Given a target whose Cucumber report parses but holds <defect>
       When the balance run reads that input
@@ -281,7 +281,7 @@ Feature: spec-controller balance runs standalone
         | a scenario whose steps are not a list           |
         | a feature whose location is not a string        |
 
-    @unit @e2e @SCN-CLI-078
+    @unit @e2e @CLM-CLI-078
     Scenario Outline: a CI step record not in the shape of a record of step outcomes is refused as unreadable, naming where its shape is wrong
       Given a target whose CI step record parses but holds <defect>
       When the balance run reads that input
@@ -292,10 +292,10 @@ Feature: spec-controller balance runs standalone
         | defect                                              |
         | a list where the record belongs                     |
         | nothing where the record belongs                    |
-        | a scenario-coded step that is not an object         |
-        | a scenario-coded step whose outcome is not a string |
+        | a claim-coded step that is not an object         |
+        | a claim-coded step whose outcome is not a string |
 
-    @unit @e2e @SCN-CLI-079
+    @unit @e2e @CLM-CLI-079
     Scenario Outline: a package.json not in a manifest's shape is refused as unreadable, whether given or read by default
       Given a target whose manifest, <how>, holds <defect>
       When the balance run reads that input
@@ -310,7 +310,7 @@ Feature: spec-controller balance runs standalone
         | read by default | a script that is not a string     |
         | read by default | text that does not parse          |
 
-    @unit @e2e @SCN-CLI-080
+    @unit @e2e @CLM-CLI-080
     Scenario Outline: a well-formed but empty report is read as empty, never refused
       Given a target whose <input> is well formed and holds nothing
       When the balance run reads that input
@@ -327,7 +327,7 @@ Feature: spec-controller balance runs standalone
         | Cucumber report        |
         | CI step record         |
 
-    @unit @e2e @SCN-CLI-075
+    @unit @e2e @CLM-CLI-075
     Scenario Outline: an input path that is not the kind of path its flag reads is refused as unreadable, naming the flag and the path
       Given a target whose <input> path is <kind>
       When the balance run reads that input
@@ -342,7 +342,7 @@ Feature: spec-controller balance runs standalone
         | CI workflows   | a directory holding a directory named as a workflow file |
         | JUnit reports  | a directory holding a directory named as a JUnit report  |
 
-    @unit @e2e @SCN-CLI-082
+    @unit @e2e @CLM-CLI-082
     Scenario Outline: an input the tool is not permitted to read is refused as unreadable, naming the flag and the path
       Given a target in which <input> is not permitted to be read
       When the balance run reads that input
@@ -364,14 +364,14 @@ Feature: spec-controller balance runs standalone
         | the JUnit report             |
         | the JUnit report directory   |
 
-    @unit @e2e @SCN-CLI-100
+    @unit @e2e @CLM-CLI-100
     Scenario: a run from a working directory that no longer exists is refused as unreadable, naming the feature corpus read by default
       Given a target whose working directory has since been removed
       When balance is asked to reconcile it with no feature corpus given
       Then the input is refused as one the tool cannot read, never read as a verdict
       And the refusal names the feature corpus read by default and the working directory's read failure
 
-    @unit @e2e @SCN-CLI-102
+    @unit @e2e @CLM-CLI-102
     Scenario Outline: a workflow that does not parse as YAML is refused as unreadable, naming the workflow and the parse error — <workflow>
       Given a target whose <workflow> does not parse as YAML
       When the balance run reads that input
@@ -384,7 +384,7 @@ Feature: spec-controller balance runs standalone
         | workflow in the --ci folder |
         | workflow read by default    |
 
-    @unit @e2e @SCN-CLI-074
+    @unit @e2e @CLM-CLI-074
     Scenario Outline: a saved file that parses but is not a saved reconciliation is refused as unreadable, naming a section of the wrong kind by its place in the report, and one in an earlier report shape by its missing section
       Given a saved report that parses but is <defect>
       When the balance run reads that input
@@ -400,7 +400,7 @@ Feature: spec-controller balance runs standalone
         | a reconciliation that does not name its corpus |
         | in an earlier report shape                     |
 
-    @e2e @SCN-CLI-081
+    @e2e @CLM-CLI-081
     Scenario Outline: a stored run given an input it cannot read in shape is refused and stores nothing
       Given a stored run's target whose <input> is one the tool cannot read in shape
       When a stored balance run reads that input
@@ -418,14 +418,14 @@ Feature: spec-controller balance runs standalone
     the directory it examined. A supplied --features path that does not exist is a usage fault,
     exit 2.
 
-    @SCN-CLI-017 @unit @e2e
+    @CLM-CLI-017 @unit @e2e
     Scenario: a target with no features/ directory is reported on, never crashed over
       Given a target with no Gherkin corpus at all — no features directory on disk
       When balance is asked to reconcile that target
       Then it reports the Evidence Reconciliation
       And the run ends on the exit its verdict headline names, rather than on a stack trace
 
-    @SCN-CLI-018 @unit @e2e
+    @CLM-CLI-018 @unit @e2e
     Scenario: an absent corpus and a corpus holding no scenario reach the same verdict by the same sentence
       Given a target with no corpus directory, a target whose corpus is empty, and a target whose corpus carries no scenario
       When balance is asked to reconcile each of those targets
@@ -440,14 +440,14 @@ Feature: spec-controller balance runs standalone
     A target with no corpus but with uncited evidence observations is not empty: the unnamed claim's
     row makes it an ordinary out-of-balance run at exit 1.
 
-    @SCN-CLI-019 @unit @e2e
+    @CLM-CLI-019 @unit @e2e
     Scenario: a run with nothing to reconcile exits 5 and its headline says so, rather than reporting balanced
       Given a target that carried no scenario and produced no evidence
       When balance is asked to reconcile that target
       Then the run ends on the nothing-to-reconcile verdict
       And the verdict headline says the run had nothing to reconcile, never that it balanced
 
-    @SCN-CLI-020 @unit @e2e
+    @CLM-CLI-020 @unit @e2e
     Scenario: a corpus-less run carrying uncited evidence observations is an ordinary out-of-balance report at exit 1
       Given a target with no Gherkin corpus whose unit evidence cites no scenario
       When balance is asked to reconcile that target
@@ -463,7 +463,7 @@ Feature: spec-controller balance runs standalone
     Without the flag the gate exits as usual. A saved report records --strict but never
     --exit-zero.
 
-    @SCN-CLI-021 @unit @e2e
+    @CLM-CLI-021 @unit @e2e
     Scenario Outline: under --exit-zero a <verdict> run prints the same report byte for byte and exits 0
       Given a target that reconciles <verdict>
       When balance is asked to reconcile that target <flags>, once without the report-only option and once under it
@@ -478,7 +478,7 @@ Feature: spec-controller balance runs standalone
         | only-Pending-Items              | under the strict option | the pending verdict           |
         | balanced-with-claim-code-errors | with no options         | the claim-code-errors verdict |
 
-    @SCN-CLI-022 @unit @e2e
+    @CLM-CLI-022 @unit @e2e
     Scenario Outline: --exit-zero never masks a run that could give no verdict — <state> still ends on <code>
       Given <target>
       When balance is asked to reconcile that target under the report-only option
@@ -490,63 +490,63 @@ Feature: spec-controller balance runs standalone
         | usage                | a target, and the Vitest report option pointing at a path that does not exist | a usage error                    | the rejection names the Vitest report option and the missing path                  |
         | unsound              | a target whose vitest report carries a collection-failed suite                | the unsound verdict              | it reports the Evidence Reconciliation                                             |
         | nothing to reconcile | a target that carried no scenario and produced no evidence                    | the nothing-to-reconcile verdict | the verdict headline says the run had nothing to reconcile, never that it balanced |
-        | unsound              | a target whose collection-failed suite sits beside a misfiled scenario code   | the unsound verdict              | the report still lists the scenario code error                                     |
+        | unsound              | a target whose collection-failed suite sits beside a misfiled claim code   | the unsound verdict              | the report still lists the claim code error                                     |
 
   Rule: a run that stops on an unexpected error before its verdict exits 6, a code no verdict uses
 
     An error that no refusal names ends the run on exit 6, never on Node's default 1. One line on stderr names the error. A run that has already reached its verdict keeps it. --exit-zero never changes 6.
 
-    @unit @SCN-CLI-101
+    @unit @CLM-CLI-101
     Scenario: a balance run that stops on an unexpected error exits 6 and names the error on one line, under --exit-zero too
 
-    @unit @SCN-CLI-103
+    @unit @CLM-CLI-103
     Scenario: an error that cannot be formatted still ends the run at 6, named on one line
 
-    @unit @SCN-CLI-104
+    @unit @CLM-CLI-104
     Scenario: an error raised after the verdict is set keeps the verdict's exit code
 
-    @unit @SCN-CLI-105
+    @unit @CLM-CLI-105
     Scenario: an error raised after the run's own call, on stdout, on stderr or as an uncaught exception, ends a run with no verdict at 6
 
-    @unit @SCN-CLI-106
+    @unit @CLM-CLI-106
     Scenario: an error while the program loads ends the run at 6, named on one line
 
-    @unit @SCN-CLI-107
+    @unit @CLM-CLI-107
     Scenario: a run writes at most one crash line, and never calls a refusal's code or its own 6 a verdict
 
-    @unit @SCN-CLI-108
+    @unit @CLM-CLI-108
     Scenario: an uncaught error ends the process once its line is written, on 6 or on the verdict kept
 
-    @unit @SCN-CLI-109
+    @unit @CLM-CLI-109
     Scenario: a kept run whose manifest cannot be written did not finish, and ends at 6
 
-    @unit @SCN-CLI-110
+    @unit @CLM-CLI-110
     Scenario: an error after a re-rendered report's verdict keeps that verdict, named on one line
 
-    @unit @SCN-CLI-111
+    @unit @CLM-CLI-111
     Scenario: an error in reading a feature file or workflow the parser accepted ends the run at 6, and is never refused as that file failing to parse
 
   Rule: a corpus-shape fault never pre-empts the report
 
-    A scenario code error never stops the reconciliation. The report still carries every
+    A claim code error never stops the reconciliation. The report still carries every
     account, balanced or not. When several exit codes apply, 5 comes first, then 4, then 1
-    for scenario code errors, then 1 for out of balance, then 3.
+    for claim code errors, then 1 for out of balance, then 3.
 
-    @SCN-CLI-055 @unit @e2e
-    Scenario: An out-of-balance account and a scenario code error in one run exit 1, both reported
-      Given a target whose corpus misfiles a scenario code and whose ledger has an account out of balance
+    @CLM-CLI-055 @unit @e2e
+    Scenario: An out-of-balance account and a claim code error in one run exit 1, both reported
+      Given a target whose corpus misfiles a claim code and whose ledger has an account out of balance
       When balance is asked to reconcile that target
       Then the run ends on the out-of-balance verdict
-      And the report lists the scenario code error
+      And the report lists the claim code error
       And the report carries the out-of-balance account
-      And the verdict headline names both the scenario code error and the accounts out of balance
+      And the verdict headline names both the claim code error and the accounts out of balance
 
   Rule: an unknown command is a usage fault, and exits 2
 
     An unknown command, a typo or a name the tool does not have, exits 2, the usage status,
     never 1. The command is named on stderr, and help follows.
 
-    @SCN-CLI-056 @unit @e2e
+    @CLM-CLI-056 @unit @e2e
     Scenario Outline: an unknown command is a usage fault — <request>
       Given the spec-controller host
       When it is asked for <request>
@@ -560,7 +560,7 @@ Feature: spec-controller balance runs standalone
         | a name that is no command                  |
         | a name that is no command, as a stored run |
 
-    @SCN-CLI-057 @unit @e2e
+    @CLM-CLI-057 @unit @e2e
     Scenario: --exit-zero after an unknown command never moves its usage status
       Given the spec-controller host
       When it is asked for a name that is no command, with the report-only option after the command
@@ -573,7 +573,7 @@ Feature: spec-controller balance runs standalone
     another flag follows it, or when it is empty. --exit-zero cannot move the refusal. A
     missing value is never read as the word true.
 
-    @SCN-CLI-058 @unit @e2e
+    @CLM-CLI-058 @unit @e2e
     Scenario Outline: balance refuses <flag> given no value as a usage fault, naming the missing value — <shape>
       Given a target that reconciles out-of-balance
       When balance is asked to run with <flag> given no value, <shape>
@@ -593,7 +593,7 @@ Feature: spec-controller balance runs standalone
         | the re-render option      | at the end of the arguments                                 |
         | the feature corpus option | with an empty value                                         |
 
-    @SCN-CLI-059 @unit @e2e
+    @CLM-CLI-059 @unit @e2e
     Scenario Outline: the host refuses <modifier> given no value as a usage fault, and stores nothing — <shape>
       Given a target that reconciles out-of-balance, and an empty run store
       When a stored balance run is asked for with <modifier> given no value, <shape>
@@ -616,7 +616,7 @@ Feature: spec-controller balance runs standalone
     as an unknown command, and never given pin advice. A --help or -h among the host's own
     tokens still answers the top-level help first, whatever else is out of place beside it.
 
-    @SCN-CLI-060 @unit @e2e
+    @CLM-CLI-060 @unit @e2e
     Scenario Outline: a flag given before the command is refused as a flag out of place, never as an unknown command — <flag>
       Given a target that reconciles out-of-balance, and an empty run store
       When a stored run is asked for with <flag>
@@ -631,7 +631,7 @@ Feature: spec-controller balance runs standalone
         | an unknown flag, before balance                 |
         | the report-only option, before no known command |
 
-    @SCN-CLI-061 @unit @e2e
+    @CLM-CLI-061 @unit @e2e
     Scenario: a host modifier given after the command is refused as out of place, naming where it goes, with no pin advice
       Given a target that reconciles out-of-balance, and an empty run store
       When balance is asked to run with the store modifier given after the command
@@ -651,7 +651,7 @@ Feature: spec-controller balance runs standalone
     modifier with no command after it is refused, and a bare spec-controller answers help.
     --run-id given without --store is refused, though a request for help still answers first.
 
-    @SCN-CLI-062 @unit @e2e
+    @CLM-CLI-062 @unit @e2e
     Scenario Outline: balance refuses a value given to a flag that takes none, naming both — <shape>
       Given a target that reconciles out-of-balance, and an empty run store
       When balance is asked to run with <flag> given the value <value>, <shape>
@@ -665,7 +665,7 @@ Feature: spec-controller balance runs standalone
         | the report-only option | foo   | after the target's flags                  |
         | the strict option      | foo   | after the target's flags, in a stored run |
 
-    @SCN-CLI-063 @unit @e2e
+    @CLM-CLI-063 @unit @e2e
     Scenario Outline: balance refuses an argument that is neither a flag nor a flag's value, naming it — <shape>
       Given a target that reconciles out-of-balance, and an empty run store
       When balance is asked to run with an argument that is no flag, <shape>
@@ -680,7 +680,7 @@ Feature: spec-controller balance runs standalone
         | a single-dash token after the target's flags, under the report-only option |
         | the command given twice, in a stored run                                   |
 
-    @SCN-CLI-064 @unit @e2e
+    @CLM-CLI-064 @unit @e2e
     Scenario Outline: a flag that does not repeat, given twice, is refused naming the flag, never read as its last value — <flag> <shape>
       Given a target that reconciles out-of-balance, and an empty run store
       When a run is asked for with <flag> given twice, <shape>
@@ -698,7 +698,7 @@ Feature: spec-controller balance runs standalone
         | the store modifier        | before the command, the second time at the run store                            |
         | the run-name modifier     | before the command, as two ids, in a stored run                                 |
 
-    @SCN-CLI-065 @unit @e2e
+    @CLM-CLI-065 @unit @e2e
     Scenario Outline: a flag written --flag=value is refused naming the form and the spelling that is read, with no pin advice — <written> <shape>
       Given a target that reconciles out-of-balance, and an empty run store
       When a run is asked for with <written>, <shape>
@@ -717,7 +717,7 @@ Feature: spec-controller balance runs standalone
         | the store modifier and the run store joined by an equals sign  | the store modifier and the run store as two arguments      | after the command                                      |
         | the format option and json joined by an equals sign            | the format option and json as two arguments                | after the target's flags, in a stored run              |
 
-    @SCN-CLI-066 @unit @e2e
+    @CLM-CLI-066 @unit @e2e
     Scenario Outline: the host refuses a modifier that took the command as its value, naming both, and stores nothing — <modifier> <shape>
       Given a target that reconciles out-of-balance, and an empty run store
       When a stored run is asked for, with the command given as the value of <modifier>, <shape>
@@ -731,7 +731,7 @@ Feature: spec-controller balance runs standalone
         | the store modifier    | with nothing after it                                      |
         | the run-name modifier | after the store modifier, with the target's flags after it |
 
-    @SCN-CLI-067 @unit @e2e
+    @CLM-CLI-067 @unit @e2e
     Scenario Outline: the host refuses a modifier with no command after it, naming it, and stores nothing — <modifiers> <shape>
       Given a target that reconciles out-of-balance, and an empty run store
       When the host is asked for nothing but <modifiers>, <shape>
@@ -748,7 +748,7 @@ Feature: spec-controller balance runs standalone
         | the store modifier and the run-name modifier | in that order                    |
         | the run-name modifier and the store modifier | in that order                    |
 
-    @SCN-CLI-068 @unit @e2e
+    @CLM-CLI-068 @unit @e2e
     Scenario Outline: help after a modifier, or nothing given at all, still answers the top-level help — <request>
       Given a target that reconciles out-of-balance, and an empty run store
       When spec-controller is asked for <request>
@@ -768,7 +768,7 @@ Feature: spec-controller balance runs standalone
         | help by its long name after the run-name modifier, given a command as its value  |
         | help by its short name after the run-name modifier, given a command as its value |
 
-    @SCN-CLI-073 @unit @e2e
+    @CLM-CLI-073 @unit @e2e
     Scenario Outline: a --help or -h among the host's own tokens answers the top-level help ahead of any refusal of the tokens beside it, and writes nothing — <request>
       Given a target that reconciles out-of-balance, and an empty run store
       When the host is given <request>
@@ -787,7 +787,7 @@ Feature: spec-controller balance runs standalone
         | help by its long name after a modifier joined to its value by an equals sign           |
         | help by its short name as a modifier's value, before a command                         |
 
-    @SCN-CLI-083 @unit @e2e
+    @CLM-CLI-083 @unit @e2e
     Scenario Outline: the host refuses --run-id given without --store as a usage fault, naming it, and nothing runs or is written — <shape>
       Given a target that reconciles out-of-balance, and an empty run store
       When a run is named with the run-name modifier and given no store modifier, <shape>
@@ -804,7 +804,7 @@ Feature: spec-controller balance runs standalone
         | before a live balance run that writes its report to a file |
         | before a balance re-render of a saved report               |
 
-    @SCN-CLI-084 @unit @e2e
+    @CLM-CLI-084 @unit @e2e
     Scenario Outline: a request for balance's help after --run-id with no --store answers balance's help as it does alone, and writes nothing — <request>
       Given a target that reconciles out-of-balance, and an empty run store
       When balance's help is asked for <request>, after the run-name modifier with no store modifier
@@ -823,16 +823,16 @@ Feature: spec-controller balance runs standalone
     own. Every registered flag, positional argument, command and modifier appears on its help
     surface.
 
-    @SCN-CLI-006 @unit
+    @CLM-CLI-006 @unit
     Scenario: <command> --help lists that command's flags and exits 0
 
-    @SCN-CLI-007 @unit
+    @CLM-CLI-007 @unit
     Scenario: spec-controller --help lists the commands and the global --store/--run-id modifiers
 
-    @SCN-CLI-008 @unit
+    @CLM-CLI-008 @unit
     Scenario: every registered flag, positional argument, command and modifier reaches its help surface (completeness guard)
 
-    @SCN-CLI-009 @unit @e2e
+    @CLM-CLI-009 @unit @e2e
     Scenario: an unregistered flag to balance is a usage error
       Given a flag balance has never registered
       When balance is asked to run with that unregistered flag
@@ -846,7 +846,7 @@ Feature: spec-controller balance runs standalone
     it, and no pin is advised. An unregistered flag is refused with advice to bump the pin to
     a version that accepts it. A retired flag is never accepted again.
 
-    @SCN-CLI-023 @unit @e2e
+    @CLM-CLI-023 @unit @e2e
     Scenario: a retired flag to balance is refused as retired, naming its replacement and no pin that restores it
       Given a flag balance has retired
       When balance is asked to run with that flag
@@ -860,7 +860,7 @@ Feature: spec-controller balance runs standalone
     A project may keep its feature files in subdirectories. Where a feature file sits under
     the corpus changes nothing about how it is judged.
 
-    @SCN-CLI-085 @unit @e2e
+    @CLM-CLI-085 @unit @e2e
     Scenario: a feature file in a subdirectory of the corpus, at any depth, is read and judged as it would be at the top level
       Given a target whose feature files sit in its corpus at the top level and in subdirectories at several depths
       And the same target with every one of those feature files at the top level of its corpus
@@ -868,14 +868,14 @@ Feature: spec-controller balance runs standalone
       Then the nested target's reconciliation reports the scenarios of every one of its feature files
       And both targets reach the same verdict over the same Claim Reconciliations
 
-    @SCN-CLI-086 @unit @e2e
+    @CLM-CLI-086 @unit @e2e
     Scenario: a feature file in a subdirectory is named by its path under the corpus, so two files of one name in different subdirectories are told apart
-      Given a target whose corpus holds two feature files of one name in different subdirectories, each with a scenario of one title that carries no scenario code
+      Given a target whose corpus holds two feature files of one name in different subdirectories, each with a scenario of one title that carries no claim code
       When balance is asked to reconcile that corpus
       Then the reconciliation names each of those scenarios by its feature file's path under the corpus
       And each of those scenarios is counted against its own feature, not against the other
 
-    @SCN-CLI-087 @unit @e2e
+    @CLM-CLI-087 @unit @e2e
     Scenario: a subdirectory of the corpus the tool is not permitted to read is refused as unreadable, naming it, never skipped
       Given a target in which a subdirectory of the feature corpus, holding a feature file, is not permitted to be read
       When the balance run reads that input
@@ -885,42 +885,42 @@ Feature: spec-controller balance runs standalone
 
   Rule: with no deferral tags configured, balance defers a scenario that carries a built-in deferral tag
 
-    @unit @SCN-CLI-088
+    @unit @CLM-CLI-088
     Scenario: a scenario tagged @wip, @ignore, @skip, @todo or @pending reads as a Pending Item while its untagged twin reads missing, whether Cucumber left it out or reported it pending
 
   Rule: balance hands fitness-function discovery the target's workflows, its manifest and its own command
 
-    @unit @SCN-CLI-089
+    @unit @CLM-CLI-089
     Scenario: balance posts the checks a target's CI runs as fitness functions, and not the steps running the runners its manifest names
 
-    @unit @SCN-CLI-090
+    @unit @CLM-CLI-090
     Scenario: balance recognises the step that runs it as the reconciler, with nothing configured, named in its step accounting
 
-    @unit @SCN-CLI-091
+    @unit @CLM-CLI-091
     Scenario: a CI workflows input naming a directory is read as every workflow file in it, of either YAML spelling and nothing else
 
-    @unit @SCN-CLI-092
+    @unit @CLM-CLI-092
     Scenario: balance writes nothing to stderr for a target whose specController block names no runners and no non-checks
 
-  Rule: balance reads a corpus's scenario codes end to end, and a scenario code error never refuses the corpus
+  Rule: balance reads a corpus's claim codes end to end, and a claim code error never refuses the corpus
 
-    @unit @SCN-CLI-093
-    Scenario: balance over a corpus whose @SCN two scenarios carry exits 1 with the report in full, one claim per sharer, reconciles every other account, and never refuses the corpus
+    @unit @CLM-CLI-093
+    Scenario: balance over a corpus whose claim code two scenarios carry exits 1 with the report in full, one claim per sharer, reconciles every other account, and never refuses the corpus
 
-    @unit @SCN-CLI-094
-    Scenario: balance counts a prose mention of a feature part of two or five characters as an excluded @SCN occurrence, and one of one or six characters as none, listing no scenario code error
+    @unit @CLM-CLI-094
+    Scenario: balance counts a prose mention of a feature part of two or five characters as an excluded claim code occurrence, and one of one or six characters as none, listing no claim code error
 
-    @unit @SCN-CLI-095
-    Scenario: balance over a scenario tagged with two scenario codes opens no account under either, lists a several-claim-codes error naming both in the JSON and the markdown, and exits 1
+    @unit @CLM-CLI-095
+    Scenario: balance over a scenario tagged with two claim codes opens no account under either, lists a several-claim-codes error naming both in the JSON and the markdown, and exits 1
 
-    @unit @SCN-CLI-096
+    @unit @CLM-CLI-096
     Scenario: balance names each feature code by the file whose header carries it, and no file for a code only a scenario carries
 
-    @unit @SCN-CLI-097
-    Scenario: balance reads an empty feature directory as a corpus of no file and no feature code, judged with no scenario code error
+    @unit @CLM-CLI-097
+    Scenario: balance reads an empty feature directory as a corpus of no file and no feature code, judged with no claim code error
 
-    @unit @SCN-CLI-098
+    @unit @CLM-CLI-098
     Scenario: balance reads a feature file's header code of two or five characters, and no code from a header of one or six
 
-    @unit @SCN-CLI-099
+    @unit @CLM-CLI-099
     Scenario: balance names each code more than one scenario carries, with the file and the name of each scenario carrying it

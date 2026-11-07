@@ -12,7 +12,7 @@ function usageErrorOf(argv: readonly string[], registry: CliRegistry = cliRegist
   return errorText(read.usageError, "allocate");
 }
 
-describe("[SCN-ALC-012] a request not in the claim-code form is refused as a usage error, never as an unknown part", () => {
+describe("[CLM-ALC-012] a request not in the claim-code form is refused as a usage error, never as an unknown part", () => {
   it.each([
     ["no part", [], /no feature part was given/],
     ["a lower-case part", ["fit"], /'fit' is not a feature part: two to five characters/],

@@ -34,5 +34,5 @@ Feature: Term spelling — a term names the same pair however its author spelled
     the corpus read. Each port is a pure function, so the padded, empty and doubled-sigil
     spellings are held where the term is read.
 
-    @unit @SCN-TRM-001
+    @unit @CLM-TRM-001
     Scenario: a term is the same term however its author spaced it around the sigil, in a deferral tag and in a check step's id:

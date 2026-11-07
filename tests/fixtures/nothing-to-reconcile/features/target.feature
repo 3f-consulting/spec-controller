@@ -10,7 +10,7 @@ Feature: a fixture target that carried no scenario and produced nothing
 
   The ledger that reconcile() emits over this target therefore carries ZERO Claim
   Reconciliation rows, which is the one shape `isBalanced` cannot speak about:
-  `.every()` over `[]` is VACUOUSLY TRUE, so before @SCN-CLI-019 this target was told
+  `.every()` over `[]` is VACUOUSLY TRUE, so before @CLM-CLI-019 this target was told
   "BALANCED — every Claim Reconciliation balances … (exit 0)".
 
   The file deliberately carries NO scenario. That absence IS the fixture — adding one

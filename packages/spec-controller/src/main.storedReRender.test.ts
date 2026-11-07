@@ -75,7 +75,7 @@ const EXAMPLES: { saved: string; beside: string; reRender: () => string[] }[] = 
   },
 ];
 
-describe("[SCN-RMG-007] main refuses a stored --render-from-json re-render naming --store, never a flag the operator did not give, and stores nothing", () => {
+describe("[CLM-RMG-007] main refuses a stored --render-from-json re-render naming --store, never a flag the operator did not give, and stores nothing", () => {
   describe.each(EXAMPLES)("a saved reconciliation $saved, re-rendered under a run store $beside", ({ reRender }) => {
     const argvAt = (store: string): string[] => ["--store", store, "balance", ...reRender()];
 
@@ -128,7 +128,7 @@ describe("[SCN-RMG-007] main refuses a stored --render-from-json re-render namin
   });
 });
 
-describe("[SCN-MSG-015] a counted noun agrees with its count — a re-render's flags it does not read", () => {
+describe("[CLM-MSG-015] a counted noun agrees with its count — a re-render's flags it does not read", () => {
   it("2 flags", () => {
     const answered = underAStoreNotYetMade((store) => ["--store", store, "--run-id", "r1", "balance", "--render-from-json", savedReport]);
     expect(answered.stderr.trimEnd().split("\n").at(-1)).toBe("Run 'spec-controller balance --render-from-json <path>' without them.");

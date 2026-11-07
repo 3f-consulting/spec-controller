@@ -76,7 +76,7 @@ function afterVerdictLine(): string {
   return `${crashLine("Error", FIRST_LINE, true)}\n`;
 }
 
-describe("[SCN-CLI-110] an error after a re-rendered report's verdict keeps that verdict, named on one line", () => {
+describe("[CLM-CLI-110] an error after a re-rendered report's verdict keeps that verdict, named on one line", () => {
   describe.each([
     { saved: "a balanced report", fixture: "balanced", flags: [], verdict: 0 },
     { saved: "an out-of-balance report", fixture: "evidence-observation", flags: [], verdict: 1 },

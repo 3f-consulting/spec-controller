@@ -14,11 +14,11 @@ function newRepository(): string {
 const CORPUS = [
   "@ONE",
   "Feature: part ONE",
-  "  @SCN-ONE-001 @unit",
+  "  @CLM-ONE-001 @unit",
   "  Scenario: scenario 1",
   "    Given a step",
   "",
-  "  @SCN-ONE-002 @unit",
+  "  @CLM-ONE-002 @unit",
   "  Scenario: scenario 2",
   "    Given a step",
   "    And a step",
@@ -38,32 +38,32 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
+describe("[CLM-ALC-005] stderr names where the highest code was seen", () => {
   it("added only on an unmerged branch, below another added line, names the line it was added at and the commit that added it", () => {
     const repo = newRepository();
     writeInto(repo, "features/one.feature", lines(...CORPUS));
     commitAll(repo, "the corpus");
-    const adding = commitOnUnmergedBranch(repo, "features/one.feature", lines(...CORPUS, "", "  @SCN-ONE-007 @unit", "  Scenario: scenario 7"));
+    const adding = commitOnUnmergedBranch(repo, "features/one.feature", lines(...CORPUS, "", "  @CLM-ONE-007 @unit", "  Scenario: scenario 7"));
     expect(git(repo, ["show", "--format=", "-U0", adding]).match(/^@@ .*$/gm)).toEqual(["@@ -10,0 +11,3 @@ Feature: part ONE"]);
 
     const answered = allocateIn(repo, ["ONE"]);
 
     expectAnsweredEnding(answered, "ONE-008");
-    expect(answered.stderr).toBe(`highest seen: SCN-ONE-007, features/one.feature:12 in ${adding}\n`);
+    expect(answered.stderr).toBe(`highest seen: CLM-ONE-007, features/one.feature:12 in ${adding}\n`);
   });
 
   it("added only on an unmerged branch to a file that ended without a newline, still names the line it was added at", () => {
     const repo = newRepository();
     writeInto(repo, "features/one.feature", lines(...CORPUS).slice(0, -1));
     commitAll(repo, "the corpus, no final newline");
-    const adding = commitOnUnmergedBranch(repo, "features/one.feature", lines(...CORPUS, "  @SCN-ONE-007 @unit"));
+    const adding = commitOnUnmergedBranch(repo, "features/one.feature", lines(...CORPUS, "  @CLM-ONE-007 @unit"));
     expect(git(repo, ["show", "--format=", "-U0", adding])).toContain(
-      "@@ -10 +10,2 @@ Feature: part ONE\n-    And a step\n\\ No newline at end of file\n+    And a step\n+  @SCN-ONE-007 @unit\n",
+      "@@ -10 +10,2 @@ Feature: part ONE\n-    And a step\n\\ No newline at end of file\n+    And a step\n+  @CLM-ONE-007 @unit\n",
     );
 
     const answered = allocateIn(repo, ["ONE"]);
 
     expectAnsweredEnding(answered, "ONE-008");
-    expect(answered.stderr).toBe(`highest seen: SCN-ONE-007, features/one.feature:11 in ${adding}\n`);
+    expect(answered.stderr).toBe(`highest seen: CLM-ONE-007, features/one.feature:11 in ${adding}\n`);
   });
 });

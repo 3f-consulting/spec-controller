@@ -10,7 +10,7 @@ beforeEach(() => {
   scratch = realpathSync(temporaryDirectory("spec-controller-names-stdout-"));
 });
 
-describe("[SCN-FMT-011] a path names standard output when it spells file descriptor 1, directly or through links", () => {
+describe("[CLM-FMT-011] a path names standard output when it spells file descriptor 1, directly or through links", () => {
   it("answers yes for /dev/stdout and /dev/fd/1, however the path is spelled", () => {
     expect(namesStdout("/dev/stdout")).toBe(true);
     expect(namesStdout("/dev/fd/1")).toBe(true);

@@ -42,7 +42,7 @@ const onAClosedPipe = (): never => {
   throw closedPipe();
 };
 
-describe("[SCN-CLI-101] a balance run that stops on an unexpected error exits 6 and names the error on one line, under --exit-zero too", () => {
+describe("[CLM-CLI-101] a balance run that stops on an unexpected error exits 6 and names the error on one line, under --exit-zero too", () => {
   describe.each([
     { run: "a balance run", flags: [] },
     { run: "a balance run under --exit-zero", flags: ["--exit-zero"] },
@@ -79,7 +79,7 @@ function messageGetterThrows(): Error {
   });
 }
 
-describe("[SCN-CLI-103] an error that cannot be formatted still ends the run at 6, named on one line", () => {
+describe("[CLM-CLI-103] an error that cannot be formatted still ends the run at 6, named on one line", () => {
   describe.each([
     { thrown: "a null-prototype object", make: (): unknown => Object.create(null), name: "object", firstLine: "" },
     { thrown: "an Error whose message getter throws", make: messageGetterThrows, name: "Error", firstLine: "" },
@@ -122,7 +122,7 @@ describe("[SCN-CLI-103] an error that cannot be formatted still ends the run at 
   });
 });
 
-describe("[SCN-CLI-104] an error raised after the verdict is set keeps the verdict's exit code", () => {
+describe("[CLM-CLI-104] an error raised after the verdict is set keeps the verdict's exit code", () => {
   describe.each([
     { run: "a kept balance run", flags: [] },
     { run: "a kept balance run under --exit-zero", flags: ["--exit-zero"] },
@@ -172,7 +172,7 @@ describe("[SCN-CLI-104] an error raised after the verdict is set keeps the verdi
   });
 });
 
-describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — an unexpected error before its verdict", () => {
+describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — an unexpected error before its verdict", () => {
   it("names a balance run's closed pipe with [unexpected-error] once, after the words that it stopped", () => {
     expect(answer(balance(), onAClosedPipe).stderr).toBe(
       `spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: Error: ${FIRST_LINE}\n`,
@@ -180,7 +180,7 @@ describe("[SCN-MSG-010] an error shows its reader the error code of what went wr
   });
 });
 
-describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — an unexpected error that cannot be formatted", () => {
+describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — an unexpected error that cannot be formatted", () => {
   it("names a thrown null-prototype object with [unexpected-error] once, as the same line with nothing it cannot read", () => {
     const throwing = (): never => {
       throw Object.create(null);
@@ -191,7 +191,7 @@ describe("[SCN-MSG-010] an error shows its reader the error code of what went wr
   });
 });
 
-describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — an unexpected error after its verdict", () => {
+describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — an unexpected error after its verdict", () => {
   it("names a kept run's closed pipe on its run-directory line with [unexpected-error-after-verdict] once", () => {
     const store = temporaryDirectory("spec-controller-kept-");
     const onTheRunDirectoryLine = (chunk: string | Uint8Array): boolean => {

@@ -10,7 +10,7 @@ function corpusCarrying(code: string): string {
 
 function copyWithoutGitLinkingTo(target: string): string {
   const copy = freshDirectory("allocate-linked-copy-");
-  writeInto(copy, "features/one.feature", corpusCarrying("SCN-ONE-001"));
+  writeInto(copy, "features/one.feature", corpusCarrying("CLM-ONE-001"));
   symlinkSync(target, join(copy, "features", "elsewhere.feature"));
   return copy;
 }
@@ -18,7 +18,7 @@ function copyWithoutGitLinkingTo(target: string): string {
 function linkedWorktreeOfShallowClone(): string {
   const repo = freshDirectory("allocate-worktree-origin-");
   git(repo, ["init", "-q", "-b", "main"]);
-  writeInto(repo, "features/one.feature", corpusCarrying("SCN-ONE-001"));
+  writeInto(repo, "features/one.feature", corpusCarrying("CLM-ONE-001"));
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-q", "-m", "the corpus"]);
   writeInto(repo, "features/one.feature", `${readFileSync(join(repo, "features/one.feature"), "utf8")}\n`);
@@ -36,10 +36,10 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-ALC-004] With no history to read, a code is still offered and the boundary is stated on stderr", () => {
-  it("in a copy without git holding a symlink to a file that mentions SCN-ONE-900, answers a claim code ending ONE-002 and states no history was read", () => {
+describe("[CLM-ALC-004] With no history to read, a code is still offered and the boundary is stated on stderr", () => {
+  it("in a copy without git holding a symlink to a file that mentions CLM-ONE-900, answers a claim code ending ONE-002 and states no history was read", () => {
     const outside = freshDirectory("allocate-link-target-");
-    writeInto(outside, "far.feature", corpusCarrying("SCN-ONE-900"));
+    writeInto(outside, "far.feature", corpusCarrying("CLM-ONE-900"));
 
     expectAnsweredWithNoHistoryRead(copyWithoutGitLinkingTo(join(outside, "far.feature")));
   });

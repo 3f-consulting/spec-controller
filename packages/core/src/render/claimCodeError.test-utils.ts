@@ -16,7 +16,7 @@ export const FOREIGN: ClaimCodeError = {
   kind: "foreign-claim-code",
   files: ["two.feature"],
   featureCode: "TWO",
-  claimCode: "SCN-ONE-002",
+  claimCode: "CLM-ONE-002",
   namedFeatureCode: "ONE",
   namedFeatureFiles: ["one.feature"],
 };

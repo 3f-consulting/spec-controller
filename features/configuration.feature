@@ -9,7 +9,7 @@ Feature: balance reads the specController block of the target's package.json
     excludes nothing, and does not stop the run. A check whose script that key names is still
     reported as a fitness function.
 
-    @unit @SCN-CFG-003
+    @unit @CLM-CFG-003
     Scenario: a runners key that is not one of the four layers is reported, never silently honoured
 
   Rule: a specController entry the tool cannot use is named on the report, and the run is not refused over it
@@ -20,14 +20,14 @@ Feature: balance reads the specController block of the target's package.json
     A key the block does not read, a retired key included, is named as unknown in the same words as
     any other. A saved run, re-rendered, names the same entries its live report named.
 
-    @unit @SCN-CFG-004
+    @unit @CLM-CFG-004
     Scenario Outline: a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it
 
-    @unit @SCN-CFG-005
+    @unit @CLM-CFG-005
     Scenario Outline: a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it
 
-    @unit @SCN-CFG-006
+    @unit @CLM-CFG-006
     Scenario Outline: a specController block whose every entry is a kind its reader takes names nothing as the wrong kind
 
-    @unit @SCN-CFG-007
+    @unit @CLM-CFG-007
     Scenario: a saved run re-rendered names the same specController entries its live report named

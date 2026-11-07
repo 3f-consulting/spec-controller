@@ -3,7 +3,7 @@
     {
       "name": "tests/fixtures/roundtrip/checkout.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-CHK-001] the target unit scenario is proven", "status": "passed" }
+        { "fullName": "[CLM-CHK-001] the target unit scenario is proven", "status": "passed" }
       ]
     }
   ]

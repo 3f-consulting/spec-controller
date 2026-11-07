@@ -32,14 +32,14 @@ function reportOver(
 }
 
 const sharedCodeCorpus = [
-  "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: first\n    Given a thing\n\n  @unit @SCN-ONE-001\n  Scenario: second\n    Given a thing\n\n  @unit\n  Scenario: carries no code\n    Given a thing\n",
+  "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: first\n    Given a thing\n\n  @unit @CLM-ONE-001\n  Scenario: second\n    Given a thing\n\n  @unit\n  Scenario: carries no code\n    Given a thing\n",
 ];
 
 const sharedCodeCorpusFacts = {
   untaggedScenarios: [{ feature: "one.feature", title: "carries no code" }],
   sharedClaimCodes: [
     {
-      claimCode: "SCN-ONE-001",
+      claimCode: "CLM-ONE-001",
       scenarios: [
         { feature: "one.feature", title: "first" },
         { feature: "one.feature", title: "second" },
@@ -48,7 +48,7 @@ const sharedCodeCorpusFacts = {
   ],
 };
 
-describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under summary.claimCodes, straight after the run verdict", () => {
+describe("[CLM-RMD-022] the JSON report carries the corpus's own facts under summary.claimCodes, straight after the run verdict", () => {
   it("states them in the summary after the run verdict, and not at the report's top level", () => {
     const report = reportOver(sharedCodeCorpus, ["one.feature"]);
     expect(report).not.toHaveProperty("claimCodes");
@@ -62,13 +62,13 @@ describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under sum
           "@ONE",
           "Feature: one",
           "",
-          "  Prose that mentions @SCN-ONE-009 names no scenario.",
+          "  Prose that mentions @CLM-ONE-009 names no scenario.",
           "",
-          "  @unit @SCN-ONE-001",
+          "  @unit @CLM-ONE-001",
           "  Scenario: first",
           "    Given a thing",
           "",
-          "  @unit @SCN-ONE-001",
+          "  @unit @CLM-ONE-001",
           "  Scenario: second",
           "    Given a thing",
           "",
@@ -92,8 +92,8 @@ describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under sum
   it("carries no sharedClaimCodes when no two scenarios share a code", () => {
     const report = reportOver(
       [
-        "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: first\n    Given a thing\n",
-        "@TWO\nFeature: two\n\n  @unit @SCN-TWO-001\n  Scenario: first\n    Given a thing\n",
+        "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: first\n    Given a thing\n",
+        "@TWO\nFeature: two\n\n  @unit @CLM-TWO-001\n  Scenario: first\n    Given a thing\n",
       ],
       ["one.feature", "two.feature"]
     );

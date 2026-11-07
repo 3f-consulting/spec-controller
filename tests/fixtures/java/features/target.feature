@@ -7,54 +7,54 @@ Feature: a target whose unit tests are a Java suite
 
   Rule: the fixture target names the scenarios its JUnit 5 tests cite
 
-    @unit @SCN-JVF-001
+    @unit @CLM-JVF-001
     Scenario: the scenario a passing JUnit 5 test cites
       Given the target repo's source
 
-    @unit @SCN-JVF-002
+    @unit @CLM-JVF-002
     Scenario: the scenario a failing JUnit 5 test cites
       Given the target repo's source
 
-    @unit @SCN-JVF-003
+    @unit @CLM-JVF-003
     Scenario: the scenario a JUnit 5 test's own display name cites inside a class that cites another
       Given the target repo's source
 
-    @unit @SCN-JVF-004
+    @unit @CLM-JVF-004
     Scenario: the scenario an inner class cites around a JUnit 5 test whose own display name cites nothing
       Given the target repo's source
 
-    @unit @SCN-JVF-005
+    @unit @CLM-JVF-005
     Scenario: the first of two scenarios one JUnit 5 test cites
       Given the target repo's source
 
-    @unit @SCN-JVF-006
+    @unit @CLM-JVF-006
     Scenario: the second of two scenarios one JUnit 5 test cites
       Given the target repo's source
 
-    @unit @SCN-JVF-007
+    @unit @CLM-JVF-007
     Scenario: the scenario each invocation of a parameterised JUnit 5 test cites
       Given the target repo's source
 
-    @unit @SCN-JVF-008
+    @unit @CLM-JVF-008
     Scenario: the scenario a disabled JUnit 5 test cites
       Given the target repo's source
 
-    @unit @SCN-JVF-009
+    @unit @CLM-JVF-009
     Scenario: the scenario a JUnit 5 test whose assumption fails cites
       Given the target repo's source
 
-    @unit @SCN-JVF-010
+    @unit @CLM-JVF-010
     Scenario: the scenario a JUnit 5 test that throws cites
       Given the target repo's source
 
-    @unit @SCN-JVF-011
+    @unit @CLM-JVF-011
     Scenario: the scenario a JUnit 5 test cites whose setup before each test throws
       Given the target repo's source
 
-    @unit @SCN-JVF-012
+    @unit @CLM-JVF-012
     Scenario: the scenario a JUnit 5 test cites in a class whose setup before all its tests fails
       Given the target repo's source
 
-    @unit @SCN-JVF-013
+    @unit @CLM-JVF-013
     Scenario: the scenario an outer class cites around a JUnit 5 test whose own display name cites nothing
       Given the target repo's source

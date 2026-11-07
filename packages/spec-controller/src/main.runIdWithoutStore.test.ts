@@ -107,7 +107,7 @@ const SHAPES: { shape: string; argvAt: (cwd: string) => string[]; refusal: Refus
   },
 ];
 
-describe("[SCN-CLI-083] the host refuses --run-id given without --store as a usage fault, naming it", () => {
+describe("[CLM-CLI-083] the host refuses --run-id given without --store as a usage fault, naming it", () => {
   describe.each(SHAPES)("$shape", ({ argvAt, refusal, closing }) => {
     it("refuses on stderr with exactly the refusal naming --run-id as naming a run that is not kept", () => {
       const answered = inTemporaryWorkingDirectory(argvAt, refusal);

@@ -6,7 +6,7 @@ import { toFile, toStdout, fileIdentity as id, identifiedAs as at } from "./plan
 import { shownText } from "../../shownText.test-utils.js";
 
 
-describe("[SCN-FMT-010] two outputs whose regular files share one device and inode are refused, naming both", () => {
+describe("[CLM-FMT-010] two outputs whose regular files share one device and inode are refused, naming both", () => {
   it("refuses two outputs on one file, naming each as the operator gave it", () => {
     const refusal = shownText(sharedFileRefusal([at(toFile("md", "y.md"), id(1n, 7n)), at(toFile("json", "./y.md"), id(1n, 7n))]));
 

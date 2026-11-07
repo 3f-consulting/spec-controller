@@ -7,7 +7,7 @@ import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er, heldObservationsOf } from "../evidenceReconciliation.test-utils.js";
 import { claimReconciliationsOf } from "../assemble/reportClaimReconciliations.test-utils.js";
 
-describe("[SCN-RMD-010] the JSON report carries each test's name on its evidence observation, from Vitest and Cucumber alike", () => {
+describe("[CLM-RMD-010] the JSON report carries each test's name on its evidence observation, from Vitest and Cucumber alike", () => {
   it("carries a Vitest test's name and a Cucumber scenario's name on their evidence observations as testName", () => {
     const observations = [
       ...parseVitestEvidenceObservations(

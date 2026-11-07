@@ -11,14 +11,14 @@ function planOf(result: ReturnType<typeof planOutput>): OutputPlan {
   return result.plan;
 }
 
-describe("[SCN-FMT-001] planOutput plans markdown to stdout by default", () => {
+describe("[CLM-FMT-001] planOutput plans markdown to stdout by default", () => {
   it("plans exactly one md→stdout output when no --format flag is given", () => {
     const plan = planOf(planOutput([], () => false));
     expect(plan.outputs).toEqual([{ fmt: "md", dest: { kind: "stdout" } }]);
   });
 });
 
-describe("[SCN-FMT-002] planOutput plans json to a caller-given file", () => {
+describe("[CLM-FMT-002] planOutput plans json to a caller-given file", () => {
   it.each([
     ["plans exactly one json→file output for a json:<path> spec", "json:reports/spec-reconciliation.json", "reports/spec-reconciliation.json"],
     ["takes the path as everything after the FIRST colon (a later colon stays in the path)", "json:/tmp/out:v2.json", "/tmp/out:v2.json"],
@@ -30,7 +30,7 @@ describe("[SCN-FMT-002] planOutput plans json to a caller-given file", () => {
   });
 });
 
-describe("[SCN-FMT-003] planOutput plans markdown to a caller-given file", () => {
+describe("[CLM-FMT-003] planOutput plans markdown to a caller-given file", () => {
   it("plans exactly one md→file output for a md:<path> spec", () => {
     const plan = planOf(planOutput(["md:reports/spec-reconciliation.md"], () => false));
     expect(plan.outputs).toEqual([
@@ -39,7 +39,7 @@ describe("[SCN-FMT-003] planOutput plans markdown to a caller-given file", () =>
   });
 });
 
-describe("[SCN-FMT-004] planOutput routes several specs independently in one plan", () => {
+describe("[CLM-FMT-004] planOutput routes several specs independently in one plan", () => {
   it("plans md→stdout AND json→file from a `md` + `json:<path>` spec list", () => {
     const plan = planOf(planOutput(["md", "json:reports/spec-reconciliation.json"], () => false));
     expect(plan.outputs).toEqual([
@@ -49,7 +49,7 @@ describe("[SCN-FMT-004] planOutput routes several specs independently in one pla
   });
 });
 
-describe("[SCN-FMT-005] planOutput rejects more than one output routed to stdout", () => {
+describe("[CLM-FMT-005] planOutput rejects more than one output routed to stdout", () => {
   it("rejects two DIFFERENT formats both bound for stdout, with a stdout+:<path> hint", () => {
     const result = planOutput(["md", "json"], () => false);
     expect(result.ok).toBe(false);
@@ -59,7 +59,7 @@ describe("[SCN-FMT-005] planOutput rejects more than one output routed to stdout
   });
 });
 
-describe("[SCN-FMT-007] balance rejects an unknown format with a hint listing md and json", () => {
+describe("[CLM-FMT-007] balance rejects an unknown format with a hint listing md and json", () => {
   it("runBalance refuses --format xml at exit 2 with the hint alone, writing nothing, over a target that would otherwise reconcile", () => {
     const { stdout, stderr, exitCode } = runBalanceCaptured([
       "--features", "tests/fixtures/balanced/features",
@@ -81,7 +81,7 @@ describe("[SCN-FMT-007] balance rejects an unknown format with a hint listing md
   });
 });
 
-describe("[SCN-FMT-011] planOutput counts a --format path naming standard output as routed to stdout", () => {
+describe("[CLM-FMT-011] planOutput counts a --format path naming standard output as routed to stdout", () => {
   const namesStdout = (path: string): boolean => path === "/dev/stdout" || path === "/dev/fd/1";
 
   it("refuses the markdown report on stdout beside one at a path naming stdout", () => {

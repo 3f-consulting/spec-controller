@@ -16,15 +16,15 @@ import { markdownHeading } from "./heading.js";
 import { UNNAMED_CLAIM_ID } from "../domain/claimReconciliation.js";
 
 const scenarios: Scenario[] = [
-  { claimCode: "SCN-CHK-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-  { claimCode: "SCN-CHK-002", evidenceObligations: [{ qualityCheckKind: "integration" }] },
-  { claimCode: "SCN-CHK-003", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-CHK-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { claimCode: "CLM-CHK-002", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+  { claimCode: "CLM-CHK-003", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 const observations: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", claimCode: "SCN-CHK-001", status: "passed" },
-  { qualityCheckKind: "unit", claimCode: "SCN-PHX-001", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "CLM-CHK-001", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "CLM-PHX-001", status: "passed" },
   { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "src/b.test.ts" },
-  { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "CLM-CHK-003", exists: true, enforcedOverRealSource: true },
   { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
 let balance: Ledger;
@@ -59,7 +59,7 @@ function byFeatureRowOf(md: string, code: string): string[] | undefined {
     .find(([feature = ""]) => feature === code || feature.endsWith(` (${code})`));
 }
 
-describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliation.json alone", () => {
+describe("[CLM-RMD-007] the markdown regenerates from a saved spec-reconciliation.json alone", () => {
   it("regenerates markdown byte-identical to the direct render (drift-equality)", () => {
     const savedJson = renderJson(__er(balance, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson, HANDED_INPUT_NAMES, publishedExitCodeOf);
@@ -97,7 +97,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
   });
 
   it("regenerates a non-strict report with a pending item exactly as it was rendered", () => {
-    const er = __er(reconcile([{ claimCode: "SCN-P", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] }], []));
+    const er = __er(reconcile([{ claimCode: "CLM-P", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] }], []));
     const regenerated = renderReportFromJson(renderJson(er, ctx), HANDED_INPUT_NAMES, publishedExitCodeOf);
     expect(regenerated).toBe(renderMarkdown(er, ctx, publishedExitCodeOf));
   });

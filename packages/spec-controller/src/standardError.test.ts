@@ -15,7 +15,7 @@ function notAPart(): ReturnType<typeof refusal> {
   return refusal(AppError.NotAFeaturePart, { part: "one" });
 }
 
-describe("[SCN-MSG-002] the printer prints a refusal's entry with the values its code is given, then each pointer line", () => {
+describe("[CLM-MSG-002] the printer prints a refusal's entry with the values its code is given, then each pointer line", () => {
   it("prints a refusal given no pointer as its entry's words with the values given, on one line", () => {
     expect(printedBy("balance", (shown) => shown.error(notAPart()))).toEqual([
       "spec-controller balance: usage error [not-a-feature-part] — 'one' is not a feature part: two to five characters, each A-Z or 0-9.\n",
@@ -37,7 +37,7 @@ describe("[SCN-MSG-002] the printer prints a refusal's entry with the values its
   });
 });
 
-describe("[SCN-ALC-012] a command's usage error opens with the command's usage-error prefix", () => {
+describe("[CLM-ALC-012] a command's usage error opens with the command's usage-error prefix", () => {
   it("opens the first line with the command, and leaves the pointer lines as they are", () => {
     const given = refusal(AppError.NotAFeaturePart, { part: "one" }, ["a pointer"]);
     expect(errorText(given, "allocate")).toBe(
@@ -46,7 +46,7 @@ describe("[SCN-ALC-012] a command's usage error opens with the command's usage-e
   });
 });
 
-describe("[SCN-ALC-014] a refusal at the host's scope opens with the tool's usage-error prefix", () => {
+describe("[CLM-ALC-014] a refusal at the host's scope opens with the tool's usage-error prefix", () => {
   it("opens the first line with the tool alone when no command is given", () => {
     const given = refusal(AppError.ModifiersNotTaken, { command: "allocate", modifiers: "--store" });
     expect(errorText(given)).toBe(
@@ -55,7 +55,7 @@ describe("[SCN-ALC-014] a refusal at the host's scope opens with the tool's usag
   });
 });
 
-describe("[SCN-CLI-056] an unknown command is named after the tool", () => {
+describe("[CLM-CLI-056] an unknown command is named after the tool", () => {
   it("opens with the tool's name, then the entry", () => {
     expect(errorText(refusal(AppError.UnknownCommand, { command: "frobnicate" }, ["", "help"]))).toBe(
       'spec-controller: usage error [unknown-command] — unknown command "frobnicate".\n\nhelp',
@@ -69,7 +69,7 @@ describe("[SCN-CLI-056] an unknown command is named after the tool", () => {
   });
 });
 
-describe("[SCN-CLI-101] an error given as its words is printed as they are, on its own line", () => {
+describe("[CLM-CLI-101] an error given as its words is printed as they are, on its own line", () => {
   it("prints the words, then a newline, whatever the command", () => {
     const words = "spec-controller stopped on an unexpected error, and gives no verdict: Error: boom" as CodedLine;
     expect(printedBy("allocate", (shown) => shown.error(words))).toEqual([`${words}\n`]);
@@ -77,13 +77,13 @@ describe("[SCN-CLI-101] an error given as its words is printed as they are, on i
   });
 });
 
-describe("[SCN-ALC-005] a note is printed on its own line", () => {
+describe("[CLM-ALC-005] a note is printed on its own line", () => {
   it("prints the note, then a newline", () => {
     expect(printedBy("allocate", (shown) => shown.note("highest seen: none"))).toEqual(["highest seen: none\n"]);
   });
 });
 
-describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong", () => {
+describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong", () => {
   const withPointers = (): ReturnType<typeof refusal> =>
     refusal(AppError.RunIdWithoutStore, { runId: "r1" }, ["first pointer", "second pointer"]);
   const words = "--run-id names a stored run, and was given 'r1' with no --store, so no run is kept under it.";

@@ -56,7 +56,7 @@ const COUNTS = ["stepsRead", "candidates", "runners", "reconciler", "nonChecks",
 const summedOver = (rows: readonly JobStepAccount[], count: (typeof COUNTS)[number]): number =>
   rows.reduce((sum, row) => sum + row[count], 0);
 
-describe("[SCN-USG-018] the step account's total sums each count over its rows, and the steps its dispositions account for equal the steps read", () => {
+describe("[CLM-USG-018] the step account's total sums each count over its rows, and the steps its dispositions account for equal the steps read", () => {
   it("sums each count over the rows of every workflow and job, and adds the dispositions back up to the steps read", () => {
     const dispositionOf = stepDispositions({
       isReconciler: named("Dump this run's step record", "Reconciliation"),

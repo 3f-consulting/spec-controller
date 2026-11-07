@@ -17,72 +17,72 @@ function rowOf(md: string, rowName: string): string {
   return row;
 }
 
-describe("[SCN-RPT-034] a test that cites a scenario no feature carries shows on its phantom claim's row as failed or passed, as it ran", () => {
+describe("[CLM-RPT-034] a test that cites a scenario no feature carries shows on its phantom claim's row as failed or passed, as it ran", () => {
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
-      [{ claimCode: "SCN-PST-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "CLM-PST-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-PST-001", status: "passed", locator: "src/proven.test.ts" },
-        { qualityCheckKind: "unit", claimCode: "SCN-PST-901", status: "failed", locator: "src/broken-spawn.test.ts" },
-        { qualityCheckKind: "unit", claimCode: "SCN-PST-901", status: "passed", locator: "src/sound.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "CLM-PST-001", status: "passed", locator: "src/proven.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "CLM-PST-901", status: "failed", locator: "src/broken-spawn.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "CLM-PST-901", status: "passed", locator: "src/sound.test.ts" },
       ]
     );
   });
 
   it("shows the test that failed as failed", () => {
-    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "CLM-PST-901");
     expect(row).toContain(`unit: ${CITES_UNKNOWN()} (src/broken-spawn.test.ts) — failed`);
   });
 
   it("shows the test that passed as passed", () => {
-    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "CLM-PST-901");
     expect(row).toContain(`unit: ${CITES_UNKNOWN()} (src/sound.test.ts) — passed`);
   });
 });
 
-describe("[SCN-RPT-035] a test observed at a check its scenario holds no obligation for shows as failed or passed, as it ran", () => {
+describe("[CLM-RPT-035] a test observed at a check its scenario holds no obligation for shows as failed or passed, as it ran", () => {
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
-      [{ claimCode: "SCN-NOS-001", evidenceObligations: [{ qualityCheckKind: "integration" }] }],
+      [{ claimCode: "CLM-NOS-001", evidenceObligations: [{ qualityCheckKind: "integration" }] }],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-NOS-001", status: "failed", locator: "src/broken-spawn.test.ts" },
-        { qualityCheckKind: "unit", claimCode: "SCN-NOS-001", status: "passed", locator: "src/sound.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "CLM-NOS-001", status: "failed", locator: "src/broken-spawn.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "CLM-NOS-001", status: "passed", locator: "src/sound.test.ts" },
       ]
     );
   });
 
   it("shows the test that failed as failed", () => {
-    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-NOS-001");
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "CLM-NOS-001");
     expect(row).toContain(`unit: ${NO_OBLIGATION()} (src/broken-spawn.test.ts) — failed`);
   });
 
   it("shows the test that passed as passed", () => {
-    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-NOS-001");
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "CLM-NOS-001");
     expect(row).toContain(`unit: ${NO_OBLIGATION()} (src/sound.test.ts) — passed`);
   });
 });
 
-describe("[SCN-RPT-086] a test that answers no evidence obligation is named by its file and its test name, so two such tests in one file read as two items", () => {
+describe("[CLM-RPT-086] a test that answers no evidence obligation is named by its file and its test name, so two such tests in one file read as two items", () => {
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
       [],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-PST-901", status: "failed", locator: "src/x.test.ts", testName: "first" },
-        { qualityCheckKind: "unit", claimCode: "SCN-PST-901", status: "failed", locator: "src/x.test.ts", testName: "second" },
+        { qualityCheckKind: "unit", claimCode: "CLM-PST-901", status: "failed", locator: "src/x.test.ts", testName: "first" },
+        { qualityCheckKind: "unit", claimCode: "CLM-PST-901", status: "failed", locator: "src/x.test.ts", testName: "second" },
       ]
     );
   });
 
   it("names the first test by its file and its test name", () => {
-    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "CLM-PST-901");
     expect(row).toContain(`unit: ${CITES_UNKNOWN()} (src/x.test.ts: first) — failed`);
   });
 
   it("names the second test by its file and its test name", () => {
-    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "SCN-PST-901");
+    const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "CLM-PST-901");
     expect(row).toContain(`unit: ${CITES_UNKNOWN()} (src/x.test.ts: second) — failed`);
   });
 });

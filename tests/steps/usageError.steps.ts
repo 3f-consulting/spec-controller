@@ -748,7 +748,7 @@ const HELP_REQUEST: Record<string, readonly string[]> = {
   alone: ["--help"],
   "by its short name, alone": ["-h"],
   "after a part": ["ONE", "--help"],
-  "after a part not in the scenario-code form": ["fit", "--help"],
+  "after a part not in the claim-code form": ["fit", "--help"],
   "beside a flag the command does not take": ["--bogus", "--help"],
 };
 
@@ -767,7 +767,7 @@ Then("it answers with allocate's help, naming the feature part it takes and the 
   assert.ok(opensWithAllocateHelpTitle(this.answer.stdout), this.answer.stdout);
   assert.match(this.answer.stdout, /<FFF>/);
   assert.match(this.answer.stdout, /--new/);
-  assert.doesNotMatch(this.answer.stdout, /^SCN-/m);
+  assert.doesNotMatch(this.answer.stdout, /^CLM-/m);
 });
 
 const MODIFIER_FLAG: Record<string, string> = { "the store modifier": "--store", "the run-name modifier": "--run-id" };
@@ -831,5 +831,5 @@ Then("it answers with allocate's help, exactly as it does with nothing before it
   assert.equal(this.answer.status, 0, `expected success, got ${this.answer.status}\n${this.answer.stderr}`);
   assert.equal(this.answer.stderr, "");
   assert.equal(this.answer.stdout, this.answerAlone.stdout);
-  assert.doesNotMatch(this.answer.stdout, /^SCN-/m);
+  assert.doesNotMatch(this.answer.stdout, /^CLM-/m);
 });

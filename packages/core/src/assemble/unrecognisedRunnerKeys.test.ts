@@ -32,7 +32,7 @@ function unnamedClaimChecks(reconciliation: EvidenceReconciliation) {
     );
 }
 
-describe("[SCN-CFG-003] a runners key that is not one of the four layers is reported, never silently honoured", () => {
+describe("[CLM-CFG-003] a runners key that is not one of the four layers is reported, never silently honoured", () => {
   it("names the key outside the four layers, and keeps the check it names on the books as uncited", () => {
     const reconciliation = reconcile({ unit: "vitest", lint: "eslint" });
     expect(reconciliation.summary.runnerKeysNotALayer).toStrictEqual(["lint"]);

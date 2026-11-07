@@ -15,7 +15,7 @@ const RUNNERS = { unit: "vitest" };
 
 const candidates = (pipeline: readonly PipelineStep[]): string[] => candidatesAmong(pipeline, SCRIPTS, RUNNERS);
 
-describe("[SCN-USG-007] an uncited check running in a sibling workflow is a candidate fitness function", () => {
+describe("[CLM-USG-007] an uncited check running in a sibling workflow is a candidate fitness function", () => {
   it("keeps a check run by the first workflow among the candidates", () => {
     expect(candidates([run(IN_CI_YML, "test"), run(IN_CI_YML, "lint:sweep")])).toStrictEqual(["lint:sweep"]);
   });

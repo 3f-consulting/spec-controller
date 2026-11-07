@@ -5,8 +5,8 @@
       "status": "passed",
       "assertionResults": [
         {
-          "fullName": "satisfied [SCN-TOC-001]",
-          "title": "[SCN-TOC-001] a passing unit obligation",
+          "fullName": "satisfied [CLM-TOC-001]",
+          "title": "[CLM-TOC-001] a passing unit obligation",
           "status": "passed"
         }
       ]
@@ -16,8 +16,8 @@
       "status": "failed",
       "assertionResults": [
         {
-          "fullName": "failing [SCN-TOC-002]",
-          "title": "[SCN-TOC-002] a failing unit obligation",
+          "fullName": "failing [CLM-TOC-002]",
+          "title": "[CLM-TOC-002] a failing unit obligation",
           "status": "failed"
         }
       ]
@@ -27,8 +27,8 @@
       "status": "passed",
       "assertionResults": [
         {
-          "fullName": "no-evidence-obligation unit evidence observation [SCN-TOC-005]",
-          "title": "[SCN-TOC-005] a unit evidence observation at a quality-check the scenario never named",
+          "fullName": "no-evidence-obligation unit evidence observation [CLM-TOC-005]",
+          "title": "[CLM-TOC-005] a unit evidence observation at a quality-check the scenario never named",
           "status": "passed"
         }
       ]
@@ -38,8 +38,8 @@
       "status": "passed",
       "assertionResults": [
         {
-          "fullName": "phantom claim [SCN-TOC-999]",
-          "title": "[SCN-TOC-999] an evidence observation citing a scenario no feature names",
+          "fullName": "phantom claim [CLM-TOC-999]",
+          "title": "[CLM-TOC-999] an evidence observation citing a scenario no feature names",
           "status": "passed"
         }
       ]

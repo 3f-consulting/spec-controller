@@ -7,50 +7,50 @@ Feature: a target whose unit tests are an RSpec suite
 
   Rule: the fixture target names the scenarios its RSpec examples cite
 
-    @unit @SCN-RSF-001
+    @unit @CLM-RSF-001
     Scenario: the scenario a passing RSpec example cites
       Given the target repo's source
 
-    @unit @SCN-RSF-002
+    @unit @CLM-RSF-002
     Scenario: the scenario a failing RSpec example cites
       Given the target repo's source
 
-    @unit @SCN-RSF-003
+    @unit @CLM-RSF-003
     Scenario: the scenario an RSpec example's own description cites inside a group that cites another
       Given the target repo's source
 
-    @unit @SCN-RSF-004
+    @unit @CLM-RSF-004
     Scenario: the scenario a group cites around an RSpec example whose own description cites nothing
       Given the target repo's source
 
-    @unit @SCN-RSF-005
+    @unit @CLM-RSF-005
     Scenario: the first of two scenarios one RSpec example cites
       Given the target repo's source
 
-    @unit @SCN-RSF-006
+    @unit @CLM-RSF-006
     Scenario: the second of two scenarios one RSpec example cites
       Given the target repo's source
 
-    @unit @SCN-RSF-007
+    @unit @CLM-RSF-007
     Scenario: the scenario a skipped RSpec example cites
       Given the target repo's source
 
-    @unit @SCN-RSF-008
+    @unit @CLM-RSF-008
     Scenario: the scenario an xit RSpec example cites
       Given the target repo's source
 
-    @unit @SCN-RSF-009
+    @unit @CLM-RSF-009
     Scenario: the scenario a pending RSpec example that fails cites
       Given the target repo's source
 
-    @unit @SCN-RSF-010
+    @unit @CLM-RSF-010
     Scenario: the scenario a pending RSpec example that passes cites
       Given the target repo's source
 
-    @unit @SCN-RSF-011
+    @unit @CLM-RSF-011
     Scenario: the scenario an RSpec example after a failing before hook cites
       Given the target repo's source
 
-    @unit @SCN-RSF-012
+    @unit @CLM-RSF-012
     Scenario: the scenario an RSpec example after a failing before(:context) hook cites
       Given the target repo's source

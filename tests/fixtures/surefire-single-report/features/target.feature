@@ -8,6 +8,6 @@ Feature: a target whose unit tests are a Java suite
 
   Rule: the fixture target names the scenario a passing JUnit 5 test cites
 
-    @unit @SCN-AAA-001
+    @unit @CLM-AAA-001
     Scenario: the scenario a passing JUnit 5 test cites
       Given the target repo's source

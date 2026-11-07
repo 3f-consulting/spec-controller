@@ -38,17 +38,17 @@ const collectionFailed = (locator: string | undefined, message?: string): Eviden
 
 const SKIPPED_CHECK: EvidenceObservation = {
   qualityCheckKind: "fitness",
-  fitnessFunction: "SCN-RIN-001",
-  claimCode: "SCN-RIN-001",
+  fitnessFunction: "CLM-RIN-001",
+  claimCode: "CLM-RIN-001",
   exists: false,
   enforcedOverRealSource: false,
   broken: true,
-  notes: [{ kind: "check-step-did-not-run", code: "SCN-RIN-001", outcome: "skipped" }],
+  notes: [{ kind: "check-step-did-not-run", code: "CLM-RIN-001", outcome: "skipped" }],
 };
 
 const SCENARIOS: readonly Scenario[] = [
-  { claimCode: "SCN-RIN-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { claimCode: "SCN-RIN-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { claimCode: "CLM-RIN-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-RIN-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
 ];
 
 function render(...broken: readonly EvidenceObservation[]): string {
@@ -78,10 +78,10 @@ const brokenCell = (qualityCheckKind: string, where: string): string =>
 
 const unsoundStamp = (proofs: string): string => coreMessage(CoreMessage.RunUnsound, { proofs });
 
-describe("[SCN-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
+describe("[CLM-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
   let checkDidNotRun: string;
   beforeEach(() => {
-    checkDidNotRun = coreMessage(CoreMessage.CheckStepSkipped, { claimCode: "SCN-RIN-001" });
+    checkDidNotRun = coreMessage(CoreMessage.CheckStepSkipped, { claimCode: "CLM-RIN-001" });
   });
 
   it.each([
@@ -154,7 +154,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
     expect(reconcilingItemsCell(md, UNNAMED_CLAIM_ID)).toBe(
       brokenCell("unit", `${COLLECTION_FAILED_LOCATOR}: Cannot find \\| package`),
     );
-    expect(reconcilingItemsCell(md, "SCN-RIN-001")).toBe(
+    expect(reconcilingItemsCell(md, "CLM-RIN-001")).toBe(
       [`fitness: ${outcomeDescription("missing")}`, brokenCell("fitness", checkDidNotRun)].join("; "),
     );
   });
@@ -179,8 +179,8 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
   });
 });
 
-describe("[SCN-RPT-085] an item quoting what an evidence observation said states the first line of its message and every note, however many lines the message runs to", () => {
-  const codes = ["SCN-RIN-001", "SCN-RIN-002"];
+describe("[CLM-RPT-085] an item quoting what an evidence observation said states the first line of its message and every note, however many lines the message runs to", () => {
+  const codes = ["CLM-RIN-001", "CLM-RIN-002"];
   const said = { locator: "src/x.test.ts", message: "\nexpected 1 to be 2\n    at foo (x.ts:1)", notes: [{ kind: "several-claim-codes", codes }] } as const;
   const rows: [string, EvidenceObservation][] = [
     ["a broken item", { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, ...said }],
@@ -201,7 +201,7 @@ describe("[SCN-RPT-085] an item quoting what an evidence observation said states
   });
 });
 
-describe("[SCN-MSG-015] a counted noun agrees with its count — the run-integrity stamp's proofs that never ran", () => {
+describe("[CLM-MSG-015] a counted noun agrees with its count — the run-integrity stamp's proofs that never ran", () => {
   const stampOf = (md: string): string => runIntegrityLines(md)[2]!;
 
   it("1 proof", () => {

@@ -7,7 +7,7 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 
-describe("[SCN-CLI-055] an out-of-balance account and a claim code error in one run: exit 1, both reported", () => {
+describe("[CLM-CLI-055] an out-of-balance account and a claim code error in one run: exit 1, both reported", () => {
   let outOfBalance: EvidenceReconciliation;
   let md: string;
   let headline: string;
@@ -15,10 +15,10 @@ describe("[SCN-CLI-055] an out-of-balance account and a claim code error in one 
     outOfBalance = {
       ...evidenceReconciliationOf(
         [
-          { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-          { claimCode: "SCN-ONE-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { claimCode: "CLM-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { claimCode: "CLM-ONE-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
         ],
-        [{ qualityCheckKind: "unit", claimCode: "SCN-ONE-001", status: "passed" }],
+        [{ qualityCheckKind: "unit", claimCode: "CLM-ONE-001", status: "passed" }],
         []
       ),
       claimCodeErrors: [FOREIGN],

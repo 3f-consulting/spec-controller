@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { readerOf } from "./ciPathReader.test-utils.js";
 
-describe("[SCN-CLI-091] a CI input names either one workflow file or a directory of them", () => {
+describe("[CLM-CLI-091] a CI input names either one workflow file or a directory of them", () => {
   it.each<[string, Record<string, string[]>, string, string[]]>([
     [
       "resolves a directory to every workflow file in it, so a check in any of them is observed",

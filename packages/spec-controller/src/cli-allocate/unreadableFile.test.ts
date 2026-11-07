@@ -7,7 +7,7 @@ import { AppMessage, Unreadable } from "../messages.js";
 import { message } from "../appText.js";
 
 function repository(): string {
-  const repo = repositoryHeadedOneCarrying003("allocate-unreadable-file-", { "docs/notes.md": "Cites SCN-ONE-003.\n" });
+  const repo = repositoryHeadedOneCarrying003("allocate-unreadable-file-", { "docs/notes.md": "Cites CLM-ONE-003.\n" });
   mkdirSync(join(repo, "src"));
   return repo;
 }
@@ -19,16 +19,16 @@ afterEach(() => {
 });
 
 function writeAnUntrackedDraft(repo: string): void {
-  writeInto(repo, "drafts/new.md", "Cites SCN-ONE-016.\n");
+  writeInto(repo, "drafts/new.md", "Cites CLM-ONE-016.\n");
 }
 
 function editTheTrackedNotes(repo: string): void {
-  writeInto(repo, "docs/notes.md", "Cites SCN-ONE-016.\n");
+  writeInto(repo, "docs/notes.md", "Cites CLM-ONE-016.\n");
 }
 
 function editTheFeatureFile(repo: string): void {
   const path = join(repo, "features", "one.feature");
-  writeFileSync(path, `${readFileSync(path, "utf8")}\n  @SCN-ONE-016 @unit\n  Scenario: a new scenario\n    Given a step\n`);
+  writeFileSync(path, `${readFileSync(path, "utf8")}\n  @CLM-ONE-016 @unit\n  Scenario: a new scenario\n    Given a step\n`);
 }
 
 const CARRIERS = {
@@ -119,7 +119,7 @@ const EXAMPLES: readonly Row[] = [
   },
 ];
 
-describe("[SCN-ALC-020] a file in the repository git cannot read is refused, never left out of the answer", () => {
+describe("[CLM-ALC-020] a file in the repository git cannot read is refused, never left out of the answer", () => {
   // On macOS, git resolving a working directory beneath a top it may not list scans every ancestor, so a crowded temporary directory can take seconds.
   it.for(EXAMPLES)(
     "refuses ONE when $file carries a higher code and $unreadable, standing in $where, naming it",
@@ -149,7 +149,7 @@ describe("[SCN-ALC-020] a file in the repository git cannot read is refused, nev
     const repo = repository();
     const stem = "a-file-whose-name-is-long-enough-that-two-hundred-of-them-list-to-many-kilobytes";
     for (let n = 0; n < 200; n++) writeInto(repo, `notes/${stem}-${String(n).padStart(3, "0")}.md`, "No code here.\n");
-    writeInto(repo, `notes/${stem}-199.md`, "Cites SCN-ONE-016.\n");
+    writeInto(repo, `notes/${stem}-199.md`, "Cites CLM-ONE-016.\n");
     expect(git(repo, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"]).length).toBeGreaterThan(16 * 1024);
 
     expectAnsweredEnding(allocateFrom(repo), "ONE-017");
@@ -157,7 +157,7 @@ describe("[SCN-ALC-020] a file in the repository git cannot read is refused, nev
 
   it("reads no code from a tracked binary file, answering past the codes in text alone", () => {
     const repo = repository();
-    writeInto(repo, "assets/logo.bin", Buffer.concat([Buffer.from("Cites SCN-ONE-016.\n"), Buffer.from([0, 1, 2, 3])]));
+    writeInto(repo, "assets/logo.bin", Buffer.concat([Buffer.from("Cites CLM-ONE-016.\n"), Buffer.from([0, 1, 2, 3])]));
     git(repo, ["add", "-A"]);
     git(repo, ["commit", "-q", "-m", "a binary asset"]);
 

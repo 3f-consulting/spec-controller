@@ -18,10 +18,10 @@ function featureFile(part: string, codes: readonly string[]): string {
 function headedOneAndTwo(): string {
   const repo = realpathSync(temporaryDirectory("allocate-unknown-part-"));
   git(repo, ["init", "-q", "-b", "main"]);
-  writeInto(repo, "features/one.feature", featureFile("ONE", ["SCN-ONE-001"]));
-  writeInto(repo, "features/two.feature", featureFile("TWO", ["SCN-TWO-001"]));
+  writeInto(repo, "features/one.feature", featureFile("ONE", ["CLM-ONE-001"]));
+  writeInto(repo, "features/two.feature", featureFile("TWO", ["CLM-TWO-001"]));
   writeInto(repo, "features/unheaded.feature", "Feature: no part\n\n  Scenario: scenario 1\n    Given a step\n");
-  writeInto(repo, "features/six.feature.md", featureFile("SIX", ["SCN-SIX-001"]));
+  writeInto(repo, "features/six.feature.md", featureFile("SIX", ["CLM-SIX-001"]));
   commitAll(repo, "the corpus");
   return repo;
 }
@@ -29,12 +29,12 @@ function headedOneAndTwo(): string {
 function mentionNothing(): void {}
 
 function addAFixtureHeadedZzz(repo: string): void {
-  writeInto(repo, "tests/fixtures/sample/features/zzz.feature", featureFile("ZZZ", ["SCN-ZZZ-004"]));
+  writeInto(repo, "tests/fixtures/sample/features/zzz.feature", featureFile("ZZZ", ["CLM-ZZZ-004"]));
   commitAll(repo, "a test fixture");
 }
 
 function addThenDeleteAFeatureHeadedZzz(repo: string): void {
-  writeInto(repo, "features/zzz.feature", featureFile("ZZZ", ["SCN-ZZZ-009"]));
+  writeInto(repo, "features/zzz.feature", featureFile("ZZZ", ["CLM-ZZZ-009"]));
   commitAll(repo, "a feature that did not last");
   git(repo, ["rm", "-q", "features/zzz.feature"]);
   git(repo, ["commit", "-q", "-m", "retire the feature"]);
@@ -42,7 +42,7 @@ function addThenDeleteAFeatureHeadedZzz(repo: string): void {
 
 const WHERE: readonly (readonly [where: string, arrange: (repo: string) => void])[] = [
   ["no file mentions ZZZ", mentionNothing],
-  ["a test fixture's feature file is headed ZZZ and carries SCN-ZZZ-004", addAFixtureHeadedZzz],
+  ["a test fixture's feature file is headed ZZZ and carries CLM-ZZZ-004", addAFixtureHeadedZzz],
   ["a feature file headed ZZZ was deleted by a later commit", addThenDeleteAFeatureHeadedZzz],
 ];
 
@@ -51,7 +51,7 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-ALC-010] a part no feature file's header carries is refused as an unknown part, listing the header codes and nothing else", () => {
+describe("[CLM-ALC-010] a part no feature file's header carries is refused as an unknown part, listing the header codes and nothing else", () => {
   it.each(WHERE)("refuses ZZZ at the usage status, listing ONE and TWO alone, where %s", (_where, arrange) => {
     const repo = headedOneAndTwo();
     arrange(repo);

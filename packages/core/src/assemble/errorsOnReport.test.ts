@@ -8,8 +8,8 @@ import { unitTestsAndLintCi as ci } from "../evidenceReconciliation.test-utils.j
 import { reportCtx as ctx } from "../render/runContext.test-utils.js";
 import type { RenderInput } from "../domain/renderInput.js";
 
-const coded = "@FIX\nFeature: fixture\n\n  @unit @SCN-FIX-001\n  Scenario: a fixture behaviour\n    Given a fixture\n";
-const uncoded = "Feature: fixture\n\n  @unit @SCN-FIX-001\n  Scenario: a fixture behaviour\n    Given a fixture\n";
+const coded = "@FIX\nFeature: fixture\n\n  @unit @CLM-FIX-001\n  Scenario: a fixture behaviour\n    Given a fixture\n";
+const uncoded = "Feature: fixture\n\n  @unit @CLM-FIX-001\n  Scenario: a fixture behaviour\n    Given a fixture\n";
 
 const scripts = { test: "vitest run", lint: "eslint ." };
 
@@ -40,7 +40,7 @@ function reportOver(feature: string, specController: Record<string, unknown>): R
   return assembleRenderInput(judged, ctx, corpusCountsOfFeatures(features));
 }
 
-describe("[SCN-RMD-021] the JSON report carries a top-level errors key only when its inputs hold a fault", () => {
+describe("[CLM-RMD-021] the JSON report carries a top-level errors key only when its inputs hold a fault", () => {
   it("carries no errors key when the inputs hold no fault", () => {
     expect(reportOver(coded, sound)).not.toHaveProperty("errorsInTheInputs");
   });

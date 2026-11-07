@@ -12,16 +12,16 @@ Feature: an only-Pending-Items reconciliation fixture target
   deferral).
 
   This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
-  which scan features/*.feature only, never see @PDO or its scenario ids. cucumber.js runs
+  which scan features/*.feature only, never see @PDO or its claim codes. cucumber.js runs
   features/** only, so it is never executed as a scenario; it is fed to the real binary as a
   --features target dir.
 
   Rule: the fixture target names only deferred-pending scenarios
 
-    @unitpending @SCN-PDO-001
+    @unitpending @CLM-PDO-001
     Scenario: the target names a unit obligation deferred pending
       Given the target repo's source
 
-    @integrationpending @SCN-PDO-002
+    @integrationpending @CLM-PDO-002
     Scenario: the target names an integration obligation deferred pending
       Given the target repo's source

@@ -41,7 +41,7 @@ const linesBeforeTable = (md: string): string[] => {
 
 const markdownOf = (reconciliation: EvidenceReconciliation): string => renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 
-describe("[SCN-RPT-092] the step-accounting section defines its Candidates, Reconciler, Non-checks, GitHub plumbing and Accounted for columns before its table", () => {
+describe("[CLM-RPT-092] the step-accounting section defines its Candidates, Reconciler, Non-checks, GitHub plumbing and Accounted for columns before its table", () => {
   it("prints the five definitions as a list between the heading and the table, the same on a one-job run and on a several-job run holding every disposition, with no figure from the run", () => {
     const oneJob = reconcile([ci]);
     const severalJobs = reconcile([nightly, ci], ["nightly.yml", "ci.yml"]);
@@ -81,7 +81,7 @@ describe("[SCN-RPT-092] the step-accounting section defines its Candidates, Reco
   });
 });
 
-describe("[SCN-RPT-100] the step-accounting section prints no column definition when it prints no table", () => {
+describe("[CLM-RPT-100] the step-accounting section prints no column definition when it prints no table", () => {
   it("prints no definition for a run that reads no CI step and lists a notChecks entry as not applied", () => {
     const reconciliation = reconcile([], [], {
       scripts: { test: "vitest run" },

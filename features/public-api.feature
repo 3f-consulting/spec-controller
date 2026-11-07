@@ -17,5 +17,5 @@ Feature: The public core exposes its reconciliation for reading, not for constru
 
   Rule: the v1 barrel exposes QualityCheckReconciliation for reading, not construction
 
-    @unit @SCN-API-002
+    @unit @CLM-API-002
     Scenario: an external consumer cannot construct a QualityCheckReconciliation

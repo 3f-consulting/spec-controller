@@ -8,7 +8,7 @@ function savedReport(): RenderInput {
   return JSON.parse(renderJson(reconcile([ci]), ctx)) as RenderInput;
 }
 
-describe("[SCN-RMD-025] the summary states the CI steps the run read in its step accounting alone, carrying no discovery scope, reconciler or non-check steps beside it", () => {
+describe("[CLM-RMD-025] the summary states the CI steps the run read in its step accounting alone, carrying no discovery scope, reconciler or non-check steps beside it", () => {
   it("reads a pipeline with a reconciler, a non-check, a runner and plumbing, each counted and named in the step accounting", () => {
     const accounting = savedReport().summary.stepAccounting!;
     expect(accounting.total).toMatchObject({ runners: 1, reconciler: 2, nonChecks: 3 });

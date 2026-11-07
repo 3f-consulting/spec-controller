@@ -54,11 +54,11 @@ function expectCodedFaultWordedByTheCatalogue(refusal: Refusal): void {
   }
 }
 
-describe("[SCN-MSG-001] an Evidence Obligation or Evidence Observation that diverges from its outcome is refused with a coded fault that carries its parameters, and the report catalogue words that fault from its parameters alone", () => {
+describe("[CLM-MSG-001] an Evidence Obligation or Evidence Observation that diverges from its outcome is refused with a coded fault that carries its parameters, and the report catalogue words that fault from its parameters alone", () => {
   const sampleObligation: ReconciledEvidenceObligation = { qualityCheckKind: "unit" };
   const sampleObservation: ReconciledEvidenceObservation = {
     qualityCheckKind: "unit",
-    claimCode: "SCN-MSG-001",
+    claimCode: "CLM-MSG-001",
     status: "passed",
     outcome: "satisfied",
   };

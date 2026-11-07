@@ -4,7 +4,7 @@ import { reconcile } from "./evidenceReconciliation.js";
 import { postingOf } from "./posting.js";
 import type { ClaimReconciliation, EvidenceObservation, Scenario } from "../model.js";
 
-const CODE = "SCN-DUP-001";
+const CODE = "CLM-DUP-001";
 
 const letIn: Scenario = {
   claimCode: CODE,
@@ -32,7 +32,7 @@ const broken: EvidenceObservation = {
 
 const rowsFor = (rows: readonly ClaimReconciliation[], claim: string) => rows.filter((row) => row.claim === claim);
 
-describe("[SCN-LDG-046] two scenarios sharing one claim code are two claims, and evidence citing the code posts to the unnamed claim", () => {
+describe("[CLM-LDG-046] two scenarios sharing one claim code are two claims, and evidence citing the code posts to the unnamed claim", () => {
   it("gives each of two sharers its own row under the shared code", () => {
     const rows = reconcile([letIn, turnedAway], []).claimReconciliations;
     expect(rowsFor(rows, CODE).map((row) => [row.claim, row.kind])).toEqual([

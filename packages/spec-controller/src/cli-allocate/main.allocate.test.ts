@@ -25,11 +25,11 @@ function answerIn(cwd: string, argv: string[]): Written {
   return whatTheProgramWrote();
 }
 
-describe("[SCN-ALC-008] The code is printed alone on stdout, zero-padded to three digits", () => {
+describe("[CLM-ALC-008] The code is printed alone on stdout, zero-padded to three digits", () => {
   let repo = "";
 
   beforeEach(() => {
-    repo = repositoryHeaded("ONE", "SCN-ONE-7");
+    repo = repositoryHeaded("ONE", "CLM-ONE-7");
   });
 
   it("answers a claim code ending ONE-008 alone on stdout", () => {

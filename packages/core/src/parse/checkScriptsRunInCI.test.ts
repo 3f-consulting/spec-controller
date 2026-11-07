@@ -11,7 +11,7 @@ const usesValues = [
   ["actions/cache", "cache"],
 ] as const;
 
-describe("[SCN-WFS-014] a uses: value is read as its owner and repository, whatever ref or sub-path follows", () => {
+describe("[CLM-WFS-014] a uses: value is read as its owner and repository, whatever ref or sub-path follows", () => {
   it("reads each uses: value as the owner and repository it names, whatever ref or sub-path follows", () => {
     expect(usesValues.map(([uses]) => readUses(uses))).toStrictEqual(
       usesValues.map(([, repository]) => ({ owner: "actions", repository }))
@@ -19,7 +19,7 @@ describe("[SCN-WFS-014] a uses: value is read as its owner and repository, whate
   });
 });
 
-describe("[SCN-WFS-015] a local action, a container image and another owner's look-alike are read as owned by someone other than actions", () => {
+describe("[CLM-WFS-015] a local action, a container image and another owner's look-alike are read as owned by someone other than actions", () => {
   it("reads a local action, a container image and another owner's look-alike as owned by someone other than actions", () => {
     const owners = ["./.github/actions/lint", "docker://alpine:3", "someone/checkout@v1"].map((uses) => readUses(uses).owner);
     for (const owner of owners) expect(owner).not.toBe("actions");
@@ -74,7 +74,7 @@ const continueOnErrorCi = `jobs:
         run: pnpm lint:absent
 `;
 
-describe("[SCN-WFS-017] a step's continue-on-error is read from the step or from its job, and only an absent value, false or the string \"false\" leaves its job's verdict depending on it", () => {
+describe("[CLM-WFS-017] a step's continue-on-error is read from the step or from its job, and only an absent value, false or the string \"false\" leaves its job's verdict depending on it", () => {
   it("reads the job's verdict as depending on a step only when neither the step nor its job sets continue-on-error to anything but false or \"false\"", () => {
     const read = workflowSteps([continueOnErrorCi]).map((step) => [step.job, step.identity, step.abortsJob]);
     expect(read).toStrictEqual([
@@ -98,7 +98,7 @@ const idCi = `jobs:
   check:
     steps:
       - name: padded
-        id: "  SCN-FIT-001  "
+        id: "  CLM-FIT-001  "
         run: pnpm lint:padded
       - name: blank
         id: "   "
@@ -107,18 +107,18 @@ const idCi = `jobs:
         run: pnpm lint:none
 `;
 
-describe("[SCN-WFS-018] a step's id: is read trimmed, so a padded code cites as if written unpadded", () => {
+describe("[CLM-WFS-018] a step's id: is read trimmed, so a padded code cites as if written unpadded", () => {
   it("reads a padded id: as the unpadded code, and an id: of only spaces as no id: at all", () => {
     const read = workflowSteps([idCi]).map((step) => [step.identity, step.id]);
     expect(read).toStrictEqual([
-      ["padded", "SCN-FIT-001"],
+      ["padded", "CLM-FIT-001"],
       ["blank", undefined],
       ["none", undefined],
     ]);
   });
 });
 
-describe("[SCN-WFS-020] a workflow that does not parse is refused by the reader, never read as one with no steps", () => {
+describe("[CLM-WFS-020] a workflow that does not parse is refused by the reader, never read as one with no steps", () => {
   it("returns a source that is not YAML as a fault naming the file, in the YAML parser's own words, and no parsed workflow", () => {
     expect(
       parseWorkflows([

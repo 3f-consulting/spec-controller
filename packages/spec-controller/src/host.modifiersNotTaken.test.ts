@@ -8,7 +8,7 @@ const notTaken = (command: string, given: readonly string[]): string =>
   `${message(AppError.ModifiersNotTaken, { command, modifiers: given.join(", ") })}\n` +
   message(AppMessage.RunWithoutModifiers, { command });
 
-describe("[SCN-ALC-014] a host modifier before allocate is refused, and nothing is stored", () => {
+describe("[CLM-ALC-014] a host modifier before allocate is refused, and nothing is stored", () => {
   it.each([
     [["--store", "x", "allocate", "ONE"], ["--store"]],
     [["--run-id", "r", "allocate", "ONE"], ["--run-id"]],

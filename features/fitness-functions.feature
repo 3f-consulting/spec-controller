@@ -14,7 +14,7 @@ Feature: The fitness functions this repository carries, one scenario per check
   `@fitness` tag, and that record answers it.
 
   The tag names the scenario's kind of quality check and the title names the check. A scenario
-  here carries no other tag about its subject: its title says what the check asserts, its `@SCN`
+  here carries no other tag about its subject: its title says what the check asserts, its claim code
   is its identity, and its CI step runs the command that settles it. A fitness function is known by its tag, never its shape. The
   Cucumber profile selects `@integration or @e2e`, so it selects none of these scenarios. Any
   scenario that profile does not select, a `@unit`-only one included, carries no Given, When or
@@ -49,13 +49,13 @@ Feature: The fitness functions this repository carries, one scenario per check
   or holds and never re-baselines down. A fixed bar obeys that by standing still, so it cannot go
   stale in the direction that matters.
 
-  @fitness @SCN-FIT-073
+  @fitness @CLM-FIT-073
   Scenario: the source code follows this repository's design rules for its structure, its domain's language and its tests, and no file the push touches breaks a readability limit
 
-  @fitness @SCN-FIT-022
+  @fitness @CLM-FIT-022
   Scenario: every function in a file the push touches scores under the external change-risk standard
 
-  @fitness @SCN-FIT-009
+  @fitness @CLM-FIT-009
   Scenario: the packages, the engine's adapters and its domain import each other only across the boundaries this repository draws
 
     The boundaries include the ports and adapters ones: an engine adapter meets another adapter only
@@ -66,102 +66,102 @@ Feature: The fitness functions this repository carries, one scenario per check
     parser. Every break fails the
     check; there is no list of tolerated breaks.
 
-  @fitness @SCN-FIT-074
+  @fitness @CLM-FIT-074
   Scenario: the packages contain none of the patterns this repository forbids for security: a child process started through a shell, code built from a string, a regular expression built from an argument, or a file written outside the modules that check its location
 
-  @fitness @SCN-FIT-011
+  @fitness @CLM-FIT-011
   Scenario: the code in each package's source folder, with its unit tests, and the behavioural suite's code type-check
 
-  @fitness @SCN-FIT-012
+  @fitness @CLM-FIT-012
   Scenario: the unit suite finishes inside the limit its step runs it under
 
-  @fitness @SCN-FIT-013
+  @fitness @CLM-FIT-013
   Scenario: the behavioural suite finishes inside the limit its step runs it under
 
-  @fitness @SCN-FIT-018
+  @fitness @CLM-FIT-018
   Scenario: every entry point, file and field the two packages publish is one a consumer can resolve
 
-  @fitness @SCN-FIT-019
+  @fitness @CLM-FIT-019
   Scenario: the packed engine's declarations resolve for every consumer the package says it serves
 
-  @fitness @SCN-FIT-020
+  @fitness @CLM-FIT-020
   Scenario: every workflow file this repository runs is one GitHub Actions can execute as written
 
-  @fitness @SCN-FIT-021
+  @fitness @CLM-FIT-021
   Scenario: no workflow file this repository runs carries a CI security fault the community's auditor knows
 
-  Rule: the build holds the comments it reads to a share of their file, and to no ticket ID, scenario code or narrated history
+  Rule: the build holds the comments it reads to a share of their file, and to no ticket ID, claim code or narrated history
 
     A comment carries only what the code cannot say. No check reads what a comment means, so the build holds the two parts a tool can read: how much of a file is comment, and whether a comment names a ticket or a scenario or tells how the code came to be. Review holds the rest.
 
-    @fitness @SCN-FIT-023
+    @fitness @CLM-FIT-023
     Scenario: no source, script, configuration or Gherkin file is more than fifteen per cent comment lines, outside the test fixtures, the lockfile, git's ignore list and knip's configuration
 
-    @fitness @SCN-FIT-075
-    Scenario: outside the test fixtures, no comment in a module or a YAML file, and no Feature, Rule or Scenario description or current-state document, carries a ticket ID or a scenario code, or narrates how the product used to be
+    @fitness @CLM-FIT-075
+    Scenario: outside the test fixtures, no comment in a module or a YAML file, and no Feature, Rule or Scenario description or current-state document, carries a ticket ID or a claim code, or narrates how the product used to be
 
   Rule: every Given, When and Then in the corpus is one Cucumber runs
 
-    @fitness @SCN-FIT-028
+    @fitness @CLM-FIT-028
     Scenario: no scenario outside the tag filter Cucumber runs under carries a step
 
-    @fitness @SCN-FIT-029
+    @fitness @CLM-FIT-029
     Scenario: every step definition matches a step in a scenario Cucumber runs
 
   Rule: a Given, When or Then states the rule it checks, never the interface it is observed through
 
-    @fitness @SCN-FIT-030
+    @fitness @CLM-FIT-030
     Scenario: no Given, When or Then line in the corpus names an output channel, an exit code, a flag, a file name or the binary
 
   Rule: a lowercase given, when, then, and or but line in a scenario is held to the rules for a step
 
-    @fitness @SCN-FIT-077
+    @fitness @CLM-FIT-077
     Scenario: a lowercase line naming an exit code or a file name is refused
 
-    @fitness @SCN-FIT-078
+    @fitness @CLM-FIT-078
     Scenario: the description gates leave a lowercase line naming a code alone
 
-    @fitness @SCN-FIT-079
+    @fitness @CLM-FIT-079
     Scenario: a scenario Cucumber does not run, with lowercase lines, still has no step
 
   Rule: the domain-tests rule finds a domain concept's codes in clm cells as well as tags
 
-    @fitness @SCN-FIT-080
+    @fitness @CLM-FIT-080
     Scenario Outline: a test citing a code from a domain concept's clm cell is refused outside core's domain
 
   Rule: a title or description states behaviour in the reader's language, never the code's
 
-    @fitness @SCN-FIT-038
+    @fitness @CLM-FIT-038
     Scenario: no Feature, Rule or Scenario title or description names a code identifier or a source file
 
   Rule: production logic is written once
 
-    @fitness @SCN-FIT-032
+    @fitness @CLM-FIT-032
     Scenario: no clone exists anywhere in the production code
 
   Rule: nothing ships that nothing uses
 
-    @fitness @SCN-FIT-033
+    @fitness @CLM-FIT-033
     Scenario: outside the behavioural suite's test code, no file, export or dependency is unused, except three dependencies and one script whose use the check cannot read
 
   Rule: mutation reaches every production source file, or the repository records which it leaves out and why
 
-    @fitness @SCN-FIT-040
+    @fitness @CLM-FIT-040
     Scenario: every production source file in the packages is in a mutation scope or on the recorded list of files no scope mutates
 
   Rule: the test estate stays within the ceiling the product declares
 
-    @fitness @SCN-FIT-043
+    @fitness @CLM-FIT-043
     Scenario: test code above the declared ceiling ratio to production code reds the build
 
   Rule: every reference in a current-state document resolves
 
-    @fitness @SCN-FIT-059
+    @fitness @CLM-FIT-059
     Scenario: the build reds when a current-state document cites a file, heading or path that does not exist
 
   Rule: the tool shows an error only from its catalogues' errors, and only with its error code
 
     Every error the tool shows is worded in a catalogue, under its error code, and reaches the reader with that code. Nothing the tool writes to standard error goes around the one printer that shows it so.
 
-    @fitness @SCN-FIT-076
+    @fitness @CLM-FIT-076
     Scenario: every refusal, crash line and error in the inputs the tool shows is a catalogue error, shown with its error code

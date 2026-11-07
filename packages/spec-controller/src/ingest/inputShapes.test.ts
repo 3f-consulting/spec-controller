@@ -17,7 +17,7 @@ function fixtureReports(file: string): Array<[string, unknown]> {
     .map((path) => [path, JSON.parse(readFileSync(path, "utf8"))]);
 }
 
-describe("[SCN-CLI-076] a Vitest report is read only in the shape the Vitest JSON reporter writes", () => {
+describe("[CLM-CLI-076] a Vitest report is read only in the shape the Vitest JSON reporter writes", () => {
   it.each([
     [{ numTotalTests: 0 }, "testResults is missing"],
     [[], "the top level is a list, not an object"],
@@ -44,7 +44,7 @@ describe("[SCN-CLI-076] a Vitest report is read only in the shape the Vitest JSO
   });
 });
 
-describe("[SCN-CLI-077] a Cucumber report is read only in the shape the Cucumber JSON formatter writes", () => {
+describe("[CLM-CLI-077] a Cucumber report is read only in the shape the Cucumber JSON formatter writes", () => {
   it.each([
     [{}, "the top level is an object, not a list"],
     ["x", "the top level is a string, not a list"],
@@ -73,33 +73,33 @@ describe("[SCN-CLI-077] a Cucumber report is read only in the shape the Cucumber
   });
 });
 
-describe("[SCN-CLI-078] a CI step record is read only as a record of step outcomes", () => {
+describe("[CLM-CLI-078] a CI step record is read only as a record of step outcomes", () => {
   it.each([
     [[], "the top level is a list, not an object"],
     [null, "the top level is null, not an object"],
-    [{ "SCN-ABC-001": "success" }, "SCN-ABC-001 is a string, not an object"],
-    [{ "SCN-ABC-001": null }, "SCN-ABC-001 is null, not an object"],
-    [{ "SCN-ABC-001": { outcome: 1 } }, "SCN-ABC-001.outcome is a number, not a string"],
+    [{ "CLM-ABC-001": "success" }, "CLM-ABC-001 is a string, not an object"],
+    [{ "CLM-ABC-001": null }, "CLM-ABC-001 is null, not an object"],
+    [{ "CLM-ABC-001": { outcome: 1 } }, "CLM-ABC-001.outcome is a number, not a string"],
   ])("names where %j is not that shape", (record, fault) => {
     expect(shapeFaultIn(record, CI_STEP_RECORD)).toBe(fault);
   });
 
   it("never checks a step the reader reads no evidence observation from: one not keyed by a claim code", () => {
-    expect(shapeFaultIn({ "dump-the-step-record": "x", "SCN-A-001": null, lint: 7 }, CI_STEP_RECORD)).toBeNull();
+    expect(shapeFaultIn({ "dump-the-step-record": "x", "CLM-A-001": null, lint: 7 }, CI_STEP_RECORD)).toBeNull();
   });
 
-  it.each(["xSCN-AAA-001", "SCN-AAA-001x"])("never checks a step keyed %s, which only contains a claim code", (key) => {
+  it.each(["xCLM-AAA-001", "CLM-AAA-001x"])("never checks a step keyed %s, which only contains a claim code", (key) => {
     expect(shapeFaultIn({ [key]: { outcome: 7 } }, CI_STEP_RECORD)).toBeNull();
   });
 
   it("names a fault in a step past the first, when the steps before it are well-formed", () => {
     const record = JSON.parse(readFileSync(join(fixtures, "ci-steps-four-outcomes", "ci-steps.json"), "utf8"));
-    record["SCN-CVT-002"].outcome = 7;
-    expect(shapeFaultIn(record, CI_STEP_RECORD)).toBe("SCN-CVT-002.outcome is a number, not a string");
+    record["CLM-CVT-002"].outcome = 7;
+    expect(shapeFaultIn(record, CI_STEP_RECORD)).toBe("CLM-CVT-002.outcome is a number, not a string");
   });
 });
 
-describe("[SCN-CLI-079] a package.json is read only in a manifest's shape", () => {
+describe("[CLM-CLI-079] a package.json is read only in a manifest's shape", () => {
   it.each([
     [[], "the top level is a list, not an object"],
     ["x", "the top level is a string, not an object"],

@@ -9,19 +9,19 @@ import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 
-describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the bare handle", () => {
+describe("[CLM-RPT-020] the markdown renders each outcome's sentence, not the bare handle", () => {
   let rich: Ledger;
   beforeEach(() => {
     rich = reconcile(
       [
         {
-          claimCode: "SCN-A",
+          claimCode: "CLM-A",
           evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }],
         },
-        { claimCode: "SCN-B", evidenceObligations: [] },
+        { claimCode: "CLM-B", evidenceObligations: [] },
       ],
       [
-        { qualityCheckKind: "fitness", fitnessFunction: "typecheck", claimCode: "SCN-A", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "fitness", fitnessFunction: "typecheck", claimCode: "CLM-A", exists: true, enforcedOverRealSource: false },
         { qualityCheckKind: "integration", claimCode: null, status: "passed", locator: "tests/stray.test.ts:1" },
       ]
     );
@@ -64,7 +64,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
   });
 
   it("renders a fitness claim's reconciling item with the outcome's sentence, not the bare handle", () => {
-    const items = reconcilingItemsOf(renderMarkdown(__er(rich), ctx, publishedExitCodeOf), "SCN-A");
+    const items = reconcilingItemsOf(renderMarkdown(__er(rich), ctx, publishedExitCodeOf), "CLM-A");
     expect(items.some((item) => item.startsWith(`fitness: ${coreMessage(CoreMessage.OutcomeWatermelon)}`))).toBe(true);
     expect(items.some((item) => item.startsWith("fitness: watermelon"))).toBe(false);
   });

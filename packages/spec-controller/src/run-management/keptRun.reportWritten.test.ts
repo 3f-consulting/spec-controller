@@ -25,7 +25,7 @@ function filesUnder(dir: string): Map<string, string> {
   return files;
 }
 
-describe("[SCN-RMG-005] executeKeptRun stamps run.yaml only when the command wrote its report", () => {
+describe("[CLM-RMG-005] executeKeptRun stamps run.yaml only when the command wrote its report", () => {
   it("stamps nothing and hands back no run when the command wrote no report", () => {
     const storeRoot = join(scratch, "store");
 
@@ -37,7 +37,7 @@ describe("[SCN-RMG-005] executeKeptRun stamps run.yaml only when the command wro
   });
 });
 
-describe("[SCN-RMG-005] runBalance answers whether it wrote the report its --format specs name", () => {
+describe("[CLM-RMG-005] runBalance answers whether it wrote the report its --format specs name", () => {
   function answer(argv: readonly string[]): { wrote: unknown; exitCode: number } {
     const { wrote, exitCode } = runBalanceCaptured(argv);
     return { wrote, exitCode };

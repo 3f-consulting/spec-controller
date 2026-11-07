@@ -5,14 +5,14 @@ import { parseScenarios } from "../parse/scenarioReaders.test-utils.js";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../parse/cucumber.js";
 
-describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucumber observation reconciles both layers satisfied", () => {
+describe("[CLM-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucumber observation reconciles both layers satisfied", () => {
   it("balances both obligations — vitest discharges @unit, cucumber (derived) discharges @e2e — from a real scenario and both real readers", () => {
     const scenarios = parseScenarios(
       [
         "@LDG",
         "Feature: fixture",
         "  Rule: a fixture rule",
-        "    @unit @e2e @SCN-LDG-013",
+        "    @unit @e2e @CLM-LDG-013",
         "    Scenario: a unit-and-e2e fixture scenario",
         "      Given a fixture step",
       ].join("\n")
@@ -23,7 +23,7 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
         {
           name: "src/unitAndE2e.test.ts",
           assertionResults: [
-            { fullName: "[SCN-LDG-013] the unit substrate proves the unit layer", status: "passed" },
+            { fullName: "[CLM-LDG-013] the unit substrate proves the unit layer", status: "passed" },
           ],
         },
       ],
@@ -35,7 +35,7 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
         uri: "features/fixture.feature",
         elements: [
           {
-            tags: [{ name: "@unit" }, { name: "@e2e" }, { name: "@SCN-LDG-013" }],
+            tags: [{ name: "@unit" }, { name: "@e2e" }, { name: "@CLM-LDG-013" }],
             steps: [{ result: { status: "passed" } }],
           },
         ],
@@ -43,18 +43,18 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
     ];
     const cucumberObs = parseCucumberEvidenceObservations(cucumberReport);
     expect(cucumberObs).toEqual([
-      { qualityCheckKind: "e2e", claimCode: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature" },
+      { qualityCheckKind: "e2e", claimCode: "CLM-LDG-013", status: "passed", locator: "features/fixture.feature" },
     ]);
 
     const balance = reconcile(scenarios, [...vitestObs, ...cucumberObs]);
-    const scenario = balance.claimReconciliations.find((s) => s.claim === "SCN-LDG-013");
+    const scenario = balance.claimReconciliations.find((s) => s.claim === "CLM-LDG-013");
 
     expect(scenario?.verdict).toBe("balanced");
     expect(reconcilingItemsOf(scenario!)).toEqual([]);
     expect(scenario?.qualityCheckReconciliations).toEqual(
       expect.arrayContaining([
-        { qualityCheckKind: "unit", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservations: [{ qualityCheckKind: "unit", claimCode: "SCN-LDG-013", status: "passed", locator: "src/unitAndE2e.test.ts", testName: "[SCN-LDG-013] the unit substrate proves the unit layer", outcome: "satisfied" }] },
-        { qualityCheckKind: "e2e", evidenceObligation: { qualityCheckKind: "e2e" }, evidenceObservations: [{ qualityCheckKind: "e2e", claimCode: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature", outcome: "satisfied" }] },
+        { qualityCheckKind: "unit", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservations: [{ qualityCheckKind: "unit", claimCode: "CLM-LDG-013", status: "passed", locator: "src/unitAndE2e.test.ts", testName: "[CLM-LDG-013] the unit substrate proves the unit layer", outcome: "satisfied" }] },
+        { qualityCheckKind: "e2e", evidenceObligation: { qualityCheckKind: "e2e" }, evidenceObservations: [{ qualityCheckKind: "e2e", claimCode: "CLM-LDG-013", status: "passed", locator: "features/fixture.feature", outcome: "satisfied" }] },
       ])
     );
     expect(scenario?.qualityCheckReconciliations).toHaveLength(2);

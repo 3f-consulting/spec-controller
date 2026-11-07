@@ -8,6 +8,6 @@ Feature: a fixture target whose tests cite no scenario, one failing and one pass
 
   Rule: the fixture target names one satisfied unit-level scenario
 
-    @unit @SCN-SST-001
+    @unit @CLM-SST-001
     Scenario: the target names a satisfied unit-level scenario
       Given the target repo's source

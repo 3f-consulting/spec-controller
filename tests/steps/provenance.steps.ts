@@ -77,7 +77,7 @@ function consumerRoom(world: SpecControllerWorld, purpose: string): string {
       "",
       "  Rule: the room names one behaviour",
       "",
-      "    @unit @SCN-CNS-001",
+      "    @unit @CLM-CNS-001",
       "    Scenario: the consumer names one behaviour",
       "      Given a corpus",
       "      Then it is reconciled",
@@ -301,8 +301,8 @@ function writeTargetReports(repo: string): void {
         {
           name: vitestLocator,
           assertionResults: [
-            { fullName: "[SCN-TGT-001] the target unit scenario is proven", status: "passed" },
-            { fullName: "an ordinary unit test carrying no @SCN id", status: "passed" },
+            { fullName: "[CLM-TGT-001] the target unit scenario is proven", status: "passed" },
+            { fullName: "an ordinary unit test carrying no claim code", status: "passed" },
           ],
         },
       ],
@@ -335,7 +335,7 @@ Given(
         "",
         "  Rule: the target names a unit scenario",
         "",
-        "    @unit @SCN-TGT-001",
+        "    @unit @CLM-TGT-001",
         "    Scenario: the target names a unit-level scenario",
         "      Given the target repo's source",
         "",

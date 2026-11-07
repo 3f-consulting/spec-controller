@@ -9,7 +9,7 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-ALC-019] asked from a working directory that no longer exists, allocate is refused as a usage error", () => {
+describe("[CLM-ALC-019] asked from a working directory that no longer exists, allocate is refused as a usage error", () => {
   it("refuses ONE, saying the working directory could not be read, with no path to name", () => {
     const thrown = removedWorkingDirectory();
     expect(Object.keys(thrown)).toEqual(["errno", "code", "syscall"]);

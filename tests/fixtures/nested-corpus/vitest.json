@@ -3,9 +3,9 @@
     {
       "name": "tests/fixtures/nested-corpus/widget.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-NTA-001] the top-level scenario is proven", "status": "passed" },
-        { "fullName": "[SCN-NTB-001] the middle scenario is proven", "status": "passed" },
-        { "fullName": "[SCN-NTC-001] the deep scenario is proven", "status": "passed" }
+        { "fullName": "[CLM-NTA-001] the top-level scenario is proven", "status": "passed" },
+        { "fullName": "[CLM-NTB-001] the middle scenario is proven", "status": "passed" },
+        { "fullName": "[CLM-NTC-001] the deep scenario is proven", "status": "passed" }
       ]
     }
   ]

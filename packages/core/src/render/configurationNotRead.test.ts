@@ -14,8 +14,8 @@ import { entryOf } from "./inputErrorEntry.test-utils.js";
 let ledger: Ledger;
 beforeEach(() => {
   ledger = reconcile(
-    [{ claimCode: "SCN-USG-025", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-    [{ qualityCheckKind: "unit", claimCode: "SCN-USG-025", status: "passed" }],
+    [{ claimCode: "CLM-USG-025", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", claimCode: "CLM-USG-025", status: "passed" }],
   );
 });
 
@@ -49,7 +49,7 @@ const section = (md: string): string[] => {
   return lines.slice(start, end);
 };
 
-describe("[SCN-RPT-045] the report names a specController entry of a kind its reader does not take", () => {
+describe("[CLM-RPT-045] the report names a specController entry of a kind its reader does not take", () => {
   it("renders one line per entry, after the run provenance and before any cut of the reconciliation", () => {
     const md = render({
       configurationOfWrongKind: [
@@ -71,7 +71,7 @@ describe("[SCN-RPT-045] the report names a specController entry of a kind its re
   });
 });
 
-describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — a configuration entry of a kind it does not read", () => {
+describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — a configuration entry of a kind it does not read", () => {
   it("opens the entry of the wrong kind with its code, and the entry's words after it", () => {
     const md = render({ configurationOfWrongKind: [{ entry: "specController.notChecks", is: "string", reads: "list" }] });
     const words = wrongKind("`specController.notChecks`", coreMessage(CoreMessage.ManifestKindString), coreMessage(CoreMessage.ManifestKindList));
@@ -90,7 +90,7 @@ describe("[SCN-MSG-010] an error shows its reader the error code of what went wr
   });
 });
 
-describe("[SCN-RPT-046] the report names a key the specController block does not read, in one sentence for every key", () => {
+describe("[CLM-RPT-046] the report names a key the specController block does not read, in one sentence for every key", () => {
   it("names each unread key after the entries of the wrong kind", () => {
     const md = render({
       configurationOfWrongKind: [{ entry: "specController.notChecks", is: "string", reads: "list" }],
@@ -134,7 +134,7 @@ const withNotApplied = (rows: Partial<StepAccountingRows>): Partial<Summary> => 
   },
 });
 
-describe("[SCN-RPT-088] each configuration entry and workflow name the report quotes is shown whole in its code span: a backtick as written, and a line break, spaces at both edges, nothing but spaces, an empty value or enclosing quotes as its quoted string", () => {
+describe("[CLM-RPT-088] each configuration entry and workflow name the report quotes is shown whole in its code span: a backtick as written, and a line break, spaces at both edges, nothing but spaces, an empty value or enclosing quotes as its quoted string", () => {
   it.each([
     { shown: "ci.yml:quality:Run `pnpm test`", extra: { nonChecksMatchingNoStep: ["ci.yml:quality:Run `pnpm test`"] } },
     { shown: "`Deploy`", extra: { nonChecksNotAStepName: ["`Deploy`"] } },

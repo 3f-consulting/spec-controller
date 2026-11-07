@@ -14,7 +14,7 @@ import { captured, expectRefused } from "./balanceRun.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { errorCodesShown, printedRefusal, shownText } from "../shownText.test-utils.js";
 
-describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does not exist", () => {
+describe("[CLM-CLI-002] checkInputsExist rejects a supplied input path that does not exist", () => {
   const flags = ["vitest", "pytest", "jest", "junit", "rspec", "cucumber", "features", "ci", "package-json"] as const;
 
   it.each(flags)(
@@ -29,7 +29,7 @@ describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does
   );
 });
 
-describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists but cannot be parsed", () => {
+describe("[CLM-CLI-014] checkInputsParse rejects a supplied report that exists but cannot be parsed", () => {
   const jsonInputs = [
     ["vitest", AppMessage.FlaggedReport],
     ["cucumber", AppMessage.FlaggedReport],
@@ -76,7 +76,7 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
   );
 });
 
-describe("[SCN-CLI-015] balance rejects a saved report the tool cannot read", () => {
+describe("[CLM-CLI-015] balance rejects a saved report the tool cannot read", () => {
   function failureOf(act: () => unknown): string {
     try {
       act();
@@ -99,7 +99,7 @@ describe("[SCN-CLI-015] balance rejects a saved report the tool cannot read", ()
   });
 });
 
-describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitting the report in full, never a truncating process.exit", () => {
+describe("[CLM-CLI-004] runBalance sets the out-of-balance exit code AFTER emitting the report in full, never a truncating process.exit", () => {
   it("emits the whole Evidence Reconciliation to stdout AND sets process.exitCode = 1, returning normally", () => {
     const { stdout: emitted, exitCode } = runBalanceCaptured([
       "--features",
@@ -114,7 +114,7 @@ describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitt
   });
 });
 
-describe("[SCN-CLI-012] runBalance exits 4 for a run carrying broken evidence, PRE-EMPTING the out-of-balance verdict", () => {
+describe("[CLM-CLI-012] runBalance exits 4 for a run carrying broken evidence, PRE-EMPTING the out-of-balance verdict", () => {
   it("emits the report in full AND sets process.exitCode = 4 — not the 1 the same run's out-of-balance verdict would otherwise give", () => {
     const { stdout: emitted, exitCode } = runBalanceCaptured([
       "--features",
@@ -131,7 +131,7 @@ describe("[SCN-CLI-012] runBalance exits 4 for a run carrying broken evidence, P
   });
 });
 
-describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, PRE-EMPTING the vacuously-balanced verdict", () => {
+describe("[CLM-CLI-019] runBalance exits 5 for a run with nothing to reconcile, PRE-EMPTING the vacuously-balanced verdict", () => {
   it("emits the report in full AND sets process.exitCode = 5 — not the 0 the same run's vacuously-true balance verdict would otherwise give", () => {
     const { stdout: emitted, exitCode } = runBalanceCaptured([
       "--features",
@@ -148,7 +148,7 @@ describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, 
   });
 });
 
-describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-Items run when --strict is not given", () => {
+describe("[CLM-CLI-010] runBalance leaves the exit code 0 for an only-Pending-Items run when --strict is not given", () => {
   it("emits the balanced-with-pending report AND leaves process.exitCode at its default 0, returning normally", () => {
     const { stdout: emitted, exitCode } = runBalanceCaptured([
       "--features",
@@ -167,7 +167,7 @@ describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-It
 
 const REFUSING_TOOL_VERSION = "9.9.9-test";
 
-describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the registry names", () => {
+describe("[CLM-CLI-009] checkUnknownFlags bounds balance to the flags the registry names", () => {
 
   it("returns a typed usage error naming an unregistered flag (the swallowed-typo footgun)", () => {
     const bogus = shownText(checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION));
@@ -228,7 +228,7 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
   });
 });
 
-describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — a flag the command does not take", () => {
+describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — a flag the command does not take", () => {
   it("prints balance's refusal of --nosuch with [unknown-flag] once, after the usage-error prefix, and no code on its pointer lines", () => {
     const { stderr, exitCode } = runBalanceCaptured(["--nosuch"]);
     const words = message(AppError.UnknownFlag, {
@@ -243,7 +243,7 @@ describe("[SCN-MSG-010] an error shows its reader the error code of what went wr
   });
 });
 
-describe("[SCN-CLI-003] checkInputsExist treats an OMITTED optional flag as nothing-to-validate, not missing", () => {
+describe("[CLM-CLI-003] checkInputsExist treats an OMITTED optional flag as nothing-to-validate, not missing", () => {
   it("returns null for an omitted flag even when other flags are supplied and present", () => {
     const args = { vitest: "reports/vitest.json", features: "features" };
     const exists = (path: string) =>
@@ -252,7 +252,7 @@ describe("[SCN-CLI-003] checkInputsExist treats an OMITTED optional flag as noth
   });
 });
 
-describe("[SCN-CLI-013] the tally, the verdict headline and the process exit code name the same outcome", () => {
+describe("[CLM-CLI-013] the tally, the verdict headline and the process exit code name the same outcome", () => {
   const RUNS = [
     {
       name: "an all-balanced run",

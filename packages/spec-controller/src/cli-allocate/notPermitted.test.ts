@@ -19,14 +19,14 @@ import { message } from "../appText.js";
 function repository(): string {
   return repositoryHeadedOneCarrying003("allocate-not-permitted-", {
     "features/nested/two.feature": "@TWO\nFeature: part TWO\n",
-    "docs/deep/notes.md": "Cites SCN-ONE-002.\n",
+    "docs/deep/notes.md": "Cites CLM-ONE-002.\n",
   });
 }
 
 function copyWithoutGit(): string {
   const copy = freshDirectory("allocate-not-permitted-plain-");
   writeInto(copy, "features/one.feature", HEADED_ONE_CARRYING_003);
-  writeInto(copy, "docs/notes.md", "Cites SCN-ONE-002.\n");
+  writeInto(copy, "docs/notes.md", "Cites CLM-ONE-002.\n");
   return copy;
 }
 
@@ -54,7 +54,7 @@ const EXAMPLES: readonly Withheld[] = [
   { copy: "copy without git", path: "docs", subject: Unreadable.TreeDirectory },
 ];
 
-describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, naming the path and saying it was not permitted", () => {
+describe("[CLM-ALC-018] a path allocate is not permitted to read is refused, naming the path and saying it was not permitted", () => {
   beforeEach(({ skip }) => {
     skip(runsAsRoot());
   });
@@ -85,7 +85,7 @@ describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, nam
   it("answers ONE, refusing nothing, when the directory it may not enter is one git ignores", () => {
     const repo = repository();
     writeInto(repo, ".gitignore", "build/\n");
-    writeInto(repo, "build/out.md", "Cites SCN-ONE-900.\n");
+    writeInto(repo, "build/out.md", "Cites CLM-ONE-900.\n");
     withhold(join(repo, "build"), 0o000);
 
     expectAnsweredEnding(allocateFrom(repo), "ONE-004");
@@ -93,7 +93,7 @@ describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, nam
 
   it("answers ONE, refusing nothing, when the directory it may not enter lies in a repository nested in the tree", () => {
     const repo = repository();
-    writeInto(repo, "vendor/inner/withheld/notes.md", "Cites SCN-ONE-900.\n");
+    writeInto(repo, "vendor/inner/withheld/notes.md", "Cites CLM-ONE-900.\n");
     git(join(repo, "vendor", "inner"), ["init", "-q"]);
     withhold(join(repo, "vendor", "inner", "withheld"), 0o000);
 

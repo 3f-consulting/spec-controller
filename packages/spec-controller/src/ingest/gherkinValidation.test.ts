@@ -29,16 +29,16 @@ function parserMessageOf(source: string): string {
 const WELL_FORMED = `@AAA
 Feature: alpha
 
-  @unit @SCN-AAA-001
+  @unit @CLM-AAA-001
   Scenario: alpha works
     Given a thing
 
-  @unit @SCN-AAA-002
+  @unit @CLM-AAA-002
   Scenario: beta works
     Given another thing
 `;
 
-describe("[SCN-CLI-016] the Gherkin validator refuses a feature file the parser cannot read", () => {
+describe("[CLM-CLI-016] the Gherkin validator refuses a feature file the parser cannot read", () => {
 
   it("reads an unparseable corpus as a parse failure, never as an input it could not read", () => {
     const { features, paths } = corpusOf({
@@ -53,7 +53,7 @@ describe("[SCN-CLI-016] the Gherkin validator refuses a feature file the parser 
   });
 
   it("runBalance refuses a corpus holding two unparseable files at exit 2, naming each file in name order above its parse failure, reconciling nothing", () => {
-    const corruptTag = WELL_FORMED.replace("@unit @SCN-AAA-002", "@unit @SCN-AAA-002 x");
+    const corruptTag = WELL_FORMED.replace("@unit @CLM-AAA-002", "@unit @CLM-AAA-002 x");
     const corruptKeyword = WELL_FORMED.replace("Scenario: beta works", "Scenari0: beta works");
     const { features, paths } = corpusOf({
       "a.feature": corruptTag,

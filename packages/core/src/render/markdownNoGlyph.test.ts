@@ -22,25 +22,25 @@ function readsInWords(item: string): boolean {
   return sentence(item) || (colon > 0 && QUALITY_CHECK_KINDS.includes(item.slice(0, colon)) && sentence(item.slice(colon + 2)));
 }
 
-describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconciling item reads its kind of quality check and its outcome's sentence, with no symbol beside either", () => {
+describe("[CLM-RPT-066] a verdict reads balanced or out-of-balance, and a reconciling item reads its kind of quality check and its outcome's sentence, with no symbol beside either", () => {
   let everyOutcome: Ledger;
   beforeEach(() => {
     everyOutcome = reconcile(
       [
-        { claimCode: "SCN-NGL-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
-        { claimCode: "SCN-NGL-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-NGL-003", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
-        { claimCode: "SCN-NGL-004", evidenceObligations: [] },
-        { claimCode: "SCN-NGL-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-NGL-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-NGL-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
+        { claimCode: "CLM-NGL-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-NGL-003", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
+        { claimCode: "CLM-NGL-004", evidenceObligations: [] },
+        { claimCode: "CLM-NGL-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-NGL-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-NGL-001", status: "passed", locator: "src/a.test.ts" },
-        { qualityCheckKind: "fitness", fitnessFunction: "lint:sound", claimCode: "SCN-NGL-001", exists: true, enforcedOverRealSource: true },
-        { qualityCheckKind: "unit", claimCode: "SCN-NGL-002", status: "failed", locator: "src/b.test.ts" },
-        { qualityCheckKind: "integration", claimCode: "SCN-NGL-002", status: "passed", locator: "tests/steps/b.steps.ts" },
-        { qualityCheckKind: "fitness", fitnessFunction: "lint:fake", claimCode: "SCN-NGL-003", exists: true, enforcedOverRealSource: false },
-        { qualityCheckKind: "unit", claimCode: "SCN-NGL-999", status: "passed", locator: "src/ghost.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "CLM-NGL-001", status: "passed", locator: "src/a.test.ts" },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:sound", claimCode: "CLM-NGL-001", exists: true, enforcedOverRealSource: true },
+        { qualityCheckKind: "unit", claimCode: "CLM-NGL-002", status: "failed", locator: "src/b.test.ts" },
+        { qualityCheckKind: "integration", claimCode: "CLM-NGL-002", status: "passed", locator: "tests/steps/b.steps.ts" },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:fake", claimCode: "CLM-NGL-003", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "unit", claimCode: "CLM-NGL-999", status: "passed", locator: "src/ghost.test.ts" },
         { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "src/uncited.test.ts" },
         { qualityCheckKind: "fitness", fitnessFunction: "lint:uncited", exists: true, enforcedOverRealSource: true },
         { qualityCheckKind: "unit", claimCode: null, status: "passed", broken: true, locator: "src/broken.test.ts" },
@@ -76,10 +76,10 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
 
   it("reads each fitness evidence obligation's reconciling item on its claim's row as its kind of quality check and its outcome's sentence, with no symbol", () => {
     const md = renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf);
-    const watermelon = reconcilingItemsOf(md, "SCN-NGL-003");
+    const watermelon = reconcilingItemsOf(md, "CLM-NGL-003");
     expect(watermelon.some((item) => item.startsWith(`fitness: ${outcomeDescription("watermelon")}`))).toBe(true);
     expect(symbolCharactersIn(watermelon.join("\n"))).toEqual([]);
-    expect(reconcilingItemsOf(md, "SCN-NGL-001").filter((item) => item.startsWith("fitness")), "a satisfied obligation adds no item").toEqual([]);
+    expect(reconcilingItemsOf(md, "CLM-NGL-001").filter((item) => item.startsWith("fitness")), "a satisfied obligation adds no item").toEqual([]);
   });
 
   it("holds no symbol character in any cell of the claim table, judged by what a symbol is, not by a list of known ones", () => {

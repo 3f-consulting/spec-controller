@@ -18,27 +18,27 @@ function observationCiting(codes: readonly string[]): BehaviouralEvidenceObserva
   };
 }
 
-describe("[SCN-LDG-042] an evidence observation citing two scenarios credits neither, and the unnamed claim's row names both codes", () => {
+describe("[CLM-LDG-042] an evidence observation citing two scenarios credits neither, and the unnamed claim's row names both codes", () => {
   it("credits no scenario and names both codes", () => {
-    expect(attributionOf(["SCN-AAA-001", "SCN-AAA-002"])).toEqual({
+    expect(attributionOf(["CLM-AAA-001", "CLM-AAA-002"])).toEqual({
       claimCode: null,
-      severalCodes: ["SCN-AAA-001", "SCN-AAA-002"],
+      severalCodes: ["CLM-AAA-001", "CLM-AAA-002"],
     });
   });
 
   it.each([
-    ["one code", ["SCN-AAA-001"]],
-    ["one code repeated", ["SCN-AAA-001", "SCN-AAA-001"]],
+    ["one code", ["CLM-AAA-001"]],
+    ["one code repeated", ["CLM-AAA-001", "CLM-AAA-001"]],
   ])("CONTROL: %s credits that code, naming no codes", (_, codes) => {
-    expect(attributionOf(codes)).toEqual({ claimCode: "SCN-AAA-001" });
+    expect(attributionOf(codes)).toEqual({ claimCode: "CLM-AAA-001" });
   });
 
   describe("assembled into the ledger", () => {
     const ledgerOf = (codes: readonly string[]) =>
       reconcile(
         [
-          { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-          { claimCode: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { claimCode: "CLM-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
         ],
         [observationCiting(codes)]
       );
@@ -51,16 +51,16 @@ describe("[SCN-LDG-042] an evidence observation citing two scenarios credits nei
       return unnamedClaimGroupsOf(row === undefined ? [] : reconcilingItemsOf(row));
     };
 
-    it.each(["SCN-AAA-001", "SCN-AAA-002"])("leaves %s missing", (claimCode) => {
-      expect(unitOutcomeOf(["SCN-AAA-001", "SCN-AAA-002"], claimCode)).toBe("missing");
+    it.each(["CLM-AAA-001", "CLM-AAA-002"])("leaves %s missing", (claimCode) => {
+      expect(unitOutcomeOf(["CLM-AAA-001", "CLM-AAA-002"], claimCode)).toBe("missing");
     });
 
     it("posts the observation to one group on the unnamed claim's row whose remark names both codes", () => {
-      expect(unnamedClaimGroups(["SCN-AAA-001", "SCN-AAA-002"])).toEqual([
+      expect(unnamedClaimGroups(["CLM-AAA-001", "CLM-AAA-002"])).toEqual([
         {
           qualityCheckKind: "unit",
           locator: LOCATOR,
-          remarks: [{ notes: [{ kind: "several-claim-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }] }],
+          remarks: [{ notes: [{ kind: "several-claim-codes", codes: ["CLM-AAA-001", "CLM-AAA-002"] }] }],
           ran: 1,
           passed: 1,
           failed: 0,
@@ -70,11 +70,11 @@ describe("[SCN-LDG-042] an evidence observation citing two scenarios credits nei
     });
 
     it.each([
-      ["one code", ["SCN-AAA-001"]],
-      ["one code repeated", ["SCN-AAA-001", "SCN-AAA-001"]],
+      ["one code", ["CLM-AAA-001"]],
+      ["one code repeated", ["CLM-AAA-001", "CLM-AAA-001"]],
     ])("CONTROL: %s credits that scenario and posts nothing to the unnamed claim", (_, codes) => {
-      expect(unitOutcomeOf(codes, "SCN-AAA-001")).not.toBe("missing");
-      expect(unitOutcomeOf(codes, "SCN-AAA-002")).toBe("missing");
+      expect(unitOutcomeOf(codes, "CLM-AAA-001")).not.toBe("missing");
+      expect(unitOutcomeOf(codes, "CLM-AAA-002")).toBe("missing");
       expect(unnamedClaimGroups(codes)).toEqual([]);
     });
   });

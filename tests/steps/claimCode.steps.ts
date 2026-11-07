@@ -43,14 +43,14 @@ function commitAll(repo: string, message: string): void {
   git(repo, ["commit", "-q", "-m", message]);
 }
 
-Given("a repository whose feature file headed {word} carries the scenario code {word}", function (this: SpecControllerWorld, part: string, code: string) {
+Given("a repository whose feature file headed {word} carries the claim code {word}", function (this: SpecControllerWorld, part: string, code: string) {
   this.repository = newRepository(this);
   writeInto(this.repository, `features/${part.toLowerCase()}.feature`, featureFile(part, [code]));
   commitAll(this.repository, "the corpus");
 });
 
 Given(
-  "a repository whose only feature file headed {word} lies two subdirectories down in its features directory and carries the scenario code {word}",
+  "a repository whose only feature file headed {word} lies two subdirectories down in its features directory and carries the claim code {word}",
   function (this: SpecControllerWorld, part: string, code: string) {
     this.repository = newRepository(this);
     writeInto(this.repository, `features/outer/inner/${part.toLowerCase()}.feature`, featureFile(part, [code]));
@@ -83,7 +83,7 @@ Given("the repository has a test whose title cites {word}", function (this: Spec
 });
 
 Given(
-  "a repository whose feature file headed {word} carries the scenario codes {word} and {word}",
+  "a repository whose feature file headed {word} carries the claim codes {word} and {word}",
   function (this: SpecControllerWorld, part: string, first: string, second: string) {
     this.repository = newRepository(this);
     writeInto(this.repository, `features/${part.toLowerCase()}.feature`, featureFile(part, [first, second]));
@@ -111,7 +111,7 @@ Given(
 
 function repositoryCarrying(world: SpecControllerWorld, code: string): void {
   world.repository = newRepository(world);
-  writeInto(world.repository, "features/one.feature", featureFile("ONE", ["SCN-ONE-001", code]));
+  writeInto(world.repository, "features/one.feature", featureFile("ONE", ["CLM-ONE-001", code]));
   commitAll(world.repository, "the corpus");
 }
 
@@ -221,12 +221,12 @@ Given("a file the repository ignores mentions {word}", function (this: SpecContr
 
 const UNHEADED_PART: Record<string, (world: SpecControllerWorld) => void> = {
   "no file mentions ZZZ": () => undefined,
-  "a test fixture's feature file is headed ZZZ and carries SCN-ZZZ-004": (world) => {
-    writeInto(world.repository, "tests/fixtures/sample/features/zzz.feature", featureFile("ZZZ", ["SCN-ZZZ-004"]));
+  "a test fixture's feature file is headed ZZZ and carries CLM-ZZZ-004": (world) => {
+    writeInto(world.repository, "tests/fixtures/sample/features/zzz.feature", featureFile("ZZZ", ["CLM-ZZZ-004"]));
     commitAll(world.repository, "a test fixture");
   },
   "a feature file headed ZZZ was deleted by a later commit": (world) => {
-    writeInto(world.repository, "features/zzz.feature", featureFile("ZZZ", ["SCN-ZZZ-009"]));
+    writeInto(world.repository, "features/zzz.feature", featureFile("ZZZ", ["CLM-ZZZ-009"]));
     commitAll(world.repository, "a feature that did not last");
     git(world.repository, ["rm", "-q", "features/zzz.feature"]);
     git(world.repository, ["commit", "-q", "-m", "retire the feature"]);
@@ -237,8 +237,8 @@ Given("a repository whose feature files are headed ONE and TWO, where {}", funct
   const arrange = UNHEADED_PART[where];
   assert.ok(arrange !== undefined, `no fixture for: ${where}`);
   this.repository = newRepository(this);
-  writeInto(this.repository, "features/one.feature", featureFile("ONE", ["SCN-ONE-001"]));
-  writeInto(this.repository, "features/two.feature", featureFile("TWO", ["SCN-TWO-001"]));
+  writeInto(this.repository, "features/one.feature", featureFile("ONE", ["CLM-ONE-001"]));
+  writeInto(this.repository, "features/two.feature", featureFile("TWO", ["CLM-TWO-001"]));
   commitAll(this.repository, "the corpus");
   arrange(this);
 });
@@ -325,8 +325,8 @@ After(function (this: SpecControllerWorld) {
 
 function copyWithoutGit(world: SpecControllerWorld): string {
   const copy = temporaryDirectory(world, "allocate-plain-");
-  writeInto(copy, "features/one.feature", featureFile("ONE", ["SCN-ONE-003"]));
-  writeInto(copy, "docs/notes.md", "Cites SCN-ONE-004.\n");
+  writeInto(copy, "features/one.feature", featureFile("ONE", ["CLM-ONE-003"]));
+  writeInto(copy, "docs/notes.md", "Cites CLM-ONE-004.\n");
   const probe = spawnSync("git", ["rev-parse", "--git-dir"], { cwd: copy, encoding: "utf8" });
   assert.notEqual(probe.status, 0, `the copy is inside a git repository: ${probe.stdout}`);
   return copy;
@@ -337,12 +337,12 @@ function withholdingMode(path: string): number {
 }
 
 Given(
-  "a {} whose feature file headed ONE carries the scenario code {word}, and whose {} allocate is not permitted to read",
+  "a {} whose feature file headed ONE carries the claim code {word}, and whose {} allocate is not permitted to read",
   function (this: SpecControllerWorld, copy: string, code: string, path: string) {
     if (copy === "repository") {
       this.repository = newRepository(this);
       writeInto(this.repository, "features/one.feature", featureFile("ONE", [code]));
-      writeInto(this.repository, "features/nested/two.feature", featureFile("TWO", ["SCN-TWO-001"]));
+      writeInto(this.repository, "features/nested/two.feature", featureFile("TWO", ["CLM-TWO-001"]));
       commitAll(this.repository, "the corpus");
     } else {
       assert.equal(copy, "copy without git", `no fixture for: ${copy}`);
@@ -386,7 +386,7 @@ const CARRIER: Record<string, { path: string; write: (world: SpecControllerWorld
   "a tracked file with an edit not yet committed, docs/notes.md": {
     path: "docs/notes.md",
     write: (world, code) => {
-      writeInto(world.repository, "docs/notes.md", "Cites SCN-ONE-003.\n");
+      writeInto(world.repository, "docs/notes.md", "Cites CLM-ONE-003.\n");
       commitAll(world.repository, "the notes");
       writeInto(world.repository, "docs/notes.md", `Cites ${code}.\n`);
     },
@@ -475,9 +475,9 @@ Then("allocate's refusal names the repository's .git and says git could not open
   assert.ok(showsEntry(refusal["reason"] ?? "", "git-exited", { command: "rev-parse" }), `expected git's reason; got:\n${this.answer.stderr}`);
 });
 
-const OUTSIDE = ["SCN-A-001", "SCN-SIXCHR-001"] as const;
+const OUTSIDE = ["CLM-A-001", "CLM-SIXCHR-001"] as const;
 
-const INSIDE = ["SCN-AB-001", "SCN-FIVEC-001"] as const;
+const INSIDE = ["CLM-AB-001", "CLM-FIVEC-001"] as const;
 
 function scenarioFile(claimCode: string): string {
   const code = claimCode.split("-")[1]!;
@@ -524,13 +524,13 @@ When("balance reconciles that grammar target", function (this: SpecControllerWor
   this.grammarRun = balanceGrammarTarget(this);
 });
 
-Then("the grammar target lists no scenario code error", function (this: SpecControllerWorld) {
+Then("the grammar target lists no claim code error", function (this: SpecControllerWorld) {
   assert.ok(publishedSchemaNamesClaimCodeErrors(), "expected the published schema to name the place claim code errors are read from; it does not");
   const errors = claimCodeErrorsOnReport(this.grammarRun.report);
   assert.deepEqual(errors ?? [], [], `expected no claim code error; got ${JSON.stringify(errors)}`);
 });
 
-const OWN = "SCN-OWN-001";
+const OWN = "CLM-OWN-001";
 
 function rowsOfKind(world: SpecControllerWorld, kind: string): GrammarRow[] {
   return claimReconciliationsOf(world.grammarRun.report).filter((row) => row.kind === kind);
@@ -613,14 +613,14 @@ Then("the one- and six-character step ids post no evidence observation at all", 
 const INHERITED = "tests/fixtures/inherited-claim-code";
 
 const CLAIM_CODE_INHERITED_FROM: Readonly<Record<string, string>> = {
-  Feature: "SCN-INF-001",
-  Rule: "SCN-INR-001",
+  Feature: "CLM-INF-001",
+  Rule: "CLM-INR-001",
 };
 
 const THE_ONE_SCENARIO = "the one scenario beneath it";
 
 Given(
-  "a target whose one scenario carries no scenario code of its own, inherits one from its {word}, and has passing evidence citing that code",
+  "a target whose one scenario carries no claim code of its own, inherits one from its {word}, and has passing evidence citing that code",
   function (this: SpecControllerWorld, from: string) {
     assert.ok(CLAIM_CODE_INHERITED_FROM[from], `no fixture inherits a claim code from its ${from}`);
     this.ancestor = from;
@@ -649,7 +649,7 @@ function reconciled(world: SpecControllerWorld): ReconciledRun {
   return world.reconciledRun;
 }
 
-Then("the scenario is reconciled once, balanced, on its scenario code's row", function (this: SpecControllerWorld) {
+Then("the scenario is reconciled once, balanced, on its claim code's row", function (this: SpecControllerWorld) {
   const rows = claimReconciliationsOf<ClaimReconciliation>(reconciled(this).report).filter(({ kind }) => kind === "scenario");
   assert.deepEqual(
     rows.map(({ claim, verdict }) => ({ claim, verdict })),
@@ -658,7 +658,7 @@ Then("the scenario is reconciled once, balanced, on its scenario code's row", fu
   );
 });
 
-Then("no reconciliation names it as a scenario with no scenario code", function (this: SpecControllerWorld) {
+Then("no reconciliation names it as a scenario with no claim code", function (this: SpecControllerWorld) {
   const { report } = reconciled(this);
   assert.deepEqual(claimCodesOnReport(report).untaggedScenarios, [], "the scenario was also listed as carrying no claim code");
   const named = claimReconciliationsOf<ClaimReconciliation>(report).filter(({ claim }) => claim.endsWith(THE_ONE_SCENARIO));

@@ -40,7 +40,7 @@ const withoutRunners = (): EvidenceReconciliation =>
     deferralTags: [],
   });
 
-describe("[SCN-RPT-072] the step-accounting section lists each step that runs a declared runner beneath its table, and lists none when no step runs one", () => {
+describe("[CLM-RPT-072] the step-accounting section lists each step that runs a declared runner beneath its table, and lists none when no step runs one", () => {
   it("lists the step that runs the declared runner under a Runners label beneath the table, before the Reconciler list", () => {
     const section = stepAccounting(reconcileStepAccounting([ci]));
     const tableEnd = endOfTable(section);

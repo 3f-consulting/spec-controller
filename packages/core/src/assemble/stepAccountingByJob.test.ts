@@ -24,7 +24,7 @@ const nightlyRows = [
   { workflow: "nightly.yml", job: "sweep", stepsRead: 2, candidates: 2, runners: 0, reconciler: 0, nonChecks: 0, plumbing: 0 },
 ];
 
-describe("[SCN-RMD-012] the step accounting carries a row per workflow and job read, with its steps read and each disposition's count, ordered by workflow and then job compared character by character whatever the locale, and none for a run that reads no CI step and has no notChecks entry naming a workflow it did not read", () => {
+describe("[CLM-RMD-012] the step accounting carries a row per workflow and job read, with its steps read and each disposition's count, ordered by workflow and then job compared character by character whatever the locale, and none for a run that reads no CI step and has no notChecks entry naming a workflow it did not read", () => {
   it("carries a row for every workflow and job read, with its steps read and each disposition's count, in one settled order", () => {
     const { summary } = reconcile([nightly, ci], ["nightly.yml", "ci.yml"]);
     expect(summary.stepAccounting?.byJob).toMatchObject([
@@ -84,7 +84,7 @@ jobs:
   });
 });
 
-describe("[SCN-RMD-028] a run that reads no CI step carries each notChecks entry naming a workflow it did not read in its step accounting, with every workflow it read, no row and a zero total", () => {
+describe("[CLM-RMD-028] a run that reads no CI step carries each notChecks entry naming a workflow it did not read in its step accounting, with every workflow it read, no row and a zero total", () => {
   it("carries those entries, the workflows read, no row and a zero total, for a run that reads no workflow and for one whose only workflow read has no step", () => {
     const usesOnly = "jobs:\n  release:\n    uses: ./.github/workflows/reuse.yml\n";
     const withNotChecks = (notChecks: string[]): typeof packageJson => ({

@@ -22,7 +22,7 @@ function refusedWithHelp(help: string): string[][] {
   ];
 }
 
-describe("[SCN-CLI-073] a --help or -h among the host's own tokens answers the top-level help ahead of any refusal of the tokens beside it, and writes nothing", () => {
+describe("[CLM-CLI-073] a --help or -h among the host's own tokens answers the top-level help ahead of any refusal of the tokens beside it, and writes nothing", () => {
 
   for (const help of HELP) {
     for (const argv of refusedWithHelp(help)) {

@@ -61,7 +61,7 @@ function listLengths({ steps }: StepAccounting): Record<"runners" | "reconciler"
   };
 }
 
-describe("[SCN-RMD-024] the step accounting names the steps behind its runners and plumbing counts, each list holding exactly the steps its count counts", () => {
+describe("[CLM-RMD-024] the step accounting names the steps behind its runners and plumbing counts, each list holding exactly the steps its count counts", () => {
   it("names the steps that run a declared runner and the plumbing steps under their workflow, job and name, in step order", () => {
     const accounting = reconcile(unitRunner, [setUpAndTestCi], ["ci.yml"]).summary.stepAccounting!;
     expect(accounting.steps.runners).toStrictEqual(["ci.yml:quality:Unit tests"]);
@@ -142,7 +142,7 @@ const twoWorkflowsEveryList = {
   },
 } as Parameters<typeof evidenceReconciliationFromSources>[0]["packageJson"];
 
-describe("[SCN-RMD-026] every list of the steps behind a count follows the step accounting's rows, so reading the workflows in another order changes neither the rows nor the lists", () => {
+describe("[CLM-RMD-026] every list of the steps behind a count follows the step accounting's rows, so reading the workflows in another order changes neither the rows nor the lists", () => {
   it("lists each count's steps by workflow, then by job, and within a job in the order they were read, though the workflows are given against that order", () => {
     const accounting = reconcile(
       twoWorkflowsEveryList,

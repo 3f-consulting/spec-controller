@@ -11,32 +11,32 @@ Feature: A Vitest suite's results answer unit evidence obligations
 
     A citation under CLM is held to the same bound on its feature part as one under SCN.
 
-    @unit @SCN-VIT-001
+    @unit @CLM-VIT-001
     Scenario: a self-citing leaf discharges its own scenario while a bare sibling leaf still discharges the ancestor's
 
-    @unit @SCN-VIT-002
-    Scenario: a test whose only SCN-shaped token is prose cites no scenario, and its evidence observation posts to the unnamed claim
+    @unit @CLM-VIT-002
+    Scenario: a test whose only claim-code-shaped token is prose cites no scenario, and its evidence observation posts to the unnamed claim
 
-    @unit @SCN-VIT-003
-    Scenario: a leaf naming a scenario code in prose does not override its describe's bracketed citation
+    @unit @CLM-VIT-003
+    Scenario: a leaf naming a claim code in prose does not override its describe's bracketed citation
 
-    @unit @SCN-VIT-004
+    @unit @CLM-VIT-004
     Scenario: a Vitest test whose title cites two scenarios credits neither, and the unnamed claim's row names both codes
 
-    @unit @SCN-VIT-008
+    @unit @CLM-VIT-008
     Scenario: a title citing a feature part outside two to five characters cites no scenario, beside a citation of five characters that is read
 
   Rule: a Vitest file that failed to collect is broken, not absent
 
-    @unit @SCN-VIT-005
+    @unit @CLM-VIT-005
     Scenario: a Vitest file that failed to collect posts a broken item naming the file and its error to the unnamed claim's row, while the scenario it would have proven still reads missing
 
   Rule: a Vitest observation is posted at unit, because a Vitest report is a report of test results
 
-    @unit @SCN-VIT-006
+    @unit @CLM-VIT-006
     Scenario: every observation read from a Vitest report is posted at unit, because a Vitest report is a report of test results and carries no layer tags
 
   Rule: a Vitest test's result gives its run result: passed or failed as reported, inconclusive when skipped or todo
 
-    @unit @SCN-VIT-007
+    @unit @CLM-VIT-007
     Scenario: a Vitest test that passed or failed posts that status, and one skipped or todo posts nothing

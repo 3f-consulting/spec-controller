@@ -8,6 +8,6 @@ Feature: a fixture target whose tests cite a scenario at a check it holds no obl
 
   Rule: the fixture target names one integration-level scenario
 
-    @integration @SCN-NOS-001
+    @integration @CLM-NOS-001
     Scenario: the target names an integration-level scenario
       Given the target repo's source

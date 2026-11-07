@@ -31,7 +31,7 @@ beforeEach(() => {
 
 recordWhatTheProgramWrites();
 
-describe("[SCN-RMG-010] executeKeptRun refuses a --format path that is its own run.yaml, before the command runs", () => {
+describe("[CLM-RMG-010] executeKeptRun refuses a --format path that is its own run.yaml, before the command runs", () => {
   it("refuses the run.yaml of a new run, naming it, and writes no run.yaml", () => {
     const route = vi.fn(() => true);
 
@@ -59,7 +59,7 @@ describe("[SCN-RMG-010] executeKeptRun refuses a --format path that is its own r
   });
 });
 
-describe("[SCN-RMG-010] a --format path is the stored run's own run.yaml only when it is the same file", () => {
+describe("[CLM-RMG-010] a --format path is the stored run's own run.yaml only when it is the same file", () => {
   it("routes a run whose --format path lies in a folder that does not exist, and creates nothing there", () => {
     const route = vi.fn(() => true);
     const unmade = join(scratch, "no-such-folder", "out.md");

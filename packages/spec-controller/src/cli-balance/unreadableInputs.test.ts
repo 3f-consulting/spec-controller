@@ -47,7 +47,7 @@ import { scenarioName } from "../../../../tests/steps/support/scenarioName.js";
 const nothingByDefault = (): boolean => false;
 const reading = (content: string) => (): string => content;
 
-describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the reporter's shape", () => {
+describe("[CLM-CLI-076] checkInputShapes refuses a Vitest report not in the reporter's shape", () => {
   it("names the flag, the file and where the shape is wrong", () => {
     const inputs = jsonInputsOf({ vitest: "reports/vitest.json" }, nothingByDefault);
     const error = shownText(checkInputShapes(readReports(inputs, reading('{"testResults":"x"}'))));
@@ -99,7 +99,7 @@ describe("[SCN-CLI-076] checkInputShapes refuses a Vitest report not in the repo
   });
 });
 
-describe("[SCN-CLI-077] checkInputShapes refuses a Cucumber report not in the formatter's shape", () => {
+describe("[CLM-CLI-077] checkInputShapes refuses a Cucumber report not in the formatter's shape", () => {
   it("names the flag, the file and where the shape is wrong", () => {
     const error = shownText(checkInputShapes(readReports(jsonInputsOf({ cucumber: "reports/cucumber.json" }, nothingByDefault), reading("{}"))));
 
@@ -109,7 +109,7 @@ describe("[SCN-CLI-077] checkInputShapes refuses a Cucumber report not in the fo
   });
 });
 
-describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the JUnit XML report pytest writes", () => {
+describe("[CLM-PYT-009] checkInputShapes refuses a --pytest file that is not the JUnit XML report pytest writes", () => {
   const refusalOf = (content: string): string | null =>
     shownText(checkInputShapes(readReports(jsonInputsOf({ pytest: "reports/report.xml" }, nothingByDefault), reading(content))));
 
@@ -148,7 +148,7 @@ describe("[SCN-PYT-009] checkInputShapes refuses a --pytest file that is not the
   });
 });
 
-describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the JSON report Jest writes", () => {
+describe("[CLM-JST-008] checkInputShapes refuses a --jest file that is not the JSON report Jest writes", () => {
   const refusalOf = (content: string): string | null =>
     shownText(checkInputShapes(readReports(jsonInputsOf({ jest: "reports/jest.json" }, nothingByDefault), reading(content))));
 
@@ -177,7 +177,7 @@ describe("[SCN-JST-008] checkInputShapes refuses a --jest file that is not the J
   });
 });
 
-describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the JSON report RSpec writes", () => {
+describe("[CLM-RSP-009] checkInputShapes refuses an --rspec file that is not the JSON report RSpec writes", () => {
   const refusalOf = (content: string): string | null =>
     shownText(checkInputShapes(readReports(jsonInputsOf({ rspec: "reports/rspec.json" }, nothingByDefault), reading(content))));
 
@@ -222,7 +222,7 @@ describe("[SCN-RSP-009] checkInputShapes refuses an --rspec file that is not the
   });
 });
 
-describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JUnit XML report", () => {
+describe("[CLM-GOT-009] checkInputShapes refuses a --junit file that is not a JUnit XML report", () => {
   const refusalOf = (content: string): string | null =>
     shownText(checkInputShapes(readReports(jsonInputsOf({ junit: "reports/report.xml" }, nothingByDefault), reading(content))));
 
@@ -252,7 +252,7 @@ describe("[SCN-GOT-009] checkInputShapes refuses a --junit file that is not a JU
   });
 });
 
-describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit directory that is not a JUnit XML report, naming that file", () => {
+describe("[CLM-JAV-011] checkInputShapes refuses a report file in a --junit directory that is not a JUnit XML report, naming that file", () => {
 
   function surefireReportsBeside(content: string): { reports: string; notAReport: string } {
     const reports = temporaryDirectory("surefire-reports-");
@@ -283,7 +283,7 @@ describe("[SCN-JAV-011] checkInputShapes refuses a report file in a --junit dire
   });
 });
 
-describe("[SCN-CLI-079] checkInputShapes refuses a package.json not in a manifest's shape, given or read by default", () => {
+describe("[CLM-CLI-079] checkInputShapes refuses a package.json not in a manifest's shape, given or read by default", () => {
 
   it("refuses a default package.json that does not parse, rather than crashing on it", () => {
     const error = shownText(checkInputShapes(readReports(jsonInputsOf({}, (path) => path === "package.json"), reading("{not json"))));
@@ -291,7 +291,7 @@ describe("[SCN-CLI-079] checkInputShapes refuses a package.json not in a manifes
   });
 });
 
-describe("[SCN-CLI-080] checkInputShapes reads a well-formed empty report", () => {
+describe("[CLM-CLI-080] checkInputShapes reads a well-formed empty report", () => {
   it.each([
     ["vitest", '{"testResults":[]}'],
     [
@@ -349,7 +349,7 @@ function targetOnDisk(): { features: string; ci: string } {
   return { features, ci };
 }
 
-describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its flag reads", () => {
+describe("[CLM-CLI-075] checkInputPaths refuses a path that is not the kind its flag reads", () => {
   it.each([
     ["a regular file", "notes.txt", "notes\n"],
     ["a single feature file", "z.feature", "Feature: z\n"],
@@ -394,7 +394,7 @@ describe("[SCN-CLI-075] checkInputPaths refuses a path that is not the kind its 
   });
 });
 
-describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, naming it and the path", () => {
+describe("[CLM-CLI-082] an input the tool is not permitted to read is refused, naming it and the path", () => {
   const runsAsRoot = (): boolean => process.getuid?.() === 0;
   const locked: string[] = [];
 
@@ -531,7 +531,7 @@ describe("[SCN-CLI-082] an input the tool is not permitted to read is refused, n
   });
 });
 
-describe("[SCN-CLI-087] a subdirectory of the corpus the tool may not read is refused, naming it, never skipped", () => {
+describe("[CLM-CLI-087] a subdirectory of the corpus the tool may not read is refused, naming it, never skipped", () => {
   const runsAsRoot = (): boolean => process.getuid?.() === 0;
   const locked: string[] = [];
 
@@ -565,7 +565,7 @@ describe("[SCN-CLI-087] a subdirectory of the corpus the tool may not read is re
   });
 });
 
-describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not parse as YAML, naming the workflows, the file and the parse error", () => {
+describe("[CLM-CLI-102] checkWorkflowsParse refuses a workflow that does not parse as YAML, naming the workflows, the file and the parse error", () => {
   const NOT_YAML = "jobs:\n  ci: [\n";
   const readText = (path: string): string => readFileSync(path, "utf8");
 
@@ -622,7 +622,7 @@ const SAVED_BEFORE_CLAIM_KEYS = {"runProvenance":{"target":"unknown-target","sou
 const savedWithSections = () => withClaimCodesOnReport({
   ...saved(),
   errorsInTheInputs: {
-    claimCodeErrors: [{ kind: "several-claim-codes", files: ["a.feature"], scenario: "one", codes: ["@SCN-AAA-001", "@SCN-AAA-002"] }],
+    claimCodeErrors: [{ kind: "several-claim-codes", files: ["a.feature"], scenario: "one", codes: ["@CLM-AAA-001", "@CLM-AAA-002"] }],
     configurationNotRead: {
       keysNotRead: ["runner"],
       ofWrongKind: [{ entry: "tiers", is: "string", reads: "list" }],
@@ -633,7 +633,7 @@ const savedWithSections = () => withClaimCodesOnReport({
   },
 }, claimCodes());
 
-describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refused, naming a section of the wrong kind by its place in the report, and one in an earlier report shape by its missing section", () => {
+describe("[CLM-CLI-074] a saved file that is not a saved reconciliation is refused, naming a section of the wrong kind by its place in the report, and one in an earlier report shape by its missing section", () => {
   it.each([
     ["the top level is a list, not an object", () => []],
     ["runProvenance is missing", (s: Saved) => ({ ...s, runProvenance: undefined })],
@@ -691,7 +691,7 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
           featureCodes: 1,
           excludedOccurrences: 0,
           untaggedScenarios: [],
-          sharedClaimCodes: [{ claimCode: "SCN-AAA-001", scenarios: [{ feature: "a.feature", scenario: "one" }, { feature: "a.feature", scenario: "two" }] }],
+          sharedClaimCodes: [{ claimCode: "CLM-AAA-001", scenarios: [{ feature: "a.feature", scenario: "one" }, { feature: "a.feature", scenario: "two" }] }],
         }),
     ],
   ] as const)("names where a saved file departs from a saved reconciliation: %s", (fault, documentOf: (s: Saved) => unknown) => {
@@ -742,7 +742,7 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
   });
 });
 
-describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — an input it cannot read", () => {
+describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — an input it cannot read", () => {
   const BALANCE_INPUTS = ["--features", "tests/fixtures/evidence-observation/features", "--vitest", "tests/fixtures/evidence-observation/vitest.json"];
   const NOT_GHERKIN = "not gherkin at all {{{\n";
 

@@ -19,7 +19,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     as spec-reconciliation.json (the whole-document report model). Nothing is written
     outside the root.
 
-    @unit @SCN-RMG-001
+    @unit @CLM-RMG-001
     Scenario: a kept run writes spec-reconciliation.md and spec-reconciliation.json under the run directory
 
   Rule: a kept run stamps run.yaml with the decided fields
@@ -28,7 +28,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     mode (balance), date, purpose (a list of grouping slugs — empty by
     default, an ad-hoc run, curated by hand afterward), links, and the artefact filenames.
 
-    @unit @SCN-RMG-002
+    @unit @CLM-RMG-002
     Scenario: a kept run stamps run.yaml with schema_version, run_id, target, sha, tool identity, mode, date, an empty purpose list, links, and artefacts
 
   Rule: the run-id defaults to a timestamp, an operator mnemonic overrides it
@@ -41,7 +41,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     The default timestamp derives from an INJECTED instant (never a bare clock read), so the
     isolated Vitest test asserts the exact run-id string deterministically.
 
-    @unit @SCN-RMG-003
+    @unit @CLM-RMG-003
     Scenario: the run-id is an ISO timestamp by default and an operator mnemonic overrides it
 
   Rule: the operator can store any command's run from the shipped tool
@@ -62,7 +62,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     directly. The @e2e proves operator-reachability through the REAL binary: a stored run dir
     the operator can open, not the scaffold in isolation.
 
-    @unit @e2e @SCN-RMG-004
+    @unit @e2e @CLM-RMG-004
     Scenario: `spec-controller --store <root> balance` writes a stored run the operator can reach
       Given a reconcilable target and a run store outside the repo
       When the operator runs balance under the store modifier and the run-name modifier
@@ -81,7 +81,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     after the reports. A run whose manifest cannot be written does not finish, and ends as an
     unexpected error, not a refusal.
 
-    @unit @e2e @SCN-RMG-008
+    @unit @e2e @CLM-RMG-008
     Scenario Outline: a --store root that cannot be created is refused naming the location and why, with no stack trace and no run directory printed
       Given an out-of-balance target and a run store that is <location>
       When the operator stores a run of it under that run store
@@ -98,7 +98,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
         | a path under a directory it may not write  | permission was denied           |
         | a root whose run directory is a file       | the location already exists     |
 
-    @unit @e2e @SCN-RMG-009
+    @unit @e2e @CLM-RMG-009
     Scenario Outline: a stored run that cannot write a report into its run directory is refused naming the file and why, with no stack trace and no run directory printed
       Given an out-of-balance target and a run store whose run directory already holds <obstacle>
       When the operator stores a run of it under that run store
@@ -121,7 +121,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     refused as a usage error before any report is written: no run directory is announced, no
     run.yaml of this run is written, and an earlier run under the same run-id keeps its files.
 
-    @unit @e2e @SCN-RMG-010
+    @unit @e2e @CLM-RMG-010
     Scenario Outline: a stored run given a --format naming its own report or run.yaml is refused naming the file, prints no run directory, and an earlier run under the same run id keeps its files
       Given an out-of-balance target and a run store holding <earlier>
       When the operator stores a run of it and also asks for the <format> report at <file> in the run directory
@@ -149,7 +149,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     before any report is written, and the earlier run keeps its files. A directory is a stored
     run's when it holds a run.yaml that reads as a run manifest; the run needs no store to know it.
 
-    @unit @e2e @SCN-RMG-012
+    @unit @e2e @CLM-RMG-012
     Scenario Outline: a run given a --format naming a file of an earlier stored run is refused naming the file, and that run keeps its files
       Given an out-of-balance target and a run store holding an earlier stored run of a balanced target
       When the operator makes <how> of it and also asks for the <format> report at <file> in the earlier run's directory
@@ -165,10 +165,10 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
         | a bare run                        | markdown | the run manifest                      |
         | a run stored under another run id | markdown | the saved reconciliation, in markdown |
 
-    @unit @SCN-RMG-013
+    @unit @CLM-RMG-013
     Scenario: a --format path beside a run.yaml that is not a run manifest is written as before
 
-    @unit @e2e @SCN-RMG-014
+    @unit @e2e @CLM-RMG-014
     Scenario Outline: a run given a --format that is a symlink to a file of an earlier stored run is refused naming the link and that run's directory, and that run keeps its files
       Given an out-of-balance target and a run store holding an earlier stored run of a balanced target
       And a link to <file> in the earlier run's directory
@@ -193,7 +193,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     directory, a truthful record of a run that produced nothing. A manifest already under that
     run-id belongs to an earlier run and is left as it was.
 
-    @unit @e2e @SCN-RMG-005
+    @unit @e2e @CLM-RMG-005
     Scenario Outline: a stored run refused for an unknown flag leaves no run.yaml and prints no run directory, and an earlier run under the same run-id keeps its record
       Given a run store holding <earlier>
       When the operator stores a balance run under that run-id with a flag balance does not accept
@@ -206,7 +206,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
         | nothing yet                               |
         | an earlier kept run under the same run-id |
 
-    @unit @e2e @SCN-RMG-006
+    @unit @e2e @CLM-RMG-006
     Scenario Outline: a stored balance --help answers the help before the store is touched, even under a store root that cannot be written
       Given a run store that is <root>
       When the operator asks for balance's help by its <name> name under that run store
@@ -220,7 +220,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
         | long  | a regular file |
         | short | a regular file |
 
-    @unit @e2e @SCN-RMG-007
+    @unit @e2e @CLM-RMG-007
     Scenario Outline: a stored --render-from-json re-render is refused naming --store, never a flag the operator did not give, and nothing is stored
       Given a saved reconciliation that is <saved>
       When the operator asks for it to be re-rendered under a run store <beside>
@@ -244,7 +244,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     anything is written, naming the file: no run directory is announced, no run.yaml of this run is
     written, and an earlier run under the same run-id keeps its files.
 
-    @unit @e2e @SCN-RMG-011
+    @unit @e2e @CLM-RMG-011
     Scenario Outline: a stored run whose report or run.yaml would land on one of its inputs is refused naming the file, prints no run directory, and every input is left as it was
       Given a balanced target whose <input> sits where a stored run of it would write <file>, over <earlier>
       When the operator stores a run of it reading that input

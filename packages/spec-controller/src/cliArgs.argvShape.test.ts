@@ -24,7 +24,7 @@ function withBalanceFlag(flag: FlagSpec): CliRegistry {
   };
 }
 
-describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a flag's value, naming it", () => {
+describe("[CLM-CLI-063] balance refuses an argument that is neither a flag nor a flag's value, naming it", () => {
   const BALANCE_SCOPE = "spec-controller balance";
   const notAFlag = (token: string): string =>
     `${message(AppError.NotAFlag, { token, scope: BALANCE_SCOPE })}\n${message(AppMessage.SeeFlags, { scope: BALANCE_SCOPE })}`;
@@ -75,13 +75,13 @@ describe("[SCN-CLI-063] balance refuses an argument that is neither a flag nor a
 
   it.each([
     ["accepts a value that is a command's name, --target balance", ["--target", "balance"]],
-    ["leaves an unregistered flag and the word after it to @SCN-CLI-009", ["--bogus", "value"]],
+    ["leaves an unregistered flag and the word after it to @CLM-CLI-009", ["--bogus", "value"]],
   ] as const)("%s", (_title, argv) => {
     expect(shownText(checkArgvShape(argv, cliRegistry, "balance"))).toBeNull();
   });
 });
 
-describe("[SCN-CLI-062] balance refuses a value given to a flag that takes none, naming both", () => {
+describe("[CLM-CLI-062] balance refuses a value given to a flag that takes none, naming both", () => {
   const BALANCE_SCOPE = "spec-controller balance";
   const refusalFor = (flag: string, value: string): string =>
     `${message(AppError.TakesNoValue, { flag, scope: BALANCE_SCOPE, value })}\n` +
@@ -99,7 +99,7 @@ describe("[SCN-CLI-062] balance refuses a value given to a flag that takes none,
   });
 });
 
-describe("[SCN-CLI-064] a flag that does not repeat, given twice, is refused naming the flag, never read as its last value", () => {
+describe("[CLM-CLI-064] a flag that does not repeat, given twice, is refused naming the flag, never read as its last value", () => {
   const BALANCE_SCOPE = "spec-controller balance";
   const givenTwice = (flag: string): string =>
     `${message(AppError.GivenTwice, { flag, scope: BALANCE_SCOPE })}\n${message(AppMessage.SeeFlags, { scope: BALANCE_SCOPE })}`;
@@ -123,7 +123,7 @@ describe("[SCN-CLI-064] a flag that does not repeat, given twice, is refused nam
   });
 });
 
-describe("[SCN-CLI-065] a flag written --flag=value is refused naming the form and the spelling that is read, with no pin advice", () => {
+describe("[CLM-CLI-065] a flag written --flag=value is refused naming the form and the spelling that is read, with no pin advice", () => {
   const BALANCE_SCOPE = "spec-controller balance";
   const equalsForm = (written: string, spelling: string): string =>
     `${message(AppError.EqualsForm, { token: written, scope: BALANCE_SCOPE, spelling })}\n${message(AppMessage.SeeFlags, { scope: BALANCE_SCOPE })}`;

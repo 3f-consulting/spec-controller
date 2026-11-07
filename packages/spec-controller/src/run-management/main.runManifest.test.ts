@@ -64,7 +64,7 @@ function expectToolIdentityAndDate(manifest: Record<string, unknown>): void {
   expect(manifest["date"]).toBe(PINNED.toISOString());
 }
 
-describe("[SCN-RMG-002] a kept run stamps run.yaml with schema_version, run_id, target, sha, tool identity, mode, date, an empty purpose list, links, and artefacts", () => {
+describe("[CLM-RMG-002] a kept run stamps run.yaml with schema_version, run_id, target, sha, tool identity, mode, date, an empty purpose list, links, and artefacts", () => {
   it("names the target and source SHA the operator gave, in balance mode", () => {
     const manifest = storedManifest("t", [
       "--features", join(outOfBalance, "features"),

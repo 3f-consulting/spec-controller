@@ -6,36 +6,36 @@ import type {
   EvidenceObservation,
 } from "../model.js";
 
-describe("[SCN-LDG-002] a scenario whose Evidence Obligation names a test that exists but fails is reported as out of balance with a failing reconciling item", () => {
+describe("[CLM-LDG-002] a scenario whose Evidence Obligation names a test that exists but fails is reported as out of balance with a failing reconciling item", () => {
   it("returns the out-of-balance verdict listing a failing reconciling item when the evidence answering its unit Evidence Obligation is present but failing", () => {
     const scenarios: Scenario[] = [
-      { claimCode: "SCN-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "CLM-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheckKind: "unit", claimCode: "SCN-LDG-002", status: "failed" },
+      { qualityCheckKind: "unit", claimCode: "CLM-LDG-002", status: "failed" },
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.claimReconciliations.find((s) => s.claim === "SCN-LDG-002");
+    const scenario = balance.claimReconciliations.find((s) => s.claim === "CLM-LDG-002");
 
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(reconcilingItemsOf(scenario!)).toEqual([
-      { qualityCheckKind: "unit", outcome: "failing", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservation: { qualityCheckKind: "unit", claimCode: "SCN-LDG-002", status: "failed", outcome: "failing" } },
+      { qualityCheckKind: "unit", outcome: "failing", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservation: { qualityCheckKind: "unit", claimCode: "CLM-LDG-002", status: "failed", outcome: "failing" } },
     ]);
   });
 });
 
-describe("[SCN-LDG-003] a scenario that raises an Evidence Obligation with no matching result is reported as out of balance with a missing reconciling item", () => {
+describe("[CLM-LDG-003] a scenario that raises an Evidence Obligation with no matching result is reported as out of balance with a missing reconciling item", () => {
   it("returns the out-of-balance verdict listing a missing reconciling item when its integration Evidence Obligation has no matching result", () => {
     const scenarios: Scenario[] = [
-      { claimCode: "SCN-LDG-003", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+      { claimCode: "CLM-LDG-003", evidenceObligations: [{ qualityCheckKind: "integration" }] },
     ];
     const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheckKind: "integration", claimCode: "SCN-LDG-OTHER", status: "passed" },
+      { qualityCheckKind: "integration", claimCode: "CLM-LDG-OTHER", status: "passed" },
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.claimReconciliations.find((s) => s.claim === "SCN-LDG-003");
+    const scenario = balance.claimReconciliations.find((s) => s.claim === "CLM-LDG-003");
 
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(reconcilingItemsOf(scenario!)).toEqual([
@@ -44,11 +44,11 @@ describe("[SCN-LDG-003] a scenario that raises an Evidence Obligation with no ma
   });
 });
 
-describe("[SCN-LDG-004] a multi-evidenceObligation scenario failing one level and missing another lists both reconciling items", () => {
+describe("[CLM-LDG-004] a multi-evidenceObligation scenario failing one level and missing another lists both reconciling items", () => {
   it("lists BOTH the failing AND the missing reconciling item, with no ranking between them", () => {
     const scenarios: Scenario[] = [
       {
-        claimCode: "SCN-LDG-004",
+        claimCode: "CLM-LDG-004",
         evidenceObligations: [
           { qualityCheckKind: "unit" },
           { qualityCheckKind: "integration" },
@@ -56,16 +56,16 @@ describe("[SCN-LDG-004] a multi-evidenceObligation scenario failing one level an
       },
     ];
     const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheckKind: "unit", claimCode: "SCN-LDG-004", status: "failed" },
+      { qualityCheckKind: "unit", claimCode: "CLM-LDG-004", status: "failed" },
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.claimReconciliations.find((s) => s.claim === "SCN-LDG-004");
+    const scenario = balance.claimReconciliations.find((s) => s.claim === "CLM-LDG-004");
 
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(reconcilingItemsOf(scenario!)).toEqual(
       expect.arrayContaining([
-        { qualityCheckKind: "unit", outcome: "failing", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservation: { qualityCheckKind: "unit", claimCode: "SCN-LDG-004", status: "failed", outcome: "failing" } },
+        { qualityCheckKind: "unit", outcome: "failing", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservation: { qualityCheckKind: "unit", claimCode: "CLM-LDG-004", status: "failed", outcome: "failing" } },
         { qualityCheckKind: "integration", outcome: "missing", evidenceObligation: { qualityCheckKind: "integration" } },
       ])
     );
@@ -73,39 +73,39 @@ describe("[SCN-LDG-004] a multi-evidenceObligation scenario failing one level an
   });
 });
 
-describe("[SCN-LDG-005] an out-of-balance scenario carries its reconciling items as a list", () => {
+describe("[CLM-LDG-005] an out-of-balance scenario carries its reconciling items as a list", () => {
   it("carries the non-balanced reconciling item among the claim's reconciling items, read through reconcilingItemsOf, not a single picked scenario outcome", () => {
     const scenarios: Scenario[] = [
-      { claimCode: "SCN-LDG-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "CLM-LDG-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheckKind: "unit", claimCode: "SCN-LDG-005", status: "failed" },
+      { qualityCheckKind: "unit", claimCode: "CLM-LDG-005", status: "failed" },
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.claimReconciliations.find((s) => s.claim === "SCN-LDG-005");
+    const scenario = balance.claimReconciliations.find((s) => s.claim === "CLM-LDG-005");
 
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(Array.isArray(reconcilingItemsOf(scenario!))).toBe(true);
     expect(reconcilingItemsOf(scenario!)).toEqual([
-      { qualityCheckKind: "unit", outcome: "failing", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservation: { qualityCheckKind: "unit", claimCode: "SCN-LDG-005", status: "failed", outcome: "failing" } },
+      { qualityCheckKind: "unit", outcome: "failing", evidenceObligation: { qualityCheckKind: "unit" }, evidenceObservation: { qualityCheckKind: "unit", claimCode: "CLM-LDG-005", status: "failed", outcome: "failing" } },
     ]);
   });
 });
 
-describe("[SCN-LDG-027] a quality-check reconciliation carries every evidence observation of its kind of quality check on its claim", () => {
+describe("[CLM-LDG-027] a quality-check reconciliation carries every evidence observation of its kind of quality check on its claim", () => {
   const REMOVED_KEYS = ["evidenceObservation", "locator", "message", "notes", "fitnessFunction"];
 
-  const first: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-LDG-027", status: "passed", locator: "a.test.ts" };
-  const second: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-LDG-027", status: "passed", locator: "b.test.ts" };
-  const third: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-LDG-027", status: "passed", locator: "c.test.ts" };
-  const integrationOne: EvidenceObservation = { qualityCheckKind: "integration", claimCode: "SCN-LDG-027", status: "passed", locator: "d.feature" };
-  const integrationTwo: EvidenceObservation = { qualityCheckKind: "integration", claimCode: "SCN-LDG-027", status: "failed", locator: "e.feature", message: "boom" };
+  const first: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "CLM-LDG-027", status: "passed", locator: "a.test.ts" };
+  const second: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "CLM-LDG-027", status: "passed", locator: "b.test.ts" };
+  const third: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "CLM-LDG-027", status: "passed", locator: "c.test.ts" };
+  const integrationOne: EvidenceObservation = { qualityCheckKind: "integration", claimCode: "CLM-LDG-027", status: "passed", locator: "d.feature" };
+  const integrationTwo: EvidenceObservation = { qualityCheckKind: "integration", claimCode: "CLM-LDG-027", status: "failed", locator: "e.feature", message: "boom" };
   const uncitedOne: EvidenceObservation = { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "f.test.ts", message: "said" };
   const uncitedTwo: EvidenceObservation = { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "g.test.ts" };
 
   function ledger() {
-    const scenarios: Scenario[] = [{ claimCode: "SCN-LDG-027", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
+    const scenarios: Scenario[] = [{ claimCode: "CLM-LDG-027", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
     return reconcile(scenarios, [third, integrationTwo, uncitedTwo, first, integrationOne, uncitedOne, second]);
   }
 
@@ -115,14 +115,14 @@ describe("[SCN-LDG-027] a quality-check reconciliation carries every evidence ob
   }
 
   it("holds all three unit tests citing the scenario's unit obligation in one unit reconciliation, in evidence order", () => {
-    const unit = qcrsOf("SCN-LDG-027", "unit");
+    const unit = qcrsOf("CLM-LDG-027", "unit");
     expect(unit).toHaveLength(1);
     expect(unit[0]!.evidenceObligation).toEqual({ qualityCheckKind: "unit" });
     expect(unit[0]!.evidenceObservations).toEqual([first, second, third].map((o) => ({ ...o, outcome: "satisfied" })));
   });
 
   it("holds both integration observations the scenario raises no obligation for in one integration reconciliation", () => {
-    const integration = qcrsOf("SCN-LDG-027", "integration");
+    const integration = qcrsOf("CLM-LDG-027", "integration");
     expect(integration).toHaveLength(1);
     expect(integration[0]!.evidenceObligation).toBeUndefined();
     expect(integration[0]!.evidenceObservations).toEqual([integrationOne, integrationTwo].map((o) => ({ ...o, outcome: "no-evidence-obligation" })));
@@ -142,37 +142,37 @@ describe("[SCN-LDG-027] a quality-check reconciliation carries every evidence ob
   });
 });
 
-describe("[SCN-LDG-010] a zero-evidence obligation scenario cited by a stray evidence observation is no-evidence-obligation, not both-missing", () => {
+describe("[CLM-LDG-010] a zero-evidence obligation scenario cited by a stray evidence observation is no-evidence-obligation, not both-missing", () => {
   it("emits a no-evidence-obligation row (NOT a warning, NOT both-missing) when a zero-evidence obligation scenario is cited by a stray evidence observation", () => {
     const scenarios: Scenario[] = [
-      { claimCode: "SCN-LDG-010", evidenceObligations: [] },
+      { claimCode: "CLM-LDG-010", evidenceObligations: [] },
     ];
     const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheckKind: "unit", claimCode: "SCN-LDG-010", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "CLM-LDG-010", status: "passed" },
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);
 
-    const row = balance.claimReconciliations.find((s) => s.claim === "SCN-LDG-010");
+    const row = balance.claimReconciliations.find((s) => s.claim === "CLM-LDG-010");
     expect(row?.kind).toBe("scenario");
     expect(row?.verdict).toBe("out-of-balance");
     expect(reconcilingItemsOf(row!)).toEqual([
-      { qualityCheckKind: "unit", outcome: "no-evidence-obligation", evidenceObservation: { qualityCheckKind: "unit", claimCode: "SCN-LDG-010", status: "passed", outcome: "no-evidence-obligation" } },
+      { qualityCheckKind: "unit", outcome: "no-evidence-obligation", evidenceObservation: { qualityCheckKind: "unit", claimCode: "CLM-LDG-010", status: "passed", outcome: "no-evidence-obligation" } },
     ]);
     expect(reconcilingItemsOf(row!).some((r) => r.outcome === "both-missing")).toBe(false);
   });
 });
 
-describe("[SCN-LDG-009] a scenario with zero rows on both sides is reported as both-missing, out of balance", () => {
+describe("[CLM-LDG-009] a scenario with zero rows on both sides is reported as both-missing, out of balance", () => {
 
   it("does NOT emit both-missing when the scenario names an evidence obligation (a one-sided row is a debit, not both-missing)", () => {
     const scenarios: Scenario[] = [
-      { claimCode: "SCN-LDG-009", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "CLM-LDG-009", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     const evidenceObservations: EvidenceObservation[] = [];
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const row = balance.claimReconciliations.find((s) => s.claim === "SCN-LDG-009");
+    const row = balance.claimReconciliations.find((s) => s.claim === "CLM-LDG-009");
 
     expect(row?.verdict).toBe("out-of-balance");
     expect(reconcilingItemsOf(row!)).toEqual([{ qualityCheckKind: "unit", outcome: "missing", evidenceObligation: { qualityCheckKind: "unit" } }]);

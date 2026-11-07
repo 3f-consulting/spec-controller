@@ -7,7 +7,7 @@ import type { Ledger } from "./ledger.js";
 import type { EvidenceObservation, QualityCheckKind, Scenario } from "./journal.js";
 import type { QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 
-const CLAIM_CODE = "SCN-AAA-001";
+const CLAIM_CODE = "CLM-AAA-001";
 
 const unit = (status: "passed" | "failed", locator: string): EvidenceObservation => ({
   qualityCheckKind: "unit",
@@ -44,7 +44,7 @@ function reconciledOneScenario(observations: EvidenceObservation[], obligations:
   return { ledger, row: rowOf(ledger, CLAIM_CODE) };
 }
 
-describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation holds reads its own outcome, every one counting toward the claim's verdict, and an obligation with none reads one missing line", () => {
+describe("[CLM-LDG-047] each evidence observation a quality-check reconciliation holds reads its own outcome, every one counting toward the claim's verdict, and an obligation with none reads one missing line", () => {
   it("reads two satisfied lines for an obligation answered by two passing tests, and the claim balances", () => {
     const { ledger, row } = reconciledOneScenario([unit("passed", "a.test.ts"), unit("passed", "b.test.ts")]);
 
@@ -147,9 +147,9 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
   });
 
   it("reads each observation on a phantom claim as its own cites-unknown-scenario line", () => {
-    const phantom = (locator: string): EvidenceObservation => ({ qualityCheckKind: "unit", claimCode: "SCN-PHM-999", status: "passed", locator });
+    const phantom = (locator: string): EvidenceObservation => ({ qualityCheckKind: "unit", claimCode: "CLM-PHM-999", status: "passed", locator });
     const ledger = reconcile([], [phantom("a.test.ts"), phantom("b.test.ts")]);
-    const row = rowOf(ledger, "SCN-PHM-999");
+    const row = rowOf(ledger, "CLM-PHM-999");
 
     expect(qcrOf(row, "unit").map(lineOutcomesOf)).toEqual([["cites-unknown-scenario", "cites-unknown-scenario"]]);
     expect(reconcilingItemsOf(row).map((line) => line.outcome)).toEqual(["cites-unknown-scenario", "cites-unknown-scenario"]);
@@ -182,34 +182,34 @@ describe("[SCN-LDG-047] each evidence observation a quality-check reconciliation
     expect(row.verdict).toBe("out-of-balance");
   });
 
-  it("reads one line for a scenario with no @SCN, for a shared code's kind of quality check, and for a scenario with neither side", () => {
+  it("reads one line for a scenario with no claim code, for a shared code's kind of quality check, and for a scenario with neither side", () => {
     const ledger = reconcile(
       [
-        { claimCode: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-NON-001", evidenceObligations: [] },
+        { claimCode: "CLM-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-NON-001", evidenceObligations: [] },
       ],
       [],
       ["a.feature : untagged"]
     );
 
     expect(reconcilingItemsOf(rowOf(ledger, "a.feature : untagged")).map((line) => line.outcome)).toEqual(["no-claim-code"]);
-    expect(reconcilingItemsOf(rowOf(ledger, "SCN-DUP-001")).map((line) => [line.qualityCheckKind, line.outcome])).toEqual([
+    expect(reconcilingItemsOf(rowOf(ledger, "CLM-DUP-001")).map((line) => [line.qualityCheckKind, line.outcome])).toEqual([
       ["unit", "duplicate-claim-code"],
     ]);
-    expect(reconcilingItemsOf(rowOf(ledger, "SCN-NON-001")).map((line) => line.outcome)).toEqual(["both-missing"]);
+    expect(reconcilingItemsOf(rowOf(ledger, "CLM-NON-001")).map((line) => line.outcome)).toEqual(["both-missing"]);
   });
 
   it("counts lines, not reconciliations, in the summary's total and by-outcome tally", () => {
     const ledger = reconcile(
       [
         { claimCode: CLAIM_CODE, evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-BBB-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-BBB-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
         unit("passed", "a.test.ts"),
         unit("passed", "b.test.ts"),
-        { qualityCheckKind: "unit", claimCode: "SCN-BBB-001", status: "failed", broken: true, locator: "c.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "CLM-BBB-001", status: "failed", broken: true, locator: "c.test.ts" },
       ]
     );
 

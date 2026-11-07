@@ -14,7 +14,7 @@ const expectVitestRecognisedAtCheck = (command: string, scripts: Parameters<type
   ]);
 };
 
-describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a command runs", () => {
+describe("[CLM-WFS-026] commandInvokesScript — a script is run only where a command runs", () => {
   it.each([
     ["as what echo prints", "echo pnpm check", "check"],
     ["as an argument to a command's option", "publint --pack pnpm packages/core && publint --pack pnpm packages/spec-controller", "packages/core"],
@@ -197,7 +197,7 @@ describe("[SCN-WFS-026] commandInvokesScript — a script is run only where a co
   });
 });
 
-describe("[SCN-WFS-027] commandInvokesScript — a script run behind a command that runs the command after it is run", () => {
+describe("[CLM-WFS-027] commandInvokesScript — a script run behind a command that runs the command after it is run", () => {
   it.each([
     ["env past its options and assignments", "env -i -u HOME --unset=TMPDIR -C packages/core CI=1 pnpm test", "test"],
     ["nice past its adjustment", "nice -n 10 pnpm test", "test"],
@@ -406,7 +406,7 @@ describe("[SCN-WFS-027] commandInvokesScript — a script run behind a command t
   );
 });
 
-describe("[SCN-WFS-028] commandInvokesScript — a script run after a background &, in a subshell or a group, in the body of an if, a loop or a select, or as a coproc is run", () => {
+describe("[CLM-WFS-028] commandInvokesScript — a script run after a background &, in a subshell or a group, in the body of an if, a loop or a select, or as a coproc is run", () => {
   it.each([
     ["after a background &", "pnpm start & pnpm test", "test"],
     ["after a background & glued to both commands", "pnpm start&pnpm test", "test"],
@@ -488,7 +488,7 @@ describe("[SCN-WFS-028] commandInvokesScript — a script run after a background
   );
 });
 
-describe("[SCN-WFS-021] recognisedRunners — npm's test shortcut runs the manifest's test script", () => {
+describe("[CLM-WFS-021] recognisedRunners — npm's test shortcut runs the manifest's test script", () => {
   it.each([["npm test"], ["npm t"], ["npm tst"], ["cd packages/core && npm test"]] as const)(
     "recognises the unit runner at a step running %s",
     (command) => {
@@ -505,7 +505,7 @@ describe("[SCN-WFS-021] recognisedRunners — npm's test shortcut runs the manif
   });
 });
 
-describe("[SCN-WFS-022] commandInvokesScript — npm's run aliases run the script named after them, as npm run does", () => {
+describe("[CLM-WFS-022] commandInvokesScript — npm's run aliases run the script named after them, as npm run does", () => {
   it.each([["npm run"], ["npm run-script"], ["npm rum"], ["npm urn"]] as const)(
     "reads a step running %s check under the check script it runs",
     (run) => {
@@ -524,7 +524,7 @@ describe("[SCN-WFS-022] commandInvokesScript — npm's run aliases run the scrip
   });
 });
 
-describe("[SCN-WFS-023] recognisedRunners — pnpm's test shortcut runs the manifest's test script", () => {
+describe("[CLM-WFS-023] recognisedRunners — pnpm's test shortcut runs the manifest's test script", () => {
   it.each([["pnpm t"], ["pnpm tst"]] as const)("recognises the unit runner at a step running %s", (command) => {
     expectVitestRecognisedAtCheck(command, { test: "vitest run" });
   });
@@ -539,7 +539,7 @@ describe("[SCN-WFS-023] recognisedRunners — pnpm's test shortcut runs the mani
   });
 });
 
-describe("[SCN-WFS-024] commandInvokesScript — a script run after a pnpm selection is run", () => {
+describe("[CLM-WFS-024] commandInvokesScript — a script run after a pnpm selection is run", () => {
   it.each([
     ["pnpm --filter core test", "test"],
     ["pnpm --filter=core test", "test"],
@@ -591,7 +591,7 @@ describe("[SCN-WFS-024] commandInvokesScript — a script run after a pnpm selec
   });
 });
 
-describe("[SCN-WFS-025] commandInvokesScript — a script run in a yarn workspace is run", () => {
+describe("[CLM-WFS-025] commandInvokesScript — a script run in a yarn workspace is run", () => {
   it.each([
     ["yarn workspace web test", "test"],
     ["yarn workspace web run test", "test"],

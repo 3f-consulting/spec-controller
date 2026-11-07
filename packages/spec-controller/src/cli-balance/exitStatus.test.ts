@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { exitCodeOf } from "./exitStatus.js";
 
-describe("[SCN-CLI-021] exitCodeOf — --exit-zero moves a verdict's code to 0", () => {
+describe("[CLM-CLI-021] exitCodeOf — --exit-zero moves a verdict's code to 0", () => {
   const ROWS = [
     { verdict: "out-of-balance", code: 1 },
     { verdict: "claim-code-errors", code: 1 },
@@ -22,7 +22,7 @@ describe("[SCN-CLI-021] exitCodeOf — --exit-zero moves a verdict's code to 0",
   });
 });
 
-describe("[SCN-CLI-022] exitCodeOf — --exit-zero never moves a run that could give no verdict", () => {
+describe("[CLM-CLI-022] exitCodeOf — --exit-zero never moves a run that could give no verdict", () => {
   const ROWS = [
     { verdict: "unsound", code: 4 },
     { verdict: "nothing-to-reconcile", code: 5 },

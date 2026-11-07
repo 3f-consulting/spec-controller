@@ -18,7 +18,7 @@ const EXAMPLES: [string, { flag: string; argv: string[] }][] = [
   ["the report-only option, before no known command", { flag: "--exit-zero", argv: ["--exit-zero", "nosuchcommand"] }],
 ];
 
-describe("[SCN-CLI-060] a flag given before the command is refused as a flag out of place", () => {
+describe("[CLM-CLI-060] a flag given before the command is refused as a flag out of place", () => {
 
   for (const [row, { flag, argv }] of EXAMPLES) {
     it(`refuses ${row} as a flag before the command, listing the host's modifiers, and takes no command arguments`, () => {

@@ -23,7 +23,7 @@ function reconcile(notChecks?: readonly string[]): EvidenceReconciliation {
   });
 }
 
-describe("[SCN-RMD-013] the step accounting names the steps the target calls non-checks, and none for a target that names no step a non-check", () => {
+describe("[CLM-RMD-013] the step accounting names the steps the target calls non-checks, and none for a target that names no step a non-check", () => {
   it("names each step the target calls a non-check under its workflow, job and name, in step order", () => {
     const { summary } = reconcile(["ci.yml:quality:Types", "ci.yml:quality:Install"]);
     expect(summary.stepAccounting).toHaveProperty("steps.nonChecks");

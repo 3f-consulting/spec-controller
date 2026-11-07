@@ -10,7 +10,7 @@ const REFUSING_TOOL_VERSION = "9.9.9-test";
 
 const MEASUREMENTS_RETIRED_IN = "0.1.0-alpha.5";
 
-describe("[SCN-CLI-023] checkUnknownFlags refuses a flag balance has retired as retired, offering no pin", () => {
+describe("[CLM-CLI-023] checkUnknownFlags refuses a flag balance has retired as retired, offering no pin", () => {
   let refusal: string | null;
   let balance: CommandSpec | undefined;
   let retiredFlags: NonNullable<CommandSpec["retiredFlags"]>;
@@ -59,7 +59,7 @@ describe("[SCN-CLI-023] checkUnknownFlags refuses a flag balance has retired as 
   });
 });
 
-describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — a flag the command has retired", () => {
+describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — a flag the command has retired", () => {
   it("prints balance's refusal of a retired flag with [retired-flag] once, after the usage-error prefix, and no code on its pointer lines", () => {
     const retired = checkUnknownFlags({ measurements: "x.json" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
     expect(retired).not.toBeNull();

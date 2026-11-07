@@ -3,8 +3,8 @@
     {
       "name": "tests/fixtures/code-error-out-of-balance/widget.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-CEA-001] the first scenario is proven", "status": "passed" },
-        { "fullName": "[SCN-CEA-002] the misfiled scenario is proven", "status": "passed" }
+        { "fullName": "[CLM-CEA-001] the first scenario is proven", "status": "passed" },
+        { "fullName": "[CLM-CEA-002] the misfiled scenario is proven", "status": "passed" }
       ]
     }
   ]

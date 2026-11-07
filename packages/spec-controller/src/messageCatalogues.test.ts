@@ -188,10 +188,10 @@ const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessage
   [CoreMessage.MisfiledAndSeveralClaimCodesFraming]: { count: "2 claim code errors" },
   [CoreMessage.DuplicateClaimCodeNotListed]: { outcome: "Evidence Obligation's claim code is carried by another Scenario" },
   [CoreMessage.DuplicateFeatureCode]: { code: "ABC", fileCount: 2, files: "a.feature, b.feature" },
-  [CoreMessage.ForeignClaimCodeCarried]: { file: "a.feature", featureCode: "ABC", claimCode: "SCN-DEF-001", named: "DEF", carrierCount: 2, carriers: "d.feature, e.feature" },
-  [CoreMessage.ForeignClaimCodeNoCarrier]: { file: "a.feature", featureCode: "ABC", claimCode: "SCN-DEF-001", named: "DEF" },
+  [CoreMessage.ForeignClaimCodeCarried]: { file: "a.feature", featureCode: "ABC", claimCode: "CLM-DEF-001", named: "DEF", carrierCount: 2, carriers: "d.feature, e.feature" },
+  [CoreMessage.ForeignClaimCodeNoCarrier]: { file: "a.feature", featureCode: "ABC", claimCode: "CLM-DEF-001", named: "DEF" },
   [CoreMessage.NoFeatureCode]: { file: "a.feature" },
-  [CoreMessage.ScenarioSeveralClaimCodes]: { file: "a.feature", scenario: "a scenario", codeCount: 2, codes: "SCN-ABC-001, SCN-ABC-002" },
+  [CoreMessage.ScenarioSeveralClaimCodes]: { file: "a.feature", scenario: "a scenario", codeCount: 2, codes: "CLM-ABC-001, CLM-ABC-002" },
   [CoreMessage.ProvenanceTargetRepo]: { target: "/repo" },
   [CoreMessage.ProvenanceTargetRepoUntargeted]: { target: "unknown-target", origin: "owner/repo" },
   [CoreMessage.ProvenanceNotSupplied]: { flags: "--results" },
@@ -218,7 +218,7 @@ const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessage
   [CoreMessage.PhantomClaimReconciliations]: { count: 1 },
   [CoreMessage.UnnamedClaimReconciliations]: { count: 1 },
   [CoreMessage.NoClaimCodeScenarios]: { count: 1 },
-  [CoreMessage.CodesAndNoClaimCodeScenarios]: { codes: "SCN-ABC-001", count: 1 },
+  [CoreMessage.CodesAndNoClaimCodeScenarios]: { codes: "CLM-ABC-001", count: 1 },
   [CoreMessage.ClaimReconciliationTally]: { total: 3, balanced: 2, outOfBalance: 1 },
   [CoreMessage.PhantomClaimTally]: { count: 1 },
   [CoreMessage.UnnamedClaimTally]: { count: 1, unnamedClaimId: "(unnamed claim)" },
@@ -227,14 +227,14 @@ const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessage
   [CoreMessage.SharedClaimCodes]: { scenarios: 4, codes: 1 },
   [CoreMessage.SharedClaimCodeScenario]: { feature: "login.feature", title: "a user with the right password is let in" },
   [CoreMessage.PendingItemFor]: { qualityCheckKind: "unit" },
-  [CoreMessage.CheckStepNoOutcome]: { claimCode: "SCN-ABC-001" },
-  [CoreMessage.CheckStepSkipped]: { claimCode: "SCN-ABC-001" },
-  [CoreMessage.CheckStepEnded]: { claimCode: "SCN-ABC-001", outcome: "cancelled" },
+  [CoreMessage.CheckStepNoOutcome]: { claimCode: "CLM-ABC-001" },
+  [CoreMessage.CheckStepSkipped]: { claimCode: "CLM-ABC-001" },
+  [CoreMessage.CheckStepEnded]: { claimCode: "CLM-ABC-001", outcome: "cancelled" },
   [CoreMessage.AmbiguousNamedStep]: { step: "Given a thing" },
   [CoreMessage.UnnamedClaimGroupCounts]: { ran: 3, passed: 2, failed: 1 },
   [CoreMessage.UnnamedClaimFailedNames]: { names: "spawns yarn / reads the lockfile" },
-  [CoreMessage.SeveralClaimCodesCited]: { count: 2, codes: "SCN-ABC-001, SCN-ABC-002" },
-  [CoreMessage.SharedClaimCode]: { code: "SCN-ABC-001" },
+  [CoreMessage.SeveralClaimCodesCited]: { count: 2, codes: "CLM-ABC-001, CLM-ABC-002" },
+  [CoreMessage.SharedClaimCode]: { code: "CLM-ABC-001" },
   [CoreMessage.EvidenceObligationDivergesFromOutcome]: { outcome: "satisfied", presenceForOutcome: "Exists", presenceFound: "None" },
   [CoreMessage.EvidenceObservationDivergesFromOutcome]: { outcome: "missing", presenceForOutcome: "None", presenceFound: "Exists" },
 };
@@ -249,11 +249,11 @@ type AppValues = AppMessageValues & AppErrorValues;
 const SAMPLE_APP_VALUES: { readonly [C in keyof AppValues]: AppValues[C] } = {
   [AppMessage.BuiltInDeferralTags]: { tags: "@wip, @pending" },
   [AppMessage.ShallowHistoryRisksPartCode]: { before: "abc1234", part: "ONE" },
-  [AppMessage.ShallowHistoryRisksCodeAbove]: { before: "abc1234", code: "SCN-ONE-001" },
+  [AppMessage.ShallowHistoryRisksCodeAbove]: { before: "abc1234", code: "CLM-ONE-001" },
   [AppMessage.NoRepositoryRisksPartCode]: { part: "ONE" },
-  [AppMessage.NoRepositoryRisksCodeAbove]: { code: "SCN-ONE-001" },
-  [AppMessage.HighestSeenInTree]: { code: "SCN-ONE-005", path: "features/one.feature", line: 8 },
-  [AppMessage.HighestSeenInCommit]: { code: "SCN-ONE-005", path: "features/one.feature", line: 8, commit: "abc1234" },
+  [AppMessage.NoRepositoryRisksCodeAbove]: { code: "CLM-ONE-001" },
+  [AppMessage.HighestSeenInTree]: { code: "CLM-ONE-005", path: "features/one.feature", line: 8 },
+  [AppMessage.HighestSeenInCommit]: { code: "CLM-ONE-005", path: "features/one.feature", line: 8, commit: "abc1234" },
   [AppMessage.PartAlreadyHeaded]: { part: "ONE" },
   [AppMessage.HelpUsageLine]: { modifierUsage: "[--store <dir>] [--run-id <id>]" },
   [AppMessage.HelpCommandTitle]: { command: "allocate", summary: "Print the next claim code for a feature part." },
@@ -356,7 +356,7 @@ function renderedFault(code: QualityCheckFaultCode): string {
   return qualityCheckFaultWords(SAMPLE_FAULTS[code]);
 }
 
-describe("[SCN-MSG-002] every code has exactly one message", () => {
+describe("[CLM-MSG-002] every code has exactly one message", () => {
   it("holds core's report catalogue to every core message code and nothing else", () => {
     const codes = codesOf(CoreMessage);
     expect(codes.length).toBeGreaterThan(0);
@@ -403,7 +403,7 @@ describe("[SCN-MSG-002] every code has exactly one message", () => {
   });
 });
 
-describe("[SCN-MSG-003] every message belongs to a code", () => {
+describe("[CLM-MSG-003] every message belongs to a code", () => {
   it("holds the app's data file to entries an app message or error code uses, and core's to entries a core message code uses, naming any other", () => {
     const codes = [...codesOf(AppMessage), ...codesOf(AppError)].filter((code) => typeof code === "string");
     expect(codes.length).toBeGreaterThan(0);
@@ -414,7 +414,7 @@ describe("[SCN-MSG-003] every message belongs to a code", () => {
   });
 });
 
-describe("[SCN-MSG-004] no message is empty", () => {
+describe("[CLM-MSG-004] no message is empty", () => {
   it("names an entry that is empty or only whitespace", () => {
     expect(blankEntries({ kept: "Kept.", empty: "", spaces: " \t\n" })).toEqual(["empty", "spaces"]);
   });
@@ -430,7 +430,7 @@ describe("[SCN-MSG-004] no message is empty", () => {
   });
 });
 
-describe("[SCN-MSG-005] a message uses only the values its code gives it", () => {
+describe("[CLM-MSG-005] a message uses only the values its code gives it", () => {
   it("names a message using a placeholder its code does not give, and the placeholder, in any branch of a plural", () => {
     const texts = { greeting: "Hello {name}, from {sender}.", files: "{count, plural, one {# file in {dir}} other {# files}}" };
     const values = { greeting: { name: "Ada" }, files: { count: 1 } };
@@ -446,7 +446,7 @@ describe("[SCN-MSG-005] a message uses only the values its code gives it", () =>
   });
 });
 
-describe("[SCN-MSG-006] a message uses every value its code gives it", () => {
+describe("[CLM-MSG-006] a message uses every value its code gives it", () => {
   it("names a message leaving out a value its code gives, and the value, reading every branch of a plural", () => {
     const texts = { greeting: "Hello {name}.", files: "{count, plural, one {# file in {dir}} other {# files}}" };
     const values = { greeting: { name: "Ada", sender: "Bo" }, files: { count: 1, dir: "src", owner: "Cy" } };
@@ -462,7 +462,7 @@ describe("[SCN-MSG-006] a message uses every value its code gives it", () => {
   });
 });
 
-describe("[SCN-MSG-007] every message parses", () => {
+describe("[CLM-MSG-007] every message parses", () => {
   it("names a message the format cannot parse, with the parser's words and the offset where it failed", () => {
     const texts = { kept: "Hello {name}.", unclosed: "unknown command {command." };
     expect(unparseable(texts)).toEqual([{ message: "unclosed", error: "MALFORMED_ARGUMENT", offset: 16 }]);
@@ -474,7 +474,7 @@ describe("[SCN-MSG-007] every message parses", () => {
   });
 });
 
-describe("[SCN-MSG-008] every message prints its words as written", () => {
+describe("[CLM-MSG-008] every message prints its words as written", () => {
   it("names a message whose apostrophe, brace or hash sign would not print as written, or whose number the locale formats", () => {
     const texts = {
       doubled: "Run ''{scope} --help' to see the flags.",
@@ -497,7 +497,7 @@ describe("[SCN-MSG-008] every message prints its words as written", () => {
   });
 });
 
-describe("[SCN-MSG-009] no message chooses between words other than by a count's plural forms", () => {
+describe("[CLM-MSG-009] no message chooses between words other than by a count's plural forms", () => {
   it("names a message that uses select, or an exact plural selector, at any depth", () => {
     const texts = {
       counted: "{count, plural, one {{count} file} other {{count} files}}",

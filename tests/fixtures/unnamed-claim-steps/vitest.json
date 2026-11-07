@@ -3,7 +3,7 @@
     {
       "name": "tests/fixtures/unnamed-claim-steps/proven.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-SSP-001] the target unit scenario is proven", "status": "passed" }
+        { "fullName": "[CLM-SSP-001] the target unit scenario is proven", "status": "passed" }
       ]
     },
     {

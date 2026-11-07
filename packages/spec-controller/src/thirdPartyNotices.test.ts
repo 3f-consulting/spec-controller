@@ -24,7 +24,7 @@ const workspacePackage = {
   texts: ["MIT License", "Copyright 3F Consulting"],
 };
 
-describe("[SCN-TPN-001] building the command fails, naming the package and the field, when a bundled package's manifest gives an empty or missing name or version, or a licence that is empty or not text", () => {
+describe("[CLM-TPN-001] building the command fails, naming the package and the field, when a bundled package's manifest gives an empty or missing name or version, or a licence that is empty or not text", () => {
   it("writes each package's notice in directory order, an installed package headed with its version and a workspace package without", () => {
     expect(thirdPartyNotices([workspacePackage, installedPackage], wording)).toBe(
       [
@@ -84,7 +84,7 @@ describe("[SCN-TPN-001] building the command fails, naming the package and the f
   });
 });
 
-describe("[SCN-TPN-002] building the command fails when the engine is not among the packages its bundle carries", () => {
+describe("[CLM-TPN-002] building the command fails when the engine is not among the packages its bundle carries", () => {
   it("refuses a bundled-package list without the engine, naming the engine", () => {
     expect(() => thirdPartyNotices([installedPackage], wording)).toThrow(
       new Error("refused: no @3f-consulting/spec-controller-core"),

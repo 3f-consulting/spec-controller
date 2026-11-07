@@ -41,7 +41,7 @@ function byFeatureRowOf(rows: string[][], code: string): { row: string[][]; othe
   return { row: rows.filter(isCodes).map(([, ...cells]) => cells), others: rows.filter((cells) => !isCodes(cells)) };
 }
 
-describe("[SCN-RPT-031] a feature file's scenarios carrying no claim code count together on one row named by that file", () => {
+describe("[CLM-RPT-031] a feature file's scenarios carrying no claim code count together on one row named by that file", () => {
   let checkout: ScenarioName[];
   beforeEach(() => {
     checkout = ["pay by card", "pay by voucher", "pay on account"].map((title) => scenarioName("checkout.feature", title));
@@ -54,7 +54,7 @@ describe("[SCN-RPT-031] a feature file's scenarios carrying no claim code count 
   });
 });
 
-describe("[SCN-RPT-032] a scenario carrying no claim code in a file headed by a feature code counts on that feature's row", () => {
+describe("[CLM-RPT-032] a scenario carrying no claim code in a file headed by a feature code counts on that feature's row", () => {
   it("counts a headed file's no-claim-code scenarios on its feature's row when none carries the code", () => {
     const { reconciliation, census } = noClaimCodeCorpus([
       scenarioName("one.feature", "a no-claim-code scenario"),
@@ -70,11 +70,11 @@ describe("[SCN-RPT-032] a scenario carrying no claim code in a file headed by a 
       scenarioName("sample.feature", "an untagged outline with no anchor"),
     ];
     const ledger = reconcile(
-      [{ claimCode: "SCN-UNT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "CLM-UNT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [],
       untagged.map((u) => `${u.feature} : ${scenarioTitleOf(u)}`),
     );
     const md = renderMarkdown(reconciliationOf(ledger), ctx, publishedExitCodeOf, evidenceObligations(1, 1, untagged), new Map([["UNT", "sample"]]));
-    expect(byFeatureRowOf(byFeatureRows(md), "UNT")).toEqual({ row: [["3", "SCN-UNT-001 and 2 with no claim code"]], others: [] });
+    expect(byFeatureRowOf(byFeatureRows(md), "UNT")).toEqual({ row: [["3", "CLM-UNT-001 and 2 with no claim code"]], others: [] });
   });
 });

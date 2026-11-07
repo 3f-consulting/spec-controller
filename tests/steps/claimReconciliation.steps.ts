@@ -72,13 +72,13 @@ const UNCITED_STEPS = ["ci.yml:ci:pnpm lint:bar", "ci.yml:ci:pnpm lint:foo"];
 
 const UNCITED_TEST_FILE = "tests/fixtures/unnamed-claim-steps/sound.test.ts";
 
-const PHANTOM_CLAIM = "SCN-PST-901";
+const PHANTOM_CLAIM = "CLM-PST-901";
 
 const PHANTOM_CLAIM_FAILED_TEST = "tests/fixtures/cites-unknown-scenario-status/broken-spawn.test.ts";
 
 const PHANTOM_CLAIM_PASSED_TEST = "tests/fixtures/cites-unknown-scenario-status/sound.test.ts";
 
-const NO_OBLIGATION_SCENARIO = "SCN-NOS-001";
+const NO_OBLIGATION_SCENARIO = "CLM-NOS-001";
 
 const NO_OBLIGATION_FAILED_TEST = "tests/fixtures/no-obligation-status/broken-spawn.test.ts";
 

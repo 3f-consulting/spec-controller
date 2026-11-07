@@ -11,7 +11,7 @@ const noCommand = (given: readonly string[]): string =>
   `${message(AppError.NoCommandAfterModifiers, { modifiers: given.join(", ") })}\n` +
   message(AppMessage.SeeCommandsAndModifiers);
 
-describe("[SCN-CLI-067] the host refuses a modifier with no command after it, naming it, and stores nothing", () => {
+describe("[CLM-CLI-067] the host refuses a modifier with no command after it, naming it, and stores nothing", () => {
 
   for (const modifier of modifiers) {
     it(`refuses ${modifier} given its value and nothing after it, naming it, and takes no command`, () => {

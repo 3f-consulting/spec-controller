@@ -137,17 +137,17 @@ A test cites a scenario that asks for no evidence of its kind. Move the test's c
 
 ## How your evidence finds its scenario
 
-A scenario's tag line says what it needs proved. `@SCN-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-<FFF>-<NNN>`. A code may be written under `CLM` as well as `SCN`, and the two forms with one feature part and number are different codes: a scenario tagged under `CLM` is answered only by evidence citing its code under `CLM`. A tag naming a kind of quality check says which kind of run answers the obligation. Whether that run really is end-to-end is the test's job.
+A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `CLM-<FFF>-<NNN>`. A code may be written under `CLM` as well as `SCN`, and the two forms with one feature part and number are different codes: a scenario tagged under `CLM` is answered only by evidence citing its code under `CLM`. A tag naming a kind of quality check says which kind of run answers the obligation. Whether that run really is end-to-end is the test's job.
 
 A feature file has a header code on the line above `Feature:`, then its Rules and scenarios. Each scenario carries its own code:
 
 ```gherkin
 @<FFF>
-Feature: Allocate the next scenario code for a feature part
+Feature: Allocate the next claim code for a feature part
 
   Rule: the next code is one past the highest the repository has ever carried
 
-    @unit @SCN-<FFF>-<NNN>
+    @unit @CLM-<FFF>-<NNN>
     Scenario: a feature part whose highest live code is below a deleted one is offered one past the deleted code
 ```
 
@@ -155,20 +155,20 @@ Each piece of evidence names the scenario it answers, **in the one form its runn
 
 | The scenario asks for | The evidence | How it names the scenario |
 |---|---|---|
-| `@unit` | a Vitest test | `[SCN-…]` in square brackets in the test's `it` title, or in an enclosing `describe` title. The most specific one wins. |
-| `@unit` | a Jest test | `[SCN-…]` in square brackets in the test's title, or in an enclosing `describe` title, as for Vitest (see [Citing a scenario from Jest](#citing-a-scenario-from-jest)) |
-| `@unit` | a Go test | `[SCN-…]` in square brackets in a subtest's name, given to `t.Run` (see [Citing a scenario from Go](#citing-a-scenario-from-go)) |
-| `@unit` | a JUnit 5 test in Java | `[SCN-…]` in square brackets in the test's `@DisplayName`, carried into the report by Surefire's phrased reporter (see [Citing a scenario from Java](#citing-a-scenario-from-java)) |
-| `@unit` | a JUnit 5 test in Kotlin | `[SCN-…]` in square brackets in the test's `@DisplayName`, which Gradle writes into the report (see [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin)) |
-| `@unit` | an RSpec example | `[SCN-…]` in square brackets in the example's description, given to `it`, or in an enclosing `describe` or `context` description (see [Citing a scenario from RSpec](#citing-a-scenario-from-rspec)) |
-| `@unit` | a pytest test | one claim code in a `clm` or `scn` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.clm("CLM-…")` or `@pytest.mark.scn("SCN-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
-| `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag, and a row of an Outline with a `clm` column is credited by Cucumber's result for that row |
+| `@unit` | a Vitest test | `[CLM-…]` in square brackets in the test's `it` title, or in an enclosing `describe` title. The most specific one wins. |
+| `@unit` | a Jest test | `[CLM-…]` in square brackets in the test's title, or in an enclosing `describe` title, as for Vitest (see [Citing a scenario from Jest](#citing-a-scenario-from-jest)) |
+| `@unit` | a Go test | `[CLM-…]` in square brackets in a subtest's name, given to `t.Run` (see [Citing a scenario from Go](#citing-a-scenario-from-go)) |
+| `@unit` | a JUnit 5 test in Java | `[CLM-…]` in square brackets in the test's `@DisplayName`, carried into the report by Surefire's phrased reporter (see [Citing a scenario from Java](#citing-a-scenario-from-java)) |
+| `@unit` | a JUnit 5 test in Kotlin | `[CLM-…]` in square brackets in the test's `@DisplayName`, which Gradle writes into the report (see [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin)) |
+| `@unit` | an RSpec example | `[CLM-…]` in square brackets in the example's description, given to `it`, or in an enclosing `describe` or `context` description (see [Citing a scenario from RSpec](#citing-a-scenario-from-rspec)) |
+| `@unit` | a pytest test | one claim code in a `clm` or `scn` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.clm("CLM-…")` or `@pytest.mark.scn("CLM-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
+| `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own claim code, and a row of an Outline with a `clm` column is credited by Cucumber's result for that row |
 | `@fitness` | a CI step | the step's `id:` is the code (see [Fitness functions](#fitness-functions)) |
 
 A Vitest citation:
 
 ```ts
-describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
+describe("[CLM-<FFF>-<NNN>] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
   it("offers the next code", () => { /* … */ });
 });
 ```
@@ -177,23 +177,23 @@ A CI step citation:
 
 ```yaml
       - name: Test
-        id: SCN-<FFF>-<NNN>
+        id: CLM-<FFF>-<NNN>
         run: pnpm test
 ```
 
 ### Only these four forms are read
 
-The table above holds the only four forms that name a scenario: a bracketed code in a test's title or name, or in an enclosing title where the table allows it, a `scn` property on a pytest test, a Cucumber scenario's own `@SCN` tag, and a CI step's `id:`. These name nothing:
+The table above holds the only four forms that name a scenario: a bracketed code in a test's title or name, or in an enclosing title where the table allows it, a `scn` property on a pytest test, a Cucumber scenario's own claim code, and a CI step's `id:`. These name nothing:
 
-- `SCN-<FFF>-<NNN>` or `@SCN-<FFF>-<NNN>` in a test title without the square brackets;
-- a code in a comment, including a `// @SCN-…` line in a step-definition file;
+- `CLM-<FFF>-<NNN>` or `@CLM-<FFF>-<NNN>` in a test title without the square brackets;
+- a code in a comment, including a `// @CLM-…` line in a step-definition file;
 - a code anywhere else.
 
 A test that names nothing still runs and is still reported. It lands on the **unnamed claim**'s row, *Evidence Observation cites no Scenario*, and the scenario it was meant for reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.**
 
 ### Citing a scenario from pytest
 
-A pytest test's name is a Python function name, which cannot hold `[SCN-…]`. So a pytest test cites its scenario with a marker, and a hook you add once copies the marker into the report. Pass the report with `--pytest`:
+A pytest test's name is a Python function name, which cannot hold `[CLM-…]`. So a pytest test cites its scenario with a marker, and a hook you add once copies the marker into the report. Pass the report with `--pytest`:
 
 ```sh
 pytest --junitxml=reports/pytest.xml
@@ -223,7 +223,7 @@ markers =
 ```python
 import pytest
 
-@pytest.mark.scn("SCN-<FFF>-<NNN>")
+@pytest.mark.scn("CLM-<FFF>-<NNN>")
 def test_offers_the_next_code():
     ...
 ```
@@ -231,12 +231,12 @@ def test_offers_the_next_code():
 `pytest --junitxml` then writes the code as a property of that test. This is what `balance` reads:
 
 ```xml
-<testcase classname="test_cases" name="test_offers_the_next_code" time="0.001"><properties><property name="scn" value="SCN-<FFF>-<NNN>" /></properties></testcase>
+<testcase classname="test_cases" name="test_offers_the_next_code" time="0.001"><properties><property name="scn" value="CLM-<FFF>-<NNN>" /></properties></testcase>
 ```
 
-**A `clm` property is read as a `scn` property is.** To cite a code written under `CLM`, use `clm` wherever the steps above say `scn`: `item.iter_markers("clm")` and `("clm", code)` in the hook, `clm(code)` in `pytest.ini`, and `@pytest.mark.clm("CLM-<FFF>-<NNN>")` on the test. `pytest --junitxml` then writes `<property name="clm" value="CLM-<FFF>-<NNN>" />`.
+**A `clm` property is read as a `scn` property is,** whichever prefix the code carries. To cite by `clm`, use it wherever the steps above say `scn`: `item.iter_markers("clm")` and `("clm", code)` in the hook, `clm(code)` in `pytest.ini`, and `@pytest.mark.clm("CLM-<FFF>-<NNN>")` on the test. `pytest --junitxml` then writes `<property name="clm" value="CLM-<FFF>-<NNN>" />`.
 
-**No hook?** Calling `record_property("scn", "SCN-<FFF>-<NNN>")` inside the test writes the same element. Under pytest's default `junit_family`, though, each such test raises a `PytestWarning`, so a suite run with `filterwarnings = error` fails them.
+**No hook?** Calling `record_property("scn", "CLM-<FFF>-<NNN>")` inside the test writes the same element. Under pytest's default `junit_family`, though, each such test raises a `PytestWarning`, so a suite run with `filterwarnings = error` fails them.
 
 **What a pytest report posts:**
 
@@ -262,7 +262,7 @@ A complete test file:
 
 ```js
 describe("allocating the next number", () => {
-  test("[SCN-<FFF>-<NNN>] offers one past the highest number already used", () => {
+  test("[CLM-<FFF>-<NNN>] offers one past the highest number already used", () => {
     expect(nextNumber([1, 3])).toBe(4);
   });
 });
@@ -273,8 +273,8 @@ describe("allocating the next number", () => {
 ```json
 {
   "ancestorTitles": ["allocating the next number"],
-  "title": "[SCN-<FFF>-<NNN>] offers one past the highest number already used",
-  "fullName": "allocating the next number [SCN-<FFF>-<NNN>] offers one past the highest number already used",
+  "title": "[CLM-<FFF>-<NNN>] offers one past the highest number already used",
+  "fullName": "allocating the next number [CLM-<FFF>-<NNN>] offers one past the highest number already used",
   "status": "passed"
 }
 ```
@@ -311,7 +311,7 @@ package allocate
 import "testing"
 
 func TestNextNumber(t *testing.T) {
-	t.Run("[SCN-<FFF>-<NNN>] offers one past the highest number already used", func(t *testing.T) {
+	t.Run("[CLM-<FFF>-<NNN>] offers one past the highest number already used", func(t *testing.T) {
 		if got := NextNumber([]int{1, 3}); got != 4 {
 			t.Fatalf("NextNumber([1 3]) = %d, want 4", got)
 		}
@@ -322,7 +322,7 @@ func TestNextNumber(t *testing.T) {
 gotestsum writes the subtest into the report under its full name: the test function's name and the subtest's, joined by `/`, with every space turned into `_`. The code survives in its brackets. This is what `balance` reads:
 
 ```xml
-<testcase classname="example.com/allocate" name="TestNextNumber/[SCN-&lt;FFF&gt;-&lt;NNN&gt;]_offers_one_past_the_highest_number_already_used" time="0.000000"></testcase>
+<testcase classname="example.com/allocate" name="TestNextNumber/[CLM-&lt;FFF&gt;-&lt;NNN&gt;]_offers_one_past_the_highest_number_already_used" time="0.000000"></testcase>
 ```
 
 A nested subtest's name carries every enclosing subtest's name too. `balance` reads the code in the subtest's own segment, after the last `/`, first. Only when that segment carries none does it read a code in an enclosing subtest's segment, nearest first. Name the runner in the `specController` block as `"unit": "gotestsum"` (see [Naming your runners](#naming-your-runners--runners)).
@@ -383,7 +383,7 @@ import org.junit.jupiter.api.Test;
 class NextNumberTest {
 
   @Test
-  @DisplayName("[SCN-<FFF>-<NNN>] offers one past the highest number already used")
+  @DisplayName("[CLM-<FFF>-<NNN>] offers one past the highest number already used")
   void offersOnePastTheHighest() {
     assertEquals(4, NextNumber.of(List.of(1, 3)));
   }
@@ -393,7 +393,7 @@ class NextNumberTest {
 Surefire writes that test into `TEST-example.allocate.NextNumberTest.xml` under its display name. This is what `balance` reads:
 
 ```xml
-<testcase name="[SCN-&lt;FFF&gt;-&lt;NNN&gt;] offers one past the highest number already used" classname="example.allocate.NextNumberTest" time="0.004"/>
+<testcase name="[CLM-&lt;FFF&gt;-&lt;NNN&gt;] offers one past the highest number already used" classname="example.allocate.NextNumberTest" time="0.004"/>
 ```
 
 Name the runner in the `specController` block with its test task, in the words your pipeline's test step opens with: `"unit": "mvn clean test"` for the `mvn clean test` recommended below, `"unit": "mvn test"` if the step runs `mvn test`, or `"unit": "./mvnw clean test"` for the Maven wrapper (see [Naming your runners](#naming-your-runners--runners)). Declared as `"mvn"` alone, the runner would be recognised in every step that runs Maven, and a `mvn checkstyle:check` step would be taken for the test suite instead of being reported as a check.
@@ -423,7 +423,7 @@ import org.junit.jupiter.api.Test
 class NextNumberTest {
 
     @Test
-    @DisplayName("[SCN-<FFF>-<NNN>] offers one past the highest number already used")
+    @DisplayName("[CLM-<FFF>-<NNN>] offers one past the highest number already used")
     fun offersOnePastTheHighest() {
         assertEquals(4, NextNumber.of(listOf(1, 3)))
     }
@@ -433,7 +433,7 @@ class NextNumberTest {
 Gradle writes that test into `TEST-example.allocate.NextNumberTest.xml` under its display name. This is what `balance` reads:
 
 ```xml
-<testcase name="[SCN-&lt;FFF&gt;-&lt;NNN&gt;] offers one past the highest number already used" classname="example.allocate.NextNumberTest" time="0.004"/>
+<testcase name="[CLM-&lt;FFF&gt;-&lt;NNN&gt;] offers one past the highest number already used" classname="example.allocate.NextNumberTest" time="0.004"/>
 ```
 
 Gradle's report differs from Surefire's in two ways:
@@ -460,7 +460,7 @@ A complete spec file:
 
 ```ruby
 RSpec.describe "allocating the next number" do
-  it "[SCN-<FFF>-<NNN>] offers one past the highest number already used" do
+  it "[CLM-<FFF>-<NNN>] offers one past the highest number already used" do
     expect(next_number([1, 3])).to eq(4)
   end
 end
@@ -470,8 +470,8 @@ end
 
 ```json
 {
-  "description": "[SCN-<FFF>-<NNN>] offers one past the highest number already used",
-  "full_description": "allocating the next number [SCN-<FFF>-<NNN>] offers one past the highest number already used",
+  "description": "[CLM-<FFF>-<NNN>] offers one past the highest number already used",
+  "full_description": "allocating the next number [CLM-<FFF>-<NNN>] offers one past the highest number already used",
   "status": "passed",
   "file_path": "./spec/allocate_spec.rb"
 }
@@ -506,31 +506,31 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
 
 You write two artefacts and no third, and neither is a Cucumber step definition. There is no fitness profile to configure, no manifest list and no step to write.
 
-**1. A scenario, tagged `@fitness`, carrying an `@SCN`.** Write it exactly as you write a `@unit`-only scenario: a tag naming its kind of quality check, a title, and no Given/When/Then, because Cucumber does not select it. Its title is the specification; the command your CI already runs is the evidence.
+**1. A scenario, tagged `@fitness`, carrying a claim code.** Write it exactly as you write a `@unit`-only scenario: a tag naming its kind of quality check, a title, and no Given/When/Then, because Cucumber does not select it. Its title is the specification; the command your CI already runs is the evidence.
 
 ```gherkin
-  @fitness @SCN-<FFF>-<NNN>
+  @fitness @CLM-<FFF>-<NNN>
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
 ```
 
-**2. That scenario's `@SCN` as the `id:` of the CI step that already runs the check.** The check stays exactly where it is in your pipeline; you add only a citation.
+**2. That scenario's claim code as the `id:` of the CI step that already runs the check.** The check stays exactly where it is in your pipeline; you add only a citation.
 
 ```yaml
       - name: Complexity
-        id: SCN-<FFF>-<NNN>
+        id: CLM-<FFF>-<NNN>
         if: always()
         run: eslint
 ```
 
-- **One `@fitness` scenario is one check.** Its `@SCN` identifies the check and its title describes it. Nothing else says what the check is about.
+- **One `@fitness` scenario is one check.** Its claim code identifies the check and its title describes it. Nothing else says what the check is about.
 - **Nothing names a bar.** The bar is in the tool's own configuration or its step's `env:`, such as a suite's `timeout`, and the step fails below it. A check run on a schedule, such as a mutation sweep with Stryker's own `thresholds.break`, holds its bar in its own run and has no step here (see [Wiring into CI](#wiring-into-ci)).
 - **The check's evidence observation is its step's `outcome`.** Whatever the tool measures, its exit code on its own CI step is the verdict.
 
 **Neither artefact is derived from the other, on purpose.** That lets the two disagree, and the run reports each disagreement as a fault:
 
-- A `@fitness` scenario whose `@SCN` no CI step states reconciles **missing**, and the run is out of balance, exactly as a `@unit` scenario with no test does.
-- A step stating an `@SCN` that no scenario carries posts to a **phantom claim**'s row.
-- A step stating no `@SCN` posts to the **unnamed claim**.
+- A `@fitness` scenario whose claim code no CI step states reconciles **missing**, and the run is out of balance, exactly as a `@unit` scenario with no test does.
+- A step stating a claim code that no scenario carries posts to a **phantom claim**'s row.
+- A step stating no claim code posts to the **unnamed claim**.
 
 **`specController.fitnessChecks` is not read.** Like any other key this tool does not read, it is named under `### Configuration not read`, in the same words as a misspelling.
 
@@ -685,7 +685,7 @@ jobs:
       - name: Test
         run: mkdir -p reports && npx vitest run --reporter=json --outputFile=reports/vitest.json
       - name: Complexity
-        id: SCN-<FFF>-<NNN>
+        id: CLM-<FFF>-<NNN>
         if: always()
         run: npx eslint .
       - name: Record the steps
@@ -711,14 +711,14 @@ With `"runners": { "unit": "vitest" }` and `"notChecks": ["ci.yml:build:Install 
 
 ### If you have converted any fitness function
 
-Each check step carries its `@SCN` as its `id:`, and the job ends with one dump step:
+Each check step carries its claim code as its `id:`, and the job ends with one dump step:
 
 ```yaml
 - run: eslint
-  id: SCN-<FFF>-<NNN>
+  id: CLM-<FFF>-<NNN>
   if: always()
 - run: pnpm typecheck
-  id: SCN-<FFF>-<MMM>
+  id: CLM-<FFF>-<MMM>
   if: always()
 - if: always()
   env:
@@ -816,9 +816,9 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 ### What counts as a claim code
 
-A claim code has the form `SCN-<FFF>-<NNN>` or `CLM-<FFF>-<NNN>`: a prefix, a feature part of two to five uppercase letters or digits, then a number of any width. The two prefixes give two different codes. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[SCN-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
+A claim code has the form `CLM-<FFF>-<NNN>` or `SCN-<FFF>-<NNN>`: a prefix, a feature part of two to five uppercase letters or digits, then a number of any width. The two prefixes give two different codes. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[CLM-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
 
-So an id such as `@SCN-TOOLONGCODE-001` is not a claim code. It opens no account and cites nothing. A scenario tagged only with it has no claim code, and reconciles as `no-claim-code`.
+So an id such as `@CLM-TOOLONGCODE-001` is not a claim code. It opens no account and cites nothing. A scenario tagged only with it has no claim code, and reconciles as `no-claim-code`.
 
 The tool judges claim code errors only over the corpus that `--features` names.
 
@@ -826,7 +826,7 @@ The tool judges claim code errors only over the corpus that `--features` names.
 
 ### Duplicate claim codes
 
-**A claim code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry can arise from the same id written twice, or from an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
+**A claim code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry can arise from the same id written twice, or from a claim code on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
 
 - Each scenario reconciles as a Claim Reconciliation of its own, under the code, and every Quality Check Reconciliation on it reads `duplicate-claim-code`: *Evidence Obligation's claim code is carried by another Scenario*. Each row's reconciling item names the scenario it reconciles (*this one is login.feature : a user with the right password is let in*), and the JSON carries it as `scenario: { feature, title }`.
 - No evidence citing that code can be attributed to either scenario, so both claims are out of balance whatever the evidence says. An evidence observation citing the code credits neither and posts to the unnamed claim, naming the code.
@@ -840,7 +840,7 @@ The tool judges claim code errors only over the corpus that `--features` names.
 
 | Handle | The fault | The fix |
 | --- | --- | --- |
-| `foreign-claim-code` | a scenario's code names a feature its file does not carry, e.g. `@SCN-<FFF>-<NNN>` in a file headed with a code other than `@<FFF>` | re-code the scenario for its file, or move it to the file whose header carries the code its id names, when exactly one does; the finding names that file, or says no file carries the code |
+| `foreign-claim-code` | a scenario's code names a feature its file does not carry, e.g. `@CLM-<FFF>-<NNN>` in a file headed with a code other than `@<FFF>` | re-code the scenario for its file, or move it to the file whose header carries the code its id names, when exactly one does; the finding names that file, or says no file carries the code |
 | `no-feature-code` | a feature file carries no header code while its scenarios carry claim codes (a header longer than five characters is no header code) | give the file a header code, and code its scenarios for it |
 | `duplicate-feature-code` | two feature files carry one header code | give one of them a code of its own |
 | `several-claim-codes` | one scenario carries more than one distinct claim code, so it opens no account under any of them, and a test citing one of them cites a code no scenario carries | give the scenario one code |
@@ -941,8 +941,8 @@ Run `spec-controller --help` for the top-level summary of the commands and host 
 | `--junit <report.xml>` | A JUnit XML report, or a directory of them, from any runner that writes one: runtime unit test evidence. For example, for Go, `gotestsum --junitfile <path>` writes one; Maven Surefire writes the `target/surefire-reports` directory for a Java suite; Gradle writes `build/test-results/test` for a Kotlin one. A test cites its scenario with the code in square brackets in its name. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from Go](#citing-a-scenario-from-go), [Citing a scenario from Java](#citing-a-scenario-from-java) and [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin). |
 | `--rspec <report.json>` | An RSpec JSON report (`rspec --format json --out <path>`): runtime unit test evidence. An example cites its scenario with the code in square brackets in its description. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from RSpec](#citing-a-scenario-from-rspec). |
 | `--cucumber <report.json>` | A Cucumber JSON report: runtime test evidence. |
-| `--ci <ci.yml>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where the tool finds an UNCONVERTED fitness function running over the real source, and where a check step's `id:` supplies the `@SCN` that its result cites. |
-| `--package-json <path>` | The target's `package.json`: its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see [Configuration](#configuration--the-speccontroller-block)). A fitness function is named by its `@fitness` scenario and by the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` in the working directory. |
+| `--ci <ci.yml>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where the tool finds an UNCONVERTED fitness function running over the real source, and where a check step's `id:` supplies the claim code that its result cites. |
+| `--package-json <path>` | The target's `package.json`: its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see [Configuration](#configuration--the-speccontroller-block)). A fitness function is named by its `@fitness` scenario and by the CI step whose `id:` is that scenario's claim code; no manifest key names one. Defaults to `package.json` in the working directory. |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did: the `toJSON(steps)` dump, which is the evidence for converted fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance: the project this run reconciled. |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
@@ -1079,11 +1079,11 @@ The code is written under `CLM`, one past the highest number the repository has 
 
 ## Troubleshooting
 
-**No scenarios found, or an empty report.** Check that `--features` points at the directory holding your `.feature` files, and that the scenarios carry `@SCN-…` ids and evidence-obligation tags.
+**No scenarios found, or an empty report.** Check that `--features` points at the directory holding your `.feature` files, and that the scenarios carry `@CLM-…` ids and evidence-obligation tags.
 
 **A `@unit` scenario reads `missing` while its test passes.** Check the square brackets around the code in the test title first. See [Only these four forms are read](#only-these-four-forms-are-read).
 
-**A fitness function shows `missing` or `watermelon` when you didn't expect it.** `missing` means no CI step carries that scenario's `@SCN` as its `id:`; `package.json` scripts play no part in it. `watermelon` means the step that cites it runs under `continue-on-error`, and no `--ci-steps` record answered it. Both are real findings, not tool errors.
+**A fitness function shows `missing` or `watermelon` when you didn't expect it.** `missing` means no CI step carries that scenario's claim code as its `id:`; `package.json` scripts play no part in it. `watermelon` means the step that cites it runs under `continue-on-error`, and no `--ci-steps` record answered it. Both are real findings, not tool errors.
 
 **My first run fails with a wall of uncited checks.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise. A candidate that cites no scenario posts to the unnamed claim, so `balance` exits `1`.
 
@@ -1095,7 +1095,7 @@ The code is written under `CLM`, one past the highest number the repository has 
 
 **The verdict reads CLAIM CODE ERRORS.** The corpus files a claim code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one claim code. `### Claim code errors` names each by its handle and file, and says which fix it wants. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes has no account raised for it under any of them, and the verdict says so. The run exits `1` until the codes are filed correctly. See [Claim code errors](#claim-code-errors).
 
-**A row reads `duplicate-claim-code`.** Two scenarios carry that claim code, and each has a row of its own whose reconciling item names it by its file and title. Give one of them a code of its own. An `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. While two scenarios share it, the run exits `1`.
+**A row reads `duplicate-claim-code`.** Two scenarios carry that claim code, and each has a row of its own whose reconciling item names it by its file and title. Give one of them a code of its own. A claim code hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. While two scenarios share it, the run exits `1`.
 
 **`--json` rejected.** There is no such flag. Use `--format json:<path>`.
 

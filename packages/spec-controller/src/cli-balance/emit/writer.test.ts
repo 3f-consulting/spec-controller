@@ -84,7 +84,7 @@ afterEach(() => {
   }
 });
 
-describe("[SCN-FMT-008] a file destination that cannot be written is refused on the usage code, naming the path and why", () => {
+describe("[CLM-FMT-008] a file destination that cannot be written is refused on the usage code, naming the path and why", () => {
   for (const [shape, arrange, reason] of UNWRITABLE) {
     it(`refuses ${shape}, naming it and ${reason}, on one line with no stack trace`, () => {
       const path = arrange(scratch);
@@ -107,7 +107,7 @@ describe("[SCN-FMT-008] a file destination that cannot be written is refused on 
   });
 });
 
-describe("[SCN-FMT-009] when one file destination cannot be written, the writer emits to no destination", () => {
+describe("[CLM-FMT-009] when one file destination cannot be written, the writer emits to no destination", () => {
   const unwritable = (): PlannedOutput => {
     writeFileSync(join(scratch, "regular"), "");
     return { fmt: "json", dest: { kind: "file", path: join(scratch, "regular", "report.json") } };
@@ -170,7 +170,7 @@ describe("[SCN-FMT-009] when one file destination cannot be written, the writer 
   }
 });
 
-describe("[SCN-FMT-010] two outputs that land on one regular file are refused before anything is written", () => {
+describe("[CLM-FMT-010] two outputs that land on one regular file are refused before anything is written", () => {
   const file = (fmt: "md" | "json", path: string): PlannedOutput => ({ fmt, dest: { kind: "file", path } });
   const EARLIER = "an earlier run's report\n";
 
@@ -218,7 +218,7 @@ describe("[SCN-FMT-010] two outputs that land on one regular file are refused be
   });
 });
 
-describe("[SCN-FMT-012] a destination that is a link to a file not yet created is written through the link", () => {
+describe("[CLM-FMT-012] a destination that is a link to a file not yet created is written through the link", () => {
 
   it("removes the file it created through the link, not the link, when the run is refused for another destination", () => {
     const target = join(scratch, "report.json");

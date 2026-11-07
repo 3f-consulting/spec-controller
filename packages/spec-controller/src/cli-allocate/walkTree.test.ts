@@ -13,11 +13,11 @@ afterEach(() => {
 function tree(): string {
   const root = temporaryDirectory("allocate-walk-");
   mkdirSync(join(root, "docs"));
-  writeFileSync(join(root, "docs", "notes.md"), "Cites SCN-ONE-004.\n");
+  writeFileSync(join(root, "docs", "notes.md"), "Cites CLM-ONE-004.\n");
   return root;
 }
 
-describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, naming the path and saying it was not permitted", () => {
+describe("[CLM-ALC-018] a path allocate is not permitted to read is refused, naming the path and saying it was not permitted", () => {
   it("refuses a file in the tree it may not read, naming it", () => {
     const root = tree();
     const file = join(root, "docs", "notes.md");

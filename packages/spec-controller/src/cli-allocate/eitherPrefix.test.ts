@@ -44,7 +44,7 @@ function copyWithoutGitCarrying(...codes: string[]): string {
   return copy;
 }
 
-describe("[SCN-ALC-025] allocate counts the highest number wherever a code appears, under either prefix", () => {
+describe("[CLM-ALC-025] allocate counts the highest number wherever a code appears, under either prefix", () => {
   it.each([
     { case: "SCN highest", where: () => repositoryWhoseTreeCarries("SCN-ONE-004", "CLM-ONE-002") },
     { case: "CLM highest", where: () => repositoryWhoseTreeCarries("SCN-ONE-002", "CLM-ONE-004") },

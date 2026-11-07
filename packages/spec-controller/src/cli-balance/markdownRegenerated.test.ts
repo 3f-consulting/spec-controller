@@ -11,7 +11,7 @@ beforeEach(() => {
   saveLive = liveSaver(scratch);
 });
 
-describe("[SCN-RMD-007] the markdown regenerates from a saved report byte-identical to the direct render, and exits the code its saved verdict names", () => {
+describe("[CLM-RMD-007] the markdown regenerates from a saved report byte-identical to the direct render, and exits the code its saved verdict names", () => {
   it("regenerates the out-of-balance roundtrip report and exits the 1 the live run exited", () => {
     const saved = saveLive("roundtrip", [
       "--features", "tests/fixtures/roundtrip/features",

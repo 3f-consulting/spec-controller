@@ -35,15 +35,15 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-ALC-004] With no history to read, a code is still offered and the boundary is stated on stderr", () => {
+describe("[CLM-ALC-004] With no history to read, a code is still offered and the boundary is stated on stderr", () => {
   let repo = "";
 
   beforeEach(() => {
-    repo = repositoryWhoseHistoryOnceCarried("SCN-ONE-001", "SCN-ONE-005");
+    repo = repositoryWhoseHistoryOnceCarried("CLM-ONE-001", "CLM-ONE-005");
   });
 
-  it("in a copy without git, whose packages and hidden directories mention SCN-ONE-900, answers a claim code ending ONE-002 and states no history was read", () => {
-    expectAnsweredWithNoHistoryRead(copyWithoutGit(repo, "SCN-ONE-900"));
+  it("in a copy without git, whose packages and hidden directories mention CLM-ONE-900, answers a claim code ending ONE-002 and states no history was read", () => {
+    expectAnsweredWithNoHistoryRead(copyWithoutGit(repo, "CLM-ONE-900"));
   });
 
   it("in a clone one commit deep, answers a claim code ending ONE-002 and states history before the clone's first commit was not read", () => {

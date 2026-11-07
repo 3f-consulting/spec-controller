@@ -8,6 +8,6 @@ Feature: a fixture target whose CI runs two checks that cite no scenario
 
   Rule: the fixture target names one satisfied unit-level scenario
 
-    @unit @SCN-SSP-001
+    @unit @CLM-SSP-001
     Scenario: the target names a satisfied unit-level scenario
       Given the target repo's source

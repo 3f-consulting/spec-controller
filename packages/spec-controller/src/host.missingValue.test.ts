@@ -24,7 +24,7 @@ const MISSING: [string, (modifier: string) => string[]][] = [
   ["with an empty value", (modifier) => [modifier, "", "balance"]],
 ];
 
-describe("[SCN-CLI-059] the host refuses a modifier given no value as a usage fault, and stores nothing", () => {
+describe("[CLM-CLI-059] the host refuses a modifier given no value as a usage fault, and stores nothing", () => {
 
   for (const flag of cliRegistry.global) {
     if (flag.arg === undefined) continue;

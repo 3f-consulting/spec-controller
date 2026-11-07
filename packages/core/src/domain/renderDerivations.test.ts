@@ -10,17 +10,17 @@ import {
 import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
 
 const scenarios: Scenario[] = [
-  { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { claimCode: "SCN-AAA-004", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { claimCode: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { claimCode: "SCN-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-AAA-004", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-AAA-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
 ];
 
 const evidenceObservations: EvidenceObservation[] = [
-  { qualityCheckKind: "fitness", fitnessFunction: "lint:wired", claimCode: "SCN-AAA-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "fitness", fitnessFunction: "lint:unwired", claimCode: "SCN-AAA-004", exists: true, enforcedOverRealSource: false },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:wired", claimCode: "CLM-AAA-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:unwired", claimCode: "CLM-AAA-004", exists: true, enforcedOverRealSource: false },
   { qualityCheckKind: "fitness", fitnessFunction: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "unit", claimCode: "SCN-AAA-003", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "CLM-AAA-003", status: "passed" },
   {
     qualityCheckKind: "unit",
     claimCode: null,
@@ -38,14 +38,14 @@ beforeEach(() => {
 const rowOf = (claimCode: string) =>
   ledger.claimReconciliations.find((r) => r.claim === claimCode)!;
 
-describe("[SCN-LDG-001] isScenario names only the named thing", () => {
+describe("[CLM-LDG-001] isScenario names only the named thing", () => {
   let mixed: Ledger;
   beforeEach(() => {
     mixed = reconcile(
-      [{ claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "passed" },
-        { qualityCheckKind: "unit", claimCode: "SCN-ZZZ-009", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-ZZZ-009", status: "passed" },
         { qualityCheckKind: "unit", claimCode: null, status: "passed" },
       ]
     );
@@ -61,14 +61,14 @@ describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   });
 });
 
-describe("[SCN-RPT-011] observationCountOf counts a row's fitness evidence observations as it counts any other", () => {
-  const posted = { qualityCheckKind: "fitness", claimCode: "SCN-AAA-001", exists: true } as const;
+describe("[CLM-RPT-011] observationCountOf counts a row's fitness evidence observations as it counts any other", () => {
+  const posted = { qualityCheckKind: "fitness", claimCode: "CLM-AAA-001", exists: true } as const;
   const satisfied: EvidenceObservation = { ...posted, fitnessFunction: "lint:satisfied", enforcedOverRealSource: true, status: "passed" };
   const watermelon: EvidenceObservation = { ...posted, fitnessFunction: "lint:watermelon", enforcedOverRealSource: false };
   const failing: EvidenceObservation = { ...posted, fitnessFunction: "lint:failing", enforcedOverRealSource: true, status: "failed" };
   const rowPostedWith = (observations: EvidenceObservation[]) =>
-    reconcile([{ claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] }], observations)
-      .claimReconciliations.find((r) => r.claim === "SCN-AAA-001")!;
+    reconcile([{ claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] }], observations)
+      .claimReconciliations.find((r) => r.claim === "CLM-AAA-001")!;
 
   it.each([
     ["a satisfied one", [satisfied], "satisfied"],
@@ -85,7 +85,7 @@ describe("[SCN-RPT-011] observationCountOf counts a row's fitness evidence obser
   });
 
   it("counts nothing for a row with no fitness evidence observation", () => {
-    const row = rowOf("SCN-AAA-002");
+    const row = rowOf("CLM-AAA-002");
     expect(fitnessFunctionReconciliationsOf(row).flatMap(linesOf).map((line) => line.outcome)).toEqual(["missing"]);
     expect(observationCountOf(row, "fitness")).toBe(0);
   });

@@ -27,7 +27,7 @@ beforeEach(() => {
 
 recordWhatTheProgramWrites();
 
-describe("[SCN-FMT-008] a file destination that cannot be written is refused on the usage code, naming the path and why", () => {
+describe("[CLM-FMT-008] a file destination that cannot be written is refused on the usage code, naming the path and why", () => {
 
   it("lets an error that is not a refusal escape unchanged, with no stderr line and no exit code set", () => {
     const failure = new Error("not a refusal");

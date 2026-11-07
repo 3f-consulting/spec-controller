@@ -24,7 +24,7 @@ const refused = prefixes.flatMap((prefix) =>
   commandsTakingNone.flatMap((command) => NO_HELP.map((args) => [...prefix, command, ...args])),
 );
 
-describe("[SCN-ALC-016] a host modifier before allocate does not stop a request for allocate's help, which answers as it does alone, at exit 0, and stores nothing", () => {
+describe("[CLM-ALC-016] a host modifier before allocate does not stop a request for allocate's help, which answers as it does alone, at exit 0, and stores nothing", () => {
 
   it.each(refused.map((argv) => [argv]))("still refuses %j, which asks for no help", (argv) => {
     expect(modifiersNotTakenRefusal(parseHostInvocation(argv))).toBeDefined();

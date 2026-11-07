@@ -3,8 +3,8 @@
     {
       "name": "tests/fixtures/byfeature-cites-unknown-scenario/widget.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-BFP-001] the proven unit-level scenario", "status": "passed" },
-        { "fullName": "[SCN-BFP-099] a test still citing a scenario whose feature file was deleted", "status": "passed" }
+        { "fullName": "[CLM-BFP-001] the proven unit-level scenario", "status": "passed" },
+        { "fullName": "[CLM-BFP-099] a test still citing a scenario whose feature file was deleted", "status": "passed" }
       ]
     }
   ]

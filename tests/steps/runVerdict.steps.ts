@@ -308,7 +308,7 @@ When("balance is asked to reconcile that target under the report-only option", f
 const CODE_ERROR_OUT_OF_BALANCE = "tests/fixtures/code-error-out-of-balance";
 
 Given(
-  "a target whose corpus misfiles a scenario code and whose ledger has an account out of balance",
+  "a target whose corpus misfiles a claim code and whose ledger has an account out of balance",
   function (this: SpecControllerWorld) {
     this.invocationArgs = [
       "--features", `${CODE_ERROR_OUT_OF_BALANCE}/features`,
@@ -326,16 +326,16 @@ function assertListsMisfiled(report: string, claimCode: string): void {
   );
 }
 
-Then("the report lists the scenario code error", function (this: SpecControllerWorld) {
+Then("the report lists the claim code error", function (this: SpecControllerWorld) {
   assert.ok(showsHeading(this.balanceResult.stdout, 3, "claim-code-errors-heading"), `expected the heading over the misfiled codes; got:\n${this.balanceResult.stdout}`);
-  assertListsMisfiled(this.balanceResult.stdout, "SCN-CEA-002");
+  assertListsMisfiled(this.balanceResult.stdout, "CLM-CEA-002");
 });
 
 Then("the report carries the out-of-balance account", function (this: SpecControllerWorld) {
-  assert.match(this.balanceResult.stdout, /\| SCN-CEB-001 \|[^\n]*out-of-balance/);
+  assert.match(this.balanceResult.stdout, /\| CLM-CEB-001 \|[^\n]*out-of-balance/);
 });
 
-Then("the verdict headline names both the scenario code error and the accounts out of balance", function (this: SpecControllerWorld) {
+Then("the verdict headline names both the claim code error and the accounts out of balance", function (this: SpecControllerWorld) {
   const headline = verdictHeadline(this.balanceResult.stdout);
   assert.equal(headline.headline, "claim-code-errors-headline", `expected the headline of a corpus that misfiles a code; got ${headline.line}`);
   assert.ok(headline.line.includes(entryText("also-out-of-balance")), `expected the headline to carry the also-out-of-balance entry; got ${headline.line}`);
@@ -355,7 +355,7 @@ Given("a target that reconciles balanced-with-claim-code-errors", function (this
 
 const UNSOUND_CODE_ERROR = "tests/fixtures/unsound-code-error";
 
-Given("a target whose collection-failed suite sits beside a misfiled scenario code", function (this: SpecControllerWorld) {
+Given("a target whose collection-failed suite sits beside a misfiled claim code", function (this: SpecControllerWorld) {
   this.invocationArgs = [
     "--features", `${UNSOUND_CODE_ERROR}/features`,
     "--vitest", `${UNSOUND_CODE_ERROR}/vitest.json`,
@@ -364,7 +364,7 @@ Given("a target whose collection-failed suite sits beside a misfiled scenario co
   ];
 });
 
-Then("the report still lists the scenario code error", function (this: SpecControllerWorld) {
+Then("the report still lists the claim code error", function (this: SpecControllerWorld) {
   assert.ok(showsHeading(this.balanceResult.stdout, 3, "claim-code-errors-heading"), `expected the heading over the misfiled codes; got:\n${this.balanceResult.stdout}`);
-  assertListsMisfiled(this.balanceResult.stdout, "SCN-UCA-002");
+  assertListsMisfiled(this.balanceResult.stdout, "CLM-UCA-002");
 });

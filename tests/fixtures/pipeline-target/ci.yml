@@ -11,7 +11,7 @@ jobs:
       - name: Unit tests
         run: pnpm test
       - name: Duplication
-        id: SCN-PLT-003
+        id: CLM-PLT-003
         if: always()
         run: jscpd
       - name: Dump this run's step record

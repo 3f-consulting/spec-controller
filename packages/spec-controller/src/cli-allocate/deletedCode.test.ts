@@ -28,18 +28,18 @@ afterEach(() => {
 });
 
 const HEAD = ["@ONE", "Feature: part ONE"];
-const SCENARIO_1 = ["  @SCN-ONE-001 @unit", "  Scenario: scenario 1", "    Given a step", ""];
+const SCENARIO_1 = ["  @CLM-ONE-001 @unit", "  Scenario: scenario 1", "    Given a step", ""];
 
-describe("[SCN-ALC-001] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
+describe("[CLM-ALC-001] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
   it("answers one past the deleted code when the history that carries it runs to many kilobytes", () => {
-    const longSteps = Array.from({ length: 200 }, (_, n) => `    And step ${n} of the scenario that SCN-ONE-005 once named`);
-    const scenario5 = ["  @SCN-ONE-005 @unit", "  Scenario: scenario 5", "    Given a step", ...longSteps];
+    const longSteps = Array.from({ length: 200 }, (_, n) => `    And step ${n} of the scenario that CLM-ONE-005 once named`);
+    const scenario5 = ["  @CLM-ONE-005 @unit", "  Scenario: scenario 5", "    Given a step", ...longSteps];
     const repo = newRepository();
     writeInto(repo, "features/one.feature", lines(...HEAD, ...SCENARIO_1, ...scenario5));
     commitAll(repo, "the corpus");
     writeInto(repo, "features/one.feature", lines(...HEAD, ...SCENARIO_1));
     commitAll(repo, "retire scenario 5");
-    expect(git(repo, ["log", "--all", "-p", "-U0", "-G", "SCN-ONE-"]).length).toBeGreaterThan(16 * 1024);
+    expect(git(repo, ["log", "--all", "-p", "-U0", "-G", "CLM-ONE-"]).length).toBeGreaterThan(16 * 1024);
 
     const answered = allocateIn(repo, ["ONE"]);
 

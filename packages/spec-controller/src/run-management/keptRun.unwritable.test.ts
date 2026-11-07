@@ -32,7 +32,7 @@ beforeEach(() => {
 
 recordWhatTheProgramWrites();
 
-describe("[SCN-RMG-008] executeKeptRun refuses a run directory it cannot create, before the command runs", () => {
+describe("[CLM-RMG-008] executeKeptRun refuses a run directory it cannot create, before the command runs", () => {
   it("creates a root whose missing parents can be created, and runs the command", () => {
     const storeRoot = join(scratch, "missing", "store");
     const route = vi.fn(() => true);
@@ -44,7 +44,7 @@ describe("[SCN-RMG-008] executeKeptRun refuses a run directory it cannot create,
   });
 });
 
-describe("[SCN-RMG-009] a stored run that cannot write a report into its run directory is refused naming the file and why", () => {
+describe("[CLM-RMG-009] a stored run that cannot write a report into its run directory is refused naming the file and why", () => {
   it("refuses a markdown report whose place in the run directory is a directory, with EISDIR, and stamps no run.yaml", () => {
     const storeRoot = join(scratch, "store");
     const runDir = join(storeRoot, TARGET, RUN_ID);

@@ -15,7 +15,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("[SCN-CLI-100] a run from a working directory that no longer exists is refused as unreadable, naming the feature corpus read by default", () => {
+describe("[CLM-CLI-100] a run from a working directory that no longer exists is refused as unreadable, naming the feature corpus read by default", () => {
   it("refuses with the usage status, naming the default corpus and the working directory's read failure", () => {
     const thrown = removedWorkingDirectory();
     let answered: BalanceRun | undefined;

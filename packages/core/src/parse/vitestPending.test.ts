@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "./vitest.js";
 
-describe("[SCN-VIT-007] parseVitestEvidenceObservations classifies three-way — inconclusive is dropped", () => {
+describe("[CLM-VIT-007] parseVitestEvidenceObservations classifies three-way — inconclusive is dropped", () => {
   const reportWithStatus = (status: string): VitestJsonReport => ({
     testResults: [
-      { name: "/r/a.test.ts", assertionResults: [{ fullName: "[SCN-PDV-001] a unit assertion", status }] },
+      { name: "/r/a.test.ts", assertionResults: [{ fullName: "[CLM-PDV-001] a unit assertion", status }] },
     ],
   });
 
@@ -13,7 +13,7 @@ describe("[SCN-VIT-007] parseVitestEvidenceObservations classifies three-way —
     ["emits a `failed` observation for a failed assertion", "failed"],
   ] as const)("%s", (_title, status) => {
     expect(parseVitestEvidenceObservations(reportWithStatus(status))).toEqual([
-      { qualityCheckKind: "unit", claimCode: "SCN-PDV-001", status, locator: "/r/a.test.ts", testName: "[SCN-PDV-001] a unit assertion" },
+      { qualityCheckKind: "unit", claimCode: "CLM-PDV-001", status, locator: "/r/a.test.ts", testName: "[CLM-PDV-001] a unit assertion" },
     ]);
   });
 

@@ -24,7 +24,7 @@ const refusalFor = (given: string, flag: FlagSpec): string =>
   `${message(AppError.MissingValue, { flag: given, scope: "spec-controller balance", arg: flag.arg ?? "" })}\n` +
   message(AppMessage.SeeFlagsAndValues, { scope: "spec-controller balance" });
 
-describe("[SCN-CLI-058] balance refuses a flag given no value as a usage fault, naming the missing value", () => {
+describe("[CLM-CLI-058] balance refuses a flag given no value as a usage fault, naming the missing value", () => {
 
   for (const flag of balanceFlags) {
     if (flag.arg === undefined) continue;

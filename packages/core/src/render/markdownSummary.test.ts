@@ -12,31 +12,31 @@ import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { RECONCILING_ITEMS_COLUMN, VERDICT_COLUMN, claimReconciliationsTable } from "./claimReconciliationsTable.test-utils.js";
 
-describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by its feature file and code, falling back to the bare code for a foreign-claim-code", () => {
+describe("[CLM-RPT-006] the by-feature cut names each out-of-balance feature by its feature file and code, falling back to the bare code for a foreign-claim-code", () => {
   let spanning: Ledger;
   beforeEach(() => {
     spanning = reconcile(
       [
-        { claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-LDG-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-        { claimCode: "SCN-LDG-007", evidenceObligations: [{ qualityCheckKind: "integration" }] },
-        { claimCode: "SCN-LNT-009", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "CLM-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-LDG-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "CLM-LDG-007", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+        { claimCode: "CLM-LNT-009", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
       ],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" },
-        { qualityCheckKind: "integration", claimCode: "SCN-LDG-007", status: "failed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-LDG-001", status: "passed" },
+        { qualityCheckKind: "integration", claimCode: "CLM-LDG-007", status: "failed" },
         {
           qualityCheckKind: "fitness",
           fitnessFunction: "lint:guard-lint",
-          claimCode: "SCN-LNT-002",
+          claimCode: "CLM-LNT-002",
           exists: true,
           enforcedOverRealSource: false,
         },
         {
           qualityCheckKind: "fitness",
           fitnessFunction: "lint:guard-lint",
-          claimCode: "SCN-LNT-009",
+          claimCode: "CLM-LNT-009",
           exists: true,
           enforcedOverRealSource: true,
         },
@@ -52,14 +52,14 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
       `${coreMessage(CoreMessage.ScenarioClaimReconciliationsOutOfBalance, { outOfBalance: 3, claimReconciliations: 5 })}${coreMessage(CoreMessage.GroupedByFeature)}.`
     );
     expect(md).toContain(coreMessage(CoreMessage.ByFeatureTableHeader));
-    expect(md).toContain("| LDG | 2 | SCN-LDG-003, SCN-LDG-007 |");
-    expect(md).toContain("| LNT | 1 | SCN-LNT-002 |");
+    expect(md).toContain("| LDG | 2 | CLM-LDG-003, CLM-LDG-007 |");
+    expect(md).toContain("| LNT | 1 | CLM-LNT-002 |");
   });
 
   it("omits the section entirely (total line and all) when no scenario is out of balance", () => {
     const allBalanced: Ledger = reconcile(
-      [{ claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-      [{ qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" }]
+      [{ claimCode: "CLM-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ qualityCheckKind: "unit", claimCode: "CLM-LDG-001", status: "passed" }]
     );
     const md = renderMarkdown(__er(allBalanced), ctx, publishedExitCodeOf);
     expect(md).not.toContain(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)));
@@ -69,7 +69,7 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
 
   it("slots the by-feature section after the Evidence observations and before the Claim Reconciliations (no warnings section)", () => {
     const withAll: Ledger = reconcile(
-      [{ claimCode: "SCN-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] }],
+      [{ claimCode: "CLM-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] }],
       [{ qualityCheckKind: "fitness", fitnessFunction: "guard-lint", exists: true, enforcedOverRealSource: false }]
     );
     const md = renderMarkdown(__er(withAll, true), ctx, publishedExitCodeOf);
@@ -91,8 +91,8 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
     ]);
     const md = renderMarkdown(__er(spanning, false), ctx, publishedExitCodeOf, undefined, featureNames);
     const files = featureFilesOf(__er(spanning, false), featureNames);
-    expect(md).toContain(`| ${files.get("LDG")} (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |`);
-    expect(md).toContain(`| ${files.get("LNT")} (LNT) | 1 | SCN-LNT-002 |`);
+    expect(md).toContain(`| ${files.get("LDG")} (LDG) | 2 | CLM-LDG-003, CLM-LDG-007 |`);
+    expect(md).toContain(`| ${files.get("LNT")} (LNT) | 1 | CLM-LNT-002 |`);
   });
 
   const ledgerHeading = (): string => markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading));
@@ -122,16 +122,16 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
       "",
       coreMessage(CoreMessage.ByFeatureTableHeader),
       "| --- | --- | --- |",
-      `| ${files.get("LDG")} (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |`,
-      "| LNT | 1 | SCN-LNT-002 |",
+      `| ${files.get("LDG")} (LDG) | 2 | CLM-LDG-003, CLM-LDG-007 |`,
+      "| LNT | 1 | CLM-LNT-002 |",
       "",
     ]);
   });
 
   it("emits no line at all when no scenario is out of balance, so the ledger heading follows the previous section's closing blank", () => {
     const allBalanced: Ledger = reconcile(
-      [{ claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-      [{ qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" }]
+      [{ claimCode: "CLM-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ qualityCheckKind: "unit", claimCode: "CLM-LDG-001", status: "passed" }]
     );
     const lines = renderMarkdown(__er(allBalanced), ctx, publishedExitCodeOf).split("\n");
     const ledgerAt = lines.indexOf(ledgerHeading());
@@ -143,11 +143,11 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
   });
 });
 
-describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows no feature can group", () => {
-  const proven = { claimCode: "SCN-BFP-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
-  const unproven = { claimCode: "SCN-BFP-002", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
-  const provenObservation = { qualityCheckKind: "unit" as const, claimCode: "SCN-BFP-001", status: "passed" as const };
-  const strandedObservation = { qualityCheckKind: "unit" as const, claimCode: "SCN-GONE-001", status: "passed" as const };
+describe("[CLM-RPT-030] the by-feature total line counts the out-of-balance rows no feature can group", () => {
+  const proven = { claimCode: "CLM-BFP-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
+  const unproven = { claimCode: "CLM-BFP-002", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
+  const provenObservation = { qualityCheckKind: "unit" as const, claimCode: "CLM-BFP-001", status: "passed" as const };
+  const strandedObservation = { qualityCheckKind: "unit" as const, claimCode: "CLM-GONE-001", status: "passed" as const };
   const uncitedObservation = { qualityCheckKind: "unit" as const, claimCode: null, status: "passed" as const };
   const byFeature = (ledger: Ledger): string => {
     const md = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
@@ -165,8 +165,8 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
       `${coreMessage(CoreMessage.ScenarioClaimReconciliationsOutOfBalance, { outOfBalance: 1, claimReconciliations: 2 })}${coreMessage(CoreMessage.GroupedByFeature)}; ` +
         `${coreMessage(CoreMessage.NotGroupedByFeature, { ungrouped: coreMessage(CoreMessage.PhantomClaimReconciliations, { count: 1 }) })}.`
     );
-    expect(section).toContain("| BFP | 1 | SCN-BFP-002 |");
-    expect(section).not.toContain("SCN-GONE-001");
+    expect(section).toContain("| BFP | 1 | CLM-BFP-002 |");
+    expect(section).not.toContain("CLM-GONE-001");
   });
 
   it("names both ungrouped kinds when a phantom claim's row and the unnamed claim's row are out of balance", () => {
@@ -196,16 +196,16 @@ describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows
   });
 });
 
-describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenario-count", () => {
+describe("[CLM-RPT-007] the corpus census is recoverable from the ledger scenario-count", () => {
   let reconciliationFixture: Ledger;
   beforeEach(() => {
     reconciliationFixture = reconcile(
       [
-        { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-B", evidenceObligations: [{ qualityCheckKind: "integration" }] },
-        { claimCode: "SCN-C", evidenceObligations: [] },
+        { claimCode: "CLM-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-B", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+        { claimCode: "CLM-C", evidenceObligations: [] },
       ],
-      [{ qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" }]
+      [{ qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" }]
     );
   });
 
@@ -222,22 +222,22 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
   it("recovers the census from the ledger scenario-count alone — the zero-obligation scenario is a both-missing row, not a second axis", () => {
     const md = renderMarkdown(__er(reconciliationFixture), ctx, publishedExitCodeOf);
     expect(md).toContain(`- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 3, balanced: 1, outOfBalance: 2 })}`);
-    expect(md).toContain("SCN-C");
+    expect(md).toContain("CLM-C");
     expect(md).toContain(`| out-of-balance | ${coreMessage(CoreMessage.OutcomeBothMissing)} |`);
   });
 });
 
-describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN occurrences", () => {
+describe("[CLM-RPT-008] the markdown report outcomes the excluded non-tag claim code occurrences", () => {
   let simple: Ledger;
   beforeEach(() => {
     simple = reconcile(
-      [{ claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-      [{ qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" }]
+      [{ claimCode: "CLM-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" }]
     );
   });
   const evidenceObligations = { rawClaimCodeOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [] };
 
-  it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet when a corpus is threaded", () => {
+  it("appends a '- M claim codes seen in non-tag context, excluded' bullet when a corpus is threaded", () => {
     const md = renderMarkdown(__er(simple, false), ctx, publishedExitCodeOf, evidenceObligations);
     expect(md).toContain(markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading)));
     expect(md.split("\n")).toContain(`- ${coreMessage(CoreMessage.ExcludedClaimOccurrences, { count: 3 })}`);
@@ -256,23 +256,23 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
     const table = claimReconciliationsTable(section);
     expect(table.start).toBe(4);
     expect(table.evidenceColumns).toEqual([]);
-    expect(table.rows.map((row) => row.claim)).toEqual(["SCN-A"]);
+    expect(table.rows.map((row) => row.claim)).toEqual(["CLM-A"]);
     expect(section.slice(table.end)).toEqual([""]);
   });
 });
 
-describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last", () => {
+describe("[CLM-RPT-009] the markdown report renders summary-first, ledger-last", () => {
   let reformatted: Ledger;
   beforeEach(() => {
     reformatted = reconcile(
       [
-        { claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-LNT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "CLM-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-LNT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
       ],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" },
-        { qualityCheckKind: "fitness", fitnessFunction: "lint:guard-lint", claimCode: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "unit", claimCode: "CLM-LDG-001", status: "passed" },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:guard-lint", claimCode: "CLM-LNT-001", exists: true, enforcedOverRealSource: false },
       ]
     );
   });
@@ -289,10 +289,10 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
   it("labels the ledger's reconciling items by tag (unit / fitness), never by the internal kind (runtime / static)", () => {
     const md = renderMarkdown(__er(reformatted), ctx, publishedExitCodeOf);
     const table = claimReconciliationsTable(md);
-    expect(table.rowOf("SCN-LDG-002").cell(VERDICT_COLUMN())).toBe("out-of-balance");
-    expect(table.rowOf("SCN-LDG-002").cell(RECONCILING_ITEMS_COLUMN())).toBe(`unit: ${coreMessage(CoreMessage.OutcomeMissing)}`);
-    expect(table.rowOf("SCN-LNT-001").cell(VERDICT_COLUMN())).toBe("out-of-balance");
-    expect(table.rowOf("SCN-LNT-001").cell(RECONCILING_ITEMS_COLUMN()).startsWith(`fitness: ${coreMessage(CoreMessage.OutcomeWatermelon)}`)).toBe(true);
+    expect(table.rowOf("CLM-LDG-002").cell(VERDICT_COLUMN())).toBe("out-of-balance");
+    expect(table.rowOf("CLM-LDG-002").cell(RECONCILING_ITEMS_COLUMN())).toBe(`unit: ${coreMessage(CoreMessage.OutcomeMissing)}`);
+    expect(table.rowOf("CLM-LNT-001").cell(VERDICT_COLUMN())).toBe("out-of-balance");
+    expect(table.rowOf("CLM-LNT-001").cell(RECONCILING_ITEMS_COLUMN()).startsWith(`fitness: ${coreMessage(CoreMessage.OutcomeWatermelon)}`)).toBe(true);
     expect(md).not.toContain("runtime/");
     expect(md).not.toContain("static:");
   });
@@ -300,10 +300,10 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
   it("ends the report with the Claim Reconciliations: heading, blank, tally and its blank first, the table then one closing blank last", () => {
     const observed: Ledger = reconcile(
       [
-        { claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
-      [{ qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" }]
+      [{ qualityCheckKind: "unit", claimCode: "CLM-LDG-001", status: "passed" }]
     );
     const lines = renderMarkdown(__er(observed, true), ctx, publishedExitCodeOf).split("\n");
     const heading = markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading));
@@ -321,21 +321,21 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     const table = claimReconciliationsTable(section);
     expect(table.start).toBeGreaterThanOrEqual(4);
     expect(table.evidenceColumns).toEqual(["Unit"]);
-    expect(table.rows.map((row) => row.claim)).toEqual(["SCN-LDG-001", "SCN-LDG-002"]);
+    expect(table.rows.map((row) => row.claim)).toEqual(["CLM-LDG-001", "CLM-LDG-002"]);
     expect(section.slice(table.end)).toEqual([""]);
   });
 });
 
-describe("[SCN-RPT-010] the markdown report renders the Evidence observations reconciliation", () => {
+describe("[CLM-RPT-010] the markdown report renders the Evidence observations reconciliation", () => {
   const scenarios: Scenario[] = [
-    { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "CLM-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ];
   const observations: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "SCN-PHX-001", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-PHX-001", status: "passed" },
     { qualityCheckKind: "integration", claimCode: null, status: "passed" },
     { qualityCheckKind: "integration", claimCode: null, status: "passed" },
     { qualityCheckKind: "integration", claimCode: null, status: "passed" },
@@ -345,7 +345,7 @@ describe("[SCN-RPT-010] the markdown report renders the Evidence observations re
     balance = reconcile(scenarios, observations);
   });
 
-  it("[SCN-RPT-010] renders a '### Evidence observations' section with the three-way balancing identity line", () => {
+  it("[CLM-RPT-010] renders a '### Evidence observations' section with the three-way balancing identity line", () => {
     const md = renderMarkdown(__er(balance, true), ctx, publishedExitCodeOf);
     expect(md).toContain(markdownHeading(3, coreMessage(CoreMessage.EvidenceObservationsHeading)));
     expect(md).toContain(coreMessage(CoreMessage.EvidenceObservationsSum, { total: 8, onScenario: 4, onPhantomClaim: 1, onUnnamedClaim: 3 }));

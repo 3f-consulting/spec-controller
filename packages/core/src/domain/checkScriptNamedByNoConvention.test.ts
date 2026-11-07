@@ -14,7 +14,7 @@ const RUNNERS = { unit: "vitest", integration: "cucumber-js" };
 
 const candidates = (pipeline: readonly PipelineStep[]): string[] => candidatesAmong(pipeline, SCRIPTS, RUNNERS);
 
-describe("[SCN-USG-004] an uncited check whose script name carries no prefix of ours is a candidate fitness function", () => {
+describe("[CLM-USG-004] an uncited check whose script name carries no prefix of ours is a candidate fitness function", () => {
   it("keeps a step whose script is named by a convention of ours among the candidates", () => {
     expect(candidates([run("lint:foo")])).toStrictEqual(["lint:foo"]);
   });

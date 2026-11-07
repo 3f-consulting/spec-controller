@@ -35,7 +35,7 @@ const candidates = (runners: Readonly<Record<string, string | null>>): string[] 
     )
   ).map((step) => step.identity);
 
-describe("[SCN-USG-017] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
+describe("[CLM-USG-017] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
   it("makes every step but the checkout a candidate, the test step among them, when the runners block names nothing", () => {
     expect(candidates(NO_RUNNERS)).toStrictEqual([
       "Install",

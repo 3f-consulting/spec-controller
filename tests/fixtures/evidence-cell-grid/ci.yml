@@ -5,5 +5,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: pnpm install --frozen-lockfile
-      - id: SCN-CEL-001
+      - id: CLM-CEL-001
         run: pnpm guard:cell-grid

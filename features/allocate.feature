@@ -1,7 +1,7 @@
 @ALC
-Feature: Allocate the next scenario code for a feature part
+Feature: Allocate the next claim code for a feature part
 
-  An author asks the installed tool for the next scenario code instead of inventing one. The code is
+  An author asks the installed tool for the next claim code instead of inventing one. The code is
   one past the highest the repository has ever carried for that feature part, so a code that was
   retired is never handed out again: a reissued code would make every old reference to it, in
   history, in a chat, in a stale document, resolve silently to a different capability.
@@ -14,48 +14,48 @@ Feature: Allocate the next scenario code for a feature part
 
   Rule: the next code is one past the highest the tree has ever carried
 
-    @SCN-ALC-001 @unit @e2e
+    @CLM-ALC-001 @unit @e2e
     Scenario: A feature part whose highest live code is below a deleted one is offered one past the deleted code
-      Given a repository whose feature file headed ONE carries the scenario codes SCN-ONE-001 and SCN-ONE-005
-      And a later commit deletes the scenario coded SCN-ONE-005
+      Given a repository whose feature file headed ONE carries the claim codes CLM-ONE-001 and CLM-ONE-005
+      And a later commit deletes the scenario coded CLM-ONE-005
       When the author asks for the next code for ONE
       Then the answer is a claim code ending ONE-006, and nothing else
 
-    @SCN-ALC-002 @unit @e2e
+    @CLM-ALC-002 @unit @e2e
     Scenario: A code carried only on a CI step id is never offered again
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
-      And the repository's CI workflow has a step whose id is SCN-ONE-007
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-001
+      And the repository's CI workflow has a step whose id is CLM-ONE-007
       When the author asks for the next code for ONE
       Then the answer is a claim code ending ONE-008, and nothing else
 
-    @SCN-ALC-003 @unit @e2e
+    @CLM-ALC-003 @unit @e2e
     Scenario: A code carried only in a test title is never offered again
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
-      And the repository has a test whose title cites SCN-ONE-007
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-001
+      And the repository has a test whose title cites CLM-ONE-007
       When the author asks for the next code for ONE
       Then the answer is a claim code ending ONE-008, and nothing else
 
-    @SCN-ALC-015 @unit @e2e
+    @CLM-ALC-015 @unit @e2e
     Scenario: A code that appears only in a commit message is not retired
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
-      And a later commit, whose message mentions SCN-ONE-900, retags the scenario coded SCN-ONE-001
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-001
+      And a later commit, whose message mentions CLM-ONE-900, retags the scenario coded CLM-ONE-001
       When the author asks for the next code for ONE
       Then the answer is a claim code ending ONE-002, and nothing else
 
-    @SCN-ALC-005 @unit @e2e
+    @CLM-ALC-005 @unit @e2e
     Scenario Outline: stderr names where the highest code was seen — <where>
-      Given a repository whose highest ONE code, SCN-ONE-005, is <carried>
+      Given a repository whose highest ONE code, CLM-ONE-005, is <carried>
       When the author asks for the next code for ONE
-      Then beside the answer it names where SCN-ONE-005 was seen: <place>
+      Then beside the answer it names where CLM-ONE-005 was seen: <place>
 
       Examples:
         | where                                  | carried                           | place                                                        |
         | a file and line in the tree            | still carried by its feature file | the file and line that carry it                              |
         | a file, line and commit only in history | deleted by a later commit         | the file and line that carried it, and the commit that did so |
 
-    @SCN-ALC-004 @unit @e2e
+    @CLM-ALC-004 @unit @e2e
     Scenario Outline: With no history to read, a code is still offered and the boundary is stated on stderr — <tree>
-      Given a repository whose feature file headed ONE carries SCN-ONE-001, and whose history once carried SCN-ONE-005
+      Given a repository whose feature file headed ONE carries CLM-ONE-001, and whose history once carried CLM-ONE-005
       And the author's copy of it is <copy>
       When the author asks for the next code for ONE in that copy
       Then the answer is a claim code ending ONE-002, and nothing else
@@ -63,44 +63,44 @@ Feature: Allocate the next scenario code for a feature part
 
       Examples:
         | tree                     | copy                                                                                 | boundary                                              |
-        | not a git repository     | a copy without git, whose packages and hidden directories mention SCN-ONE-900 | no history was read, because the copy is not a git repository |
+        | not a git repository     | a copy without git, whose packages and hidden directories mention CLM-ONE-900 | no history was read, because the copy is not a git repository |
         | a shallow clone          | a clone one commit deep                                                               | history before the clone's first commit was not read  |
 
-    @SCN-ALC-006 @e2e
+    @CLM-ALC-006 @e2e
     Scenario: Run from a subdirectory, the whole repository is read
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
-      And the author has since tagged a new scenario SCN-ONE-007 in that file, not yet committed
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-001
+      And the author has since tagged a new scenario CLM-ONE-007 in that file, not yet committed
       When the author asks for the next code for ONE from a subdirectory holding no code
       Then the answer is a claim code ending ONE-008, and nothing else
 
-    @SCN-ALC-007 @e2e
+    @CLM-ALC-007 @e2e
     Scenario: A code written into a file not yet added to git is never offered again
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
-      And the author has written SCN-ONE-007 into a new file not yet added to git
-      And a file the repository ignores mentions SCN-ONE-900
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-001
+      And the author has written CLM-ONE-007 into a new file not yet added to git
+      And a file the repository ignores mentions CLM-ONE-900
       When the author asks for the next code for ONE
       Then the answer is a claim code ending ONE-008, and nothing else
 
-    @SCN-ALC-025 @unit
+    @CLM-ALC-025 @unit
     Scenario Outline: allocate counts the highest number wherever a code appears, under either prefix
 
-  Rule: the code is printed alone, in the scenario-code form, and the number never runs out
+  Rule: the code is printed alone, in the claim-code form, and the number never runs out
 
-    @SCN-ALC-008 @unit @e2e
+    @CLM-ALC-008 @unit @e2e
     Scenario: The code is printed alone on stdout, zero-padded to three digits
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-7
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-7
       When the author asks for the next code for ONE
       Then the answer is a claim code ending ONE-008, and nothing else
 
-    @SCN-ALC-009 @unit @e2e
+    @CLM-ALC-009 @unit @e2e
     Scenario: A part whose highest code is 999 is offered 1000
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-999
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-999
       When the author asks for the next code for ONE
       Then the answer is a claim code ending ONE-1000, and nothing else
 
   Rule: allocate writes its answer under CLM
 
-    @SCN-ALC-026 @unit
+    @CLM-ALC-026 @unit
     Scenario: allocate writes the next code under CLM, even when the repository holds only SCN codes
 
   Rule: parts come from the tree's feature-file headers; a malformed request is a usage error
@@ -111,7 +111,7 @@ Feature: Allocate the next scenario code for a feature part
     A host modifier before allocate is refused, because allocate keeps no run; a request for
     allocate's help is answered first, whatever stands before it.
 
-    @SCN-ALC-010 @unit @e2e
+    @CLM-ALC-010 @unit @e2e
     Scenario Outline: A part no feature file's header carries is refused as an unknown part, listing the header codes and nothing else — <part>
       Given a repository whose feature files are headed ONE and TWO, where <where>
       When the author asks for the next code for ZZZ
@@ -121,12 +121,12 @@ Feature: Allocate the next scenario code for a feature part
       Examples:
         | part                           | where                                                                    |
         | carried nowhere                | no file mentions ZZZ                                                     |
-        | carried only in a test fixture | a test fixture's feature file is headed ZZZ and carries SCN-ZZZ-004      |
+        | carried only in a test fixture | a test fixture's feature file is headed ZZZ and carries CLM-ZZZ-004      |
         | carried only in history        | a feature file headed ZZZ was deleted by a later commit                  |
 
-    @SCN-ALC-011 @unit @e2e
+    @CLM-ALC-011 @unit @e2e
     Scenario Outline: --new admits a part no feature file's header carries, and on a part a header does carry it answers as usual with a note on stderr — <part>
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
       When the author asks for the next code for <part>, as a new part
       Then the answer is <answer>, and nothing else
       And beside the answer <note>
@@ -136,15 +136,15 @@ Feature: Allocate the next scenario code for a feature part
         | ZZ   | a claim code ending ZZ-001  | it says nothing of the part being carried already          |
         | ONE  | a claim code ending ONE-004 | it notes that a feature file's header already carries ONE  |
 
-    @SCN-ALC-023 @unit @e2e
+    @CLM-ALC-023 @unit @e2e
     Scenario: A part headed only by a feature file in a subdirectory of features, at any depth, is a known part and is offered its next code
-      Given a repository whose only feature file headed NEST lies two subdirectories down in its features directory and carries the scenario code SCN-NEST-004
+      Given a repository whose only feature file headed NEST lies two subdirectories down in its features directory and carries the claim code CLM-NEST-004
       When the author asks for the next code for NEST
       Then the answer is a claim code ending NEST-005, and nothing else
 
-    @SCN-ALC-012 @unit @e2e
-    Scenario Outline: A request not in the scenario-code form is refused as a usage error, never as an unknown part — <request>
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+    @CLM-ALC-012 @unit @e2e
+    Scenario Outline: A request not in the claim-code form is refused as a usage error, never as an unknown part — <request>
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
       When the author asks for the next code giving <request>
       Then it is refused as a usage error, never as an unknown part, and no code is given
 
@@ -157,9 +157,9 @@ Feature: Allocate the next scenario code for a feature part
         | two parts, ONE and TWO                  |
         | the part ONE and a flag it does not take |
 
-    @SCN-ALC-013 @unit @e2e
+    @CLM-ALC-013 @unit @e2e
     Scenario Outline: allocate --help answers first, listing <FFF> and --new, and exits 0 whatever else is given — <request>
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
       When the author asks allocate for its help <request>
       Then it answers with allocate's help, naming the feature part it takes and the new-part option, and gives no code
 
@@ -168,12 +168,12 @@ Feature: Allocate the next scenario code for a feature part
         | alone                                      |
         | by its short name, alone                   |
         | after a part                               |
-        | after a part not in the scenario-code form |
+        | after a part not in the claim-code form |
         | beside a flag the command does not take    |
 
-    @SCN-ALC-014 @unit @e2e
+    @CLM-ALC-014 @unit @e2e
     Scenario Outline: A host modifier before allocate is refused, and nothing is stored — <modifiers>
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
       When the author asks for the next code for ONE with <modifiers> before the command
       Then it is refused as a usage error naming <modifiers>, and no code is given
       And nothing is stored, in the run store or the repository
@@ -184,9 +184,9 @@ Feature: Allocate the next scenario code for a feature part
         | the run-name modifier                        |
         | the store modifier and the run-name modifier |
 
-    @SCN-ALC-016 @unit @e2e
+    @CLM-ALC-016 @unit @e2e
     Scenario Outline: a host modifier before allocate does not stop a request for allocate's help, which answers as it does alone, at exit 0, and stores nothing — <modifiers> <request>
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
       When the author gives <modifiers> before allocate and asks it for its help <request>
       Then it answers with allocate's help, exactly as it does with nothing before it, and gives no code
       And nothing is stored, in the run store or the repository
@@ -212,9 +212,9 @@ Feature: Allocate the next scenario code for a feature part
     being wrong, the same as a malformed request: it is refused, naming the path and the reason, and
     no code is given. An answer computed without it could hand out a code the unread file carries.
 
-    @SCN-ALC-017 @unit @e2e
+    @CLM-ALC-017 @unit @e2e
     Scenario Outline: a path allocate reads that is not the kind it reads is refused, naming the path — <path>
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
       And in that repository <path> is <kind>
       When the author asks for the next code for ONE
       Then it is refused as a path allocate cannot read, and no code is given
@@ -226,9 +226,9 @@ Feature: Allocate the next scenario code for a feature part
         | features/two.feature | a directory                        |
         | features/two.feature | a link to a file that is not there |
 
-    @SCN-ALC-018 @unit @e2e
+    @CLM-ALC-018 @unit @e2e
     Scenario Outline: a path allocate is not permitted to read is refused, naming the path and saying it was not permitted — <path>
-      Given a <copy> whose feature file headed ONE carries the scenario code SCN-ONE-003, and whose <path> allocate is not permitted to read
+      Given a <copy> whose feature file headed ONE carries the claim code CLM-ONE-003, and whose <path> allocate is not permitted to read
       When the author asks for the next code for ONE
       Then it is refused as a path allocate cannot read, and no code is given
       And allocate's refusal names <path> and says allocate was not permitted to read it
@@ -242,17 +242,17 @@ Feature: Allocate the next scenario code for a feature part
         | copy without git | docs                 |
         | copy without git | working directory    |
 
-    @SCN-ALC-019 @unit @e2e
+    @CLM-ALC-019 @unit @e2e
     Scenario: asked from a working directory that no longer exists, allocate is refused as a usage error
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
       When the author asks for the next code for ONE from a working directory that has since been removed
       Then it is refused as a path allocate cannot read, and no code is given
       And allocate's refusal says the working directory could not be read
 
-    @SCN-ALC-020 @unit @e2e
+    @CLM-ALC-020 @unit @e2e
     Scenario Outline: a file in the repository git cannot read is refused, never left out of the answer — <file>
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
-      And in it, <file> carries SCN-ONE-016, and <unreadable>
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
+      And in it, <file> carries CLM-ONE-016, and <unreadable>
       When the author asks for the next code for ONE, standing in <where>
       Then it is refused as a path allocate cannot read, and no code is given
       And allocate's refusal names <named> and says allocate was not permitted to read it
@@ -265,10 +265,10 @@ Feature: Allocate the next scenario code for a feature part
         | a tracked file with an edit not yet committed, docs/notes.md | allocate is not permitted to read it                   | docs/notes.md        | its top        |
         | the feature file, with an edit not yet committed             | allocate is not permitted to list the repository's top | the repository's top | a subdirectory |
 
-    @SCN-ALC-021 @unit @e2e
+    @CLM-ALC-021 @unit @e2e
     Scenario Outline: history git cannot read is refused, never answered below a code it carries — <history>
-      Given a repository whose feature file headed ONE carries the scenario codes SCN-ONE-001 and SCN-ONE-005
-      And a later commit deletes the scenario coded SCN-ONE-005
+      Given a repository whose feature file headed ONE carries the claim codes CLM-ONE-001 and CLM-ONE-005
+      And a later commit deletes the scenario coded CLM-ONE-005
       And <history>
       When the author asks for the next code for ONE
       Then it is refused as a path allocate cannot read, and no code is given
@@ -281,9 +281,9 @@ Feature: Allocate the next scenario code for a feature part
         | its branch refs are not permitted to be read                                              |
         | it is cloned one commit deep, and the clone's shallow record is not permitted to be read |
 
-    @SCN-ALC-022 @unit @e2e
+    @CLM-ALC-022 @unit @e2e
     Scenario Outline: a repository git cannot open is refused, never read as no repository — <git directory>
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
       And <git directory>
       When the author asks for the next code for ONE
       Then it is refused as a path allocate cannot read, and no code is given
@@ -296,9 +296,9 @@ Feature: Allocate the next scenario code for a feature part
         | its HEAD is not permitted to be read                         |
         | its .git is a file pointing to a directory that is not there |
 
-    @SCN-ALC-024 @unit @e2e
+    @CLM-ALC-024 @unit @e2e
     Scenario: a feature file the Gherkin parser rejects is refused, naming the file and the parser's words, and no code is given
-      Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-003
+      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
       And in that repository features/two.feature is a feature file the Gherkin parser rejects
       When the author asks for the next code for ONE
       Then it is refused as a usage error, never as an unknown part, and no code is given

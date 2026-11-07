@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="[SCN-JVF-013] an outer class that cites a scenario [SCN-JVF-004] an inner class that cites a scenario" time="0.007" tests="3" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="[CLM-JVF-013] an outer class that cites a scenario [CLM-JVF-004] an inner class that cites a scenario" time="0.007" tests="3" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -53,7 +53,7 @@
     <property name="java.class.version" value="61.0"/>
     <property name="maven.test.failure.ignore" value="true"/>
   </properties>
-  <testcase name="a test in the outer class whose own display name cites nothing" classname="[SCN-JVF-013] an outer class that cites a scenario" time="0.001"/>
-  <testcase name="[SCN-JVF-003] a test whose own display name cites a scenario" classname="[SCN-JVF-013] an outer class that cites a scenario" time="0.001"/>
-  <testcase name="a test in the inner class whose own display name cites nothing" classname="[SCN-JVF-013] an outer class that cites a scenario [SCN-JVF-004] an inner class that cites a scenario" time="0.001"/>
+  <testcase name="a test in the outer class whose own display name cites nothing" classname="[CLM-JVF-013] an outer class that cites a scenario" time="0.001"/>
+  <testcase name="[CLM-JVF-003] a test whose own display name cites a scenario" classname="[CLM-JVF-013] an outer class that cites a scenario" time="0.001"/>
+  <testcase name="a test in the inner class whose own display name cites nothing" classname="[CLM-JVF-013] an outer class that cites a scenario [CLM-JVF-004] an inner class that cites a scenario" time="0.001"/>
 </testsuite>

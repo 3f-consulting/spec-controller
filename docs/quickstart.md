@@ -90,9 +90,9 @@ See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--run
 
 ## Cite one scenario from one test
 
-A scenario's tag line says what it needs proved. `@SCN-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `SCN-<FFF>-<NNN>`.
+A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `CLM-<FFF>-<NNN>`.
 
-`SCN-<FFF>-<NNN>` is the scenario's **claim code**. It may also be written `CLM-<FFF>-<NNN>`; the two forms with one feature part and number are two different codes, so a test cites the one its scenario carries. `<FFF>` is a feature part of two to five uppercase letters or digits, and `<NNN>` is a number. Each feature file carries a header code, `@<FFF>`, and its scenarios' codes must match it. A misfiled code fails the run. [Claim code errors](./user-guide.md#claim-code-errors) explains the header code and the four ways a code can be misfiled.
+`CLM-<FFF>-<NNN>` is the scenario's **claim code**. It may also be written `SCN-<FFF>-<NNN>`; the two forms with one feature part and number are two different codes, so a test cites the one its scenario carries. `<FFF>` is a feature part of two to five uppercase letters or digits, and `<NNN>` is a number. Each feature file carries a header code, `@<FFF>`, and its scenarios' codes must match it. A misfiled code fails the run. [Claim code errors](./user-guide.md#claim-code-errors) explains the header code and the four ways a code can be misfiled.
 
 A `@unit` scenario needs no step definitions. A title and its tags are the whole scenario.
 
@@ -106,14 +106,14 @@ spec-controller allocate <FFF>
 A Vitest test cites the scenario with the code **in square brackets** in its `it` title, or in an enclosing `describe` title. The most specific one wins:
 
 ```ts
-describe("[SCN-<FFF>-<NNN>] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
+describe("[CLM-<FFF>-<NNN>] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
   it("offers the next code", () => { /* … */ });
 });
 ```
 
 For Vitest, Jest, Go, JUnit 5 and RSpec tests, only the bracketed form counts. A code without brackets, or in a comment, names nothing: the test still runs, but it lands on the unnamed claim, and the scenario reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.**
 
-Other evidence cites differently: a pytest test through a `scn` property, a Cucumber run through the scenario's own `@SCN` tag, and a CI check through its step's `id:`. See [Only these four forms are read](./user-guide.md#only-these-four-forms-are-read).
+Other evidence cites differently: a pytest test through a `scn` property, a Cucumber run through the scenario's own claim code, and a CI check through its step's `id:`. See [Only these four forms are read](./user-guide.md#only-these-four-forms-are-read).
 
 For how each other runner cites a scenario, see [Citing a scenario from pytest](./user-guide.md#citing-a-scenario-from-pytest), [Citing a scenario from Jest](./user-guide.md#citing-a-scenario-from-jest), [Citing a scenario from Go](./user-guide.md#citing-a-scenario-from-go), [Citing a scenario from Java](./user-guide.md#citing-a-scenario-from-java), [Citing a scenario from Kotlin](./user-guide.md#citing-a-scenario-from-kotlin) and [Citing a scenario from RSpec](./user-guide.md#citing-a-scenario-from-rspec).
 
@@ -124,7 +124,7 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
 **1. A scenario, tagged `@fitness`, carrying a code.** Write it as you write a `@unit`-only scenario: tags, a title, and no Given/When/Then. Its title is the specification.
 
 ```gherkin
-  @fitness @SCN-<FFF>-<NNN>
+  @fitness @CLM-<FFF>-<NNN>
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
 ```
 
@@ -132,7 +132,7 @@ A **fitness function** is a whole-system property: complexity, mutation score, t
 
 ```yaml
       - name: Complexity
-        id: SCN-<FFF>-<NNN>
+        id: CLM-<FFF>-<NNN>
         if: always()
         run: eslint
 ```
@@ -155,10 +155,10 @@ If no step carries the scenario's code, the scenario reads `missing`. A step cit
 
 ```yaml
 - run: eslint
-  id: SCN-<FFF>-<NNN>
+  id: CLM-<FFF>-<NNN>
   if: always()
 - run: pnpm typecheck
-  id: SCN-<FFF>-<MMM>
+  id: CLM-<FFF>-<MMM>
   if: always()
 - if: always()
   env:

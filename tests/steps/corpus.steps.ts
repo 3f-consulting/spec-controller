@@ -18,8 +18,8 @@ Given(
   "a feature corpus containing a feature file that is a corrupt tag line",
   function (this: SpecControllerWorld) {
     writeCorruptFeature(this, 
-      "@AAA\nFeature: alpha\n\n  @unit @SCN-AAA-001\n  Scenario: alpha works\n    Given a thing\n\n" +
-        "  @unit @SCN-AAA-002 x\n  Scenario: beta works\n    Given another thing\n",
+      "@AAA\nFeature: alpha\n\n  @unit @CLM-AAA-001\n  Scenario: alpha works\n    Given a thing\n\n" +
+        "  @unit @CLM-AAA-002 x\n  Scenario: beta works\n    Given another thing\n",
     );
   },
 );
@@ -28,8 +28,8 @@ Given(
   "a feature corpus containing a feature file that is a corrupt scenario keyword",
   function (this: SpecControllerWorld) {
     writeCorruptFeature(this, 
-      "@AAA\nFeature: alpha\n\n  @unit @SCN-AAA-001\n  Scenario: alpha works\n    Given a thing\n\n" +
-        "  @unit @SCN-AAA-002\n  Scenari0: beta works\n    Given another thing\n",
+      "@AAA\nFeature: alpha\n\n  @unit @CLM-AAA-001\n  Scenario: alpha works\n    Given a thing\n\n" +
+        "  @unit @CLM-AAA-002\n  Scenari0: beta works\n    Given another thing\n",
     );
   },
 );
@@ -56,7 +56,7 @@ function writeCorruptFeature(world: SpecControllerWorld, featureSource: string):
           name: "/x/a.test.ts",
           status: "passed",
           assertionResults: [
-            { fullName: "[SCN-AAA-001] alpha works", title: "alpha works", status: "passed" },
+            { fullName: "[CLM-AAA-001] alpha works", title: "alpha works", status: "passed" },
           ],
         },
       ],
@@ -264,7 +264,7 @@ const NESTED = "tests/fixtures/nested-corpus";
 
 const NESTED_FEATURE_FILES = ["top.feature", "area/middle.feature", "area/deeper/deep.feature"];
 
-const SCENARIOS_OF_EVERY_FILE = ["SCN-NTA-001", "SCN-NTB-001", "SCN-NTC-001", "SCN-NTC-002"];
+const SCENARIOS_OF_EVERY_FILE = ["CLM-NTA-001", "CLM-NTB-001", "CLM-NTC-001", "CLM-NTC-002"];
 
 function reconcile(features: string): CorpusRun {
   const result: SpawnSyncReturns<string> = spawnSync(
@@ -340,7 +340,7 @@ const SAME_NAME = "tests/fixtures/same-name-corpus";
 
 const SAME_NAME_FILES = ["alpha/run.feature", "beta/run.feature"];
 
-const UNTAGGED_TITLE = "the run has no scenario code";
+const UNTAGGED_TITLE = "the run has no claim code";
 
 function balanceOverSameName(format: "json" | "md"): string {
   const result = spawnSync(
@@ -361,7 +361,7 @@ function balanceOverSameName(format: "json" | "md"): string {
 }
 
 Given(
-  "a target whose corpus holds two feature files of one name in different subdirectories, each with a scenario of one title that carries no scenario code",
+  "a target whose corpus holds two feature files of one name in different subdirectories, each with a scenario of one title that carries no claim code",
   function (this: SpecControllerWorld) {
     this.sameNameJson = null;
     this.sameNameMarkdown = "";

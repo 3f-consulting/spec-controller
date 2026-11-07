@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { obligationsRaisedBy } from "./scenarioObligations.js";
 import { reconcile } from "./evidenceReconciliation.js";
 
-describe("[SCN-PND-001] a <quality-check-kind>pending tag raises a pending obligation of its kind of quality check", () => {
+describe("[CLM-PND-001] a <quality-check-kind>pending tag raises a pending obligation of its kind of quality check", () => {
   it.each([
     ["fitnesspending", "fitness"],
     ["unitpending", "unit"],
@@ -18,7 +18,7 @@ describe("[SCN-PND-001] a <quality-check-kind>pending tag raises a pending oblig
   });
 });
 
-describe("[SCN-PND-002] the pending suffix is significant — @integrationpending is not read as @integration", () => {
+describe("[CLM-PND-002] the pending suffix is significant — @integrationpending is not read as @integration", () => {
   it("a bare integration tag raises a plain integration obligation", () => {
     expect(obligationsRaisedBy(["integration"], [])).toEqual([{ qualityCheckKind: "integration" }]);
   });
@@ -28,13 +28,13 @@ describe("[SCN-PND-002] the pending suffix is significant — @integrationpendin
   });
 });
 
-describe("[SCN-PND-003] an unrecognised <x>pending tag is passed through, ignored like any unknown tag", () => {
+describe("[CLM-PND-003] an unrecognised <x>pending tag is passed through, ignored like any unknown tag", () => {
   it("an unknown <x>pending alongside a recognised tag leaves the recognised obligation intact", () => {
     expect(obligationsRaisedBy(["unit", "foopending"], [])).toEqual([{ qualityCheckKind: "unit" }]);
   });
 });
 
-describe("[SCN-PND-016] a recognised community deferral tag defers every named obligation on its scenario", () => {
+describe("[CLM-PND-016] a recognised community deferral tag defers every named obligation on its scenario", () => {
   const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
   const COMMUNITY_TAGS = ["wip", "ignore", "skip", "todo", "pending"] as const;
 
@@ -46,7 +46,7 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every named o
   });
 });
 
-describe("[SCN-PND-017] `@integrationpending` defers only its own obligation (obligation-scope), not the whole scenario", () => {
+describe("[CLM-PND-017] `@integrationpending` defers only its own obligation (obligation-scope), not the whole scenario", () => {
   const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
   it("defers only the integration obligation — the unit obligation stays owed", () => {
@@ -64,7 +64,7 @@ describe("[SCN-PND-017] `@integrationpending` defers only its own obligation (ob
   });
 });
 
-describe("[SCN-PND-018] a scenario-scope `@wip` and an obligation-scope `@integrationpending` compose — both obligations pending", () => {
+describe("[CLM-PND-018] a scenario-scope `@wip` and an obligation-scope `@integrationpending` compose — both obligations pending", () => {
   const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
   it("defers the bare unit by the scenario-scope wip and the integration by the obligation-scope integrationpending — both pending", () => {
@@ -75,7 +75,7 @@ describe("[SCN-PND-018] a scenario-scope `@wip` and an obligation-scope `@integr
   });
 });
 
-describe("[SCN-PND-020] an unrecognised tag is given no special meaning — it defers nothing", () => {
+describe("[CLM-PND-020] an unrecognised tag is given no special meaning — it defers nothing", () => {
   const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
   it("an unrecognised tag derives exactly what no extra tag would — the tag buys no special treatment", () => {
@@ -85,7 +85,7 @@ describe("[SCN-PND-020] an unrecognised tag is given no special meaning — it d
   });
 });
 
-describe("[SCN-PND-022] a deferred scenario naming no obligations synthesises one scenario-scope pending obligation", () => {
+describe("[CLM-PND-022] a deferred scenario naming no obligations synthesises one scenario-scope pending obligation", () => {
   const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
   it("a bare wip scenario (no evidence tag) derives ONE scenario-scope pending obligation with no qualityCheckKind", () => {
@@ -93,7 +93,7 @@ describe("[SCN-PND-022] a deferred scenario naming no obligations synthesises on
   });
 
   it("a bare wip scenario reconciled raises one Pending Item whose qualityCheckKind is null", () => {
-    const balance = reconcile([{ claimCode: "SCN-PND-022", evidenceObligations: obligationsRaisedBy(["wip"], DEFERRAL_TAGS) }], []);
-    expect(balance.claimReconciliations.find((row) => row.claim === "SCN-PND-022")?.pendingItems).toEqual([{ qualityCheckKind: null }]);
+    const balance = reconcile([{ claimCode: "CLM-PND-022", evidenceObligations: obligationsRaisedBy(["wip"], DEFERRAL_TAGS) }], []);
+    expect(balance.claimReconciliations.find((row) => row.claim === "CLM-PND-022")?.pendingItems).toEqual([{ qualityCheckKind: null }]);
   });
 });

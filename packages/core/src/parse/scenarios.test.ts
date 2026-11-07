@@ -4,58 +4,58 @@ import { parseScenarioTags, parseScenarios, parseUntaggedScenarios } from "./sce
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { parsedFeatures } from "./parsedFeatures.test-utils.js";
 
-describe("[SCN-RPT-008] countClaimCodeOccurrences counts every @SCN occurrence including non-tag context", () => {
+describe("[CLM-RPT-008] countClaimCodeOccurrences counts every claim code occurrence including non-tag context", () => {
   let source: string;
   beforeEach(() => {
     source = [
-      "@RPT @SCN-RPT-001",
+      "@RPT @CLM-RPT-001",
       "Scenario: a thing",
-      "  Given the rule @SCN-RPT-001 is referenced again in prose",
-      "  # see also @SCN-LNT-005 in a comment",
+      "  Given the rule @CLM-RPT-001 is referenced again in prose",
+      "  # see also @CLM-LNT-005 in a comment",
       "",
-      "@unit @SCN-LDG-003",
+      "@unit @CLM-LDG-003",
       "Scenario: another",
     ].join("\n");
   });
 
-  it("counts @SCN occurrences across tag lines AND non-tag context (prose, comments)", () => {
+  it("counts claim code occurrences across tag lines AND non-tag context (prose, comments)", () => {
     expect(countClaimCodeOccurrences(source)).toBe(4);
   });
 
-  it("returns 0 for a source with no @SCN occurrences", () => {
+  it("returns 0 for a source with no claim code occurrences", () => {
     expect(countClaimCodeOccurrences("Feature: nothing\n  Scenario: blank")).toBe(0);
   });
 });
 
-describe("[SCN-RPT-008] the excluded figure counts only the claim codes not written as tags", () => {
+describe("[CLM-RPT-008] the excluded figure counts only the claim codes not written as tags", () => {
   it.each([
     {
       shape: "a scenario carrying several codes, none in prose",
       source:
-        "Feature: two\n\n  @unit @SCN-TWO-001\n  Scenario: one code\n    Given a step\n\n  @unit @SCN-TWO-002 @SCN-TWO-003\n  Scenario: two codes\n    Given a step\n",
+        "Feature: two\n\n  @unit @CLM-TWO-001\n  Scenario: one code\n    Given a step\n\n  @unit @CLM-TWO-002 @CLM-TWO-003\n  Scenario: two codes\n    Given a step\n",
       excluded: 0,
     },
     {
       shape: "a code on a Rule over three scenarios carrying none",
       source:
-        "Feature: rule\n\n  @SCN-RUL-001\n  Rule: tagged\n\n    Scenario: a\n      Given a step\n\n    Scenario: b\n      Given a step\n\n    Scenario: c\n      Given a step\n",
+        "Feature: rule\n\n  @CLM-RUL-001\n  Rule: tagged\n\n    Scenario: a\n      Given a step\n\n    Scenario: b\n      Given a step\n\n    Scenario: c\n      Given a step\n",
       excluded: 0,
     },
     {
       shape: "a code on a Feature over two scenarios carrying none",
-      source: "@FEA @SCN-FEA-001\nFeature: feature\n\n  Scenario: a\n    Given a step\n\n  Scenario: b\n    Given a step\n",
+      source: "@FEA @CLM-FEA-001\nFeature: feature\n\n  Scenario: a\n    Given a step\n\n  Scenario: b\n    Given a step\n",
       excluded: 0,
     },
     {
       shape: "a code on an Examples block under a tagged Scenario Outline",
       source:
-        "Feature: examples\n\n  @unit @SCN-EXA-001\n  Scenario Outline: outline\n    Given a <thing>\n\n    @SCN-EXA-002\n    Examples:\n      | thing |\n      | one   |\n",
+        "Feature: examples\n\n  @unit @CLM-EXA-001\n  Scenario Outline: outline\n    Given a <thing>\n\n    @CLM-EXA-002\n    Examples:\n      | thing |\n      | one   |\n",
       excluded: 0,
     },
     {
       shape: "one code in a step and one in a comment",
       source:
-        "Feature: prose\n\n  @unit @SCN-PRO-001\n  Scenario: mentions\n    # see @SCN-PRO-008\n    Given the rule @SCN-PRO-009 is cited\n",
+        "Feature: prose\n\n  @unit @CLM-PRO-001\n  Scenario: mentions\n    # see @CLM-PRO-008\n    Given the rule @CLM-PRO-009 is cited\n",
       excluded: 2,
     },
   ])("$shape", ({ source, excluded }) => {
@@ -63,7 +63,7 @@ describe("[SCN-RPT-008] the excluded figure counts only the claim codes not writ
   });
 });
 
-describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SCN tag", () => {
+describe("[CLM-RPT-014] parseUntaggedScenarios returns the scenarios with no claim code", () => {
   let source: string;
   beforeEach(() => {
     source = [
@@ -72,7 +72,7 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
       "",
       "  Rule: a mix of tagged and untagged scenarios",
       "",
-      "    @unit @SCN-UNT-001",
+      "    @unit @CLM-UNT-001",
       "    Scenario: a tagged scenario with an anchor",
       "      Given a step",
       "",
@@ -85,7 +85,7 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
       "        | x |",
       "        | 1 |",
       "",
-      "    @SCN-UNT-002",
+      "    @CLM-UNT-002",
       "    Scenario Outline: a tagged outline",
       "      Given <y>",
       "      Examples:",
@@ -94,7 +94,7 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
     ].join("\n");
   });
 
-  it("returns the untagged scenario + outline names, excluding the @SCN-tagged ones", () => {
+  it("returns the untagged scenario + outline names, excluding the claim-code-tagged ones", () => {
     expect(parseUntaggedScenarios(source)).toEqual([
       "an untagged scenario",
       "an untagged outline",
@@ -104,7 +104,7 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
   it("reads a tag line with more than one space between its tags as tags", () => {
     const spaced = [
       "Feature: spaced tags",
-      "  @unit  @SCN-AB-001",
+      "  @unit  @CLM-AB-001",
       "  Scenario: coded on a double-spaced tag line",
       "    Given a step",
     ].join("\n");
@@ -140,7 +140,7 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
   it("never reads a header keyword in the middle of a step as a scenario", () => {
     const midLine = [
       "Feature: mid-line keyword",
-      "  @unit @SCN-AB-001",
+      "  @unit @CLM-AB-001",
       "  Scenario: coded",
       "    Given the Scenario: wording appears mid-line",
     ].join("\n");
@@ -150,9 +150,9 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
   it("lists an untagged scenario whose header follows a step citing a code", () => {
     const cited = [
       "Feature: a cited code above a header",
-      "  @unit @SCN-AB-001",
+      "  @unit @CLM-AB-001",
       "  Scenario: coded",
-      "    Given the rule @SCN-AB-001 is cited",
+      "    Given the rule @CLM-AB-001 is cited",
       "  Scenario: no-claim-code, straight after the cited step",
       "    Given a step",
     ].join("\n");
@@ -160,29 +160,29 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
   });
 });
 
-describe("[SCN-GRD-004] a scenario tagged with two claim codes raises no evidence obligation under either", () => {
+describe("[CLM-GRD-004] a scenario tagged with two claim codes raises no evidence obligation under either", () => {
   const source = (ids: string): string =>
-    `@AAA\nFeature: a\n\n  @unit @SCN-AAA-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`;
+    `@AAA\nFeature: a\n\n  @unit @CLM-AAA-001\n  Scenario: its own\n    Given a thing\n\n  @unit ${ids}\n  Scenario: carries codes\n    Given a thing\n`;
 
   it("raises obligations under neither code, and does not count the scenario as untagged", () => {
-    const two = source("@SCN-AAA-002 @SCN-AAA-003");
-    expect(parseScenarios(two).map((s) => s.claimCode)).toEqual(["SCN-AAA-001"]);
+    const two = source("@CLM-AAA-002 @CLM-AAA-003");
+    expect(parseScenarios(two).map((s) => s.claimCode)).toEqual(["CLM-AAA-001"]);
     expect(parseUntaggedScenarios(two)).toEqual([]);
   });
 
   it("raises its obligation under one code, or the same code repeated, as today", () => {
-    expect(parseScenarios(source("@SCN-AAA-002"))).toEqual([
-      { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { claimCode: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    expect(parseScenarios(source("@CLM-AAA-002"))).toEqual([
+      { claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "CLM-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ]);
-    expect(parseScenarios(source("@SCN-AAA-002 @SCN-AAA-002")).map((s) => s.claimCode)).toEqual([
-      "SCN-AAA-001",
-      "SCN-AAA-002",
+    expect(parseScenarios(source("@CLM-AAA-002 @CLM-AAA-002")).map((s) => s.claimCode)).toEqual([
+      "CLM-AAA-001",
+      "CLM-AAA-002",
     ]);
   });
 });
 
-describe("[SCN-GRD-005] an Outline whose two rows hold CLM-ONE-001 and CLM-ONE-002 is two claims", () => {
+describe("[CLM-GRD-005] an Outline whose two rows hold CLM-ONE-001 and CLM-ONE-002 is two claims", () => {
   it("reads one claim for each row, under the code in its clm cell", () => {
     const source = [
       "@ONE",
@@ -236,7 +236,7 @@ describe("[SCN-GRD-005] an Outline whose two rows hold CLM-ONE-001 and CLM-ONE-0
   });
 });
 
-describe("[SCN-GRD-006] each row's claim raises the Evidence Obligations its Outline's tags name", () => {
+describe("[CLM-GRD-006] each row's claim raises the Evidence Obligations its Outline's tags name", () => {
   it("raises a unit and an integration obligation for a row of an Outline tagged @unit and @integration", () => {
     const source = [
       "@ONE",
@@ -258,7 +258,7 @@ describe("[SCN-GRD-006] each row's claim raises the Evidence Obligations its Out
   });
 });
 
-describe("[SCN-GRD-007] a row whose code is wrong reconciles as a scenario whose code is wrong", () => {
+describe("[CLM-GRD-007] a row whose code is wrong reconciles as a scenario whose code is wrong", () => {
   const outline = (tags: string, examplesTags: string, cells: readonly string[]): string =>
     [
       "@ONE",
@@ -355,7 +355,7 @@ describe("[SCN-GRD-007] a row whose code is wrong reconciles as a scenario whose
   });
 });
 
-describe("[SCN-GRD-008] an Outline tagged with a code and with no clm column is one claim", () => {
+describe("[CLM-GRD-008] an Outline tagged with a code and with no clm column is one claim", () => {
   it("reads one claim under the Outline's code, whatever its rows and their Examples tags hold", () => {
     const source = [
       "@ONE",

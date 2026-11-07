@@ -16,13 +16,13 @@ Feature: a fixture target citing one of the two checks its CI runs
   only the one posting rule can produce, so it is the one this fixture holds.
 
   THE @unit TAG BELOW IS LOAD-BEARING AND IS NOT THIS FEATURE FILE'S. This target is shared
-  with @SCN-RMD-005 and @SCN-RMD-008 in features/report-model.feature, and RMD-008 reads the
+  with @CLM-RMD-005 and @CLM-RMD-008 in features/report-model.feature, and RMD-008 reads the
   missing-evidence split for the word "unit" — which only exists because this scenario raises an Evidence Obligation for a
-  unit test no run ever supplies. Two axes on one stepless row is the shape @SCN-LNT-004
+  unit test no run ever supplies. Two axes on one stepless row is the shape @CLM-LNT-004
   already models, so it costs the fitness reading nothing; dropping the tag silently empties
   another scenario's assertion.
 
   Rule: the target holds itself to the foo check its CI runs
 
-    @unit @fitness @SCN-TGT-001
+    @unit @fitness @CLM-TGT-001
     Scenario: the tree stays inside the foo threshold

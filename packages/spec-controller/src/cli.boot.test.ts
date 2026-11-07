@@ -44,7 +44,7 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-CLI-106] an error while the program loads ends the run at 6, named on one line", () => {
+describe("[CLM-CLI-106] an error while the program loads ends the run at 6, named on one line", () => {
   describe("a load that fails because a module cannot be found", () => {
     it("sets the process's exit code to 6", async () => {
       const b = await booted(failingLoad);

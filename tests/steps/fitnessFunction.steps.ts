@@ -73,17 +73,17 @@ Then(
   "lint:foo is attributed to the scenario citing it, not reported uncited",
   function (this: SpecControllerWorld) {
     assert.equal(
-      claimReconciliationCell(this.markdown, "SCN-TGT-001", "Fitness"),
+      claimReconciliationCell(this.markdown, "CLM-TGT-001", "Fitness"),
       "F/1",
-      `expected lint:foo's evidence observation posted to SCN-TGT-001 — the attribution the citation seam ` +
+      `expected lint:foo's evidence observation posted to CLM-TGT-001 — the attribution the citation seam ` +
         `produces. Asserting only that no uncited evidence observation names lint:foo is the weaker claim, and ` +
         `a reader posting the evidence observation to a scenario the corpus never wrote satisfies it too. ` +
         `Got:\n${this.markdown}`
     );
-    const reconcilingItems = claimReconciliationCell(this.markdown, "SCN-TGT-001", entryText("reconciling-items-column"));
+    const reconcilingItems = claimReconciliationCell(this.markdown, "CLM-TGT-001", entryText("reconciling-items-column"));
     assert.ok(
       !reconcilingItems.split("; ").some((item) => item.startsWith("fitness:")),
-      `expected SCN-TGT-001's fitness evidence obligation satisfied, adding no reconciling item; got: ${reconcilingItems}`
+      `expected CLM-TGT-001's fitness evidence obligation satisfied, adding no reconciling item; got: ${reconcilingItems}`
     );
     const unnamedClaimRow = this.markdown.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
     assert.ok(
@@ -192,16 +192,16 @@ Then(
   "lint:nightly reconciles satisfied, with no watermelon raised against it",
   function (this: SpecControllerWorld) {
     assert.equal(
-      claimReconciliationCell(this.markdown, "SCN-TGS-001", "Fitness"),
+      claimReconciliationCell(this.markdown, "CLM-TGS-001", "Fitness"),
       "F/1",
-      `expected lint:nightly's evidence observation posted to SCN-TGS-001 — lint:nightly is invoked by ` +
+      `expected lint:nightly's evidence observation posted to CLM-TGS-001 — lint:nightly is invoked by ` +
         `nightly.yml, so the scenario citing it is telling the truth. Reading ci.yml alone is what makes ` +
         `the tool disagree. Report:\n${this.markdown}`,
     );
-    const reconcilingItems = claimReconciliationCell(this.markdown, "SCN-TGS-001", entryText("reconciling-items-column"));
+    const reconcilingItems = claimReconciliationCell(this.markdown, "CLM-TGS-001", entryText("reconciling-items-column"));
     assert.ok(
       !reconcilingItems.split("; ").some((item) => item.startsWith("fitness:")),
-      `expected SCN-TGS-001's fitness evidence obligation satisfied, adding no reconciling item; got: ${reconcilingItems}`,
+      `expected CLM-TGS-001's fitness evidence obligation satisfied, adding no reconciling item; got: ${reconcilingItems}`,
     );
     const report = JSON.parse(this.jsonText) as JsonReport;
     const watermelons = reconciliationTotalsOf(report).reconciliationLines.byOutcome["watermelon"];

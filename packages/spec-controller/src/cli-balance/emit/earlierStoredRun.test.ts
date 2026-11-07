@@ -56,7 +56,7 @@ beforeEach(() => {
 
 recordWhatTheProgramWrites();
 
-describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run is refused naming the file, and that run keeps its files", () => {
+describe("[CLM-RMG-012] a --format path naming a file of an earlier stored run is refused naming the file, and that run keeps its files", () => {
   const files: ReadonlyArray<readonly [string, "md" | "json"]> = [
     ["spec-reconciliation.json", "json"],
     ["spec-reconciliation.md", "md"],
@@ -105,7 +105,7 @@ describe("[SCN-RMG-012] a --format path naming a file of an earlier stored run i
   });
 });
 
-describe("[SCN-RMG-012] the stored run's own run directory is not an earlier stored run's", () => {
+describe("[CLM-RMG-012] the stored run's own run directory is not an earlier stored run's", () => {
   it("writes into the run's own directory though an earlier run under the same run id left its run.yaml there", () => {
     const path = join(earlierRunDir, "spec-reconciliation.json");
 
@@ -116,7 +116,7 @@ describe("[SCN-RMG-012] the stored run's own run directory is not an earlier sto
   });
 });
 
-describe("[SCN-RMG-014] a --format path that is a symlink to a file of an earlier stored run is refused naming the link and that run's directory", () => {
+describe("[CLM-RMG-014] a --format path that is a symlink to a file of an earlier stored run is refused naming the link and that run's directory", () => {
   const files: ReadonlyArray<readonly [string, "md" | "json"]> = [
     ["spec-reconciliation.json", "json"],
     ["spec-reconciliation.md", "md"],
@@ -152,7 +152,7 @@ describe("[SCN-RMG-014] a --format path that is a symlink to a file of an earlie
   });
 });
 
-describe("[SCN-RMG-013] a --format path beside a run.yaml that is not a run manifest is written as before", () => {
+describe("[CLM-RMG-013] a --format path beside a run.yaml that is not a run manifest is written as before", () => {
   const notManifests: ReadonlyArray<readonly [string, string | undefined]> = [
     ["a run.yaml that is not YAML", "jobs: [build\n"],
     ["a run.yaml of some other tool", "name: ci\non: push\njobs: {}\n"],

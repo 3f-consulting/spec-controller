@@ -16,10 +16,10 @@ const NO_STEP_RUNS_IT = (): string => coreMessage(CoreMessage.NoStepCountedAsIts
 
 const feature = `Feature: fixture
 
-  @unit @SCN-FIX-001
+  @unit @CLM-FIX-001
   Scenario: a behaviour proved by a unit test
 
-  @integration @SCN-FIX-002
+  @integration @CLM-FIX-002
   Scenario: a behaviour proved by an integration test
 `;
 
@@ -47,9 +47,9 @@ const packageJson = {
 };
 
 const behaviouralObservations: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", claimCode: "SCN-FIX-001", status: "passed" },
-  { qualityCheckKind: "unit", claimCode: "SCN-FIX-001", status: "passed" },
-  { qualityCheckKind: "integration", claimCode: "SCN-FIX-002", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "CLM-FIX-001", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "CLM-FIX-001", status: "passed" },
+  { qualityCheckKind: "integration", claimCode: "CLM-FIX-002", status: "passed" },
 ];
 
 const runnersOnlyCi = `name: fixture CI
@@ -125,7 +125,7 @@ function fitnessRowWith(fitness: QualityCheckKindObservations): string[] | undef
     .find(([check]) => check === "fitness");
 }
 
-describe("[SCN-RPT-074] each layer's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
+describe("[CLM-RPT-074] each layer's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations", () => {
   it("heads the table with the kind of quality check, its count, its runner and its CI step", () => {
     const [header, separator] = tableRows();
     expect(header).toStrictEqual(cells(coreMessage(CoreMessage.EvidenceObservationsTableHeader)));
@@ -184,7 +184,7 @@ describe("[SCN-RPT-074] each layer's row names its runner and the CI steps the s
   it("says no step counted as its runner runs a declared runner that no step runs, with evidence observations", () => {
     const withPerformance: EvidenceObservation[] = [
       ...behaviouralObservations,
-      { qualityCheckKind: "performance", claimCode: "SCN-FIX-001", status: "passed" },
+      { qualityCheckKind: "performance", claimCode: "CLM-FIX-001", status: "passed" },
     ];
     const rows = tableRows(ci, withPerformance).slice(2);
     expect(rows.find(([check]) => check === "performance")).toStrictEqual([
@@ -271,7 +271,7 @@ jobs:
         run: pnpm e2e
 `;
 
-describe("[SCN-RPT-079] every cell of the evidence observations table holds its text whole, a runner or a step name holding a pipe included", () => {
+describe("[CLM-RPT-079] every cell of the evidence observations table holds its text whole, a runner or a step name holding a pipe included", () => {
   const declared = { unit: "vitest", integration: "cucumber-js", e2e: "playwright", performance: "k6 | cloud" };
 
   it("keeps a step name holding a pipe in its CI step cell, the row keeping four cells", () => {

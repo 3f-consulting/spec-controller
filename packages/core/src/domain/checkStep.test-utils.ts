@@ -5,11 +5,11 @@ import type { PipelineStep } from "./pipelineStep.js";
 import { stepDispositions } from "./uncitedFitnessFunctions.js";
 
 export const FITNESS_SCENARIOS: Scenario[] = [
-  { claimCode: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { claimCode: "SCN-CVT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { claimCode: "SCN-CVT-003", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { claimCode: "SCN-CVT-004", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { claimCode: "SCN-CVT-005", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-CVT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-CVT-003", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-CVT-004", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-CVT-005", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 export const IN_THE_QUALITY_JOB = { workflow: "ci.yml", job: "quality", writesStepRecord: false, abortsJob: true, plumbing: false } as const;

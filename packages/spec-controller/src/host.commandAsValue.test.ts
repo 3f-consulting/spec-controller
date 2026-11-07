@@ -13,7 +13,7 @@ const tookCommand = (modifier: FlagSpec, command: string): string =>
 
 const valueKey = (modifier: FlagSpec): "store" | "runId" => (modifier.name === "--store" ? "store" : "runId");
 
-describe("[SCN-CLI-066] the host refuses a modifier that took the command as its value, naming both, and stores nothing", () => {
+describe("[CLM-CLI-066] the host refuses a modifier that took the command as its value, naming both, and stores nothing", () => {
 
   for (const modifier of modifiers) {
     for (const { name: command } of cliRegistry.commands) {

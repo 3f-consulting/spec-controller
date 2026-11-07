@@ -35,7 +35,7 @@ function summedOver(rows: readonly JobStepAccount[]): Counts {
   return Object.fromEntries(COUNTS.map((count) => [count, rows.reduce((total, row) => total + row[count], 0)])) as Counts;
 }
 
-describe("[SCN-RMD-023] the step accounting's total sums each count over its rows, one per workflow and job", () => {
+describe("[CLM-RMD-023] the step accounting's total sums each count over its rows, one per workflow and job", () => {
   it("sums each count over the rows of two workflows and three jobs", () => {
     const accounting = reconcileTwoWorkflows().summary.stepAccounting!;
     expect(accounting.byJob.map(({ workflow, job }) => `${workflow}:${job}`)).toStrictEqual([

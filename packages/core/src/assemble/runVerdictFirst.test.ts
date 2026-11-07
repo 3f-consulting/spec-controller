@@ -18,7 +18,7 @@ const SAVES: readonly SaveRow[] = [
   { save: "a saved report holding a stale run verdict first", reshape: (summary) => ({ runVerdict: "balanced", ...withoutVerdict(summary) }) },
 ];
 
-describe("[SCN-RMD-029] the JSON report's summary states the run verdict first, on a fresh run and on a saved report concluded again", () => {
+describe("[CLM-RMD-029] the JSON report's summary states the run verdict first, on a fresh run and on a saved report concluded again", () => {
   it("a fresh run: the run verdict comes first and the rest of the summary keeps its order", () => {
     const report = JSON.parse(everyOutcomeCorpusJson()) as { readonly summary: Summary };
 

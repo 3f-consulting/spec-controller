@@ -26,10 +26,10 @@ const block = { runners: { unit: "vitest" }, notChecks: ["ci.yml:ci:Checkout"], 
 function targetOf(specController: unknown): string {
   const dir = temporaryDirectory("scn-usg-config-");
   mkdirSync(join(dir, "features"));
-  writeFileSync(join(dir, "features", "own.feature"), "@OWN\nFeature: own\n\n  @unit @SCN-OWN-001\n  Scenario: own\n");
+  writeFileSync(join(dir, "features", "own.feature"), "@OWN\nFeature: own\n\n  @unit @CLM-OWN-001\n  Scenario: own\n");
   writeFileSync(
     join(dir, "vitest.json"),
-    JSON.stringify({ testResults: [{ name: "own.test.ts", assertionResults: [{ fullName: "[SCN-OWN-001] own", status: "passed" }] }] })
+    JSON.stringify({ testResults: [{ name: "own.test.ts", assertionResults: [{ fullName: "[CLM-OWN-001] own", status: "passed" }] }] })
   );
   writeFileSync(
     join(dir, "ci.yml"),
@@ -52,7 +52,7 @@ function balanceOf(specController: unknown): { report: string; stderr: string; e
   return captured([...inputsOf(targetOf(specController)), "--format", "md"]);
 }
 
-describe("[SCN-CFG-004] a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it", () => {
+describe("[CLM-CFG-004] a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it", () => {
   const examples: ReadonlyArray<readonly [string, unknown, unknown]> = [
     ["specController", "x", undefined],
     ["specController.runners", { ...block, runners: ["vitest"] }, { ...block, runners: undefined }],
@@ -71,7 +71,7 @@ describe("[SCN-CFG-004] a specController entry of a kind its reader does not tak
   });
 });
 
-describe("[SCN-CFG-006] a specController block whose every entry is a kind its reader takes names nothing as the wrong kind", () => {
+describe("[CLM-CFG-006] a specController block whose every entry is a kind its reader takes names nothing as the wrong kind", () => {
   it.each([
     ["a null runner", { ...block, runners: { unit: "vitest", e2e: null } }],
     ["an empty notChecks", { ...block, notChecks: [] }],
@@ -91,9 +91,9 @@ describe("[SCN-CFG-006] a specController block whose every entry is a kind its r
   });
 });
 
-describe("[SCN-CFG-007] a saved run re-rendered names the same specController entries its live report named", () => {
+describe("[CLM-CFG-007] a saved run re-rendered names the same specController entries its live report named", () => {
   it("re-renders a saved run of a target holding a wrong kind and an unread key, naming both as the live report did and writing nothing to stderr", () => {
-    const dir = targetOf({ ...block, notChecks: "ci.yml:ci:Checkout", fitnessChecks: [{ scn: "SCN-OWN-001" }] });
+    const dir = targetOf({ ...block, notChecks: "ci.yml:ci:Checkout", fitnessChecks: [{ scn: "CLM-OWN-001" }] });
     const saved = join(dir, "saved.json");
     const live = captured([...inputsOf(dir), "--format", "md", "--format", `json:${saved}`]);
     const again = captured(["--render-from-json", saved]);
@@ -103,7 +103,7 @@ describe("[SCN-CFG-007] a saved run re-rendered names the same specController en
   });
 });
 
-describe("[SCN-CFG-005] a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it", () => {
+describe("[CLM-CFG-005] a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it", () => {
   const accounts = (report: string): string => report.slice(report.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))));
 
   it.each(["notCheck", "fitnessChecks", "zzz"])("reconciles a target also holding %s as the target without it, naming the key in the one sentence every unread key gets", (key) => {
@@ -121,11 +121,11 @@ describe("[SCN-CFG-005] a key the specController block does not read, a retired 
   });
 });
 
-describe("[SCN-CLI-092] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
+describe("[CLM-CLI-092] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
   it("writes nothing to stderr for a target whose configuration names no runners and no non-checks", () => {
     const dir = temporaryDirectory("scn-usg-017-unit-");
     mkdirSync(join(dir, "features"));
-    writeFileSync(join(dir, "features", "own.feature"), "@OWN\nFeature: own\n\n  @unit @SCN-OWN-001\n  Scenario: own\n");
+    writeFileSync(join(dir, "features", "own.feature"), "@OWN\nFeature: own\n\n  @unit @CLM-OWN-001\n  Scenario: own\n");
     writeFileSync(
       join(dir, "ci.yml"),
       "jobs:\n  ci:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Unit tests\n        run: pnpm test\n"

@@ -7,22 +7,22 @@ Feature: a target whose unit tests are a Kotlin suite
 
   Rule: the fixture target names the scenarios its JUnit 5 tests cite
 
-    @unit @SCN-KOF-001
+    @unit @CLM-KOF-001
     Scenario: the scenario a passing JUnit 5 test cites
       Given the target repo's source
 
-    @unit @SCN-KOF-002
+    @unit @CLM-KOF-002
     Scenario: the scenario a failing JUnit 5 test cites
       Given the target repo's source
 
-    @unit @SCN-KOF-003
+    @unit @CLM-KOF-003
     Scenario: the scenario a disabled JUnit 5 test cites
       Given the target repo's source
 
-    @unit @SCN-KOF-004
+    @unit @CLM-KOF-004
     Scenario: the scenario a class cites around a JUnit 5 test whose own display name cites nothing
       Given the target repo's source
 
-    @unit @SCN-KOF-005
+    @unit @CLM-KOF-005
     Scenario: the scenario a JUnit 5 test cites in a class whose setup before all its tests fails
       Given the target repo's source

@@ -3,8 +3,8 @@
     {
       "name": "tests/fixtures/unnamed-claim-only/widget.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-SUS-001] the first target unit scenario is proven", "status": "passed" },
-        { "fullName": "[SCN-SUS-002] the second target unit scenario is proven", "status": "passed" }
+        { "fullName": "[CLM-SUS-001] the first target unit scenario is proven", "status": "passed" },
+        { "fullName": "[CLM-SUS-002] the second target unit scenario is proven", "status": "passed" }
       ]
     }
   ]

@@ -5,7 +5,7 @@
     "elements": [
       {
         "name": "no-evidence-obligation — a real scenario cited at a quality-check it never named",
-        "tags": [{ "name": "@SCN-TOC-005" }, { "name": "@e2e" }],
+        "tags": [{ "name": "@CLM-TOC-005" }, { "name": "@e2e" }],
         "steps": [
           {
             "keyword": "Given ",

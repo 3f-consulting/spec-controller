@@ -7,7 +7,7 @@ import { shownText } from "../../shownText.test-utils.js";
 
 const input = (subject: string, path: string, identity: FileIdentity | undefined): IdentifiedInput => ({ subject, path, identity });
 
-describe("[SCN-FMT-013] an output on the regular file an input is refused, naming the output and the input", () => {
+describe("[CLM-FMT-013] an output on the regular file an input is refused, naming the output and the input", () => {
   it("refuses an output on the file an input names, naming the output as given and the input by its subject and path", () => {
     const refusal = shownText(inputOverwriteRefusal([at(toFile("json", "vitest.json"), id(1n, 7n))], [input("the --vitest report", "vitest.json", id(1n, 7n))]));
 

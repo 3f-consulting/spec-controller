@@ -8,7 +8,7 @@ import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { printedRefusal, shownText } from "../shownText.test-utils.js";
 
-describe("[SCN-FMT-006] balance rejects the removed --json flag with a migration hint", () => {
+describe("[CLM-FMT-006] balance rejects the removed --json flag with a migration hint", () => {
   it("returns the typed migration-hint error naming --format json:<path> when --json is present", () => {
     const error = shownText(checkLegacyJson({ json: "out.json" }));
     expect(error).not.toBeNull();

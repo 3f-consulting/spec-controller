@@ -52,7 +52,7 @@ beforeEach(() => {
   BALANCED_LINE = verdictLine(CoreMessage.BalancedHeadline, coreMessage(CoreMessage.BalancedGloss), 0);
 });
 
-describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
+describe("[CLM-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
   it("a balanced ledger: the heading, a blank line, the verdict naming exit 0, and one blank line", () => {
     const md = renderMarkdown(evidenceReconciliation(reconcile([scenario], [passed])), ctx, publishedExitCodeOf);
     expect(verdictSectionOf(md)).toEqual([heading(), "", BALANCED_LINE, ""]);
@@ -94,10 +94,10 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     ]);
   });
 
-  describe("a corpus whose file headed @TWO holds a scenario coded @SCN-ONE-002", () => {
+  describe("a corpus whose file headed @TWO holds a scenario coded @CLM-ONE-002", () => {
     const sources = [
-      "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: one\n    Given a thing\n",
-      "@TWO\nFeature: two\n\n  @unit @SCN-ONE-002\n  Scenario: two\n    Given a thing\n",
+      "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n    Given a thing\n",
+      "@TWO\nFeature: two\n\n  @unit @CLM-ONE-002\n  Scenario: two\n    Given a thing\n",
     ];
     const reconciled = (behaviouralObservations: readonly EvidenceObservation[]): EvidenceReconciliation =>
       evidenceReconciliationFromSources({
@@ -108,8 +108,8 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
         deferralTags: [],
       });
     const bothPassed: EvidenceObservation[] = [
-      { qualityCheckKind: "unit", claimCode: "SCN-ONE-001", status: "passed" },
-      { qualityCheckKind: "unit", claimCode: "SCN-ONE-002", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "CLM-ONE-001", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "CLM-ONE-002", status: "passed" },
     ];
 
     it("with every account balanced: the claim-code-error verdict names exit 1 and adds nothing about the accounts", () => {

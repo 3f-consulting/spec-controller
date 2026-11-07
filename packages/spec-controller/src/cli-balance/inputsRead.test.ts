@@ -19,7 +19,7 @@ const reader: InputReader = {
   workflowFiles: workflowFilesAt,
 };
 
-describe("[SCN-FMT-013] the files a run reads are named by how the run came to read them", () => {
+describe("[CLM-FMT-013] the files a run reads are named by how the run came to read them", () => {
   it("names each input the run was pointed at by its flag", () => {
     const args = { vitest: "v.json", cucumber: "c.json", "ci-steps": "s.json", "package-json": "p.json", features: "f", ci: "w.yml" };
 
@@ -50,7 +50,7 @@ describe("[SCN-FMT-013] the files a run reads are named by how the run came to r
   });
 });
 
-describe("[SCN-FMT-013] balance refuses a --format naming one of the feature files it reads, and writes one naming a file it does not read", () => {
+describe("[CLM-FMT-013] balance refuses a --format naming one of the feature files it reads, and writes one naming a file it does not read", () => {
   function target(): { features: string; ci: string } {
     const dir = temporaryDirectory("fmt-013-unit-");
     const features = join(dir, "features");
@@ -114,7 +114,7 @@ describe("[SCN-FMT-013] balance refuses a --format naming one of the feature fil
   });
 });
 
-describe("[SCN-CLI-085] a feature file in a subdirectory of the corpus is among the files a run reads", () => {
+describe("[CLM-CLI-085] a feature file in a subdirectory of the corpus is among the files a run reads", () => {
   const corpus = "tests/fixtures/nested-corpus/features";
 
   it("names every feature file under the corpus, at any depth", () => {

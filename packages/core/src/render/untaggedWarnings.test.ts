@@ -24,7 +24,7 @@ const zeta = `Feature: zeta
   Scenario: untagged scenario b
     Given nothing cites it
 
-  @unit @SCN-ZET-001
+  @unit @CLM-ZET-001
   Scenario: a tagged behaviour
     Given a fixture
 
@@ -64,7 +64,7 @@ const untaggedLocators = [
   "zeta.feature : untagged scenario b",
 ];
 
-describe("[SCN-RPT-014] the report counts the scenarios with no claim code", () => {
+describe("[CLM-RPT-014] the report counts the scenarios with no claim code", () => {
   it("states the count of scenarios with no claim code, naming none of them there", () => {
     expect(censusBlock(renderCorpus(corpus))).toEqual([
       `- ${coreMessage(CoreMessage.ExcludedClaimOccurrences, { count: 0 })}`,
@@ -73,7 +73,7 @@ describe("[SCN-RPT-014] the report counts the scenarios with no claim code", () 
   });
 });
 
-describe("[SCN-RPT-095] each scenario with no claim code is listed once, on its own ledger row", () => {
+describe("[CLM-RPT-095] each scenario with no claim code is listed once, on its own ledger row", () => {
   it.each(untaggedLocators)("names %s exactly once, on its own ledger row", (locator) => {
     const lines = renderCorpus(corpus).split("\n");
     const naming = lines.filter((line) => line.includes(locator));

@@ -15,5 +15,5 @@ Feature: A scenario raising no evidence obligations is both-missing
 
   Rule: a scenario raising no evidence obligations is a both-missing out-of-balance row
 
-    @unit @SCN-WRN-001
+    @unit @CLM-WRN-001
     Scenario: a scenario raising no evidence obligations is reported as a both-missing reconciliation, out of balance

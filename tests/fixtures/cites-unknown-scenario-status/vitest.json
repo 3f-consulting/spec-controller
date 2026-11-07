@@ -3,19 +3,19 @@
     {
       "name": "tests/fixtures/cites-unknown-scenario-status/proven.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-PST-001] the target unit scenario is proven", "status": "passed" }
+        { "fullName": "[CLM-PST-001] the target unit scenario is proven", "status": "passed" }
       ]
     },
     {
       "name": "tests/fixtures/cites-unknown-scenario-status/broken-spawn.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-PST-901] spawns yarn", "status": "failed" }
+        { "fullName": "[CLM-PST-901] spawns yarn", "status": "failed" }
       ]
     },
     {
       "name": "tests/fixtures/cites-unknown-scenario-status/sound.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-PST-901] adds two numbers", "status": "passed" }
+        { "fullName": "[CLM-PST-901] adds two numbers", "status": "passed" }
       ]
     }
   ]

@@ -42,7 +42,7 @@ const answering =
 
 const CHECKOUT_IS_PLUMBING = { "actions/checkout@v4": "plumbing" } as const;
 
-describe("[SCN-USG-020] the step account's rows, one per workflow and job read, carry each disposition's count beside the steps read, and those counts add up to the steps read", () => {
+describe("[CLM-USG-020] the step account's rows, one per workflow and job read, carry each disposition's count beside the steps read, and those counts add up to the steps read", () => {
   it("gives a row for every workflow and job, in workflow then job order, with each disposition's count summing to the steps read", () => {
     const dispositionOf = answering({
       ...CHECKOUT_IS_PLUMBING,

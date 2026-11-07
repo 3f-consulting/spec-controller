@@ -11,7 +11,7 @@ const RUNNERS = { unit: "vitest", integration: "cucumber-js" };
 
 const candidates = (): string[] => candidatesAmong(pipeline(), SCRIPTS, RUNNERS);
 
-describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners", () => {
+describe("[CLM-USG-003] test and cucumber CI steps are not candidate fitness functions, because the manifest names their runners", () => {
   it("leaves out the steps that run the declared unit and integration runners, and keeps the step that runs neither", () => {
     expect(candidates()).toStrictEqual(["pnpm lint:foo"]);
   });

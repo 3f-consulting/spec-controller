@@ -54,7 +54,7 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-ALC-017] a path allocate reads that is not the kind it reads is refused, naming the path", () => {
+describe("[CLM-ALC-017] a path allocate reads that is not the kind it reads is refused, naming the path", () => {
   it.each(WRONG_KINDS)("refuses ONE at the usage status, naming $path, where it is $kind", ({ path, make, subject, reason }) => {
     const repo = repositoryHeadedOneCarrying003("allocate-not-the-kind-");
     make(join(repo, path));

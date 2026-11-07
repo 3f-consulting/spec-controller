@@ -5,7 +5,7 @@ import { AppError } from "../messages.js";
 import { message } from "../appText.js";
 import { CoreMessage, coreMessage, markdownHeading } from "@3f-consulting/spec-controller-core/internal";
 
-describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report byte for byte and exits 0", () => {
+describe("[CLM-CLI-021] under --exit-zero a verdict run prints the same report byte for byte and exits 0", () => {
   const EXAMPLES = [
     {
       verdict: "all-balanced",
@@ -72,7 +72,7 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
   }
 });
 
-describe("[SCN-CLI-022] --exit-zero never masks a run that could give no verdict", () => {
+describe("[CLM-CLI-022] --exit-zero never masks a run that could give no verdict", () => {
   function runWithExitZero(argv: readonly string[]): { exitCode: number; stdout: string; stderr: string } {
     const { exitCode, stdout, stderr } = runBalanceCaptured([...argv, "--exit-zero"]);
     return { exitCode, stdout, stderr };

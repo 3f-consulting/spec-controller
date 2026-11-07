@@ -51,40 +51,40 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
 
   Rule: a domain invariant names its fault by code and carries its parameters, not its prose
 
-    @unit @SCN-MSG-001
+    @unit @CLM-MSG-001
     Scenario: an Evidence Obligation or Evidence Observation that diverges from its outcome is refused with a coded fault that carries its parameters, and the report catalogue words that fault from its parameters alone
 
   Rule: every code in a message catalogue has one message, which prints the values its code is given
 
-    @unit @SCN-MSG-002
+    @unit @CLM-MSG-002
     Scenario: every code has exactly one message
 
-    @unit @SCN-MSG-003
+    @unit @CLM-MSG-003
     Scenario: every message belongs to a code
 
-    @unit @SCN-MSG-004
+    @unit @CLM-MSG-004
     Scenario: no message is empty
 
-    @unit @SCN-MSG-005
+    @unit @CLM-MSG-005
     Scenario: a message uses only the values its code gives it
 
-    @unit @SCN-MSG-006
+    @unit @CLM-MSG-006
     Scenario: a message uses every value its code gives it
 
-    @unit @SCN-MSG-007
+    @unit @CLM-MSG-007
     Scenario: every message parses
 
-    @unit @SCN-MSG-008
+    @unit @CLM-MSG-008
     Scenario: every message prints its words as written
 
   Rule: a message holds no choice between words, other than a count's plural forms
 
-    @unit @SCN-MSG-009
+    @unit @CLM-MSG-009
     Scenario: no message chooses between words other than by a count's plural forms
 
   Rule: a counted noun reads in the number its count calls for
 
-    @unit @SCN-MSG-015
+    @unit @CLM-MSG-015
     Scenario Outline: a counted noun agrees with its count — <message>
 
       Examples:
@@ -102,7 +102,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
     An error is what refuses a run, stops it on an unexpected error, or is named under the report's
     errors in the inputs.
 
-    @unit @SCN-MSG-010
+    @unit @CLM-MSG-010
     Scenario Outline: an error shows its reader the error code of what went wrong — <error>
 
       Examples:
@@ -110,7 +110,7 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
         | a flag the command does not take                           | the flag unknown to the command      |
         | a flag the command has retired                             | the retired flag                     |
         | a command the tool does not have                           | the unknown command                  |
-        | a request for a scenario code not in its form              | the request not in the code's form   |
+        | a request for a claim code not in its form              | the request not in the code's form   |
         | an unexpected error before its verdict                     | the unexpected error                 |
         | an unexpected error that cannot be formatted               | the unexpected error                 |
         | an unexpected error after its verdict                      | the unexpected error after a verdict |
@@ -119,16 +119,16 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
         | a scenario carrying a code of another feature              | the misfiled code                    |
         | a saved report holding an error in its inputs, re-rendered | the error the saved report holds     |
 
-    @unit @SCN-MSG-011
+    @unit @CLM-MSG-011
     Scenario: a balanced run shows no error code
 
   Rule: a reader can look up every error code and every way a run can end
 
-    @unit @SCN-MSG-012
+    @unit @CLM-MSG-012
     Scenario: every code the tool can give is documented
 
-    @unit @SCN-MSG-013
+    @unit @CLM-MSG-013
     Scenario: every documented code is one the tool can give
 
-    @unit @SCN-MSG-014
+    @unit @CLM-MSG-014
     Scenario: no error code stands for two errors

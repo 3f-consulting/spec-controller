@@ -23,10 +23,10 @@ import { scenarioName } from "../domain/scenarioName.test-utils.js";
 function reportLedger(): Ledger {
   return reconcile(
     [
-      { claimCode: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { claimCode: "SCN-RMD-002", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+      { claimCode: "CLM-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "CLM-RMD-002", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
     ],
-    [{ qualityCheckKind: "unit", claimCode: "SCN-RMD-001", status: "passed" }],
+    [{ qualityCheckKind: "unit", claimCode: "CLM-RMD-001", status: "passed" }],
   );
 }
 
@@ -37,11 +37,11 @@ const evidenceObligations: EvidenceObligations = {
   untaggedScenarios: [],
 };
 
-describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report model", () => {
+describe("[CLM-RMD-001] assembleRenderInput builds one whole-document report model", () => {
   it("carries the sections as top-level keys in document order", () => {
     const judged = evidenceReconciliationFromSources({
       features: parsedFeatures(
-        ["@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: s\n    Given a thing\n", "Feature: plain\n"],
+        ["@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: s\n    Given a thing\n", "Feature: plain\n"],
         ["one.feature", "plain.feature"]
       ),
       packageJson: {},
@@ -71,7 +71,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   it("states each fact once: the faults only under errors and the corpus's facts only under claimCodes", () => {
     const features = parsedFeatures(
       [
-        "Feature: uncoded\n\n  @unit @SCN-FIX-001\n  Scenario: one\n    Given a thing\n\n  @unit @SCN-FIX-001\n  Scenario: two\n    Given a thing\n",
+        "Feature: uncoded\n\n  @unit @CLM-FIX-001\n  Scenario: one\n    Given a thing\n\n  @unit @CLM-FIX-001\n  Scenario: two\n    Given a thing\n",
       ],
       ["uncoded.feature"]
     );
@@ -135,19 +135,19 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   });
 
   const twoBalancedScenarios: Scenario[] = [
-    { claimCode: "SCN-TGT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { claimCode: "SCN-TGT-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "CLM-TGT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "CLM-TGT-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ];
   const twoPassingTestsAndAnUncitedCheck: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", claimCode: "SCN-TGT-001", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "SCN-TGT-002", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-TGT-001", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-TGT-002", status: "passed" },
     { qualityCheckKind: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
   ];
 
   it("counts the phantom claim's reconciliation in the summary totals too — a phantom claim is out-of-balance, not a bucket apart", () => {
     const ledgerWithPhantomClaimRow: Ledger = reconcile(twoBalancedScenarios, [
       ...twoPassingTestsAndAnUncitedCheck,
-      { qualityCheckKind: "unit", claimCode: "SCN-PHM-999", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "CLM-PHM-999", status: "passed" },
     ]);
     const report = assembleRenderInput(__er(ledgerWithPhantomClaimRow), ctx);
     const t = reconciliationTotalsOf(report).claimReconciliations;
@@ -180,7 +180,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   });
 });
 
-describe("[SCN-RMD-002] the Claim Reconciliations sit at the report's top level beside the Summary", () => {
+describe("[CLM-RMD-002] the Claim Reconciliations sit at the report's top level beside the Summary", () => {
   it("writes the every-outcome corpus's Claim Reconciliations as a top-level list straight after the summary, under no ledger wrapper", () => {
     const parsed = JSON.parse(everyOutcomeCorpusJson()) as Record<string, unknown>;
     const keys = Object.keys(parsed);
@@ -191,7 +191,7 @@ describe("[SCN-RMD-002] the Claim Reconciliations sit at the report's top level 
   });
 });
 
-describe("[SCN-RMD-030] each Claim Reconciliation carries its claim, kind, verdict, Quality Check Reconciliations and pending items and nothing else", () => {
+describe("[CLM-RMD-030] each Claim Reconciliation carries its claim, kind, verdict, Quality Check Reconciliations and pending items and nothing else", () => {
   it("writes every row of the every-outcome corpus's Claim Reconciliations with exactly its claim, kind, verdict, Quality Check Reconciliations and pending items", () => {
     const parsed = JSON.parse(everyOutcomeCorpusJson()) as {
       readonly claimReconciliations: readonly Record<string, unknown>[];
@@ -205,29 +205,29 @@ describe("[SCN-RMD-030] each Claim Reconciliation carries its claim, kind, verdi
   });
 });
 
-describe("[SCN-RMD-020] each Claim Reconciliation names the claim it reconciles", () => {
-  it("names a scenario by its @SCN, a phantom claim by its cited code, the unnamed claim, and a scenario with no @SCN by its feature and title", () => {
+describe("[CLM-RMD-020] each Claim Reconciliation names the claim it reconciles", () => {
+  it("names a scenario by its claim code, a phantom claim by its cited code, the unnamed claim, and a scenario with no claim code by its feature and title", () => {
     const feature = [
       "@AAA",
       "Feature: alpha",
       "",
-      "  @unit @SCN-AAA-001",
+      "  @unit @CLM-AAA-001",
       "  Scenario: a tagged scenario",
       "    Given a thing",
     ].join("\n");
     const ledger = reconcile(
       parseScenarios(feature),
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "passed" },
-        { qualityCheckKind: "unit", claimCode: "SCN-PHM-999", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-PHM-999", status: "passed" },
         { qualityCheckKind: "unit", claimCode: null, status: "passed" },
       ],
       [untaggedScenarioId(scenarioName("alpha.feature", "an untagged scenario"))]
     );
     const rows = claimReconciliationsOf<Record<string, unknown>>(JSON.parse(renderJson(__er(ledger), ctx)));
     expect(rows.map((row) => [row.kind, row.claim])).toEqual([
-      ["scenario", "SCN-AAA-001"],
-      ["phantom-claim", "SCN-PHM-999"],
+      ["scenario", "CLM-AAA-001"],
+      ["phantom-claim", "CLM-PHM-999"],
       ["unnamed-claim", "(unnamed claim)"],
       ["scenario", "alpha.feature : an untagged scenario"],
     ]);
@@ -235,26 +235,26 @@ describe("[SCN-RMD-020] each Claim Reconciliation names the claim it reconciles"
   });
 });
 
-describe("[SCN-RMD-003] the summary counts the evidence observations of each of the five kinds of quality check, fitness included, by the kind of claim each posts to, and their total is the five counts' sum", () => {
+describe("[CLM-RMD-003] the summary counts the evidence observations of each of the five kinds of quality check, fitness included, by the kind of claim each posts to, and their total is the five counts' sum", () => {
   const rmd003Scenarios: Scenario[] = [
-    { claimCode: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
-    { claimCode: "SCN-RMD-010", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-    { claimCode: "SCN-RMD-011", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "CLM-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+    { claimCode: "CLM-RMD-010", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "CLM-RMD-011", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
   const rmd003Observations: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", claimCode: "SCN-RMD-001", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "SCN-RMD-001", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "SCN-RMD-001", status: "failed", broken: true, locator: "src/rmd.test.ts" },
-    { qualityCheckKind: "integration", claimCode: "SCN-RMD-001", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "SCN-PHX-999", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-RMD-001", status: "failed", broken: true, locator: "src/rmd.test.ts" },
+    { qualityCheckKind: "integration", claimCode: "CLM-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "CLM-PHX-999", status: "passed" },
     { qualityCheckKind: "integration", claimCode: null, status: "passed" },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", claimCode: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:qux", claimCode: "SCN-RMD-011", exists: false, enforcedOverRealSource: false },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "CLM-RMD-010", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", claimCode: "CLM-RMD-011", exists: true, enforcedOverRealSource: false },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:qux", claimCode: "CLM-RMD-011", exists: false, enforcedOverRealSource: false },
     {
       qualityCheckKind: "fitness",
       fitnessFunction: "lint:quux",
-      claimCode: "SCN-RMD-010",
+      claimCode: "CLM-RMD-010",
       exists: true,
       enforcedOverRealSource: true,
       broken: true,
@@ -299,7 +299,7 @@ describe("[SCN-RMD-003] the summary counts the evidence observations of each of 
     const rows = claimReconciliationsOf<{ kind: string; claim: string; qualityCheckReconciliations: { evidenceObservations?: { outcome: unknown }[] }[] }>(parsed);
     const phantomClaimRow = rows.find((s) => s.kind === "phantom-claim");
     const unnamedClaimRow = rows.find((s) => s.kind === "unnamed-claim");
-    expect(phantomClaimRow?.claim).toBe("SCN-PHX-999");
+    expect(phantomClaimRow?.claim).toBe("CLM-PHX-999");
     expect(heldObservationsOf(unnamedClaimRow!)).toHaveLength(2);
     expect(parsed.summary.evidenceObservations.onPhantomClaim).toBe(1);
     expect(parsed.summary.evidenceObservations.onUnnamedClaim).toBe(2);

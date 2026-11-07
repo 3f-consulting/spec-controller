@@ -5,7 +5,7 @@ import { recognisedRunners } from "../domain/uncitedFitnessFunctions.js";
 import { shellReading } from "./commandRuns.js";
 import { parsedWorkflows, workflowSteps } from "./parsedWorkflows.test-utils.js";
 
-describe("[SCN-WFS-001] recognisedRunners — a runner recognised at the step invoking it through a manifest script", () => {
+describe("[CLM-WFS-001] recognisedRunners — a runner recognised at the step invoking it through a manifest script", () => {
   const ciWith = (...steps: string[]): string =>
     ["jobs:", "  ci:", "    steps:", ...steps].join("\n");
 
@@ -83,7 +83,7 @@ describe("[SCN-WFS-001] recognisedRunners — a runner recognised at the step in
   });
 });
 
-describe("[SCN-WFS-002] recognisedRunners — a runner's name out of command position leaves the step a candidate", () => {
+describe("[CLM-WFS-002] recognisedRunners — a runner's name out of command position leaves the step a candidate", () => {
   const unit = { unit: "vitest" };
 
   it("recognises the runner beside every one of them — the control", () => {
@@ -153,7 +153,7 @@ describe("[SCN-WFS-002] recognisedRunners — a runner's name out of command pos
   });
 });
 
-describe("[SCN-WFS-007] recognisedRunners — a runner whose output another command reads leaves the step a candidate", () => {
+describe("[CLM-WFS-007] recognisedRunners — a runner whose output another command reads leaves the step a candidate", () => {
   const stepRunning = (...lines: string[]): string =>
     [
       "jobs:",
@@ -300,7 +300,7 @@ type LaunchedForms = readonly (readonly [form: string, command: string])[];
 
 describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>([
   [
-    "[SCN-WFS-003] recognisedRunners — a runner started through a launcher, after an environment assignment or later in a command list is recognised",
+    "[CLM-WFS-003] recognisedRunners — a runner started through a launcher, after an environment assignment or later in a command list is recognised",
     "vitest",
     [
       ["directly", "vitest run"],
@@ -326,7 +326,7 @@ describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>
     ],
   ],
   [
-    "[SCN-WFS-004] recognisedRunners — a pytest suite started through a Python launcher is recognised as the unit runner",
+    "[CLM-WFS-004] recognisedRunners — a pytest suite started through a Python launcher is recognised as the unit runner",
     "pytest",
     [
       ["through python -m", "python -m pytest --junitxml=reports/pytest.xml"],
@@ -343,7 +343,7 @@ describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>
     ],
   ],
   [
-    "[SCN-WFS-005] recognisedRunners — an RSpec suite started through bundle exec is recognised as the unit runner",
+    "[CLM-WFS-005] recognisedRunners — an RSpec suite started through bundle exec is recognised as the unit runner",
     "rspec",
     [
       ["directly", "rspec"],
@@ -367,7 +367,7 @@ describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>
   });
 });
 
-describe("[SCN-WFS-003] recognisedRunners — a runner started through a launcher, after an environment assignment or later in a command list is recognised", () => {
+describe("[CLM-WFS-003] recognisedRunners — a runner started through a launcher, after an environment assignment or later in a command list is recognised", () => {
   const unit = { unit: "vitest" };
   const joined = [["a launcher continued onto the next line with no blank, which joins the two into one name", "npx\\\nvitest run"]] as const;
 
@@ -382,7 +382,7 @@ describe("[SCN-WFS-003] recognisedRunners — a runner started through a launche
 
 describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>([
   [
-    "[SCN-WFS-004] recognisedRunners — a pytest suite started through a Python launcher is recognised as the unit runner",
+    "[CLM-WFS-004] recognisedRunners — a pytest suite started through a Python launcher is recognised as the unit runner",
     "pytest",
     [
       ["an option between the launcher and the runner", "uv run --frozen pytest"],
@@ -392,7 +392,7 @@ describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>
     ],
   ],
   [
-    "[SCN-WFS-005] recognisedRunners — an RSpec suite started through bundle exec is recognised as the unit runner",
+    "[CLM-WFS-005] recognisedRunners — an RSpec suite started through bundle exec is recognised as the unit runner",
     "rspec",
     [
       ["an option between the launcher and the runner", "bundle exec --keep-file-descriptors rspec"],
@@ -412,7 +412,7 @@ describe.each<readonly [scenario: string, runner: string, forms: LaunchedForms]>
   });
 });
 
-describe("[SCN-WFS-006] recognisedRunners — a runner declared with its test task is recognised only on a step that runs that task, and another task run through the same build tool is a candidate", () => {
+describe("[CLM-WFS-006] recognisedRunners — a runner declared with its test task is recognised only on a step that runs that task, and another task run through the same build tool is a candidate", () => {
   const ciRunning = (...steps: readonly (readonly [string, string])[]): string =>
     [
       "jobs:",

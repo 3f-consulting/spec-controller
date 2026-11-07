@@ -18,7 +18,7 @@ Feature: Emit each output format to stdout or a caller-given path
     No --format flag — and an explicit "--format md" — emits the markdown report to
     stdout, the default human output. It rests on the output plan and the writer.
 
-    @unit @SCN-FMT-001
+    @unit @CLM-FMT-001
     Scenario: with no --format flag the markdown report is written to stdout
 
   Rule: a format routes to a caller-given file
@@ -26,16 +26,16 @@ Feature: Emit each output format to stdout or a caller-given path
     A "<fmt>:<path>" spec writes that format's report to the file; stdout stays clean.
     The path is everything after the first colon; the renderer is unchanged.
 
-    @unit @SCN-FMT-002
+    @unit @CLM-FMT-002
     Scenario: --format json:<path> writes the JSON report to that file
 
-    @unit @integration @SCN-FMT-003
+    @unit @integration @CLM-FMT-003
     Scenario: --format md:<path> writes the markdown report to a file instead of stdout
       Given a target corpus to reconcile
       When the operator asks for the markdown report in a file
       Then the markdown report is in that file, and nothing else is reported
 
-    @unit @e2e @SCN-FMT-012
+    @unit @e2e @CLM-FMT-012
     Scenario: a --format path that is a symlink to a file not yet created is written through the link
       Given a balanced target and a link to a report file that does not exist yet
       When the operator asks for the json report to be written at the link
@@ -48,7 +48,7 @@ Feature: Emit each output format to stdout or a caller-given path
     gets markdown on stdout and json in a file from a single invocation (exactly one
     output bound for stdout, which the stdout invariant allows).
 
-    @unit @SCN-FMT-004
+    @unit @CLM-FMT-004
     Scenario: --format md --format json:<path> emits markdown to stdout and json to the file
 
   Rule: at most one output may route to stdout
@@ -61,14 +61,14 @@ Feature: Emit each output format to stdout or a caller-given path
     names standard output itself (/dev/stdout, /dev/fd/1, or a link to either) routes to
     stdout and is counted with it, whatever standard output is connected to.
 
-    @unit @integration @SCN-FMT-005
+    @unit @integration @CLM-FMT-005
     Scenario: two outputs both routed to stdout are rejected with a hint
       Given a target corpus to reconcile
       When the operator asks for the markdown report and the json report, neither given a file of its own
       Then the run is rejected
       And the rejection hints to give one of the outputs a path of its own
 
-    @unit @e2e @SCN-FMT-011
+    @unit @e2e @CLM-FMT-011
     Scenario Outline: a --format path naming stdout counts as routed to stdout, so beside another stdout output it is refused and no report is printed
       Given an out-of-balance target whose default report destination is <connected to>
       When the operator asks for the markdown report at <first> and the json report at <second>
@@ -91,7 +91,7 @@ Feature: Emit each output format to stdout or a caller-given path
     --json <path> is not a flag. Supplying it fails fast with a hint to use
     --format json:<path>, so it never silently no-ops and drops output.
 
-    @unit @integration @SCN-FMT-006
+    @unit @integration @CLM-FMT-006
     Scenario: the legacy --json flag is rejected with a hint to use --format json:<path>
       Given a target corpus to reconcile with a destination for the legacy json option
       When the operator asks for the json report through the removed legacy json option
@@ -105,7 +105,7 @@ Feature: Emit each output format to stdout or a caller-given path
     robustness, the same typed-error surface as the stdout-collision and legacy-flag
     rejections.
 
-    @unit @integration @SCN-FMT-007
+    @unit @integration @CLM-FMT-007
     Scenario: --format xml (an unsupported format) is rejected with a hint listing md and json
       Given a target corpus to reconcile with an unsupported report format
       When the operator asks for the xml report
@@ -122,7 +122,7 @@ Feature: Emit each output format to stdout or a caller-given path
     writer creates no directories. The refusal outranks the verdict: a target that is out of balance
     still ends on the usage code when its report has nowhere to go.
 
-    @unit @e2e @SCN-FMT-008
+    @unit @e2e @CLM-FMT-008
     Scenario Outline: a --format file destination that cannot be written is refused naming the path and why, with no stack trace
       Given an out-of-balance target and a report destination that is <location>
       When the operator asks for the <format> report to be written to that destination
@@ -140,7 +140,7 @@ Feature: Emit each output format to stdout or a caller-given path
         | an existing directory                        | markdown | the destination is a directory |
         | a file whose parent directory does not exist | json     | the parent does not exist      |
 
-    @unit @e2e @SCN-FMT-009
+    @unit @e2e @CLM-FMT-009
     Scenario Outline: when one file destination cannot be written, no destination is written: no report on stdout, and no other file created or changed
       Given an out-of-balance target and a json report destination under a regular file
       And a markdown report destination that is <markdown>
@@ -171,7 +171,7 @@ Feature: Emit each output format to stdout or a caller-given path
     destination that is not a regular file (a terminal, a pipe, a device) is never refused for being
     shared, because writing it twice loses nothing.
 
-    @unit @e2e @SCN-FMT-010
+    @unit @e2e @CLM-FMT-010
     Scenario Outline: two outputs naming one regular file are refused as a usage error naming both, and no destination is written or changed
       Given an out-of-balance target and a report file that <state>
       And a second path to that file that is <alias>
@@ -208,7 +208,7 @@ Feature: Emit each output format to stdout or a caller-given path
     standard output appended into an input. A file the run does not read, beside an input or inside
     one of its folders, is written as asked.
 
-    @unit @e2e @SCN-FMT-013
+    @unit @e2e @CLM-FMT-013
     Scenario Outline: a --format naming a file the run reads as input is refused as a usage error naming the output and the input, and every input and destination is left as it was
       Given a <verdict> target the run reads <input> from
       And a path to that input that is <alias>

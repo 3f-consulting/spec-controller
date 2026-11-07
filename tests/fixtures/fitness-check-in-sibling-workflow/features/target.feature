@@ -7,7 +7,7 @@ Feature: a fixture target whose fitness function runs in a sibling workflow
 
   The target CITES that check: the lint:nightly step in nightly.yml carries the code of its
   `@fitness` scenario as its own `id:`. So the running-check observer reads the citation
-  directly off the step, under the @SCN the row names rather than the
+  directly off the step, under the claim code the row names rather than the
   handle that ran. The point is that the cited set and the running set agree once every
   workflow is read. Read ci.yml alone and they disagree, and the disagreement is scored
   against the target: lint:nightly reports as a watermelon, a real gate called fabricated.
@@ -29,5 +29,5 @@ Feature: a fixture target whose fitness function runs in a sibling workflow
 
   Rule: the target holds itself to the nightly check its CI runs
 
-    @fitness @SCN-TGS-001
+    @fitness @CLM-TGS-001
     Scenario: the tree stays inside the nightly threshold

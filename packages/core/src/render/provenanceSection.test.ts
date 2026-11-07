@@ -15,8 +15,8 @@ const notSupplied = (flags: string): string => `- ${coreMessage(CoreMessage.Prov
 let balance: Ledger;
 beforeEach(() => {
   balance = reconcile(
-    [{ claimCode: "SCN-RPT-028", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-    [{ qualityCheckKind: "unit", claimCode: "SCN-RPT-028", status: "passed" }],
+    [{ claimCode: "CLM-RPT-028", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", claimCode: "CLM-RPT-028", status: "passed" }],
   );
 });
 
@@ -33,7 +33,7 @@ const handed = (inputs: RunInputs): RunContext => ({
 const notSuppliedLine = (md: string): string | null =>
   md.split("\n").find((line) => line.startsWith(notSupplied(""))) ?? null;
 
-describe("[SCN-RPT-028] the Run provenance names the canonical inputs the run did not receive", () => {
+describe("[CLM-RPT-028] the Run provenance names the canonical inputs the run did not receive", () => {
   it("names the flags with no value on a line of their own, beneath the Inputs list", () => {
     const md = renderMarkdown(er(balance), handed({ features: "features", ciSteps: "ci-steps.json" }), publishedExitCodeOf);
     expect(notSuppliedLine(md)).toBe(notSupplied("`--vitest`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--cucumber`, `--ci`, `--package-json`"));

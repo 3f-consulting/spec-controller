@@ -7,11 +7,11 @@ import { linesOf } from "./claimReconciliation.js";
 import { FITNESS_SCENARIOS } from "./checkStep.test-utils.js";
 
 const recorded: RecordedCheckStep[] = [
-  { citedClaimCode: "SCN-CVT-001", report: "succeeded", said: "success" },
-  { citedClaimCode: "SCN-CVT-002", report: "failed", said: "failure" },
-  { citedClaimCode: "SCN-CVT-003", report: "other", said: "skipped" },
-  { citedClaimCode: "SCN-CVT-004", report: "other", said: "neutral" },
-  { citedClaimCode: "SCN-CVT-005", report: "other" },
+  { citedClaimCode: "CLM-CVT-001", report: "succeeded", said: "success" },
+  { citedClaimCode: "CLM-CVT-002", report: "failed", said: "failure" },
+  { citedClaimCode: "CLM-CVT-003", report: "other", said: "skipped" },
+  { citedClaimCode: "CLM-CVT-004", report: "other", said: "neutral" },
+  { citedClaimCode: "CLM-CVT-005", report: "other" },
 ];
 
 function reconcile() {
@@ -28,25 +28,25 @@ function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, 
     ]);
 }
 
-describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only where it says what the check did", () => {
+describe("[CLM-LNT-026] a check step's outcome answers its row's obligation only where it says what the check did", () => {
   it("answers the obligation for the step that succeeded and the step that failed, and for none of the other three, whose rows each read one missing line and one broken line and nothing else", () => {
     expect(scenarioRows(reconcile())).toEqual([
-      ["SCN-CVT-001", "balanced", [[["SCN-CVT-001"], "satisfied"]]],
-      ["SCN-CVT-002", "out-of-balance", [[["SCN-CVT-002"], "failing"]]],
-      ["SCN-CVT-003", "out-of-balance", [[[], "missing"], [["SCN-CVT-003"], "broken"]]],
-      ["SCN-CVT-004", "out-of-balance", [[[], "missing"], [["SCN-CVT-004"], "broken"]]],
-      ["SCN-CVT-005", "out-of-balance", [[[], "missing"], [["SCN-CVT-005"], "broken"]]],
+      ["CLM-CVT-001", "balanced", [[["CLM-CVT-001"], "satisfied"]]],
+      ["CLM-CVT-002", "out-of-balance", [[["CLM-CVT-002"], "failing"]]],
+      ["CLM-CVT-003", "out-of-balance", [[[], "missing"], [["CLM-CVT-003"], "broken"]]],
+      ["CLM-CVT-004", "out-of-balance", [[[], "missing"], [["CLM-CVT-004"], "broken"]]],
+      ["CLM-CVT-005", "out-of-balance", [[[], "missing"], [["CLM-CVT-005"], "broken"]]],
     ]);
   });
 
   it("carries the failed step's verdict on its own observation, because nothing else carries it", () => {
     const failed = reconcile().ledger.claimReconciliations.find(
-      (row) => row.claim === "SCN-CVT-002"
+      (row) => row.claim === "CLM-CVT-002"
     );
     expect(failed?.qualityCheckReconciliations[0]?.evidenceObservations).toEqual([{
       qualityCheckKind: "fitness",
-      fitnessFunction: "SCN-CVT-002",
-      claimCode: "SCN-CVT-002",
+      fitnessFunction: "CLM-CVT-002",
+      claimCode: "CLM-CVT-002",
       exists: true,
       enforcedOverRealSource: true,
       status: "failed",
@@ -62,21 +62,21 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
     const items = brokenItemsOf(reconciliation.ledger);
     const observations = items.flatMap((line) => line.evidenceObservation ?? []);
     expect(items.map((line) => [line.outcome, line.evidenceObservation?.notes])).toEqual([
-      ["broken", [{ kind: "check-step-did-not-run", code: "SCN-CVT-003", outcome: "skipped" }]],
-      ["broken", [{ kind: "check-step-did-not-run", code: "SCN-CVT-004", outcome: "neutral" }]],
-      ["broken", [{ kind: "check-step-did-not-run", code: "SCN-CVT-005" }]],
+      ["broken", [{ kind: "check-step-did-not-run", code: "CLM-CVT-003", outcome: "skipped" }]],
+      ["broken", [{ kind: "check-step-did-not-run", code: "CLM-CVT-004", outcome: "neutral" }]],
+      ["broken", [{ kind: "check-step-did-not-run", code: "CLM-CVT-005" }]],
     ]);
     expect(observations.map((o) => o.notes?.[0])).toStrictEqual([
-      { kind: "check-step-did-not-run", code: "SCN-CVT-003", outcome: "skipped" },
-      { kind: "check-step-did-not-run", code: "SCN-CVT-004", outcome: "neutral" },
-      { kind: "check-step-did-not-run", code: "SCN-CVT-005" },
+      { kind: "check-step-did-not-run", code: "CLM-CVT-003", outcome: "skipped" },
+      { kind: "check-step-did-not-run", code: "CLM-CVT-004", outcome: "neutral" },
+      { kind: "check-step-did-not-run", code: "CLM-CVT-005" },
     ]);
     expect(observations.filter((o) => "message" in o)).toEqual([]);
   });
 
   it("posts each step it has no reading for as an observation that claims no check exists or ran", () => {
     const observations = fitnessObservationsOf([], recorded).filter(
-      (o) => o.claimCode !== "SCN-CVT-001" && o.claimCode !== "SCN-CVT-002"
+      (o) => o.claimCode !== "CLM-CVT-001" && o.claimCode !== "CLM-CVT-002"
     );
     expect(
       observations.map((o) => [
@@ -86,9 +86,9 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
         o.broken,
       ])
     ).toEqual([
-      ["SCN-CVT-003", false, false, true],
-      ["SCN-CVT-004", false, false, true],
-      ["SCN-CVT-005", false, false, true],
+      ["CLM-CVT-003", false, false, true],
+      ["CLM-CVT-004", false, false, true],
+      ["CLM-CVT-005", false, false, true],
     ]);
   });
 

@@ -16,7 +16,7 @@ export const __er = (ledger: Ledger, withEvidenceObservations = false): Evidence
 
 export const feature = `Feature: fixture
 
-  @unit @SCN-FIX-001
+  @unit @CLM-FIX-001
   Scenario: a fixture behaviour
     Given a fixture
 `;

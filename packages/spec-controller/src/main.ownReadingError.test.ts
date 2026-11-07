@@ -39,7 +39,7 @@ vi.mock("yaml", async (importOriginal) => {
 
 const unexpectedErrorLine = (): string => crashLine("TypeError", "", false);
 
-const FEATURE = "@AB\nFeature: a part\n\n  @unit @SCN-AB-001\n  Scenario: a scenario\n";
+const FEATURE = "@AB\nFeature: a part\n\n  @unit @CLM-AB-001\n  Scenario: a scenario\n";
 const PLANTED_FEATURE = `# ${PLANTED}\n${FEATURE}`;
 const REJECTED_FEATURE = `${FEATURE}    Given a step\n  a line the parser rejects\n`;
 
@@ -84,7 +84,7 @@ function allocate(feature: string): Promise<Answered> {
   return run(["allocate", "AB"]);
 }
 
-describe("[SCN-CLI-111] an error in reading a feature file or workflow the parser accepted ends the run at 6, and is never refused as that file failing to parse", () => {
+describe("[CLM-CLI-111] an error in reading a feature file or workflow the parser accepted ends the run at 6, and is never refused as that file failing to parse", () => {
   describe.each([
     { run: "a balance run whose feature file the parser accepts", answer: (): Promise<Answered> => balance(PLANTED_FEATURE, WORKFLOW) },
     { run: "a balance run whose workflow the parser accepts", answer: (): Promise<Answered> => balance(FEATURE, PLANTED_WORKFLOW) },

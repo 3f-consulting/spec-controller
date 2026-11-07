@@ -37,7 +37,7 @@ const readThroughTheWorkflowModule = (): readonly PipelineStep[] => workflowStep
 const dispositionWhereNothingElseDecides = (step: PipelineStep): string =>
   stepDispositions({ isReconciler: () => false, isNamedANonCheck: () => false, runsARunner: () => false })(step);
 
-describe("[SCN-USG-030] a step that only uses one of GitHub's plumbing actions is not a candidate fitness function, whatever ref pins it", () => {
+describe("[CLM-USG-030] a step that only uses one of GitHub's plumbing actions is not a candidate fitness function, whatever ref pins it", () => {
   it("marks each step using one of the plumbing actions as plumbing, at a tag, at a commit and under a sub-path", () => {
     const usingAnAction = readThroughTheWorkflowModule().filter((step) => "action" in step);
     expect(usingAnAction.map((step) => [step.identity, step.plumbing])).toStrictEqual(PLUMBING_USES.map((uses) => [uses, true]));
@@ -74,7 +74,7 @@ ${OUTSIDE_THE_LIST_USES.map((uses) => `      - uses: ${uses}\n`).join("")}      
 const outsideTheListThroughTheWorkflowModule = (): readonly PipelineStep[] =>
   workflowSteps([outsideTheListBesideLint()]).filter((step) => "action" in step);
 
-describe("[SCN-USG-031] an action outside the closed list stays a candidate — dependency review, another owner's look-alike and a local action", () => {
+describe("[CLM-USG-031] an action outside the closed list stays a candidate — dependency review, another owner's look-alike and a local action", () => {
   it("leaves each step using an action outside the closed list unmarked: another of GitHub's actions, another owner's checkout, a look-alike, a local action and an image", () => {
     expect(outsideTheListThroughTheWorkflowModule().map((step) => [step.identity, step.plumbing])).toStrictEqual(
       OUTSIDE_THE_LIST_USES.map((uses) => [uses, false])
@@ -102,7 +102,7 @@ const UNNAMED_CHECKOUT: PipelineStep = {
 };
 const NAMED_A_NON_CHECK = "ci.yml:quality:Set up Node";
 
-describe("[SCN-USG-032] a plumbing step the manifest names a non-check is a non-check, as the manifest says", () => {
+describe("[CLM-USG-032] a plumbing step the manifest names a non-check is a non-check, as the manifest says", () => {
   it("names the plumbing step excluded", () => {
     const { excluded } = nonChecksApplied(
       [SET_UP_NODE, UNNAMED_CHECKOUT],
@@ -124,7 +124,7 @@ describe("[SCN-USG-032] a plumbing step the manifest names a non-check is a non-
   });
 });
 
-describe("[SCN-USG-037] a notChecks entry naming a plumbing step is not stale", () => {
+describe("[CLM-USG-037] a notChecks entry naming a plumbing step is not stale", () => {
   it("reports no entry matching no step", () => {
     const { unmatchedEntries } = nonChecksApplied(
       [SET_UP_NODE, UNNAMED_CHECKOUT],

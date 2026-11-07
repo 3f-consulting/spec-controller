@@ -14,7 +14,7 @@ class BeforeAllFailsTest {
   }
 
   @Test
-  @DisplayName("[SCN-JVF-012] a test in a class whose setup before all its tests fails cites its scenario")
+  @DisplayName("[CLM-JVF-012] a test in a class whose setup before all its tests fails cites its scenario")
   void underAFailingClassSetUp() {
     assertEquals(2, 1 + 1);
   }

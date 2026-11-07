@@ -7,6 +7,6 @@ Feature: a feature file at the top level of a nested fixture corpus
 
   Rule: the top-level file names one satisfied unit-level scenario
 
-    @unit @SCN-NTA-001
+    @unit @CLM-NTA-001
     Scenario: the top-level file's scenario is proven
       Given the target repo's source

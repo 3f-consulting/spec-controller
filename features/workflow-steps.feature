@@ -10,7 +10,7 @@ Feature: balance reads a workflow's steps
     another script is followed up to three levels deep, never revisiting a script. A step
     recognised as a runner is named on the report.
 
-    @unit @SCN-WFS-001
+    @unit @CLM-WFS-001
     Scenario: a step running `pnpm test` is the unit runner when the manifest's `test` script runs vitest
 
   Rule: a step runs a package script when it invokes it in a form its package manager documents
@@ -25,19 +25,19 @@ Feature: balance reads a workflow's steps
     runs a script, and exec runs the command that follows it, never a script by that command's
     name. An option written after the script name is not read.
 
-    @unit @SCN-WFS-021
+    @unit @CLM-WFS-021
     Scenario: a step running npm's test shortcut, as `npm test`, `npm t` or `npm tst`, is the unit runner when the manifest's `test` script runs it
 
-    @unit @SCN-WFS-022
+    @unit @CLM-WFS-022
     Scenario: a step running a script through `npm run-script`, `npm rum` or `npm urn` runs that script, as `npm run` does
 
-    @unit @SCN-WFS-023
+    @unit @CLM-WFS-023
     Scenario: a step running `pnpm t` or `pnpm tst` runs the manifest's `test` script
 
-    @unit @SCN-WFS-024
+    @unit @CLM-WFS-024
     Scenario: a step running a script after a pnpm selection, `--filter`, `-F` or `-r`, runs that script
 
-    @unit @SCN-WFS-025
+    @unit @CLM-WFS-025
     Scenario: a step running a script in a yarn workspace, through `yarn workspace <name>` or `yarn workspaces foreach`, runs that script
 
   Rule: a script is run only where a command runs, so a step whose text only names a script runs nothing
@@ -72,13 +72,13 @@ Feature: balance reads a workflow's steps
     though no command inside one is read as run. A comment runs to the end of its line: a
     backslash at its end joins no lines, so the command on the next line runs.
 
-    @unit @SCN-WFS-026
+    @unit @CLM-WFS-026
     Scenario: a step that names a script as another command's argument does not run it, and one that runs it after `&&`, `;` or `|` does
 
-    @unit @SCN-WFS-027
+    @unit @CLM-WFS-027
     Scenario: a step running a script behind a command that runs the command after it, such as `env`, `sudo`, `xargs` or `timeout`, past that command's options, runs that script
 
-    @unit @SCN-WFS-028
+    @unit @CLM-WFS-028
     Scenario: a step running a script after a background `&`, in a subshell or a group, in the body of an `if`, `while`, `until`, `for` or `select`, or as a `coproc`, runs that script
 
   Rule: a runner is recognised only as the command a step runs, and named anywhere else it leaves the step a candidate
@@ -98,19 +98,19 @@ Feature: balance reads a workflow's steps
     hands on to the runner. A runner named anywhere else, as an argument, a quoted argument
     included, inside a path, a flag or an =-joined value, leaves the step a candidate.
 
-    @unit @SCN-WFS-002
+    @unit @CLM-WFS-002
     Scenario: a check step naming a runner in a path or an argument is a candidate, never excluded as the runner
 
-    @unit @SCN-WFS-003
+    @unit @CLM-WFS-003
     Scenario: a runner started through a launcher, after an environment assignment or later in a command list is recognised
 
-    @unit @SCN-WFS-004
+    @unit @CLM-WFS-004
     Scenario: a pytest suite started through a Python launcher is recognised as the unit runner
 
-    @unit @SCN-WFS-005
+    @unit @CLM-WFS-005
     Scenario: an RSpec suite started through bundle exec is recognised as the unit runner
 
-    @unit @SCN-WFS-006
+    @unit @CLM-WFS-006
     Scenario: a runner declared with its test task is recognised only on a step that runs that task, and another task run through the same build tool is a candidate
 
   Rule: a runner whose output another command reads is a tool of a check, and the step is a candidate
@@ -122,7 +122,7 @@ Feature: balance reads a workflow's steps
     > out takes it off. &> and >& to a file send stderr there as well as stdout. A coprocess's stdout
     is a pipe the shell reads, so a runner run as a coprocess leaves the step a candidate.
 
-    @unit @SCN-WFS-007
+    @unit @CLM-WFS-007
     Scenario: a check step piping a declared runner's output into another command is a candidate, never excluded as the runner
 
   Rule: each step is read as the check it runs, under the name the report gives it
@@ -131,48 +131,48 @@ Feature: balance reads a workflow's steps
     on the step only when continue-on-error is absent, false or the string "false" on both; any
     other value, an expression included, leaves the verdict not depending on it.
 
-    @unit @SCN-WFS-008
+    @unit @CLM-WFS-008
     Scenario: a step that runs a manifest script is read under that script's name, and an unnamed step under its first non-blank command, trimmed
 
-    @unit @SCN-WFS-009
+    @unit @CLM-WFS-009
     Scenario: the runner each suite's step runs is read from the workflow and the manifest scripts it invokes
 
-    @unit @SCN-WFS-010
+    @unit @CLM-WFS-010
     Scenario: a step is read as a check whatever its script is named
 
-    @unit @SCN-WFS-012
+    @unit @CLM-WFS-012
     Scenario: a uses: step is read under the action it uses, or under its trimmed name, with its own continue-on-error
 
-    @unit @SCN-WFS-017
+    @unit @CLM-WFS-017
     Scenario: a step's continue-on-error is read from the step or from its job, and only an absent value, false or the string "false" leaves its job's verdict depending on it
 
-    @unit @SCN-WFS-018
+    @unit @CLM-WFS-018
     Scenario: a step's id: is read trimmed, so a padded code cites as if written unpadded
 
   Rule: every workflow the CI input names is read
 
-    @unit @SCN-WFS-011
+    @unit @CLM-WFS-011
     Scenario: a check run by the second of two workflows is read, as one run by the first is
 
-    @unit @SCN-WFS-020
+    @unit @CLM-WFS-020
     Scenario: a workflow that does not parse is refused by the reader, never read as one with no steps
 
   Rule: the step that dumps GitHub's step record is read wherever GitHub lets its expression be written
 
-    @unit @SCN-WFS-013
+    @unit @CLM-WFS-013
     Scenario: the step-record expression is read however GitHub lets it be spelled, beside env values that are not text and inside a command
 
   Rule: a uses: value is read as the owner and repository it names
 
-    @unit @SCN-WFS-014
+    @unit @CLM-WFS-014
     Scenario: a uses: value is read as its owner and repository, whatever ref or sub-path follows
 
-    @unit @SCN-WFS-015
+    @unit @CLM-WFS-015
     Scenario: a local action, a container image and another owner's look-alike are read as owned by someone other than actions
 
-  Rule: a step's entry in the run's record is read under the scenario code its id states
+  Rule: a step's entry in the run's record is read under the claim code its id states
 
-    @unit @SCN-WFS-016
+    @unit @CLM-WFS-016
     Scenario: a step record entry whose id is a feature part outside two to five characters is read as no citation, beside ids of two and five characters that are
 
   Rule: the run's step record is read by what each step did
@@ -180,5 +180,5 @@ Feature: balance reads a workflow's steps
     Each step in the record is read by its outcome, what the step itself did. Its conclusion, which
     continue-on-error turns to success, is never read.
 
-    @unit @SCN-WFS-019
+    @unit @CLM-WFS-019
     Scenario: each step in the run's record is read by its outcome, never its conclusion, so a red the job swallowed still reads failed

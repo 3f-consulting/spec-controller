@@ -10,7 +10,7 @@ import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
-describe("[SCN-RPT-021] the markdown names the broken evidence and its error, stamped unsound", () => {
+describe("[CLM-RPT-021] the markdown names the broken evidence and its error, stamped unsound", () => {
   const VITEST_LOCATOR = "tests/harness/cucumber.trigger.test.ts";
   const VITEST_MESSAGE =
     "Error: Cannot find package '@cucumber/tag-expressions' imported from " +
@@ -33,7 +33,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
 
   const balanceWithBroken = (observation: EvidenceObservation): Ledger => {
     const scenarios: Scenario[] = [
-      { claimCode: "SCN-HNS-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "CLM-HNS-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     return reconcile(scenarios, [observation]);
   };
@@ -65,7 +65,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     expect(unnamedClaimRow).toContain(VITEST_LOCATOR);
     expect(unnamedClaimRow).toContain("Cannot find package '@cucumber/tag-expressions'");
     expect(unnamedClaimRow).not.toContain("at packageResolve");
-    const namedRow = rowFor(vitestMd, "SCN-HNS-002");
+    const namedRow = rowFor(vitestMd, "CLM-HNS-002");
     expect(namedRow).toContain(`unit: ${coreMessage(CoreMessage.OutcomeMissing)}`);
     expect(namedRow).not.toContain(coreMessage(CoreMessage.OutcomeBroken));
 
@@ -76,17 +76,17 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   });
 });
 
-describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
+describe("[CLM-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
   const summaryOpening = (md: string): string =>
     md.slice(md.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))), md.indexOf(markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading))));
 
   const balancedScenario: Scenario = {
-    claimCode: "SCN-VRD-001",
+    claimCode: "CLM-VRD-001",
     evidenceObligations: [{ qualityCheckKind: "unit" }],
   };
   const balancedObs: EvidenceObservation = {
     qualityCheckKind: "unit",
-    claimCode: "SCN-VRD-001",
+    claimCode: "CLM-VRD-001",
     status: "passed",
   };
 
@@ -97,7 +97,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     balancedWithPending = reconcile(
       [
         {
-          claimCode: "SCN-VRD-001",
+          claimCode: "CLM-VRD-001",
           evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
         },
       ],
@@ -114,14 +114,14 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
   });
 });
 
-describe('[SCN-RPT-024] the reconciliation collection is named "Claim Reconciliation(s)" on every surface, never "Scenario Reconciliation(s)" or "scenario(s)"', () => {
+describe('[CLM-RPT-024] the reconciliation collection is named "Claim Reconciliation(s)" on every surface, never "Scenario Reconciliation(s)" or "scenario(s)"', () => {
   let scenarioPhantomClaimAndUnnamedClaimRows: Ledger;
   beforeEach(() => {
     scenarioPhantomClaimAndUnnamedClaimRows = reconcile(
-      [{ claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "CLM-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
-        { qualityCheckKind: "unit", claimCode: "SCN-PHM-999", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-PHM-999", status: "passed" },
         { qualityCheckKind: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
       ],
     );

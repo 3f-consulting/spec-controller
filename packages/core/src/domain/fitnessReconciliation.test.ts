@@ -34,18 +34,18 @@ function severedWiringFor(script: string): { ciSource: string; packageJson: Pack
   };
 }
 
-describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenario carries posts to a phantom claim's row", () => {
-  it("mints the phantom claim's row for the cited @SCN, posts the run's one evidence observation there naming the check, and holds it out-of-balance", () => {
+describe("[CLM-LNT-009] a fitness evidence observation citing a claim code no scenario carries posts to a phantom claim's row", () => {
+  it("mints the phantom claim's row for the cited claim code, posts the run's one evidence observation there naming the check, and holds it out-of-balance", () => {
     const { ciSource, packageJson } = wiringFor(REAL_GUARD);
 
     const citedClaimCode = (script: string): ScriptCitation | null =>
-      script === REAL_GUARD ? { claimCode: "SCN-AAA-001" } : null;
+      script === REAL_GUARD ? { claimCode: "CLM-AAA-001" } : null;
 
     const corpusAtReconcile = [
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      "    @fitness @SCN-AAA-002",
+      "    @fitness @CLM-AAA-002",
       "    Scenario: the corpus keeps its feature codes inside the threshold",
     ].join("\n");
 
@@ -56,16 +56,16 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
       citedClaimCode
     );
     const observation = evidenceObservations.find((o) => o.fitnessFunction === REAL_GUARD);
-    expect(observation?.claimCode).toBe("SCN-AAA-001");
+    expect(observation?.claimCode).toBe("CLM-AAA-001");
 
     const scenarios = parseScenarios(
       corpusAtReconcile);
-    expect(scenarios.map((s) => s.claimCode)).toEqual(["SCN-AAA-002"]);
+    expect(scenarios.map((s) => s.claimCode)).toEqual(["CLM-AAA-002"]);
 
     const balance = reconcile(scenarios, evidenceObservations);
 
     const phantomClaimRow = balance.claimReconciliations.find((s) => s.kind === "phantom-claim");
-    expect(phantomClaimRow?.claim).toBe("SCN-AAA-001");
+    expect(phantomClaimRow?.claim).toBe("CLM-AAA-001");
     expect(phantomClaimRow?.verdict).toBe("out-of-balance");
     expect(obligationsOf(phantomClaimRow!)).toEqual([]);
     expect(observationsOf(phantomClaimRow!)).toEqual([{ ...observation, outcome: "cites-unknown-scenario" }]);
@@ -82,13 +82,13 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
       balance.claimReconciliations
         .filter((row) => observationsOf(row).some(({ outcome: _outcome, ...posted }) => isDeepStrictEqual(posted, observation)))
         .map((row) => row.claim)
-    ).toEqual(["SCN-AAA-001"]);
+    ).toEqual(["CLM-AAA-001"]);
   });
 });
 
 const SEVERED_SCRIPT = "lint:severed-check";
 
-describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit test and a fitness function reports each independently", () => {
+describe("[CLM-LNT-004] a scenario raising Evidence Obligations for both a unit test and a fitness function reports each independently", () => {
   it("answers each obligation from an evidence observation of its own kind of quality check — the unit evidence observation satisfies the unit obligation, the citing fitness evidence observation the watermelon — and never one from the other", () => {
     const { ciSource: plantedCi, packageJson: plantedPackageJson } =
       severedWiringFor(SEVERED_SCRIPT);
@@ -97,7 +97,7 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      "    @unit @fitness @SCN-AAA-001",
+      "    @unit @fitness @CLM-AAA-001",
       "    Scenario: the tree stays inside this check's threshold",
     ].join("\n");
     const scenarios = parseScenarios(
@@ -107,11 +107,11 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
     ]);
 
     const citedClaimCode = (script: string): ScriptCitation | null =>
-      script === SEVERED_SCRIPT ? { claimCode: "SCN-AAA-001" } : null;
+      script === SEVERED_SCRIPT ? { claimCode: "CLM-AAA-001" } : null;
 
     const unitObservation: EvidenceObservation = {
       qualityCheckKind: "unit",
-      claimCode: "SCN-AAA-001",
+      claimCode: "CLM-AAA-001",
       status: "passed",
     };
     const fitnessObservations = runningFitnessFunctions(
@@ -127,12 +127,12 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
         fitnessFunction: SEVERED_SCRIPT,
         exists: true,
         enforcedOverRealSource: false,
-        claimCode: "SCN-AAA-001",
+        claimCode: "CLM-AAA-001",
       },
     ]);
 
     const balance = reconcile(scenarios, [unitObservation, ...fitnessObservations]);
-    const scenario = balance.claimReconciliations.find((s) => s.claim === "SCN-AAA-001");
+    const scenario = balance.claimReconciliations.find((s) => s.claim === "CLM-AAA-001");
 
     expect(scenario?.verdict).toBe("out-of-balance");
 

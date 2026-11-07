@@ -12,16 +12,16 @@ Feature: a target whose pipeline runs its unit tests and a fitness check, two of
 
   Rule: the target's behaviour
 
-    @unit @SCN-PLT-001
+    @unit @CLM-PLT-001
     Scenario: a returning customer's basket is restored
 
-    @unit @SCN-PLT-002
+    @unit @CLM-PLT-002
     Scenario: an empty basket cannot be checked out
 
-    @unit @SCN-PLT-002
+    @unit @CLM-PLT-002
     Scenario: a basket over its limit cannot be checked out
 
   Rule: the tree stays inside its thresholds
 
-    @fitness @SCN-PLT-003
+    @fitness @CLM-PLT-003
     Scenario: the codebase carries no duplicated block above its threshold

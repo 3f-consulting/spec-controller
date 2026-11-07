@@ -8,13 +8,13 @@ import type {
   EvidenceObservation,
 } from "../model.js";
 
-describe("[SCN-PND-008] isBalanced — an Ledger whose only exceptions are Pending Items does not fail", () => {
+describe("[CLM-PND-008] isBalanced — an Ledger whose only exceptions are Pending Items does not fail", () => {
   it("is balanced over a WHOLE run whose only exceptions are Pending Items — one-sided, run-neutral", () => {
     const scenarios: Scenario[] = [
-      { claimCode: "SCN-PDR-001", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
-      { claimCode: "SCN-PDR-002", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
+      { claimCode: "CLM-PDR-001", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
+      { claimCode: "CLM-PDR-002", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
       {
-        claimCode: "SCN-PDR-003",
+        claimCode: "CLM-PDR-003",
         evidenceObligations: [
           { qualityCheckKind: "unit" },
           { qualityCheckKind: "integration", pending: true },
@@ -22,7 +22,7 @@ describe("[SCN-PND-008] isBalanced — an Ledger whose only exceptions are Pendi
       },
     ];
     const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheckKind: "unit", claimCode: "SCN-PDR-003", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "CLM-PDR-003", status: "passed" },
     ];
     const balance = reconcile(scenarios, evidenceObservations);
 

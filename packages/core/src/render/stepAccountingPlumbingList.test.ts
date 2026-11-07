@@ -34,7 +34,7 @@ const stepAccounting = (workflow: string): string[] =>
     linesOf(reconcileStepAccounting([workflow]))
   );
 
-describe("[SCN-RPT-073] the step-accounting section lists each GitHub plumbing step beneath its table, and lists none when no step is plumbing", () => {
+describe("[CLM-RPT-073] the step-accounting section lists each GitHub plumbing step beneath its table, and lists none when no step is plumbing", () => {
   it("lists each GitHub plumbing step by its name under a GitHub plumbing label after the Non-checks list, in the order the steps were read", () => {
     const section = stepAccounting(stepAccountingCi);
     const nonChecks = section.indexOf("Non-checks:");

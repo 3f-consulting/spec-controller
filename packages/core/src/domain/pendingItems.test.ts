@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { BUILT_IN_DEFERRAL_TAGS, deferralTagsExtendedBy } from "./pendingItems.js";
 
-describe("[SCN-PND-021] a configured deferral tag extends the built-in deferral set", () => {
+describe("[CLM-PND-021] a configured deferral tag extends the built-in deferral set", () => {
   it("unions a project-configured tag with the built-in set — the configured tag is recognised", () => {
     const resolved = deferralTagsExtendedBy(BUILT_IN_DEFERRAL_TAGS, ["deferred"]);
     expect(resolved).toContain("deferred");

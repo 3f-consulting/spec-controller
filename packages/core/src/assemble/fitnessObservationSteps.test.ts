@@ -8,10 +8,10 @@ import type { StepRecord } from "../parse/ciStepRecord.js";
 
 const fitnessFeature = `Feature: fixture
 
-  @fitness @SCN-FIX-002
+  @fitness @CLM-FIX-002
   Scenario: a fixture property holds
 
-  @fitness @SCN-FIX-003
+  @fitness @CLM-FIX-003
   Scenario: another fixture property holds
 `;
 
@@ -36,7 +36,7 @@ jobs:
   quality:
     steps:
       - name: Property
-        id: SCN-FIX-002
+        id: CLM-FIX-002
         run: pnpm property
       - name: Lint
         run: pnpm lint
@@ -47,12 +47,12 @@ jobs:
   quality:
     steps:
       - name: Property
-        id: SCN-FIX-002
+        id: CLM-FIX-002
         run: pnpm property
   again:
     steps:
       - name: Property again
-        id: SCN-FIX-002
+        id: CLM-FIX-002
         run: pnpm property
 `;
 
@@ -76,7 +76,7 @@ function observedFitness(
   );
 }
 
-describe("[SCN-RMD-027] each fitness evidence observation names the CI step it was observed at, as workflow, job and step, and names none where no single step carries its code", () => {
+describe("[CLM-RMD-027] each fitness evidence observation names the CI step it was observed at, as workflow, job and step, and names none where no single step carries its code", () => {
   it("names the workflow, job and step of the candidate step a workflow observation was read from", () => {
     expect(observedFitness([lintCi], [])).toStrictEqual([
       {
@@ -113,33 +113,18 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
 
   it("names, on a step-record observation, the one step whose id is its code", () => {
     expect(
-      observedFitness([recordedCi], ["ci.yml"], { "SCN-FIX-002": { outcome: "success", conclusion: "success" } })
+      observedFitness([recordedCi], ["ci.yml"], { "CLM-FIX-002": { outcome: "success", conclusion: "success" } })
     ).toStrictEqual([
       {
         qualityCheckKind: "fitness",
-        fitnessFunction: "lint",
-        exists: true,
-        enforcedOverRealSource: true,
-        outcome: "cites-no-scenario",
-        step: "ci.yml:quality:Lint",
-      },
-      {
-        qualityCheckKind: "fitness",
-        fitnessFunction: "SCN-FIX-002",
-        claimCode: "SCN-FIX-002",
+        fitnessFunction: "CLM-FIX-002",
+        claimCode: "CLM-FIX-002",
         exists: true,
         enforcedOverRealSource: true,
         outcome: "satisfied",
         status: "passed",
         step: "ci.yml:quality:Property",
       },
-    ]);
-  });
-
-  it("names no step on a step-record observation whose code no step carries", () => {
-    expect(
-      observedFitness([recordedCi], ["ci.yml"], { "SCN-FIX-003": { outcome: "failure", conclusion: "failure" } })
-    ).toStrictEqual([
       {
         qualityCheckKind: "fitness",
         fitnessFunction: "lint",
@@ -148,26 +133,41 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
         outcome: "cites-no-scenario",
         step: "ci.yml:quality:Lint",
       },
+    ]);
+  });
+
+  it("names no step on a step-record observation whose code no step carries", () => {
+    expect(
+      observedFitness([recordedCi], ["ci.yml"], { "CLM-FIX-003": { outcome: "failure", conclusion: "failure" } })
+    ).toStrictEqual([
       {
         qualityCheckKind: "fitness",
-        fitnessFunction: "SCN-FIX-003",
-        claimCode: "SCN-FIX-003",
+        fitnessFunction: "CLM-FIX-003",
+        claimCode: "CLM-FIX-003",
         exists: true,
         enforcedOverRealSource: true,
         outcome: "failing",
         status: "failed",
+      },
+      {
+        qualityCheckKind: "fitness",
+        fitnessFunction: "lint",
+        exists: true,
+        enforcedOverRealSource: true,
+        outcome: "cites-no-scenario",
+        step: "ci.yml:quality:Lint",
       },
     ]);
   });
 
   it("names no step on a step-record observation whose code two steps, in two jobs, carry", () => {
     expect(
-      observedFitness([twiceRecordedCi], ["ci.yml"], { "SCN-FIX-002": { outcome: "success", conclusion: "success" } })
+      observedFitness([twiceRecordedCi], ["ci.yml"], { "CLM-FIX-002": { outcome: "success", conclusion: "success" } })
     ).toStrictEqual([
       {
         qualityCheckKind: "fitness",
-        fitnessFunction: "SCN-FIX-002",
-        claimCode: "SCN-FIX-002",
+        fitnessFunction: "CLM-FIX-002",
+        claimCode: "CLM-FIX-002",
         exists: true,
         enforcedOverRealSource: true,
         outcome: "satisfied",

@@ -10,36 +10,36 @@ Feature: A Jest suite's results answer unit evidence obligations
 
   Rule: a Jest test answers the scenario its title cites
 
-    @unit @e2e @SCN-JST-001
+    @unit @e2e @CLM-JST-001
     Scenario: a passing Jest test that cites its scenario in its title answers that scenario's unit evidence obligation, and the scenario reconciles satisfied
       Given a target whose unit tests are a Jest suite and whose scenario raises a unit evidence obligation
       And a Jest report in which a passing test cites that scenario in its title
       When balance is asked to reconcile that target with the Jest report
       Then the scenario that Jest test cites reconciles satisfied, by that test
 
-    @unit @SCN-JST-002
+    @unit @CLM-JST-002
     Scenario: a failing Jest test that cites its scenario posts a failing observation, and the scenario reconciles failing
 
-    @unit @SCN-JST-003
+    @unit @CLM-JST-003
     Scenario: a code in a Jest test's own title is read before a code in the describe blocks around it
 
-    @unit @SCN-JST-004
+    @unit @CLM-JST-004
     Scenario: a Jest test whose title cites two scenarios credits neither, and the unnamed claim's row names both codes
 
   Rule: a Jest test that did not run proves nothing
 
-    @unit @SCN-JST-005
+    @unit @CLM-JST-005
     Scenario: a todo or skipped Jest test posts no evidence observation, so the scenario it cites reads missing
 
-    @unit @SCN-JST-006
+    @unit @CLM-JST-006
     Scenario: a Jest test whose shared setup fails before it runs posts a failing observation
 
-    @unit @SCN-JST-007
+    @unit @CLM-JST-007
     Scenario: a Jest test file that failed to run posts a broken item and the run is unsound
 
   Rule: the report given to --jest is read only in the shape Jest writes
 
-    @unit @e2e @SCN-JST-008
+    @unit @e2e @CLM-JST-008
     Scenario Outline: a file given to --jest that is not Jest's JSON report is refused as unreadable at exit 2, naming the shape Jest writes
       Given a target whose Jest report is <defect>
       When the balance run reads that input

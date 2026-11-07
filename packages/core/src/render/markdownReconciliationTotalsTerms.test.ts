@@ -27,17 +27,17 @@ function totalOf(md: string, subject: string): number {
   return Number(row?.split("|")[2]?.trim());
 }
 
-describe("[SCN-RPT-071] the Reconciliation totals section says what a Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence Observation are before its table", () => {
+describe("[CLM-RPT-071] the Reconciliation totals section says what a Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence Observation are before its table", () => {
   it("prints the four definitions as a list between the heading and the table, the same on a one-scenario ledger and on one holding a phantom claim and the unnamed claim, with no count and nothing bold", () => {
     const small = reconcile(
-      [{ claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-      [{ qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" }],
+      [{ claimCode: "CLM-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" }],
     );
     const large = reconcile(
-      [{ claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "CLM-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
-        { qualityCheckKind: "unit", claimCode: "SCN-Z", status: "failed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-Z", status: "failed" },
         { qualityCheckKind: "unit", claimCode: null, status: "passed" },
       ],
     );
@@ -58,10 +58,10 @@ describe("[SCN-RPT-071] the Reconciliation totals section says what a Claim Reco
 
   it("prints, for the worked example its Reconciliation line definition states, one Claim Reconciliation and two Reconciliation lines", () => {
     const ledger = reconcile(
-      [{ claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "CLM-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
-        { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
       ],
     );
     const md = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);

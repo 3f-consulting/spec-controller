@@ -6,16 +6,16 @@ import { hasBrokenEvidence } from "./ledger.js";
 import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { claimCode: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
-const recorded: RecordedCheckStep[] = [{ citedClaimCode: "SCN-CVT-001", report: "failed" }];
+const recorded: RecordedCheckStep[] = [{ citedClaimCode: "CLM-CVT-001", report: "failed" }];
 
 function reconcile() {
   return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), []);
 }
 
-describe("[SCN-LNT-028] a check step the run's record says failed posts a failing observation", () => {
+describe("[CLM-LNT-028] a check step the run's record says failed posts a failing observation", () => {
   it("reds the row it names, carrying what the check found, and leaves the run sound", () => {
     const reconciliation = reconcile();
 
@@ -26,13 +26,13 @@ describe("[SCN-LNT-028] a check step the run's record says failed posts a failin
         row.verdict,
         lineReadingsOf(row.qualityCheckReconciliations),
       ])
-    ).toEqual([["SCN-CVT-001", "scenario", "out-of-balance", [[["SCN-CVT-001"], "failing"]]]]);
+    ).toEqual([["CLM-CVT-001", "scenario", "out-of-balance", [[["CLM-CVT-001"], "failing"]]]]);
 
     const [item] = reconciliation.ledger.claimReconciliations[0]!.qualityCheckReconciliations;
     expect(item?.evidenceObservations).toEqual([{
       qualityCheckKind: "fitness",
-      fitnessFunction: "SCN-CVT-001",
-      claimCode: "SCN-CVT-001",
+      fitnessFunction: "CLM-CVT-001",
+      claimCode: "CLM-CVT-001",
       exists: true,
       enforcedOverRealSource: true,
       status: "failed",

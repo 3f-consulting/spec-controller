@@ -55,7 +55,7 @@ const GO_TARGET = {
   report: "tests/fixtures/go/report.xml",
 };
 
-const GO_CITED = "SCN-GOF-001";
+const GO_CITED = "CLM-GOF-001";
 
 const CITING_SUBTEST = `example.com/gofixture/cited::TestCited/[${GO_CITED}]_a_passing_subtest_cites_its_scenario`;
 
@@ -121,9 +121,9 @@ const SINGLE_REPORT_TARGET = {
   report: "tests/fixtures/surefire-single-report/report.xml",
 };
 
-const SINGLE_REPORT_CITED = "SCN-AAA-001";
+const SINGLE_REPORT_CITED = "CLM-AAA-001";
 
-const SINGLE_REPORT_CITING_CLASS = "[SCN-AAA-010] a class that cites";
+const SINGLE_REPORT_CITING_CLASS = "[CLM-AAA-010] a class that cites";
 
 const SINGLE_REPORT_CITING_TEST = `[${SINGLE_REPORT_CITED}] passes`;
 
@@ -136,9 +136,9 @@ const JAVA_TARGET = {
 
 const JAVA_RUN: ReportedRun = {
   ...JAVA_TARGET,
-  cited: "SCN-JVF-001",
+  cited: "CLM-JVF-001",
   citingClass: "example.CitedTest",
-  citingTest: "[SCN-JVF-001] a passing test cites its scenario",
+  citingTest: "[CLM-JVF-001] a passing test cites its scenario",
 };
 
 const KOTLIN_RUN: ReportedRun = {
@@ -146,9 +146,9 @@ const KOTLIN_RUN: ReportedRun = {
   packageJson: "tests/fixtures/kotlin/package.json",
   ci: "tests/fixtures/kotlin",
   reports: "tests/fixtures/kotlin/test-results",
-  cited: "SCN-KOF-001",
+  cited: "CLM-KOF-001",
   citingClass: "example.CitedTest",
-  citingTest: "[SCN-KOF-001] a passing test cites its scenario",
+  citingTest: "[CLM-KOF-001] a passing test cites its scenario",
 };
 
 const escaped = (text: string): string => text.replace(/[[\]]/g, "\\$&");
@@ -270,7 +270,7 @@ const JEST_TARGET = {
   report: "tests/fixtures/jest/report.json",
 };
 
-const JEST_CITED = "SCN-JSF-001";
+const JEST_CITED = "CLM-JSF-001";
 
 const JEST_CITING_TEST = `[${JEST_CITED}] a passing test cites its scenario`;
 
@@ -316,7 +316,7 @@ const PYTEST_TARGET = {
   report: "tests/fixtures/pytest/report.xml",
 };
 
-const PYTEST_CITED = "SCN-PYF-001";
+const PYTEST_CITED = "CLM-PYF-001";
 
 const PYTEST_CITING_TEST = "test_passing_cited";
 
@@ -353,7 +353,7 @@ const RSPEC_TARGET = {
   report: "tests/fixtures/rspec/report.json",
 };
 
-const RSPEC_CITED = "SCN-RSF-001";
+const RSPEC_CITED = "CLM-RSF-001";
 
 const CITING_EXAMPLE = `[${RSPEC_CITED}] a passing example cites its scenario`;
 
@@ -390,7 +390,7 @@ Then("the scenario that RSpec example cites reconciles satisfied, by that exampl
   );
 });
 
-const FEATURE = "@UIN\nFeature: a target\n\n  @unit @SCN-UIN-001\n  Scenario: it works\n    Given a thing\n";
+const FEATURE = "@UIN\nFeature: a target\n\n  @unit @CLM-UIN-001\n  Scenario: it works\n    Given a thing\n";
 
 function targetDir(world: SpecControllerWorld): string {
   const dir = temporaryDirectory(world, "unreadable-input-");
@@ -462,10 +462,10 @@ Given("a target whose Cucumber report parses but holds {}", function (this: Spec
 const CI_STEPS: Record<string, readonly [unknown, ExpectedEntry]> = {
   "a list where the record belongs": [[], inShape(atTop(LIST, OBJECT))],
   "nothing where the record belongs": [null, inShape(atTop("null", OBJECT))],
-  "a scenario-coded step that is not an object": [{ "SCN-UIN-001": "success" }, inShape(wrongKind("SCN-UIN-001", kindOf("string"), OBJECT))],
-  "a scenario-coded step whose outcome is not a string": [
-    { "SCN-UIN-001": { outcome: 1 } },
-    inShape(wrongKind("SCN-UIN-001.outcome", kindOf("number"), kindOf("string"))),
+  "a claim-coded step that is not an object": [{ "CLM-UIN-001": "success" }, inShape(wrongKind("CLM-UIN-001", kindOf("string"), OBJECT))],
+  "a claim-coded step whose outcome is not a string": [
+    { "CLM-UIN-001": { outcome: 1 } },
+    inShape(wrongKind("CLM-UIN-001.outcome", kindOf("number"), kindOf("string"))),
   ],
 };
 

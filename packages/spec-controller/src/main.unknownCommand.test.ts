@@ -29,7 +29,7 @@ const REQUESTS: { request: string; command: string; ask: () => Written }[] = [
   },
 ];
 
-describe("[SCN-CLI-056] an unknown command is a usage fault", () => {
+describe("[CLM-CLI-056] an unknown command is a usage fault", () => {
   describe.each(REQUESTS)("$request", ({ ask }) => {
     it("writes nothing to stdout", () => {
       expect(ask().stdout).toBe("");

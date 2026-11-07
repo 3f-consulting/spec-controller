@@ -3,8 +3,8 @@
     {
       "name": "tests/fixtures/same-name-corpus/widget.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-SNA-001] the alpha scenario is proven", "status": "passed" },
-        { "fullName": "[SCN-SNB-001] the beta scenario is proven", "status": "passed" }
+        { "fullName": "[CLM-SNA-001] the alpha scenario is proven", "status": "passed" },
+        { "fullName": "[CLM-SNB-001] the beta scenario is proven", "status": "passed" }
       ]
     }
   ]

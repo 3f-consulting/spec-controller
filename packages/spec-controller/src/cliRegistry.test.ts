@@ -13,7 +13,7 @@ import { BUILT_IN_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
 import { AppMessage } from "./messages.js";
 import { message } from "./appText.js";
 
-describe("[SCN-CLI-006] renderCommandHelp renders a line per flag the registry gives that command", () => {
+describe("[CLM-CLI-006] renderCommandHelp renders a line per flag the registry gives that command", () => {
   let balanceFlags: FlagSpec[];
 
   beforeEach(() => {
@@ -137,7 +137,7 @@ describe("[SCN-CLI-006] renderCommandHelp renders a line per flag the registry g
   });
 });
 
-describe("[SCN-CLI-007] renderTopLevelHelp renders the commands and the global scope", () => {
+describe("[CLM-CLI-007] renderTopLevelHelp renders the commands and the global scope", () => {
   it("lists each registered command by name and its exact registry summary", () => {
     expect(cliRegistry.commands.length).toBeGreaterThan(0);
     const out = renderTopLevelHelp(cliRegistry);
@@ -231,7 +231,7 @@ describe("[SCN-CLI-007] renderTopLevelHelp renders the commands and the global s
   });
 });
 
-describe("[SCN-CLI-008] the completeness guard — no registry entry is missing from its help surface", () => {
+describe("[CLM-CLI-008] the completeness guard — no registry entry is missing from its help surface", () => {
   it("finds every command's registry entries in that command's --help render (per-command scope)", () => {
     const entryCount = cliRegistry.commands.reduce(
       (total, command) =>

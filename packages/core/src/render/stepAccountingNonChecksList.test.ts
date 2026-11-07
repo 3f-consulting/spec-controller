@@ -84,7 +84,7 @@ const nonChecksList = (lines: readonly string[], length: number): string[] => {
   return lines.slice(start, start + length);
 };
 
-describe("[SCN-RPT-048] the step-accounting section lists each non-check beneath its table with its reason", () => {
+describe("[CLM-RPT-048] the step-accounting section lists each non-check beneath its table with its reason", () => {
   it("lists each non-check with its reason under a Non-checks label beneath the table, then a blank line, and no entry that matches no step", () => {
     const section = stepAccounting(reportLines(["ci.yml:quality:Types", "ci.yml:quality:Lint"]));
     const tableEnd = endOfTable(section);
@@ -123,7 +123,7 @@ describe("[SCN-RPT-048] the step-accounting section lists each non-check beneath
   });
 });
 
-describe("[SCN-RPT-098] the step-accounting section lists no non-check when the target names none", () => {
+describe("[CLM-RPT-098] the step-accounting section lists no non-check when the target names none", () => {
   it("lists no non-check, and prints no Non-checks label, for a target that names no step a non-check", () => {
     const lines = reportLines();
     expect(stepAccounting(lines).length).toBeGreaterThan(0);
@@ -151,7 +151,7 @@ const notAppliedLabelOf = (workflowsRead: readonly string[]): string =>
     workflows: workflowsRead.map((workflow) => `\`${workflow}\``).join(", "),
   });
 
-describe("[SCN-RPT-089] a well-formed notChecks entry naming a workflow the run did not read is listed beneath the step accounting's table as not applied, with every workflow the run read named beside it, one whose jobs only call another workflow included, and none is listed when every entry names a workflow the run read", () => {
+describe("[CLM-RPT-089] a well-formed notChecks entry naming a workflow the run did not read is listed beneath the step accounting's table as not applied, with every workflow the run read named beside it, one whose jobs only call another workflow included, and none is listed when every entry names a workflow the run read", () => {
   it.each<{ workflows: Readonly<Record<string, string>>; notChecks: readonly string[]; notApplied: readonly string[] }>([
     {
       workflows: { "ci.yml": ci },
@@ -216,7 +216,7 @@ describe("[SCN-RPT-089] a well-formed notChecks entry naming a workflow the run 
 const configurationNotRead = (lines: readonly string[]): string[] =>
   sectionUnder(markdownHeading(3, coreMessage(CoreMessage.ConfigurationNotReadHeading)))(lines);
 
-describe("[SCN-RPT-091] a run that reads no CI step lists each notChecks entry naming a workflow it did not read under the step accounting as not applied, with no table, under a label naming the workflows it read or saying it read none", () => {
+describe("[CLM-RPT-091] a run that reads no CI step lists each notChecks entry naming a workflow it did not read under the step accounting as not applied, with no table, under a label naming the workflows it read or saying it read none", () => {
   it.each<{ case: string; workflows: Readonly<Record<string, string>>; notChecks: readonly string[]; malformed: readonly string[] }>([
     { case: "reads no workflow", workflows: {}, notChecks: ["deploy.yml:release:Ship", "ci.yml:build"], malformed: ["ci.yml:build"] },
     { case: "reads one workflow whose only job calls another", workflows: { "release.yml": callsAnotherWorkflowCi }, notChecks: ["deploy.yml:release:Ship"], malformed: [] },
@@ -252,7 +252,7 @@ jobs:
         run: ./deploy.sh
 `;
 
-describe("[SCN-RPT-090] a notChecks entry naming a workflow whose name holds a colon makes that workflow's step a non-check", () => {
+describe("[CLM-RPT-090] a notChecks entry naming a workflow whose name holds a colon makes that workflow's step a non-check", () => {
   it.each<{ workflows: Readonly<Record<string, string>>; entry: string }>([
     { workflows: { "a:b.yml": deployCi }, entry: "a:b.yml:quality:Deploy" },
     { workflows: { "a.yml": deployCi, "a.yml:b.yml": deployCi }, entry: "a.yml:b.yml:quality:Deploy" },

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceOfRunResult } from "./journal.js";
 
-describe("[SCN-LDG-043] a test that never reached its assertions posts broken evidence, whatever the runner", () => {
+describe("[CLM-LDG-043] a test that never reached its assertions posts broken evidence, whatever the runner", () => {
   it("gives failed and broken evidence", () => {
     expect(evidenceOfRunResult("never-reached-its-assertions")).toStrictEqual({ status: "failed", broken: true });
   });
@@ -11,7 +11,7 @@ describe("[SCN-LDG-043] a test that never reached its assertions posts broken ev
   });
 });
 
-describe("[SCN-LDG-044] a test whose result is inconclusive posts no evidence observation, whatever the runner", () => {
+describe("[CLM-LDG-044] a test whose result is inconclusive posts no evidence observation, whatever the runner", () => {
   it("gives no evidence", () => {
     expect(evidenceOfRunResult("inconclusive")).toBeUndefined();
   });

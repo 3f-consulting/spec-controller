@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parseJunitEvidenceObservations, parsePytestEvidenceObservations, type JunitXmlReport } from "./junit.js";
 import { remarkWordsOf } from "../render/remarkWords.js";
 
-describe("[SCN-PYT-001] parsePytestEvidenceObservations posts a passing testcase to the scenario its scn property cites", () => {
+describe("[CLM-PYT-001] parsePytestEvidenceObservations posts a passing testcase to the scenario its scn property cites", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -11,7 +11,7 @@ describe("[SCN-PYT-001] parsePytestEvidenceObservations posts a passing testcase
             {
               classname: "tests.test_widget",
               name: "test_the_widget_turns",
-              properties: { property: [{ name: "scn", value: "SCN-FOO-001" }] },
+              properties: { property: [{ name: "scn", value: "CLM-FOO-001" }] },
             },
           ],
         },
@@ -21,12 +21,12 @@ describe("[SCN-PYT-001] parsePytestEvidenceObservations posts a passing testcase
 
   it("emits one passed unit observation citing that code, located at the test", () => {
     expect(parsePytestEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", claimCode: "SCN-FOO-001", status: "passed", locator: "tests.test_widget::test_the_widget_turns" },
+      { qualityCheckKind: "unit", claimCode: "CLM-FOO-001", status: "passed", locator: "tests.test_widget::test_the_widget_turns" },
     ]);
   });
 });
 
-describe("[SCN-PYT-002] parsePytestEvidenceObservations posts a failing testcase to the scenario its scn property cites", () => {
+describe("[CLM-PYT-002] parsePytestEvidenceObservations posts a failing testcase to the scenario its scn property cites", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -35,7 +35,7 @@ describe("[SCN-PYT-002] parsePytestEvidenceObservations posts a failing testcase
             {
               classname: "tests.test_widget",
               name: "test_the_widget_jams",
-              properties: { property: [{ name: "scn", value: "SCN-FOO-002" }] },
+              properties: { property: [{ name: "scn", value: "CLM-FOO-002" }] },
               failure: { message: "assert 1 == 2" },
             },
           ],
@@ -46,12 +46,12 @@ describe("[SCN-PYT-002] parsePytestEvidenceObservations posts a failing testcase
 
   it("emits one failed unit observation citing that code, located at the test", () => {
     expect(parsePytestEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", claimCode: "SCN-FOO-002", status: "failed", locator: "tests.test_widget::test_the_widget_jams" },
+      { qualityCheckKind: "unit", claimCode: "CLM-FOO-002", status: "failed", locator: "tests.test_widget::test_the_widget_jams" },
     ]);
   });
 });
 
-describe("[SCN-PYT-003] parsePytestEvidenceObservations posts nothing for a skipped testcase", () => {
+describe("[CLM-PYT-003] parsePytestEvidenceObservations posts nothing for a skipped testcase", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -60,7 +60,7 @@ describe("[SCN-PYT-003] parsePytestEvidenceObservations posts nothing for a skip
             {
               classname: "tests.test_widget",
               name: "test_the_widget_is_not_built_yet",
-              properties: { property: [{ name: "scn", value: "SCN-FOO-003" }] },
+              properties: { property: [{ name: "scn", value: "CLM-FOO-003" }] },
               skipped: { message: "the behaviour is not built yet" },
             },
           ],
@@ -74,7 +74,7 @@ describe("[SCN-PYT-003] parsePytestEvidenceObservations posts nothing for a skip
   });
 });
 
-describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no scn property as a passed observation citing no scenario", () => {
+describe("[CLM-PYT-005] parsePytestEvidenceObservations posts a testcase with no scn property as a passed observation citing no scenario", () => {
   const reportOf = (properties?: { property: { name: string; value: string }[] }): JunitXmlReport => ({
     testsuites: {
       testsuite: [
@@ -101,14 +101,14 @@ describe("[SCN-PYT-005] parsePytestEvidenceObservations posts a testcase with no
 
   it("emits one unit observation citing no scenario for a testcase whose only property of another name holds a claim code", () => {
     expect(
-      parsePytestEvidenceObservations(reportOf({ property: [{ name: "owner", value: "SCN-PYT-001" }] }))
+      parsePytestEvidenceObservations(reportOf({ property: [{ name: "owner", value: "CLM-PYT-001" }] }))
     ).toEqual([
       { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
 });
 
-describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for a testcase carrying two scn properties", () => {
+describe("[CLM-PYT-006] parsePytestEvidenceObservations credits no scenario for a testcase carrying two scn properties", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -119,8 +119,8 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
               name: "test_the_widget_spins_and_turns",
               properties: {
                 property: [
-                  { name: "scn", value: "SCN-FOO-004" },
-                  { name: "scn", value: "SCN-FOO-005" },
+                  { name: "scn", value: "CLM-FOO-004" },
+                  { name: "scn", value: "CLM-FOO-005" },
                 ],
               },
             },
@@ -137,7 +137,7 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
         claimCode: null,
         status: "passed",
         locator: "tests.test_widget::test_the_widget_spins_and_turns",
-        notes: [{ kind: "several-claim-codes", codes: ["SCN-FOO-004", "SCN-FOO-005"] }],
+        notes: [{ kind: "several-claim-codes", codes: ["CLM-FOO-004", "CLM-FOO-005"] }],
       },
     ]);
   });
@@ -145,7 +145,7 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
   it("words its note as every reader words it, in claim codes rather than scn properties", () => {
     const [observation] = parsePytestEvidenceObservations(report);
 
-    expect(remarkWordsOf(observation ?? {})).toContain("2 claim codes cite SCN-FOO-004, SCN-FOO-005");
+    expect(remarkWordsOf(observation ?? {})).toContain("2 claim codes cite CLM-FOO-004, CLM-FOO-005");
   });
 
   it("credits the scenario when the one code is carried twice", () => {
@@ -159,8 +159,8 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
                 name: "test_the_widget_spins",
                 properties: {
                   property: [
-                    { name: "scn", value: "SCN-FOO-004" },
-                    { name: "scn", value: "SCN-FOO-004" },
+                    { name: "scn", value: "CLM-FOO-004" },
+                    { name: "scn", value: "CLM-FOO-004" },
                   ],
                 },
               },
@@ -171,12 +171,12 @@ describe("[SCN-PYT-006] parsePytestEvidenceObservations credits no scenario for 
     };
 
     expect(parsePytestEvidenceObservations(repeated)).toEqual([
-      { qualityCheckKind: "unit", claimCode: "SCN-FOO-004", status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
+      { qualityCheckKind: "unit", claimCode: "CLM-FOO-004", status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
 });
 
-describe("[SCN-PYT-010] parsePytestEvidenceObservations credits a claim only when a testcase's scn and clm properties name one code", () => {
+describe("[CLM-PYT-010] parsePytestEvidenceObservations credits a claim only when a testcase's scn and clm properties name one code", () => {
   it.each([
     {
       case: "clm alone",
@@ -221,7 +221,7 @@ describe("[SCN-PYT-010] parsePytestEvidenceObservations credits a claim only whe
   });
 });
 
-describe("[SCN-PYT-007] parsePytestEvidenceObservations posts a collection failure as broken evidence citing no scenario", () => {
+describe("[CLM-PYT-007] parsePytestEvidenceObservations posts a collection failure as broken evidence citing no scenario", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -255,7 +255,7 @@ describe("[SCN-PYT-007] parsePytestEvidenceObservations posts a collection failu
   });
 });
 
-describe("[SCN-PYT-008] parsePytestEvidenceObservations posts a test whose setup errored as broken evidence citing its scenario", () => {
+describe("[CLM-PYT-008] parsePytestEvidenceObservations posts a test whose setup errored as broken evidence citing its scenario", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -264,7 +264,7 @@ describe("[SCN-PYT-008] parsePytestEvidenceObservations posts a test whose setup
             {
               classname: "tests.test_widget",
               name: "test_the_widget_needs_a_resource",
-              properties: { property: [{ name: "scn", value: "SCN-FOO-008" }] },
+              properties: { property: [{ name: "scn", value: "CLM-FOO-008" }] },
               error: {
                 message: 'failed on setup with "RuntimeError: no resource"',
                 "#text": "E       RuntimeError: no resource",
@@ -280,7 +280,7 @@ describe("[SCN-PYT-008] parsePytestEvidenceObservations posts a test whose setup
     expect(parsePytestEvidenceObservations(report)).toEqual([
       {
         qualityCheckKind: "unit",
-        claimCode: "SCN-FOO-008",
+        claimCode: "CLM-FOO-008",
         status: "failed",
         locator: "tests.test_widget::test_the_widget_needs_a_resource",
         broken: true,
@@ -290,7 +290,7 @@ describe("[SCN-PYT-008] parsePytestEvidenceObservations posts a test whose setup
   });
 });
 
-describe("[SCN-GOT-007] parseJunitEvidenceObservations posts a Go package that failed to compile as broken evidence naming the package", () => {
+describe("[CLM-GOT-007] parseJunitEvidenceObservations posts a Go package that failed to compile as broken evidence naming the package", () => {
   type Testcase = NonNullable<NonNullable<NonNullable<JunitXmlReport["testsuites"]>["testsuite"]>[number]["testcase"]>[number];
   const observationsOf = (testcase: Testcase) =>
     parseJunitEvidenceObservations({ testsuites: { testsuite: [{ name: "example.com/m/broken", testcase: [testcase] }] } });
@@ -321,14 +321,14 @@ describe("[SCN-GOT-007] parseJunitEvidenceObservations posts a Go package that f
   });
 });
 
-describe("[SCN-JAV-003] parseJunitEvidenceObservations reads a code in a JUnit 5 test's own display name before a code in its class's display name", () => {
-  const classname = "[SCN-JVF-013] an outer class that cites a scenario";
+describe("[CLM-JAV-003] parseJunitEvidenceObservations reads a code in a JUnit 5 test's own display name before a code in its class's display name", () => {
+  const classname = "[CLM-JVF-013] an outer class that cites a scenario";
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
         {
           testcase: [
-            { classname, name: "[SCN-JVF-003] a test whose own display name cites a scenario" },
+            { classname, name: "[CLM-JVF-003] a test whose own display name cites a scenario" },
             { classname, name: "a test in the outer class whose own display name cites nothing" },
           ],
         },
@@ -340,13 +340,13 @@ describe("[SCN-JAV-003] parseJunitEvidenceObservations reads a code in a JUnit 5
     expect(parseJunitEvidenceObservations(report)).toEqual([
       {
         qualityCheckKind: "unit",
-        claimCode: "SCN-JVF-003",
+        claimCode: "CLM-JVF-003",
         status: "passed",
-        locator: `${classname}::[SCN-JVF-003] a test whose own display name cites a scenario`,
+        locator: `${classname}::[CLM-JVF-003] a test whose own display name cites a scenario`,
       },
       {
         qualityCheckKind: "unit",
-        claimCode: "SCN-JVF-013",
+        claimCode: "CLM-JVF-013",
         status: "passed",
         locator: `${classname}::a test in the outer class whose own display name cites nothing`,
       },
@@ -354,7 +354,7 @@ describe("[SCN-JAV-003] parseJunitEvidenceObservations reads a code in a JUnit 5
   });
 });
 
-describe("[SCN-JAV-004] parseJunitEvidenceObservations credits a JUnit 5 test with no code of its own to the innermost class around it that cites one", () => {
+describe("[CLM-JAV-004] parseJunitEvidenceObservations credits a JUnit 5 test with no code of its own to the innermost class around it that cites one", () => {
   const observationOf = (classname: string) =>
     parseJunitEvidenceObservations({
       testsuites: { testsuite: [{ testcase: [{ classname, name: "a test whose own display name cites nothing" }] }] },
@@ -362,19 +362,19 @@ describe("[SCN-JAV-004] parseJunitEvidenceObservations credits a JUnit 5 test wi
 
   it("credits a test in an inner class that cites a scenario to the inner class's code, not the outer class's", () => {
     const observation = observationOf(
-      "[SCN-JVF-013] an outer class that cites a scenario [SCN-JVF-004] an inner class that cites a scenario"
+      "[CLM-JVF-013] an outer class that cites a scenario [CLM-JVF-004] an inner class that cites a scenario"
     );
-    expect(observation?.claimCode).toBe("SCN-JVF-004");
+    expect(observation?.claimCode).toBe("CLM-JVF-004");
     expect(observation?.notes).toBeUndefined();
   });
 
   it("credits a test in an inner class that cites nothing to the outer class's code", () => {
-    const observation = observationOf("[SCN-JVF-013] an outer class that cites a scenario an inner class that cites nothing");
-    expect(observation?.claimCode).toBe("SCN-JVF-013");
+    const observation = observationOf("[CLM-JVF-013] an outer class that cites a scenario an inner class that cites nothing");
+    expect(observation?.claimCode).toBe("CLM-JVF-013");
   });
 });
 
-describe("[SCN-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that throws as a failing observation citing its scenario", () => {
+describe("[CLM-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that throws as a failing observation citing its scenario", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -382,7 +382,7 @@ describe("[SCN-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that
           testcase: [
             {
               classname: "example.CitedTest",
-              name: "[SCN-JVF-010] a test that throws cites its scenario",
+              name: "[CLM-JVF-010] a test that throws cites its scenario",
               error: {
                 message: "the resource could not be reached",
                 "#text": "java.lang.IllegalStateException: the resource could not be reached",
@@ -398,9 +398,9 @@ describe("[SCN-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that
     expect(parseJunitEvidenceObservations(report)).toEqual([
       {
         qualityCheckKind: "unit",
-        claimCode: "SCN-JVF-010",
+        claimCode: "CLM-JVF-010",
         status: "failed",
-        locator: "example.CitedTest::[SCN-JVF-010] a test that throws cites its scenario",
+        locator: "example.CitedTest::[CLM-JVF-010] a test that throws cites its scenario",
       },
     ]);
   });
@@ -410,14 +410,14 @@ describe("[SCN-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that
   });
 });
 
-describe("[SCN-JAV-009] parseJunitEvidenceObservations posts a JUnit 5 class whose setup before all its tests failed as broken evidence citing no scenario", () => {
+describe("[CLM-JAV-009] parseJunitEvidenceObservations posts a JUnit 5 class whose setup before all its tests failed as broken evidence citing no scenario", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
         {
           testcase: [
             {
-              classname: "[SCN-JVF-014] a class that cites a scenario",
+              classname: "[CLM-JVF-014] a class that cites a scenario",
               name: "",
               error: {
                 message: "the shared resource could not be set up",
@@ -436,7 +436,7 @@ describe("[SCN-JAV-009] parseJunitEvidenceObservations posts a JUnit 5 class who
         qualityCheckKind: "unit",
         claimCode: null,
         status: "failed",
-        locator: "[SCN-JVF-014] a class that cites a scenario",
+        locator: "[CLM-JVF-014] a class that cites a scenario",
         broken: true,
         message: "java.lang.IllegalStateException: the shared resource could not be set up",
       },

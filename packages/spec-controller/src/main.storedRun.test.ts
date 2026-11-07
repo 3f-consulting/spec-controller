@@ -46,7 +46,7 @@ function ranIn(hostArgvAt: (storeRoot: string) => string[], inspect: (answered: 
 const STORED = (storeRoot: string): string[] => ["--store", storeRoot, "--run-id", RUN_ID, "balance", ...balanceArgs];
 const UNSTORED = (): string[] => ["balance", ...balanceArgs];
 
-describe("[SCN-RMG-004] `spec-controller --store <root> balance` writes a stored run the operator can reach", () => {
+describe("[CLM-RMG-004] `spec-controller --store <root> balance` writes a stored run the operator can reach", () => {
   describe("balance under the store modifier and the run-name modifier", () => {
     it("prints exactly the run directory named for the target and run-id under the run store", () => {
       ranIn(STORED, ({ stdout: printed, stderr: refused, runDir }) => {

@@ -16,9 +16,9 @@ function repositoryWithADeletedCode(): string {
   const repo = freshDirectory("allocate-unreadable-history-");
   git(repo, ["init", "-q", "-b", "main"]);
   const path = "features/one.feature";
-  writeInto(repo, path, `@ONE\nFeature: part ONE\n\n${scenarioBlock("SCN-ONE-001")}\n${scenarioBlock("SCN-ONE-005")}`);
+  writeInto(repo, path, `@ONE\nFeature: part ONE\n\n${scenarioBlock("CLM-ONE-001")}\n${scenarioBlock("CLM-ONE-005")}`);
   commitAll(repo, "the corpus");
-  writeInto(repo, path, `@ONE\nFeature: part ONE\n\n${scenarioBlock("SCN-ONE-001")}`);
+  writeInto(repo, path, `@ONE\nFeature: part ONE\n\n${scenarioBlock("CLM-ONE-001")}`);
   commitAll(repo, "retire a scenario");
   return repo;
 }
@@ -42,7 +42,7 @@ function historyRefusalReason(answered: Answered, path: string): string {
 
 const NOT_PERMITTED = /^(EACCES|EPERM): /;
 
-describe("[SCN-ALC-021] history git cannot read is refused, never answered below a code it carries", () => {
+describe("[CLM-ALC-021] history git cannot read is refused, never answered below a code it carries", () => {
   it("refuses ONE when its loose objects are not permitted to be read, in git's own words", ({ skip }) => {
     skip(runsAsRoot());
     const repo = repositoryWithADeletedCode();

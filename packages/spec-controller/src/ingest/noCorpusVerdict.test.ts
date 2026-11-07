@@ -32,7 +32,7 @@ function verdictFor(target: Shape): string {
   return line ?? "";
 }
 
-describe("[SCN-CLI-018] absent, empty and scenario-less corpora are one answer, told by one sentence", () => {
+describe("[CLM-CLI-018] absent, empty and scenario-less corpora are one answer, told by one sentence", () => {
   const absent = () => verdictFor(NO_CORPUS_DIRECTORY);
 
   it("tells a target whose corpus is empty exactly what it tells one with no corpus directory", () => {

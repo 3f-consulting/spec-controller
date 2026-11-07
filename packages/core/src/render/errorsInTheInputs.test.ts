@@ -17,9 +17,9 @@ const CONFIGURATION_NOT_READ = (): string => markdownHeading(3, coreMessage(Core
 const runProvenance = (): string => markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading));
 const summary = (): string => markdownHeading(2, coreMessage(CoreMessage.SummaryHeading));
 
-const SCENARIOS: readonly Scenario[] = [{ claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
+const SCENARIOS: readonly Scenario[] = [{ claimCode: "CLM-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
 
-const PASSED: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-ONE-001", status: "passed" };
+const PASSED: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "CLM-ONE-001", status: "passed" };
 
 const NEVER_RAN: EvidenceObservation = {
   qualityCheckKind: "unit",
@@ -74,7 +74,7 @@ const withoutErrorSection = (lines: readonly string[]): string[] => {
   return [...lines.slice(0, start), ...lines.slice(start + body.length)];
 };
 
-describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in the inputs section after the run provenance", () => {
+describe("[CLM-RPT-077] every fault in the inputs is stated under one Errors in the inputs section after the run provenance", () => {
   it("states claim code errors alone under Claim code errors, right after the run provenance and before the Summary", () => {
     const { before, body, after } = errorSectionOf(reportLines({ codeErrors: [FOREIGN] }));
     expect(before).toBe(runProvenance());

@@ -6,13 +6,13 @@ import type { Scenario, EvidenceObservation } from "./journal.js";
 
 const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
 
-describe("[SCN-LDG-007] an evidence observation citing no scenario is reported as the unnamed claim's reconciliation, out of balance", () => {
+describe("[CLM-LDG-007] an evidence observation citing no scenario is reported as the unnamed claim's reconciliation, out of balance", () => {
   const scenarios: Scenario[] = [
-    { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ];
   const cited: EvidenceObservation = {
     qualityCheckKind: "unit",
-    claimCode: "SCN-AAA-001",
+    claimCode: "CLM-AAA-001",
     status: "passed",
     locator: "tests/cited.test.ts",
   };
@@ -60,7 +60,7 @@ describe("[SCN-LDG-007] an evidence observation citing no scenario is reported a
   it("judges the unnamed claim's row out of balance while the real scenario's row stays balanced", () => {
     const rows = reconciled();
     expect(unnamedClaimRowsOf(rows)[0]!.verdict).toBe("out-of-balance");
-    const real = rows.find((r) => r.claim === "SCN-AAA-001");
+    const real = rows.find((r) => r.claim === "CLM-AAA-001");
     expect(real?.kind).toBe("scenario");
     expect(real?.verdict).toBe("balanced");
   });

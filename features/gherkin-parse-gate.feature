@@ -21,5 +21,5 @@ Feature: The Gherkin parse gate — no check reports on a corpus the parser reje
     parser's own words, and never returns an empty corpus in its place. A reader that gets that
     report refuses: `balance` and `allocate` each end at exit 2, naming every unreadable file.
 
-    @unit @SCN-GPG-001
+    @unit @CLM-GPG-001
     Scenario: the shared parse reports every feature file the parser rejects, with the parser's own words, and returns no corpus in its place

@@ -38,9 +38,9 @@ let census: EvidenceObligations;
 beforeEach(() => {
   ledger = reconcile(
     [
-      { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { claimCode: "SCN-OWN-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "CLM-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "CLM-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "CLM-OWN-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ],
     []
   );
@@ -48,7 +48,7 @@ beforeEach(() => {
     ...evidenceObligations(3, 3),
     sharedClaimCodes: [
       {
-        claimCode: "SCN-ONE-001",
+        claimCode: "CLM-ONE-001",
         scenarios: [
           scenarioName("one.feature", "the scenario in one"),
           scenarioName("two.feature", "the scenario in two"),
@@ -60,30 +60,30 @@ beforeEach(() => {
 
 const alpha = `Feature: alpha
 
-  @unit @SCN-TRI-001
+  @unit @CLM-TRI-001
   Scenario: the first carrier of the three-way code
     Given a fixture
 
-  @unit @SCN-DUO-001
+  @unit @CLM-DUO-001
   Scenario: the first carrier of the two-way code
     Given a fixture
 
-  @unit @SCN-OWN-001
+  @unit @CLM-OWN-001
   Scenario: a scenario of its own
     Given a fixture
 `;
 
 const beta = `Feature: beta
 
-  @unit @SCN-TRI-001
+  @unit @CLM-TRI-001
   Scenario: the second carrier of the three-way code
     Given a fixture
 
-  @unit @SCN-DUO-001
+  @unit @CLM-DUO-001
   Scenario: the second carrier of the two-way code
     Given a fixture
 
-  @unit @SCN-TRI-001
+  @unit @CLM-TRI-001
   Scenario: the third carrier of the three-way code
     Given a fixture
 `;
@@ -99,7 +99,7 @@ function censusBlock(corpus: readonly { feature: string; source: string }[]): st
   return censusBlockOf(md);
 }
 
-describe("[SCN-RPT-064] the report states how many scenarios the corpus holds and how many codes more than one carries, and names the scenarios sharing each code", () => {
+describe("[CLM-RPT-064] the report states how many scenarios the corpus holds and how many codes more than one carries, and names the scenarios sharing each code", () => {
   it.each([
     [
       "states that the corpus holds three scenarios, one code carried by more than one of them",
@@ -107,7 +107,7 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
     ],
     [
       "names the shared code with the file and the name of each scenario carrying it",
-      () => "  - SCN-ONE-001: one.feature : the scenario in one; two.feature : the scenario in two",
+      () => "  - CLM-ONE-001: one.feature : the scenario in one; two.feature : the scenario in two",
     ],
   ])("%s", (_title, line) => {
     const md = renderMarkdown(er(ledger), ctx, publishedExitCodeOf, census);
@@ -125,12 +125,12 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
   it("renders an account whose sharers name no kind of quality check by its outcome alone, never an undefined subject", () => {
     const bare = reconcile(
       [
-        { claimCode: "SCN-ONE-001", evidenceObligations: [] },
-        { claimCode: "SCN-ONE-001", evidenceObligations: [] },
+        { claimCode: "CLM-ONE-001", evidenceObligations: [] },
+        { claimCode: "CLM-ONE-001", evidenceObligations: [] },
       ],
       []
     );
-    const [row] = claimReconciliationsTable(renderMarkdown(er(bare), ctx, publishedExitCodeOf)).rowsOf("SCN-ONE-001");
+    const [row] = claimReconciliationsTable(renderMarkdown(er(bare), ctx, publishedExitCodeOf)).rowsOf("CLM-ONE-001");
     expect(row?.cell(VERDICT_COLUMN())).toBe("out-of-balance");
     expect(row?.cell(RECONCILING_ITEMS_COLUMN()).startsWith(coreMessage(CoreMessage.OutcomeDuplicateClaimCode))).toBe(true);
     expect(row?.cells.join(" | ")).not.toContain("undefined");
@@ -145,20 +145,20 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
     ).toEqual([
       `- ${coreMessage(CoreMessage.ExcludedClaimOccurrences, { count: 0 })}`,
       `- ${coreMessage(CoreMessage.SharedClaimCodes, { scenarios: 6, codes: 2 })}`,
-      "  - SCN-DUO-001: alpha.feature : the first carrier of the two-way code; beta.feature : the second carrier of the two-way code",
-      "  - SCN-TRI-001: alpha.feature : the first carrier of the three-way code; beta.feature : the second carrier of the three-way code; beta.feature : the third carrier of the three-way code",
+      "  - CLM-DUO-001: alpha.feature : the first carrier of the two-way code; beta.feature : the second carrier of the two-way code",
+      "  - CLM-TRI-001: alpha.feature : the first carrier of the three-way code; beta.feature : the second carrier of the three-way code; beta.feature : the third carrier of the three-way code",
     ]);
   });
 });
 
-describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its reconciling items, the feature file and title of the scenario it reconciles", () => {
+describe("[CLM-RPT-070] each Claim Reconciliation of a shared code names, in its reconciling items, the feature file and title of the scenario it reconciles", () => {
   const sharerTable = (): ClaimReconciliationsTable =>
     claimReconciliationsTable(renderMarkdown(
       er(
         reconcile(
           [
-            { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "login.feature", title: "a user with the right password is let in" },
-            { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "logout.feature", title: "a signed-in user is signed out" },
+            { claimCode: "CLM-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "login.feature", title: "a user with the right password is let in" },
+            { claimCode: "CLM-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "logout.feature", title: "a signed-in user is signed out" },
           ],
           []
         )
@@ -166,7 +166,7 @@ describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its
       ctx,
       publishedExitCodeOf
     ));
-  const sharerRowsOf = (): ClaimRow[] => sharerTable().rowsOf("SCN-ONE-001");
+  const sharerRowsOf = (): ClaimRow[] => sharerTable().rowsOf("CLM-ONE-001");
 
   it.each([
     ["login.feature : a user with the right password is let in"],
@@ -179,7 +179,7 @@ describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its
 
   it("renders the two sharers' rows alike but for the scenario each names", () => {
     const table = sharerTable();
-    const rows = table.rowsOf("SCN-ONE-001").map((row) =>
+    const rows = table.rowsOf("CLM-ONE-001").map((row) =>
       table.header.map((column) =>
         column === RECONCILING_ITEMS_COLUMN() ? row.cell(column).replace(/ — this one is .+$/, " — this one is <scenario>") : row.cell(column)
       )

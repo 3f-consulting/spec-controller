@@ -5,21 +5,21 @@ import type { Scenario } from "./journal.js";
 import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { claimCode: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { claimCode: "SCN-CVT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-CVT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 const recorded: RecordedCheckStep[] = [
-  { citedClaimCode: "SCN-CVT-001", report: "succeeded" },
-  { citedClaimCode: "SCN-CVT-002", report: "succeeded" },
+  { citedClaimCode: "CLM-CVT-001", report: "succeeded" },
+  { citedClaimCode: "CLM-CVT-002", report: "succeeded" },
 ];
 
 function reconcile() {
   return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), []);
 }
 
-describe("[SCN-LNT-021] a fitness function's step the run's record says succeeded answers its own row's obligation", () => {
-  it("answers each row's obligation by the step citing its OWN @SCN, and both balance", () => {
+describe("[CLM-LNT-021] a fitness function's step the run's record says succeeded answers its own row's obligation", () => {
+  it("answers each row's obligation by the step citing its OWN claim code, and both balance", () => {
     const reconciliation = reconcile();
 
     expect(
@@ -30,8 +30,8 @@ describe("[SCN-LNT-021] a fitness function's step the run's record says succeede
         lineReadingsOf(row.qualityCheckReconciliations),
       ])
     ).toEqual([
-      ["SCN-CVT-001", "scenario", "balanced", [[["SCN-CVT-001"], "satisfied"]]],
-      ["SCN-CVT-002", "scenario", "balanced", [[["SCN-CVT-002"], "satisfied"]]],
+      ["CLM-CVT-001", "scenario", "balanced", [[["CLM-CVT-001"], "satisfied"]]],
+      ["CLM-CVT-002", "scenario", "balanced", [[["CLM-CVT-002"], "satisfied"]]],
     ]);
   });
 
@@ -39,8 +39,8 @@ describe("[SCN-LNT-021] a fitness function's step the run's record says succeede
     const [first, second] = reconcile().ledger.claimReconciliations;
     expect(first?.qualityCheckReconciliations[0]?.evidenceObservations).toEqual([{
       qualityCheckKind: "fitness",
-      fitnessFunction: "SCN-CVT-001",
-      claimCode: "SCN-CVT-001",
+      fitnessFunction: "CLM-CVT-001",
+      claimCode: "CLM-CVT-001",
       exists: true,
       enforcedOverRealSource: true,
       status: "passed",
@@ -48,8 +48,8 @@ describe("[SCN-LNT-021] a fitness function's step the run's record says succeede
     }]);
     expect(second?.qualityCheckReconciliations[0]?.evidenceObservations).toEqual([{
       qualityCheckKind: "fitness",
-      fitnessFunction: "SCN-CVT-002",
-      claimCode: "SCN-CVT-002",
+      fitnessFunction: "CLM-CVT-002",
+      claimCode: "CLM-CVT-002",
       exists: true,
       enforcedOverRealSource: true,
       status: "passed",

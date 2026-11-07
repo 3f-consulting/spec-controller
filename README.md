@@ -4,7 +4,7 @@
 
 `balance` fails your build when your scenarios and your tests stop agreeing.
 
-You write each behaviour as a scenario in a `.feature` file. You give the scenario two kinds of tag: the evidence it needs, such as `@unit` or `@e2e`, and a claim code of the form `@SCN-<FFF>-<NNN>` or `@CLM-<FFF>-<NNN>`. Each test cites the code of the scenario it proves.
+You write each behaviour as a scenario in a `.feature` file. You give the scenario two kinds of tag: the evidence it needs, such as `@unit` or `@e2e`, and a claim code of the form `@CLM-<FFF>-<NNN>` or `@SCN-<FFF>-<NNN>`. Each test cites the code of the scenario it proves.
 
 On every CI run, `balance` reconciles the scenarios against the test reports and CI steps that actually ran. Every check a scenario asks for must have run, be credited to that scenario, pass, and be able to fail. Any disagreement turns the build red.
 
@@ -20,14 +20,14 @@ A scenario:
 @CHK
 Feature: Checkout
 
-  @unit @SCN-CHK-001
+  @unit @CLM-CHK-001
   Scenario: an empty basket cannot be checked out
 ```
 
 A Vitest test that cites it, in its title:
 
 ```ts
-it("[SCN-CHK-001] refuses an empty basket", () => { /* … */ });
+it("[CLM-CHK-001] refuses an empty basket", () => { /* … */ });
 ```
 
 `balance` reconciles them, and the row balances:
@@ -35,7 +35,7 @@ it("[SCN-CHK-001] refuses an empty basket", () => { /* … */ });
 ```markdown
 | Claim | Unit | Verdict | Reconciling items | CI steps |
 | --- | --- | --- | --- | --- |
-| SCN-CHK-001 | U/1 | balanced | — |  |
+| CLM-CHK-001 | U/1 | balanced | — |  |
 ```
 
 Delete the test, and the run is out of balance and exits `1`:
@@ -43,7 +43,7 @@ Delete the test, and the run is out of balance and exits `1`:
 ```markdown
 | Claim | Unit | Verdict | Reconciling items | CI steps |
 | --- | --- | --- | --- | --- |
-| SCN-CHK-001 | U/- | out-of-balance | unit: Evidence Observation is missing |  |
+| CLM-CHK-001 | U/- | out-of-balance | unit: Evidence Observation is missing |  |
 ```
 
 </div>
@@ -133,13 +133,13 @@ Key: each evidence cell reads *obligation*/*observations*.
 
 | Claim | Fitness | Unit | E2e | Verdict | Reconciling items | CI steps |
 | --- | --- | --- | --- | --- | --- | --- |
-| SCN-CHK-001 |  | U/1 |  | balanced | — | ci.yml:build:Unit tests |
-| SCN-CHK-002 |  | U/1 |  | out-of-balance | unit: Evidence Observation is failing (src/checkout.test.ts: [SCN-CHK-002] charges the card) | ci.yml:build:Unit tests |
-| SCN-CHK-003 |  | U/- |  | out-of-balance | unit: Evidence Observation is missing | ci.yml:build:Unit tests |
-| SCN-CHK-005 |  | U/3 | E/2 | balanced | — | ci.yml:build:Unit tests, ci.yml:build:End-to-end tests |
-| SCN-CHK-006 | F/1 |  |  | balanced | — | ci.yml:build:Complexity |
-| SCN-CHK-007 | F/1 |  |  | out-of-balance | fitness: Evidence Observation is failing (SCN-CHK-007) | ci.yml:build:Lint |
-| SCN-CHK-004 | — | — | — | out-of-balance | unit: Evidence Observation cites an unknown Scenario (src/checkout.test.ts: [SCN-CHK-004] applies the discount) — passed | ci.yml:build:Unit tests |
+| CLM-CHK-001 |  | U/1 |  | balanced | — | ci.yml:build:Unit tests |
+| CLM-CHK-002 |  | U/1 |  | out-of-balance | unit: Evidence Observation is failing (src/checkout.test.ts: [CLM-CHK-002] charges the card) | ci.yml:build:Unit tests |
+| CLM-CHK-003 |  | U/- |  | out-of-balance | unit: Evidence Observation is missing | ci.yml:build:Unit tests |
+| CLM-CHK-005 |  | U/3 | E/2 | balanced | — | ci.yml:build:Unit tests, ci.yml:build:End-to-end tests |
+| CLM-CHK-006 | F/1 |  |  | balanced | — | ci.yml:build:Complexity |
+| CLM-CHK-007 | F/1 |  |  | out-of-balance | fitness: Evidence Observation is failing (CLM-CHK-007) | ci.yml:build:Lint |
+| CLM-CHK-004 | — | — | — | out-of-balance | unit: Evidence Observation cites an unknown Scenario (src/checkout.test.ts: [CLM-CHK-004] applies the discount) — passed | ci.yml:build:Unit tests |
 | (unnamed claim) | — | — | — | out-of-balance | unit: Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed | ci.yml:build:Unit tests |
 ```
 
@@ -195,7 +195,7 @@ Coverage and mutation testing tell you how much of the application the unit test
   - Ruby's RSpec JSON report (`--rspec`).
 - **Integration and end-to-end evidence:** the JSON report of any Cucumber implementation, in any language.
 - **Fitness evidence:** any check your pipeline runs, in any language.
-- **The scenarios:** a list of named behaviours in `.feature` files. A `@unit` scenario needs no step definitions: a title and its tags are the whole scenario. A test cites a scenario as `[SCN-<FFF>-<NNN>]`, in brackets:
+- **The scenarios:** a list of named behaviours in `.feature` files. A `@unit` scenario needs no step definitions: a title and its tags are the whole scenario. A test cites a scenario as `[CLM-<FFF>-<NNN>]`, in brackets:
   - a Vitest or Jest test, in its title;
   - a Go test, in a subtest's name;
   - a JUnit 5 test in Java or Kotlin, in its `@DisplayName`;

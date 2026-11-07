@@ -25,25 +25,25 @@ const DEFERRAL_TAG = "@deferred";
 
 const FEATURE = `Feature: pending items on their rows
 
-  @SCN-PIR-001 ${DEFERRAL_TAG}
+  @CLM-PIR-001 ${DEFERRAL_TAG}
   Scenario: deferred whole, with no layer named
 
-  @unit @SCN-PIR-002 @integrationpending
+  @unit @CLM-PIR-002 @integrationpending
   Scenario: one layer deferred, the other proved
 
-  @unit @integration @SCN-PIR-003 ${DEFERRAL_TAG}
+  @unit @integration @CLM-PIR-003 ${DEFERRAL_TAG}
   Scenario: every named layer deferred
 
-  @unit @integration @SCN-PIR-004 @e2epending @performancepending
+  @unit @integration @CLM-PIR-004 @e2epending @performancepending
   Scenario: two layers unproved and two deferred
 
-  @unit @SCN-PIR-005
+  @unit @CLM-PIR-005
   Scenario: proved, with nothing deferred
 `;
 
 const OBSERVATIONS: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", claimCode: "SCN-PIR-002", status: "passed", locator: "src/b.test.ts" },
-  { qualityCheckKind: "unit", claimCode: "SCN-PIR-005", status: "passed", locator: "src/e.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "CLM-PIR-002", status: "passed", locator: "src/b.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "CLM-PIR-005", status: "passed", locator: "src/e.test.ts" },
 ];
 
 function render(rewrite: (ledger: Ledger) => Ledger = (ledger) => ledger): string {
@@ -62,41 +62,41 @@ const noKindAbsent = (ledger: Ledger): Ledger => ({
 const pendingFor = (qualityCheckKind: string): string => `pending: ${qualityCheckKind}`;
 const missing = (qualityCheckKind: string): string => `${qualityCheckKind}: ${outcomeDescription("missing")}`;
 
-describe("[SCN-RPT-041] the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item", () => {
+describe("[CLM-RPT-041] the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item", () => {
   it("a Pending Item with no kind of quality check carries the bare pending label, and its row still balances", () => {
-    expect(rowFor(render(), "SCN-PIR-001")).toEqual({
+    expect(rowFor(render(), "CLM-PIR-001")).toEqual({
       verdict: "balanced",
       items: "pending",
     });
-    expect(rowFor(render(noKindAbsent), "SCN-PIR-001")).toEqual({
+    expect(rowFor(render(noKindAbsent), "CLM-PIR-001")).toEqual({
       verdict: "balanced",
       items: "pending",
     });
   });
 
   it("a Pending Item with a kind of quality check carries the label that names it", () => {
-    expect(rowFor(render(), "SCN-PIR-002")).toEqual({
+    expect(rowFor(render(), "CLM-PIR-002")).toEqual({
       verdict: "balanced",
       items: pendingFor("integration"),
     });
-    expect(rowFor(render(), "SCN-PIR-001").items).not.toBe(rowFor(render(), "SCN-PIR-002").items);
+    expect(rowFor(render(), "CLM-PIR-001").items).not.toBe(rowFor(render(), "CLM-PIR-002").items);
   });
 
   it("two Pending Items on one row are each labelled, joined in the order their layers were tagged", () => {
-    expect(rowFor(render(), "SCN-PIR-003")).toEqual({
+    expect(rowFor(render(), "CLM-PIR-003")).toEqual({
       verdict: "balanced",
       items: [pendingFor("unit"), pendingFor("integration")].join("; "),
     });
   });
 
   it("Reconciling Items come first, then the Pending Items, every exception joined in order on the one cell", () => {
-    expect(rowFor(render(), "SCN-PIR-004")).toEqual({
+    expect(rowFor(render(), "CLM-PIR-004")).toEqual({
       verdict: "out-of-balance",
       items: [missing("unit"), missing("integration"), pendingFor("e2e"), pendingFor("performance")].join("; "),
     });
   });
 
   it("a row with neither Reconciling nor Pending Items shows the placeholder alone", () => {
-    expect(rowFor(render(), "SCN-PIR-005")).toEqual({ verdict: "balanced", items: "—" });
+    expect(rowFor(render(), "CLM-PIR-005")).toEqual({ verdict: "balanced", items: "—" });
   });
 });

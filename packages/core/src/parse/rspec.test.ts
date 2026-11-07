@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseRspecEvidenceObservations, type RspecJsonReport } from "./rspec.js";
 
-describe("[SCN-RSP-003] parseRspecEvidenceObservations reads an example's own code before its groups' codes", () => {
+describe("[CLM-RSP-003] parseRspecEvidenceObservations reads an example's own code before its groups' codes", () => {
   const claimCodeOf = (description: string, full_description: string) => {
     const report: RspecJsonReport = {
       examples: [{ description, full_description, status: "passed", file_path: "./spec/a_spec.rb" }],
@@ -10,15 +10,15 @@ describe("[SCN-RSP-003] parseRspecEvidenceObservations reads an example's own co
   };
 
   it("credits the example's own code inside a group that cites another", () => {
-    expect(claimCodeOf("[SCN-AAA-002] leaf", "[SCN-AAA-001] group [SCN-AAA-002] leaf")).toBe("SCN-AAA-002");
+    expect(claimCodeOf("[CLM-AAA-002] leaf", "[CLM-AAA-001] group [CLM-AAA-002] leaf")).toBe("CLM-AAA-002");
   });
 
   it("credits the group's code to an example whose own description cites nothing", () => {
-    expect(claimCodeOf("leaf", "[SCN-AAA-001] group leaf")).toBe("SCN-AAA-001");
+    expect(claimCodeOf("leaf", "[CLM-AAA-001] group leaf")).toBe("CLM-AAA-001");
   });
 
   it("reads two citing groups' codes together, so an example citing nothing inside both credits neither", () => {
-    expect(claimCodeOf("leaf", "[SCN-AAA-001] outer [SCN-AAA-002] inner leaf")).toBeNull();
+    expect(claimCodeOf("leaf", "[CLM-AAA-001] outer [CLM-AAA-002] inner leaf")).toBeNull();
   });
 
   it("credits nothing to an example citing nothing inside groups citing nothing", () => {
@@ -26,7 +26,7 @@ describe("[SCN-RSP-003] parseRspecEvidenceObservations reads an example's own co
   });
 });
 
-describe("[SCN-RSP-004] parseRspecEvidenceObservations credits neither code an example's description cites when it cites two", () => {
+describe("[CLM-RSP-004] parseRspecEvidenceObservations credits neither code an example's description cites when it cites two", () => {
   const observationOf = (description: string, full_description: string) => {
     const report: RspecJsonReport = {
       examples: [{ description, full_description, status: "passed", file_path: "./spec/a_spec.rb" }],
@@ -35,37 +35,37 @@ describe("[SCN-RSP-004] parseRspecEvidenceObservations credits neither code an e
   };
 
   it("posts one observation citing no scenario, with a note of both codes", () => {
-    expect(observationOf("[SCN-AAA-001] [SCN-AAA-002] two", "group [SCN-AAA-001] [SCN-AAA-002] two")).toEqual({
+    expect(observationOf("[CLM-AAA-001] [CLM-AAA-002] two", "group [CLM-AAA-001] [CLM-AAA-002] two")).toEqual({
       qualityCheckKind: "unit",
       claimCode: null,
       status: "passed",
       locator: "spec/a_spec.rb",
-      testName: "group [SCN-AAA-001] [SCN-AAA-002] two",
-      notes: [{ kind: "several-claim-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }],
+      testName: "group [CLM-AAA-001] [CLM-AAA-002] two",
+      notes: [{ kind: "several-claim-codes", codes: ["CLM-AAA-001", "CLM-AAA-002"] }],
     });
   });
 
   it("reads two groups' codes by the same rule when the example cites none", () => {
-    expect(observationOf("leaf", "[SCN-AAA-001] outer [SCN-AAA-002] inner leaf")).toMatchObject({
+    expect(observationOf("leaf", "[CLM-AAA-001] outer [CLM-AAA-002] inner leaf")).toMatchObject({
       claimCode: null,
-      notes: [{ kind: "several-claim-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }],
+      notes: [{ kind: "several-claim-codes", codes: ["CLM-AAA-001", "CLM-AAA-002"] }],
     });
   });
 
   it.each([
-    ["one code", "[SCN-AAA-001] one"],
-    ["one code repeated", "[SCN-AAA-001] once [SCN-AAA-001] again"],
+    ["one code", "[CLM-AAA-001] one"],
+    ["one code repeated", "[CLM-AAA-001] once [CLM-AAA-001] again"],
   ])("CONTROL: a description with %s credits it, with no note", (_, description) => {
     const observation = observationOf(description, `group ${description}`);
-    expect(observation).toMatchObject({ claimCode: "SCN-AAA-001" });
+    expect(observation).toMatchObject({ claimCode: "CLM-AAA-001" });
     expect(observation).not.toHaveProperty("notes");
   });
 });
 
-describe("[SCN-RSP-005] parseRspecEvidenceObservations posts nothing for an example that did not run", () => {
+describe("[CLM-RSP-005] parseRspecEvidenceObservations posts nothing for an example that did not run", () => {
   const observationsOf = (status: string) =>
     parseRspecEvidenceObservations({
-      examples: [{ description: "[SCN-AAA-001] leaf", full_description: "group [SCN-AAA-001] leaf", status, file_path: "./spec/a_spec.rb" }],
+      examples: [{ description: "[CLM-AAA-001] leaf", full_description: "group [CLM-AAA-001] leaf", status, file_path: "./spec/a_spec.rb" }],
     });
 
   it("posts no observation for a pending example", () => {
@@ -73,15 +73,15 @@ describe("[SCN-RSP-005] parseRspecEvidenceObservations posts nothing for an exam
   });
 
   it.each(["passed", "failed"])("CONTROL: posts one observation for a %s example", (status) => {
-    expect(observationsOf(status)).toMatchObject([{ claimCode: "SCN-AAA-001", status }]);
+    expect(observationsOf(status)).toMatchObject([{ claimCode: "CLM-AAA-001", status }]);
   });
 });
 
-describe("[SCN-RSP-006] parseRspecEvidenceObservations posts a failing observation for a pending example that passes", () => {
+describe("[CLM-RSP-006] parseRspecEvidenceObservations posts a failing observation for a pending example that passes", () => {
   it("posts the failed status RSpec writes for a pending example whose body passed", () => {
     const fixedPending = {
-      description: "[SCN-AAA-001] leaf",
-      full_description: "group [SCN-AAA-001] leaf",
+      description: "[CLM-AAA-001] leaf",
+      full_description: "group [CLM-AAA-001] leaf",
       status: "failed",
       file_path: "./spec/a_spec.rb",
       pending_message: "not yet",
@@ -89,22 +89,22 @@ describe("[SCN-RSP-006] parseRspecEvidenceObservations posts a failing observati
 
     expect(parseRspecEvidenceObservations({ examples: [fixedPending] })).toEqual([{
       qualityCheckKind: "unit",
-      claimCode: "SCN-AAA-001",
+      claimCode: "CLM-AAA-001",
       status: "failed",
       locator: "spec/a_spec.rb",
-      testName: "group [SCN-AAA-001] leaf",
+      testName: "group [CLM-AAA-001] leaf",
     }]);
   });
 });
 
-describe("[SCN-RSP-007] parseRspecEvidenceObservations posts a failing observation for an example a failing before hook stopped", () => {
+describe("[CLM-RSP-007] parseRspecEvidenceObservations posts a failing observation for an example a failing before hook stopped", () => {
   it.each([
     ["before", "the resource could not be set up", 8],
     ["before(:context)", "the shared resource could not be set up", 3],
   ])("posts the failed status RSpec writes for an example whose %s hook raised", (_, message, hookLine) => {
     const stoppedByHook = {
-      description: "[SCN-AAA-001] leaf",
-      full_description: "group [SCN-AAA-001] leaf",
+      description: "[CLM-AAA-001] leaf",
+      full_description: "group [CLM-AAA-001] leaf",
       status: "failed",
       file_path: "./spec/a_spec.rb",
       line_number: 10,
@@ -113,18 +113,18 @@ describe("[SCN-RSP-007] parseRspecEvidenceObservations posts a failing observati
 
     expect(parseRspecEvidenceObservations({ examples: [stoppedByHook] })).toEqual([{
       qualityCheckKind: "unit",
-      claimCode: "SCN-AAA-001",
+      claimCode: "CLM-AAA-001",
       status: "failed",
       locator: "spec/a_spec.rb",
-      testName: "group [SCN-AAA-001] leaf",
+      testName: "group [CLM-AAA-001] leaf",
     }]);
   });
 });
 
-describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a spec file that failed to load", () => {
+describe("[CLM-RSP-008] parseRspecEvidenceObservations posts a broken item for a spec file that failed to load", () => {
   const syntaxError = "\nWhile loading ./spec/unloadable_spec.rb a `raise SyntaxError` occurred, RSpec will now quit.\nFailure/Error: __send__(method, file)\n";
   const raisedWhileLoading = "\nAn error occurred while loading ./spec/raising_spec.rb.\nFailure/Error: raise \"no\"\n";
-  const passing = { description: "[SCN-AAA-001] leaf", full_description: "group [SCN-AAA-001] leaf", status: "passed", file_path: "./spec/a_spec.rb" };
+  const passing = { description: "[CLM-AAA-001] leaf", full_description: "group [CLM-AAA-001] leaf", status: "passed", file_path: "./spec/a_spec.rb" };
 
   it.each([
     ["a syntax error", syntaxError, "spec/unloadable_spec.rb"],
@@ -151,7 +151,7 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     const report: RspecJsonReport = { examples: [passing], summary: { errors_outside_of_examples_count: 1 }, messages: [syntaxError] };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "passed", locator: "spec/a_spec.rb", testName: "group [SCN-AAA-001] leaf" },
+      { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "passed", locator: "spec/a_spec.rb", testName: "group [CLM-AAA-001] leaf" },
       { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
     ]);
   });

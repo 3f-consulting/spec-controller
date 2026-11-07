@@ -10,9 +10,9 @@ import { reconcilingItemsOf } from "../render/claimReconciliationsTable.test-uti
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import type { EvidenceObservation, Scenario } from "./journal.js";
 
-const CLAIM_CODE = "SCN-AAA-001";
+const CLAIM_CODE = "CLM-AAA-001";
 
-describe("[SCN-LNT-036] a failed fitness evidence observation beside a passing one for the same check reads a failing line beside a satisfied one, and the ledger is out of balance", () => {
+describe("[CLM-LNT-036] a failed fitness evidence observation beside a passing one for the same check reads a failing line beside a satisfied one, and the ledger is out of balance", () => {
   const rowNamingCheck: Scenario[] = [
     { claimCode: CLAIM_CODE, evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
@@ -38,7 +38,7 @@ describe("[SCN-LNT-036] a failed fitness evidence observation beside a passing o
   });
 });
 
-describe("[SCN-LNT-037] a watermelon fitness evidence observation beside a wired one for the same check reads a watermelon line beside a satisfied one, and the ledger is out of balance, whichever one's locator sorts first", () => {
+describe("[CLM-LNT-037] a watermelon fitness evidence observation beside a wired one for the same check reads a watermelon line beside a satisfied one, and the ledger is out of balance, whichever one's locator sorts first", () => {
   const obligation = { qualityCheckKind: "fitness" } as const;
   const rowNamingCheck: Scenario[] = [{ claimCode: CLAIM_CODE, evidenceObligations: [obligation] }];
   const runOf = (enforcedOverRealSource: boolean, locator: string): EvidenceObservation => ({
@@ -80,7 +80,7 @@ describe("[SCN-LNT-037] a watermelon fitness evidence observation beside a wired
   });
 });
 
-describe("[SCN-LNT-038] a failed fitness evidence observation beside a watermelon one for the same check reads a failing line and a watermelon line, each carrying its own observation, whichever one's locator sorts first", () => {
+describe("[CLM-LNT-038] a failed fitness evidence observation beside a watermelon one for the same check reads a failing line and a watermelon line, each carrying its own observation, whichever one's locator sorts first", () => {
   const obligation = { qualityCheckKind: "fitness" } as const;
   const rowNamingCheck: Scenario[] = [{ claimCode: CLAIM_CODE, evidenceObligations: [obligation] }];
   const failedRun = (locator: string): EvidenceObservation => ({

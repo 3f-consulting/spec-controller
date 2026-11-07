@@ -12,17 +12,17 @@ function newRepository(): string {
 }
 
 const HEAD = ["@ONE", "Feature: part ONE"];
-const SCENARIO_1 = ["  @SCN-ONE-001 @unit", "  Scenario: scenario 1", "    Given a step", ""];
+const SCENARIO_1 = ["  @CLM-ONE-001 @unit", "  Scenario: scenario 1", "    Given a step", ""];
 const PADDING = ["# a", "# b", "# c", "# d"];
-const SCENARIO_3 = ["  @SCN-ONE-003 @unit", "  Scenario: scenario 3", "    Given a step", "    And a step", "    And a step"];
-const SCENARIO_5 = ["  @SCN-ONE-005 @unit", "  Scenario: scenario 5", "    Given a step", "    And a step", "    And a step"];
+const SCENARIO_3 = ["  @CLM-ONE-003 @unit", "  Scenario: scenario 3", "    Given a step", "    And a step", "    And a step"];
+const SCENARIO_5 = ["  @CLM-ONE-005 @unit", "  Scenario: scenario 5", "    Given a step", "    And a step", "    And a step"];
 
 afterEach(() => {
   vi.restoreAllMocks();
   process.exitCode = undefined;
 });
 
-describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
+describe("[CLM-ALC-005] stderr names where the highest code was seen", () => {
   it("still carried by its feature file, names the file and line that carry it", () => {
     const repo = newRepository();
     writeInto(repo, "features/one.feature", lines(...HEAD, ...SCENARIO_1, ...PADDING, ...SCENARIO_5));
@@ -31,7 +31,7 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
     const answered = allocateIn(repo, ["ONE"]);
 
     expectAnsweredEnding(answered, "ONE-006");
-    expect(answered.stderr).toBe("highest seen: SCN-ONE-005, features/one.feature:11\n");
+    expect(answered.stderr).toBe("highest seen: CLM-ONE-005, features/one.feature:11\n");
   });
 
   it("deleted by a later commit, names the file and line that carried it, and the commit that did so", () => {
@@ -45,14 +45,14 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
     const answered = allocateIn(repo, ["ONE"]);
 
     expectAnsweredEnding(answered, "ONE-006");
-    expect(answered.stderr).toBe(`highest seen: SCN-ONE-005, features/one.feature:17 in ${retiring}\n`);
+    expect(answered.stderr).toBe(`highest seen: CLM-ONE-005, features/one.feature:17 in ${retiring}\n`);
   });
 
   it("deleted by a later commit in a repository whose patches name paths without a/ and b/, names the path as the tree had it", () => {
     const repo = newRepository();
     git(repo, ["config", "diff.noprefix", "true"]);
     writeInto(repo, "features/one.feature", lines(...HEAD, ...SCENARIO_1));
-    writeInto(repo, "notes/data/retired.md", lines("SCN-ONE-005 is parked here"));
+    writeInto(repo, "notes/data/retired.md", lines("CLM-ONE-005 is parked here"));
     commitAll(repo, "the corpus");
     rmSync(join(repo, "notes"), { recursive: true });
     const retiring = commitAll(repo, "retire the note");
@@ -61,6 +61,6 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
     const answered = allocateIn(repo, ["ONE"]);
 
     expectAnsweredEnding(answered, "ONE-006");
-    expect(answered.stderr).toBe(`highest seen: SCN-ONE-005, notes/data/retired.md:1 in ${retiring}\n`);
+    expect(answered.stderr).toBe(`highest seen: CLM-ONE-005, notes/data/retired.md:1 in ${retiring}\n`);
   });
 });

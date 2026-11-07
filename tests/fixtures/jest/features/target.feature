@@ -7,38 +7,38 @@ Feature: a target whose unit tests are a Jest suite
 
   Rule: the fixture target names the scenarios its Jest tests cite
 
-    @unit @SCN-JSF-001
+    @unit @CLM-JSF-001
     Scenario: the scenario a passing Jest test cites
       Given the target repo's source
 
-    @unit @SCN-JSF-002
+    @unit @CLM-JSF-002
     Scenario: the scenario a failing Jest test cites
       Given the target repo's source
 
-    @unit @SCN-JSF-003
+    @unit @CLM-JSF-003
     Scenario: the scenario a Jest test's own title cites inside a describe block that cites another
       Given the target repo's source
 
-    @unit @SCN-JSF-004
+    @unit @CLM-JSF-004
     Scenario: the scenario a describe block cites around a test whose own title cites nothing
       Given the target repo's source
 
-    @unit @SCN-JSF-005
+    @unit @CLM-JSF-005
     Scenario: the first of two scenarios one Jest test cites
       Given the target repo's source
 
-    @unit @SCN-JSF-006
+    @unit @CLM-JSF-006
     Scenario: the second of two scenarios one Jest test cites
       Given the target repo's source
 
-    @unit @SCN-JSF-007
+    @unit @CLM-JSF-007
     Scenario: the scenario a todo Jest test cites
       Given the target repo's source
 
-    @unit @SCN-JSF-008
+    @unit @CLM-JSF-008
     Scenario: the scenario a skipped Jest test cites
       Given the target repo's source
 
-    @unit @SCN-JSF-009
+    @unit @CLM-JSF-009
     Scenario: the scenario a Jest test under a failing beforeAll cites
       Given the target repo's source

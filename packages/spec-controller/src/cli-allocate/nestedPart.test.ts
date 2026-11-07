@@ -7,11 +7,11 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-ALC-023] a part headed only by a feature file in a subdirectory of features, at any depth, is a known part and is offered its next code", () => {
+describe("[CLM-ALC-023] a part headed only by a feature file in a subdirectory of features, at any depth, is a known part and is offered its next code", () => {
   it("answers a claim code ending NEST-005 for NEST, headed two subdirectories down, without --new", () => {
     const repo = freshDirectory("allocate-nested-part-");
     git(repo, ["init", "-q", "-b", "main"]);
-    writeInto(repo, "features/outer/inner/nest.feature", "@NEST\nFeature: part NEST\n\n  @SCN-NEST-004 @unit\n  Scenario: scenario 1\n    Given a step\n");
+    writeInto(repo, "features/outer/inner/nest.feature", "@NEST\nFeature: part NEST\n\n  @CLM-NEST-004 @unit\n  Scenario: scenario 1\n    Given a step\n");
     commitAll(repo, "the corpus");
 
     const answered = allocateIn(repo, ["NEST"]);

@@ -60,7 +60,7 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-CLI-107] a run writes at most one crash line, and never calls a refusal's code or its own 6 a verdict", () => {
+describe("[CLM-CLI-107] a run writes at most one crash line, and never calls a refusal's code or its own 6 a verdict", () => {
   describe.each(ARRIVALS)("$arrival, then", ({ raise: raiseFirst }) => {
     describe.each(ARRIVALS)("$arrival, with no verdict reached", ({ raise: raiseSecond }) => {
       it("ends at 6", () => {
@@ -139,7 +139,7 @@ const exits = (g: Guarded): unknown[] => g.happened.flatMap((h) => ("exit" in h 
 
 const uncaught = ARRIVALS[1]!.raise;
 
-describe("[SCN-CLI-108] an uncaught error ends the process once its line is written, on 6 or on the verdict kept", () => {
+describe("[CLM-CLI-108] an uncaught error ends the process once its line is written, on 6 or on the verdict kept", () => {
   it("with no verdict reached, ends the process at 6, once, after the no-verdict line", () => {
     const g = guarded();
     uncaught(g);

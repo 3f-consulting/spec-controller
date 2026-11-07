@@ -15,15 +15,15 @@ const keyLines = (): string[] => [
   coreMessage(CoreMessage.WatermelonItemKey),
 ];
 
-describe("[SCN-RPT-044] a reader finds a key to the evidence cells before the Claim Reconciliations table, and none where the table has no evidence cell", () => {
+describe("[CLM-RPT-044] a reader finds a key to the evidence cells before the Claim Reconciliations table, and none where the table has no evidence cell", () => {
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
       [
-        { claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { claimCode: "SCN-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "CLM-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
-      [{ qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" }]
+      [{ qualityCheckKind: "unit", claimCode: "CLM-LDG-001", status: "passed" }]
     );
   });
   const sectionOf = (md: string): string[] => {

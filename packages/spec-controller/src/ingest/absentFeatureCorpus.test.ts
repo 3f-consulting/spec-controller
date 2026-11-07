@@ -28,7 +28,7 @@ function unreadableCorpus(): { features: string; packageJson: string; file: stri
   return { features, packageJson, file };
 }
 
-describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every reader", () => {
+describe("[CLM-CLI-017] balance reads an absent corpus as no corpus, at every reader", () => {
 
   it("reads no feature-code map", () => {
     const { features } = absentCorpus();
@@ -57,7 +57,7 @@ describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every re
   });
 });
 
-describe("[SCN-CLI-017] a corpus that is PRESENT and unreadable is still refused", () => {
+describe("[CLM-CLI-017] a corpus that is PRESENT and unreadable is still refused", () => {
   it("keeps reporting the parse failure rather than reading absence into it", () => {
     const { features, file } = unreadableCorpus();
 
@@ -67,7 +67,7 @@ describe("[SCN-CLI-017] a corpus that is PRESENT and unreadable is still refused
   });
 });
 
-describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOENT", () => {
+describe("[CLM-CLI-017] an absent feature corpus is a typed fact, not a raw ENOENT", () => {
   function absentDir(): string {
     const dir = join(temporaryDirectory(`scn-cli-017-${process.pid}-`), "features");
     expect(existsSync(dir)).toBe(false);

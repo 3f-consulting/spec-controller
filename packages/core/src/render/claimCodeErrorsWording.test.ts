@@ -48,14 +48,14 @@ function verdictOf(md: string): string {
   return lines[heading + 2]!;
 }
 
-const SEVERAL: File = { slug: "one", featureCode: "ONE", scenarios: ["@SCN-ONE-001", "@SCN-ONE-002 @SCN-ONE-003"] };
-const FOREIGN: File = { slug: "two", featureCode: "TWO", scenarios: ["@SCN-TWO-001", "@SCN-ONE-004"] };
-const ONE_ALONE: File = { slug: "one", featureCode: "ONE", scenarios: ["@SCN-ONE-001"] };
+const SEVERAL: File = { slug: "one", featureCode: "ONE", scenarios: ["@CLM-ONE-001", "@CLM-ONE-002 @CLM-ONE-003"] };
+const FOREIGN: File = { slug: "two", featureCode: "TWO", scenarios: ["@CLM-TWO-001", "@CLM-ONE-004"] };
+const ONE_ALONE: File = { slug: "one", featureCode: "ONE", scenarios: ["@CLM-ONE-001"] };
 
 const SEVERAL_CODES = "more than one claim code";
 const NO_ACCOUNT = "no account was raised for it";
 
-describe("[SCN-RPT-061] a scenario carrying several codes is described in the report as a scenario no account was raised for, never as a misfiled code whose accounts still reconcile", () => {
+describe("[CLM-RPT-061] a scenario carrying several codes is described in the report as a scenario no account was raised for, never as a misfiled code whose accounts still reconcile", () => {
   describe("when every listed error is several-claim-codes", () => {
     let md: string;
     beforeEach(() => {

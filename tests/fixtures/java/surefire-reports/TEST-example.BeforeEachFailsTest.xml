@@ -53,7 +53,7 @@
     <property name="java.class.version" value="61.0"/>
     <property name="maven.test.failure.ignore" value="true"/>
   </properties>
-  <testcase name="[SCN-JVF-011] a test whose setup before each test throws cites its scenario" classname="example.BeforeEachFailsTest" time="0.031">
+  <testcase name="[CLM-JVF-011] a test whose setup before each test throws cites its scenario" classname="example.BeforeEachFailsTest" time="0.031">
     <error message="the fixture could not be set up" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: the fixture could not be set up
 	at example.BeforeEachFailsTest.setUp(BeforeEachFailsTest.java:13)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)

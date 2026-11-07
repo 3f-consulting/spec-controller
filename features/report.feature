@@ -22,7 +22,7 @@ Feature: The report renders the ledger as sectioned facts
     Any other form, and a remote whose user part can only be guessed at, names no origin. A
     local path, and a file: URL holding no user, are named as given.
 
-    @unit @SCN-RPT-001
+    @unit @CLM-RPT-001
     Scenario: the markdown report opens with a Run provenance header whose Target repo is the --target value verbatim, defaulting to unknown-target and naming the git origin beside it
 
   Rule: the JSON report carries a provenance object
@@ -30,7 +30,7 @@ Feature: The report renders the ledger as sectioned facts
     A top-level run provenance object holds the same run facts as the markdown header: the target, the source SHA, the
     tool's own SHA and version, the UTC run timestamp, and the input paths and flags used.
 
-    @unit @SCN-RPT-002
+    @unit @CLM-RPT-002
     Scenario: the JSON report carries a provenance object stating target, source SHA, tool SHA, tool version, UTC timestamp, and inputs, with the reconciliation body intact
 
   Rule: an explicit source SHA wins, and a non-git target resolves to unknown
@@ -40,7 +40,7 @@ Feature: The report renders the ledger as sectioned facts
     With no override and a target that is not a git repository, the source SHA is recorded as
     unknown and the run completes.
 
-    @unit @SCN-RPT-003
+    @unit @CLM-RPT-003
     Scenario: an explicit source SHA overrides the git read, and a non-git target with no override resolves to unknown
 
   Rule: the markdown report renders the reconciliation totals as a subjects-rows table with balanced and out-of-balance columns
@@ -67,7 +67,7 @@ Feature: The report renders the ledger as sectioned facts
     The two out-of-balance counts differ in granularity: a scenario with two missing arms is one
     out-of-balance Claim Reconciliation and two out-of-balance Reconciliation lines.
 
-    @unit @SCN-RPT-004
+    @unit @CLM-RPT-004
     Scenario: the markdown report renders the reconciliation totals as subjects-rows with balanced and out-of-balance columns
 
   Rule: the Reconciliation totals section defines its terms before its table
@@ -83,7 +83,7 @@ Feature: The report renders the ledger as sectioned facts
     for another, so a scenario whose one obligation two passing tests answer adds one to the
     Claim Reconciliation total and two to the Reconciliation line total.
 
-    @unit @SCN-RPT-071
+    @unit @CLM-RPT-071
     Scenario: the Reconciliation totals section says what a Claim Reconciliation, a Reconciliation line, an Evidence Obligation and an Evidence Observation are before its table
 
   Rule: the markdown report groups out-of-balance scenarios by feature
@@ -95,7 +95,7 @@ Feature: The report renders the ledger as sectioned facts
     "| Feature | Count | Out-of-balance claim codes |" follows, one row per feature with its count.
     Balanced scenarios are left out.
 
-    A scenario's feature is the feature code in its @SCN code. The Feature cell reads
+    A scenario's feature is the feature code in its claim code. The Feature cell reads
     "<file> (<code>)", where the file is the path under the corpus of the feature file carrying
     that code. A code no feature file carries shows bare. Every code shows bare when the report
     is re-rendered from saved JSON that carries no feature files.
@@ -108,22 +108,22 @@ Feature: The report renders the ledger as sectioned facts
     The section is left out only when no Claim Reconciliation is out of balance. When only
     ungrouped rows are out of balance, it states them and has no table.
 
-    A scenario with no @SCN code counts on the row of the feature file it sits in: under the
+    A scenario with no claim code counts on the row of the feature file it sits in: under the
     file's header code when it has one, and under the file's name when it has none. Its cell
     states how many such scenarios the row holds rather than naming them; the list of scenarios
-    with no @SCN code names each one. A re-render from saved JSON groups them the same way.
+    with no claim code names each one. A re-render from saved JSON groups them the same way.
 
-    @unit @SCN-RPT-006
+    @unit @CLM-RPT-006
     Scenario: the by-feature cut names each out-of-balance feature by its feature file and code, falling back to the bare code for a foreign-claim-code
 
-    @unit @SCN-RPT-030
+    @unit @CLM-RPT-030
     Scenario: the by-feature total line counts the out-of-balance rows no feature can group, even when they are the only ones
 
-    @unit @SCN-RPT-031
-    Scenario: a feature file's scenarios carrying no @SCN code count together on one row named by that file, never one row each
+    @unit @CLM-RPT-031
+    Scenario: a feature file's scenarios carrying no claim code count together on one row named by that file, never one row each
 
-    @unit @SCN-RPT-032
-    Scenario: a scenario carrying no @SCN code in a file headed by a feature code counts on that feature's row
+    @unit @CLM-RPT-032
+    Scenario: a scenario carrying no claim code in a file headed by a feature code counts on that feature's row
 
   Rule: the ledger's scenario count is the corpus census, and the report has no census section
 
@@ -132,30 +132,30 @@ Feature: The report renders the ledger as sectioned facts
     Every scenario is a ledger row, and a scenario with no obligation is a both-missing row, so
     the ledger's scenario count ("- N Claim Reconciliation(s): …") is the corpus census.
 
-    @unit @SCN-RPT-007
+    @unit @CLM-RPT-007
     Scenario: the corpus census is recoverable from the ledger summary alone
 
-  Rule: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
+  Rule: the report outcomes the excluded non-tag claim code occurrences on both surfaces
 
-    The report states "N claim codes seen in non-tag context, excluded": the raw @SCN code
+    The report states "N claim codes seen in non-tag context, excluded": the raw claim code
     occurrences in the feature source (in prose, comments and step text) minus the codes written
     as tags. A code written as a tag counts once, on whatever it tags, however many scenarios
-    inherit it, so the figure is never negative. The JSON report carries it with the scenario codes.
+    inherit it, so the figure is never negative. The JSON report carries it with the claim codes.
 
-    @unit @SCN-RPT-008
-    Scenario: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
+    @unit @CLM-RPT-008
+    Scenario: the report outcomes the excluded non-tag claim code occurrences on both surfaces
 
   Rule: the report renders summary-first, ledger-last
 
     The report is titled "# Evidence Reconciliation", never "Ledger". "## Run provenance" comes
-    first. "## Summary" holds the derived cuts: Run verdict first, followed by the scenario codes,
+    first. "## Summary" holds the derived cuts: Run verdict first, followed by the claim codes,
     then Reconciliation totals, Evidence observations and Step accounting, and Out-of-balance by feature last.
     "## Claim Reconciliations" comes last, with its tally lines on top.
 
     Every reconciling item is labelled by its tag: the bare tag word for a layer (unit,
     integration, …) and "fitness" for fitness, never an internal kind.
 
-    @unit @SCN-RPT-009
+    @unit @CLM-RPT-009
     Scenario: the markdown report renders summary-first with the Claim Reconciliations last
 
   Rule: the report reconciles the evidence observations — raw = attributed + phantom claim + unnamed claim
@@ -165,8 +165,8 @@ Feature: The report renders the ledger as sectioned facts
     "N evidence observations = a on scenarios + b on cited scenario ids with no real scenario + c that no one scenario can take",
     which always balances.
 
-    A phantom claim is an @SCN code no scenario carries. The unnamed claim holds the observations
-    no one scenario can take: those citing no @SCN code, several codes, or a code several scenarios share.
+    A phantom claim is a claim code no scenario carries. The unnamed claim holds the observations
+    no one scenario can take: those citing no claim code, several codes, or a code several scenarios share.
 
     A table by kind of quality check follows, always listing all five: fitness last at the count
     of fitness functions that ran, and a kind with no evidence observation at zero.
@@ -174,7 +174,7 @@ Feature: The report renders the ledger as sectioned facts
     The JSON also holds the counts per kind of quality check and the three per-account counts.
     The identity line is markdown only.
 
-    @unit @SCN-RPT-010
+    @unit @CLM-RPT-010
     Scenario: the report renders the Evidence observations cut over every kind of quality check, fitness included, and the evidence observation identity balances by construction
 
   Rule: the evidence observations table names, beside each kind of quality check's count, its runner, if it has one, and for a layer the CI steps counted as running its declared runner, or for fitness how many steps run its fitness functions
@@ -199,13 +199,13 @@ Feature: The report renders the ledger as sectioned facts
 
     There is no Behavioural runners section.
 
-    @unit @SCN-RPT-074
+    @unit @CLM-RPT-074
     Scenario: each layer's row names its runner and the CI steps the summary names for it, whatever its count, says when no step counted as a runner runs a declared runner, and the fitness row counts the steps that run its fitness functions, each named on its row of Claim Reconciliations
 
-    @unit @SCN-RPT-051
+    @unit @CLM-RPT-051
     Scenario: a layer the target gives no runner's name says in its runner cell whether the target declared that the layer has none or left its runner undeclared, and where a target names a layer's runner, whatever its count
 
-    @unit @SCN-RPT-079
+    @unit @CLM-RPT-079
     Scenario: every cell of the evidence observations table holds its text whole, a runner or a step name holding a pipe included
 
   Rule: the per-scenario ledger shows the evidence backing each evidence obligation
@@ -246,20 +246,20 @@ Feature: The report renders the ledger as sectioned facts
 
     A kind of quality check with no known step adds none: a layer no CI step is found running, a
     fitness obligation with no evidence observation, and a fitness observation that names no
-    step. A row with no known step, and a scenario with no @SCN, has a blank CI steps cell. A step
+    step. A row with no known step, and a scenario with no claim code, has a blank CI steps cell. A step
     name holding one of the row's separators sits in its code span, so the cell reads it as one
     step.
 
-    @unit @SCN-RPT-011
+    @unit @CLM-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding, and a shared code's row is lettered from its obligations alone, its citing evidence on the unnamed claim
 
-    @unit @SCN-RPT-054
+    @unit @CLM-RPT-054
     Scenario: a fitness function whose step ran and failed shows as one observation in its Fitness cell, as a failed test does in its column
 
-    @unit @SCN-RPT-080
+    @unit @CLM-RPT-080
     Scenario: each Claim Reconciliation names, after its reconciling items, the CI steps behind each kind of quality check it obligates or observes, each step once, the step of a fitness function it observes only through broken evidence included
 
-    @unit @SCN-RPT-081
+    @unit @CLM-RPT-081
     Scenario: a kind of quality check with no known step adds no CI step to any Claim Reconciliation, and a Claim Reconciliation with none has a blank cell
 
   Rule: the evidence grid counts the evidence observations that ran
@@ -269,23 +269,23 @@ Feature: The report renders the ledger as sectioned facts
     Verdict and Reconciling-items columns. An observation that ran beside it at the same check is
     counted.
 
-    @unit @SCN-RPT-069
+    @unit @CLM-RPT-069
     Scenario: the evidence grid counts only the evidence observations that ran, so a broken observation fills no cell and adds no column
 
-  Rule: the report counts the scenarios with no @SCN code and lists each on its own ledger row
+  Rule: the report counts the scenarios with no claim code and lists each on its own ledger row
 
     Each is named by its `feature-file : scenario` locator.
 
     Every scenario header counts, including outlines, templates and examples. An Examples data
     table does not.
 
-    The JSON report carries these scenarios with the scenario codes.
+    The JSON report carries these scenarios with the claim codes.
 
-    @unit @SCN-RPT-014
-    Scenario: the report counts the scenarios with no @SCN code
+    @unit @CLM-RPT-014
+    Scenario: the report counts the scenarios with no claim code
 
-    @unit @SCN-RPT-095
-    Scenario: each scenario with no @SCN code is listed once, on its own ledger row
+    @unit @CLM-RPT-095
+    Scenario: each scenario with no claim code is listed once, on its own ledger row
 
   Rule: a cross-repo reconcile relativises paths against the target repo root, not the run cwd
 
@@ -297,7 +297,7 @@ Feature: The report renders the ledger as sectioned facts
     repository; else that parent directory itself; else, with no --features, the run's working
     directory.
 
-    @unit @integration @SCN-RPT-016
+    @unit @integration @CLM-RPT-016
     Scenario: a cross-repo reconcile run from a foreign cwd yields zero absolute paths on both surfaces
       Given a target repo outside the run's working directory whose Vitest and Cucumber reports carry absolute test-file locators under that repo
       When balance reconciles it from a foreign working directory and saves the reconciliation in markdown and JSON
@@ -309,10 +309,10 @@ Feature: The report renders the ledger as sectioned facts
     of an @e2e scenario counts at e2e in Evidence observations and in the scenario's E2e cell. A
     Cucumber run of a scenario tagged both @integration and @e2e counts in both layers.
 
-    @unit @SCN-RPT-017
+    @unit @CLM-RPT-017
     Scenario: an @e2e-via-cucumber observation is counted at e2e across the report views
 
-    @unit @SCN-RPT-018
+    @unit @CLM-RPT-018
     Scenario: an @integration @e2e-via-cucumber observation is counted in both layers across the views
 
   Rule: the Reconciliation line out-of-balance count decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
@@ -325,10 +325,10 @@ Feature: The report renders the ledger as sectioned facts
     Every outcome except satisfied has a row. No debit-side, credit-side or neither-side subtotal
     row appears.
 
-    @unit @SCN-RPT-019
+    @unit @CLM-RPT-019
     Scenario: the Reconciliation totals section lists the ten leaf outcomes summing to the Reconciliation line out-of-balance total
 
-    @unit @SCN-RPT-099
+    @unit @CLM-RPT-099
     Scenario: the Reconciliation totals section lists no group rows among the leaf outcomes
 
   Rule: the markdown renders each outcome's sentence in place of the bare handle
@@ -344,7 +344,7 @@ Feature: The report renders the ledger as sectioned facts
 
     The Detail column shows no sentence. The JSON keeps the bare handle.
 
-    @unit @SCN-RPT-020
+    @unit @CLM-RPT-020
     Scenario: the markdown renders each outcome's sentence, not the bare handle
 
   Rule: the markdown states each verdict and each reconciling item in words, with no glyph
@@ -358,7 +358,7 @@ Feature: The report renders the ledger as sectioned facts
 
     The report puts no symbol of its own beside a verdict or an outcome.
 
-    @unit @SCN-RPT-066
+    @unit @CLM-RPT-066
     Scenario: a verdict reads balanced or out-of-balance, and a reconciling item reads its kind of quality check and its outcome's sentence, with no symbol beside either
 
   Rule: the markdown report's own words carry no symbol
@@ -377,7 +377,7 @@ Feature: The report renders the ledger as sectioned facts
     it: a runner's error message, a test's name, a scenario title, a locator or a fitness
     function's name.
 
-    @unit @SCN-RPT-067
+    @unit @CLM-RPT-067
     Scenario: the markdown report's own words hold no symbol character, whatever its outcomes, Pending Items or run integrity
 
   Rule: the report surfaces broken evidence as a proof that never ran, and stamps the run unsound
@@ -410,10 +410,10 @@ Feature: The report renders the ledger as sectioned facts
 
     A run with no broken evidence has no run-integrity section. The section is markdown only.
 
-    @unit @SCN-RPT-021
+    @unit @CLM-RPT-021
     Scenario: the markdown names the broken evidence and its error, and stamps the run unsound
 
-    @unit @SCN-RPT-065
+    @unit @CLM-RPT-065
     Scenario: a check step that did not run is worded by what the record said, skipped, ended with another outcome or carrying none, prefixed by the code it cites
 
   Rule: the summary opens with the run's verdict
@@ -429,7 +429,7 @@ Feature: The report renders the ledger as sectioned facts
     a balanced run carrying pending items reads pending and names exit 3. Without --strict, it
     reads balanced and names exit 3 only conditionally, as "exit 3 under --strict".
 
-    @unit @SCN-RPT-022
+    @unit @CLM-RPT-022
     Scenario: the summary opens with the run verdict and the exit code it maps to
 
   Rule: Evidence observations counts each evidence observation on the kind of claim its row reconciles, a broken behavioural one included, and each fitness function that ran
@@ -440,7 +440,7 @@ Feature: The report renders the ledger as sectioned facts
     count. The total is the sum of the counts of the five kinds of quality check and the sum of
     the counts on each kind of claim.
 
-    @unit @SCN-RPT-023
+    @unit @CLM-RPT-023
     Scenario: Evidence observations counts each evidence observation by the kind of claim its row reconciles, a broken behavioural one included, and each fitness function that ran
 
   Rule: the reconciliation collection renders as "Claim Reconciliation(s)", never "Scenario Reconciliation(s)" or "scenario(s)", on every surface that names it
@@ -450,7 +450,7 @@ Feature: The report renders the ledger as sectioned facts
 
     The tally counts every row: scenario, phantom claim and unnamed claim.
 
-    @unit @SCN-RPT-024
+    @unit @CLM-RPT-024
     Scenario: the reconciliation collection is named "Claim Reconciliation(s)" on every surface, never "Scenario Reconciliation(s)" or "scenario(s)"
 
   Rule: the tool identity is the tool's OWN checkout — an installed tool has none, whatever repository it is sitting inside
@@ -464,10 +464,10 @@ Feature: The report renders the ledger as sectioned facts
     The version, read from the tool's own package manifest, always shows, so a run stays
     attributable without a SHA.
 
-    @unit @SCN-RPT-026
+    @unit @CLM-RPT-026
     Scenario: the tool names its own checkout's commit, and where it is not a git checkout names no commit and still names its version
 
-    @unit @integration @SCN-RPT-029
+    @unit @integration @CLM-RPT-029
     Scenario: a spec-controller resolved out of node_modules reports no tool SHA though the tree it sits in is a git repository, while one running from a checkout of itself still reports that checkout's HEAD
       Given this release's packages installed into a directory that is a git repository, into a directory that is not one, and reached from a third through a node_modules symlink to a checkout of the tool
       When each one runs a reconcile and the provenance it renders is read
@@ -484,10 +484,10 @@ Feature: The report renders the ledger as sectioned facts
 
     A run handed no inputs reads "Inputs: none specified".
 
-    @unit @SCN-RPT-027
+    @unit @CLM-RPT-027
     Scenario: the Inputs block names the optional fitness stream when the run received it
 
-    @unit @SCN-RPT-028
+    @unit @CLM-RPT-028
     Scenario: a canonical input the run did not receive is named as absent rather than omitted, so silence is never the answer
       The canonical inputs the run did not receive are named on a line of their own,
       separate from the Inputs list. That line appears only when an input is absent. The
@@ -502,21 +502,21 @@ Feature: The report renders the ledger as sectioned facts
 
     The unnamed claim's row counts its results by file instead, under the Rule below.
 
-    @SCN-RPT-034 @unit @e2e
+    @CLM-RPT-034 @unit @e2e
     Scenario: a test that cites a scenario no feature carries shows on its phantom claim's row as failed or passed, as it ran
       Given a target with two tests that cite a scenario no feature carries, one that failed and one that passed
       When the target's evidence is reconciled into a report
       Then the phantom claim's row shows the test that failed as failed
       And the phantom claim's row shows the test that passed as passed
 
-    @SCN-RPT-035 @unit @e2e
+    @CLM-RPT-035 @unit @e2e
     Scenario: a test observed at a check its scenario holds no obligation for shows as failed or passed, as it ran
       Given a target with two tests that cite a scenario holding no obligation at the check they ran at, one that failed and one that passed
       When the target's evidence is reconciled into a report
       Then the scenario's row shows the test that failed as failed
       And the scenario's row shows the test that passed as passed
 
-    @unit @SCN-RPT-086
+    @unit @CLM-RPT-086
     Scenario: a test that answers no evidence obligation is named by its file and its test name, so two such tests in one file read as two items
 
   Rule: a failing or watermelon reconciling item names the evidence observation it carries
@@ -525,10 +525,10 @@ Feature: The report renders the ledger as sectioned facts
     name, or the fitness function that failed by its name. A watermelon item names its fitness
     function. So two failing tests on one scenario read as two different items.
 
-    @unit @SCN-RPT-082
+    @unit @CLM-RPT-082
     Scenario: each failing test on a scenario's row is named by its file and its test name, so two failing tests read as two items
 
-    @unit @SCN-RPT-083
+    @unit @CLM-RPT-083
     Scenario: a failing or watermelon fitness evidence observation on a scenario's row is named by its fitness function
 
   Rule: every reconciling item quotes what the run reported whole in its cell
@@ -540,7 +540,7 @@ Feature: The report renders the ledger as sectioned facts
     semicolon, a colon or a comma followed by a space, or a slash with a space on each side, sits
     in its code span, so it reads as one item and one part. One that holds none reads as written.
 
-    @unit @SCN-RPT-084
+    @unit @CLM-RPT-084
     Scenario: every reconciling item quotes what the run reported whole in its cell, a pipe, a backslash or a line break included, and leaves out a part the run did not give
 
   Rule: the unnamed claim's row groups what ran by where it ran, counting what passed and naming what failed
@@ -552,7 +552,7 @@ Feature: The report renders the ledger as sectioned facts
     Cucumber scenario name, and each CI step by its workflow, job and step, which holds no result.
     Broken items are listed individually.
 
-    Evidence citing an @SCN code that more than one scenario carries is grouped apart from evidence
+    Evidence citing a claim code that more than one scenario carries is grouped apart from evidence
     citing nothing. In one file, the tests citing such a code form a group of their own, and the CI
     steps citing it are listed apart from the CI steps citing nothing. Each such group names the
     code once, whatever its tests' messages say, and says that evidence citing it credits none of
@@ -560,7 +560,7 @@ Feature: The report renders the ledger as sectioned facts
 
     The grouping is not stored; the JSON carries each observation's test name.
 
-    @SCN-RPT-033 @unit @e2e
+    @CLM-RPT-033 @unit @e2e
     Scenario: tests that cite no scenario are grouped on the unnamed claim's row by the file they ran in, each group counting how many ran, passed and failed
       Given a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed
       When the target's evidence is reconciled into a report
@@ -568,21 +568,21 @@ Feature: The report renders the ledger as sectioned facts
       And each file's entry counts how many of its tests ran, how many passed and how many failed
       And the counts of tests that ran add up to the count of evidence observations that cite no scenario
 
-    @SCN-RPT-036 @unit @e2e
+    @CLM-RPT-036 @unit @e2e
     Scenario: a failed test that cites no scenario is named on the unnamed claim's row by its test title
       Given a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed
       When the target's evidence is reconciled into a report
       Then the file's entry on the unnamed claim's row names the test that failed by its title
       And the file's entry does not name the test that passed
 
-    @SCN-RPT-037 @unit @e2e
+    @CLM-RPT-037 @unit @e2e
     Scenario: a failed Cucumber scenario that cites no scenario is named on the unnamed claim's row by its scenario name
       Given a target whose Cucumber scenarios that cite no scenario ran in one feature file, one that failed and one that passed
       When the target's evidence is reconciled into a report
       Then the feature file's entry on the unnamed claim's row names the Cucumber scenario that failed by its name
       And the feature file's entry does not name the Cucumber scenario that passed
 
-    @SCN-RPT-038 @unit @e2e
+    @CLM-RPT-038 @unit @e2e
     Scenario: the CI steps that cite no scenario are grouped together on the unnamed claim's row, each named
       Given a target whose CI runs two checks that cite no scenario, beside a test that cites no scenario
       When the target's evidence is reconciled into a report
@@ -590,10 +590,10 @@ Feature: The report renders the ledger as sectioned facts
       And the CI steps' entry names each of the two checks
       And what the unnamed claim's row counts adds up to the count of evidence observations that cite no scenario
 
-    @unit @SCN-RPT-075
+    @unit @CLM-RPT-075
     Scenario: in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code, once, whatever its tests' messages say, even where the runner names no file
 
-    @unit @SCN-RPT-076
+    @unit @CLM-RPT-076
     Scenario: a CI step citing a code more than one scenario carries is listed apart from the CI steps citing no scenario, and its entry names the code
 
   Rule: an item quoting what an evidence observation said states the first line of its message and every note it carries
@@ -603,7 +603,7 @@ Feature: The report renders the ledger as sectioned facts
     holds text, then the words of each note the observation carries, however many lines the message
     runs to. A file's group states each such line once, however the run spaced it.
 
-    @unit @SCN-RPT-085
+    @unit @CLM-RPT-085
     Scenario: an item quoting what an evidence observation said states the first line of its message and every note, however many lines the message runs to
 
   Rule: the markdown names each reconciling item in plain words, and the JSON keeps the evidence model's terms
@@ -616,24 +616,24 @@ Feature: The report renders the ledger as sectioned facts
 
     The JSON keeps the terms `phantom-claim` and `unnamed-claim` as the rows' kinds.
 
-    @unit @SCN-RPT-039
+    @unit @CLM-RPT-039
     Scenario: the markdown counts phantom-claim and unnamed-claim rows by the reconciliation model's definitions of them, while the JSON keeps the terms
 
-    @unit @SCN-RPT-040
+    @unit @CLM-RPT-040
     Scenario: the markdown's prose refers to an outcome by its sentence, never by its handle
 
   Rule: the markdown shows each Pending Item, labelled apart from a Reconciling Item and tallied apart from the verdict counts
 
-    @unit @SCN-RPT-041
+    @unit @CLM-RPT-041
     Scenario: a row's exceptions cell labels each Pending Item, naming its kind of quality check when it has one, after the row's Reconciling Items
 
-    @unit @SCN-RPT-042
+    @unit @CLM-RPT-042
     Scenario: the Reconciliation totals section tallies the Pending Items on a line of their own after its table
 
-    @unit @SCN-RPT-097
+    @unit @CLM-RPT-097
     Scenario: the Reconciliation totals section shows no Pending Items tally line when there are none
 
-    @unit @SCN-RPT-043
+    @unit @CLM-RPT-043
     Scenario: a balanced row carrying a Pending Item reads differently from a clean-balanced row
 
   Rule: the markdown report explains the Claim Reconciliations table's cells in a key under its heading
@@ -647,19 +647,19 @@ Feature: The report renders the ledger as sectioned facts
 
     A table with no evidence column carries no key.
 
-    @unit @SCN-RPT-044
+    @unit @CLM-RPT-044
     Scenario: a reader finds a key to the evidence cells before the Claim Reconciliations table, and none where the table has no evidence cell
 
   Rule: the report states every fault in its inputs in one section after its provenance, only when there is one
 
-    Right after "## Run provenance", "## Errors in the inputs" holds the scenario code errors under
+    Right after "## Run provenance", "## Errors in the inputs" holds the claim code errors under
     "### Claim code errors", then the configuration the run could not use under
     "### Configuration not read", in the order the JSON's errorsInTheInputs holds them. Each part keeps its own
     introduction and prints only when it holds a fault, and the section prints only when one part
     does.
 
-    @unit @SCN-RPT-077
-    Scenario: every fault in the inputs is stated under one Errors in the inputs section after the run provenance, scenario code errors first, and the section is absent when the inputs hold none
+    @unit @CLM-RPT-077
+    Scenario: every fault in the inputs is stated under one Errors in the inputs section after the run provenance, claim code errors first, and the section is absent when the inputs hold none
 
   Rule: the report names each specController entry it could not read, before any cut of the reconciliation
 
@@ -669,22 +669,22 @@ Feature: The report renders the ledger as sectioned facts
     whole in its code span: as written, or as its quoted string where a code span cannot hold it as
     written.
 
-    @unit @SCN-RPT-045
+    @unit @CLM-RPT-045
     Scenario: each specController entry of a kind its reader does not take is named on a line of its own, after the run provenance and before any cut of the reconciliation
 
-    @unit @SCN-RPT-046
+    @unit @CLM-RPT-046
     Scenario: each key the specController block does not read is named in one sentence, after the entries of the wrong kind
 
-    @unit @SCN-RPT-053
+    @unit @CLM-RPT-053
     Scenario: each runners key outside the four layers is named under Configuration not read, after the keys the specController block does not read
 
-    @unit @SCN-RPT-078
+    @unit @CLM-RPT-078
     Scenario: a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not, whatever its workflow file's name holds
 
-    @unit @SCN-RPT-087
+    @unit @CLM-RPT-087
     Scenario: a notChecks entry that does not name a workflow, a job and a step is named under Configuration not read as not naming a step
 
-    @unit @SCN-RPT-088
+    @unit @CLM-RPT-088
     Scenario: each configuration entry and workflow name the report quotes is shown whole in its code span: a backtick as written, and a line break, spaces at both edges, nothing but spaces, an empty value or enclosing quotes as its quoted string
 
   Rule: the step-accounting section is the one account of the CI steps read, a row per workflow and job read, with the steps behind its Runners, Reconciler, Non-checks and GitHub plumbing counts listed beneath
@@ -709,87 +709,87 @@ Feature: The report renders the ledger as sectioned facts
     label names the workflows the run read, or says it read none. The section is absent when the run
     reads no CI step and has nothing to list as not applied.
 
-    @unit @SCN-RPT-052
+    @unit @CLM-RPT-052
     Scenario: the step-accounting section tables a row per workflow and job read, and a total row when more than one job was read
 
-    @unit @SCN-RPT-072
+    @unit @CLM-RPT-072
     Scenario: the step-accounting section lists each step that runs a declared runner beneath its table, and lists none when no step runs one
 
-    @unit @SCN-RPT-050
+    @unit @CLM-RPT-050
     Scenario: the step-accounting section lists each reconciler step beneath its table with what it does, and lists none for a pipeline that runs no reconciliation
 
-    @unit @SCN-RPT-048
+    @unit @CLM-RPT-048
     Scenario: the step-accounting section lists each non-check beneath its table with its reason
 
-    @unit @SCN-RPT-098
+    @unit @CLM-RPT-098
     Scenario: the step-accounting section lists no non-check when the target names none
 
-    @unit @SCN-RPT-090
+    @unit @CLM-RPT-090
     Scenario: a notChecks entry naming a workflow whose name holds a colon makes that workflow's step a non-check
 
-    @unit @SCN-RPT-089
+    @unit @CLM-RPT-089
     Scenario: a well-formed notChecks entry naming a workflow the run did not read is listed beneath the step accounting's table as not applied, with every workflow the run read named beside it, one whose jobs only call another workflow included, and none is listed when every entry names a workflow the run read
 
-    @unit @SCN-RPT-091
+    @unit @CLM-RPT-091
     Scenario: a run that reads no CI step lists each notChecks entry naming a workflow it did not read under the step accounting as not applied, with no table, under a label naming the workflows it read or saying it read none
 
-    @unit @SCN-RPT-073
+    @unit @CLM-RPT-073
     Scenario: the step-accounting section lists each GitHub plumbing step beneath its table, and lists none when no step is plumbing
 
-    @unit @SCN-RPT-092
+    @unit @CLM-RPT-092
     Scenario: the step-accounting section defines its Candidates, Reconciler, Non-checks, GitHub plumbing and Accounted for columns before its table
 
-    @unit @SCN-RPT-100
+    @unit @CLM-RPT-100
     Scenario: the step-accounting section prints no column definition when it prints no table
 
-  Rule: the report lists each scenario code error under Claim code errors, only when the corpus holds one, worded from the error's own values
+  Rule: the report lists each claim code error under Claim code errors, only when the corpus holds one, worded from the error's own values
 
-    @unit @SCN-RPT-055
+    @unit @CLM-RPT-055
     Scenario: a foreign-claim-code is listed by its handle under Claim code errors, worded from its values with the one file or the several files carrying the named code, before the Summary
 
-    @unit @SCN-RPT-056
+    @unit @CLM-RPT-056
     Scenario: a duplicate-feature-code is listed by its handle, worded from the shared code and the files that carry it
 
-    @unit @SCN-RPT-057
+    @unit @CLM-RPT-057
     Scenario: a no-feature-code is listed by its handle, worded from the file that carries no feature code
 
-    @unit @SCN-RPT-058
+    @unit @CLM-RPT-058
     Scenario: a foreign-claim-code whose named code no file carries is worded with no file to move to, naming no header tag or file the corpus lacks
 
-    @unit @SCN-RPT-059
+    @unit @CLM-RPT-059
     Scenario: a several-claim-codes error is listed by its handle, worded from its file, its scenario and its codes
 
-    @unit @SCN-RPT-060
+    @unit @CLM-RPT-060
     Scenario: the section counts its errors, one in the singular and several with their number, then lists each on its own line in the order judged
 
-    @unit @SCN-RPT-061
+    @unit @CLM-RPT-061
     Scenario: a scenario carrying several codes is framed in the section and the run verdict as a scenario no account was raised for, never as a misfiling whose accounts reconcile
 
-  Rule: the report states a corpus's scenario codes clean only over the files it judged, with the counts the run recorded
+  Rule: the report states a corpus's claim codes clean only over the files it judged, with the counts the run recorded
 
-    @unit @SCN-RPT-062
-    Scenario: clean scenario codes are stated after the run verdict under the Summary, with the run's count of feature files and of feature codes
+    @unit @CLM-RPT-062
+    Scenario: clean claim codes are stated after the run verdict under the Summary, with the run's count of feature files and of feature codes
 
-    @unit @SCN-RPT-093
-    Scenario: no scenario code errors section prints when the scenario codes are clean
+    @unit @CLM-RPT-093
+    Scenario: no claim code errors section prints when the claim codes are clean
 
-    @unit @SCN-RPT-094
-    Scenario: nothing is stated about scenario codes when no corpus was judged
+    @unit @CLM-RPT-094
+    Scenario: nothing is stated about claim codes when no corpus was judged
 
-    @unit @SCN-RPT-063
+    @unit @CLM-RPT-063
     Scenario: a corpus with no feature file is stated, after the run verdict, as no feature file judged, never as clean
 
-    @unit @SCN-RPT-064
+    @unit @CLM-RPT-064
     Scenario: the report states how many scenarios the corpus holds and how many codes more than one carries, and names the scenarios sharing each code
 
-    @unit @SCN-RPT-096
-    Scenario: the excluded @SCN occurrences, the scenarios with no @SCN code and the codes several scenarios share are stated after the run verdict, whether the codes are clean, hold errors or come from no feature file
+    @unit @CLM-RPT-096
+    Scenario: the excluded claim code occurrences, the scenarios with no claim code and the codes several scenarios share are stated after the run verdict, whether the codes are clean, hold errors or come from no feature file
 
   Rule: a shared code's Claim Reconciliations each name their scenario
 
-    Two scenarios sharing one @SCN code have a row each under that code. Each row's reconciling item
+    Two scenarios sharing one claim code have a row each under that code. Each row's reconciling item
     names the feature file and title of the scenario it reconciles, so the two rows differ only in
     that name.
 
-    @unit @SCN-RPT-070
+    @unit @CLM-RPT-070
     Scenario: each Claim Reconciliation of a shared code names, in its reconciling items, the feature file and title of the scenario it reconciles

@@ -41,7 +41,7 @@ const notAStepName = (entry: string): string =>
   entryOf(coreMessage(CoreMessage.NotChecksEntryNotAStepName, { key: "`specController.notChecks`", entry: codeSpan(entry) }));
 const notALayer = (): string => entryOf(coreMessage(CoreMessage.RunnerKeyNotALayer, { key: "`specController.runners.lint`" }));
 
-describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not, whatever its workflow file's name holds", () => {
+describe("[CLM-RPT-078] a notChecks entry that matches no step of a workflow the run read is named by its key under Configuration not read, and an entry naming a workflow the run did not read is not, whatever its workflow file's name holds", () => {
   it.each([
     { entry: "ci.yml:quality:Deploy", workflowsRead: ["ci.yml"], judged: ["ci.yml:quality:Deploy"] },
     { entry: "ci.yml:quality:Deploy", workflowsRead: [], judged: undefined },
@@ -63,7 +63,7 @@ describe("[SCN-RPT-078] a notChecks entry that matches no step of a workflow the
   });
 });
 
-describe("[SCN-RPT-087] a notChecks entry that does not name a workflow, a job and a step is named under Configuration not read as not naming a step", () => {
+describe("[CLM-RPT-087] a notChecks entry that does not name a workflow, a job and a step is named under Configuration not read as not naming a step", () => {
   it.each([
     { entry: "Deploy", workflowsRead: [] },
     { entry: "Deploy", workflowsRead: ["ci.yml"] },

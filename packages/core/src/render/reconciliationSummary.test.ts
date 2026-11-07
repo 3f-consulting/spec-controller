@@ -24,32 +24,32 @@ const ctx: RunContext = {
 
 const SETTLED = `Feature: the reconciliation totals
 
-  @unit @SCN-ERS-001
+  @unit @CLM-ERS-001
   Scenario: proved
 
-  @unit @integration @SCN-ERS-002
+  @unit @integration @CLM-ERS-002
   Scenario: its unit tier proved, its integration tier missing
 
-  @unit @SCN-ERS-003
+  @unit @CLM-ERS-003
   Scenario: its unit tier failing
 
-  @unit @SCN-ERS-005
+  @unit @CLM-ERS-005
   Scenario: its unit tier missing
 `;
 
 const ONE_DEFERRED = `
-  @unit @SCN-ERS-004 @integrationpending
+  @unit @CLM-ERS-004 @integrationpending
   Scenario: its integration tier deferred
 `;
 
 const OBSERVATIONS: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", claimCode: "SCN-ERS-001", status: "passed", locator: "src/a.test.ts" },
-  { qualityCheckKind: "unit", claimCode: "SCN-ERS-002", status: "passed", locator: "src/b.test.ts" },
-  { qualityCheckKind: "unit", claimCode: "SCN-ERS-003", status: "failed", locator: "src/c.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "CLM-ERS-001", status: "passed", locator: "src/a.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "CLM-ERS-002", status: "passed", locator: "src/b.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "CLM-ERS-003", status: "failed", locator: "src/c.test.ts" },
 ];
 
 const DEFERRED_OBSERVATIONS: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", claimCode: "SCN-ERS-004", status: "passed", locator: "src/d.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "CLM-ERS-004", status: "passed", locator: "src/d.test.ts" },
 ];
 
 function render(feature: string, observations: EvidenceObservation[] = OBSERVATIONS): string {
@@ -132,7 +132,7 @@ function expectedTable(
   ];
 }
 
-describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending Items on a line of their own after its table", () => {
+describe("[CLM-RPT-042] the Reconciliation totals section tallies the Pending Items on a line of their own after its table", () => {
   it("with one Pending Item: a blank line, the tally carrying 1 on its own line, then a blank line; the counts are those of the settled layers", () => {
     expect(sectionLines(render(SETTLED + ONE_DEFERRED, [...OBSERVATIONS, ...DEFERRED_OBSERVATIONS]))).toEqual([
       ...expectedTable(
@@ -148,7 +148,7 @@ describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending It
   });
 });
 
-describe("[SCN-RPT-097] the Reconciliation totals section shows no Pending Items tally line when there are none", () => {
+describe("[CLM-RPT-097] the Reconciliation totals section shows no Pending Items tally line when there are none", () => {
   let settledTable: string[];
   beforeEach(() => {
     settledTable = expectedTable(

@@ -20,7 +20,7 @@ function routeThroughBalance(formatSpecs: readonly string[]): boolean {
   return runBalanceCaptured(wrapCommandArgv(BALANCE_ARGS, [...formatSpecs])).wrote;
 }
 
-describe("[SCN-RMG-004] `spec-controller --store <root> balance` writes a stored run the operator can reach", () => {
+describe("[CLM-RMG-004] `spec-controller --store <root> balance` writes a stored run the operator can reach", () => {
   it("writes the markdown and JSON reports into the run directory it hands back", () => {
     const scratch = temporaryDirectory("spec-controller-stored-reports-");
     const storeRoot = join(scratch, "store");

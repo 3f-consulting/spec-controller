@@ -3,7 +3,7 @@
     {
       "name": "tests/fixtures/inherited-claim-code/feature/widget.test.ts",
       "assertionResults": [
-        { "fullName": "[SCN-INF-001] the one scenario is proven", "status": "passed" }
+        { "fullName": "[CLM-INF-001] the one scenario is proven", "status": "passed" }
       ]
     }
   ]

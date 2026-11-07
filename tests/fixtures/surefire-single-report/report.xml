@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="[SCN-AAA-010] a class that cites [SCN-AAA-012] nested group" time="0.002" tests="13" errors="1" skipped="2" failures="1">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="[CLM-AAA-010] a class that cites [CLM-AAA-012] nested group" time="0.002" tests="13" errors="1" skipped="2" failures="1">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -54,7 +54,7 @@
     <property name="java.class.version" value="61.0"/>
     <property name="maven.test.failure.ignore" value="true"/>
   </properties>
-  <testcase name="[SCN-AAA-003] errors" classname="[SCN-AAA-010] a class that cites" time="0.01">
+  <testcase name="[CLM-AAA-003] errors" classname="[CLM-AAA-010] a class that cites" time="0.01">
     <error message="error boom" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: error boom
 	at measure.CitedTest.errors(CitedTest.java:13)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
@@ -62,7 +62,7 @@
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
 ]]></error>
   </testcase>
-  <testcase name="[SCN-AAA-005] aborted" classname="[SCN-AAA-010] a class that cites" time="0.0">
+  <testcase name="[CLM-AAA-005] aborted" classname="[CLM-AAA-010] a class that cites" time="0.0">
     <skipped type="org.opentest4j.TestAbortedException"><![CDATA[org.opentest4j.TestAbortedException: Assumption failed: assumption off
 	at org.junit.jupiter.api.Assumptions.throwAssumptionFailed(Assumptions.java:316)
 	at org.junit.jupiter.api.Assumptions.assumeTrue(Assumptions.java:115)
@@ -72,9 +72,9 @@
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
 ]]></skipped>
   </testcase>
-  <testcase name="no code at all" classname="[SCN-AAA-010] a class that cites" time="0.003"/>
-  <testcase name="[SCN-AAA-001] passes" classname="[SCN-AAA-010] a class that cites" time="0.002"/>
-  <testcase name="[SCN-AAA-002] fails" classname="[SCN-AAA-010] a class that cites" time="0.005">
+  <testcase name="no code at all" classname="[CLM-AAA-010] a class that cites" time="0.003"/>
+  <testcase name="[CLM-AAA-001] passes" classname="[CLM-AAA-010] a class that cites" time="0.002"/>
+  <testcase name="[CLM-AAA-002] fails" classname="[CLM-AAA-010] a class that cites" time="0.005">
     <failure message="assertion boom" type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: assertion boom
 	at org.junit.jupiter.api.AssertionUtils.fail(AssertionUtils.java:38)
 	at org.junit.jupiter.api.Assertions.fail(Assertions.java:138)
@@ -84,14 +84,14 @@
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
 ]]></failure>
   </testcase>
-  <testcase name="param(int)[SCN-AAA-011] param 1" classname="[SCN-AAA-010] a class that cites" time="0.009"/>
-  <testcase name="param(int)[SCN-AAA-011] param 2" classname="[SCN-AAA-010] a class that cites" time="0.002"/>
-  <testcase name="reporterEntry(TestReporter)" classname="[SCN-AAA-010] a class that cites" time="0.011"/>
-  <testcase name="[SCN-AAA-004] disabled" classname="[SCN-AAA-010] a class that cites" time="0.0">
+  <testcase name="param(int)[CLM-AAA-011] param 1" classname="[CLM-AAA-010] a class that cites" time="0.009"/>
+  <testcase name="param(int)[CLM-AAA-011] param 2" classname="[CLM-AAA-010] a class that cites" time="0.002"/>
+  <testcase name="reporterEntry(TestReporter)" classname="[CLM-AAA-010] a class that cites" time="0.011"/>
+  <testcase name="[CLM-AAA-004] disabled" classname="[CLM-AAA-010] a class that cites" time="0.0">
     <skipped message="not yet"/>
   </testcase>
-  <testcase name="SCN_AAA_008_inMethodName" classname="[SCN-AAA-010] a class that cites" time="0.0"/>
-  <testcase name="[SCN-AAA-006] [SCN-AAA-007] two codes" classname="[SCN-AAA-010] a class that cites" time="0.002"/>
-  <testcase name="a child that cites nothing" classname="[SCN-AAA-010] a class that cites [SCN-AAA-012] nested group" time="0.001"/>
-  <testcase name="[SCN-AAA-013] a child that cites its own" classname="[SCN-AAA-010] a class that cites [SCN-AAA-012] nested group" time="0.001"/>
+  <testcase name="CLM_AAA_008_inMethodName" classname="[CLM-AAA-010] a class that cites" time="0.0"/>
+  <testcase name="[CLM-AAA-006] [CLM-AAA-007] two codes" classname="[CLM-AAA-010] a class that cites" time="0.002"/>
+  <testcase name="a child that cites nothing" classname="[CLM-AAA-010] a class that cites [CLM-AAA-012] nested group" time="0.001"/>
+  <testcase name="[CLM-AAA-013] a child that cites its own" classname="[CLM-AAA-010] a class that cites [CLM-AAA-012] nested group" time="0.001"/>
 </testsuite>

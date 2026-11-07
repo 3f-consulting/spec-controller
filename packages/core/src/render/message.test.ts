@@ -23,7 +23,7 @@ function message<C extends Code>(code: C, ...values: C extends keyof Values ? [v
   return messagesFrom<Code, Values>(TEXTS)(code, ...values);
 }
 
-describe("[SCN-MSG-002] core's formatter prints a catalogue entry's words, with the values its code is given", () => {
+describe("[CLM-MSG-002] core's formatter prints a catalogue entry's words, with the values its code is given", () => {
   it("prints an entry that takes no value as written", () => {
     expect(message("plain")).toBe("Do not pin an earlier version to get it back.");
   });
@@ -51,7 +51,7 @@ describe("[SCN-MSG-002] core's formatter prints a catalogue entry's words, with 
   });
 });
 
-describe("[SCN-MSG-015] a counted noun agrees with its count — the run-integrity stamp's proofs that never ran", () => {
+describe("[CLM-MSG-015] a counted noun agrees with its count — the run-integrity stamp's proofs that never ran", () => {
   const PROOFS = { proofs: "{count, plural, one {{count} proof never ran} other {{count} proofs never ran}}." };
 
   it("1000 proofs", () => {

@@ -7,7 +7,7 @@ import { stepDispositions } from "./uncitedFitnessFunctions.js";
 import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 const partlyAnnotatedSteps: PipelineStep[] = [
@@ -25,7 +25,7 @@ const partlyAnnotatedSteps: PipelineStep[] = [
     workflow: "ci.yml",
     job: "quality",
     identity: "Complexity",
-    id: "SCN-AAA-001",
+    id: "CLM-AAA-001",
     writesStepRecord: false,
     abortsJob: true,
     plumbing: false,
@@ -35,7 +35,7 @@ const partlyAnnotatedSteps: PipelineStep[] = [
   { workflow: "ci.yml", job: "quality", identity: "Types", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm typecheck" },
 ];
 
-const recorded: RecordedCheckStep[] = [{ citedClaimCode: "SCN-AAA-001", report: "succeeded" }];
+const recorded: RecordedCheckStep[] = [{ citedClaimCode: "CLM-AAA-001", report: "succeeded" }];
 
 function reconcileWithRecord() {
   const dispositionOf = stepDispositions({
@@ -48,12 +48,12 @@ function reconcileWithRecord() {
     (step) => dispositionOf(step) === "candidate",
     (step) => ("command" in step ? step.command.replace("pnpm ", "") : step.identity),
     (step) => step.identity,
-    (_handle, citedByStep) => (citedByStep === "SCN-AAA-001" ? { claimCode: citedByStep } : null)
+    (_handle, citedByStep) => (citedByStep === "CLM-AAA-001" ? { claimCode: citedByStep } : null)
   );
   return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, recorded), []);
 }
 
-describe("[SCN-LNT-029] a check step citing no @SCN posts to the unnamed claim, which is the unannotated consumer's whole report", () => {
+describe("[CLM-LNT-029] a check step citing no claim code posts to the unnamed claim, which is the unannotated consumer's whole report", () => {
   it("keeps every uncited check on the unnamed claim's row where the run's step record answers the cited ones", () => {
     const unnamedClaimRows = reconcileWithRecord()
       .ledger.claimReconciliations.filter((row) => row.claim === "(unnamed claim)")

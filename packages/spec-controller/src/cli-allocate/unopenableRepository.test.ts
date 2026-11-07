@@ -31,7 +31,7 @@ function expectRefusedNaming(answered: Answered, gitEntry: string, git: { status
   expect(answered.stderr).toContain(message(AppError.CouldNotBeRead, { subject: message(AppMessage.Repository), path: gitEntry, reason }));
 }
 
-describe("[SCN-ALC-022] a repository git cannot open is refused, never read as no repository", () => {
+describe("[CLM-ALC-022] a repository git cannot open is refused, never read as no repository", () => {
   it("refuses ONE when its .git directory is not permitted to be read, naming the .git in git's own words", ({ skip }) => {
     skip(runsAsRoot());
     const repo = repositoryCarryingOneCode();

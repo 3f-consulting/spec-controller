@@ -19,7 +19,7 @@ function reconcile(
   });
 }
 
-describe("[SCN-RMD-014] the step accounting names each reconciler step with its role, and none for a pipeline that runs no reconciliation", () => {
+describe("[CLM-RMD-014] the step accounting names each reconciler step with its role, and none for a pipeline that runs no reconciliation", () => {
 
   it("names each reconciler step under its workflow, job and name, with its role, in step order", () => {
     const { summary } = reconcile([ci], ["ci.yml"]);

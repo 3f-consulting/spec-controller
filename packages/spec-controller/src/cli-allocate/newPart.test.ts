@@ -10,7 +10,7 @@ function headedOneCarryingThree(): string {
   writeInto(
     repo,
     "features/one.feature",
-    "@ONE\nFeature: part ONE\n\n  @SCN-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n",
+    "@ONE\nFeature: part ONE\n\n  @CLM-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n",
   );
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-q", "-m", "the corpus"]);
@@ -22,7 +22,7 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-ALC-011] --new admits a part no feature file's header carries, and on a part a header does carry it answers as usual with a note on stderr", () => {
+describe("[CLM-ALC-011] --new admits a part no feature file's header carries, and on a part a header does carry it answers as usual with a note on stderr", () => {
   it("answers a claim code ending ZZ-001 for ZZ as a new part, saying nothing of the part being carried already", () => {
     const answered = allocateIn(headedOneCarryingThree(), ["ZZ", "--new"]);
 

@@ -57,12 +57,12 @@ function userGuide(): string {
   return readFileSync("docs/user-guide.md", "utf8");
 }
 
-describe("[SCN-MSG-012] every code the tool can give is documented", () => {
-  it("[SCN-MSG-012] the user guide lists every exit code and every error code once, each with its meaning", () => {
+describe("[CLM-MSG-012] every code the tool can give is documented", () => {
+  it("[CLM-MSG-012] the user guide lists every exit code and every error code once, each with its meaning", () => {
     expect(documentationFindings(userGuide())).toEqual([]);
   });
 
-  it("[SCN-MSG-012] a guide lacking an error code and an exit code, listing a code twice and one with no meaning is named for each", () => {
+  it("[CLM-MSG-012] a guide lacking an error code and an exit code, listing a code twice and one with no meaning is named for each", () => {
     const planted = userGuide()
       .replace(/^\| `unknown-flag` \|.*\n/m, "")
       .replace(/^\| `6` \|.*\n/m, "")
@@ -77,8 +77,8 @@ describe("[SCN-MSG-012] every code the tool can give is documented", () => {
   });
 });
 
-describe("[SCN-MSG-013] every documented code is one the tool can give", () => {
-  it("[SCN-MSG-013] a guide listing an exit code and an error code the tool cannot give is named for each", () => {
+describe("[CLM-MSG-013] every documented code is one the tool can give", () => {
+  it("[CLM-MSG-013] a guide listing an exit code and an error code the tool cannot give is named for each", () => {
     const planted = userGuide()
       .replace(/^(\| `6` \|.*\n)/m, "$1| `7` | a way no run ends |\n")
       .replace(/^(\| `unknown-flag` \|.*\n)/m, "$1| `no-such-error` | an error no refusal shows |\n");
@@ -89,8 +89,8 @@ describe("[SCN-MSG-013] every documented code is one the tool can give", () => {
   });
 });
 
-describe("[SCN-MSG-014] no error code stands for two errors", () => {
-  it("[SCN-MSG-014] a code the app's errors and the errors in the inputs both hold is named, though the guide lists it under each", () => {
+describe("[CLM-MSG-014] no error code stands for two errors", () => {
+  it("[CLM-MSG-014] a code the app's errors and the errors in the inputs both hold is named, though the guide lists it under each", () => {
     const planted = userGuide().replace(
       /^(\| `configuration-wrong-kind` \|.*\n)/m,
       "$1| `unknown-flag` | an entry the run cannot use, under a code a refusal already gives |\n",

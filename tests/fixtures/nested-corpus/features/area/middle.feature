@@ -5,6 +5,6 @@ Feature: a feature file one directory below the top of a nested fixture corpus
 
   Rule: the middle file names one satisfied unit-level scenario
 
-    @unit @SCN-NTB-001
+    @unit @CLM-NTB-001
     Scenario: the middle file's scenario is proven
       Given the target repo's source

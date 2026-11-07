@@ -41,7 +41,7 @@ function keptRunWithManifestAsDirectory(): Answered {
   return { stderr: whatTheProgramWrote().stderr, exitCode: process.exitCode, runDir };
 }
 
-describe("[SCN-CLI-109] a kept run whose manifest cannot be written did not finish, and ends at 6", () => {
+describe("[CLM-CLI-109] a kept run whose manifest cannot be written did not finish, and ends at 6", () => {
   it("exits 6, not the usage code", () => {
     expect(keptRunWithManifestAsDirectory().exitCode).toBe(6);
   });

@@ -16,12 +16,12 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe("[SCN-ALC-001] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
+describe("[CLM-ALC-001] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
   it("answers one past the deleted code when the file that carried it is deleted from the working copy but not yet committed", () => {
     const repo = newRepository();
     const retired = "features/retired.feature";
-    writeInto(repo, "features/one.feature", lines("@ONE", "Feature: part ONE", "  @SCN-ONE-001 @unit", "  Scenario: scenario 1"));
-    writeInto(repo, retired, lines("@ONE", "Feature: part ONE, retired", "  @SCN-ONE-005 @unit", "  Scenario: scenario 5"));
+    writeInto(repo, "features/one.feature", lines("@ONE", "Feature: part ONE", "  @CLM-ONE-001 @unit", "  Scenario: scenario 1"));
+    writeInto(repo, retired, lines("@ONE", "Feature: part ONE, retired", "  @CLM-ONE-005 @unit", "  Scenario: scenario 5"));
     git(repo, ["add", "-A"]);
     git(repo, ["commit", "-q", "-m", "the corpus"]);
     rmSync(join(repo, retired));
@@ -32,6 +32,6 @@ describe("[SCN-ALC-001] a feature part whose highest live code is below a delete
 
     expectAnsweredEnding(answered, "ONE-006");
     expect(answered.stderr).not.toContain("spec-controller allocate:");
-    expect(answered.stderr).toMatch(/^highest seen: SCN-ONE-005, features\/retired\.feature:/);
+    expect(answered.stderr).toMatch(/^highest seen: CLM-ONE-005, features\/retired\.feature:/);
   });
 });

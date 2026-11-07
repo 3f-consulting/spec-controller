@@ -47,7 +47,7 @@ const examples: ReadonlyArray<readonly [string, unknown, unknown, { entry: strin
   ],
 ];
 
-describe("[SCN-CFG-004] a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it", () => {
+describe("[CLM-CFG-004] a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it", () => {
   it.each(examples)("names %s on the report with the kind it is and the kind read", (_, written, _without, named) => {
     expect(reconcile(written).summary.configurationOfWrongKind).toEqual([named]);
   });

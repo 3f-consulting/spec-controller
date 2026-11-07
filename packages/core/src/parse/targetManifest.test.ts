@@ -10,7 +10,7 @@ const base = {
 const wrongKindsOf = (specController: unknown) =>
   configurationNotRead({ specController } as { specController?: unknown }).wrongKinds;
 
-describe("[SCN-CFG-004] a specController entry of a kind its reader does not take is named, with the kind it is and the kind read", () => {
+describe("[CLM-CFG-004] a specController entry of a kind its reader does not take is named, with the kind it is and the kind read", () => {
   it.each([
     ["the block", "x", { entry: "specController", is: "string", reads: "object" }],
     ["the block", null, { entry: "specController", is: "null", reads: "object" }],

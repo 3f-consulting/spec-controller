@@ -3,7 +3,7 @@ import { parseHostInvocation } from "./host.js";
 import { dispatchesUnstored, storedReRenderRefusal } from "./storedRun.js";
 import { shownText } from "./shownText.test-utils.js";
 
-describe("[SCN-RMG-006] the host answers a stored command's help before the store is touched", () => {
+describe("[CLM-RMG-006] the host answers a stored command's help before the store is touched", () => {
   it("dispatches unstored when there is no --store", () => {
     const inv = parseHostInvocation(["balance", "--features", "f"]);
 
@@ -11,7 +11,7 @@ describe("[SCN-RMG-006] the host answers a stored command's help before the stor
   });
 });
 
-describe("[SCN-RMG-007] the host refuses a stored re-render, naming the store and no flag the operator did not give", () => {
+describe("[CLM-RMG-007] the host refuses a stored re-render, naming the store and no flag the operator did not give", () => {
   const SAVED = ["balance", "--render-from-json", "saved.json"];
 
   it("names --store, and never --format", () => {
@@ -29,7 +29,7 @@ describe("[SCN-RMG-007] the host refuses a stored re-render, naming the store an
   });
 });
 
-describe("[SCN-MSG-015] a counted noun agrees with its count — a re-render's flags it does not read", () => {
+describe("[CLM-MSG-015] a counted noun agrees with its count — a re-render's flags it does not read", () => {
   it("1 flag", () => {
     const refusal = shownText(storedReRenderRefusal(parseHostInvocation(["--store", "/s", "balance", "--render-from-json", "saved.json"])));
     expect(refusal?.trimEnd().split("\n").at(-1)).toBe("Run 'spec-controller balance --render-from-json <path>' without it.");

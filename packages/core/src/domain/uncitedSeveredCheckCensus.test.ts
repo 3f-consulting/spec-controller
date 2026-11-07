@@ -51,13 +51,13 @@ function reconcileUncited() {
     () => null
   );
   return evidenceReconciliationOf(
-    [{ claimCode: "SCN-TSC-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ claimCode: "CLM-TSC-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
     fitnessObservationsOf(workflow, undefined),
     []
   );
 }
 
-describe("[SCN-LNT-033] the fitness-function census counts a check whose red its job survives as a check that ran", () => {
+describe("[CLM-LNT-033] the fitness-function census counts a check whose red its job survives as a check that ran", () => {
   it("still POSTS both checks to the unnamed claim's row, the severed one included", () => {
     const unnamedClaimRows = reconcileUncited().ledger.claimReconciliations.filter(
       (row) => row.kind === "unnamed-claim"
