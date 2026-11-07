@@ -814,7 +814,7 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 ### What counts as an `@SCN` code
 
-An `@SCN` code has the form `SCN-<FFF>-<NNN>`: a feature part of two to five uppercase letters or digits, then a number of any width. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[SCN-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
+A claim code has the form `SCN-<FFF>-<NNN>` or `CLM-<FFF>-<NNN>`: a prefix, a feature part of two to five uppercase letters or digits, then a number of any width. The two prefixes give two different codes. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[SCN-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
 
 So an id such as `@SCN-TOOLONGCODE-001` is not an `@SCN` code. It opens no account and cites nothing. A scenario tagged only with it has no claim code, and reconciles as `no-claim-code`.
 
