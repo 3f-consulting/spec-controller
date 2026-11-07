@@ -820,6 +820,8 @@ So an id such as `@SCN-TOOLONGCODE-001` is not an `@SCN` code. It opens no accou
 
 The tool judges claim code errors only over the corpus that `--features` names.
 
+**An Outline can make each of its rows a claim of its own.** Give its Examples table a column named `clm`, and put each row's claim code in it. Each row is then a claim under its own code, raising the Evidence Obligations its Outline's tags name, and evidence cites the row's code as it would a scenario's. Such an Outline carries no code of its own. A row whose `clm` cell is empty, or not a claim code, has no claim code, and two rows with one code are duplicates, as two scenarios would be. An Outline with no `clm` column is one claim, under the code its tags carry.
+
 ### Duplicate `@SCN` codes
 
 **An `@SCN` code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry can arise from the same id written twice, or from an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
