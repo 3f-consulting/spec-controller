@@ -100,7 +100,7 @@ Ask the tool for each code instead of inventing one. A feature part is known onl
 
 ```bash
 spec-controller allocate <FFF>
-# SCN-<FFF>-<NNN>
+# CLM-<FFF>-<NNN>
 ```
 
 A Vitest test cites the scenario with the code **in square brackets** in its `it` title, or in an enclosing `describe` title. The most specific one wins:
