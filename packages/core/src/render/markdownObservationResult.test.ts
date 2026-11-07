@@ -21,11 +21,11 @@ describe("[SCN-RPT-034] a test that cites a scenario no feature carries shows on
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
-      [{ scnId: "SCN-PST-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "SCN-PST-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-PST-001", status: "passed", locator: "src/proven.test.ts" },
-        { qualityCheckKind: "unit", scnId: "SCN-PST-901", status: "failed", locator: "src/broken-spawn.test.ts" },
-        { qualityCheckKind: "unit", scnId: "SCN-PST-901", status: "passed", locator: "src/sound.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "SCN-PST-001", status: "passed", locator: "src/proven.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "SCN-PST-901", status: "failed", locator: "src/broken-spawn.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "SCN-PST-901", status: "passed", locator: "src/sound.test.ts" },
       ]
     );
   });
@@ -45,10 +45,10 @@ describe("[SCN-RPT-035] a test observed at a check its scenario holds no obligat
   let ledger: Ledger;
   beforeEach(() => {
     ledger = reconcile(
-      [{ scnId: "SCN-NOS-001", evidenceObligations: [{ qualityCheckKind: "integration" }] }],
+      [{ claimCode: "SCN-NOS-001", evidenceObligations: [{ qualityCheckKind: "integration" }] }],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-NOS-001", status: "failed", locator: "src/broken-spawn.test.ts" },
-        { qualityCheckKind: "unit", scnId: "SCN-NOS-001", status: "passed", locator: "src/sound.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "SCN-NOS-001", status: "failed", locator: "src/broken-spawn.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "SCN-NOS-001", status: "passed", locator: "src/sound.test.ts" },
       ]
     );
   });
@@ -70,8 +70,8 @@ describe("[SCN-RPT-086] a test that answers no evidence obligation is named by i
     ledger = reconcile(
       [],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-PST-901", status: "failed", locator: "src/x.test.ts", testName: "first" },
-        { qualityCheckKind: "unit", scnId: "SCN-PST-901", status: "failed", locator: "src/x.test.ts", testName: "second" },
+        { qualityCheckKind: "unit", claimCode: "SCN-PST-901", status: "failed", locator: "src/x.test.ts", testName: "first" },
+        { qualityCheckKind: "unit", claimCode: "SCN-PST-901", status: "failed", locator: "src/x.test.ts", testName: "second" },
       ]
     );
   });

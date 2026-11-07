@@ -5,7 +5,7 @@ const OUTCOME_EXIT: Readonly<Record<string, number>> = {
   "the balanced verdict": 0,
   success: 0,
   "the out-of-balance verdict": 1,
-  "the scenario-code-errors verdict": 1,
+  "the claim-code-errors verdict": 1,
   "a usage error": 2,
   "the pending verdict": 3,
   "the unsound verdict": 4,

@@ -9,7 +9,7 @@ export interface FeatureOutOfBalance {
   readonly featureFile?: string;
   readonly count: number;
   readonly claims: readonly string[];
-  readonly scenariosWithNoScnCode?: number;
+  readonly scenariosWithNoClaimCode?: number;
 }
 
 export function outOfBalanceByFeature(
@@ -37,7 +37,7 @@ export function outOfBalanceByFeature(
       ...(featureFile ? { featureFile } : {}),
       count: claims.length + noScnCode,
       claims,
-      ...(noScnCode > 0 ? { scenariosWithNoScnCode: noScnCode } : {}),
+      ...(noScnCode > 0 ? { scenariosWithNoClaimCode: noScnCode } : {}),
     };
   });
 }

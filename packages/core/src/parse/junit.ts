@@ -66,18 +66,18 @@ function observationOf(
   if (isCollectionFailure(testcase)) return collectionFailureOf(testcase, evidence, layer);
   if (isBuildFailure(testcase)) return buildFailureOf(suite, testcase, evidence, layer);
   if (isClassSetupFailure(testcase)) return classSetupFailureOf(testcase, evidence, layer);
-  const { scnId: soleCode, severalCodes } = attributionOf(citingCodesOf(testcase));
-  const scnId = soleCode === null ? null : citedCode(soleCode);
+  const { claimCode: soleCode, severalCodes } = attributionOf(citingCodesOf(testcase));
+  const claimCode = soleCode === null ? null : citedCode(soleCode);
   const locator = `${testcase.classname}::${testcase.name}`;
   if (evidence.broken) {
-    return { qualityCheckKind: layer, scnId, status: evidence.status, locator, broken: evidence.broken, message: errorTextOf(testcase) };
+    return { qualityCheckKind: layer, claimCode, status: evidence.status, locator, broken: evidence.broken, message: errorTextOf(testcase) };
   }
   return {
     qualityCheckKind: layer,
-    scnId,
+    claimCode,
     status: evidence.status,
     locator,
-    ...(severalCodes ? { notes: [{ kind: "several-scn-codes" as const, codes: severalCodes }] } : {}),
+    ...(severalCodes ? { notes: [{ kind: "several-claim-codes" as const, codes: severalCodes }] } : {}),
   };
 }
 
@@ -112,7 +112,7 @@ function collectionFailureOf(
 ): EvidenceObservation {
   return {
     qualityCheckKind: layer,
-    scnId: null,
+    claimCode: null,
     status: evidence.status,
     locator: testcase.name ?? "",
     broken: evidence.broken,
@@ -131,7 +131,7 @@ function classSetupFailureOf(
 ): EvidenceObservation {
   return {
     qualityCheckKind: layer,
-    scnId: null,
+    claimCode: null,
     status: evidence.status,
     locator: testcase.classname,
     broken: evidence.broken,
@@ -153,7 +153,7 @@ function buildFailureOf(
 ): EvidenceObservation {
   return {
     qualityCheckKind: layer,
-    scnId: null,
+    claimCode: null,
     status: evidence.status,
     locator: suite.name,
     broken: evidence.broken,

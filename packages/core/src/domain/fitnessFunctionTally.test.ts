@@ -20,14 +20,14 @@ const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
 
 describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function evidence observations, filtered to what ran", () => {
   const scenarios: Scenario[] = [
-    { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-    { scnId: "SCN-C", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-    { scnId: "SCN-D", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "SCN-C", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "SCN-D", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
   const observations: EvidenceObservation[] = [
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:water", scnId: "SCN-C", exists: true, enforcedOverRealSource: false },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:absent", scnId: "SCN-D", exists: false, enforcedOverRealSource: false },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "SCN-A", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:water", claimCode: "SCN-C", exists: true, enforcedOverRealSource: false },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:absent", claimCode: "SCN-D", exists: false, enforcedOverRealSource: false },
     { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
   ];
   let tally: ReturnType<typeof fitnessFunctionTally>;
@@ -46,7 +46,7 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function e
   it("counts no behavioural evidence observation, whatever fields it arrives carrying", () => {
     const behaviouralCarryingGuardFields = {
       qualityCheckKind: "unit" as const,
-      scnId: "SCN-A",
+      claimCode: "SCN-A",
       status: "passed" as const,
       exists: true,
       enforcedOverRealSource: true,
@@ -57,8 +57,8 @@ describe("[SCN-USG-001] fitnessFunctionTally folds the posted fitness-function e
 });
 
 describe("[SCN-USG-001] a fitness function no scenario cites is banked on the unnamed claim's row and counted uncited", () => {
-  const rowFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
-    ledger.claimReconciliations.find((r) => r.claim === scnId);
+  const rowFor = (ledger: Ledger, claimCode: string): ClaimReconciliation | undefined =>
+    ledger.claimReconciliations.find((r) => r.claim === claimCode);
 
   const pkg: PackageJsonScripts = {
     scripts: {
@@ -79,17 +79,17 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
   ];
 
   const fitness: Scenario[] = [
-    { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "SCN-TGT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
 
-  const citedScn = (script: string): ScriptCitation | null =>
-    script === "lint:foo" ? { scnId: "SCN-TGT-001" } : null;
+  const citedClaimCode = (script: string): ScriptCitation | null =>
+    script === "lint:foo" ? { claimCode: "SCN-TGT-001" } : null;
 
   let citedObservations: ReturnType<typeof runningFitnessFunctions>;
   let uncitedObservations: ReturnType<typeof runningFitnessFunctions>;
   let ledger: Ledger;
   beforeEach(() => {
-    const runningObservations = runningFitnessFunctions(parsedWorkflows([ciLines.join("\n")]), pkg, SUITE_RUNNERS, citedScn);
+    const runningObservations = runningFitnessFunctions(parsedWorkflows([ciLines.join("\n")]), pkg, SUITE_RUNNERS, citedClaimCode);
     citedObservations = runningObservations.filter((o) => o.fitnessFunction === "lint:foo");
     uncitedObservations = runningObservations.filter((o) => o.fitnessFunction !== "lint:foo");
     ledger = reconcile(fitness, [...citedObservations, ...uncitedObservations]);
@@ -103,7 +103,7 @@ describe("[SCN-USG-001] a fitness function no scenario cites is banked on the un
         fitnessFunction: "lint:foo",
         exists: true,
         enforcedOverRealSource: true,
-        scnId: "SCN-TGT-001",
+        claimCode: "SCN-TGT-001",
       },
     ]);
     expect(uncitedObservations.map(withoutStep)).toEqual([
@@ -139,19 +139,19 @@ describe("[SCN-USG-005] a cited fitness function under no convention of ours is 
     "      - run: pnpm cucumber",
   ];
 
-  const citedScn = (script: string): ScriptCitation | null =>
-    script === "domain-purity" ? { scnId: "SCN-GRD-001" } : null;
+  const citedClaimCode = (script: string): ScriptCitation | null =>
+    script === "domain-purity" ? { claimCode: "SCN-GRD-001" } : null;
 
   const fitness: Scenario[] = [
     {
-      scnId: "SCN-GRD-001",
+      claimCode: "SCN-GRD-001",
       evidenceObligations: [{ qualityCheckKind: "fitness" }],
     },
   ];
   let observations: ReturnType<typeof runningFitnessFunctions>;
   let ledger: Ledger;
   beforeEach(() => {
-    observations = runningFitnessFunctions(parsedWorkflows([guardCiLines.join("\n")]), guardPkg, SUITE_RUNNERS, citedScn).filter(
+    observations = runningFitnessFunctions(parsedWorkflows([guardCiLines.join("\n")]), guardPkg, SUITE_RUNNERS, citedClaimCode).filter(
       (o) => o.fitnessFunction === "domain-purity"
     );
     ledger = reconcile(fitness, observations);

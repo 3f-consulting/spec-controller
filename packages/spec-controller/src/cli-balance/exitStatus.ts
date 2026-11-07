@@ -3,7 +3,7 @@ import type { ExitCodeOf, RunVerdict } from "@3f-consulting/spec-controller-core
 export const EXIT_CODE: Readonly<Record<RunVerdict, number>> = {
   balanced: 0,
   "out-of-balance": 1,
-  "scenario-code-errors": 1,
+  "claim-code-errors": 1,
   pending: 3,
   unsound: 4,
   "nothing-to-reconcile": 5,
@@ -11,7 +11,7 @@ export const EXIT_CODE: Readonly<Record<RunVerdict, number>> = {
 
 const MOVED_BY_EXIT_ZERO: ReadonlySet<RunVerdict> = new Set<RunVerdict>([
   "out-of-balance",
-  "scenario-code-errors",
+  "claim-code-errors",
   "pending",
 ]);
 

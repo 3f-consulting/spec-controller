@@ -1,24 +1,24 @@
-import type { ScenarioCodeError, ScenarioCodePopulation } from "./scnTags.js";
+import type { ClaimCodeError, ScenarioCodePopulation } from "./scnTags.js";
 import type { ClaimReconciliation } from "./claimReconciliation.js";
 import type { Summary, WrongKindEntry } from "./evidenceReconciliation.js";
 import type { ProvenanceObject } from "./runProvenance.js";
-import type { EvidenceObligations, SharedScnCode } from "./corpusCounts.js";
+import type { EvidenceObligations, SharedClaimCode } from "./corpusCounts.js";
 import type { ScenarioName } from "./qualityCheckReconciliation.js";
 import type { RunVerdict } from "./runVerdict.js";
 import type { FeatureOutOfBalance } from "./outOfBalanceByFeature.js";
 
-export interface ScenarioCodesSection {
+export interface ClaimCodesSection {
   readonly featureFiles?: number;
   readonly featureCodes?: number;
   readonly excludedOccurrences?: number;
   readonly untaggedScenarios?: readonly ScenarioName[];
-  readonly sharedScnCodes?: readonly SharedScnCode[];
+  readonly sharedClaimCodes?: readonly SharedClaimCode[];
 }
 
 export function scenarioCodesOf(
   population: ScenarioCodePopulation | undefined,
   obligations: EvidenceObligations | undefined
-): ScenarioCodesSection | undefined {
+): ClaimCodesSection | undefined {
   if (!population && !obligations) return undefined;
   return {
     ...(population ? { featureFiles: population.featureFiles, featureCodes: population.featureCodes } : {}),
@@ -26,7 +26,7 @@ export function scenarioCodesOf(
       ? {
           excludedOccurrences: obligations.excludedOccurrences,
           untaggedScenarios: obligations.untaggedScenarios,
-          ...nonEmpty("sharedScnCodes", obligations.sharedScnCodes),
+          ...nonEmpty("sharedClaimCodes", obligations.sharedClaimCodes),
         }
       : {}),
   };
@@ -41,12 +41,12 @@ interface ConfigurationFaults {
 }
 
 export interface ErrorsSection {
-  readonly scenarioCodeErrors?: readonly ScenarioCodeError[];
+  readonly claimCodeErrors?: readonly ClaimCodeError[];
   readonly configurationNotRead?: ConfigurationFaults;
 }
 
 export function errorsOf(
-  scenarioCodeErrors: readonly ScenarioCodeError[] | undefined,
+  claimCodeErrors: readonly ClaimCodeError[] | undefined,
   summary: Summary
 ): ErrorsSection | undefined {
   const configurationNotRead: ConfigurationFaults = {
@@ -57,7 +57,7 @@ export function errorsOf(
     ...nonEmpty("nonChecksNotAStepName", summary.nonChecksNotAStepName),
   };
   const errors: ErrorsSection = {
-    ...nonEmpty("scenarioCodeErrors", scenarioCodeErrors),
+    ...nonEmpty("claimCodeErrors", claimCodeErrors),
     ...(Object.keys(configurationNotRead).length > 0 ? { configurationNotRead } : {}),
   };
   return Object.keys(errors).length > 0 ? errors : undefined;
@@ -92,7 +92,7 @@ export interface RenderInput {
   readonly errorsInTheInputs?: ErrorsSection;
   readonly summary: SummaryStatingNoFault & {
     readonly runVerdict: RunVerdict;
-    readonly scenarioCodes?: ScenarioCodesSection;
+    readonly claimCodes?: ClaimCodesSection;
     readonly outOfBalanceByFeature?: readonly FeatureOutOfBalance[];
   };
   readonly claimReconciliations: readonly ClaimReconciliation[];

@@ -28,7 +28,7 @@ describe("[SCN-TRM-001] a check step's id: names the scenario the target authore
     ["bares a step's id: spelled with a space between the sigil and the term", "@ SCN-MSD-001"],
   ] as const)("%s", (_title, id) => {
     expect(citationOfCitedRow(id)).toStrictEqual({
-      scnId: "SCN-MSD-001",
+      claimCode: "SCN-MSD-001",
     });
   });
 

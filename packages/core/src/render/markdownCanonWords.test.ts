@@ -10,10 +10,10 @@ import { claimReconciliationsOf } from "../assemble/reportClaimReconciliations.t
 import { UNNAMED_CLAIM_ID } from "../domain/claimReconciliation.js";
 
 describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows by the reconciliation model's definitions of them, while the JSON keeps the terms", () => {
-  const proven = { scnId: "SCN-CWD-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
-  const provenObservation = { qualityCheckKind: "unit" as const, scnId: "SCN-CWD-001", status: "passed" as const };
-  const strandedObservation = { qualityCheckKind: "unit" as const, scnId: "SCN-GONE-001", status: "passed" as const };
-  const uncitedObservation = { qualityCheckKind: "unit" as const, scnId: null, status: "passed" as const };
+  const proven = { claimCode: "SCN-CWD-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
+  const provenObservation = { qualityCheckKind: "unit" as const, claimCode: "SCN-CWD-001", status: "passed" as const };
+  const strandedObservation = { qualityCheckKind: "unit" as const, claimCode: "SCN-GONE-001", status: "passed" as const };
+  const uncitedObservation = { qualityCheckKind: "unit" as const, claimCode: null, status: "passed" as const };
   const unbalanced = () => reconcile([proven], [provenObservation, strandedObservation, uncitedObservation]);
 
   it("tallies each row kind by its definition", () => {
@@ -55,15 +55,15 @@ describe("[SCN-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
 });
 
 describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentence, never by its handle", () => {
-  const proven = { scnId: "SCN-CWD-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
+  const proven = { claimCode: "SCN-CWD-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
   const brokenObservation = {
     qualityCheckKind: "unit" as const,
-    scnId: "SCN-CWD-001",
+    claimCode: "SCN-CWD-001",
     status: "failed" as const,
     broken: true as const,
     locator: "src/collect.test.ts",
   };
-  const provenObservation = { qualityCheckKind: "unit" as const, scnId: "SCN-CWD-001", status: "passed" as const };
+  const provenObservation = { qualityCheckKind: "unit" as const, claimCode: "SCN-CWD-001", status: "passed" as const };
 
   it("the unsound stamp quotes the missing outcome's sentence", () => {
     const md = renderMarkdown(__er(reconcile([proven], [brokenObservation])), ctx, publishedExitCodeOf);
@@ -77,14 +77,14 @@ describe("[SCN-RPT-040] the markdown's prose refers to an outcome by its sentenc
     const md = renderMarkdown(
       {
         ...__er(reconcile([proven], [provenObservation])),
-        scenarioCodeErrors: [{ kind: "no-feature-code", files: ["unc.feature"] }],
+        claimCodeErrors: [{ kind: "no-feature-code", files: ["unc.feature"] }],
         scenarioCodePopulation: { featureFiles: 1, featureCodes: 0 },
       },
       ctx,
       publishedExitCodeOf
     );
-    expect(md).toContain(coreMessage(CoreMessage.DuplicateScnCodeNotListed, { outcome: coreMessage(CoreMessage.OutcomeDuplicateScnCode) }));
-    expect(md).toContain(`as "${coreMessage(CoreMessage.OutcomeDuplicateScnCode)}".`);
-    expect(md).not.toContain("`duplicate-scn-code`");
+    expect(md).toContain(coreMessage(CoreMessage.DuplicateClaimCodeNotListed, { outcome: coreMessage(CoreMessage.OutcomeDuplicateClaimCode) }));
+    expect(md).toContain(`as "${coreMessage(CoreMessage.OutcomeDuplicateClaimCode)}".`);
+    expect(md).not.toContain("`duplicate-claim-code`");
   });
 });

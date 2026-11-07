@@ -6,14 +6,14 @@ import type {
   EvidenceObservation,
 } from "../model.js";
 
-describe("[SCN-LDG-029] a no-scn-code reconciliation carries a scenario-scope obligation and no observation", () => {
+describe("[SCN-LDG-029] a no-claim-code reconciliation carries a scenario-scope obligation and no observation", () => {
 
-  it("the untagged scenario's one reconciliation is the no-scn-code outcome and its scenario-scope obligation, whose kind of quality check is null, with no observation list, and the row's obligation census stays empty", () => {
+  it("the untagged scenario's one reconciliation is the no-claim-code outcome and its scenario-scope obligation, whose kind of quality check is null, with no observation list, and the row's obligation census stays empty", () => {
     const namedScenarios: Scenario[] = [
-      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     const observed: EvidenceObservation[] = [
-      { scnId: "SCN-AAA-001", qualityCheckKind: "unit", status: "passed" },
+      { claimCode: "SCN-AAA-001", qualityCheckKind: "unit", status: "passed" },
     ];
 
     const reconciliation = reconcile(namedScenarios, observed, ["beta must never lose the money"]);
@@ -21,7 +21,7 @@ describe("[SCN-LDG-029] a no-scn-code reconciliation carries a scenario-scope ob
       (r) => r.claim === "beta must never lose the money",
     );
     expect(row?.qualityCheckReconciliations).toStrictEqual([
-      { outcome: "no-scn-code", evidenceObligation: { qualityCheckKind: null } },
+      { outcome: "no-claim-code", evidenceObligation: { qualityCheckKind: null } },
     ]);
     expect(obligationsOf(row!)).toEqual([]);
   });

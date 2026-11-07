@@ -37,9 +37,9 @@ const sharedCodeCorpus = [
 
 const sharedCodeCorpusFacts = {
   untaggedScenarios: [{ feature: "one.feature", title: "carries no code" }],
-  sharedScnCodes: [
+  sharedClaimCodes: [
     {
-      scnId: "SCN-ONE-001",
+      claimCode: "SCN-ONE-001",
       scenarios: [
         { feature: "one.feature", title: "first" },
         { feature: "one.feature", title: "second" },
@@ -48,11 +48,11 @@ const sharedCodeCorpusFacts = {
   ],
 };
 
-describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under summary.scenarioCodes, straight after the run verdict", () => {
+describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under summary.claimCodes, straight after the run verdict", () => {
   it("states them in the summary after the run verdict, and not at the report's top level", () => {
     const report = reportOver(sharedCodeCorpus, ["one.feature"]);
-    expect(report).not.toHaveProperty("scenarioCodes");
-    expect(Object.keys(report.summary).slice(0, 2)).toEqual(["runVerdict", "scenarioCodes"]);
+    expect(report).not.toHaveProperty("claimCodes");
+    expect(Object.keys(report.summary).slice(0, 2)).toEqual(["runVerdict", "claimCodes"]);
   });
 
   it("states the feature files and codes, the excluded occurrences, the untagged scenarios and the shared codes in one object", () => {
@@ -81,7 +81,7 @@ describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under sum
       ],
       ["one.feature", "plain.feature"]
     );
-    expect(report.summary.scenarioCodes).toEqual({
+    expect(report.summary.claimCodes).toEqual({
       featureFiles: 2,
       featureCodes: 1,
       excludedOccurrences: 1,
@@ -89,7 +89,7 @@ describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under sum
     });
   });
 
-  it("carries no sharedScnCodes when no two scenarios share a code", () => {
+  it("carries no sharedClaimCodes when no two scenarios share a code", () => {
     const report = reportOver(
       [
         "@ONE\nFeature: one\n\n  @unit @SCN-ONE-001\n  Scenario: first\n    Given a thing\n",
@@ -97,31 +97,31 @@ describe("[SCN-RMD-022] the JSON report carries the corpus's own facts under sum
       ],
       ["one.feature", "two.feature"]
     );
-    expect(report.summary.scenarioCodes).toEqual({
+    expect(report.summary.claimCodes).toEqual({
       featureFiles: 2,
       featureCodes: 2,
       excludedOccurrences: 0,
       untaggedScenarios: [],
     });
-    expect(report.summary.scenarioCodes).not.toHaveProperty("sharedScnCodes");
+    expect(report.summary.claimCodes).not.toHaveProperty("sharedClaimCodes");
   });
 
   it("carries the feature files and codes alone when the report is given only the population", () => {
     const report = reportOver(sharedCodeCorpus, ["one.feature"], { population: true, census: false });
-    expect(report.summary.scenarioCodes).toStrictEqual({ featureFiles: 1, featureCodes: 1 });
+    expect(report.summary.claimCodes).toStrictEqual({ featureFiles: 1, featureCodes: 1 });
   });
 
   it("carries the excluded occurrences, the untagged scenarios and the shared codes alone when the report is given only the census", () => {
     const report = reportOver(sharedCodeCorpus, ["one.feature"], { population: false, census: true });
-    expect(report.summary.scenarioCodes).toStrictEqual({
+    expect(report.summary.claimCodes).toStrictEqual({
       excludedOccurrences: 0,
       ...sharedCodeCorpusFacts,
     });
   });
 
-  it("carries no scenarioCodes when the report is given neither", () => {
+  it("carries no claimCodes when the report is given neither", () => {
     const report = reportOver(sharedCodeCorpus, ["one.feature"], { population: false, census: false });
-    expect(report).not.toHaveProperty("scenarioCodes");
-    expect(report.summary).not.toHaveProperty("scenarioCodes");
+    expect(report).not.toHaveProperty("claimCodes");
+    expect(report.summary).not.toHaveProperty("claimCodes");
   });
 });

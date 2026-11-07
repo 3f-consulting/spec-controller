@@ -133,10 +133,10 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-018
     Scenario: a reconciliation carrying a broken item is unsound, and one carrying none is sound
 
-  Rule: a scenario carrying no @SCN reconciles no-scn-code — no-scn-code work is never invisible
+  Rule: a scenario carrying no @SCN reconciles no-claim-code — no-claim-code work is never invisible
 
     @unit @SCN-LDG-021
-    Scenario: a scenario carrying no @SCN reconciles no-scn-code on its own row, and the run is out-of-balance
+    Scenario: a scenario carrying no @SCN reconciles no-claim-code on its own row, and the run is out-of-balance
 
   Rule: every evidence observation posts to exactly one ledger account, never to none — the evidence observation cites, on both axes
 
@@ -175,10 +175,10 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @SCN-LDG-028
     Scenario: a fitness missing quality-check reconciliation carries its obligation and no observation, read from its observation list
 
-  Rule: a no-scn-code reconciliation carries a scenario-scope evidence obligation and no observation
+  Rule: a no-claim-code reconciliation carries a scenario-scope evidence obligation and no observation
 
     @unit @SCN-LDG-029
-    Scenario: a no-scn-code quality-check reconciliation carries a scenario-scope obligation and no observation, read from its observation list
+    Scenario: a no-claim-code quality-check reconciliation carries a scenario-scope obligation and no observation, read from its observation list
 
   Rule: a Quality Check Reconciliation's carried sides are consistent with its outcome
 
@@ -209,7 +209,7 @@ Feature: Ledger over obligation-vs-observation evidence
     neither and posts to the unnamed claim, naming the code, as evidence naming several scenarios does.
 
     @unit @SCN-LDG-046
-    Scenario: two scenarios sharing one @SCN code reconcile as two duplicate-scn-code Claim Reconciliations under that code, each naming its own scenario, and an observation citing the code posts to the unnamed claim
+    Scenario: two scenarios sharing one @SCN code reconcile as two duplicate-claim-code Claim Reconciliations under that code, each naming its own scenario, and an observation citing the code posts to the unnamed claim
 
   Rule: a test's run result gives the same evidence whatever the runner: broken when it never reached its assertions, nothing when it is inconclusive
 

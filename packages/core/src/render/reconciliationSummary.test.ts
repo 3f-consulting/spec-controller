@@ -43,13 +43,13 @@ const ONE_DEFERRED = `
 `;
 
 const OBSERVATIONS: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", scnId: "SCN-ERS-001", status: "passed", locator: "src/a.test.ts" },
-  { qualityCheckKind: "unit", scnId: "SCN-ERS-002", status: "passed", locator: "src/b.test.ts" },
-  { qualityCheckKind: "unit", scnId: "SCN-ERS-003", status: "failed", locator: "src/c.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "SCN-ERS-001", status: "passed", locator: "src/a.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "SCN-ERS-002", status: "passed", locator: "src/b.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "SCN-ERS-003", status: "failed", locator: "src/c.test.ts" },
 ];
 
 const DEFERRED_OBSERVATIONS: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", scnId: "SCN-ERS-004", status: "passed", locator: "src/d.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "SCN-ERS-004", status: "passed", locator: "src/d.test.ts" },
 ];
 
 function render(feature: string, observations: EvidenceObservation[] = OBSERVATIONS): string {
@@ -74,8 +74,8 @@ const CAUSE_ROW_SENTENCE: Record<Outcome, WordedCoreMessage> = {
   missing: CoreMessage.OutcomeMissing,
   failing: CoreMessage.OutcomeFailing,
   watermelon: CoreMessage.OutcomeWatermelon,
-  "no-scn-code": CoreMessage.OutcomeNoScnCode,
-  "duplicate-scn-code": CoreMessage.OutcomeDuplicateScnCode,
+  "no-claim-code": CoreMessage.OutcomeNoClaimCode,
+  "duplicate-claim-code": CoreMessage.OutcomeDuplicateClaimCode,
   "cites-unknown-scenario": CoreMessage.OutcomeCitesUnknownScenario,
   "cites-no-scenario": CoreMessage.OutcomeCitesNoScenario,
   "no-evidence-obligation": CoreMessage.OutcomeNoEvidenceObligation,

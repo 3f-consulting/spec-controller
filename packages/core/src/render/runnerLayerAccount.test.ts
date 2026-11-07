@@ -31,9 +31,9 @@ jobs:
 `;
 
 const behaviouralObservations: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", scnId: "SCN-FIX-001", status: "passed" },
-  { qualityCheckKind: "e2e", scnId: "SCN-FIX-002", status: "passed" },
-  { qualityCheckKind: "performance", scnId: "SCN-FIX-003", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "SCN-FIX-001", status: "passed" },
+  { qualityCheckKind: "e2e", claimCode: "SCN-FIX-002", status: "passed" },
+  { qualityCheckKind: "performance", claimCode: "SCN-FIX-003", status: "passed" },
 ];
 
 const NO_RUNNER = (): string => coreMessage(CoreMessage.RunnerLayerNamesNone);

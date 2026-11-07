@@ -29,7 +29,7 @@ const COLLECTION_FAILED_MESSAGE = "  \n\t\nError:  Cannot   find | package\n    
 
 const collectionFailed = (locator: string | undefined, message?: string): EvidenceObservation => ({
   qualityCheckKind: "unit",
-  scnId: null,
+  claimCode: null,
   status: "failed",
   ...(locator !== undefined ? { locator } : {}),
   broken: true,
@@ -39,7 +39,7 @@ const collectionFailed = (locator: string | undefined, message?: string): Eviden
 const SKIPPED_CHECK: EvidenceObservation = {
   qualityCheckKind: "fitness",
   fitnessFunction: "SCN-RIN-001",
-  scnId: "SCN-RIN-001",
+  claimCode: "SCN-RIN-001",
   exists: false,
   enforcedOverRealSource: false,
   broken: true,
@@ -47,8 +47,8 @@ const SKIPPED_CHECK: EvidenceObservation = {
 };
 
 const SCENARIOS: readonly Scenario[] = [
-  { scnId: "SCN-RIN-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-RIN-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { claimCode: "SCN-RIN-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-RIN-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
 ];
 
 function render(...broken: readonly EvidenceObservation[]): string {
@@ -81,7 +81,7 @@ const unsoundStamp = (proofs: string): string => coreMessage(CoreMessage.RunUnso
 describe("[SCN-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
   let checkDidNotRun: string;
   beforeEach(() => {
-    checkDidNotRun = coreMessage(CoreMessage.CheckStepSkipped, { scnId: "SCN-RIN-001" });
+    checkDidNotRun = coreMessage(CoreMessage.CheckStepSkipped, { claimCode: "SCN-RIN-001" });
   });
 
   it.each([
@@ -181,20 +181,20 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, an
 
 describe("[SCN-RPT-085] an item quoting what an evidence observation said states the first line of its message and every note, however many lines the message runs to", () => {
   const codes = ["SCN-RIN-001", "SCN-RIN-002"];
-  const said = { locator: "src/x.test.ts", message: "\nexpected 1 to be 2\n    at foo (x.ts:1)", notes: [{ kind: "several-scn-codes", codes }] } as const;
+  const said = { locator: "src/x.test.ts", message: "\nexpected 1 to be 2\n    at foo (x.ts:1)", notes: [{ kind: "several-claim-codes", codes }] } as const;
   const rows: [string, EvidenceObservation][] = [
-    ["a broken item", { qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, ...said }],
-    ["a file's group on the unnamed claim's row", { qualityCheckKind: "unit", scnId: null, status: "failed", testName: "t1", ...said }],
+    ["a broken item", { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, ...said }],
+    ["a file's group on the unnamed claim's row", { qualityCheckKind: "unit", claimCode: null, status: "failed", testName: "t1", ...said }],
   ];
   it.each(rows)("%s", (_, observation) => {
     const item = reconcilingItemsCell(render(observation), UNNAMED_CLAIM_ID);
-    expect(item).toContain(`(${said.locator}: expected 1 to be 2 ${coreMessage(CoreMessage.SeveralScnCodesCited, { count: codes.length, codes: codes.join(", ") })})`);
+    expect(item).toContain(`(${said.locator}: expected 1 to be 2 ${coreMessage(CoreMessage.SeveralClaimCodesCited, { count: codes.length, codes: codes.join(", ") })})`);
     expect(item).not.toContain("at foo");
   });
 
   it("a file's group states a headline once when its tests' messages differ only in their spacing", () => {
     const failing = (testName: string, message: string): EvidenceObservation =>
-      ({ qualityCheckKind: "unit", scnId: null, status: "failed", locator: "x.test.ts", testName, message });
+      ({ qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "x.test.ts", testName, message });
     const item = reconcilingItemsCell(render(failing("t1", "expected\t1  to be 2"), failing("t2", "expected 1 to be 2")), UNNAMED_CLAIM_ID);
     expect(item).toContain("(x.test.ts: expected 1 to be 2)");
     expect(item.split("expected 1 to be 2")).toHaveLength(2);

@@ -15,7 +15,7 @@ function reconcileCorpus(corpus: Corpus): EvidenceReconciliation {
   });
   const observations: EvidenceObservation[] = entries
     .flatMap(([, { ids }]) => ids)
-    .map((scnId) => ({ qualityCheckKind: "unit", scnId, status: "passed" }));
+    .map((claimCode) => ({ qualityCheckKind: "unit", claimCode, status: "passed" }));
   return evidenceReconciliationFromSources({
     features: parsedFeatures(sources, entries.map(([slug]) => `${slug}.feature`)),
     packageJson: {},
@@ -33,7 +33,7 @@ function byCode(reconciliation: EvidenceReconciliation) {
 
 const PAIRS: { fault: string; misfiled: Corpus; twin: Corpus }[] = [
   {
-    fault: "foreign-scn-code",
+    fault: "foreign-claim-code",
     misfiled: { one: { code: "ONE", ids: ["SCN-ONE-001"] }, two: { code: "TWO", ids: ["SCN-TWO-001", "SCN-ONE-002"] } },
     twin: { one: { code: "ONE", ids: ["SCN-ONE-001", "SCN-ONE-002"] }, two: { code: "TWO", ids: ["SCN-TWO-001"] } },
   },
@@ -54,8 +54,8 @@ describe("[SCN-RMD-016] a misfiled account reconciles exactly as it would if cor
     it(`${fault}: the ledger and summary equal the correctly filed twin's; only the code errors differ`, () => {
       const wrong = reconcileCorpus(misfiled);
       const right = reconcileCorpus(twin);
-      expect(wrong.scenarioCodeErrors?.map((e) => e.kind)).toEqual([fault]);
-      expect(right.scenarioCodeErrors).toEqual([]);
+      expect(wrong.claimCodeErrors?.map((e) => e.kind)).toEqual([fault]);
+      expect(right.claimCodeErrors).toEqual([]);
       expect(byCode(wrong)).toEqual(byCode(right));
       expect(wrong.summary).toEqual(right.summary);
     });

@@ -6,7 +6,7 @@ const BOUNDS = ["SCN-A-001", "SCN-AB-001", "SCN-FIVEC-001", "SCN-SIXCHR-001"] as
 describe("[SCN-WFS-016] a CI step whose id is a feature part outside two to five characters is no fitness evidence observation's citation", () => {
   it("reads an evidence observation from the two- and five-character step ids in the run record, and from no other", () => {
     const record = Object.fromEntries(BOUNDS.map((id) => [id, { outcome: "success", conclusion: "success" }]));
-    expect(ciStepRecordObservations(record).map((observation) => observation.scnId)).toEqual(["SCN-AB-001", "SCN-FIVEC-001"]);
+    expect(ciStepRecordObservations(record).map((observation) => observation.claimCode)).toEqual(["SCN-AB-001", "SCN-FIVEC-001"]);
   });
 });
 
@@ -20,7 +20,7 @@ describe("[SCN-WFS-019] each step in the run's record is read by its outcome, ne
       {
         qualityCheckKind: "fitness",
         fitnessFunction: "SCN-FIT-001",
-        scnId: "SCN-FIT-001",
+        claimCode: "SCN-FIT-001",
         exists: true,
         enforcedOverRealSource: true,
         status: "failed",
@@ -28,7 +28,7 @@ describe("[SCN-WFS-019] each step in the run's record is read by its outcome, ne
       {
         qualityCheckKind: "fitness",
         fitnessFunction: "SCN-FIT-002",
-        scnId: "SCN-FIT-002",
+        claimCode: "SCN-FIT-002",
         exists: true,
         enforcedOverRealSource: true,
         status: "passed",
@@ -43,10 +43,10 @@ describe("[SCN-WFS-019] each step in the run's record is read by its outcome, ne
       "SCN-FIT-004": { conclusion: "success" },
     };
     expect(recordedCheckStepsOf(record)).toStrictEqual([
-      { citedScn: "SCN-FIT-001", report: "succeeded", said: "success" },
-      { citedScn: "SCN-FIT-002", report: "failed", said: "failure" },
-      { citedScn: "SCN-FIT-003", report: "other", said: "skipped" },
-      { citedScn: "SCN-FIT-004", report: "other" },
+      { citedClaimCode: "SCN-FIT-001", report: "succeeded", said: "success" },
+      { citedClaimCode: "SCN-FIT-002", report: "failed", said: "failure" },
+      { citedClaimCode: "SCN-FIT-003", report: "other", said: "skipped" },
+      { citedClaimCode: "SCN-FIT-004", report: "other" },
     ]);
   });
 });

@@ -12,31 +12,31 @@ import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { RECONCILING_ITEMS_COLUMN, VERDICT_COLUMN, claimReconciliationsTable } from "./claimReconciliationsTable.test-utils.js";
 
-describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by its feature file and code, falling back to the bare code for a foreign-scn-code", () => {
+describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by its feature file and code, falling back to the bare code for a foreign-claim-code", () => {
   let spanning: Ledger;
   beforeEach(() => {
     spanning = reconcile(
       [
-        { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-        { scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheckKind: "integration" }] },
-        { scnId: "SCN-LNT-009", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-LDG-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "SCN-LDG-007", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+        { claimCode: "SCN-LNT-009", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
       ],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" },
-        { qualityCheckKind: "integration", scnId: "SCN-LDG-007", status: "failed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" },
+        { qualityCheckKind: "integration", claimCode: "SCN-LDG-007", status: "failed" },
         {
           qualityCheckKind: "fitness",
           fitnessFunction: "lint:guard-lint",
-          scnId: "SCN-LNT-002",
+          claimCode: "SCN-LNT-002",
           exists: true,
           enforcedOverRealSource: false,
         },
         {
           qualityCheckKind: "fitness",
           fitnessFunction: "lint:guard-lint",
-          scnId: "SCN-LNT-009",
+          claimCode: "SCN-LNT-009",
           exists: true,
           enforcedOverRealSource: true,
         },
@@ -58,8 +58,8 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
 
   it("omits the section entirely (total line and all) when no scenario is out of balance", () => {
     const allBalanced: Ledger = reconcile(
-      [{ scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-      [{ qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" }]
+      [{ claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" }]
     );
     const md = renderMarkdown(__er(allBalanced), ctx, publishedExitCodeOf);
     expect(md).not.toContain(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)));
@@ -69,7 +69,7 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
 
   it("slots the by-feature section after the Evidence observations and before the Claim Reconciliations (no warnings section)", () => {
     const withAll: Ledger = reconcile(
-      [{ scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] }],
+      [{ claimCode: "SCN-LNT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] }],
       [{ qualityCheckKind: "fitness", fitnessFunction: "guard-lint", exists: true, enforcedOverRealSource: false }]
     );
     const md = renderMarkdown(__er(withAll, true), ctx, publishedExitCodeOf);
@@ -130,8 +130,8 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
 
   it("emits no line at all when no scenario is out of balance, so the ledger heading follows the previous section's closing blank", () => {
     const allBalanced: Ledger = reconcile(
-      [{ scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-      [{ qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" }]
+      [{ claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" }]
     );
     const lines = renderMarkdown(__er(allBalanced), ctx, publishedExitCodeOf).split("\n");
     const ledgerAt = lines.indexOf(ledgerHeading());
@@ -144,11 +144,11 @@ describe("[SCN-RPT-006] the by-feature cut names each out-of-balance feature by 
 });
 
 describe("[SCN-RPT-030] the by-feature total line counts the out-of-balance rows no feature can group", () => {
-  const proven = { scnId: "SCN-BFP-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
-  const unproven = { scnId: "SCN-BFP-002", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
-  const provenObservation = { qualityCheckKind: "unit" as const, scnId: "SCN-BFP-001", status: "passed" as const };
-  const strandedObservation = { qualityCheckKind: "unit" as const, scnId: "SCN-GONE-001", status: "passed" as const };
-  const uncitedObservation = { qualityCheckKind: "unit" as const, scnId: null, status: "passed" as const };
+  const proven = { claimCode: "SCN-BFP-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
+  const unproven = { claimCode: "SCN-BFP-002", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
+  const provenObservation = { qualityCheckKind: "unit" as const, claimCode: "SCN-BFP-001", status: "passed" as const };
+  const strandedObservation = { qualityCheckKind: "unit" as const, claimCode: "SCN-GONE-001", status: "passed" as const };
+  const uncitedObservation = { qualityCheckKind: "unit" as const, claimCode: null, status: "passed" as const };
   const byFeature = (ledger: Ledger): string => {
     const md = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
     const at = md.indexOf(markdownHeading(3, coreMessage(CoreMessage.OutOfBalanceByFeatureHeading)));
@@ -201,11 +201,11 @@ describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenari
   beforeEach(() => {
     reconciliationFixture = reconcile(
       [
-        { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-B", evidenceObligations: [{ qualityCheckKind: "integration" }] },
-        { scnId: "SCN-C", evidenceObligations: [] },
+        { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-B", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+        { claimCode: "SCN-C", evidenceObligations: [] },
       ],
-      [{ qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" }]
+      [{ qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" }]
     );
   });
 
@@ -231,8 +231,8 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
   let simple: Ledger;
   beforeEach(() => {
     simple = reconcile(
-      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-      [{ qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" }]
+      [{ claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" }]
     );
   });
   const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [] };
@@ -240,7 +240,7 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet when a corpus is threaded", () => {
     const md = renderMarkdown(__er(simple, false), ctx, publishedExitCodeOf, evidenceObligations);
     expect(md).toContain(markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading)));
-    expect(md.split("\n")).toContain(`- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: 3 })}`);
+    expect(md.split("\n")).toContain(`- ${coreMessage(CoreMessage.ExcludedClaimOccurrences, { count: 3 })}`);
   });
 
   it("renders no census line and nothing in its place when no corpus is threaded: heading, blank, tally, one blank, then the table", () => {
@@ -266,13 +266,13 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
   beforeEach(() => {
     reformatted = reconcile(
       [
-        { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-LNT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
       ],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" },
-        { qualityCheckKind: "fitness", fitnessFunction: "lint:guard-lint", scnId: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:guard-lint", claimCode: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
       ]
     );
   });
@@ -300,10 +300,10 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
   it("ends the report with the Claim Reconciliations: heading, blank, tally and its blank first, the table then one closing blank last", () => {
     const observed: Ledger = reconcile(
       [
-        { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-LDG-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-LDG-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
-      [{ qualityCheckKind: "unit", scnId: "SCN-LDG-001", status: "passed" }]
+      [{ qualityCheckKind: "unit", claimCode: "SCN-LDG-001", status: "passed" }]
     );
     const lines = renderMarkdown(__er(observed, true), ctx, publishedExitCodeOf).split("\n");
     const heading = markdownHeading(2, coreMessage(CoreMessage.ClaimReconciliationsHeading));
@@ -328,17 +328,17 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
 
 describe("[SCN-RPT-010] the markdown report renders the Evidence observations reconciliation", () => {
   const scenarios: Scenario[] = [
-    { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ];
   const observations: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-PHX-001", status: "passed" },
-    { qualityCheckKind: "integration", scnId: null, status: "passed" },
-    { qualityCheckKind: "integration", scnId: null, status: "passed" },
-    { qualityCheckKind: "integration", scnId: null, status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-PHX-001", status: "passed" },
+    { qualityCheckKind: "integration", claimCode: null, status: "passed" },
+    { qualityCheckKind: "integration", claimCode: null, status: "passed" },
+    { qualityCheckKind: "integration", claimCode: null, status: "passed" },
   ];
   let balance: Ledger;
   beforeEach(() => {

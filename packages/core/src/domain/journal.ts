@@ -38,7 +38,7 @@ export interface EvidenceObligation {
 }
 
 export interface Scenario {
-  readonly scnId: string;
+  readonly claimCode: string;
   readonly evidenceObligations: readonly EvidenceObligation[];
   readonly feature?: string;
   readonly title?: string;
@@ -49,17 +49,17 @@ export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<s
   for (const scenario of scenarios) {
     for (const obligation of scenario.evidenceObligations) {
       if (obligation.pending === true) continue;
-      pairs.add(evidenceObligationPairKey(scenario.scnId, obligation.qualityCheckKind));
+      pairs.add(evidenceObligationPairKey(scenario.claimCode, obligation.qualityCheckKind));
     }
   }
   return pairs;
 }
 
 export function evidenceObligationPairKey(
-  scnId: string,
+  claimCode: string,
   qualityCheckKind: QualityCheckKind | undefined
 ): string {
-  return `${scnId} ${qualityCheckKind}`;
+  return `${claimCode} ${qualityCheckKind}`;
 }
 
 export function evidenceObligationsOf<T extends { readonly pending?: boolean }>(
@@ -89,13 +89,13 @@ export function evidenceOfRunResult(result: RunResult): RunEvidence | undefined 
   return { status: result };
 }
 
-interface SeveralScnCodesNote {
-  readonly kind: "several-scn-codes";
+interface SeveralClaimCodesNote {
+  readonly kind: "several-claim-codes";
   readonly codes: readonly string[];
 }
 
-interface SharedScnCodeNote {
-  readonly kind: "shared-scn-code";
+interface SharedClaimCodeNote {
+  readonly kind: "shared-claim-code";
   readonly code: string;
 }
 
@@ -110,11 +110,11 @@ interface CheckStepDidNotRunNote {
   readonly outcome?: string;
 }
 
-export type ObservationNote = SeveralScnCodesNote | SharedScnCodeNote | AmbiguousStepNote | CheckStepDidNotRunNote;
+export type ObservationNote = SeveralClaimCodesNote | SharedClaimCodeNote | AmbiguousStepNote | CheckStepDidNotRunNote;
 
 export interface BehaviouralEvidenceObservation {
   readonly qualityCheckKind: Layer;
-  readonly scnId: string | null;
+  readonly claimCode: string | null;
   readonly status: EvidenceStatus;
   readonly locator?: string;
   readonly broken?: true;
@@ -126,7 +126,7 @@ export interface BehaviouralEvidenceObservation {
 export interface FitnessEvidenceObservation {
   readonly qualityCheckKind: "fitness";
   readonly fitnessFunction: string;
-  readonly scnId?: string;
+  readonly claimCode?: string;
   /** The CI step it was observed at, as workflow, job and step. */
   readonly step?: string;
   readonly exists: boolean;

@@ -395,12 +395,12 @@ Then("the reconciliation names each of those scenarios by its feature file's pat
 
 Then("each of those scenarios is counted against its own feature, not against the other", function (this: SpecControllerWorld) {
   assert.ok(this.sameNameJson, "the corpus was not reconciled");
-  const summary = this.sameNameJson["summary"] as { outOfBalanceByFeature: { feature: string; count: number; scenariosWithNoScnCode?: number }[] };
+  const summary = this.sameNameJson["summary"] as { outOfBalanceByFeature: { feature: string; count: number; scenariosWithNoClaimCode?: number }[] };
   assert.deepEqual(
-    summary.outOfBalanceByFeature.map(({ feature, count, scenariosWithNoScnCode }) => ({ feature, count, scenariosWithNoScnCode })),
+    summary.outOfBalanceByFeature.map(({ feature, count, scenariosWithNoClaimCode }) => ({ feature, count, scenariosWithNoClaimCode })),
     [
-      { feature: "SNA", count: 1, scenariosWithNoScnCode: 1 },
-      { feature: "SNB", count: 1, scenariosWithNoScnCode: 1 },
+      { feature: "SNA", count: 1, scenariosWithNoClaimCode: 1 },
+      { feature: "SNB", count: 1, scenariosWithNoClaimCode: 1 },
     ],
     "each file's untagged scenario was not counted against its own feature alone",
   );

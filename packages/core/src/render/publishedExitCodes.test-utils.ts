@@ -5,7 +5,7 @@ import type { RunVerdict } from "../domain/runVerdict.js";
 const PUBLISHED: Readonly<Record<RunVerdict, number>> = {
   balanced: 0,
   "out-of-balance": 1,
-  "scenario-code-errors": 1,
+  "claim-code-errors": 1,
   pending: 3,
   unsound: 4,
   "nothing-to-reconcile": 5,

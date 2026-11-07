@@ -58,7 +58,7 @@ describe("[SCN-MSG-001] an Evidence Obligation or Evidence Observation that dive
   const sampleObligation: ReconciledEvidenceObligation = { qualityCheckKind: "unit" };
   const sampleObservation: ReconciledEvidenceObservation = {
     qualityCheckKind: "unit",
-    scnId: "SCN-MSG-001",
+    claimCode: "SCN-MSG-001",
     status: "passed",
     outcome: "satisfied",
   };

@@ -24,11 +24,11 @@ describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending It
     pendingBalance = reconcile(
       [
         {
-          scnId: "SCN-PDX-001",
+          claimCode: "SCN-PDX-001",
           evidenceObligations: [{ qualityCheckKind: "unit", pending: true }, { qualityCheckKind: "integration", pending: true }],
         },
         {
-          scnId: "SCN-PDX-002",
+          claimCode: "SCN-PDX-002",
           evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
         },
       ],
@@ -44,9 +44,9 @@ describe("[SCN-RPT-042] the Reconciliation totals section tallies the Pending It
 });
 
 describe("[SCN-RPT-043] a balanced-with-pending row is visibly distinguished from a clean-balanced one", () => {
-  const rowFor = (md: string, scnId: string): string => {
-    const row = md.split("\n").find((line) => line.startsWith(`| ${scnId} `));
-    expect(row, `expected a rendered row for ${scnId}`).toBeTruthy();
+  const rowFor = (md: string, claimCode: string): string => {
+    const row = md.split("\n").find((line) => line.startsWith(`| ${claimCode} `));
+    expect(row, `expected a rendered row for ${claimCode}`).toBeTruthy();
     return row!;
   };
   const exceptionsCell = (row: string): string => (row.split("|")[3] ?? "").trim();
@@ -55,10 +55,10 @@ describe("[SCN-RPT-043] a balanced-with-pending row is visibly distinguished fro
   beforeEach(() => {
     contrastBalance = reconcile(
       [
-        { scnId: "SCN-PDD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-PDD-002", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
+        { claimCode: "SCN-PDD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-PDD-002", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
       ],
-      [{ qualityCheckKind: "unit", scnId: "SCN-PDD-001", status: "passed" }]
+      [{ qualityCheckKind: "unit", claimCode: "SCN-PDD-001", status: "passed" }]
     );
   });
 

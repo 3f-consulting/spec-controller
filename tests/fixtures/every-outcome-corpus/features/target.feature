@@ -45,21 +45,21 @@ Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits e
     Then it reconciles both-missing
 
   @unit
-  Scenario: no-scn-code — an ordinary scenario carrying no @SCN tag
+  Scenario: no-claim-code — an ordinary scenario carrying no @SCN tag
     Given a scenario carrying an evidence tag but no @SCN
     When it reconciles
     Then its obligation has no code for an observation to link to
 
-  # duplicate-scn-code: two scenarios carrying one code are ONE account, and every
-  # quality check on it reads duplicate-scn-code. Nothing cites it; the outcome needs no evidence observation.
+  # duplicate-claim-code: two scenarios carrying one code are ONE account, and every
+  # quality check on it reads duplicate-claim-code. Nothing cites it; the outcome needs no evidence observation.
   @unit @SCN-TOC-007
-  Scenario: duplicate-scn-code — the first of two scenarios carrying one code
+  Scenario: duplicate-claim-code — the first of two scenarios carrying one code
     Given a unit obligation
     When another scenario carries the same code
-    Then the one account reads duplicate-scn-code
+    Then the one account reads duplicate-claim-code
 
   @unit @SCN-TOC-007
-  Scenario: duplicate-scn-code — the second of two scenarios carrying one code
+  Scenario: duplicate-claim-code — the second of two scenarios carrying one code
     Given a unit obligation
     When another scenario carries the same code
-    Then the one account reads duplicate-scn-code
+    Then the one account reads duplicate-claim-code

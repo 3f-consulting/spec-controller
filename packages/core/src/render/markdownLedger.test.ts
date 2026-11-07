@@ -22,31 +22,31 @@ import {
 describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence columns", () => {
   const scenarios: Scenario[] = [
     {
-      scnId: "SCN-A",
+      claimCode: "SCN-A",
       evidenceObligations: [
         { qualityCheckKind: "unit" },
         { qualityCheckKind: "fitness" },
       ],
     },
-    { scnId: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { scnId: "SCN-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { scnId: "SCN-D", evidenceObligations: [{ qualityCheckKind: "integration" }] },
-    { scnId: "SCN-E", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-    { scnId: "SCN-F", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
-    { scnId: "SCN-G", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
-    { scnId: "SCN-H", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "SCN-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "SCN-D", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+    { claimCode: "SCN-E", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "SCN-F", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
+    { claimCode: "SCN-G", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+    { claimCode: "SCN-H", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
   const observations: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-C", status: "passed" },
-    { qualityCheckKind: "integration", scnId: "SCN-C", status: "passed" },
-    { qualityCheckKind: "integration", scnId: "SCN-D", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-F", status: "passed" },
-    { qualityCheckKind: "fitness", fitnessFunction: "guard-x", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-    { qualityCheckKind: "fitness", fitnessFunction: "guard-y", scnId: "SCN-H", exists: true, enforcedOverRealSource: false },
-    { qualityCheckKind: "unit", scnId: "SCN-G", status: "passed" },
-    { qualityCheckKind: "integration", scnId: "SCN-G", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-C", status: "passed" },
+    { qualityCheckKind: "integration", claimCode: "SCN-C", status: "passed" },
+    { qualityCheckKind: "integration", claimCode: "SCN-D", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-F", status: "passed" },
+    { qualityCheckKind: "fitness", fitnessFunction: "guard-x", claimCode: "SCN-A", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "guard-y", claimCode: "SCN-H", exists: true, enforcedOverRealSource: false },
+    { qualityCheckKind: "unit", claimCode: "SCN-G", status: "passed" },
+    { qualityCheckKind: "integration", claimCode: "SCN-G", status: "passed" },
   ];
   let balance: Ledger;
   beforeEach(() => {
@@ -97,11 +97,11 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   it("adds a column for a behavioural layer the corpus names but no run observed, lettered E for e2e and P for performance", () => {
     const named = reconcile(
       [
-        { scnId: "SCN-U", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-E", evidenceObligations: [{ qualityCheckKind: "e2e" }] },
-        { scnId: "SCN-P", evidenceObligations: [{ qualityCheckKind: "performance" }] },
+        { claimCode: "SCN-U", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-E", evidenceObligations: [{ qualityCheckKind: "e2e" }] },
+        { claimCode: "SCN-P", evidenceObligations: [{ qualityCheckKind: "performance" }] },
       ],
-      [{ qualityCheckKind: "unit", scnId: "SCN-U", status: "passed" }]
+      [{ qualityCheckKind: "unit", claimCode: "SCN-U", status: "passed" }]
     );
     const table = claimReconciliationsTable(renderMarkdown(__er(named, true), ctx, publishedExitCodeOf));
     expect(table.evidenceColumns).toEqual(["Unit", "E2e", "Performance"]);
@@ -118,21 +118,21 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   it.each([
     [
       "letters a shared code's rows from their obligations alone, and adds no column for a layer only its citing evidence carries, which shows on the unnamed claim",
-      { qualityCheckKind: "integration", scnId: "SCN-D", status: "passed" },
+      { qualityCheckKind: "integration", claimCode: "SCN-D", status: "passed" },
       ["unit", "integration"],
     ],
     [
       "adds no Fitness column for a fitness observation citing a shared code, which shows on the unnamed claim as a unit test citing it does",
-      { qualityCheckKind: "fitness", fitnessFunction: "guard-d", scnId: "SCN-D", exists: true, enforcedOverRealSource: true },
+      { qualityCheckKind: "fitness", fitnessFunction: "guard-d", claimCode: "SCN-D", exists: true, enforcedOverRealSource: true },
       ["fitness", "unit"],
     ],
   ] as const)("%s", (_title, citing, qualityCheckKinds) => {
     const shared = reconcile(
       [
-        { scnId: "SCN-D", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-D", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-D", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-D", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
-      [{ qualityCheckKind: "unit", scnId: "SCN-D", status: "passed" }, citing]
+      [{ qualityCheckKind: "unit", claimCode: "SCN-D", status: "passed" }, citing]
     );
     const table = claimReconciliationsTable(renderMarkdown(__er(shared, true), ctx, publishedExitCodeOf));
     expect(table.evidenceColumns).toEqual(["Unit"]);
@@ -149,10 +149,10 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   it("letters the Fitness cell of a shared code's row that raises a fitness obligation, as the key reads any obligation", () => {
     const shared = reconcile(
       [
-        { scnId: "SCN-D", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-        { scnId: "SCN-D", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-D", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "SCN-D", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
-      [{ qualityCheckKind: "unit", scnId: "SCN-D", status: "passed" }]
+      [{ qualityCheckKind: "unit", claimCode: "SCN-D", status: "passed" }]
     );
     const table = claimReconciliationsTable(renderMarkdown(__er(shared, true), ctx, publishedExitCodeOf));
     expect(table.evidenceColumns).toEqual(["Fitness", "Unit"]);
@@ -167,15 +167,15 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   it("letters the Fitness cell only for a scenario that raises a fitness obligation that is not pending, however its one fitness observation reconciles", () => {
     const fitness = reconcile(
       [
-        { scnId: "SCN-UNASKED", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-PENDING", evidenceObligations: [{ qualityCheckKind: "fitness", pending: true }] },
-        { scnId: "SCN-WATERMELON", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "SCN-UNASKED", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-PENDING", evidenceObligations: [{ qualityCheckKind: "fitness", pending: true }] },
+        { claimCode: "SCN-WATERMELON", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
       ],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-UNASKED", status: "passed" },
-        { qualityCheckKind: "fitness", fitnessFunction: "guard-a", scnId: "SCN-UNASKED", exists: true, enforcedOverRealSource: true },
-        { qualityCheckKind: "fitness", fitnessFunction: "guard-b", scnId: "SCN-PENDING", exists: true, enforcedOverRealSource: true },
-        { qualityCheckKind: "fitness", fitnessFunction: "guard-c", scnId: "SCN-WATERMELON", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "unit", claimCode: "SCN-UNASKED", status: "passed" },
+        { qualityCheckKind: "fitness", fitnessFunction: "guard-a", claimCode: "SCN-UNASKED", exists: true, enforcedOverRealSource: true },
+        { qualityCheckKind: "fitness", fitnessFunction: "guard-b", claimCode: "SCN-PENDING", exists: true, enforcedOverRealSource: true },
+        { qualityCheckKind: "fitness", fitnessFunction: "guard-c", claimCode: "SCN-WATERMELON", exists: true, enforcedOverRealSource: false },
       ]
     );
     const table = claimReconciliationsTable(renderMarkdown(__er(fitness, true), ctx, publishedExitCodeOf));
@@ -189,10 +189,10 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it("takes no column from a phantom claim's row's evidence observations, and fills that row's evidence cells with —", () => {
     const ledgerWithPhantomClaimRow = reconcile(
-      [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "SCN-U", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-U", status: "passed" },
-        { qualityCheckKind: "e2e", scnId: "SCN-GHOST", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-U", status: "passed" },
+        { qualityCheckKind: "e2e", claimCode: "SCN-GHOST", status: "passed" },
       ]
     );
     expect(ledgerWithPhantomClaimRow.claimReconciliations.map((s) => [s.claim, s.kind])).toEqual([
@@ -212,12 +212,12 @@ describe("[SCN-RPT-054] a fitness function whose step ran and failed shows as on
   const tableOf = (): ClaimReconciliationsTable => {
     const failed = reconcile(
       [
-        { scnId: "SCN-FIT", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-        { scnId: "SCN-UNIT", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-FIT", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "SCN-UNIT", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
-        { qualityCheckKind: "fitness", fitnessFunction: "lint:fails", scnId: "SCN-FIT", exists: true, enforcedOverRealSource: true, status: "failed" },
-        { qualityCheckKind: "unit", scnId: "SCN-UNIT", status: "failed" },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:fails", claimCode: "SCN-FIT", exists: true, enforcedOverRealSource: true, status: "failed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-UNIT", status: "failed" },
       ]
     );
     const table = claimReconciliationsTable(renderMarkdown(__er(failed, true), ctx, publishedExitCodeOf));
@@ -247,10 +247,10 @@ describe("[SCN-RPT-054] a fitness function whose step ran and failed shows as on
 const spanningLedger = (): Ledger =>
   reconcile(
     [
-      { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { scnId: "SCN-C", evidenceObligations: [] },
+      { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-C", evidenceObligations: [] },
     ],
-    [{ qualityCheckKind: "unit", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" }]
+    [{ qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "tests/stray.test.ts:1" }]
   );
 
 describe("[SCN-RPT-019] the Reconciliation totals section lists the ten leaf outcomes summing to the Reconciliation line out-of-balance total", () => {
@@ -263,8 +263,8 @@ describe("[SCN-RPT-019] the Reconciliation totals section lists the ten leaf out
     "missing",
     "failing",
     "watermelon",
-    "no-scn-code",
-    "duplicate-scn-code",
+    "no-claim-code",
+    "duplicate-claim-code",
     "cites-unknown-scenario",
     "cites-no-scenario",
     "no-evidence-obligation",
@@ -279,8 +279,8 @@ describe("[SCN-RPT-019] the Reconciliation totals section lists the ten leaf out
     missing: true,
     "cites-unknown-scenario": true,
     "cites-no-scenario": true,
-    "no-scn-code": true,
-    "duplicate-scn-code": true,
+    "no-claim-code": true,
+    "duplicate-claim-code": true,
     broken: true,
     "no-evidence-obligation": true,
     "both-missing": true,
@@ -373,8 +373,8 @@ describe("[SCN-RPT-069] the evidence grid counts only the evidence observations 
 
   it("reads U/- for a unit obligation whose only unit test never reached its assertions", () => {
     const grid = gridOf(
-      [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-      [{ qualityCheckKind: "unit", scnId: "SCN-U", ...ranNever() }]
+      [{ claimCode: "SCN-U", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ qualityCheckKind: "unit", claimCode: "SCN-U", ...ranNever() }]
     );
     expect(grid.columns).toEqual(["Unit"]);
     expect(grid.cells.get("SCN-U")).toEqual(["U/-"]);
@@ -382,10 +382,10 @@ describe("[SCN-RPT-069] the evidence grid counts only the evidence observations 
 
   it("adds no E2e column for a broken e2e observation on a scenario that raises no e2e obligation", () => {
     const grid = gridOf(
-      [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "SCN-U", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-U", status: "passed" },
-        { qualityCheckKind: "e2e", scnId: "SCN-U", ...ranNever() },
+        { qualityCheckKind: "unit", claimCode: "SCN-U", status: "passed" },
+        { qualityCheckKind: "e2e", claimCode: "SCN-U", ...ranNever() },
       ]
     );
     expect(grid.columns).toEqual(["Unit"]);
@@ -394,12 +394,12 @@ describe("[SCN-RPT-069] the evidence grid counts only the evidence observations 
 
   it("counts the observation that ran beside a broken one at the same check", () => {
     const grid = gridOf(
-      [{ scnId: "SCN-U", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "SCN-U", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-U", ...ranNever() },
-        { qualityCheckKind: "unit", scnId: "SCN-U", status: "passed" },
-        { qualityCheckKind: "e2e", scnId: "SCN-U", ...ranNever() },
-        { qualityCheckKind: "e2e", scnId: "SCN-U", status: "failed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-U", ...ranNever() },
+        { qualityCheckKind: "unit", claimCode: "SCN-U", status: "passed" },
+        { qualityCheckKind: "e2e", claimCode: "SCN-U", ...ranNever() },
+        { qualityCheckKind: "e2e", claimCode: "SCN-U", status: "failed" },
       ]
     );
     expect(grid.columns).toEqual(["Unit", "E2e"]);

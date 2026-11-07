@@ -30,10 +30,10 @@ describe("[SCN-RMD-008] the missing split counts the missing Reconciliation line
   it("counts an obligation answered only by a broken observation as one missing line, beside its broken line", () => {
     const tally = ledgerTally(
       reconcile(
-        [{ scnId: "SCN-RMD-008", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] }],
+        [{ claimCode: "SCN-RMD-008", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] }],
         [
-          { qualityCheckKind: "unit", scnId: "SCN-RMD-008", status: "failed", broken: true, message: "the test file failed to load" },
-          { qualityCheckKind: "integration", scnId: "SCN-RMD-008", status: "passed" },
+          { qualityCheckKind: "unit", claimCode: "SCN-RMD-008", status: "failed", broken: true, message: "the test file failed to load" },
+          { qualityCheckKind: "integration", claimCode: "SCN-RMD-008", status: "passed" },
         ]
       )
     );

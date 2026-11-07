@@ -11,9 +11,9 @@ describe("[SCN-RPT-065] a check step that did not run is worded by what the reco
       { kind: "check-step-did-not-run", code: "SCN-CVT-005" },
     ] as const;
     expect(notes.map((note) => remarkWordsOf({ notes: [note] }))).toStrictEqual([
-      coreMessage(CoreMessage.CheckStepSkipped, { scnId: "SCN-CVT-003" }),
-      coreMessage(CoreMessage.CheckStepEnded, { scnId: "SCN-CVT-004", outcome: "neutral" }),
-      coreMessage(CoreMessage.CheckStepNoOutcome, { scnId: "SCN-CVT-005" }),
+      coreMessage(CoreMessage.CheckStepSkipped, { claimCode: "SCN-CVT-003" }),
+      coreMessage(CoreMessage.CheckStepEnded, { claimCode: "SCN-CVT-004", outcome: "neutral" }),
+      coreMessage(CoreMessage.CheckStepNoOutcome, { claimCode: "SCN-CVT-005" }),
     ]);
   });
 });

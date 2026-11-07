@@ -47,7 +47,7 @@ describe("[SCN-RMD-021] the JSON report carries a top-level errors key only when
 
   it("carries only the scenario code errors when the inputs hold no configuration fault", () => {
     expect(reportOver(uncoded, sound).errorsInTheInputs).toEqual({
-      scenarioCodeErrors: [{ kind: "no-feature-code", files: ["fixture.feature"] }],
+      claimCodeErrors: [{ kind: "no-feature-code", files: ["fixture.feature"] }],
     });
   });
 
@@ -59,7 +59,7 @@ describe("[SCN-RMD-021] the JSON report carries a top-level errors key only when
 
   it("carries the scenario code errors and each kind of configuration fault together", () => {
     expect(reportOver(uncoded, everyConfigurationFault).errorsInTheInputs).toEqual({
-      scenarioCodeErrors: [{ kind: "no-feature-code", files: ["fixture.feature"] }],
+      claimCodeErrors: [{ kind: "no-feature-code", files: ["fixture.feature"] }],
       configurationNotRead: {
         keysNotRead: ["zzz"],
         ofWrongKind: [{ entry: "specController.deferralTags", is: "object", reads: "list" }],

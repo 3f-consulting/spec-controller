@@ -290,14 +290,14 @@ describe("[SCN-RMD-015] each kind of quality check in the summary's evidence obs
 
   it("names a declared runner that no step counted as a runner runs on its entry, with no CI step, where it has evidence", () => {
     const reconciliation = withObservations({ runners: { unit: "vitest", e2e: "playwright" } }, [
-      { qualityCheckKind: "e2e", scnId: "SCN-FIX-001", status: "passed" },
+      { qualityCheckKind: "e2e", claimCode: "SCN-FIX-001", status: "passed" },
     ]);
     expect(entryFor(reconciliation, "e2e")).toStrictEqual({ qualityCheckKind: "e2e", count: 1, runner: "playwright" });
   });
 
   it("names null as the runner of a layer the target names none for, with no CI step, at count 0 and with evidence", () => {
     const reconciliation = withObservations({ runners: { unit: "vitest", integration: null, performance: null } }, [
-      { qualityCheckKind: "performance", scnId: "SCN-FIX-001", status: "passed" },
+      { qualityCheckKind: "performance", claimCode: "SCN-FIX-001", status: "passed" },
     ]);
     expect(entryFor(reconciliation, "integration")).toStrictEqual({ qualityCheckKind: "integration", count: 0, runner: null });
     expect(entryFor(reconciliation, "performance")).toStrictEqual({ qualityCheckKind: "performance", count: 1, runner: null });
@@ -306,8 +306,8 @@ describe("[SCN-RMD-015] each kind of quality check in the summary's evidence obs
 
   it("names no runner on a layer the target has not said, left out, of the wrong kind, or with no runners block, where it has evidence", () => {
     const unitObservations: BehaviouralEvidenceObservation[] = [
-      { qualityCheckKind: "unit", scnId: "SCN-FIX-001", status: "passed" },
-      { qualityCheckKind: "unit", scnId: "SCN-FIX-001", status: "failed" },
+      { qualityCheckKind: "unit", claimCode: "SCN-FIX-001", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "SCN-FIX-001", status: "failed" },
     ];
     for (const specController of [{}, { runners: { e2e: "playwright" } }, { runners: { unit: 5 } }]) {
       const reconciliation = withObservations(specController, unitObservations);

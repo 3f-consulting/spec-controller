@@ -32,13 +32,13 @@ function citingNoScenario(lines: readonly ReconciliationLine[]): EvidenceObserva
 }
 
 function sharedScnCodeOf(observation: EvidenceObservation): string | null {
-  const [code = null] = (observation.notes ?? []).flatMap((note) => (note.kind === "shared-scn-code" ? [note.code] : []));
+  const [code = null] = (observation.notes ?? []).flatMap((note) => (note.kind === "shared-claim-code" ? [note.code] : []));
   return code;
 }
 
 function remarksOf(observations: readonly BehaviouralEvidenceObservation[]): UnnamedClaimRemark[] {
   return observations.flatMap(({ message, notes = [] }) => {
-    const kept = notes.filter((note) => note.kind !== "shared-scn-code");
+    const kept = notes.filter((note) => note.kind !== "shared-claim-code");
     return message === undefined && kept.length === 0
       ? []
       : [{ ...(message !== undefined ? { message } : {}), ...(kept.length > 0 ? { notes: kept } : {}) }];

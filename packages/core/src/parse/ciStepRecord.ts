@@ -25,9 +25,9 @@ function reportOf(outcome: string | undefined): StepReport {
 export function recordedCheckStepsOf(record: StepRecord | undefined): RecordedCheckStep[] | undefined {
   if (record === undefined) return undefined;
   return Object.entries(record)
-    .filter(([citedScn]) => SCN_CODE.test(citedScn))
-    .map(([citedScn, step]) => ({
-      citedScn,
+    .filter(([citedClaimCode]) => SCN_CODE.test(citedClaimCode))
+    .map(([citedClaimCode, step]) => ({
+      citedClaimCode,
       report: reportOf(step.outcome),
       ...(step.outcome === undefined ? {} : { said: step.outcome }),
     }));

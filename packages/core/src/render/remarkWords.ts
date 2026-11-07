@@ -9,10 +9,10 @@ interface Remark {
 
 function noteWords(note: ObservationNote): string {
   switch (note.kind) {
-    case "several-scn-codes":
-      return coreMessage(CoreMessage.SeveralScnCodesCited, { count: note.codes.length, codes: note.codes.join(", ") });
-    case "shared-scn-code":
-      return coreMessage(CoreMessage.SharedScnCode, { code: note.code });
+    case "several-claim-codes":
+      return coreMessage(CoreMessage.SeveralClaimCodesCited, { count: note.codes.length, codes: note.codes.join(", ") });
+    case "shared-claim-code":
+      return coreMessage(CoreMessage.SharedClaimCode, { code: note.code });
     case "ambiguous-step":
       return note.step === undefined
         ? coreMessage(CoreMessage.AmbiguousUnnamedStep)
@@ -23,9 +23,9 @@ function noteWords(note: ObservationNote): string {
 }
 
 function checkStepWords(code: string, outcome: string | undefined): string {
-  if (outcome === undefined) return coreMessage(CoreMessage.CheckStepNoOutcome, { scnId: code });
-  if (outcome === "skipped") return coreMessage(CoreMessage.CheckStepSkipped, { scnId: code });
-  return coreMessage(CoreMessage.CheckStepEnded, { scnId: code, outcome });
+  if (outcome === undefined) return coreMessage(CoreMessage.CheckStepNoOutcome, { claimCode: code });
+  if (outcome === "skipped") return coreMessage(CoreMessage.CheckStepSkipped, { claimCode: code });
+  return coreMessage(CoreMessage.CheckStepEnded, { claimCode: code, outcome });
 }
 
 export function remarkWordsOf({ message, notes = [] }: Remark): string | undefined {

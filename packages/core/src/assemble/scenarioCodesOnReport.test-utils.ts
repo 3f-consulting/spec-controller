@@ -1,15 +1,15 @@
-import type { ScenarioCodesSection } from "../domain/renderInput.js";
+import type { ClaimCodesSection } from "../domain/renderInput.js";
 
-const SECTION = "scenarioCodes";
+const SECTION = "claimCodes";
 
 interface WithSummary {
-  readonly summary: { readonly [SECTION]?: ScenarioCodesSection };
+  readonly summary: { readonly [SECTION]?: ClaimCodesSection };
 }
 
-export function scenarioCodesOnReport(report: unknown): ScenarioCodesSection | undefined {
+export function scenarioCodesOnReport(report: unknown): ClaimCodesSection | undefined {
   return (report as WithSummary).summary[SECTION];
 }
 
-export function withScenarioCodesOnReport<Report extends WithSummary>(report: Report, scenarioCodes: ScenarioCodesSection): Report {
-  return { ...report, summary: { ...report.summary, [SECTION]: scenarioCodes } };
+export function withScenarioCodesOnReport<Report extends WithSummary>(report: Report, claimCodes: ClaimCodesSection): Report {
+  return { ...report, summary: { ...report.summary, [SECTION]: claimCodes } };
 }

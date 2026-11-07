@@ -26,7 +26,7 @@ function markdownOf(files: readonly File[]): string {
       features: parsedFeatures(files.map(source), files.map(({ slug }) => `${slug}.feature`)),
       packageJson: {},
       ciWorkflows: [],
-      behaviouralObservations: codes.map((scnId) => ({ qualityCheckKind: "unit", scnId, status: "passed" })),
+      behaviouralObservations: codes.map((claimCode) => ({ qualityCheckKind: "unit", claimCode, status: "passed" })),
       deferralTags: [],
     }),
     ctx,
@@ -36,7 +36,7 @@ function markdownOf(files: readonly File[]): string {
 
 function framingOf(md: string): string {
   const lines = md.split("\n");
-  const heading = lines.indexOf(markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading)));
+  const heading = lines.indexOf(markdownHeading(3, coreMessage(CoreMessage.ClaimCodeErrorsHeading)));
   expect(heading).toBeGreaterThanOrEqual(0);
   return lines[heading + 2]!;
 }
@@ -52,11 +52,11 @@ const SEVERAL: File = { slug: "one", featureCode: "ONE", scenarios: ["@SCN-ONE-0
 const FOREIGN: File = { slug: "two", featureCode: "TWO", scenarios: ["@SCN-TWO-001", "@SCN-ONE-004"] };
 const ONE_ALONE: File = { slug: "one", featureCode: "ONE", scenarios: ["@SCN-ONE-001"] };
 
-const SEVERAL_CODES = "more than one scenario code";
+const SEVERAL_CODES = "more than one claim code";
 const NO_ACCOUNT = "no account was raised for it";
 
 describe("[SCN-RPT-061] a scenario carrying several codes is described in the report as a scenario no account was raised for, never as a misfiled code whose accounts still reconcile", () => {
-  describe("when every listed error is several-scn-codes", () => {
+  describe("when every listed error is several-claim-codes", () => {
     let md: string;
     beforeEach(() => {
       md = markdownOf([SEVERAL]);
@@ -79,7 +79,7 @@ describe("[SCN-RPT-061] a scenario carrying several codes is described in the re
     });
   });
 
-  describe("when the listed errors hold a misfiling and a several-scn-codes error", () => {
+  describe("when the listed errors hold a misfiling and a several-claim-codes error", () => {
     let md: string;
     beforeEach(() => {
       md = markdownOf([SEVERAL, FOREIGN]);
@@ -87,7 +87,7 @@ describe("[SCN-RPT-061] a scenario carrying several codes is described in the re
 
     it("frames the section as true of both, and never says every account still reconciles", () => {
       const framing = framingOf(md);
-      expect(framing).toContain("misfiles a scenario code");
+      expect(framing).toContain("misfiles a claim code");
       expect(framing).toContain(SEVERAL_CODES);
       expect(framing).toContain(NO_ACCOUNT);
       expect(framing).not.toContain("reconciles");
@@ -110,9 +110,9 @@ describe("[SCN-RPT-061] a scenario carrying several codes is described in the re
 
     it("frames and glosses exactly as before", () => {
       expect(framingOf(md)).toBe(
-        coreMessage(CoreMessage.ScenarioCodeErrorsFraming, { count: coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: 1 }) })
+        coreMessage(CoreMessage.ClaimCodeErrorsFraming, { count: coreMessage(CoreMessage.ClaimCodeErrorCount, { count: 1 }) })
       );
-      expect(verdictOf(md)).toContain(`— ${coreMessage(CoreMessage.ScenarioCodeErrorsGloss, { heading: markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading)), alsoOutOfBalance: "" })} (`);
+      expect(verdictOf(md)).toContain(`— ${coreMessage(CoreMessage.ClaimCodeErrorsGloss, { heading: markdownHeading(3, coreMessage(CoreMessage.ClaimCodeErrorsHeading)), alsoOutOfBalance: "" })} (`);
     });
   });
 });

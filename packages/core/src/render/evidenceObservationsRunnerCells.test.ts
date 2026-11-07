@@ -47,9 +47,9 @@ const packageJson = {
 };
 
 const behaviouralObservations: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", scnId: "SCN-FIX-001", status: "passed" },
-  { qualityCheckKind: "unit", scnId: "SCN-FIX-001", status: "passed" },
-  { qualityCheckKind: "integration", scnId: "SCN-FIX-002", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "SCN-FIX-001", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "SCN-FIX-001", status: "passed" },
+  { qualityCheckKind: "integration", claimCode: "SCN-FIX-002", status: "passed" },
 ];
 
 const runnersOnlyCi = `name: fixture CI
@@ -184,7 +184,7 @@ describe("[SCN-RPT-074] each layer's row names its runner and the CI steps the s
   it("says no step counted as its runner runs a declared runner that no step runs, with evidence observations", () => {
     const withPerformance: EvidenceObservation[] = [
       ...behaviouralObservations,
-      { qualityCheckKind: "performance", scnId: "SCN-FIX-001", status: "passed" },
+      { qualityCheckKind: "performance", claimCode: "SCN-FIX-001", status: "passed" },
     ];
     const rows = tableRows(ci, withPerformance).slice(2);
     expect(rows.find(([check]) => check === "performance")).toStrictEqual([

@@ -7,7 +7,7 @@ import { stepDispositions } from "./uncitedFitnessFunctions.js";
 import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 const partlyAnnotatedSteps: PipelineStep[] = [
@@ -35,7 +35,7 @@ const partlyAnnotatedSteps: PipelineStep[] = [
   { workflow: "ci.yml", job: "quality", identity: "Types", writesStepRecord: false, abortsJob: true, plumbing: false, command: "pnpm typecheck" },
 ];
 
-const recorded: RecordedCheckStep[] = [{ citedScn: "SCN-AAA-001", report: "succeeded" }];
+const recorded: RecordedCheckStep[] = [{ citedClaimCode: "SCN-AAA-001", report: "succeeded" }];
 
 function reconcileWithRecord() {
   const dispositionOf = stepDispositions({
@@ -48,7 +48,7 @@ function reconcileWithRecord() {
     (step) => dispositionOf(step) === "candidate",
     (step) => ("command" in step ? step.command.replace("pnpm ", "") : step.identity),
     (step) => step.identity,
-    (_handle, citedByStep) => (citedByStep === "SCN-AAA-001" ? { scnId: citedByStep } : null)
+    (_handle, citedByStep) => (citedByStep === "SCN-AAA-001" ? { claimCode: citedByStep } : null)
   );
   return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, recorded), []);
 }

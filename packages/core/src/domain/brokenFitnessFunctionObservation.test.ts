@@ -8,7 +8,7 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
   it("leaves the obligation missing and stamps the run unsound even when the evidence observation says the check exists and ran", () => {
     const scenarios: Scenario[] = [
       {
-        scnId: "SCN-LNT-026",
+        claimCode: "SCN-LNT-026",
         evidenceObligations: [
           { qualityCheckKind: "fitness" },
         ],
@@ -18,7 +18,7 @@ describe("[SCN-LNT-026] a BROKEN fitness-function evidence observation is exclud
       {
         qualityCheckKind: "fitness",
         fitnessFunction: "traceability",
-        scnId: "SCN-LNT-026",
+        claimCode: "SCN-LNT-026",
         exists: true,
         enforcedOverRealSource: true,
         broken: true,

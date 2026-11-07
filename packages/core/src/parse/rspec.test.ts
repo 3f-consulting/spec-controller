@@ -6,7 +6,7 @@ describe("[SCN-RSP-003] parseRspecEvidenceObservations reads an example's own co
     const report: RspecJsonReport = {
       examples: [{ description, full_description, status: "passed", file_path: "./spec/a_spec.rb" }],
     };
-    return parseRspecEvidenceObservations(report)[0]?.scnId;
+    return parseRspecEvidenceObservations(report)[0]?.claimCode;
   };
 
   it("credits the example's own code inside a group that cites another", () => {
@@ -37,18 +37,18 @@ describe("[SCN-RSP-004] parseRspecEvidenceObservations credits neither code an e
   it("posts one observation citing no scenario, with a note of both codes", () => {
     expect(observationOf("[SCN-AAA-001] [SCN-AAA-002] two", "group [SCN-AAA-001] [SCN-AAA-002] two")).toEqual({
       qualityCheckKind: "unit",
-      scnId: null,
+      claimCode: null,
       status: "passed",
       locator: "spec/a_spec.rb",
       testName: "group [SCN-AAA-001] [SCN-AAA-002] two",
-      notes: [{ kind: "several-scn-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }],
+      notes: [{ kind: "several-claim-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }],
     });
   });
 
   it("reads two groups' codes by the same rule when the example cites none", () => {
     expect(observationOf("leaf", "[SCN-AAA-001] outer [SCN-AAA-002] inner leaf")).toMatchObject({
-      scnId: null,
-      notes: [{ kind: "several-scn-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }],
+      claimCode: null,
+      notes: [{ kind: "several-claim-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }],
     });
   });
 
@@ -57,7 +57,7 @@ describe("[SCN-RSP-004] parseRspecEvidenceObservations credits neither code an e
     ["one code repeated", "[SCN-AAA-001] once [SCN-AAA-001] again"],
   ])("CONTROL: a description with %s credits it, with no note", (_, description) => {
     const observation = observationOf(description, `group ${description}`);
-    expect(observation).toMatchObject({ scnId: "SCN-AAA-001" });
+    expect(observation).toMatchObject({ claimCode: "SCN-AAA-001" });
     expect(observation).not.toHaveProperty("notes");
   });
 });
@@ -73,7 +73,7 @@ describe("[SCN-RSP-005] parseRspecEvidenceObservations posts nothing for an exam
   });
 
   it.each(["passed", "failed"])("CONTROL: posts one observation for a %s example", (status) => {
-    expect(observationsOf(status)).toMatchObject([{ scnId: "SCN-AAA-001", status }]);
+    expect(observationsOf(status)).toMatchObject([{ claimCode: "SCN-AAA-001", status }]);
   });
 });
 
@@ -89,7 +89,7 @@ describe("[SCN-RSP-006] parseRspecEvidenceObservations posts a failing observati
 
     expect(parseRspecEvidenceObservations({ examples: [fixedPending] })).toEqual([{
       qualityCheckKind: "unit",
-      scnId: "SCN-AAA-001",
+      claimCode: "SCN-AAA-001",
       status: "failed",
       locator: "spec/a_spec.rb",
       testName: "group [SCN-AAA-001] leaf",
@@ -113,7 +113,7 @@ describe("[SCN-RSP-007] parseRspecEvidenceObservations posts a failing observati
 
     expect(parseRspecEvidenceObservations({ examples: [stoppedByHook] })).toEqual([{
       qualityCheckKind: "unit",
-      scnId: "SCN-AAA-001",
+      claimCode: "SCN-AAA-001",
       status: "failed",
       locator: "spec/a_spec.rb",
       testName: "group [SCN-AAA-001] leaf",
@@ -133,7 +133,7 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     const report: RspecJsonReport = { examples: [], summary: { errors_outside_of_examples_count: 1 }, messages: [message] };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", scnId: null, status: "failed", locator, broken: true, message },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator, broken: true, message },
     ]);
   });
 
@@ -151,8 +151,8 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     const report: RspecJsonReport = { examples: [passing], summary: { errors_outside_of_examples_count: 1 }, messages: [syntaxError] };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "passed", locator: "spec/a_spec.rb", testName: "group [SCN-AAA-001] leaf" },
-      { qualityCheckKind: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "passed", locator: "spec/a_spec.rb", testName: "group [SCN-AAA-001] leaf" },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
     ]);
   });
 
@@ -171,8 +171,8 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
-      { qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, message: suiteHook },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, message: suiteHook },
     ]);
   });
 
@@ -182,8 +182,8 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     const observations = parseRspecEvidenceObservations(report);
 
     expect(observations).toEqual([
-      { qualityCheckKind: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
-      { qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, message: undefined },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, message: undefined },
     ]);
     expect(observations[1]?.message).toBeUndefined();
   });
@@ -198,8 +198,8 @@ describe("[SCN-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", scnId: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
-      { qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, message: hookA + "\n" + hookB },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, message: hookA + "\n" + hookB },
     ]);
   });
 

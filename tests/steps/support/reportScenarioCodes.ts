@@ -1,6 +1,6 @@
 import type { ScenarioName } from "./scenarioName.js";
 
-const SECTION = "scenarioCodes";
+const SECTION = "claimCodes";
 
 // Where a refusal names the section, from the report's top.
 export const SCENARIO_CODES_PATH: string = `summary.${SECTION}`;
@@ -10,7 +10,7 @@ export interface ScenarioCodesOnReport {
   readonly featureCodes?: number;
   readonly excludedOccurrences: number;
   readonly untaggedScenarios: ScenarioName[];
-  readonly sharedScnCodes?: unknown[];
+  readonly sharedClaimCodes?: unknown[];
 }
 
 interface WithSummary {
@@ -21,6 +21,6 @@ export function scenarioCodesOnReport(report: unknown): ScenarioCodesOnReport {
   return (report as WithSummary).summary[SECTION];
 }
 
-export function withScenarioCodesOnReport<Report extends { readonly summary: object }>(report: Report, scenarioCodes: unknown): Report {
-  return { ...report, summary: { ...report.summary, [SECTION]: scenarioCodes } };
+export function withScenarioCodesOnReport<Report extends { readonly summary: object }>(report: Report, claimCodes: unknown): Report {
+  return { ...report, summary: { ...report.summary, [SECTION]: claimCodes } };
 }

@@ -1,5 +1,5 @@
-export function featureCodeOf(scnId: string): string | null {
-  const match = FEATURE_CODE_OF.exec(scnId);
+export function featureCodeOf(claimCode: string): string | null {
+  const match = FEATURE_CODE_OF.exec(claimCode);
   return match ? match[1]! : null;
 }
 

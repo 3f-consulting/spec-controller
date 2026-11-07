@@ -4,7 +4,7 @@ import type { Scenario } from "../model.js";
 
 export interface TargetCorpus {
   readonly scenarios: readonly Scenario[];
-  readonly citedRow: (citedScn: string | undefined) => ScriptCitation | null;
+  readonly citedRow: (citedClaimCode: string | undefined) => ScriptCitation | null;
 }
 
 export function readTargetCorpus(
@@ -13,6 +13,6 @@ export function readTargetCorpus(
 ): TargetCorpus {
   return {
     scenarios: features.flatMap((feature) => namedScenariosOf(feature, deferralTags)),
-    citedRow: (citedScn) => citationOfCitedRow(citedScn),
+    citedRow: (citedClaimCode) => citationOfCitedRow(citedClaimCode),
   };
 }

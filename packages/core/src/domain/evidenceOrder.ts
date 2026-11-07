@@ -9,7 +9,7 @@ function withSortedKeys(_key: string, value: unknown): unknown {
 
 function evidenceOrderKey(o: EvidenceObservation): string {
   const content = JSON.stringify(o, withSortedKeys);
-  return [QUALITY_CHECK_KINDS_FITNESS_LAST.indexOf(o.qualityCheckKind), o.locator ?? "", o.scnId ?? "", content].join("\u0000");
+  return [QUALITY_CHECK_KINDS_FITNESS_LAST.indexOf(o.qualityCheckKind), o.locator ?? "", o.claimCode ?? "", content].join("\u0000");
 }
 
 export function inEvidenceOrder(

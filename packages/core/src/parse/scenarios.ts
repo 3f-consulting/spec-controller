@@ -64,7 +64,7 @@ export function parseFeatureCorpus(sources: readonly Source[]): SourcesParse<Fea
 }
 
 interface TaggedScenario {
-  readonly scnId: string;
+  readonly claimCode: string;
   readonly tags: readonly string[];
   readonly name: string;
 }
@@ -76,10 +76,10 @@ function scenariosByScnCodeOf({ scenarios }: ParsedFeatureFile): {
   const taggedScenarios: TaggedScenario[] = [];
   const untaggedScenarios: string[] = [];
   for (const { name, tags } of scenarios) {
-    const { scnId, severalCodes } = scenarioCodesOf(tags);
+    const { claimCode, severalCodes } = scenarioCodesOf(tags);
     if (severalCodes !== undefined) continue;
-    if (scnId === null) untaggedScenarios.push(name);
-    else taggedScenarios.push({ scnId, tags, name });
+    if (claimCode === null) untaggedScenarios.push(name);
+    else taggedScenarios.push({ claimCode, tags, name });
   }
   return { taggedScenarios, untaggedScenarios };
 }
@@ -103,13 +103,13 @@ export function corpusCountsOfFeatures(features: readonly ParsedFeatureFile[]): 
 }
 
 export function scenariosOf(feature: ParsedFeatureFile, deferralTags: readonly string[] = []): Scenario[] {
-  return namedScenariosOf(feature, deferralTags).map(({ scnId, evidenceObligations }) => ({ scnId, evidenceObligations }));
+  return namedScenariosOf(feature, deferralTags).map(({ claimCode, evidenceObligations }) => ({ claimCode, evidenceObligations }));
 }
 
 /** The corpus's scenarios, each naming its feature file and title. */
 export function namedScenariosOf(feature: ParsedFeatureFile, deferralTags: readonly string[] = []): Scenario[] {
   return scenariosByScnCodeOf(feature).taggedScenarios.map((scenario) => ({
-    scnId: scenario.scnId,
+    claimCode: scenario.claimCode,
     evidenceObligations: obligationsRaisedBy(scenario.tags, deferralTags),
     feature: feature.file,
     title: scenario.name,

@@ -3,30 +3,30 @@ import {
   foreignCodeCarriersOf,
   scenarioCodeCleanlinessOf,
   scenarioCodeErrorsAre,
-  type ForeignScnCodeError,
+  type ForeignClaimCodeError,
   type ScenarioCodeCleanliness,
-  type ScenarioCodeError,
+  type ClaimCodeError,
 } from "../domain/scnTags.js";
 import { CoreError, CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
 import { errorEntry } from "./errorEntry.js";
 
-const CODE_OF: Readonly<Record<ScenarioCodeError["kind"], CoreError>> = {
+const CODE_OF: Readonly<Record<ClaimCodeError["kind"], CoreError>> = {
   "duplicate-feature-code": CoreError.DuplicateFeatureCode,
-  "foreign-scn-code": CoreError.ForeignScnCode,
+  "foreign-claim-code": CoreError.ForeignClaimCode,
   "no-feature-code": CoreError.NoFeatureCode,
-  "several-scn-codes": CoreError.SeveralScnCodes,
+  "several-claim-codes": CoreError.SeveralClaimCodes,
 };
 
-function scenarioCodeErrorsFraming(errors: readonly ScenarioCodeError[], count: string): string {
+function scenarioCodeErrorsFraming(errors: readonly ClaimCodeError[], count: string): string {
   switch (scenarioCodeErrorsAre(errors)) {
     case "misfilings":
-      return coreMessage(CoreMessage.ScenarioCodeErrorsFraming, { count });
+      return coreMessage(CoreMessage.ClaimCodeErrorsFraming, { count });
     case "several-codes":
-      return coreMessage(CoreMessage.SeveralScnCodesFraming, { count });
+      return coreMessage(CoreMessage.SeveralClaimCodesFraming, { count });
     case "both":
-      return coreMessage(CoreMessage.MisfiledAndSeveralScnCodesFraming, { count });
+      return coreMessage(CoreMessage.MisfiledAndSeveralClaimCodesFraming, { count });
   }
 }
 
@@ -50,7 +50,7 @@ function cleanStatement(cleanliness: ScenarioCodeCleanliness): string {
   }
 }
 
-function worded(error: ScenarioCodeError): string {
+function worded(error: ClaimCodeError): string {
   if (error.kind === "duplicate-feature-code") {
     return coreMessage(CoreMessage.DuplicateFeatureCode, {
       code: error.featureCode,
@@ -58,9 +58,9 @@ function worded(error: ScenarioCodeError): string {
       files: error.files.join(", "),
     });
   }
-  if (error.kind === "foreign-scn-code") return foreignWorded(error);
+  if (error.kind === "foreign-claim-code") return foreignWorded(error);
   if (error.kind === "no-feature-code") return coreMessage(CoreMessage.NoFeatureCode, { file: error.files.join(", ") });
-  return coreMessage(CoreMessage.ScenarioSeveralScnCodes, {
+  return coreMessage(CoreMessage.ScenarioSeveralClaimCodes, {
     file: error.files.join(", "),
     scenario: error.scenario,
     codeCount: error.codes.length,
@@ -68,14 +68,14 @@ function worded(error: ScenarioCodeError): string {
   });
 }
 
-function foreignWorded(error: ForeignScnCodeError): string {
-  const values = { file: error.files.join(", "), featureCode: error.featureCode, scnId: error.scnId, named: error.namedFeatureCode };
+function foreignWorded(error: ForeignClaimCodeError): string {
+  const values = { file: error.files.join(", "), featureCode: error.featureCode, claimCode: error.claimCode, named: error.namedFeatureCode };
   const carriers = foreignCodeCarriersOf(error);
   switch (carriers.kind) {
     case "none":
-      return coreMessage(CoreMessage.ForeignScnCodeNoCarrier, values);
+      return coreMessage(CoreMessage.ForeignClaimCodeNoCarrier, values);
     case "carried":
-      return coreMessage(CoreMessage.ForeignScnCodeCarried, {
+      return coreMessage(CoreMessage.ForeignClaimCodeCarried, {
         ...values,
         carrierCount: carriers.files.length,
         carriers: carriers.files.join(", "),
@@ -84,24 +84,24 @@ function foreignWorded(error: ForeignScnCodeError): string {
 }
 
 export const scenarioCodeErrorsSection = (report: RenderInput): string[] => {
-  const errors = report.errorsInTheInputs?.scenarioCodeErrors;
+  const errors = report.errorsInTheInputs?.claimCodeErrors;
   if (errors === undefined) return [];
-  const count = coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: errors.length });
+  const count = coreMessage(CoreMessage.ClaimCodeErrorCount, { count: errors.length });
   return [
-    markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading)),
+    markdownHeading(3, coreMessage(CoreMessage.ClaimCodeErrorsHeading)),
     "",
     scenarioCodeErrorsFraming(errors, count),
     "",
     ...errors.map((error) => errorEntry(CODE_OF[error.kind], worded(error))),
     "",
-    coreMessage(CoreMessage.DuplicateScnCodeNotListed, { outcome: coreMessage(CoreMessage.OutcomeDuplicateScnCode) }),
+    coreMessage(CoreMessage.DuplicateClaimCodeNotListed, { outcome: coreMessage(CoreMessage.OutcomeDuplicateClaimCode) }),
     "",
   ];
 };
 
 export const scenarioCodesCleanStatement = (report: RenderInput): string[] => {
-  if (report.errorsInTheInputs?.scenarioCodeErrors !== undefined) return [];
-  const { featureFiles, featureCodes } = report.summary.scenarioCodes ?? {};
+  if (report.errorsInTheInputs?.claimCodeErrors !== undefined) return [];
+  const { featureFiles, featureCodes } = report.summary.claimCodes ?? {};
   if (typeof featureFiles !== "number" || typeof featureCodes !== "number") return [];
   return [cleanStatement(scenarioCodeCleanlinessOf({ featureFiles, featureCodes })), ""];
 };

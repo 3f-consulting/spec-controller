@@ -8,21 +8,21 @@ describe("[SCN-PND-011] the ledger's tally counts Pending Items apart from balan
     const tally = ledgerTally(
       reconcile(
         [
-          { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { claimCode: "SCN-PDR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
           {
-            scnId: "SCN-PDR-002",
+            claimCode: "SCN-PDR-002",
             evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
           },
-          { scnId: "SCN-PDR-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { claimCode: "SCN-PDR-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
           {
-            scnId: "SCN-PDR-004",
+            claimCode: "SCN-PDR-004",
             evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
           },
         ],
         [
-          { qualityCheckKind: "unit", scnId: "SCN-PDR-001", status: "passed" },
-          { qualityCheckKind: "unit", scnId: "SCN-PDR-002", status: "passed" },
-          { qualityCheckKind: "unit", scnId: "SCN-PDR-004", status: "failed" },
+          { qualityCheckKind: "unit", claimCode: "SCN-PDR-001", status: "passed" },
+          { qualityCheckKind: "unit", claimCode: "SCN-PDR-002", status: "passed" },
+          { qualityCheckKind: "unit", claimCode: "SCN-PDR-004", status: "failed" },
         ]
       )
     );
@@ -36,7 +36,7 @@ describe("[SCN-PND-011] the ledger's tally counts Pending Items apart from balan
       reconcile(
         [
           {
-            scnId: "SCN-PDR-001",
+            claimCode: "SCN-PDR-001",
             evidenceObligations: [
               { qualityCheckKind: "unit", pending: true },
               { qualityCheckKind: "integration", pending: true },

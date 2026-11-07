@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { PUBLISHED_SCHEMA } from "./builtCli.js";
 
 const SECTION = "errorsInTheInputs";
-const SCENARIO_CODE_ERRORS = "scenarioCodeErrors";
+const SCENARIO_CODE_ERRORS = "claimCodeErrors";
 
 export interface ErrorsInTheInputsSection {
   readonly [SCENARIO_CODE_ERRORS]?: unknown[];

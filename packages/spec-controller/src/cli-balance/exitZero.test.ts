@@ -37,7 +37,7 @@ describe("[SCN-CLI-021] under --exit-zero a verdict run prints the same report b
       code: 3,
     },
     {
-      verdict: "balanced-with-scenario-code-errors",
+      verdict: "balanced-with-claim-code-errors",
       argv: [
         "--features", "tests/fixtures/scenario-code-error/features",
         "--vitest", "tests/fixtures/scenario-code-error/vitest.json",

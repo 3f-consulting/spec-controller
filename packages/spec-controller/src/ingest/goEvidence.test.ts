@@ -15,7 +15,7 @@ import {
 
 const TARGET = "tests/fixtures/go";
 const balance = () => reconcileFixture(TARGET, { junit: `${TARGET}/report.xml` });
-const unitOf = (scnId: string) => unitReconciliationOf(balance(), scnId);
+const unitOf = (claimCode: string) => unitReconciliationOf(balance(), claimCode);
 const observations = () => parseJunitEvidenceObservations(parseJunitXml(readFileSync(`${TARGET}/report.xml`, "utf8")));
 
 describe("[SCN-GOT-001] runReconcile reads a real gotestsum report as unit evidence", () => {
@@ -43,23 +43,23 @@ describe("[SCN-GOT-003] parseJunitEvidenceObservations reads the code in a Go su
   it.each([
     ["cites a scenario with that scenario alone, not its parent's", "[SCN-GOF-003]_a_child_whose_own_name_cites_a_scenario", "SCN-GOF-003"],
     ["cites nothing with the scenario its parent's name cites", "a_child_whose_own_name_cites_nothing", "SCN-GOF-004"],
-  ])("credits a child subtest whose own name %s", (_, childName, scnId) => {
+  ])("credits a child subtest whose own name %s", (_, childName, claimCode) => {
     const child = observations()
       .find((o) => o.locator === `example.com/gofixture/cited::TestCited/[SCN-GOF-004]_a_subtest_that_cites_a_scenario/${childName}`);
 
-    expect(child).toMatchObject({ scnId, status: "passed" });
+    expect(child).toMatchObject({ claimCode, status: "passed" });
     expect(child?.notes).toBeUndefined();
   });
 });
 
 describe("[SCN-GOT-004] runReconcile credits neither scenario a Go subtest's name cites when it cites two, and the unnamed claim's row names both codes", () => {
-  it.each(["SCN-GOF-005", "SCN-GOF-006"])("leaves %s missing, with no observation", (scnId) => {
-    expectMissingWithNoObservation(unitOf(scnId));
+  it.each(["SCN-GOF-005", "SCN-GOF-006"])("leaves %s missing, with no observation", (claimCode) => {
+    expectMissingWithNoObservation(unitOf(claimCode));
   });
 
   it("names both codes on the unnamed claim's row, beside the subtest", () => {
     expect(unnamedClaimRowOf(balance(), TARGET)).toContain(
-      "cited::TestCited/[SCN-GOF-005]_[SCN-GOF-006]_a_subtest_that_cites_two_scenarios: 2 scenario codes cite SCN-GOF-005, SCN-GOF-006",
+      "cited::TestCited/[SCN-GOF-005]_[SCN-GOF-006]_a_subtest_that_cites_two_scenarios: 2 claim codes cite SCN-GOF-005, SCN-GOF-006",
     );
   });
 });

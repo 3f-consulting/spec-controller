@@ -38,7 +38,7 @@ export const endOfStepAccountingTable = (section: readonly string[]): number => 
 
 export function censusBlock(md: string): string[] {
   const lines = md.split("\n");
-  const start = lines.indexOf(`- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: 0 })}`);
+  const start = lines.indexOf(`- ${coreMessage(CoreMessage.ExcludedClaimOccurrences, { count: 0 })}`);
   expect(start).toBeGreaterThan(0);
   const block = lines.slice(start);
   return block.slice(0, block.indexOf(""));

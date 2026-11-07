@@ -38,17 +38,17 @@ let census: EvidenceObligations;
 beforeEach(() => {
   ledger = reconcile(
     [
-      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { scnId: "SCN-OWN-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-OWN-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ],
     []
   );
   census = {
     ...evidenceObligations(3, 3),
-    sharedScnCodes: [
+    sharedClaimCodes: [
       {
-        scnId: "SCN-ONE-001",
+        claimCode: "SCN-ONE-001",
         scenarios: [
           scenarioName("one.feature", "the scenario in one"),
           scenarioName("two.feature", "the scenario in two"),
@@ -103,7 +103,7 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
   it.each([
     [
       "states that the corpus holds three scenarios, one code carried by more than one of them",
-      () => `- ${coreMessage(CoreMessage.SharedScnCodes, { scenarios: 3, codes: 1 })}`,
+      () => `- ${coreMessage(CoreMessage.SharedClaimCodes, { scenarios: 3, codes: 1 })}`,
     ],
     [
       "names the shared code with the file and the name of each scenario carrying it",
@@ -116,23 +116,23 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
 
   it("carries the shared codes in the JSON census, and nothing when no code is shared", () => {
     const shared = JSON.parse(renderJson(er(ledger), ctx, census));
-    expect(scenarioCodesOnReport(shared)?.sharedScnCodes).toEqual(census.sharedScnCodes);
+    expect(scenarioCodesOnReport(shared)?.sharedClaimCodes).toEqual(census.sharedClaimCodes);
     const clean = JSON.parse(renderJson(er(ledger), ctx, evidenceObligations(3, 3)));
-    expect(scenarioCodesOnReport(clean)).not.toHaveProperty("sharedScnCodes");
+    expect(scenarioCodesOnReport(clean)).not.toHaveProperty("sharedClaimCodes");
     expect(renderMarkdown(er(ledger), ctx, publishedExitCodeOf, evidenceObligations(3, 3))).not.toContain("The corpus holds");
   });
 
   it("renders an account whose sharers name no kind of quality check by its outcome alone, never an undefined subject", () => {
     const bare = reconcile(
       [
-        { scnId: "SCN-ONE-001", evidenceObligations: [] },
-        { scnId: "SCN-ONE-001", evidenceObligations: [] },
+        { claimCode: "SCN-ONE-001", evidenceObligations: [] },
+        { claimCode: "SCN-ONE-001", evidenceObligations: [] },
       ],
       []
     );
     const [row] = claimReconciliationsTable(renderMarkdown(er(bare), ctx, publishedExitCodeOf)).rowsOf("SCN-ONE-001");
     expect(row?.cell(VERDICT_COLUMN())).toBe("out-of-balance");
-    expect(row?.cell(RECONCILING_ITEMS_COLUMN()).startsWith(coreMessage(CoreMessage.OutcomeDuplicateScnCode))).toBe(true);
+    expect(row?.cell(RECONCILING_ITEMS_COLUMN()).startsWith(coreMessage(CoreMessage.OutcomeDuplicateClaimCode))).toBe(true);
     expect(row?.cells.join(" | ")).not.toContain("undefined");
   });
 
@@ -143,8 +143,8 @@ describe("[SCN-RPT-064] the report states how many scenarios the corpus holds an
         { feature: "beta.feature", source: beta },
       ])
     ).toEqual([
-      `- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: 0 })}`,
-      `- ${coreMessage(CoreMessage.SharedScnCodes, { scenarios: 6, codes: 2 })}`,
+      `- ${coreMessage(CoreMessage.ExcludedClaimOccurrences, { count: 0 })}`,
+      `- ${coreMessage(CoreMessage.SharedClaimCodes, { scenarios: 6, codes: 2 })}`,
       "  - SCN-DUO-001: alpha.feature : the first carrier of the two-way code; beta.feature : the second carrier of the two-way code",
       "  - SCN-TRI-001: alpha.feature : the first carrier of the three-way code; beta.feature : the second carrier of the three-way code; beta.feature : the third carrier of the three-way code",
     ]);
@@ -157,8 +157,8 @@ describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its
       er(
         reconcile(
           [
-            { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "login.feature", title: "a user with the right password is let in" },
-            { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "logout.feature", title: "a signed-in user is signed out" },
+            { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "login.feature", title: "a user with the right password is let in" },
+            { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "logout.feature", title: "a signed-in user is signed out" },
           ],
           []
         )
@@ -174,7 +174,7 @@ describe("[SCN-RPT-070] each Claim Reconciliation of a shared code names, in its
   ])("names %s in its sharer's reconciling items", (scenario) => {
     const rows = sharerRowsOf();
     expect(rows).toHaveLength(2);
-    expect(rows.filter((row) => row.cell(RECONCILING_ITEMS_COLUMN()) === `unit: ${coreMessage(CoreMessage.OutcomeDuplicateScnCode)} — this one is ${scenario}`)).toHaveLength(1);
+    expect(rows.filter((row) => row.cell(RECONCILING_ITEMS_COLUMN()) === `unit: ${coreMessage(CoreMessage.OutcomeDuplicateClaimCode)} — this one is ${scenario}`)).toHaveLength(1);
   });
 
   it("renders the two sharers' rows alike but for the scenario each names", () => {

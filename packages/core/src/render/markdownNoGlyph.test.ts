@@ -27,23 +27,23 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
   beforeEach(() => {
     everyOutcome = reconcile(
       [
-        { scnId: "SCN-NGL-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
-        { scnId: "SCN-NGL-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-NGL-003", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
-        { scnId: "SCN-NGL-004", evidenceObligations: [] },
-        { scnId: "SCN-NGL-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-NGL-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-NGL-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
+        { claimCode: "SCN-NGL-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-NGL-003", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
+        { claimCode: "SCN-NGL-004", evidenceObligations: [] },
+        { claimCode: "SCN-NGL-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-NGL-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-NGL-001", status: "passed", locator: "src/a.test.ts" },
-        { qualityCheckKind: "fitness", fitnessFunction: "lint:sound", scnId: "SCN-NGL-001", exists: true, enforcedOverRealSource: true },
-        { qualityCheckKind: "unit", scnId: "SCN-NGL-002", status: "failed", locator: "src/b.test.ts" },
-        { qualityCheckKind: "integration", scnId: "SCN-NGL-002", status: "passed", locator: "tests/steps/b.steps.ts" },
-        { qualityCheckKind: "fitness", fitnessFunction: "lint:fake", scnId: "SCN-NGL-003", exists: true, enforcedOverRealSource: false },
-        { qualityCheckKind: "unit", scnId: "SCN-NGL-999", status: "passed", locator: "src/ghost.test.ts" },
-        { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" },
+        { qualityCheckKind: "unit", claimCode: "SCN-NGL-001", status: "passed", locator: "src/a.test.ts" },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:sound", claimCode: "SCN-NGL-001", exists: true, enforcedOverRealSource: true },
+        { qualityCheckKind: "unit", claimCode: "SCN-NGL-002", status: "failed", locator: "src/b.test.ts" },
+        { qualityCheckKind: "integration", claimCode: "SCN-NGL-002", status: "passed", locator: "tests/steps/b.steps.ts" },
+        { qualityCheckKind: "fitness", fitnessFunction: "lint:fake", claimCode: "SCN-NGL-003", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "unit", claimCode: "SCN-NGL-999", status: "passed", locator: "src/ghost.test.ts" },
+        { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "src/uncited.test.ts" },
         { qualityCheckKind: "fitness", fitnessFunction: "lint:uncited", exists: true, enforcedOverRealSource: true },
-        { qualityCheckKind: "unit", scnId: null, status: "passed", broken: true, locator: "src/broken.test.ts" },
+        { qualityCheckKind: "unit", claimCode: null, status: "passed", broken: true, locator: "src/broken.test.ts" },
       ],
       [UNTAGGED],
     );
@@ -69,7 +69,7 @@ describe("[SCN-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
       .flatMap((cell) => cell.split("; "));
     expect(items.length).toBeGreaterThan(0);
     for (const item of items) expect(readsInWords(item), item).toBe(true);
-    expect(items).toContain(outcomeDescription("no-scn-code"));
+    expect(items).toContain(outcomeDescription("no-claim-code"));
     expect(items).toContain(outcomeDescription("both-missing"));
     expect(items.some((item) => item.startsWith(`unit: ${outcomeDescription("failing")}`))).toBe(true);
   });

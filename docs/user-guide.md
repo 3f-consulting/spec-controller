@@ -836,10 +836,10 @@ The tool judges scenario code errors only over the corpus that `--features` name
 
 | Handle | The fault | The fix |
 | --- | --- | --- |
-| `foreign-scn-code` | a scenario's code names a feature its file does not carry, e.g. `@SCN-<FFF>-<NNN>` in a file headed with a code other than `@<FFF>` | re-code the scenario for its file, or move it to the file whose header carries the code its id names, when exactly one does; the finding names that file, or says no file carries the code |
+| `foreign-claim-code` | a scenario's code names a feature its file does not carry, e.g. `@SCN-<FFF>-<NNN>` in a file headed with a code other than `@<FFF>` | re-code the scenario for its file, or move it to the file whose header carries the code its id names, when exactly one does; the finding names that file, or says no file carries the code |
 | `no-feature-code` | a feature file carries no header code while its scenarios carry `@SCN` codes (a header longer than five characters is no header code) | give the file a header code, and code its scenarios for it |
 | `duplicate-feature-code` | two feature files carry one header code | give one of them a code of its own |
-| `several-scn-codes` | one scenario carries more than one distinct `@SCN` code, so it opens no account under any of them, and a test citing one of them cites a code no scenario carries | give the scenario one code |
+| `several-claim-codes` | one scenario carries more than one distinct `@SCN` code, so it opens no account under any of them, and a test citing one of them cites a code no scenario carries | give the scenario one code |
 
 - The first three misfile a code without making any posting ambiguous, so every account still reconciles exactly as it would if the code were filed correctly.
 - What a misfiled code falsifies is the by-feature cut, which groups on the code. So **any scenario code error fails the run at exit `1`**.

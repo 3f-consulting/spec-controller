@@ -152,10 +152,10 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
       "  @unit @SCN-AB-001",
       "  Scenario: coded",
       "    Given the rule @SCN-AB-001 is cited",
-      "  Scenario: no-scn-code, straight after the cited step",
+      "  Scenario: no-claim-code, straight after the cited step",
       "    Given a step",
     ].join("\n");
-    expect(parseUntaggedScenarios(cited)).toEqual(["no-scn-code, straight after the cited step"]);
+    expect(parseUntaggedScenarios(cited)).toEqual(["no-claim-code, straight after the cited step"]);
   });
 });
 
@@ -165,16 +165,16 @@ describe("[SCN-GRD-004] a scenario tagged with two scenario codes raises no evid
 
   it("raises obligations under neither code, and does not count the scenario as untagged", () => {
     const two = source("@SCN-AAA-002 @SCN-AAA-003");
-    expect(parseScenarios(two).map((s) => s.scnId)).toEqual(["SCN-AAA-001"]);
+    expect(parseScenarios(two).map((s) => s.claimCode)).toEqual(["SCN-AAA-001"]);
     expect(parseUntaggedScenarios(two)).toEqual([]);
   });
 
   it("raises its obligation under one code, or the same code repeated, as today", () => {
     expect(parseScenarios(source("@SCN-AAA-002"))).toEqual([
-      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ]);
-    expect(parseScenarios(source("@SCN-AAA-002 @SCN-AAA-002")).map((s) => s.scnId)).toEqual([
+    expect(parseScenarios(source("@SCN-AAA-002 @SCN-AAA-002")).map((s) => s.claimCode)).toEqual([
       "SCN-AAA-001",
       "SCN-AAA-002",
     ]);

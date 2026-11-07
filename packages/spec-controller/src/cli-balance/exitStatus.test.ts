@@ -5,7 +5,7 @@ import { exitCodeOf } from "./exitStatus.js";
 describe("[SCN-CLI-021] exitCodeOf — --exit-zero moves a verdict's code to 0", () => {
   const ROWS = [
     { verdict: "out-of-balance", code: 1 },
-    { verdict: "scenario-code-errors", code: 1 },
+    { verdict: "claim-code-errors", code: 1 },
     { verdict: "pending", code: 3 },
   ] as const;
 

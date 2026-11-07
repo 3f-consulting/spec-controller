@@ -42,8 +42,8 @@ const FEATURE = `Feature: pending items on their rows
 `;
 
 const OBSERVATIONS: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", scnId: "SCN-PIR-002", status: "passed", locator: "src/b.test.ts" },
-  { qualityCheckKind: "unit", scnId: "SCN-PIR-005", status: "passed", locator: "src/e.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "SCN-PIR-002", status: "passed", locator: "src/b.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "SCN-PIR-005", status: "passed", locator: "src/e.test.ts" },
 ];
 
 function render(rewrite: (ledger: Ledger) => Ledger = (ledger) => ledger): string {

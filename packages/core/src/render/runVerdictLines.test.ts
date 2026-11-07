@@ -108,16 +108,16 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
         deferralTags: [],
       });
     const bothPassed: EvidenceObservation[] = [
-      { qualityCheckKind: "unit", scnId: "SCN-ONE-001", status: "passed" },
-      { qualityCheckKind: "unit", scnId: "SCN-ONE-002", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "SCN-ONE-001", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "SCN-ONE-002", status: "passed" },
     ];
 
-    it("with every account balanced: the scenario-code-error verdict names exit 1 and adds nothing about the accounts", () => {
+    it("with every account balanced: the claim-code-error verdict names exit 1 and adds nothing about the accounts", () => {
       const md = renderMarkdown(reconciled(bothPassed), ctx, publishedExitCodeOf);
       expect(verdictSectionOf(md)).toEqual([
         heading(),
         "",
-        verdictLine(CoreMessage.ScenarioCodeErrorsHeadline, coreMessage(CoreMessage.ScenarioCodeErrorsGloss, { heading: markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading)), alsoOutOfBalance: "" }), 1),
+        verdictLine(CoreMessage.ClaimCodeErrorsHeadline, coreMessage(CoreMessage.ClaimCodeErrorsGloss, { heading: markdownHeading(3, coreMessage(CoreMessage.ClaimCodeErrorsHeading)), alsoOutOfBalance: "" }), 1),
         "",
       ]);
     });

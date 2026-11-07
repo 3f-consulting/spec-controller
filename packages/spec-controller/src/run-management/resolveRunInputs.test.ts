@@ -317,7 +317,7 @@ describe("[SCN-RPT-016] resolveTargetRoot derives the target repo root from --fe
       const scenario = balance.ledger.claimReconciliations.find((s) => s.claim === "SCN-WGT-001");
 
       expect(observationsOf(scenario!).map(postedOf)).toEqual([
-        { qualityCheckKind: "unit", scnId: "SCN-WGT-001", status: "passed", locator: "src/widget.test.ts", testName: "[SCN-WGT-001] the widget is proven works" },
+        { qualityCheckKind: "unit", claimCode: "SCN-WGT-001", status: "passed", locator: "src/widget.test.ts", testName: "[SCN-WGT-001] the widget is proven works" },
       ]);
       expect(JSON.stringify(balance)).not.toContain(target);
     } finally {

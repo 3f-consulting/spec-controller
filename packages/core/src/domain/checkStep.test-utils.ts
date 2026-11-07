@@ -5,11 +5,11 @@ import type { PipelineStep } from "./pipelineStep.js";
 import { stepDispositions } from "./uncitedFitnessFunctions.js";
 
 export const FITNESS_SCENARIOS: Scenario[] = [
-  { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-CVT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-CVT-003", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-CVT-004", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-CVT-005", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CVT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CVT-003", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CVT-004", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CVT-005", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 export const IN_THE_QUALITY_JOB = { workflow: "ci.yml", job: "quality", writesStepRecord: false, abortsJob: true, plumbing: false } as const;
@@ -27,13 +27,13 @@ export function reconcileTheWorkflow(scenarios: readonly Scenario[], steps: read
     isNamedANonCheck: (step) => step.identity === "Checkout",
     runsARunner: () => false,
   });
-  const rows = new Set(scenarios.map((scenario) => scenario.scnId));
+  const rows = new Set(scenarios.map((scenario) => scenario.claimCode));
   const workflow = workflowObservationsOf(
     steps,
     (step) => dispositionOf(step) === "candidate",
     (step) => ("command" in step ? step.command.replace("pnpm ", "") : step.identity),
     (step) => step.identity,
-    (_handle, citedByStep) => (citedByStep !== undefined && rows.has(citedByStep) ? { scnId: citedByStep } : null)
+    (_handle, citedByStep) => (citedByStep !== undefined && rows.has(citedByStep) ? { claimCode: citedByStep } : null)
   );
   return evidenceReconciliationOf(scenarios, fitnessObservationsOf(workflow, undefined), []);
 }

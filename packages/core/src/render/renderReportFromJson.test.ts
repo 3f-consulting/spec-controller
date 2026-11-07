@@ -16,15 +16,15 @@ import { markdownHeading } from "./heading.js";
 import { UNNAMED_CLAIM_ID } from "../domain/claimReconciliation.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-  { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheckKind: "integration" }] },
-  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CHK-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { claimCode: "SCN-CHK-002", evidenceObligations: [{ qualityCheckKind: "integration" }] },
+  { claimCode: "SCN-CHK-003", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 const observations: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", scnId: "SCN-CHK-001", status: "passed" },
-  { qualityCheckKind: "unit", scnId: "SCN-PHX-001", status: "passed" },
-  { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
-  { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "unit", claimCode: "SCN-CHK-001", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "SCN-PHX-001", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "src/b.test.ts" },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
   { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
 let balance: Ledger;
@@ -97,7 +97,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
   });
 
   it("regenerates a non-strict report with a pending item exactly as it was rendered", () => {
-    const er = __er(reconcile([{ scnId: "SCN-P", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] }], []));
+    const er = __er(reconcile([{ claimCode: "SCN-P", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] }], []));
     const regenerated = renderReportFromJson(renderJson(er, ctx), HANDED_INPUT_NAMES, publishedExitCodeOf);
     expect(regenerated).toBe(renderMarkdown(er, ctx, publishedExitCodeOf));
   });

@@ -26,12 +26,12 @@ export {
 export type { ParsedFeatureFile } from "./parse/scenarios.js";
 
 export { evidenceObligations, corpusCountsOf, sharedScnCodesOf, untaggedScenarioId } from "./domain/corpusCounts.js";
-export type { EvidenceObligations, SharedScnCode } from "./domain/corpusCounts.js";
+export type { EvidenceObligations, SharedClaimCode } from "./domain/corpusCounts.js";
 export type { ScenarioName } from "./domain/qualityCheckReconciliation.js";
 
 export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
 export { hasScenarioCodeErrors } from "./domain/scnTags.js";
-export type { ScenarioCodeError, ScenarioCodeErrorKind, ScenarioCodePopulation } from "./domain/scnTags.js";
+export type { ClaimCodeError, ClaimCodeErrorKind, ScenarioCodePopulation } from "./domain/scnTags.js";
 export {
   isBalanced,
   hasPendingItems,

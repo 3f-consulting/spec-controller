@@ -14,8 +14,8 @@ import { entryOf } from "./inputErrorEntry.test-utils.js";
 let ledger: Ledger;
 beforeEach(() => {
   ledger = reconcile(
-    [{ scnId: "SCN-USG-025", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-    [{ qualityCheckKind: "unit", scnId: "SCN-USG-025", status: "passed" }],
+    [{ claimCode: "SCN-USG-025", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", claimCode: "SCN-USG-025", status: "passed" }],
   );
 });
 

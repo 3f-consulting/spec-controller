@@ -476,10 +476,10 @@ const OUTSIDE = ["SCN-A-001", "SCN-SIXCHR-001"] as const;
 
 const INSIDE = ["SCN-AB-001", "SCN-FIVEC-001"] as const;
 
-function scenarioFile(scnId: string): string {
-  const code = scnId.split("-")[1]!;
+function scenarioFile(claimCode: string): string {
+  const code = claimCode.split("-")[1]!;
   const header = /^[A-Z0-9]{2,5}$/.test(code) ? `@${code}\n` : "";
-  return `${header}Feature: ${code.toLowerCase()}\n\n  @unit @${scnId}\n  Scenario: ${code.toLowerCase()} scenario\n    Given a thing\n`;
+  return `${header}Feature: ${code.toLowerCase()}\n\n  @unit @${claimCode}\n  Scenario: ${code.toLowerCase()} scenario\n    Given a thing\n`;
 }
 
 function balanceGrammarTarget(world: SpecControllerWorld): GrammarRun {
@@ -513,8 +513,8 @@ function balanceGrammarTarget(world: SpecControllerWorld): GrammarRun {
   };
 }
 
-function rowOf(world: SpecControllerWorld, scnId: string): GrammarRow | undefined {
-  return claimReconciliationsOf(world.grammarRun.report).find((row) => row.claim === scnId);
+function rowOf(world: SpecControllerWorld, claimCode: string): GrammarRow | undefined {
+  return claimReconciliationsOf(world.grammarRun.report).find((row) => row.claim === claimCode);
 }
 
 When("balance reconciles that grammar target", function (this: SpecControllerWorld) {

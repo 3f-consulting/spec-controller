@@ -2,7 +2,7 @@ import type { ErrorsSection, RenderInput } from "../domain/renderInput.js";
 
 const errorsInTheInputsKey = "errorsInTheInputs" satisfies keyof RenderInput;
 
-export const scenarioCodeErrorsKey = "scenarioCodeErrors" satisfies keyof ErrorsSection;
+export const scenarioCodeErrorsKey = "claimCodeErrors" satisfies keyof ErrorsSection;
 
 export const configurationFaultsKey = "configurationNotRead" satisfies keyof ErrorsSection;
 

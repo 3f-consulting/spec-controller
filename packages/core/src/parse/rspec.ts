@@ -21,14 +21,14 @@ export function parseRspecEvidenceObservations(report: RspecJsonReport, root?: s
   for (const example of report.examples ?? []) {
     const evidence = evidenceOfRunResult(runResultOf(example.status));
     if (evidence === undefined) continue;
-    const { scnId, severalCodes } = attributionOf(citingCodesOf(example));
+    const { claimCode, severalCodes } = attributionOf(citingCodesOf(example));
     results.push({
       qualityCheckKind: layer,
-      scnId,
+      claimCode,
       status: evidence.status,
       locator: example.file_path && locatorOf(example.file_path, root),
       testName: example.full_description,
-      ...(severalCodes ? { notes: [{ kind: "several-scn-codes" as const, codes: severalCodes }] } : {}),
+      ...(severalCodes ? { notes: [{ kind: "several-claim-codes" as const, codes: severalCodes }] } : {}),
     });
   }
   return [...results, ...loadErrorsOf(report, layer, root)];
@@ -46,10 +46,10 @@ function loadErrorsOf(report: RspecJsonReport, layer: Layer, root?: string): Evi
     const file = LOADED_FILE.exec(message);
     const path = file?.[1] ?? file?.[2];
     if (path === undefined) unnamed.push(message);
-    else broken.push({ qualityCheckKind: layer, scnId: null, status: evidence.status, locator: locatorOf(path, root), broken: evidence.broken, message });
+    else broken.push({ qualityCheckKind: layer, claimCode: null, status: evidence.status, locator: locatorOf(path, root), broken: evidence.broken, message });
   }
   if (count > broken.length) {
-    broken.push({ qualityCheckKind: layer, scnId: null, status: evidence.status, broken: evidence.broken, message: unnamed.length > 0 ? unnamed.join("\n") : undefined });
+    broken.push({ qualityCheckKind: layer, claimCode: null, status: evidence.status, broken: evidence.broken, message: unnamed.length > 0 ? unnamed.join("\n") : undefined });
   }
   return broken;
 }

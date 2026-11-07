@@ -14,8 +14,8 @@ const SUBJECT = (): string => coreMessage(CoreMessage.ClaimReconciliationSubject
 let balance: Ledger;
 beforeEach(() => {
   balance = reconcile(
-    [{ scnId: "SCN-RPT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-    [{ qualityCheckKind: "unit", scnId: "SCN-RPT-001", status: "passed" }],
+    [{ claimCode: "SCN-RPT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", claimCode: "SCN-RPT-001", status: "passed" }],
   );
 });
 
@@ -61,15 +61,15 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
   beforeEach(() => {
     spanning = reconcile(
       [
-        { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
-        { scnId: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
-        { scnId: "SCN-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+        { claimCode: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+        { claimCode: "SCN-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-        { qualityCheckKind: "integration", scnId: "SCN-A", status: "failed" },
-        { qualityCheckKind: "unit", scnId: "SCN-C", status: "passed" },
-        { qualityCheckKind: "integration", scnId: "SCN-C", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+        { qualityCheckKind: "integration", claimCode: "SCN-A", status: "failed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-C", status: "passed" },
+        { qualityCheckKind: "integration", claimCode: "SCN-C", status: "passed" },
       ]
     );
   });
@@ -95,7 +95,7 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
     const lintAndBehavioural: Ledger = reconcile(
       [
         {
-          scnId: "SCN-LNT-099",
+          claimCode: "SCN-LNT-099",
           evidenceObligations: [{ qualityCheckKind: "integration" }, { qualityCheckKind: "fitness" }],
         },
       ],
@@ -113,16 +113,16 @@ describe("[SCN-RPT-004] the markdown report tallies Reconciliation lines by reco
   beforeEach(() => {
     threeScenarioRowsPlusUnnamedClaimRow = reconcile(
       [
-        { scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-B", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-C", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-        { qualityCheckKind: "unit", scnId: "SCN-B", status: "passed" },
-        { qualityCheckKind: "unit", scnId: "SCN-C", status: "passed" },
-        { qualityCheckKind: "unit", scnId: null, status: "passed" },
-        { qualityCheckKind: "integration", scnId: null, status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-B", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-C", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: null, status: "passed" },
+        { qualityCheckKind: "integration", claimCode: null, status: "passed" },
       ]
     );
   });

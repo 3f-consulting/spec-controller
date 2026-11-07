@@ -15,14 +15,14 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
     rich = reconcile(
       [
         {
-          scnId: "SCN-A",
+          claimCode: "SCN-A",
           evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }],
         },
-        { scnId: "SCN-B", evidenceObligations: [] },
+        { claimCode: "SCN-B", evidenceObligations: [] },
       ],
       [
-        { qualityCheckKind: "fitness", fitnessFunction: "typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
-        { qualityCheckKind: "integration", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" },
+        { qualityCheckKind: "fitness", fitnessFunction: "typecheck", claimCode: "SCN-A", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "integration", claimCode: null, status: "passed", locator: "tests/stray.test.ts:1" },
       ]
     );
   });
@@ -31,8 +31,8 @@ describe("[SCN-RPT-020] the markdown renders each outcome's sentence, not the ba
     ["missing", CoreMessage.OutcomeMissing],
     ["failing", CoreMessage.OutcomeFailing],
     ["watermelon", CoreMessage.OutcomeWatermelon],
-    ["no-scn-code", CoreMessage.OutcomeNoScnCode],
-    ["duplicate-scn-code", CoreMessage.OutcomeDuplicateScnCode],
+    ["no-claim-code", CoreMessage.OutcomeNoClaimCode],
+    ["duplicate-claim-code", CoreMessage.OutcomeDuplicateClaimCode],
     ["cites-unknown-scenario", CoreMessage.OutcomeCitesUnknownScenario],
     ["cites-no-scenario", CoreMessage.OutcomeCitesNoScenario],
     ["no-evidence-obligation", CoreMessage.OutcomeNoEvidenceObligation],

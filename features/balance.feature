@@ -132,12 +132,12 @@ Feature: spec-controller balance runs standalone
       And the re-render's verdict headline names the exit for <code>
 
       Examples:
-        | verdict                            | code                             |
-        | all-balanced                       | the balanced verdict             |
-        | out-of-balance                     | the out-of-balance verdict       |
-        | balanced-with-scenario-code-errors | the scenario-code-errors verdict |
-        | unsound                            | the unsound verdict              |
-        | nothing to reconcile               | the nothing-to-reconcile verdict |
+        | verdict                         | code                             |
+        | all-balanced                    | the balanced verdict             |
+        | out-of-balance                  | the out-of-balance verdict       |
+        | balanced-with-claim-code-errors | the claim-code-errors verdict    |
+        | unsound                         | the unsound verdict              |
+        | nothing to reconcile            | the nothing-to-reconcile verdict |
 
     @unit @e2e @SCN-CLI-070
     Scenario Outline: a re-render is strict when the saved run was strict or the re-render is given --strict
@@ -472,11 +472,11 @@ Feature: spec-controller balance runs standalone
       And the two runs report the same Evidence Reconciliation, byte for byte but for the run timestamp each stamps for itself
 
       Examples:
-        | verdict                            | flags                   | code                             |
-        | all-balanced                       | with no options         | the balanced verdict             |
-        | out-of-balance                     | with no options         | the out-of-balance verdict       |
-        | only-Pending-Items                 | under the strict option | the pending verdict              |
-        | balanced-with-scenario-code-errors | with no options         | the scenario-code-errors verdict |
+        | verdict                         | flags                   | code                          |
+        | all-balanced                    | with no options         | the balanced verdict          |
+        | out-of-balance                  | with no options         | the out-of-balance verdict    |
+        | only-Pending-Items              | under the strict option | the pending verdict           |
+        | balanced-with-claim-code-errors | with no options         | the claim-code-errors verdict |
 
     @SCN-CLI-022 @unit @e2e
     Scenario Outline: --exit-zero never masks a run that could give no verdict — <state> still ends on <code>
@@ -911,7 +911,7 @@ Feature: spec-controller balance runs standalone
     Scenario: balance counts a prose mention of a feature part of two or five characters as an excluded @SCN occurrence, and one of one or six characters as none, listing no scenario code error
 
     @unit @SCN-CLI-095
-    Scenario: balance over a scenario tagged with two scenario codes opens no account under either, lists a several-scn-codes error naming both in the JSON and the markdown, and exits 1
+    Scenario: balance over a scenario tagged with two scenario codes opens no account under either, lists a several-claim-codes error naming both in the JSON and the markdown, and exits 1
 
     @unit @SCN-CLI-096
     Scenario: balance names each feature code by the file whose header carries it, and no file for a code only a scenario carries

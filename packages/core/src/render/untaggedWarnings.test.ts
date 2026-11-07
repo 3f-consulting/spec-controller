@@ -67,7 +67,7 @@ const untaggedLocators = [
 describe("[SCN-RPT-014] the report counts the scenarios with no @SCN code", () => {
   it("states the count of scenarios with no @SCN code, naming none of them there", () => {
     expect(censusBlock(renderCorpus(corpus))).toEqual([
-      `- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: 0 })}`,
+      `- ${coreMessage(CoreMessage.ExcludedClaimOccurrences, { count: 0 })}`,
       `- ${coreMessage(CoreMessage.UntaggedScenarios, { count: 3 })}`,
     ]);
   });

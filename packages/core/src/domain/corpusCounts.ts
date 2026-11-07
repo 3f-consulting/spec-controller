@@ -4,8 +4,8 @@ export function untaggedScenarioId({ feature, title }: ScenarioName): string {
   return `${feature} : ${title}`;
 }
 
-export interface SharedScnCode {
-  readonly scnId: string;
+export interface SharedClaimCode {
+  readonly claimCode: string;
   readonly scenarios: readonly ScenarioName[];
 }
 
@@ -14,13 +14,13 @@ export interface EvidenceObligations {
   readonly scenarioCount: number;
   readonly excludedOccurrences: number;
   readonly untaggedScenarios: readonly ScenarioName[];
-  readonly sharedScnCodes?: readonly SharedScnCode[];
+  readonly sharedClaimCodes?: readonly SharedClaimCode[];
 }
 
 export interface ParsedFeatureCounts {
   readonly rawScnOccurrences: number;
   readonly tagScnOccurrences: number;
-  readonly taggedScenarios: readonly { readonly scnId: string; readonly name: string }[];
+  readonly taggedScenarios: readonly { readonly claimCode: string; readonly name: string }[];
   readonly untaggedScenarios: readonly string[];
 }
 
@@ -30,17 +30,17 @@ export interface ParsedFeature extends ParsedFeatureCounts {
 
 export function sharedScnCodesOf(
   files: readonly Pick<ParsedFeature, "feature" | "taggedScenarios">[]
-): SharedScnCode[] {
+): SharedClaimCode[] {
   const byCode = new Map<string, ScenarioName[]>();
   for (const { feature, taggedScenarios } of files) {
-    for (const { scnId, name } of taggedScenarios) {
-      byCode.set(scnId, [...(byCode.get(scnId) ?? []), { feature, title: name }]);
+    for (const { claimCode, name } of taggedScenarios) {
+      byCode.set(claimCode, [...(byCode.get(claimCode) ?? []), { feature, title: name }]);
     }
   }
   return [...byCode]
     .filter(([, scenarios]) => scenarios.length > 1)
-    .map(([scnId, scenarios]) => ({ scnId, scenarios }))
-    .sort((a, b) => a.scnId.localeCompare(b.scnId));
+    .map(([claimCode, scenarios]) => ({ claimCode, scenarios }))
+    .sort((a, b) => a.claimCode.localeCompare(b.claimCode));
 }
 
 export function corpusCountsOf(files: readonly ParsedFeature[]): EvidenceObligations {
@@ -57,7 +57,7 @@ export function evidenceObligations(
   raw: number,
   scenarioCount: number,
   untaggedScenarios: ScenarioName[] = [],
-  sharedScnCodes: SharedScnCode[] = [],
+  sharedClaimCodes: SharedClaimCode[] = [],
   tagOccurrences: number = scenarioCount
 ): EvidenceObligations {
   return {
@@ -65,6 +65,6 @@ export function evidenceObligations(
     scenarioCount,
     excludedOccurrences: raw - tagOccurrences,
     untaggedScenarios,
-    sharedScnCodes,
+    sharedClaimCodes,
   };
 }

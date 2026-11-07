@@ -21,7 +21,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     leaves every posting unambiguous — the account still reconciles exactly as it would if it
     were filed correctly — but the report's by-feature cut groups on the code, so a misfiled one
     makes that cut say something false. So `balance` lists each misfiling under
-    `### Scenario code errors` (`errorsInTheInputs.scenarioCodeErrors` in the JSON), and any one of them reds the
+    `### Claim code errors` (`errorsInTheInputs.claimCodeErrors` in the JSON), and any one of them reds the
     run. A duplicated @SCN is not one of these: it makes its account unreconcilable, and it is
     reported on that account's rows.
 
@@ -32,10 +32,10 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     these rules to judge — it is the one-grammar Rule below that says so.
 
     @unit @SCN-STG-011
-    Scenario: A scenario whose feature part is another file's header code is listed as foreign-scn-code, naming that file as where the by-feature cut counts it, and the run reds
+    Scenario: A scenario whose feature part is another file's header code is listed as foreign-claim-code, naming that file as where the by-feature cut counts it, and the run reds
 
     @unit @SCN-STG-022
-    Scenario: A scenario whose feature part no file's header carries is listed as foreign-scn-code, saying its by-feature row has no file behind it, and it offers no move to a file the corpus lacks
+    Scenario: A scenario whose feature part no file's header carries is listed as foreign-claim-code, saying its by-feature row has no file behind it, and it offers no move to a file the corpus lacks
 
     @unit @SCN-STG-010
     Scenario: Two feature files carrying one header code are listed as duplicate-feature-code, and the run reds
@@ -46,9 +46,9 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
   Rule: an @SCN is one account number, and two scenarios carrying it are two claims that cannot reconcile
 
     Each scenario is a claim. Two scenarios carrying one code are two claims, each its own Claim
-    Reconciliation under the code, and every kind of quality check each one raises reads `duplicate-scn-code`.
+    Reconciliation under the code, and every kind of quality check each one raises reads `duplicate-claim-code`.
     No evidence observation citing that code can be attributed to either of them, so it credits
-    neither and posts to the unnamed claim. Each `duplicate-scn-code` is a reconciling item, so each
+    neither and posts to the unnamed claim. Each `duplicate-claim-code` is a reconciling item, so each
     claim is out of balance by the ordinary rule: no new verdict, no precedence. It is not `broken` —
     the proofs ran; what fails is the attribution.
 
@@ -57,10 +57,10 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     reconciling exactly as it would without it.
 
     @unit @SCN-STG-013
-    Scenario: two scenarios in one file sharing an @SCN are two claims, each reading duplicate-scn-code at every kind of quality check it raises
+    Scenario: two scenarios in one file sharing an @SCN are two claims, each reading duplicate-claim-code at every kind of quality check it raises
 
     @unit @SCN-STG-014
-    Scenario: two scenarios in different files sharing an @SCN are two claims, each reading duplicate-scn-code at every kind of quality check it raises
+    Scenario: two scenarios in different files sharing an @SCN are two claims, each reading duplicate-claim-code at every kind of quality check it raises
 
     @unit @SCN-STG-015
     Scenario: scenarios sharing a code but naming disjoint kinds of quality check still never balance, on either claim
@@ -111,8 +111,8 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     reader picks one ([ubiquitous-language.md → Posting](../docs/ubiquitous-language.md#posting)). A scenario carrying more than
     one @SCN is the same fault from the other side: no reader picks one either, so it raises no
     evidence obligation under any of its codes and opens no account under any of them. It is not
-    untagged, since it carries codes, so `balance` lists it under `### Scenario code errors`
-    (`errorsInTheInputs.scenarioCodeErrors` in the JSON) as several-scn-codes, naming the file, the scenario and every
+    untagged, since it carries codes, so `balance` lists it under `### Claim code errors`
+    (`errorsInTheInputs.claimCodeErrors` in the JSON) as several-claim-codes, naming the file, the scenario and every
     code it carries, and the run reds. A test citing one of those codes cites a code no scenario
     carries, as any such citation does.
 

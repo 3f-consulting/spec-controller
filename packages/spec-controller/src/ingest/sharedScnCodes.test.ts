@@ -20,9 +20,9 @@ describe("[SCN-CLI-099] readEvidenceObligations names the scenarios sharing each
         "@TWO\nFeature: two\n\n  @unit @SCN-ONE-001\n  Scenario: the scenario in two\n    Given a thing\n\n" +
         "  @unit @SCN-TWO-001\n  Scenario: its own\n    Given a thing\n",
     });
-    expect(readEvidenceObligations(features).sharedScnCodes).toEqual([
+    expect(readEvidenceObligations(features).sharedClaimCodes).toEqual([
       {
-        scnId: "SCN-ONE-001",
+        claimCode: "SCN-ONE-001",
         scenarios: [
           scenarioName("one.feature", "the scenario in one"),
           scenarioName("two.feature", "the scenario in two"),

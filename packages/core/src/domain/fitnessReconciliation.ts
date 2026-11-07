@@ -5,7 +5,7 @@ import type { StepTest } from "./uncitedFitnessFunctions.js";
 export type StepReport = "succeeded" | "failed" | "other";
 
 export interface RecordedCheckStep {
-  readonly citedScn: string;
+  readonly citedClaimCode: string;
   readonly report: StepReport;
   /** What the record said the step did, repeated verbatim in the note of a step that did not run. */
   readonly said?: string;
@@ -13,18 +13,18 @@ export interface RecordedCheckStep {
 }
 
 interface Citation {
-  readonly scnId: string;
+  readonly claimCode: string;
 }
 
 type HandleOf = (step: PipelineStep) => string;
 type StepNameOf = (step: PipelineStep) => string;
 type CitationOf = (handle: string, citedByStep?: string) => Citation | null;
 
-function namedOf({ citedScn, step }: RecordedCheckStep) {
+function namedOf({ citedClaimCode, step }: RecordedCheckStep) {
   return {
     qualityCheckKind: "fitness",
-    fitnessFunction: citedScn,
-    scnId: citedScn,
+    fitnessFunction: citedClaimCode,
+    claimCode: citedClaimCode,
     ...(step === undefined ? {} : { step }),
   } as const;
 }
@@ -32,7 +32,7 @@ function namedOf({ citedScn, step }: RecordedCheckStep) {
 function checkDidNotRunNote(step: RecordedCheckStep): ObservationNote {
   return {
     kind: "check-step-did-not-run",
-    code: step.citedScn,
+    code: step.citedClaimCode,
     ...(step.said === undefined ? {} : { outcome: step.said }),
   };
 }
@@ -73,7 +73,7 @@ export function workflowObservationsOf(
         step: stepNameOf(step),
         exists: true,
         enforcedOverRealSource: step.abortsJob,
-        ...(citation !== null ? { scnId: step.id ?? citation.scnId } : {}),
+        ...(citation !== null ? { claimCode: step.id ?? citation.claimCode } : {}),
       };
     })
     .sort((a, b) => a.fitnessFunction.localeCompare(b.fitnessFunction));
@@ -94,7 +94,7 @@ export function recordedAtSteps(
   stepNameOf: StepNameOf
 ): RecordedCheckStep[] | undefined {
   return recorded?.map((entry) => {
-    const step = stepCarryingCode(steps, entry.citedScn, stepNameOf);
+    const step = stepCarryingCode(steps, entry.citedClaimCode, stepNameOf);
     return step === undefined ? entry : { ...entry, step };
   });
 }
@@ -106,7 +106,7 @@ export function fitnessObservationsOf(
 ): FitnessEvidenceObservation[] {
   if (recorded === undefined) return [...workflow];
   return [
-    ...workflow.filter((observation) => observation.scnId === undefined),
+    ...workflow.filter((observation) => observation.claimCode === undefined),
     ...recorded.map((step) => recordedObservationOf(step)),
   ];
 }

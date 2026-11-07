@@ -12,7 +12,7 @@ const VERDICT_HEADLINES = [
   "out-of-balance-headline",
   "pending-headline",
   "unsound-headline",
-  "scenario-code-errors-headline",
+  "claim-code-errors-headline",
   "nothing-to-reconcile-headline",
 ] as const;
 

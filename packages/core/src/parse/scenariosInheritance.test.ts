@@ -13,7 +13,7 @@ Feature: alpha
 `;
     const [scenario] = parseScenarios(source);
 
-    expect(scenario!.scnId).toBe("SCN-AAA-001");
+    expect(scenario!.claimCode).toBe("SCN-AAA-001");
     expect(scenario!.evidenceObligations).toEqual([
       { qualityCheckKind: "unit" },
       { qualityCheckKind: "integration" },
@@ -75,11 +75,11 @@ Feature: alpha
   ] as const)("%s", (_title, source, qualityCheckKind) => {
     expect(parseScenarios(source)).toEqual([
       {
-        scnId: "SCN-AAA-001",
+        claimCode: "SCN-AAA-001",
         evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }],
       },
       {
-        scnId: "SCN-AAA-002",
+        claimCode: "SCN-AAA-002",
         evidenceObligations: [{ qualityCheckKind }],
       },
     ]);
@@ -139,7 +139,7 @@ Feature: alpha
       ["a scenario no code reaches"],
     ],
   ] as const)("inherited from its %s", (_ancestor, source, untagged) => {
-    expect(parseScenarios(source).map(({ scnId }) => scnId)).toEqual(["SCN-AAA-001"]);
+    expect(parseScenarios(source).map(({ claimCode }) => claimCode)).toEqual(["SCN-AAA-001"]);
     expect(parseUntaggedScenarios(source)).toEqual(untagged);
   });
 });
@@ -166,7 +166,7 @@ describe("[SCN-GRD-003] a code a scenario inherits from its Rule or Feature is o
     (ancestor) => {
       const source = underAncestor[ancestor]("@SCN-AAA-001");
       expect(parseScenarios(source)).toEqual([
-        { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ]);
       expect(parseUntaggedScenarios(source)).toEqual([]);
     },

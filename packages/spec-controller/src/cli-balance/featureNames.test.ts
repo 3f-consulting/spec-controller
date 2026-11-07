@@ -20,7 +20,7 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
       { feature: "CHK", featureFile: "billing/checkout.feature", count: 1, claims: ["SCN-CHK-001"] },
       { feature: "CVL", featureFile: "config-vocabulary-lint.feature", count: 1, claims: ["SCN-CVL-001"] },
       { feature: "XYZ", count: 1, claims: ["SCN-XYZ-001"] },
-      { feature: "no-feature-code.feature", count: 1, claims: [], scenariosWithNoScnCode: 1 },
+      { feature: "no-feature-code.feature", count: 1, claims: [], scenariosWithNoClaimCode: 1 },
     ]);
   });
 
@@ -45,7 +45,7 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
       ...(featureFile ? { featureFile } : {}),
       count: 1,
       claims: [],
-      scenariosWithNoScnCode: 1,
+      scenariosWithNoClaimCode: 1,
     });
     expect(JSON.parse(stdout).summary.outOfBalanceByFeature).toEqual(
       expect.arrayContaining([
@@ -68,7 +68,7 @@ describe("[SCN-RMD-006] the summary's out-of-balance view groups each out-of-bal
     try {
       const { stdout } = runBalanceCaptured(["--format", "json"]);
       expect(JSON.parse(stdout).summary.outOfBalanceByFeature).toEqual([
-        { feature: "DEF", featureFile: "default-corpus.feature", count: 1, claims: [], scenariosWithNoScnCode: 1 },
+        { feature: "DEF", featureFile: "default-corpus.feature", count: 1, claims: [], scenariosWithNoClaimCode: 1 },
       ]);
     } finally {
       cwdSpy.mockRestore();

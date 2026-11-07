@@ -23,8 +23,8 @@ describe("[SCN-VIT-006] every observation read from a Vitest report is posted at
 
   it("posts every observation at unit, with no layer handed in", () => {
     expect(parseVitestEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", scnId: "SCN-FOO-001", status: "passed", locator: "/r/a.test.ts", testName: "[SCN-FOO-001] does a thing" },
-      { qualityCheckKind: "unit", scnId: "SCN-FOO-002", status: "failed", locator: "/r/a.test.ts", testName: "[SCN-FOO-002] does another" },
+      { qualityCheckKind: "unit", claimCode: "SCN-FOO-001", status: "passed", locator: "/r/a.test.ts", testName: "[SCN-FOO-001] does a thing" },
+      { qualityCheckKind: "unit", claimCode: "SCN-FOO-002", status: "failed", locator: "/r/a.test.ts", testName: "[SCN-FOO-002] does another" },
     ]);
   });
 });
@@ -52,8 +52,8 @@ describe("[SCN-VIT-001] parseVitestEvidenceObservations attributes an assertion 
 
   it("emits the self-citing leaf's evidence observation citing the scenario its OWN title cites, not the ancestor describe's", () => {
     expect(parseVitestEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", scnId: "SCN-LEA-016", status: "passed", locator: "/r/citation.test.ts", testName: report.testResults![0]!.assertionResults![0]!.fullName },
-      { qualityCheckKind: "unit", scnId: "SCN-ANC-016", status: "passed", locator: "/r/citation.test.ts", testName: report.testResults![0]!.assertionResults![1]!.fullName },
+      { qualityCheckKind: "unit", claimCode: "SCN-LEA-016", status: "passed", locator: "/r/citation.test.ts", testName: report.testResults![0]!.assertionResults![0]!.fullName },
+      { qualityCheckKind: "unit", claimCode: "SCN-ANC-016", status: "passed", locator: "/r/citation.test.ts", testName: report.testResults![0]!.assertionResults![1]!.fullName },
     ]);
   });
 });
@@ -76,7 +76,7 @@ describe("[SCN-VIT-002] parseVitestEvidenceObservations reads the bracketed toke
 
   it("emits an uncited evidence observation — neither the bare id nor the @-prefixed one cites", () => {
     expect(parseVitestEvidenceObservations(proseOnly)).toEqual([
-      { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "/r/prose.test.ts", testName: proseOnly.testResults![0]!.assertionResults![0]!.fullName },
+      { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "/r/prose.test.ts", testName: proseOnly.testResults![0]!.assertionResults![0]!.fullName },
     ]);
   });
 });
@@ -99,7 +99,7 @@ describe("[SCN-VIT-003] a leaf's prose mention does not override its describe's 
 
   it("emits the evidence observation citing the ancestor describe's scenario — the leaf's prose mentions are not citations", () => {
     expect(parseVitestEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", scnId: "SCN-ANC-032", status: "passed", locator: "/r/prose.test.ts", testName: report.testResults![0]!.assertionResults![0]!.fullName },
+      { qualityCheckKind: "unit", claimCode: "SCN-ANC-032", status: "passed", locator: "/r/prose.test.ts", testName: report.testResults![0]!.assertionResults![0]!.fullName },
     ]);
   });
 });
@@ -120,7 +120,7 @@ describe("[SCN-VIT-005] a collection-failed vitest file emits a broken observati
     expect(parseVitestEvidenceObservations(collectionFailed)).toEqual([
       {
         qualityCheckKind: "unit",
-        scnId: null,
+        claimCode: null,
         status: "failed",
         locator: "/r/harness.test.ts",
         broken: true,
@@ -150,7 +150,7 @@ describe("[SCN-VIT-005] a collection-failed vitest file emits a broken observati
       ],
     };
     expect(parseVitestEvidenceObservations(failedButCollected)).toEqual([
-      { qualityCheckKind: "unit", scnId: "SCN-FOO-003", status: "failed", locator: "/r/a.test.ts", testName: "[SCN-FOO-003] throws at runtime" },
+      { qualityCheckKind: "unit", claimCode: "SCN-FOO-003", status: "failed", locator: "/r/a.test.ts", testName: "[SCN-FOO-003] throws at runtime" },
     ]);
   });
 
@@ -193,11 +193,11 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
     expect(parseVitestEvidenceObservations(several())).toEqual([
       {
         qualityCheckKind: "unit",
-        scnId: null,
+        claimCode: null,
         status: "passed",
         locator: "/r/several.test.ts",
         testName: "[SCN-AAA-001] [SCN-AAA-002] two",
-        notes: [{ kind: "several-scn-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }],
+        notes: [{ kind: "several-claim-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }],
       },
     ]);
   });
@@ -206,7 +206,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
     const [observation] = parseVitestEvidenceObservations(
       reportOf({ title: "the bare leaf", fullName: "[SCN-AAA-001] [SCN-AAA-002] the describe > the bare leaf" })
     );
-    expect(observation).toMatchObject({ scnId: null, notes: [{ kind: "several-scn-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }] });
+    expect(observation).toMatchObject({ claimCode: null, notes: [{ kind: "several-claim-codes", codes: ["SCN-AAA-001", "SCN-AAA-002"] }] });
     expect(observation).not.toHaveProperty("message");
   });
 
@@ -215,7 +215,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
     ["one code repeated", "[SCN-AAA-001] once [SCN-AAA-001] again"],
   ])("CONTROL: a title with %s credits it, with no note and no message", (_, title) => {
     expect(parseVitestEvidenceObservations(reportOf({ title }))).toEqual([
-      { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "passed", locator: "/r/several.test.ts", testName: title },
+      { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "passed", locator: "/r/several.test.ts", testName: title },
     ]);
   });
 
@@ -223,7 +223,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
     const [observation] = parseVitestEvidenceObservations(
       reportOf({ title: "[SCN-AAA-002] leaf", fullName: "[SCN-AAA-001] describe > [SCN-AAA-002] leaf" })
     );
-    expect(observation).toMatchObject({ scnId: "SCN-AAA-002" });
+    expect(observation).toMatchObject({ claimCode: "SCN-AAA-002" });
     expect(observation).not.toHaveProperty("notes");
     expect(observation).not.toHaveProperty("message");
   });
@@ -231,19 +231,19 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
   describe("assembled into the ledger", () => {
     const ledger = () => reconcile(
       [
-        { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-        { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+        { claimCode: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       ],
       parseVitestEvidenceObservations(several()),
       []
     );
-    const unitOutcomeOf = (scnId: string) =>
+    const unitOutcomeOf = (claimCode: string) =>
       ledger().claimReconciliations
-        .find((row) => row.claim === scnId)
+        .find((row) => row.claim === claimCode)
         ?.qualityCheckReconciliations.find((q) => q.qualityCheckKind === "unit")?.outcome;
 
-    it.each(["SCN-AAA-001", "SCN-AAA-002"])("leaves %s missing", (scnId) => {
-      expect(unitOutcomeOf(scnId)).toBe("missing");
+    it.each(["SCN-AAA-001", "SCN-AAA-002"])("leaves %s missing", (claimCode) => {
+      expect(unitOutcomeOf(claimCode)).toBe("missing");
     });
 
     it("words both codes on the unnamed claim's row in the catalogue's words", () => {
@@ -254,7 +254,7 @@ describe("[SCN-VIT-004] a Vitest test whose title cites two scenarios credits ne
         .find((line) => line.startsWith("| (unnamed claim) | "));
 
       expect(unnamedClaimRow ?? "").toContain(
-        `(/r/several.test.ts: ${coreMessage(CoreMessage.SeveralScnCodesCited, { count: 2, codes: "SCN-AAA-001, SCN-AAA-002" })})`
+        `(/r/several.test.ts: ${coreMessage(CoreMessage.SeveralClaimCodesCited, { count: 2, codes: "SCN-AAA-001, SCN-AAA-002" })})`
       );
     });
   });

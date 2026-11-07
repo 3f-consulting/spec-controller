@@ -11,7 +11,7 @@ import {
 
 const TARGET = "tests/fixtures/rspec";
 const balance = () => reconcileFixture(TARGET, { rspec: `${TARGET}/report.json` });
-const unitOf = (scnId: string) => unitReconciliationOf(balance(), scnId);
+const unitOf = (claimCode: string) => unitReconciliationOf(balance(), claimCode);
 const CASES_SPEC = "tests/fixtures/rspec/project/spec/cases_spec.rb";
 
 describe("[SCN-RSP-001] runReconcile reads a real RSpec report as unit evidence", () => {
@@ -54,12 +54,12 @@ describe("[SCN-RSP-003] runReconcile reads a code in an RSpec example's own desc
 });
 
 describe("[SCN-RSP-004] runReconcile credits neither scenario an RSpec example's description cites when it cites two, and the unnamed claim's row names both codes", () => {
-  it.each(["SCN-RSF-005", "SCN-RSF-006"])("leaves %s missing, with no observation", (scnId) => {
-    expectMissingWithNoObservation(unitOf(scnId));
+  it.each(["SCN-RSF-005", "SCN-RSF-006"])("leaves %s missing, with no observation", (claimCode) => {
+    expectMissingWithNoObservation(unitOf(claimCode));
   });
 
   it("names both codes on the unnamed claim's row, beside the example's file", () => {
-    expect(unnamedClaimRowOf(balance(), TARGET, "cases_spec.rb: 2 scenario codes")).toContain("cases_spec.rb: 2 scenario codes cite SCN-RSF-005, SCN-RSF-006");
+    expect(unnamedClaimRowOf(balance(), TARGET, "cases_spec.rb: 2 claim codes")).toContain("cases_spec.rb: 2 claim codes cite SCN-RSF-005, SCN-RSF-006");
   });
 });
 
@@ -68,8 +68,8 @@ describe("[SCN-RSP-005] runReconcile reads a skipped or pending RSpec example as
     ["a skipped", "SCN-RSF-007"],
     ["an xit", "SCN-RSF-008"],
     ["a pending and failing", "SCN-RSF-009"],
-  ])("leaves the scenario %s example cites missing, with no observation", (_, scnId) => {
-    expectMissingWithNoObservation(unitOf(scnId));
+  ])("leaves the scenario %s example cites missing, with no observation", (_, claimCode) => {
+    expectMissingWithNoObservation(unitOf(claimCode));
   });
 });
 
@@ -87,8 +87,8 @@ describe("[SCN-RSP-007] runReconcile reads an RSpec example a failing before hoo
   it.each([
     ["before", "SCN-RSF-011", "An RSpec fixture suite with a before hook that fails [SCN-RSF-011] an example after a failing before hook cites its scenario"],
     ["before(:context)", "SCN-RSF-012", "An RSpec fixture suite with a before(:context) hook that fails [SCN-RSF-012] an example after a failing before(:context) hook cites its scenario"],
-  ])("reconciles the scenario an example after a failing %s hook cites as failing, by that example", (_, scnId, testName) => {
-    expectSoleObservation(unitOf(scnId), "failing", { status: "failed", locator: CASES_SPEC, testName });
+  ])("reconciles the scenario an example after a failing %s hook cites as failing, by that example", (_, claimCode, testName) => {
+    expectSoleObservation(unitOf(claimCode), "failing", { status: "failed", locator: CASES_SPEC, testName });
   });
 });
 

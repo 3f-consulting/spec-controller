@@ -9,18 +9,18 @@ const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, 
 const UNTAGGED = "beta must never lose the money";
 
 const namedScenarios: Scenario[] = [
-  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-  { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
+  { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { claimCode: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] },
 ];
 
 const observed: EvidenceObservation[] = [
-  { scnId: "SCN-AAA-001", qualityCheckKind: "unit", status: "passed" },
+  { claimCode: "SCN-AAA-001", qualityCheckKind: "unit", status: "passed" },
 ];
 
 describe("[SCN-LDG-021] the untagged scenario's row carries no evidence observation and no Pending Item", () => {
   const ledger = () => reconcile(namedScenarios, observed, [UNTAGGED]);
-  const rowFor = (scnId: string) =>
-    ledger().claimReconciliations.find((r) => r.claim === scnId);
+  const rowFor = (claimCode: string) =>
+    ledger().claimReconciliations.find((r) => r.claim === claimCode);
 
   it("routes the run's one evidence observation to the account its citation names, not to the untagged row", () => {
     expect(observationsOf(rowFor("SCN-AAA-001")!).map(postedOf)).toStrictEqual([observed[0]]);

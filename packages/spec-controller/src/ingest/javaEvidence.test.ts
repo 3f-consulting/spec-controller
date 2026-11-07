@@ -25,7 +25,7 @@ describe("[SCN-JAV-010] runReconcile reads a single Surefire report file whose r
 
 const JAVA = "tests/fixtures/java";
 const balance = () => reconcileFixture(JAVA, { junit: `${JAVA}/surefire-reports` });
-const unitOf = (scnId: string) => unitReconciliationOf(balance(), scnId);
+const unitOf = (claimCode: string) => unitReconciliationOf(balance(), claimCode);
 
 describe("[SCN-JAV-001] runReconcile reads the directory of reports Maven Surefire wrote through --junit", () => {
   it("reconciles the scenario a passing JUnit 5 test cites in its display name as satisfied, by that test", () => {
@@ -46,13 +46,13 @@ describe("[SCN-JAV-002] runReconcile reads a failing JUnit 5 test in the directo
 });
 
 describe("[SCN-JAV-005] runReconcile credits neither scenario a JUnit 5 test's display name cites when it cites two, and the unnamed claim's row names both codes", () => {
-  it.each(["SCN-JVF-005", "SCN-JVF-006"])("leaves %s missing, with no observation", (scnId) => {
-    expectMissingWithNoObservation(unitOf(scnId));
+  it.each(["SCN-JVF-005", "SCN-JVF-006"])("leaves %s missing, with no observation", (claimCode) => {
+    expectMissingWithNoObservation(unitOf(claimCode));
   });
 
   it("names both codes on the unnamed claim's row, beside the test", () => {
     expect(unnamedClaimRowOf(balance(), JAVA)).toContain(
-      "example.CitedTest::[SCN-JVF-005] [SCN-JVF-006] a test that cites two scenarios: 2 scenario codes cite SCN-JVF-005, SCN-JVF-006",
+      "example.CitedTest::[SCN-JVF-005] [SCN-JVF-006] a test that cites two scenarios: 2 claim codes cite SCN-JVF-005, SCN-JVF-006",
     );
   });
 });
@@ -63,7 +63,7 @@ describe("[SCN-JAV-006] runReconcile reads each invocation of a parameterised JU
   it("posts one passing observation per invocation, each citing that scenario and located at its own invocation", () => {
     expect(observationsOf(scenario()!).map(postedOf)).toEqual([1, 2].map((n) => ({
       qualityCheckKind: "unit",
-      scnId: "SCN-JVF-007",
+      claimCode: "SCN-JVF-007",
       status: "passed",
       locator: `example.CitedTest::parameterised(int)[SCN-JVF-007] a parameterised test cites its scenario with ${n}`,
     })));
@@ -78,8 +78,8 @@ describe("[SCN-JAV-007] runReconcile posts no evidence observation for a disable
   it.each([
     ["a disabled test", "SCN-JVF-008"],
     ["a test whose assumption fails", "SCN-JVF-009"],
-  ])("leaves the scenario %s cites missing, with no observation", (_, scnId) => {
-    expectMissingWithNoObservation(unitOf(scnId));
+  ])("leaves the scenario %s cites missing, with no observation", (_, claimCode) => {
+    expectMissingWithNoObservation(unitOf(claimCode));
   });
 
   it.each([
@@ -98,8 +98,8 @@ describe("[SCN-JAV-008] runReconcile reads a JUnit 5 test that throws, in its bo
       "SCN-JVF-011",
       "example.BeforeEachFailsTest::[SCN-JVF-011] a test whose setup before each test throws cites its scenario",
     ],
-  ])("reconciles the scenario %s cites as failing, by that test", (_, scnId, locator) => {
-    const unit = unitOf(scnId);
+  ])("reconciles the scenario %s cites as failing, by that test", (_, claimCode, locator) => {
+    const unit = unitOf(claimCode);
 
     expectSoleObservation(unit, "failing", { status: "failed", locator });
     expect(unit?.evidenceObservations?.[0]?.broken).toBeUndefined();

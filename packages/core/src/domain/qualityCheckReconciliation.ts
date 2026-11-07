@@ -50,8 +50,8 @@ export const OUTCOME_SIDE_PROFILE: Record<
   missing: { obligation: "Exists", observation: "None" },
   failing: { obligation: "Exists", observation: "Exists" },
   watermelon: { obligation: "Exists", observation: "Exists" },
-  "no-scn-code": { obligation: "Exists", observation: "None" },
-  "duplicate-scn-code": { obligation: "Exists", observation: "None" },
+  "no-claim-code": { obligation: "Exists", observation: "None" },
+  "duplicate-claim-code": { obligation: "Exists", observation: "None" },
   "cites-unknown-scenario": { obligation: "None", observation: "Exists" },
   "cites-no-scenario": { obligation: "None", observation: "Exists" },
   "no-evidence-obligation": { obligation: "None", observation: "Exists" },
@@ -166,12 +166,12 @@ function observationsField(
 }
 
 export function reconcileEvidenceObligation(
-  scnId: string,
+  claimCode: string,
   obligation: EvidenceObligation,
   evidenceObservations: readonly EvidenceObservation[]
 ): QualityCheckReconciliation {
   const citing = evidenceObservations.filter(
-    (o) => o.qualityCheckKind === obligation.qualityCheckKind && o.scnId === scnId
+    (o) => o.qualityCheckKind === obligation.qualityCheckKind && o.claimCode === claimCode
   );
   const answered = citing.some((o) => o.broken !== true);
   return makeQualityCheckReconciliation({
@@ -202,13 +202,13 @@ export function brokenReconciliationsOf(
 }
 
 export function noEvidenceObligationReconciliationsOf(
-  scnId: string,
+  claimCode: string,
   postedObservations: readonly EvidenceObservation[],
   evidenceObligationPairs: ReadonlySet<string>
 ): QualityCheckReconciliation[] {
   return reconciliationsByQualityCheckKind(
     postedObservations.filter(
-      (o) => !evidenceObligationPairs.has(evidenceObligationPairKey(scnId, o.qualityCheckKind))
+      (o) => !evidenceObligationPairs.has(evidenceObligationPairKey(claimCode, o.qualityCheckKind))
     ),
     "scenario"
   );
@@ -227,7 +227,7 @@ export function unnamedClaimReconciliationsOf(
 }
 
 export function noScnCodeReconciliations(): QualityCheckReconciliation[] {
-  return [makeQualityCheckReconciliation({ outcome: "no-scn-code", evidenceObligation: { qualityCheckKind: null } })];
+  return [makeQualityCheckReconciliation({ outcome: "no-claim-code", evidenceObligation: { qualityCheckKind: null } })];
 }
 
 export function duplicateScnCodeReconciliationsOf(
@@ -240,12 +240,12 @@ export function duplicateScnCodeReconciliationsOf(
     if (obligation.qualityCheckKind !== undefined) kinds.add(obligation.qualityCheckKind);
   }
   if (kinds.size === 0) {
-    return [makeQualityCheckReconciliation({ outcome: "duplicate-scn-code", evidenceObligation: { qualityCheckKind: null }, ...naming })];
+    return [makeQualityCheckReconciliation({ outcome: "duplicate-claim-code", evidenceObligation: { qualityCheckKind: null }, ...naming })];
   }
   return [...kinds].map((qualityCheckKind) =>
     makeQualityCheckReconciliation({
       qualityCheckKind,
-      outcome: "duplicate-scn-code",
+      outcome: "duplicate-claim-code",
       evidenceObligation: { qualityCheckKind },
       ...naming,
     })

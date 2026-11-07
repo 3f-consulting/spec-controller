@@ -11,7 +11,7 @@ import {
 
 const TARGET = "tests/fixtures/jest";
 const balance = () => reconcileFixture(TARGET, { jest: `${TARGET}/report.json` });
-const unitOf = (scnId: string) => unitReconciliationOf(balance(), scnId);
+const unitOf = (claimCode: string) => unitReconciliationOf(balance(), claimCode);
 const CASES_FILE = /tests\/fixtures\/jest\/project\/cases\.test\.js$/;
 
 describe("[SCN-JST-001] runReconcile reads a real Jest report as unit evidence", () => {
@@ -54,12 +54,12 @@ describe("[SCN-JST-003] runReconcile reads a code in a Jest test's own title bef
 });
 
 describe("[SCN-JST-004] runReconcile credits neither scenario a Jest test's title cites when it cites two, and the unnamed claim's row names both codes", () => {
-  it.each(["SCN-JSF-005", "SCN-JSF-006"])("leaves %s missing, with no observation", (scnId) => {
-    expectMissingWithNoObservation(unitOf(scnId));
+  it.each(["SCN-JSF-005", "SCN-JSF-006"])("leaves %s missing, with no observation", (claimCode) => {
+    expectMissingWithNoObservation(unitOf(claimCode));
   });
 
   it("names both codes on the unnamed claim's row, beside the test's file", () => {
-    expect(unnamedClaimRowOf(balance(), TARGET, "cases.test.js: 2 scenario codes")).toContain("cases.test.js: 2 scenario codes cite SCN-JSF-005, SCN-JSF-006");
+    expect(unnamedClaimRowOf(balance(), TARGET, "cases.test.js: 2 claim codes")).toContain("cases.test.js: 2 claim codes cite SCN-JSF-005, SCN-JSF-006");
   });
 });
 
@@ -67,8 +67,8 @@ describe("[SCN-JST-005] runReconcile posts no evidence observation for a todo or
   it.each([
     ["a todo test", "SCN-JSF-007"],
     ["a skipped test", "SCN-JSF-008"],
-  ])("leaves the scenario %s cites missing, with no observation", (_kind, scnId) => {
-    expectMissingWithNoObservation(unitOf(scnId));
+  ])("leaves the scenario %s cites missing, with no observation", (_kind, claimCode) => {
+    expectMissingWithNoObservation(unitOf(claimCode));
   });
 });
 

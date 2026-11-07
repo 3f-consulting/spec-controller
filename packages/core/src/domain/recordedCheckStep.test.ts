@@ -5,7 +5,7 @@ import { fitnessObservationsOf } from "./fitnessReconciliation.js";
 import type { FitnessEvidenceObservation, Scenario } from "./journal.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 const citingStep: FitnessEvidenceObservation = {
@@ -13,11 +13,11 @@ const citingStep: FitnessEvidenceObservation = {
   fitnessFunction: "lint:alpha",
   exists: true,
   enforcedOverRealSource: true,
-  scnId: "SCN-AAA-001",
+  claimCode: "SCN-AAA-001",
 };
 
 function rowWith(recordedStep: string) {
-  const observations = fitnessObservationsOf([citingStep], [{ citedScn: recordedStep, report: "succeeded" }]);
+  const observations = fitnessObservationsOf([citingStep], [{ citedClaimCode: recordedStep, report: "succeeded" }]);
   return evidenceReconciliationOf(scenarios, observations, []).ledger.claimReconciliations.find(
     (row) => row.claim === "SCN-AAA-001"
   );

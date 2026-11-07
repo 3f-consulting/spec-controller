@@ -28,7 +28,7 @@ export function runningFitnessFunctions(
   ciWorkflows: readonly ParsedWorkflow[],
   packageJson: PackageJsonScripts,
   runners: RunnerLayers,
-  citedScn: CitationOf = () => null,
+  citedClaimCode: CitationOf = () => null,
   isExcluded: StepTest = () => false
 ): FitnessEvidenceObservation[] {
   const runsARunner = declaredRunnerTest(packageJson.scripts ?? {}, runners, shellReading);
@@ -36,7 +36,7 @@ export function runningFitnessFunctions(
     pipelineStepsOf(ciWorkflows),
     packageJson,
     (step) => isCandidateStep(step, isExcluded, runsARunner),
-    citedScn
+    citedClaimCode
   );
 }
 
@@ -44,8 +44,8 @@ export function fitnessFunctionsAmong(
   steps: readonly PipelineStep[],
   packageJson: PackageJsonScripts,
   isCandidate: StepTest,
-  citedScn: CitationOf
+  citedClaimCode: CitationOf
 ): FitnessEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
-  return workflowObservationsOf(steps, isCandidate, (step) => handleOf(step, scripts), qualifiedStepName, citedScn);
+  return workflowObservationsOf(steps, isCandidate, (step) => handleOf(step, scripts), qualifiedStepName, citedClaimCode);
 }

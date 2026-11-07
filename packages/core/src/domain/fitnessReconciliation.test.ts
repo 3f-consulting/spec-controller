@@ -38,8 +38,8 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
   it("mints the phantom claim's row for the cited @SCN, posts the run's one evidence observation there naming the check, and holds it out-of-balance", () => {
     const { ciSource, packageJson } = wiringFor(REAL_GUARD);
 
-    const citedScn = (script: string): ScriptCitation | null =>
-      script === REAL_GUARD ? { scnId: "SCN-AAA-001" } : null;
+    const citedClaimCode = (script: string): ScriptCitation | null =>
+      script === REAL_GUARD ? { claimCode: "SCN-AAA-001" } : null;
 
     const corpusAtReconcile = [
       "@LNT",
@@ -53,14 +53,14 @@ describe("[SCN-LNT-009] a fitness evidence observation citing an @SCN no scenari
       parsedWorkflows([ciSource]),
       packageJson,
       NO_RUNNERS,
-      citedScn
+      citedClaimCode
     );
     const observation = evidenceObservations.find((o) => o.fitnessFunction === REAL_GUARD);
-    expect(observation?.scnId).toBe("SCN-AAA-001");
+    expect(observation?.claimCode).toBe("SCN-AAA-001");
 
     const scenarios = parseScenarios(
       corpusAtReconcile);
-    expect(scenarios.map((s) => s.scnId)).toEqual(["SCN-AAA-002"]);
+    expect(scenarios.map((s) => s.claimCode)).toEqual(["SCN-AAA-002"]);
 
     const balance = reconcile(scenarios, evidenceObservations);
 
@@ -106,19 +106,19 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
       [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }],
     ]);
 
-    const citedScn = (script: string): ScriptCitation | null =>
-      script === SEVERED_SCRIPT ? { scnId: "SCN-AAA-001" } : null;
+    const citedClaimCode = (script: string): ScriptCitation | null =>
+      script === SEVERED_SCRIPT ? { claimCode: "SCN-AAA-001" } : null;
 
     const unitObservation: EvidenceObservation = {
       qualityCheckKind: "unit",
-      scnId: "SCN-AAA-001",
+      claimCode: "SCN-AAA-001",
       status: "passed",
     };
     const fitnessObservations = runningFitnessFunctions(
       parsedWorkflows([plantedCi]),
       plantedPackageJson,
       NO_RUNNERS,
-      citedScn
+      citedClaimCode
     ).filter((o) => o.fitnessFunction === SEVERED_SCRIPT);
     const withoutStep = ({ step: _step, ...rest }: (typeof fitnessObservations)[number] & { step?: string }) => rest;
     expect(fitnessObservations.map(withoutStep)).toEqual([
@@ -127,7 +127,7 @@ describe("[SCN-LNT-004] a scenario raising Evidence Obligations for both a unit 
         fitnessFunction: SEVERED_SCRIPT,
         exists: true,
         enforcedOverRealSource: false,
-        scnId: "SCN-AAA-001",
+        claimCode: "SCN-AAA-001",
       },
     ]);
 

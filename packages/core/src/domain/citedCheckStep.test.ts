@@ -5,8 +5,8 @@ import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 import { CHECKOUT, IN_THE_QUALITY_JOB, reconcileTheWorkflow } from "./checkStep.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-CVT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CVT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 const annotatedSteps: PipelineStep[] = [

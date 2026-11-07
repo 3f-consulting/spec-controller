@@ -78,7 +78,7 @@ type Fields = Parameters<typeof makeQualityCheckReconciliation>[0];
 const sampleObligation: ReconciledEvidenceObligation = { qualityCheckKind: "unit" };
 
 function observationLine(outcome: Outcome, ran: boolean): ReconciledEvidenceObservation {
-  return { qualityCheckKind: "unit", scnId: "SCN-LDG-030", status: "passed", ...(ran ? {} : { broken: true as const }), outcome };
+  return { qualityCheckKind: "unit", claimCode: "SCN-LDG-030", status: "passed", ...(ran ? {} : { broken: true as const }), outcome };
 }
 
 /** The outcomes only an evidence observation's line reads; a reconciliation's own outcome is never one of them. */
@@ -93,7 +93,7 @@ const OBSERVATION_LINE_OUTCOMES: readonly Outcome[] = [
 ];
 
 /** The outcomes an evidence obligation's own line reads when no evidence observation that ran answers it. */
-const OBLIGATION_LINE_OUTCOMES: readonly Outcome[] = ["missing", "both-missing", "no-scn-code", "duplicate-scn-code"];
+const OBLIGATION_LINE_OUTCOMES: readonly Outcome[] = ["missing", "both-missing", "no-claim-code", "duplicate-claim-code"];
 
 function isObligationsOwnLine(profile: OutcomeSides): boolean {
   return profile.observation === "None";
@@ -232,7 +232,7 @@ describe("[SCN-LDG-035] a fitness-function evidence observation discharges only 
     const observation: EvidenceObservation = {
       qualityCheckKind: "fitness",
       fitnessFunction: "lint:complexity",
-      scnId: "SCN-AAA-001",
+      claimCode: "SCN-AAA-001",
       exists: true,
       enforcedOverRealSource: true,
     };

@@ -126,7 +126,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
       {
         qualityCheckKind: "fitness",
         fitnessFunction: "SCN-FIX-002",
-        scnId: "SCN-FIX-002",
+        claimCode: "SCN-FIX-002",
         exists: true,
         enforcedOverRealSource: true,
         outcome: "satisfied",
@@ -151,7 +151,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
       {
         qualityCheckKind: "fitness",
         fitnessFunction: "SCN-FIX-003",
-        scnId: "SCN-FIX-003",
+        claimCode: "SCN-FIX-003",
         exists: true,
         enforcedOverRealSource: true,
         outcome: "failing",
@@ -167,7 +167,7 @@ describe("[SCN-RMD-027] each fitness evidence observation names the CI step it w
       {
         qualityCheckKind: "fitness",
         fitnessFunction: "SCN-FIX-002",
-        scnId: "SCN-FIX-002",
+        claimCode: "SCN-FIX-002",
         exists: true,
         enforcedOverRealSource: true,
         outcome: "satisfied",

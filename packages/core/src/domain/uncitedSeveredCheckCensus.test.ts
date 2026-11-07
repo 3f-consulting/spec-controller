@@ -51,7 +51,7 @@ function reconcileUncited() {
     () => null
   );
   return evidenceReconciliationOf(
-    [{ scnId: "SCN-TSC-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ claimCode: "SCN-TSC-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
     fitnessObservationsOf(workflow, undefined),
     []
   );

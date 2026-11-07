@@ -7,7 +7,7 @@ import type { EvidenceObservation } from "../model.js";
 describe("[SCN-LDG-018] hasBrokenEvidence — the whole-run soundness predicate", () => {
   const brokenObservation: EvidenceObservation = {
     qualityCheckKind: "unit",
-    scnId: null,
+    claimCode: null,
     status: "failed",
     broken: true,
     locator: "packages/core/src/collection-failed.test.ts",
@@ -16,14 +16,14 @@ describe("[SCN-LDG-018] hasBrokenEvidence — the whole-run soundness predicate"
 
   it("the three whole-run predicates are INDEPENDENT: pending-without-broken is sound; broken-without-pending is unsound", () => {
     const pendingOnly = reconcile(
-      [{ scnId: "SCN-HNS-019", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] }],
+      [{ claimCode: "SCN-HNS-019", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] }],
       [],
     );
     expect(hasPendingItems(pendingOnly)).toBe(true);
     expect(hasBrokenEvidence(pendingOnly)).toBe(false);
 
     const brokenOnly = reconcile(
-      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "SCN-HNS-018", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [brokenObservation],
     );
     expect(hasBrokenEvidence(brokenOnly)).toBe(true);

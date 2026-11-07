@@ -14,12 +14,12 @@ const SCN = "SCN-AAA-001";
 
 describe("[SCN-LNT-036] a failed fitness evidence observation beside a passing one for the same check reads a failing line beside a satisfied one, and the ledger is out of balance", () => {
   const rowNamingCheck: Scenario[] = [
-    { scnId: SCN, evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: SCN, evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
   const fitnessFunctionObservation = (fitnessFunction: string, status: "passed" | "failed"): EvidenceObservation => ({
     qualityCheckKind: "fitness",
     fitnessFunction,
-    scnId: SCN,
+    claimCode: SCN,
     exists: true,
     enforcedOverRealSource: true,
     status,
@@ -40,11 +40,11 @@ describe("[SCN-LNT-036] a failed fitness evidence observation beside a passing o
 
 describe("[SCN-LNT-037] a watermelon fitness evidence observation beside a wired one for the same check reads a watermelon line beside a satisfied one, and the ledger is out of balance, whichever one's locator sorts first", () => {
   const obligation = { qualityCheckKind: "fitness" } as const;
-  const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
+  const rowNamingCheck: Scenario[] = [{ claimCode: SCN, evidenceObligations: [obligation] }];
   const runOf = (enforcedOverRealSource: boolean, locator: string): EvidenceObservation => ({
     qualityCheckKind: "fitness",
     fitnessFunction: "lint:alpha",
-    scnId: SCN,
+    claimCode: SCN,
     exists: true,
     enforcedOverRealSource,
     locator,
@@ -82,11 +82,11 @@ describe("[SCN-LNT-037] a watermelon fitness evidence observation beside a wired
 
 describe("[SCN-LNT-038] a failed fitness evidence observation beside a watermelon one for the same check reads a failing line and a watermelon line, each carrying its own observation, whichever one's locator sorts first", () => {
   const obligation = { qualityCheckKind: "fitness" } as const;
-  const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
+  const rowNamingCheck: Scenario[] = [{ claimCode: SCN, evidenceObligations: [obligation] }];
   const failedRun = (locator: string): EvidenceObservation => ({
     qualityCheckKind: "fitness",
     fitnessFunction: "lint:alpha",
-    scnId: SCN,
+    claimCode: SCN,
     exists: true,
     enforcedOverRealSource: true,
     status: "failed",
@@ -95,7 +95,7 @@ describe("[SCN-LNT-038] a failed fitness evidence observation beside a watermelo
   const severedRun = (locator: string): EvidenceObservation => ({
     qualityCheckKind: "fitness",
     fitnessFunction: "lint:alpha",
-    scnId: SCN,
+    claimCode: SCN,
     exists: true,
     enforcedOverRealSource: false,
     locator,

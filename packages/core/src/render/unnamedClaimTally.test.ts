@@ -22,12 +22,12 @@ function tallyBlockOf(scenarios: Scenario[]): (observations: EvidenceObservation
   };
 }
 
-const scenarios: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
-const known: EvidenceObservation = { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "passed" };
-const phantomClaimObservation: EvidenceObservation = { qualityCheckKind: "unit", scnId: "SCN-PHM-901", status: "passed", locator: "src/phm.test.ts" };
+const scenarios: Scenario[] = [{ claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
+const known: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "passed" };
+const phantomClaimObservation: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-PHM-901", status: "passed", locator: "src/phm.test.ts" };
 
 function uncitedObservation(locator: string): EvidenceObservation {
-  return { qualityCheckKind: "unit", scnId: null, status: "passed", locator };
+  return { qualityCheckKind: "unit", claimCode: null, status: "passed", locator };
 }
 
 const tallyBlock = (observations: EvidenceObservation[]): string[] => tallyBlockOf(scenarios)(observations);

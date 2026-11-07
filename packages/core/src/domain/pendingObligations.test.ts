@@ -93,7 +93,7 @@ describe("[SCN-PND-022] a deferred scenario naming no obligations synthesises on
   });
 
   it("a bare wip scenario reconciled raises one Pending Item whose qualityCheckKind is null", () => {
-    const balance = reconcile([{ scnId: "SCN-PND-022", evidenceObligations: obligationsRaisedBy(["wip"], DEFERRAL_TAGS) }], []);
+    const balance = reconcile([{ claimCode: "SCN-PND-022", evidenceObligations: obligationsRaisedBy(["wip"], DEFERRAL_TAGS) }], []);
     expect(balance.claimReconciliations.find((row) => row.claim === "SCN-PND-022")?.pendingItems).toEqual([{ qualityCheckKind: null }]);
   });
 });

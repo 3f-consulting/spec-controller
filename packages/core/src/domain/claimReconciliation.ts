@@ -113,7 +113,7 @@ export function outOfBalanceCountOf(rows: readonly ClaimReconciliation[]): numbe
 }
 
 export function carriesNoScnCode(row: ClaimReconciliation): boolean {
-  return reconcilingItemsOf(row).some((item) => item.outcome === "no-scn-code");
+  return reconcilingItemsOf(row).some((item) => item.outcome === "no-claim-code");
 }
 
 export function fitnessFunctionReconciliationsOf(

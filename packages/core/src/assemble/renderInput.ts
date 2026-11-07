@@ -28,23 +28,23 @@ export function assembleRenderInput(
   evidenceObligations?: EvidenceObligations,
   featureNames?: ReadonlyMap<string, string>
 ): RenderInput {
-  const errorsInTheInputs = errorsOf(evidenceReconciliation.scenarioCodeErrors, evidenceReconciliation.summary);
-  const scenarioCodes = scenarioCodesOf(evidenceReconciliation.scenarioCodePopulation, evidenceObligations);
+  const errorsInTheInputs = errorsOf(evidenceReconciliation.claimCodeErrors, evidenceReconciliation.summary);
+  const claimCodes = scenarioCodesOf(evidenceReconciliation.scenarioCodePopulation, evidenceObligations);
   const byFeature = outOfBalanceByFeature(
     evidenceReconciliation.ledger.claimReconciliations,
-    scenarioCodes?.untaggedScenarios ?? [],
+    claimCodes?.untaggedScenarios ?? [],
     Object.fromEntries(featureNames ?? []),
   );
   return {
     runProvenance: provenanceObject(ctx),
     ...(errorsInTheInputs ? { errorsInTheInputs } : {}),
     summary: concludedSummary({
-      ...(scenarioCodes ? { scenarioCodes } : {}),
+      ...(claimCodes ? { claimCodes } : {}),
       ...summaryStatingNoFault(evidenceReconciliation.summary),
       ...(byFeature.length > 0 ? { outOfBalanceByFeature: byFeature } : {}),
     }, {
       ledger: evidenceReconciliation.ledger,
-      scenarioCodeErrors: evidenceReconciliation.scenarioCodeErrors,
+      claimCodeErrors: evidenceReconciliation.claimCodeErrors,
       strict: ctx.strict === true,
     }),
     claimReconciliations: evidenceReconciliation.ledger.claimReconciliations,

@@ -13,7 +13,7 @@ describe("[SCN-VIT-007] parseVitestEvidenceObservations classifies three-way —
     ["emits a `failed` observation for a failed assertion", "failed"],
   ] as const)("%s", (_title, status) => {
     expect(parseVitestEvidenceObservations(reportWithStatus(status))).toEqual([
-      { qualityCheckKind: "unit", scnId: "SCN-PDV-001", status, locator: "/r/a.test.ts", testName: "[SCN-PDV-001] a unit assertion" },
+      { qualityCheckKind: "unit", claimCode: "SCN-PDV-001", status, locator: "/r/a.test.ts", testName: "[SCN-PDV-001] a unit assertion" },
     ]);
   });
 

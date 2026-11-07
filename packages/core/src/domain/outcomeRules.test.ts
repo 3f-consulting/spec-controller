@@ -14,9 +14,9 @@ import type {
 
 const observation = (
   qualityCheckKind: BehaviouralEvidenceObservation["qualityCheckKind"],
-  scnId: string | null,
+  claimCode: string | null,
   extra: Partial<BehaviouralEvidenceObservation> = {}
-): BehaviouralEvidenceObservation => ({ qualityCheckKind, scnId, status: "passed", ...extra });
+): BehaviouralEvidenceObservation => ({ qualityCheckKind, claimCode, status: "passed", ...extra });
 
 describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists evidence observations at kinds of quality check with no evidence obligation", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
@@ -47,14 +47,14 @@ describe("[SCN-LDG-008] an evidence observation at a kind of quality check the s
     const [item] = noEvidenceObligationReconciliationsOf("SCN-AAA-001", [observation("e2e", "SCN-AAA-001")], pairs);
     expect(item).toStrictEqual({
       qualityCheckKind: "e2e",
-      evidenceObservations: [{ qualityCheckKind: "e2e", scnId: "SCN-AAA-001", status: "passed", outcome: "no-evidence-obligation" }],
+      evidenceObservations: [{ qualityCheckKind: "e2e", claimCode: "SCN-AAA-001", status: "passed", outcome: "no-evidence-obligation" }],
     });
   });
 
   it("holds an untagged fitness evidence observation named by its runnable handle, with only the keys it has", () => {
     const untagged: FitnessEvidenceObservation = {
       qualityCheckKind: "fitness",
-      scnId: "SCN-AAA-001",
+      claimCode: "SCN-AAA-001",
       fitnessFunction: "lint:nobody-asked",
       exists: true,
       enforcedOverRealSource: true,
@@ -65,7 +65,7 @@ describe("[SCN-LDG-008] an evidence observation at a kind of quality check the s
       evidenceObservations: [
         {
           qualityCheckKind: "fitness",
-          scnId: "SCN-AAA-001",
+          claimCode: "SCN-AAA-001",
           fitnessFunction: "lint:nobody-asked",
           exists: true,
           enforcedOverRealSource: true,
@@ -99,7 +99,7 @@ describe("[SCN-LDG-006] an evidence observation citing a scenario no feature car
     expect(row.qualityCheckReconciliations).toStrictEqual([
       {
         qualityCheckKind: "unit",
-        evidenceObservations: [{ qualityCheckKind: "unit", scnId: "SCN-ZZZ-009", status: "passed", outcome: "cites-unknown-scenario" }],
+        evidenceObservations: [{ qualityCheckKind: "unit", claimCode: "SCN-ZZZ-009", status: "passed", outcome: "cites-unknown-scenario" }],
       },
     ]);
   });
@@ -110,7 +110,7 @@ describe("[SCN-LDG-034] an observation on a phantom claim's row carries the keys
     const guardWithLocator: FitnessEvidenceObservation & { locator: string } = {
       qualityCheckKind: "fitness",
       fitnessFunction: "lint:complexity",
-      scnId: "SCN-ZZZ-009",
+      claimCode: "SCN-ZZZ-009",
       exists: true,
       enforcedOverRealSource: true,
       locator: "packages/core/src/parse/fitnessCitations.ts",
@@ -122,7 +122,7 @@ describe("[SCN-LDG-034] an observation on a phantom claim's row carries the keys
         {
           qualityCheckKind: "fitness",
           fitnessFunction: "lint:complexity",
-          scnId: "SCN-ZZZ-009",
+          claimCode: "SCN-ZZZ-009",
           exists: true,
           enforcedOverRealSource: true,
           locator: "packages/core/src/parse/fitnessCitations.ts",
@@ -136,7 +136,7 @@ describe("[SCN-LDG-034] an observation on a phantom claim's row carries the keys
     const guard: FitnessEvidenceObservation = {
       qualityCheckKind: "fitness",
       fitnessFunction: "lint:complexity",
-      scnId: "SCN-ZZZ-009",
+      claimCode: "SCN-ZZZ-009",
       exists: true,
       enforcedOverRealSource: true,
     };
@@ -147,7 +147,7 @@ describe("[SCN-LDG-034] an observation on a phantom claim's row carries the keys
         {
           qualityCheckKind: "fitness",
           fitnessFunction: "lint:complexity",
-          scnId: "SCN-ZZZ-009",
+          claimCode: "SCN-ZZZ-009",
           exists: true,
           enforcedOverRealSource: true,
           outcome: "cites-unknown-scenario",
@@ -191,7 +191,7 @@ describe("[SCN-LDG-007] an observation on the unnamed claim's row omits the payl
     const [item] = unnamedClaimReconciliationsOf([silent]);
     expect(item).toStrictEqual({
       qualityCheckKind: "unit",
-      evidenceObservations: [{ qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, outcome: "broken" }],
+      evidenceObservations: [{ qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, outcome: "broken" }],
     });
   });
 

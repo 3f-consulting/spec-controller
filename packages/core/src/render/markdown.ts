@@ -11,7 +11,7 @@ import { cellSafeKeepingCodeSpans } from "./cellSafe.js";
 import { reportedName } from "./reportedName.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
 import { isFitnessObservation } from "../domain/journal.js";
-import { type SharedScnCode } from "../domain/corpusCounts.js";
+import { type SharedClaimCode } from "../domain/corpusCounts.js";
 import { brokenItemsOf, type QualityCheckKindObservations } from "../domain/ledger.js";
 import {
   isScenario,
@@ -42,7 +42,7 @@ import { unnamedClaimGroupsOf, type UnnamedClaimGroup, type UnnamedClaimFileGrou
 
 function renderLine(line: ReconciliationLine): string {
   const sentence = `${outcomeDescription(line.outcome)}${scenarioClauseOf(line)}`;
-  if (line.outcome === "both-missing" || line.outcome === "no-scn-code" || line.qualityCheckKind === undefined) {
+  if (line.outcome === "both-missing" || line.outcome === "no-claim-code" || line.qualityCheckKind === undefined) {
     return sentence;
   }
   const head = `${line.qualityCheckKind}: ${sentence}`;
@@ -64,7 +64,7 @@ function namedSuffix(o: EvidenceObservation): string {
 }
 
 function scenarioClauseOf({ scenario }: ReconciliationLine): string {
-  return scenario === undefined ? "" : ` — ${coreMessage(CoreMessage.SharedScnCodeScenario, { feature: reportedName(scenario.feature), title: reportedName(scenario.title) })}`;
+  return scenario === undefined ? "" : ` — ${coreMessage(CoreMessage.SharedClaimCodeScenario, { feature: reportedName(scenario.feature), title: reportedName(scenario.title) })}`;
 }
 
 function brokenSuffix(o: EvidenceObservation): string {
@@ -93,7 +93,7 @@ function renderPendingItem(item: PendingItem): string {
 
 function renderFileGroup(group: UnnamedClaimFileGroup): string {
   const remarks = group.remarks.flatMap((remark) => remarkHeadlineOf(remark, reportedName) ?? []);
-  const code = group.sharedScnCode === undefined ? [] : [coreMessage(CoreMessage.SharedScnCode, { code: group.sharedScnCode })];
+  const code = group.sharedScnCode === undefined ? [] : [coreMessage(CoreMessage.SharedClaimCode, { code: group.sharedScnCode })];
   const said = [...new Set([...code, ...remarks])].filter((part) => part !== "").join(" / ");
   const counts = coreMessage(CoreMessage.UnnamedClaimGroupCounts, { ran: group.ran, passed: group.passed, failed: group.failed });
   const names = group.failedNames.map(reportedName).filter((name) => name !== "");
@@ -124,7 +124,7 @@ function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
   if (!("names" in group)) return renderFileGroup(group);
   const steps = unnamedClaimCiSteps(unnamedClaimCiStepsViewOf(group.names.map(reportedName)));
   const remark =
-    group.sharedScnCode === undefined ? "" : ` (${coreMessage(CoreMessage.SharedScnCode, { code: group.sharedScnCode })})`;
+    group.sharedScnCode === undefined ? "" : ` (${coreMessage(CoreMessage.SharedClaimCode, { code: group.sharedScnCode })})`;
   return `fitness: ${outcomeDescription("cites-no-scenario")}${remark} — ${steps}`;
 }
 
@@ -273,14 +273,14 @@ const outOfBalanceCodesOf = ({ claims }: FeatureOutOfBalance): OutOfBalanceCodes
 const codeList = (codes: readonly string[]): string => codes.join(", ");
 
 function idsCell(group: FeatureOutOfBalance): string {
-  const noScnCodeCount = group.scenariosWithNoScnCode ?? 0;
+  const noScnCodeCount = group.scenariosWithNoClaimCode ?? 0;
   if (noScnCodeCount === 0) return codeList(group.claims);
   const view = outOfBalanceCodesOf(group);
   switch (view.kind) {
     case "none":
-      return coreMessage(CoreMessage.NoScnCodeScenarios, { count: noScnCodeCount });
+      return coreMessage(CoreMessage.NoClaimCodeScenarios, { count: noScnCodeCount });
     case "some":
-      return coreMessage(CoreMessage.CodesAndNoScnCodeScenarios, { codes: codeList(view.codes), count: noScnCodeCount });
+      return coreMessage(CoreMessage.CodesAndNoClaimCodeScenarios, { codes: codeList(view.codes), count: noScnCodeCount });
   }
 }
 
@@ -335,21 +335,21 @@ function ledgerTallyLines(totals: ClaimReconciliationTotals): string[] {
 }
 
 const scenarioCodeFactsSection: SectionEmitter = (report) => {
-  const codes = report.summary.scenarioCodes;
+  const codes = report.summary.claimCodes;
   if (codes?.excludedOccurrences === undefined) return [];
-  const lines = [`- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: codes.excludedOccurrences })}`];
+  const lines = [`- ${coreMessage(CoreMessage.ExcludedClaimOccurrences, { count: codes.excludedOccurrences })}`];
   const untagged = (codes.untaggedScenarios ?? []).length;
   if (untagged > 0) lines.push(`- ${coreMessage(CoreMessage.UntaggedScenarios, { count: untagged })}`);
-  lines.push(...sharedScnCodeLines(codes.sharedScnCodes ?? [], report.claimReconciliations.filter(isScenario).length));
+  lines.push(...sharedScnCodeLines(codes.sharedClaimCodes ?? [], report.claimReconciliations.filter(isScenario).length));
   return [...lines, ""];
 };
 
-function sharedScnCodeLines(shared: readonly SharedScnCode[], scenarios: number): string[] {
+function sharedScnCodeLines(shared: readonly SharedClaimCode[], scenarios: number): string[] {
   if (shared.length === 0) return [];
   return [
-    `- ${coreMessage(CoreMessage.SharedScnCodes, { scenarios, codes: shared.length })}`,
+    `- ${coreMessage(CoreMessage.SharedClaimCodes, { scenarios, codes: shared.length })}`,
     ...shared.map(
-      (code) => `  - ${code.scnId}: ${code.scenarios.map((s) => `${s.feature} : ${s.title}`).join("; ")}`
+      (code) => `  - ${code.claimCode}: ${code.scenarios.map((s) => `${s.feature} : ${s.title}`).join("; ")}`
     ),
   ];
 }

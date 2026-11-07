@@ -614,15 +614,15 @@ describe("[SCN-CLI-102] checkWorkflowsParse refuses a workflow that does not par
   });
 });
 
-const scenarioCodes = () => ({ featureFiles: 1, featureCodes: 0, excludedOccurrences: 0, untaggedScenarios: [scenarioName("a.feature", "one")] });
-const saved = () => withScenarioCodesOnReport({"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"corpus":"feat","strict":false},"summary":{...reconciliationTotalsSection({"claimReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantomClaim":0,"unnamedClaim":0},"reconciliationLines":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-scn-code":1,"duplicate-scn-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheckKind":[]},"pending":0}),"evidenceObservations":{"total":0,"onScenario":0,"onPhantomClaim":0,"onUnnamedClaim":0,"byQualityCheckKind":[{"qualityCheckKind":"unit","count":0},{"qualityCheckKind":"integration","count":0},{"qualityCheckKind":"e2e","count":0},{"qualityCheckKind":"performance","count":0},{"qualityCheckKind":"fitness","count":0}]},"claimReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantomClaim":0,"unnamedClaim":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-scn-code":1,"duplicate-scn-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheckKind":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomClaim":0,"onUnnamedClaim":0},"rawByBehaviouralQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"fitnessFunctions":{"runningFitnessFunctionCount":0,"uncitedFitnessFunctionCount":0},"fitness":{"satisfied":0,"total":0}},...claimReconciliationsSection([{"claim":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-scn-code","evidenceObligation":{"qualityCheckKind":null}}],"reconcilingItems":[{"outcome":"no-scn-code","evidenceObligation":{"qualityCheckKind":null}}],"pendingItems":[]}]),"scenarioCodeErrors":[],"scenarioCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[scenarioName("a.feature", "one")],"proseOnlyCodes":[]}}, scenarioCodes());
+const claimCodes = () => ({ featureFiles: 1, featureCodes: 0, excludedOccurrences: 0, untaggedScenarios: [scenarioName("a.feature", "one")] });
+const saved = () => withScenarioCodesOnReport({"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"corpus":"feat","strict":false},"summary":{...reconciliationTotalsSection({"claimReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantomClaim":0,"unnamedClaim":0},"reconciliationLines":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-claim-code":1,"duplicate-claim-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheckKind":[]},"pending":0}),"evidenceObservations":{"total":0,"onScenario":0,"onPhantomClaim":0,"onUnnamedClaim":0,"byQualityCheckKind":[{"qualityCheckKind":"unit","count":0},{"qualityCheckKind":"integration","count":0},{"qualityCheckKind":"e2e","count":0},{"qualityCheckKind":"performance","count":0},{"qualityCheckKind":"fitness","count":0}]},"claimReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantomClaim":0,"unnamedClaim":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-claim-code":1,"duplicate-claim-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheckKind":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomClaim":0,"onUnnamedClaim":0},"rawByBehaviouralQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"fitnessFunctions":{"runningFitnessFunctionCount":0,"uncitedFitnessFunctionCount":0},"fitness":{"satisfied":0,"total":0}},...claimReconciliationsSection([{"claim":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-claim-code","evidenceObligation":{"qualityCheckKind":null}}],"reconcilingItems":[{"outcome":"no-claim-code","evidenceObligation":{"qualityCheckKind":null}}],"pendingItems":[]}]),"claimCodeErrors":[],"scenarioCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[scenarioName("a.feature", "one")],"proseOnlyCodes":[]}}, claimCodes());
 type Saved = ReturnType<typeof saved>;
 const SAVED_BEFORE_CLAIM_KEYS = {"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"corpus":"feat","strict":false},"summary":{"scenarioReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantom":0,"suspense":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"watermelon":0,"cites-unknown-scenario":0,"cites-no-scenario":0,"no-scn-code":1,"duplicate-scn-code":0,"broken":0,"no-evidence-obligation":0,"both-missing":0},"outOfBalance":1,"missingByQualityCheckKind":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomScenario":0,"onSuspenseScenario":0},"rawByBehaviouralQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"fitnessFunctions":{"runningFitnessFunctionCount":0,"uncitedFitnessFunctionCount":0},"fitness":{"satisfied":0,"total":0}},"ledger":{"scenarioReconciliations":[{"scnId":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-scn-code","evidenceObligation":{}}],"reconcilingItems":[{"outcome":"no-scn-code","evidenceObligation":{}}],"pendingItems":[]}]},"scenarioCodeErrors":[],"scenarioCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[{"feature":"a.feature","scenario":"one"}],"proseOnlyCodes":[]}};
 
 const savedWithSections = () => withScenarioCodesOnReport({
   ...saved(),
   errorsInTheInputs: {
-    scenarioCodeErrors: [{ kind: "several-scn-codes", files: ["a.feature"], scenario: "one", codes: ["@SCN-AAA-001", "@SCN-AAA-002"] }],
+    claimCodeErrors: [{ kind: "several-claim-codes", files: ["a.feature"], scenario: "one", codes: ["@SCN-AAA-001", "@SCN-AAA-002"] }],
     configurationNotRead: {
       keysNotRead: ["runner"],
       ofWrongKind: [{ entry: "tiers", is: "string", reads: "list" }],
@@ -631,7 +631,7 @@ const savedWithSections = () => withScenarioCodesOnReport({
       nonChecksNotAStepName: ["Deploy"],
     },
   },
-}, scenarioCodes());
+}, claimCodes());
 
 describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refused, naming a section of the wrong kind by its place in the report, and one in an earlier report shape by its missing section", () => {
   it.each([
@@ -642,10 +642,10 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     [`${RECONCILIATION_TOTALS_PATH} is missing`, () => SAVED_BEFORE_CLAIM_KEYS],
     [`${RECONCILIATION_TOTALS_PATH} is missing`, (s: Saved) => withReconciliationTotalsUnderEarlierKey(s)],
     [
-      "summary.scenarioCodes is missing",
+      "summary.claimCodes is missing",
       (s: Saved) => {
-        const { scenarioCodes, ...summary } = s.summary as Saved["summary"] & { scenarioCodes: unknown };
-        return { ...s, summary, scenarioCodes };
+        const { claimCodes, ...summary } = s.summary as Saved["summary"] & { claimCodes: unknown };
+        return { ...s, summary, claimCodes };
       },
     ],
     ["claimReconciliations is missing", (s: Saved) => ({ ...withoutClaimReconciliations(s), ledger: claimReconciliationsSection(claimReconciliationsOf(s)) })],
@@ -653,13 +653,13 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     [`${CLAIM_RECONCILIATIONS_PATH} is an object, not a list`, (s: Saved) => withClaimReconciliations(s, {})],
     [
       `${CLAIM_RECONCILIATIONS_PATH}[0].qualityCheckReconciliations[0].evidenceObligation.qualityCheckKind is missing`,
-      (s: Saved) => withClaimReconciliations(s, [{ qualityCheckReconciliations: [{ outcome: "no-scn-code", evidenceObligation: {} }] }]),
+      (s: Saved) => withClaimReconciliations(s, [{ qualityCheckReconciliations: [{ outcome: "no-claim-code", evidenceObligation: {} }] }]),
     ],
     [
       `${CLAIM_RECONCILIATIONS_PATH}[0].pendingItems[0].qualityCheckKind is missing`,
       (s: Saved) => withClaimReconciliations(s, [{ pendingItems: [{}] }]),
     ],
-    ["errorsInTheInputs.scenarioCodeErrors is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { scenarioCodeErrors: "x" } })],
+    ["errorsInTheInputs.claimCodeErrors is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { claimCodeErrors: "x" } })],
     ["errorsInTheInputs.configurationNotRead.keysNotRead is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { keysNotRead: "x" } } })],
     ["errorsInTheInputs.configurationNotRead.ofWrongKind is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { ofWrongKind: "x" } } })],
     ["errorsInTheInputs.configurationNotRead.runnerKeysNotALayer is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { runnerKeysNotALayer: "x" } } })],
@@ -667,7 +667,7 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
     ["errorsInTheInputs.configurationNotRead.nonChecksNotAStepName is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { nonChecksNotAStepName: "x" } } })],
     ["errorsInTheInputs is missing", (s: Saved) => ({ ...s, errors: { configuration: { keysNotRead: ["runner"] } } })],
     ["errorsInTheInputs is missing", (s: Saved) => ({ ...s, errors: { scenarioCodes: [], configurationNotRead: { keysNotRead: ["runner"] } } })],
-    ["errorsInTheInputs.scenarioCodeErrors is missing", (s: Saved) => ({ ...s, errorsInTheInputs: { scenarioCodes: [] } })],
+    ["errorsInTheInputs.claimCodeErrors is missing", (s: Saved) => ({ ...s, errorsInTheInputs: { scenarioCodes: [] } })],
     ["errorsInTheInputs.configurationNotRead is missing", (s: Saved) => ({ ...s, errorsInTheInputs: { configuration: { keysNotRead: ["runner"] } } })],
     [`${SCENARIO_CODES_PATH} is a string, not an object`, (s: Saved) => withScenarioCodesOnReport(s, "x")],
     ["runProvenance.corpus is missing", (s: Saved) => ({ ...s, runProvenance: { ...s.runProvenance, corpus: undefined } })],
@@ -684,14 +684,14 @@ describe("[SCN-CLI-074] a saved file that is not a saved reconciliation is refus
       (s: Saved) => withScenarioCodesOnReport(s, { featureFiles: 1, featureCodes: 0, excludedOccurrences: 0, untaggedScenarios: [{ feature: "a.feature", scenario: "one" }] }),
     ],
     [
-      `${SCENARIO_CODES_PATH}.sharedScnCodes[0].scenarios[0].title is missing`,
+      `${SCENARIO_CODES_PATH}.sharedClaimCodes[0].scenarios[0].title is missing`,
       (s: Saved) =>
         withScenarioCodesOnReport(s, {
           featureFiles: 1,
           featureCodes: 1,
           excludedOccurrences: 0,
           untaggedScenarios: [],
-          sharedScnCodes: [{ scnId: "SCN-AAA-001", scenarios: [{ feature: "a.feature", scenario: "one" }, { feature: "a.feature", scenario: "two" }] }],
+          sharedClaimCodes: [{ claimCode: "SCN-AAA-001", scenarios: [{ feature: "a.feature", scenario: "one" }, { feature: "a.feature", scenario: "two" }] }],
         }),
     ],
   ] as const)("names where a saved file departs from a saved reconciliation: %s", (fault, documentOf: (s: Saved) => unknown) => {

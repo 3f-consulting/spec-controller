@@ -19,9 +19,9 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   const CUCUMBER_LOCATOR = "features/handover.feature";
   const cucumberMessage = (): string => coreMessage(CoreMessage.AmbiguousNamedStep, { step: "When the handover is accepted" });
 
-  const rowFor = (md: string, scnId: string): string => {
-    const row = md.split("\n").find((line) => line.startsWith(`| ${scnId} `));
-    expect(row, `expected a rendered row for ${scnId}`).toBeTruthy();
+  const rowFor = (md: string, claimCode: string): string => {
+    const row = md.split("\n").find((line) => line.startsWith(`| ${claimCode} `));
+    expect(row, `expected a rendered row for ${claimCode}`).toBeTruthy();
     return row!;
   };
 
@@ -29,11 +29,11 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     layer: Layer,
     locator: string,
     message: string
-  ): EvidenceObservation => ({ qualityCheckKind: layer, scnId: null, status: "passed", broken: true, locator, message });
+  ): EvidenceObservation => ({ qualityCheckKind: layer, claimCode: null, status: "passed", broken: true, locator, message });
 
   const balanceWithBroken = (observation: EvidenceObservation): Ledger => {
     const scenarios: Scenario[] = [
-      { scnId: "SCN-HNS-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-HNS-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     return reconcile(scenarios, [observation]);
   };
@@ -81,12 +81,12 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     md.slice(md.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))), md.indexOf(markdownHeading(3, coreMessage(CoreMessage.ReconciliationTotalsHeading))));
 
   const balancedScenario: Scenario = {
-    scnId: "SCN-VRD-001",
+    claimCode: "SCN-VRD-001",
     evidenceObligations: [{ qualityCheckKind: "unit" }],
   };
   const balancedObs: EvidenceObservation = {
     qualityCheckKind: "unit",
-    scnId: "SCN-VRD-001",
+    claimCode: "SCN-VRD-001",
     status: "passed",
   };
 
@@ -97,7 +97,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     balancedWithPending = reconcile(
       [
         {
-          scnId: "SCN-VRD-001",
+          claimCode: "SCN-VRD-001",
           evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration", pending: true }],
         },
       ],
@@ -118,10 +118,10 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Claim Reconcilia
   let scenarioPhantomClaimAndUnnamedClaimRows: Ledger;
   beforeEach(() => {
     scenarioPhantomClaimAndUnnamedClaimRows = reconcile(
-      [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-        { qualityCheckKind: "unit", scnId: "SCN-PHM-999", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-PHM-999", status: "passed" },
         { qualityCheckKind: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
       ],
     );

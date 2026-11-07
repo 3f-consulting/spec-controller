@@ -48,14 +48,14 @@ describe("[SCN-LNT-032] a check its job's verdict does not depend on reconciles 
         fitnessFunction: "lint:alpha",
         exists: true,
         enforcedOverRealSource: false,
-        scnId: "SCN-CVT-001",
+        claimCode: "SCN-CVT-001",
       },
       {
         qualityCheckKind: "fitness",
         fitnessFunction: "lint:beta",
         exists: true,
         enforcedOverRealSource: false,
-        scnId: "SCN-CVT-002",
+        claimCode: "SCN-CVT-002",
       },
     ]);
   });

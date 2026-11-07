@@ -23,12 +23,12 @@ const HEADLINE: Readonly<Record<RunVerdict, Exclude<WordedCoreMessage, keyof Cor
   unsound: CoreMessage.UnsoundHeadline,
   pending: CoreMessage.PendingHeadline,
   "nothing-to-reconcile": CoreMessage.NothingToReconcileHeadline,
-  "scenario-code-errors": CoreMessage.ScenarioCodeErrorsHeadline,
+  "claim-code-errors": CoreMessage.ClaimCodeErrorsHeadline,
 };
 
 const broken: EvidenceObservation = {
   qualityCheckKind: "unit",
-  scnId: null,
+  claimCode: null,
   status: "passed",
   broken: true,
   locator: "tests/harness/broken.test.ts",
@@ -49,8 +49,8 @@ const misfiledCorpus = (): EvidenceReconciliation =>
     packageJson: {},
     ciWorkflows: [],
     behaviouralObservations: [
-      { qualityCheckKind: "unit", scnId: "SCN-ONE-001", status: "passed" },
-      { qualityCheckKind: "unit", scnId: "SCN-ONE-002", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "SCN-ONE-001", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "SCN-ONE-002", status: "passed" },
     ],
     deferralTags: [],
   });
@@ -73,7 +73,7 @@ const ROWS: readonly Row[] = [
     ctx: strictCtx,
   },
   { verdict: "nothing-to-reconcile", run: "the corpus is empty", reconciliation: () => fromLedger(reconcile([], [])), ctx },
-  { verdict: "scenario-code-errors", run: "a scenario's code is misfiled", reconciliation: misfiledCorpus, ctx },
+  { verdict: "claim-code-errors", run: "a scenario's code is misfiled", reconciliation: misfiledCorpus, ctx },
 ];
 
 const verdictHeadlineOf = (md: string): string => {

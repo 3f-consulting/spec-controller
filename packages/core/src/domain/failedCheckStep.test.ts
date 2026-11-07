@@ -6,10 +6,10 @@ import { hasBrokenEvidence } from "./ledger.js";
 import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
-const recorded: RecordedCheckStep[] = [{ citedScn: "SCN-CVT-001", report: "failed" }];
+const recorded: RecordedCheckStep[] = [{ citedClaimCode: "SCN-CVT-001", report: "failed" }];
 
 function reconcile() {
   return evidenceReconciliationOf(scenarios, fitnessObservationsOf([], recorded), []);
@@ -32,7 +32,7 @@ describe("[SCN-LNT-028] a check step the run's record says failed posts a failin
     expect(item?.evidenceObservations).toEqual([{
       qualityCheckKind: "fitness",
       fitnessFunction: "SCN-CVT-001",
-      scnId: "SCN-CVT-001",
+      claimCode: "SCN-CVT-001",
       exists: true,
       enforcedOverRealSource: true,
       status: "failed",

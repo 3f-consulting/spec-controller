@@ -13,8 +13,8 @@ const CITES_NO_SCENARIO = (): string => coreMessage(CoreMessage.OutcomeCitesNoSc
 
 function reportOf(observations: readonly EvidenceObservation[]): string {
   const ledger = reconcile(
-    [{ scnId: "SCN-SGR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-    [{ qualityCheckKind: "unit", scnId: "SCN-SGR-001", status: "passed", locator: "src/proven.test.ts" }, ...observations]
+    [{ claimCode: "SCN-SGR-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", claimCode: "SCN-SGR-001", status: "passed", locator: "src/proven.test.ts" }, ...observations]
   );
   return renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
 }
@@ -36,7 +36,7 @@ function unnamedClaimCell(md: string): string {
 }
 
 function unit(status: "passed" | "failed", locator: string | undefined, message?: string): BehaviouralEvidenceObservation {
-  return { qualityCheckKind: "unit", scnId: null, status, locator, ...(message === undefined ? {} : { message }) };
+  return { qualityCheckKind: "unit", claimCode: null, status, locator, ...(message === undefined ? {} : { message }) };
 }
 
 function named(status: "passed" | "failed", testName: string | undefined): BehaviouralEvidenceObservation {

@@ -3,7 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import type { ScenarioCodeError } from "../domain/scnTags.js";
+import type { ClaimCodeError } from "../domain/scnTags.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CoreMessage } from "./messages.js";
@@ -12,18 +12,18 @@ import { coreMessage } from "./coreText.js";
 import { isEntryOf } from "./inputErrorEntry.test-utils.js";
 
 const SECTION = (): string => markdownHeading(2, coreMessage(CoreMessage.ErrorsInTheInputsHeading));
-const SCENARIO_CODE_ERRORS = (): string => markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading));
+const CLAIM_CODE_ERRORS = (): string => markdownHeading(3, coreMessage(CoreMessage.ClaimCodeErrorsHeading));
 const CONFIGURATION_NOT_READ = (): string => markdownHeading(3, coreMessage(CoreMessage.ConfigurationNotReadHeading));
 const runProvenance = (): string => markdownHeading(2, coreMessage(CoreMessage.RunProvenanceHeading));
 const summary = (): string => markdownHeading(2, coreMessage(CoreMessage.SummaryHeading));
 
-const SCENARIOS: readonly Scenario[] = [{ scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
+const SCENARIOS: readonly Scenario[] = [{ claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
 
-const PASSED: EvidenceObservation = { qualityCheckKind: "unit", scnId: "SCN-ONE-001", status: "passed" };
+const PASSED: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "SCN-ONE-001", status: "passed" };
 
 const NEVER_RAN: EvidenceObservation = {
   qualityCheckKind: "unit",
-  scnId: null,
+  claimCode: null,
   status: "failed",
   locator: "src/collect.test.ts",
   broken: true,
@@ -32,7 +32,7 @@ const NEVER_RAN: EvidenceObservation = {
 const KEY_NOT_READ: Partial<Summary> = { configurationKeysNotRead: ["zzz"] };
 
 interface Inputs {
-  readonly codeErrors?: readonly ScenarioCodeError[];
+  readonly codeErrors?: readonly ClaimCodeError[];
   readonly configuration?: Partial<Summary>;
   readonly unsound?: boolean;
 }
@@ -42,7 +42,7 @@ function reportLines({ codeErrors, configuration = {}, unsound = false }: Inputs
   const reconciliation: EvidenceReconciliation = {
     summary: { ...summaryOf(ledger, false), ...configuration },
     ledger,
-    ...(codeErrors === undefined ? {} : { scenarioCodeErrors: codeErrors }),
+    ...(codeErrors === undefined ? {} : { claimCodeErrors: codeErrors }),
   };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf).split("\n");
 }
@@ -75,12 +75,12 @@ const withoutErrorSection = (lines: readonly string[]): string[] => {
 };
 
 describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in the inputs section after the run provenance", () => {
-  it("states scenario code errors alone under Scenario code errors, right after the run provenance and before the Summary", () => {
+  it("states scenario code errors alone under Claim code errors, right after the run provenance and before the Summary", () => {
     const { before, body, after } = errorSectionOf(reportLines({ codeErrors: [FOREIGN] }));
     expect(before).toBe(runProvenance());
     expect(after).toBe(summary());
-    expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS()]);
-    expect(body.filter((line) => line.startsWith("- `foreign-scn-code` — "))).toHaveLength(1);
+    expect(partsOf(body)).toEqual([CLAIM_CODE_ERRORS()]);
+    expect(body.filter((line) => line.startsWith("- `foreign-claim-code` — "))).toHaveLength(1);
   });
 
   it("states configuration faults alone under Configuration not read, right after the run provenance and before the Summary", () => {
@@ -96,14 +96,14 @@ describe("[SCN-RPT-077] every fault in the inputs is stated under one Errors in 
     const { before, body, after } = errorSectionOf(lines);
     expect(before).toBe(runProvenance());
     expect(after).toBe(markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)));
-    expect(partsOf(body)).toEqual([SCENARIO_CODE_ERRORS(), CONFIGURATION_NOT_READ()]);
+    expect(partsOf(body)).toEqual([CLAIM_CODE_ERRORS(), CONFIGURATION_NOT_READ()]);
     expect(lines.filter((line) => line === SECTION())).toHaveLength(1);
   });
 
   it("prints no such section when the inputs hold no fault, and nothing in its place", () => {
     const clean = reportLines({});
     expect(clean).not.toContain(SECTION());
-    const partWords = [SCENARIO_CODE_ERRORS(), CONFIGURATION_NOT_READ()].map((part) => part.replace(/^#+ /, ""));
+    const partWords = [CLAIM_CODE_ERRORS(), CONFIGURATION_NOT_READ()].map((part) => part.replace(/^#+ /, ""));
     expect(clean.filter((line) => /^#+ /.test(line) && partWords.includes(line.replace(/^#+ /, "")))).toEqual([]);
     expect(withoutErrorSection(reportLines({ configuration: KEY_NOT_READ }))).toEqual(clean);
   });

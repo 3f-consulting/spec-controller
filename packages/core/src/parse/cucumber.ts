@@ -57,8 +57,8 @@ function scenarioObservations(
 ): EvidenceObservation[] {
   const tagNames = (scenario.tags ?? []).map((t) => withoutSigil(t.name ?? ""));
   const layers = layersPostedAt(tagNames, fallbackLayerOf("scenario-runs"));
-  const { scnId, severalCodes } = attributionOf(citedCodesOf(tagNames));
-  const severalNotes: ObservationNote[] = severalCodes ? [{ kind: "several-scn-codes", codes: severalCodes }] : [];
+  const { claimCode, severalCodes } = attributionOf(citedCodesOf(tagNames));
+  const severalNotes: ObservationNote[] = severalCodes ? [{ kind: "several-claim-codes", codes: severalCodes }] : [];
   const steps = scenario.steps ?? [];
   const evidence = evidenceOfRunResult(runResultOf(steps));
   if (evidence === undefined) return [];
@@ -66,7 +66,7 @@ function scenarioObservations(
     const ambiguous = steps.find(isAmbiguous)!;
     return [{
       qualityCheckKind: layers[0]!,
-      scnId,
+      claimCode,
       status: evidence.status,
       locator,
       broken: evidence.broken,
@@ -75,7 +75,7 @@ function scenarioObservations(
   }
   return layers.map((layer) => ({
     qualityCheckKind: layer,
-    scnId,
+    claimCode,
     status: evidence.status,
     locator,
     testName: scenario.name,

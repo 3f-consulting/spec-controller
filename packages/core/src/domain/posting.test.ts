@@ -7,35 +7,35 @@ const namedScenarioIds = new Set(["SCN-AAA-001", "SCN-AAA-002"]);
 
 describe("[SCN-LDG-001] postingOf routes a BEHAVIOURAL evidence observation by its citation", () => {
   it.each([
-    ["posts an evidence observation citing a named @SCN to that scenario's row", "SCN-AAA-001", { kind: "scenario", scnId: "SCN-AAA-001" }],
-    ["posts an evidence observation citing an UNKNOWN @SCN to a phantom claim's row", "SCN-ZZZ-009", { kind: "phantom-claim", scnId: "SCN-ZZZ-009" }],
-  ])("%s", (_title, scnId, expected) => {
+    ["posts an evidence observation citing a named @SCN to that scenario's row", "SCN-AAA-001", { kind: "scenario", claimCode: "SCN-AAA-001" }],
+    ["posts an evidence observation citing an UNKNOWN @SCN to a phantom claim's row", "SCN-ZZZ-009", { kind: "phantom-claim", claimCode: "SCN-ZZZ-009" }],
+  ])("%s", (_title, claimCode, expected) => {
     expect(
-      postingOf({ qualityCheckKind: "unit", scnId, status: "passed" }, namedScenarioIds)
+      postingOf({ qualityCheckKind: "unit", claimCode, status: "passed" }, namedScenarioIds)
     ).toEqual(expected);
   });
 
-  it("posts an UNCITED evidence observation (scnId null) to the unnamed claim, never a phantom claim", () => {
+  it("posts an UNCITED evidence observation (claimCode null) to the unnamed claim, never a phantom claim", () => {
     expect(
-      postingOf({ qualityCheckKind: "unit", scnId: null, status: "passed" }, namedScenarioIds)
+      postingOf({ qualityCheckKind: "unit", claimCode: null, status: "passed" }, namedScenarioIds)
     ).toEqual({ kind: "unnamed-claim", posted: "cites-nothing" });
   });
 });
 
 describe("[SCN-LDG-001] postingOf routes a FITNESS evidence observation by its citation, the same rule", () => {
-  const check = (fitnessFunction: string, scnId?: string): FitnessEvidenceObservation => ({
+  const check = (fitnessFunction: string, claimCode?: string): FitnessEvidenceObservation => ({
     qualityCheckKind: "fitness",
     fitnessFunction,
     exists: true,
     enforcedOverRealSource: true,
-    ...(scnId !== undefined ? { scnId } : {}),
+    ...(claimCode !== undefined ? { claimCode } : {}),
   });
 
   it.each([
-    ["posts a CITING run to the one row it cites — exactly as a behavioural evidence observation is posted", "SCN-AAA-001", { kind: "scenario", scnId: "SCN-AAA-001" }],
-    ["posts a run citing an UNKNOWN @SCN to that phantom claim's row, never to the unnamed claim", "SCN-ZZZ-009", { kind: "phantom-claim", scnId: "SCN-ZZZ-009" }],
-  ])("%s", (_title, scnId, expected) => {
-    expect(postingOf(check("lint:named", scnId), namedScenarioIds)).toEqual(expected);
+    ["posts a CITING run to the one row it cites — exactly as a behavioural evidence observation is posted", "SCN-AAA-001", { kind: "scenario", claimCode: "SCN-AAA-001" }],
+    ["posts a run citing an UNKNOWN @SCN to that phantom claim's row, never to the unnamed claim", "SCN-ZZZ-009", { kind: "phantom-claim", claimCode: "SCN-ZZZ-009" }],
+  ])("%s", (_title, claimCode, expected) => {
+    expect(postingOf(check("lint:named", claimCode), namedScenarioIds)).toEqual(expected);
   });
 
   it("posts an UNCITED run to the unnamed claim — and there is no by-name fallback left to try", () => {
@@ -51,9 +51,9 @@ describe("[SCN-LDG-001] postingOf routes a FITNESS evidence observation by its c
 });
 
 describe("[SCN-LDG-022] postingOf routes a BROKEN evidence observation by its citation, as every other", () => {
-  const brokenTest = (scnId: string | null) =>
-    postingOf({ qualityCheckKind: "unit", scnId, status: "failed", broken: true }, namedScenarioIds);
-  const brokenCheck = (scnId?: string) =>
+  const brokenTest = (claimCode: string | null) =>
+    postingOf({ qualityCheckKind: "unit", claimCode, status: "failed", broken: true }, namedScenarioIds);
+  const brokenCheck = (claimCode?: string) =>
     postingOf(
       {
         qualityCheckKind: "fitness",
@@ -61,7 +61,7 @@ describe("[SCN-LDG-022] postingOf routes a BROKEN evidence observation by its ci
         exists: false,
         enforcedOverRealSource: false,
         broken: true,
-        ...(scnId !== undefined ? { scnId } : {}),
+        ...(claimCode !== undefined ? { claimCode } : {}),
       },
       namedScenarioIds
     );
@@ -70,8 +70,8 @@ describe("[SCN-LDG-022] postingOf routes a BROKEN evidence observation by its ci
     ["behavioural", brokenTest],
     ["fitness", brokenCheck],
   ] as const)("posts a broken %s evidence observation to the claim it names", (_kind, post) => {
-    expect(post("SCN-AAA-001")).toEqual({ kind: "scenario", scnId: "SCN-AAA-001" });
-    expect(post("SCN-ZZZ-009")).toEqual({ kind: "phantom-claim", scnId: "SCN-ZZZ-009" });
+    expect(post("SCN-AAA-001")).toEqual({ kind: "scenario", claimCode: "SCN-AAA-001" });
+    expect(post("SCN-ZZZ-009")).toEqual({ kind: "phantom-claim", claimCode: "SCN-ZZZ-009" });
   });
 
   it("posts a broken evidence observation that names no claim to the unnamed claim, as broken", () => {

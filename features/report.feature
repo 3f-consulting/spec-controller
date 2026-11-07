@@ -92,7 +92,7 @@ Feature: The report renders the ledger as sectioned facts
     hold the out-of-balance scenarios. It opens with a total line that starts
     "N of M Claim Reconciliation(s) of scenarios out of balance", says which are grouped by
     feature, and names any that are not, "(no feature file names them)". A table headed
-    "| Feature | Count | Out-of-balance `@SCN` ids |" follows, one row per feature with its count.
+    "| Feature | Count | Out-of-balance claim codes |" follows, one row per feature with its count.
     Balanced scenarios are left out.
 
     A scenario's feature is the feature code in its @SCN code. The Feature cell reads
@@ -114,7 +114,7 @@ Feature: The report renders the ledger as sectioned facts
     with no @SCN code names each one. A re-render from saved JSON groups them the same way.
 
     @unit @SCN-RPT-006
-    Scenario: the by-feature cut names each out-of-balance feature by its feature file and code, falling back to the bare code for a foreign-scn-code
+    Scenario: the by-feature cut names each out-of-balance feature by its feature file and code, falling back to the bare code for a foreign-claim-code
 
     @unit @SCN-RPT-030
     Scenario: the by-feature total line counts the out-of-balance rows no feature can group, even when they are the only ones
@@ -137,7 +137,7 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
 
-    The report states "N @SCN ids seen in non-tag context, excluded": the raw @SCN code
+    The report states "N claim codes seen in non-tag context, excluded": the raw @SCN code
     occurrences in the feature source (in prose, comments and step text) minus the codes written
     as tags. A code written as a tag counts once, on whatever it tags, however many scenarios
     inherit it, so the figure is never negative. The JSON report carries it with the scenario codes.
@@ -318,7 +318,7 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the Reconciliation line out-of-balance count decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
 
     Each of the ten out-of-balance outcomes is a counted row that reads the outcome's sentence
-    alone, in this order: missing, failing, watermelon, no-scn-code, duplicate-scn-code,
+    alone, in this order: missing, failing, watermelon, no-claim-code, duplicate-claim-code,
     cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing. Their
     counts sum to the out-of-balance total.
 
@@ -653,7 +653,7 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report states every fault in its inputs in one section after its provenance, only when there is one
 
     Right after "## Run provenance", "## Errors in the inputs" holds the scenario code errors under
-    "### Scenario code errors", then the configuration the run could not use under
+    "### Claim code errors", then the configuration the run could not use under
     "### Configuration not read", in the order the JSON's errorsInTheInputs holds them. Each part keeps its own
     introduction and prints only when it holds a fault, and the section prints only when one part
     does.
@@ -742,10 +742,10 @@ Feature: The report renders the ledger as sectioned facts
     @unit @SCN-RPT-100
     Scenario: the step-accounting section prints no column definition when it prints no table
 
-  Rule: the report lists each scenario code error under Scenario code errors, only when the corpus holds one, worded from the error's own values
+  Rule: the report lists each scenario code error under Claim code errors, only when the corpus holds one, worded from the error's own values
 
     @unit @SCN-RPT-055
-    Scenario: a foreign-scn-code is listed by its handle under Scenario code errors, worded from its values with the one file or the several files carrying the named code, before the Summary
+    Scenario: a foreign-claim-code is listed by its handle under Claim code errors, worded from its values with the one file or the several files carrying the named code, before the Summary
 
     @unit @SCN-RPT-056
     Scenario: a duplicate-feature-code is listed by its handle, worded from the shared code and the files that carry it
@@ -754,10 +754,10 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: a no-feature-code is listed by its handle, worded from the file that carries no feature code
 
     @unit @SCN-RPT-058
-    Scenario: a foreign-scn-code whose named code no file carries is worded with no file to move to, naming no header tag or file the corpus lacks
+    Scenario: a foreign-claim-code whose named code no file carries is worded with no file to move to, naming no header tag or file the corpus lacks
 
     @unit @SCN-RPT-059
-    Scenario: a several-scn-codes error is listed by its handle, worded from its file, its scenario and its codes
+    Scenario: a several-claim-codes error is listed by its handle, worded from its file, its scenario and its codes
 
     @unit @SCN-RPT-060
     Scenario: the section counts its errors, one in the singular and several with their number, then lists each on its own line in the order judged

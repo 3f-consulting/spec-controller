@@ -7,11 +7,11 @@ import { linesOf } from "./claimReconciliation.js";
 import { FITNESS_SCENARIOS } from "./checkStep.test-utils.js";
 
 const recorded: RecordedCheckStep[] = [
-  { citedScn: "SCN-CVT-001", report: "succeeded", said: "success" },
-  { citedScn: "SCN-CVT-002", report: "failed", said: "failure" },
-  { citedScn: "SCN-CVT-003", report: "other", said: "skipped" },
-  { citedScn: "SCN-CVT-004", report: "other", said: "neutral" },
-  { citedScn: "SCN-CVT-005", report: "other" },
+  { citedClaimCode: "SCN-CVT-001", report: "succeeded", said: "success" },
+  { citedClaimCode: "SCN-CVT-002", report: "failed", said: "failure" },
+  { citedClaimCode: "SCN-CVT-003", report: "other", said: "skipped" },
+  { citedClaimCode: "SCN-CVT-004", report: "other", said: "neutral" },
+  { citedClaimCode: "SCN-CVT-005", report: "other" },
 ];
 
 function reconcile() {
@@ -46,7 +46,7 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
     expect(failed?.qualityCheckReconciliations[0]?.evidenceObservations).toEqual([{
       qualityCheckKind: "fitness",
       fitnessFunction: "SCN-CVT-002",
-      scnId: "SCN-CVT-002",
+      claimCode: "SCN-CVT-002",
       exists: true,
       enforcedOverRealSource: true,
       status: "failed",
@@ -76,11 +76,11 @@ describe("[SCN-LNT-026] a check step's outcome answers its row's obligation only
 
   it("posts each step it has no reading for as an observation that claims no check exists or ran", () => {
     const observations = fitnessObservationsOf([], recorded).filter(
-      (o) => o.scnId !== "SCN-CVT-001" && o.scnId !== "SCN-CVT-002"
+      (o) => o.claimCode !== "SCN-CVT-001" && o.claimCode !== "SCN-CVT-002"
     );
     expect(
       observations.map((o) => [
-        o.scnId,
+        o.claimCode,
         "exists" in o ? o.exists : undefined,
         "enforcedOverRealSource" in o ? o.enforcedOverRealSource : undefined,
         o.broken,

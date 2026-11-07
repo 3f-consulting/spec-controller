@@ -20,26 +20,26 @@ const DEFERRED = `Feature: deferred evidence
 `;
 
 const scenarios = (): Scenario[] => [
-  { scnId: "SCN-NSY-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-NSY-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-  { scnId: "SCN-NSY-003", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-NSY-004", evidenceObligations: [] },
-  { scnId: "SCN-NSY-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-  { scnId: "SCN-NSY-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { claimCode: "SCN-NSY-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-NSY-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { claimCode: "SCN-NSY-003", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-NSY-004", evidenceObligations: [] },
+  { claimCode: "SCN-NSY-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { claimCode: "SCN-NSY-005", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ...parseScenarios(DEFERRED, [DEFERRAL_TAG]),
 ];
 
 const OBSERVATIONS: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", scnId: "SCN-NSY-001", status: "passed", locator: "src/a.test.ts" },
-  { qualityCheckKind: "fitness", fitnessFunction: "lint:sound", scnId: "SCN-NSY-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "unit", scnId: "SCN-NSY-002", status: "failed", locator: "src/b.test.ts" },
-  { qualityCheckKind: "integration", scnId: "SCN-NSY-002", status: "passed", locator: "tests/steps/b.steps.ts" },
-  { qualityCheckKind: "fitness", fitnessFunction: "lint:fake", scnId: "SCN-NSY-003", exists: true, enforcedOverRealSource: false },
-  { qualityCheckKind: "unit", scnId: "SCN-NSY-007", status: "passed", locator: "src/g.test.ts" },
-  { qualityCheckKind: "unit", scnId: "SCN-NSY-999", status: "passed", locator: "src/ghost.test.ts" },
-  { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "SCN-NSY-001", status: "passed", locator: "src/a.test.ts" },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:sound", claimCode: "SCN-NSY-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "unit", claimCode: "SCN-NSY-002", status: "failed", locator: "src/b.test.ts" },
+  { qualityCheckKind: "integration", claimCode: "SCN-NSY-002", status: "passed", locator: "tests/steps/b.steps.ts" },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:fake", claimCode: "SCN-NSY-003", exists: true, enforcedOverRealSource: false },
+  { qualityCheckKind: "unit", claimCode: "SCN-NSY-007", status: "passed", locator: "src/g.test.ts" },
+  { qualityCheckKind: "unit", claimCode: "SCN-NSY-999", status: "passed", locator: "src/ghost.test.ts" },
+  { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "src/uncited.test.ts" },
   { qualityCheckKind: "fitness", fitnessFunction: "lint:uncited", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "unit", scnId: null, status: "passed", broken: true, locator: "src/broken.test.ts" },
+  { qualityCheckKind: "unit", claimCode: null, status: "passed", broken: true, locator: "src/broken.test.ts" },
 ];
 
 function render(scenarios: Scenario[], observations: EvidenceObservation[], untagged: string[] = []): string {
@@ -52,7 +52,7 @@ const unsoundWithEveryOutcome = (): string =>
   render(scenarios(), OBSERVATIONS, ["features/checkout.feature : a scenario with no code"]);
 const balancedWithPendingItems = (): string =>
   render(parseScenarios(DEFERRED, [DEFERRAL_TAG]), [
-    { qualityCheckKind: "unit", scnId: "SCN-NSY-007", status: "passed", locator: "src/g.test.ts" },
+    { qualityCheckKind: "unit", claimCode: "SCN-NSY-007", status: "passed", locator: "src/g.test.ts" },
   ]);
 
 describe("[SCN-RPT-067] the markdown report's own words hold no symbol character, whatever its outcomes, Pending Items or run integrity", () => {

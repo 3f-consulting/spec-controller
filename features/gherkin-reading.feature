@@ -14,7 +14,7 @@ Feature: balance reads each scenario's tags from its feature file
         | Rule     |
 
     @unit @e2e @SCN-GRD-002
-    Scenario Outline: a scenario whose @SCN it inherits from its <ancestor> is reconciled once, on that code's row, and never also as no-scn-code
+    Scenario Outline: a scenario whose @SCN it inherits from its <ancestor> is reconciled once, on that code's row, and never also as no-claim-code
       Given a target whose one scenario carries no scenario code of its own, inherits one from its <ancestor>, and has passing evidence citing that code
       When balance reconciles that target
       Then the scenario is reconciled once, balanced, on its scenario code's row

@@ -7,7 +7,7 @@ export type Outcome =
   | "cites-no-scenario"
   | "broken"
   | "no-evidence-obligation"
-  | "no-scn-code"
-  | "duplicate-scn-code"
+  | "no-claim-code"
+  | "duplicate-claim-code"
   | "both-missing";
 export type SidePresence = "Exists" | "None";

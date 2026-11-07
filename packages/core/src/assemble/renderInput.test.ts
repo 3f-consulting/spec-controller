@@ -23,10 +23,10 @@ import { scenarioName } from "../domain/scenarioName.test-utils.js";
 function reportLedger(): Ledger {
   return reconcile(
     [
-      { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+      { claimCode: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-RMD-002", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
     ],
-    [{ qualityCheckKind: "unit", scnId: "SCN-RMD-001", status: "passed" }],
+    [{ qualityCheckKind: "unit", claimCode: "SCN-RMD-001", status: "passed" }],
   );
 }
 
@@ -53,7 +53,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       string,
       unknown
     >;
-    expect(Object.keys(report).filter((key) => key !== "scenarioCodes")).toEqual([
+    expect(Object.keys(report).filter((key) => key !== "claimCodes")).toEqual([
       "runProvenance",
       "summary",
       "claimReconciliations",
@@ -68,7 +68,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     expect(report).not.toHaveProperty("warnings");
   });
 
-  it("states each fact once: the faults only under errors and the corpus's facts only under scenarioCodes", () => {
+  it("states each fact once: the faults only under errors and the corpus's facts only under claimCodes", () => {
     const features = parsedFeatures(
       [
         "Feature: uncoded\n\n  @unit @SCN-FIX-001\n  Scenario: one\n    Given a thing\n\n  @unit @SCN-FIX-001\n  Scenario: two\n    Given a thing\n",
@@ -102,8 +102,8 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
       "runnerKeysNotALayer",
       "nonChecksMatchingNoStep",
     ]);
-    expect(scenarioCodesOnReport(report)).toHaveProperty("sharedScnCodes");
-    for (const oldPlace of ["scenarioCodeErrors", "scenarioCodePopulation", "evidenceObligations"]) {
+    expect(scenarioCodesOnReport(report)).toHaveProperty("sharedClaimCodes");
+    for (const oldPlace of ["claimCodeErrors", "scenarioCodePopulation", "evidenceObligations"]) {
       expect(report).not.toHaveProperty(oldPlace);
     }
     for (const oldPlace of [
@@ -135,19 +135,19 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
   });
 
   const twoBalancedScenarios: Scenario[] = [
-    { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { scnId: "SCN-TGT-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "SCN-TGT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "SCN-TGT-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ];
   const twoPassingTestsAndAnUncitedCheck: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", scnId: "SCN-TGT-001", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-TGT-002", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-TGT-001", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-TGT-002", status: "passed" },
     { qualityCheckKind: "fitness", fitnessFunction: "guard:static", exists: true, enforcedOverRealSource: true },
   ];
 
   it("counts the phantom claim's reconciliation in the summary totals too — a phantom claim is out-of-balance, not a bucket apart", () => {
     const ledgerWithPhantomClaimRow: Ledger = reconcile(twoBalancedScenarios, [
       ...twoPassingTestsAndAnUncitedCheck,
-      { qualityCheckKind: "unit", scnId: "SCN-PHM-999", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "SCN-PHM-999", status: "passed" },
     ]);
     const report = assembleRenderInput(__er(ledgerWithPhantomClaimRow), ctx);
     const t = reconciliationTotalsOf(report).claimReconciliations;
@@ -218,9 +218,9 @@ describe("[SCN-RMD-020] each Claim Reconciliation names the claim it reconciles"
     const ledger = reconcile(
       parseScenarios(feature),
       [
-        { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "passed" },
-        { qualityCheckKind: "unit", scnId: "SCN-PHM-999", status: "passed" },
-        { qualityCheckKind: "unit", scnId: null, status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-PHM-999", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: null, status: "passed" },
       ],
       [untaggedScenarioId(scenarioName("alpha.feature", "an untagged scenario"))]
     );
@@ -231,30 +231,30 @@ describe("[SCN-RMD-020] each Claim Reconciliation names the claim it reconciles"
       ["unnamed-claim", "(unnamed claim)"],
       ["scenario", "alpha.feature : an untagged scenario"],
     ]);
-    for (const row of rows) expect(row).not.toHaveProperty("scnId");
+    for (const row of rows) expect(row).not.toHaveProperty("claimCode");
   });
 });
 
 describe("[SCN-RMD-003] the summary counts the evidence observations of each of the five kinds of quality check, fitness included, by the kind of claim each posts to, and their total is the five counts' sum", () => {
   const rmd003Scenarios: Scenario[] = [
-    { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
-    { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-    { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "SCN-RMD-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+    { claimCode: "SCN-RMD-010", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "SCN-RMD-011", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
   const rmd003Observations: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", scnId: "SCN-RMD-001", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-RMD-001", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-RMD-001", status: "failed", broken: true, locator: "src/rmd.test.ts" },
-    { qualityCheckKind: "integration", scnId: "SCN-RMD-001", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-PHX-999", status: "passed" },
-    { qualityCheckKind: "integration", scnId: null, status: "passed" },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:qux", scnId: "SCN-RMD-011", exists: false, enforcedOverRealSource: false },
+    { qualityCheckKind: "unit", claimCode: "SCN-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-RMD-001", status: "failed", broken: true, locator: "src/rmd.test.ts" },
+    { qualityCheckKind: "integration", claimCode: "SCN-RMD-001", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-PHX-999", status: "passed" },
+    { qualityCheckKind: "integration", claimCode: null, status: "passed" },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:foo", claimCode: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:bar", claimCode: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:qux", claimCode: "SCN-RMD-011", exists: false, enforcedOverRealSource: false },
     {
       qualityCheckKind: "fitness",
       fitnessFunction: "lint:quux",
-      scnId: "SCN-RMD-010",
+      claimCode: "SCN-RMD-010",
       exists: true,
       enforcedOverRealSource: true,
       broken: true,

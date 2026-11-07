@@ -27,7 +27,7 @@ export function parseVitestEvidenceObservations(report: VitestJsonReport, root?:
       const evidence = evidenceOfRunResult("never-reached-its-assertions")!;
       results.push({
         qualityCheckKind: layer,
-        scnId: null,
+        claimCode: null,
         status: evidence.status,
         locator,
         broken: evidence.broken,
@@ -38,14 +38,14 @@ export function parseVitestEvidenceObservations(report: VitestJsonReport, root?:
     for (const assertion of assertions) {
       const evidence = evidenceOfRunResult(runResultOf(assertion.status));
       if (evidence === undefined) continue;
-      const { scnId, severalCodes } = attributionOf(citingCodesOf(assertion));
+      const { claimCode, severalCodes } = attributionOf(citingCodesOf(assertion));
       results.push({
         qualityCheckKind: layer,
-        scnId,
+        claimCode,
         status: evidence.status,
         locator,
         testName: assertion.fullName ?? assertion.title,
-        ...(severalCodes ? { notes: [{ kind: "several-scn-codes" as const, codes: severalCodes }] } : {}),
+        ...(severalCodes ? { notes: [{ kind: "several-claim-codes" as const, codes: severalCodes }] } : {}),
       });
     }
   }

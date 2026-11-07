@@ -319,15 +319,15 @@ Given(
   },
 );
 
-function assertListsMisfiled(report: string, scnId: string): void {
+function assertListsMisfiled(report: string, claimCode: string): void {
   assert.ok(
-    showsEntry(report, "foreign-scn-code-carried", { file: "two.feature", scnId, carrierCount: "1" }),
-    `expected ${scnId} in two.feature listed as misfiled; got:\n${report}`,
+    showsEntry(report, "foreign-claim-code-carried", { file: "two.feature", claimCode, carrierCount: "1" }),
+    `expected ${claimCode} in two.feature listed as misfiled; got:\n${report}`,
   );
 }
 
 Then("the report lists the scenario code error", function (this: SpecControllerWorld) {
-  assert.ok(showsHeading(this.balanceResult.stdout, 3, "scenario-code-errors-heading"), `expected the heading over the misfiled codes; got:\n${this.balanceResult.stdout}`);
+  assert.ok(showsHeading(this.balanceResult.stdout, 3, "claim-code-errors-heading"), `expected the heading over the misfiled codes; got:\n${this.balanceResult.stdout}`);
   assertListsMisfiled(this.balanceResult.stdout, "SCN-CEA-002");
 });
 
@@ -337,14 +337,14 @@ Then("the report carries the out-of-balance account", function (this: SpecContro
 
 Then("the verdict headline names both the scenario code error and the accounts out of balance", function (this: SpecControllerWorld) {
   const headline = verdictHeadline(this.balanceResult.stdout);
-  assert.equal(headline.headline, "scenario-code-errors-headline", `expected the headline of a corpus that misfiles a code; got ${headline.line}`);
+  assert.equal(headline.headline, "claim-code-errors-headline", `expected the headline of a corpus that misfiles a code; got ${headline.line}`);
   assert.ok(headline.line.includes(entryText("also-out-of-balance")), `expected the headline to carry the also-out-of-balance entry; got ${headline.line}`);
   assert.equal(headline.exit, 1);
 });
 
 const SCENARIO_CODE_ERROR = "tests/fixtures/scenario-code-error";
 
-Given("a target that reconciles balanced-with-scenario-code-errors", function (this: SpecControllerWorld) {
+Given("a target that reconciles balanced-with-claim-code-errors", function (this: SpecControllerWorld) {
   this.invocationArgs = [
     "--features", `${SCENARIO_CODE_ERROR}/features`,
     "--vitest", `${SCENARIO_CODE_ERROR}/vitest.json`,
@@ -365,6 +365,6 @@ Given("a target whose collection-failed suite sits beside a misfiled scenario co
 });
 
 Then("the report still lists the scenario code error", function (this: SpecControllerWorld) {
-  assert.ok(showsHeading(this.balanceResult.stdout, 3, "scenario-code-errors-heading"), `expected the heading over the misfiled codes; got:\n${this.balanceResult.stdout}`);
+  assert.ok(showsHeading(this.balanceResult.stdout, 3, "claim-code-errors-heading"), `expected the heading over the misfiled codes; got:\n${this.balanceResult.stdout}`);
   assertListsMisfiled(this.balanceResult.stdout, "SCN-UCA-002");
 });

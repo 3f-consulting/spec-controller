@@ -36,15 +36,15 @@ import {
   qualityCheckReconciliationsOf,
   UNNAMED_CLAIM_ID,
 } from "./claimReconciliation.js";
-import type { ScenarioCodeError, ScenarioCodePopulation } from "./scnTags.js";
+import type { ClaimCodeError, ScenarioCodePopulation } from "./scnTags.js";
 import { postingOf } from "./posting.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
 
-type CitedPosting = { readonly kind: "scenario" | "phantom-claim"; readonly scnId: string };
+type CitedPosting = { readonly kind: "scenario" | "phantom-claim"; readonly claimCode: string };
 
 interface CitationIndex {
   file(posting: CitedPosting, observation: EvidenceObservation): void;
-  observationsFor(scnId: string): readonly EvidenceObservation[];
+  observationsFor(claimCode: string): readonly EvidenceObservation[];
   readonly phantomClaimIds: readonly string[];
 }
 
@@ -53,14 +53,14 @@ function citationIndex(): CitationIndex {
   const phantomClaimIds: string[] = [];
   return {
     file(posting, observation) {
-      const list = byScn.get(posting.scnId) ?? [];
+      const list = byScn.get(posting.claimCode) ?? [];
       list.push(observation);
-      byScn.set(posting.scnId, list);
-      if (posting.kind === "phantom-claim" && !phantomClaimIds.includes(posting.scnId)) {
-        phantomClaimIds.push(posting.scnId);
+      byScn.set(posting.claimCode, list);
+      if (posting.kind === "phantom-claim" && !phantomClaimIds.includes(posting.claimCode)) {
+        phantomClaimIds.push(posting.claimCode);
       }
     },
-    observationsFor: (scnId) => byScn.get(scnId) ?? [],
+    observationsFor: (claimCode) => byScn.get(claimCode) ?? [],
     phantomClaimIds,
   };
 }
@@ -72,20 +72,20 @@ interface RoutedObservations {
 
 /** An evidence observation citing a code several scenarios share credits none of them, and names the code. */
 function namingSharedCode(observation: EvidenceObservation, code: string): EvidenceObservation {
-  return { ...observation, notes: [...(observation.notes ?? []), { kind: "shared-scn-code", code }] };
+  return { ...observation, notes: [...(observation.notes ?? []), { kind: "shared-claim-code", code }] };
 }
 
 function routeObservations(
   evidenceObservations: readonly EvidenceObservation[],
   scenarioIds: ReadonlySet<string>,
-  sharedScnCodes: ReadonlySet<string>
+  sharedClaimCodes: ReadonlySet<string>
 ): RoutedObservations {
   const citations = citationIndex();
   const onUnnamedClaim: EvidenceObservation[] = [];
   for (const o of evidenceObservations) {
-    const posting = postingOf(o, scenarioIds, sharedScnCodes);
+    const posting = postingOf(o, scenarioIds, sharedClaimCodes);
     if (posting.kind !== "unnamed-claim") citations.file(posting, o);
-    else if (o.scnId !== null && o.scnId !== undefined && sharedScnCodes.has(o.scnId)) onUnnamedClaim.push(namingSharedCode(o, o.scnId));
+    else if (o.claimCode !== null && o.claimCode !== undefined && sharedClaimCodes.has(o.claimCode)) onUnnamedClaim.push(namingSharedCode(o, o.claimCode));
     else onUnnamedClaim.push(o);
   }
   return { citations, onUnnamedClaim };
@@ -100,12 +100,12 @@ function scenarioRow(
   const pendingItems: PendingItem[] = pendingItemsOf(d);
 
   const reconciledEvidenceObligations = evidenceObligationsOf(d.evidenceObligations).map((obligation) =>
-    reconcileEvidenceObligation(d.scnId, obligation, evidenceObservations)
+    reconcileEvidenceObligation(d.claimCode, obligation, evidenceObservations)
   );
 
   const noEvidenceObligationItems = noEvidenceObligationReconciliationsOf(
-    d.scnId,
-    citations.observationsFor(d.scnId),
+    d.claimCode,
+    citations.observationsFor(d.claimCode),
     evidenceObligationPairs
   );
 
@@ -115,7 +115,7 @@ function scenarioRow(
     pendingItems
   );
   return {
-    claim: d.scnId,
+    claim: d.claimCode,
     kind: "scenario",
     verdict: verdictFor(qualityCheckReconciliations),
     qualityCheckReconciliations,
@@ -130,9 +130,9 @@ function scenarioNameOf({ feature, title }: Scenario): ScenarioName | undefined 
 function accountsByCode(scenarios: readonly Scenario[]): Scenario[][] {
   const byCode = new Map<string, Scenario[]>();
   for (const scenario of scenarios) {
-    const sharers = byCode.get(scenario.scnId) ?? [];
+    const sharers = byCode.get(scenario.claimCode) ?? [];
     sharers.push(scenario);
-    byCode.set(scenario.scnId, sharers);
+    byCode.set(scenario.claimCode, sharers);
   }
   return [...byCode.values()];
 }
@@ -140,7 +140,7 @@ function accountsByCode(scenarios: readonly Scenario[]): Scenario[][] {
 function duplicateScnCodeRow(sharer: Scenario): ClaimReconciliation {
   const items = duplicateScnCodeReconciliationsOf(sharer.evidenceObligations, scenarioNameOf(sharer));
   return {
-    claim: sharer.scnId,
+    claim: sharer.claimCode,
     kind: "scenario",
     verdict: verdictFor(items),
     qualityCheckReconciliations: items,
@@ -150,11 +150,11 @@ function duplicateScnCodeRow(sharer: Scenario): ClaimReconciliation {
 
 function phantomClaimRows(citations: CitationIndex): ClaimReconciliation[] {
   const rows: ClaimReconciliation[] = [];
-  for (const scnId of citations.phantomClaimIds) {
-    const observations = citations.observationsFor(scnId);
+  for (const claimCode of citations.phantomClaimIds) {
+    const observations = citations.observationsFor(claimCode);
     const items = citesUnknownScenarioReconciliationsOf(observations);
     rows.push({
-      claim: scnId,
+      claim: claimCode,
       kind: "phantom-claim",
       verdict: verdictFor(items),
       qualityCheckReconciliations: items,
@@ -199,12 +199,12 @@ export function reconcile(
   evidenceObservations: EvidenceObservation[],
   untaggedScenarios: readonly string[] = []
 ): Ledger {
-  const scenarioIds = new Set(scenarios.map((d) => d.scnId));
+  const scenarioIds = new Set(scenarios.map((d) => d.claimCode));
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
   const observations = inEvidenceOrder(evidenceObservations);
   const accounts = accountsByCode(scenarios);
-  const sharedScnCodes = new Set(accounts.filter((sharers) => sharers.length > 1).map((sharers) => sharers[0]!.scnId));
-  const { citations, ...unnamed } = routeObservations(observations, scenarioIds, sharedScnCodes);
+  const sharedClaimCodes = new Set(accounts.filter((sharers) => sharers.length > 1).map((sharers) => sharers[0]!.claimCode));
+  const { citations, ...unnamed } = routeObservations(observations, scenarioIds, sharedClaimCodes);
   return {
     claimReconciliations: [
       ...accounts.flatMap((sharers) =>
@@ -338,7 +338,7 @@ export interface Summary {
 export interface EvidenceReconciliation {
   readonly summary: Summary;
   readonly ledger: Ledger;
-  readonly scenarioCodeErrors?: readonly ScenarioCodeError[];
+  readonly claimCodeErrors?: readonly ClaimCodeError[];
   readonly scenarioCodePopulation?: ScenarioCodePopulation;
 }
 

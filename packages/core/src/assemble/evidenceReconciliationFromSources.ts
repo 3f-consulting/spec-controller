@@ -167,7 +167,7 @@ function withScenarioCodeErrors(
 ): EvidenceReconciliation {
   return {
     ...reconciliation,
-    scenarioCodeErrors: scenarioCodeErrorsOf(input.features),
+    claimCodeErrors: scenarioCodeErrorsOf(input.features),
     scenarioCodePopulation: scenarioCodePopulationOf(input.features),
   };
 }

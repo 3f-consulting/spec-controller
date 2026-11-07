@@ -10,20 +10,20 @@ import {
 import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-AAA-004", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+  { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-AAA-004", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit" }] },
 ];
 
 const evidenceObservations: EvidenceObservation[] = [
-  { qualityCheckKind: "fitness", fitnessFunction: "lint:wired", scnId: "SCN-AAA-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "fitness", fitnessFunction: "lint:unwired", scnId: "SCN-AAA-004", exists: true, enforcedOverRealSource: false },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:wired", claimCode: "SCN-AAA-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:unwired", claimCode: "SCN-AAA-004", exists: true, enforcedOverRealSource: false },
   { qualityCheckKind: "fitness", fitnessFunction: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "unit", scnId: "SCN-AAA-003", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "SCN-AAA-003", status: "passed" },
   {
     qualityCheckKind: "unit",
-    scnId: null,
+    claimCode: null,
     status: "failed",
     broken: true,
     locator: "tests/broken.test.ts",
@@ -35,18 +35,18 @@ let ledger: Ledger;
 beforeEach(() => {
   ledger = reconcile(scenarios, evidenceObservations);
 });
-const rowOf = (scnId: string) =>
-  ledger.claimReconciliations.find((r) => r.claim === scnId)!;
+const rowOf = (claimCode: string) =>
+  ledger.claimReconciliations.find((r) => r.claim === claimCode)!;
 
 describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   let mixed: Ledger;
   beforeEach(() => {
     mixed = reconcile(
-      [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
-        { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "passed" },
-        { qualityCheckKind: "unit", scnId: "SCN-ZZZ-009", status: "passed" },
-        { qualityCheckKind: "unit", scnId: null, status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: "SCN-ZZZ-009", status: "passed" },
+        { qualityCheckKind: "unit", claimCode: null, status: "passed" },
       ]
     );
   });
@@ -62,12 +62,12 @@ describe("[SCN-LDG-001] isScenario names only the named thing", () => {
 });
 
 describe("[SCN-RPT-011] observationCountOf counts a row's fitness evidence observations as it counts any other", () => {
-  const posted = { qualityCheckKind: "fitness", scnId: "SCN-AAA-001", exists: true } as const;
+  const posted = { qualityCheckKind: "fitness", claimCode: "SCN-AAA-001", exists: true } as const;
   const satisfied: EvidenceObservation = { ...posted, fitnessFunction: "lint:satisfied", enforcedOverRealSource: true, status: "passed" };
   const watermelon: EvidenceObservation = { ...posted, fitnessFunction: "lint:watermelon", enforcedOverRealSource: false };
   const failing: EvidenceObservation = { ...posted, fitnessFunction: "lint:failing", enforcedOverRealSource: true, status: "failed" };
   const rowPostedWith = (observations: EvidenceObservation[]) =>
-    reconcile([{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] }], observations)
+    reconcile([{ claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] }], observations)
       .claimReconciliations.find((r) => r.claim === "SCN-AAA-001")!;
 
   it.each([

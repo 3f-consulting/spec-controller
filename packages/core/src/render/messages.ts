@@ -1,27 +1,27 @@
 export enum CoreMessage {
   ErrorsInTheInputsHeading = "errors-in-the-inputs-heading",
   ConfigurationNotReadHeading = "configuration-not-read-heading",
-  ScenarioCodeErrorsHeading = "scenario-code-errors-heading",
+  ClaimCodeErrorsHeading = "claim-code-errors-heading",
   ConfigurationNotReadIntro = "configuration-not-read-intro",
   ConfigurationWrongKind = "configuration-wrong-kind",
   ConfigurationUnknownKey = "configuration-unknown-key",
   ProofsNeverRan = "proofs-never-ran",
-  ScenarioCodeErrorCount = "scenario-code-error-count",
+  ClaimCodeErrorCount = "claim-code-error-count",
   NoFeatureFileJudged = "no-feature-file-judged",
   CleanNoCodedScenario = "clean-no-coded-scenario",
   CleanEachFileOwnCode = "clean-each-file-own-code",
   CleanOthersNoFeatureCode = "clean-others-no-feature-code",
   UnnamedClaimCiSteps = "unnamed-claim-ci-steps",
   UnnamedClaimCiStepsNamed = "unnamed-claim-ci-steps-named",
-  ScenarioCodeErrorsFraming = "scenario-code-errors-framing",
-  SeveralScnCodesFraming = "several-scn-codes-framing",
-  MisfiledAndSeveralScnCodesFraming = "misfiled-and-several-scn-codes-framing",
-  DuplicateScnCodeNotListed = "duplicate-scn-code-not-listed",
+  ClaimCodeErrorsFraming = "claim-code-errors-framing",
+  SeveralClaimCodesFraming = "several-claim-codes-framing",
+  MisfiledAndSeveralClaimCodesFraming = "misfiled-and-several-claim-codes-framing",
+  DuplicateClaimCodeNotListed = "duplicate-claim-code-not-listed",
   DuplicateFeatureCode = "duplicate-feature-code",
-  ForeignScnCodeCarried = "foreign-scn-code-carried",
-  ForeignScnCodeNoCarrier = "foreign-scn-code-no-carrier",
+  ForeignClaimCodeCarried = "foreign-claim-code-carried",
+  ForeignClaimCodeNoCarrier = "foreign-claim-code-no-carrier",
   NoFeatureCode = "no-feature-code",
-  ScenarioSeveralScnCodes = "several-scn-codes",
+  ScenarioSeveralClaimCodes = "several-claim-codes",
   RunnerKeyNotALayer = "runner-key-not-a-layer",
   NotChecksEntryMatchesNoStep = "not-checks-entry-matches-no-step",
   NotChecksEntryNotAStepName = "not-checks-entry-not-a-step-name",
@@ -51,10 +51,10 @@ export enum CoreMessage {
   SummaryHeading = "summary-heading",
   RunVerdictHeading = "run-verdict-heading",
   VerdictExit = "verdict-exit",
-  ScenarioCodeErrorsHeadline = "scenario-code-errors-headline",
-  ScenarioCodeErrorsGloss = "scenario-code-errors-gloss",
-  SeveralScnCodesGloss = "several-scn-codes-gloss",
-  MisfiledAndSeveralScnCodesGloss = "misfiled-and-several-scn-codes-gloss",
+  ClaimCodeErrorsHeadline = "claim-code-errors-headline",
+  ClaimCodeErrorsGloss = "claim-code-errors-gloss",
+  SeveralClaimCodesGloss = "several-claim-codes-gloss",
+  MisfiledAndSeveralClaimCodesGloss = "misfiled-and-several-claim-codes-gloss",
   AlsoOutOfBalance = "also-out-of-balance",
   OutOfBalanceHeadline = "out-of-balance-headline",
   OutOfBalanceGloss = "out-of-balance-gloss",
@@ -114,16 +114,16 @@ export enum CoreMessage {
   UnnamedClaimReconciliations = "unnamed-claim-reconciliations",
   AndJoiner = "and-joiner",
   ByFeatureTableHeader = "by-feature-table-header",
-  NoScnCodeScenarios = "no-scn-code-scenarios",
-  CodesAndNoScnCodeScenarios = "codes-and-no-scn-code-scenarios",
+  NoClaimCodeScenarios = "no-claim-code-scenarios",
+  CodesAndNoClaimCodeScenarios = "codes-and-no-claim-code-scenarios",
   ClaimReconciliationsHeading = "claim-reconciliations-heading",
   ClaimReconciliationTally = "claim-reconciliation-tally",
   PhantomClaimTally = "phantom-claim-tally",
   UnnamedClaimTally = "unnamed-claim-tally",
-  ExcludedScnOccurrences = "excluded-scn-occurrences",
+  ExcludedClaimOccurrences = "excluded-claim-occurrences",
   UntaggedScenarios = "untagged-scenarios",
-  SharedScnCodes = "shared-scn-codes",
-  SharedScnCodeScenario = "shared-scn-code-scenario",
+  SharedClaimCodes = "shared-claim-codes",
+  SharedClaimCodeScenario = "shared-claim-code-scenario",
   ClaimColumn = "claim-column",
   VerdictColumn = "verdict-column",
   ReconcilingItemsColumn = "reconciling-items-column",
@@ -141,8 +141,8 @@ export enum CoreMessage {
   OutcomeMissing = "outcome-missing",
   OutcomeFailing = "outcome-failing",
   OutcomeWatermelon = "outcome-watermelon",
-  OutcomeNoScnCode = "outcome-no-scn-code",
-  OutcomeDuplicateScnCode = "outcome-duplicate-scn-code",
+  OutcomeNoClaimCode = "outcome-no-claim-code",
+  OutcomeDuplicateClaimCode = "outcome-duplicate-claim-code",
   OutcomeCitesUnknownScenario = "outcome-cites-unknown-scenario",
   OutcomeCitesNoScenario = "outcome-cites-no-scenario",
   OutcomeNoEvidenceObligation = "outcome-no-evidence-obligation",
@@ -152,8 +152,8 @@ export enum CoreMessage {
   ObservationFailed = "observation-failed",
   UnnamedClaimGroupCounts = "unnamed-claim-group-counts",
   UnnamedClaimFailedNames = "unnamed-claim-failed-names",
-  SeveralScnCodesCited = "several-scn-codes-cited",
-  SharedScnCode = "shared-scn-code",
+  SeveralClaimCodesCited = "several-claim-codes-cited",
+  SharedClaimCode = "shared-claim-code",
   EvidenceObligationDivergesFromOutcome = "evidence-obligation-diverges-from-outcome",
   EvidenceObservationDivergesFromOutcome = "evidence-observation-diverges-from-outcome",
 }
@@ -166,9 +166,9 @@ export enum CoreError {
   NotChecksEntryMatchesNoStep = "not-checks-entry-matches-no-step",
   NotChecksEntryNotAStepName = "not-checks-entry-not-a-step-name",
   DuplicateFeatureCode = "duplicate-feature-code",
-  ForeignScnCode = "foreign-scn-code",
+  ForeignClaimCode = "foreign-claim-code",
   NoFeatureCode = "no-feature-code",
-  SeveralScnCodes = "several-scn-codes",
+  SeveralClaimCodes = "several-claim-codes",
 }
 
 
@@ -182,28 +182,28 @@ export interface CoreMessageValues {
   readonly [CoreMessage.NotChecksEntryNotAStepName]: { readonly key: string; readonly entry: string };
   readonly [CoreMessage.ManifestKindOfType]: { readonly type: string };
   readonly [CoreMessage.ProofsNeverRan]: { readonly count: number };
-  readonly [CoreMessage.ScenarioCodeErrorCount]: { readonly count: number };
+  readonly [CoreMessage.ClaimCodeErrorCount]: { readonly count: number };
   readonly [CoreMessage.CleanNoCodedScenario]: { readonly featureFiles: number };
   readonly [CoreMessage.CleanEachFileOwnCode]: { readonly featureFiles: number; readonly featureCodes: number };
   readonly [CoreMessage.CleanOthersNoFeatureCode]: { readonly featureFiles: number; readonly featureCodes: number; readonly noFeatureCode: number };
   readonly [CoreMessage.UnnamedClaimCiSteps]: { readonly count: number };
   readonly [CoreMessage.UnnamedClaimCiStepsNamed]: { readonly count: number; readonly list: string };
-  readonly [CoreMessage.ScenarioCodeErrorsFraming]: { readonly count: string };
-  readonly [CoreMessage.SeveralScnCodesFraming]: { readonly count: string };
-  readonly [CoreMessage.MisfiledAndSeveralScnCodesFraming]: { readonly count: string };
-  readonly [CoreMessage.DuplicateScnCodeNotListed]: { readonly outcome: string };
+  readonly [CoreMessage.ClaimCodeErrorsFraming]: { readonly count: string };
+  readonly [CoreMessage.SeveralClaimCodesFraming]: { readonly count: string };
+  readonly [CoreMessage.MisfiledAndSeveralClaimCodesFraming]: { readonly count: string };
+  readonly [CoreMessage.DuplicateClaimCodeNotListed]: { readonly outcome: string };
   readonly [CoreMessage.DuplicateFeatureCode]: { readonly code: string; readonly fileCount: number; readonly files: string };
-  readonly [CoreMessage.ForeignScnCodeCarried]: {
+  readonly [CoreMessage.ForeignClaimCodeCarried]: {
     readonly file: string;
     readonly featureCode: string;
-    readonly scnId: string;
+    readonly claimCode: string;
     readonly named: string;
     readonly carrierCount: number;
     readonly carriers: string;
   };
-  readonly [CoreMessage.ForeignScnCodeNoCarrier]: { readonly file: string; readonly featureCode: string; readonly scnId: string; readonly named: string };
+  readonly [CoreMessage.ForeignClaimCodeNoCarrier]: { readonly file: string; readonly featureCode: string; readonly claimCode: string; readonly named: string };
   readonly [CoreMessage.NoFeatureCode]: { readonly file: string };
-  readonly [CoreMessage.ScenarioSeveralScnCodes]: { readonly file: string; readonly scenario: string; readonly codeCount: number; readonly codes: string };
+  readonly [CoreMessage.ScenarioSeveralClaimCodes]: { readonly file: string; readonly scenario: string; readonly codeCount: number; readonly codes: string };
   readonly [CoreMessage.ProvenanceTargetRepo]: { readonly target: string };
   readonly [CoreMessage.ProvenanceTargetRepoUntargeted]: { readonly target: string; readonly origin: string };
   readonly [CoreMessage.ProvenanceNotSupplied]: { readonly flags: string };
@@ -214,9 +214,9 @@ export interface CoreMessageValues {
   readonly [CoreMessage.RunUnsound]: { readonly proofs: string };
   readonly [CoreMessage.BrokenEvidenceWhatBroke]: { readonly locator: string };
   readonly [CoreMessage.VerdictExit]: { readonly code: number };
-  readonly [CoreMessage.ScenarioCodeErrorsGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
-  readonly [CoreMessage.SeveralScnCodesGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
-  readonly [CoreMessage.MisfiledAndSeveralScnCodesGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
+  readonly [CoreMessage.ClaimCodeErrorsGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
+  readonly [CoreMessage.SeveralClaimCodesGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
+  readonly [CoreMessage.MisfiledAndSeveralClaimCodesGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
   readonly [CoreMessage.NothingToReconcileGloss]: { readonly corpusDir: string };
   readonly [CoreMessage.PendingTally]: { readonly pending: number };
   readonly [CoreMessage.EvidenceObservationsSum]: { readonly total: number; readonly onScenario: number; readonly onPhantomClaim: number; readonly onUnnamedClaim: number };
@@ -229,24 +229,24 @@ export interface CoreMessageValues {
   readonly [CoreMessage.NotGroupedByFeature]: { readonly ungrouped: string };
   readonly [CoreMessage.PhantomClaimReconciliations]: { readonly count: number };
   readonly [CoreMessage.UnnamedClaimReconciliations]: { readonly count: number };
-  readonly [CoreMessage.NoScnCodeScenarios]: { readonly count: number };
-  readonly [CoreMessage.CodesAndNoScnCodeScenarios]: { readonly codes: string; readonly count: number };
+  readonly [CoreMessage.NoClaimCodeScenarios]: { readonly count: number };
+  readonly [CoreMessage.CodesAndNoClaimCodeScenarios]: { readonly codes: string; readonly count: number };
   readonly [CoreMessage.ClaimReconciliationTally]: { readonly total: number; readonly balanced: number; readonly outOfBalance: number };
   readonly [CoreMessage.PhantomClaimTally]: { readonly count: number };
   readonly [CoreMessage.UnnamedClaimTally]: { readonly count: number; readonly unnamedClaimId: string };
-  readonly [CoreMessage.ExcludedScnOccurrences]: { readonly count: number };
+  readonly [CoreMessage.ExcludedClaimOccurrences]: { readonly count: number };
   readonly [CoreMessage.UntaggedScenarios]: { readonly count: number };
-  readonly [CoreMessage.SharedScnCodes]: { readonly scenarios: number; readonly codes: number };
-  readonly [CoreMessage.SharedScnCodeScenario]: { readonly feature: string; readonly title: string };
+  readonly [CoreMessage.SharedClaimCodes]: { readonly scenarios: number; readonly codes: number };
+  readonly [CoreMessage.SharedClaimCodeScenario]: { readonly feature: string; readonly title: string };
   readonly [CoreMessage.PendingItemFor]: { readonly qualityCheckKind: string };
-  readonly [CoreMessage.CheckStepNoOutcome]: { readonly scnId: string };
-  readonly [CoreMessage.CheckStepSkipped]: { readonly scnId: string };
-  readonly [CoreMessage.CheckStepEnded]: { readonly scnId: string; readonly outcome: string };
+  readonly [CoreMessage.CheckStepNoOutcome]: { readonly claimCode: string };
+  readonly [CoreMessage.CheckStepSkipped]: { readonly claimCode: string };
+  readonly [CoreMessage.CheckStepEnded]: { readonly claimCode: string; readonly outcome: string };
   readonly [CoreMessage.AmbiguousNamedStep]: { readonly step: string };
   readonly [CoreMessage.UnnamedClaimGroupCounts]: { readonly ran: number; readonly passed: number; readonly failed: number };
   readonly [CoreMessage.UnnamedClaimFailedNames]: { readonly names: string };
-  readonly [CoreMessage.SeveralScnCodesCited]: { readonly count: number; readonly codes: string };
-  readonly [CoreMessage.SharedScnCode]: { readonly code: string };
+  readonly [CoreMessage.SeveralClaimCodesCited]: { readonly count: number; readonly codes: string };
+  readonly [CoreMessage.SharedClaimCode]: { readonly code: string };
   readonly [CoreMessage.EvidenceObligationDivergesFromOutcome]: {
     readonly outcome: string;
     readonly presenceForOutcome: string;

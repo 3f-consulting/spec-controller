@@ -37,7 +37,7 @@ describe("[SCN-CLI-097] a corpus with no feature file is judged, never skipped",
       ci: root,
     }, resolveTargetRoot({ features: join(root, CORPUS_DIR) }));
 
-    expect(balance.scenarioCodeErrors).toEqual([]);
+    expect(balance.claimCodeErrors).toEqual([]);
     expect(balance.scenarioCodePopulation).toEqual({ featureFiles: 0, featureCodes: 0 });
   });
 });

@@ -8,19 +8,19 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import { sectionUnder, linesOf } from "./renderedSection.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-VOL-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
+  { claimCode: "SCN-VOL-001", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] },
 ];
 
 const observations: EvidenceObservation[] = [
-  { qualityCheckKind: "unit", scnId: "SCN-VOL-001", status: "passed" },
-  { qualityCheckKind: "unit", scnId: "SCN-VOL-001", status: "passed" },
-  { qualityCheckKind: "integration", scnId: "SCN-VOL-001", status: "passed" },
-  { qualityCheckKind: "unit", scnId: "SCN-VOL-404", status: "passed" },
-  { qualityCheckKind: "e2e", scnId: null, status: "passed" },
-  { qualityCheckKind: "e2e", scnId: null, status: "failed" },
-  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", scnId: "SCN-VOL-001", exists: false, enforcedOverRealSource: true },
+  { qualityCheckKind: "unit", claimCode: "SCN-VOL-001", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "SCN-VOL-001", status: "passed" },
+  { qualityCheckKind: "integration", claimCode: "SCN-VOL-001", status: "passed" },
+  { qualityCheckKind: "unit", claimCode: "SCN-VOL-404", status: "passed" },
+  { qualityCheckKind: "e2e", claimCode: null, status: "passed" },
+  { qualityCheckKind: "e2e", claimCode: null, status: "failed" },
+  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", claimCode: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", claimCode: "SCN-VOL-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "guard-x", claimCode: "SCN-VOL-001", exists: false, enforcedOverRealSource: true },
 ];
 
 const heading = (): string => markdownHeading(3, coreMessage(CoreMessage.EvidenceObservationsHeading));

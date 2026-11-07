@@ -15,16 +15,16 @@ describe("[SCN-CLI-055] an out-of-balance account and a scenario code error in o
     outOfBalance = {
       ...evidenceReconciliationOf(
         [
-          { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-          { scnId: "SCN-ONE-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+          { claimCode: "SCN-ONE-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
         ],
-        [{ qualityCheckKind: "unit", scnId: "SCN-ONE-001", status: "passed" }],
+        [{ qualityCheckKind: "unit", claimCode: "SCN-ONE-001", status: "passed" }],
         []
       ),
-      scenarioCodeErrors: [FOREIGN],
+      claimCodeErrors: [FOREIGN],
     };
     md = renderMarkdown(outOfBalance, ctx, publishedExitCodeOf);
-    headline = md.split("\n").find((line) => line.startsWith(coreMessage(CoreMessage.ScenarioCodeErrorsHeadline))) ?? "";
+    headline = md.split("\n").find((line) => line.startsWith(coreMessage(CoreMessage.ClaimCodeErrorsHeadline))) ?? "";
   });
 
   it("heads the verdict with the scenario code error, and names the accounts out of balance too", () => {

@@ -1,9 +1,9 @@
-import type { ScenarioCodeError } from "../domain/scnTags.js";
+import type { ClaimCodeError } from "../domain/scnTags.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 
 export const codeErrorsCtx: RunContext = {
-  target: "scenario-code-errors-target",
+  target: "claim-code-errors-target",
   inputs: [{ ...FEATURES, path: "features" }, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS],
   corpus: "features",
   runStart: new Date("2026-09-24T09:00:00.000Z"),
@@ -12,11 +12,11 @@ export const codeErrorsCtx: RunContext = {
   toolVersion: "0.1.0",
 };
 
-export const FOREIGN: ScenarioCodeError = {
-  kind: "foreign-scn-code",
+export const FOREIGN: ClaimCodeError = {
+  kind: "foreign-claim-code",
   files: ["two.feature"],
   featureCode: "TWO",
-  scnId: "SCN-ONE-002",
+  claimCode: "SCN-ONE-002",
   namedFeatureCode: "ONE",
   namedFeatureFiles: ["one.feature"],
 };

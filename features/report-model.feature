@@ -18,7 +18,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     run, is serialised glue-free as spec-reconciliation.json. Its summary is materialised: the
     totals the markdown's Summary shows. There is no `warnings` key: a zero-evidence scenario is a both-missing row on
     the ledger. Each fact is stated once: a fault in the inputs only under errorsInTheInputs, a fact of the
-    corpus only under scenarioCodes, and the summary carries no fault. Its unit tests
+    corpus only under claimCodes, and the summary carries no fault. Its unit tests
     hold the assembly and the glue-free serialisation in isolation.
 
     And its summary totals count EVERY Claim Reconciliation. The Evidence
@@ -231,7 +231,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
         | unsound              |
         | pending              |
         | nothing-to-reconcile |
-        | scenario-code-errors |
+        | claim-code-errors    |
 
   Rule: the JSON report's structure is stated by a JSON Schema the published package ships
 

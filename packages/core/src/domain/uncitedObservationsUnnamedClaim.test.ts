@@ -8,18 +8,18 @@ const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, 
 
 describe("[SCN-LDG-007] an evidence observation citing no scenario is reported as the unnamed claim's reconciliation, out of balance", () => {
   const scenarios: Scenario[] = [
-    { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ];
   const cited: EvidenceObservation = {
     qualityCheckKind: "unit",
-    scnId: "SCN-AAA-001",
+    claimCode: "SCN-AAA-001",
     status: "passed",
     locator: "tests/cited.test.ts",
   };
   const uncited: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "tests/orphan-a.test.ts" },
-    { qualityCheckKind: "integration", scnId: null, status: "passed", locator: "features/orphan-b.feature" },
-    { qualityCheckKind: "e2e", scnId: null, status: "failed", locator: "tests/orphan-c.e2e.ts" },
+    { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "tests/orphan-a.test.ts" },
+    { qualityCheckKind: "integration", claimCode: null, status: "passed", locator: "features/orphan-b.feature" },
+    { qualityCheckKind: "e2e", claimCode: null, status: "failed", locator: "tests/orphan-c.e2e.ts" },
   ];
   const reconciled = () => reconcile(scenarios, [cited, ...uncited]).claimReconciliations;
   const unnamedClaimRowsOf = (rows: ReturnType<typeof reconciled>) =>

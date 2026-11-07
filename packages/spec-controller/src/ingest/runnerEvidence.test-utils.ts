@@ -15,9 +15,9 @@ export function reconcileFixture(target: string, report: InputPaths): EvidenceRe
   }, resolveTargetRoot({ features: `${target}/features` }));
 }
 
-export function unitReconciliationOf(balance: EvidenceReconciliation, scnId: string) {
+export function unitReconciliationOf(balance: EvidenceReconciliation, claimCode: string) {
   return balance.ledger.claimReconciliations
-    .find((s) => s.claim === scnId)
+    .find((s) => s.claim === claimCode)
     ?.qualityCheckReconciliations.find((q) => q.qualityCheckKind === "unit");
 }
 

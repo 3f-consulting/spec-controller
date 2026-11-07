@@ -13,24 +13,24 @@ import { coreMessage } from "./coreText.js";
 const CITES_NO_SCENARIO = (): string => outcomeDescription("cites-no-scenario");
 
 const sharers: Scenario[] = [
-  { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/ci.feature", title: "the build has no lint errors" },
-  { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/ci.feature", title: "the build has no type errors" },
-  { scnId: "SCN-DUP-002", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/deps.feature", title: "no dependency is unpinned" },
-  { scnId: "SCN-DUP-002", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/deps.feature", title: "no dependency is unused" },
+  { claimCode: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/ci.feature", title: "the build has no lint errors" },
+  { claimCode: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/ci.feature", title: "the build has no type errors" },
+  { claimCode: "SCN-DUP-002", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/deps.feature", title: "no dependency is unpinned" },
+  { claimCode: "SCN-DUP-002", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/deps.feature", title: "no dependency is unused" },
 ];
 
-function step(fitnessFunction: string, scnId?: string): EvidenceObservation {
+function step(fitnessFunction: string, claimCode?: string): EvidenceObservation {
   return {
     qualityCheckKind: "fitness",
     fitnessFunction,
-    ...(scnId !== undefined ? { scnId } : {}),
+    ...(claimCode !== undefined ? { claimCode } : {}),
     exists: true,
     enforcedOverRealSource: true,
     status: "passed",
   };
 }
 
-const uncitedTest: EvidenceObservation = { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "tests/x.test.ts", testName: "reads the config" };
+const uncitedTest: EvidenceObservation = { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "tests/x.test.ts", testName: "reads the config" };
 
 function unnamedClaimItemsOf(observations: EvidenceObservation[]): string[] {
   return reconcilingItemsOf(renderMarkdown(__er(reconcile(sharers, observations)), ctx, publishedExitCodeOf), "(unnamed claim)");
@@ -38,7 +38,7 @@ function unnamedClaimItemsOf(observations: EvidenceObservation[]): string[] {
 
 describe("[SCN-RPT-076] a CI step citing a code more than one scenario carries is listed apart from the CI steps citing no scenario, and its entry names the code", () => {
   it("lists the CI steps citing nothing as one entry and the CI steps citing each shared code as an entry of their own naming the code, after the file entries", () => {
-    const remark = (code: string): string => coreMessage(CoreMessage.SharedScnCode, { code });
+    const remark = (code: string): string => coreMessage(CoreMessage.SharedClaimCode, { code });
     const observations = [
       step("guard-lint", "SCN-DUP-001"),
       step("guard-none"),

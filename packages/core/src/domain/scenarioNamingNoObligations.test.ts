@@ -10,11 +10,11 @@ describe("[SCN-WRN-001] a scenario naming no evidence obligations is reported as
 
   it("keeps a scenario that DOES name an evidenceObligation on the verdict axis, alongside a both-missing scenario (the WITH-evidenceObligations path is untouched)", () => {
     const scenarios: Scenario[] = [
-      { scnId: "SCN-WRN-001", evidenceObligations: [] },
-      { scnId: "SCN-WRN-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-WRN-001", evidenceObligations: [] },
+      { claimCode: "SCN-WRN-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     const evidenceObservations: EvidenceObservation[] = [
-      { qualityCheckKind: "unit", scnId: "SCN-WRN-002", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "SCN-WRN-002", status: "passed" },
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);

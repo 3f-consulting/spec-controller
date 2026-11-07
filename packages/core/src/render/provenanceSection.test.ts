@@ -15,8 +15,8 @@ const notSupplied = (flags: string): string => `- ${coreMessage(CoreMessage.Prov
 let balance: Ledger;
 beforeEach(() => {
   balance = reconcile(
-    [{ scnId: "SCN-RPT-028", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-    [{ qualityCheckKind: "unit", scnId: "SCN-RPT-028", status: "passed" }],
+    [{ claimCode: "SCN-RPT-028", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+    [{ qualityCheckKind: "unit", claimCode: "SCN-RPT-028", status: "passed" }],
   );
 });
 

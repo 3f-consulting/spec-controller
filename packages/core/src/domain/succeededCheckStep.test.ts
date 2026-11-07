@@ -5,13 +5,13 @@ import type { Scenario } from "./journal.js";
 import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
-  { scnId: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
-  { scnId: "SCN-CVT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CVT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+  { claimCode: "SCN-CVT-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
 ];
 
 const recorded: RecordedCheckStep[] = [
-  { citedScn: "SCN-CVT-001", report: "succeeded" },
-  { citedScn: "SCN-CVT-002", report: "succeeded" },
+  { citedClaimCode: "SCN-CVT-001", report: "succeeded" },
+  { citedClaimCode: "SCN-CVT-002", report: "succeeded" },
 ];
 
 function reconcile() {
@@ -40,7 +40,7 @@ describe("[SCN-LNT-021] a fitness function's step the run's record says succeede
     expect(first?.qualityCheckReconciliations[0]?.evidenceObservations).toEqual([{
       qualityCheckKind: "fitness",
       fitnessFunction: "SCN-CVT-001",
-      scnId: "SCN-CVT-001",
+      claimCode: "SCN-CVT-001",
       exists: true,
       enforcedOverRealSource: true,
       status: "passed",
@@ -49,7 +49,7 @@ describe("[SCN-LNT-021] a fitness function's step the run's record says succeede
     expect(second?.qualityCheckReconciliations[0]?.evidenceObservations).toEqual([{
       qualityCheckKind: "fitness",
       fitnessFunction: "SCN-CVT-002",
-      scnId: "SCN-CVT-002",
+      claimCode: "SCN-CVT-002",
       exists: true,
       enforcedOverRealSource: true,
       status: "passed",

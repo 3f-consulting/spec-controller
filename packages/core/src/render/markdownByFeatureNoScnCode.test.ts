@@ -50,18 +50,18 @@ describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count t
   it("renders one row named by the file, counting all three as carrying no @SCN code", () => {
     const { reconciliation, census } = noScnCodeCorpus(checkout);
     const rows = byFeatureRows(renderMarkdown(reconciliation, ctx, publishedExitCodeOf, census));
-    expect(rows).toEqual([["checkout.feature", "3", "3 with no `@SCN` code"]]);
+    expect(rows).toEqual([["checkout.feature", "3", "3 with no claim code"]]);
   });
 });
 
 describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a feature code counts on that feature's row", () => {
-  it("counts a headed file's no-scn-code scenarios on its feature's row when none carries the code", () => {
+  it("counts a headed file's no-claim-code scenarios on its feature's row when none carries the code", () => {
     const { reconciliation, census } = noScnCodeCorpus([
-      scenarioName("one.feature", "a no-scn-code scenario"),
+      scenarioName("one.feature", "a no-claim-code scenario"),
       scenarioName("one.feature", "an over-long code"),
     ]);
     const md = renderMarkdown(reconciliation, ctx, publishedExitCodeOf, census, new Map([["ONE", "one"]]));
-    expect(byFeatureRowOf(byFeatureRows(md), "ONE")).toEqual({ row: [["2", "2 with no `@SCN` code"]], others: [] });
+    expect(byFeatureRowOf(byFeatureRows(md), "ONE")).toEqual({ row: [["2", "2 with no claim code"]], others: [] });
   });
 
   it("counts them on the same row as the scenarios carrying the file's code", () => {
@@ -70,11 +70,11 @@ describe("[SCN-RPT-032] a scenario carrying no @SCN code in a file headed by a f
       scenarioName("sample.feature", "an untagged outline with no anchor"),
     ];
     const ledger = reconcile(
-      [{ scnId: "SCN-UNT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
+      [{ claimCode: "SCN-UNT-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [],
       untagged.map((u) => `${u.feature} : ${scenarioTitleOf(u)}`),
     );
     const md = renderMarkdown(reconciliationOf(ledger), ctx, publishedExitCodeOf, evidenceObligations(1, 1, untagged), new Map([["UNT", "sample"]]));
-    expect(byFeatureRowOf(byFeatureRows(md), "UNT")).toEqual({ row: [["3", "SCN-UNT-001 and 2 with no `@SCN` code"]], others: [] });
+    expect(byFeatureRowOf(byFeatureRows(md), "UNT")).toEqual({ row: [["3", "SCN-UNT-001 and 2 with no claim code"]], others: [] });
   });
 });

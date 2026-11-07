@@ -11,24 +11,24 @@ import { UNNAMED_CLAIM_ID } from "../model.js";
 import type { ClaimKind, ClaimReconciliation, EvidenceObservation, Ledger, Scenario } from "../model.js";
 
 const tallyOfEveryObservationKind = () => {
-  const scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
+  const scenarios: Scenario[] = [{ claimCode: "SCN-A", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
   const observations: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-    { qualityCheckKind: "integration", scnId: "SCN-A", status: "passed" },
-    { qualityCheckKind: "unit", scnId: "SCN-PHX-999", status: "passed" },
-    { qualityCheckKind: "integration", scnId: null, status: "passed" },
-    { qualityCheckKind: "e2e", scnId: "SCN-A", status: "failed", broken: true, locator: "features/x.feature" },
+    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+    { qualityCheckKind: "integration", claimCode: "SCN-A", status: "passed" },
+    { qualityCheckKind: "unit", claimCode: "SCN-PHX-999", status: "passed" },
+    { qualityCheckKind: "integration", claimCode: null, status: "passed" },
+    { qualityCheckKind: "e2e", claimCode: "SCN-A", status: "failed", broken: true, locator: "features/x.feature" },
     { qualityCheckKind: "fitness", fitnessFunction: "guard-x", exists: true, enforcedOverRealSource: true },
   ];
   const ledger: Ledger = reconcile(scenarios, observations);
   return behaviouralObservationTally(ledger);
 };
 
-const fitnessObservationOf = (scnId?: string, ran: { exists?: boolean; broken?: true } = {}): EvidenceObservation => ({
+const fitnessObservationOf = (claimCode?: string, ran: { exists?: boolean; broken?: true } = {}): EvidenceObservation => ({
   qualityCheckKind: "fitness",
   fitnessFunction: "guard-x",
-  ...(scnId !== undefined ? { scnId } : {}),
+  ...(claimCode !== undefined ? { claimCode } : {}),
   exists: ran.exists ?? true,
   enforcedOverRealSource: true,
   ...(ran.broken !== undefined ? { broken: ran.broken, locator: ".github/workflows/ci.yml" } : {}),
@@ -63,23 +63,23 @@ describe("the behavioural-observation tally reports the raw counts and the inven
     const ledger: Ledger = {
       claimReconciliations: [
         rowOf("SCN-A", "scenario", [
-          { qualityCheckKind: "unit", scnId: "SCN-A", status: "passed" },
-          { qualityCheckKind: "integration", scnId: "SCN-A", status: "passed" },
-          { qualityCheckKind: "e2e", scnId: "SCN-A", status: "failed", broken: true, locator: "features/a.feature" },
+          { qualityCheckKind: "unit", claimCode: "SCN-A", status: "passed" },
+          { qualityCheckKind: "integration", claimCode: "SCN-A", status: "passed" },
+          { qualityCheckKind: "e2e", claimCode: "SCN-A", status: "failed", broken: true, locator: "features/a.feature" },
           fitnessObservationOf("SCN-A"),
           fitnessObservationOf("SCN-A", { exists: false }),
         ]),
         rowOf("SCN-PHX-999", "phantom-claim", [
-          { qualityCheckKind: "unit", scnId: "SCN-PHX-999", status: "passed" },
-          { qualityCheckKind: "unit", scnId: "SCN-PHX-999", status: "failed", broken: true, locator: "src/phx.test.ts" },
+          { qualityCheckKind: "unit", claimCode: "SCN-PHX-999", status: "passed" },
+          { qualityCheckKind: "unit", claimCode: "SCN-PHX-999", status: "failed", broken: true, locator: "src/phx.test.ts" },
           fitnessObservationOf("SCN-PHX-999"),
           fitnessObservationOf("SCN-PHX-999", { broken: true }),
         ]),
         rowOf(UNNAMED_CLAIM_ID, "unnamed-claim", [
-          { qualityCheckKind: "unit", scnId: null, status: "passed" },
-          { qualityCheckKind: "integration", scnId: null, status: "passed" },
-          { qualityCheckKind: "performance", scnId: null, status: "failed" },
-          { qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, locator: "src/collect.test.ts" },
+          { qualityCheckKind: "unit", claimCode: null, status: "passed" },
+          { qualityCheckKind: "integration", claimCode: null, status: "passed" },
+          { qualityCheckKind: "performance", claimCode: null, status: "failed" },
+          { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, locator: "src/collect.test.ts" },
           fitnessObservationOf(),
         ]),
       ],

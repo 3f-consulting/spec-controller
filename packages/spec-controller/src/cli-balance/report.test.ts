@@ -51,7 +51,7 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
     expect({ inputs: report.runProvenance.inputs, observations: heldObservationsOf(integrationRow!) }).toEqual({
       inputs: { features: "features", cucumber: "cucumber.json", ci: "workflows", ciSteps: "ci-steps.json" },
       observations: [
-        { qualityCheckKind: "integration", scnId: "SCN-TGT-002", status: "passed", locator: "features/widget.feature" },
+        { qualityCheckKind: "integration", claimCode: "SCN-TGT-002", status: "passed", locator: "features/widget.feature" },
       ],
     });
   });
@@ -81,7 +81,7 @@ describe("[SCN-RPT-031] a feature file's scenarios carrying no @SCN code count t
     );
     const saved = join(dir, "report.json");
     const written = stdoutOf(["--features", join(dir, "features"), "--format", "md", "--format", `json:${saved}`]);
-    expect(byFeatureRows(written)).toEqual([["checkout.feature", "3", "3 with no `@SCN` code"]]);
+    expect(byFeatureRows(written)).toEqual([["checkout.feature", "3", "3 with no claim code"]]);
     expect(stdoutOf(["--render-from-json", saved])).toEqual(written);
   });
 });

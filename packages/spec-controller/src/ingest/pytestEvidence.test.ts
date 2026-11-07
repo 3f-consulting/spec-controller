@@ -14,7 +14,7 @@ import {
 
 const TARGET = "tests/fixtures/pytest";
 const balance = () => reconcileFixture(TARGET, { pytest: `${TARGET}/report.xml` });
-const unitOf = (scnId: string) => unitReconciliationOf(balance(), scnId);
+const unitOf = (claimCode: string) => unitReconciliationOf(balance(), claimCode);
 
 describe("[SCN-PYT-001] runReconcile reads a real pytest report as unit evidence", () => {
   it("reconciles the scenario a passing pytest test cites as satisfied, by that test", () => {
@@ -46,7 +46,7 @@ describe("[SCN-PYT-004] runReconcile posts a pytest test citing an unknown scena
 
     expect(phantomClaimRow?.kind).toBe("phantom-claim");
     expect(observationsOf(phantomClaimRow!).map(postedOf)).toEqual([
-      { qualityCheckKind: "unit", scnId: "SCN-PYF-099", status: "passed", locator: "test_cases::test_unknown_code" },
+      { qualityCheckKind: "unit", claimCode: "SCN-PYF-099", status: "passed", locator: "test_cases::test_unknown_code" },
     ]);
   });
 });
@@ -57,7 +57,7 @@ describe("[SCN-PYT-005] runReconcile posts a pytest test citing no scenario as i
 
     expect(observationsOf(unnamedClaimRow!).map(postedOf)).toContainEqual({
       qualityCheckKind: "unit",
-      scnId: null,
+      claimCode: null,
       status: "passed",
       locator: "test_cases::test_uncited",
     });
@@ -65,8 +65,8 @@ describe("[SCN-PYT-005] runReconcile posts a pytest test citing no scenario as i
 });
 
 describe("[SCN-PYT-006] runReconcile credits neither scenario a pytest test carrying two scn properties cites, and the unnamed claim's row names both codes", () => {
-  it.each(["SCN-PYF-004", "SCN-PYF-005"])("leaves %s missing, with no observation", (scnId) => {
-    expectMissingWithNoObservation(unitOf(scnId));
+  it.each(["SCN-PYF-004", "SCN-PYF-005"])("leaves %s missing, with no observation", (claimCode) => {
+    expectMissingWithNoObservation(unitOf(claimCode));
   });
 
   it("names both codes on the unnamed claim's row, beside the test", () => {
@@ -74,7 +74,7 @@ describe("[SCN-PYT-006] runReconcile credits neither scenario a pytest test carr
 
     expect(unnamedClaimRow).toContain("SCN-PYF-004");
     expect(unnamedClaimRow).toContain("SCN-PYF-005");
-    expect(unnamedClaimRow).toContain("2 scenario codes cite SCN-PYF-004, SCN-PYF-005");
+    expect(unnamedClaimRow).toContain("2 claim codes cite SCN-PYF-004, SCN-PYF-005");
   });
 });
 

@@ -10,7 +10,7 @@ import { coreMessage } from "./coreText.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import * as scnTags from "../domain/scnTags.js";
-import type { FeatureFileScenarios, ScenarioCodeError } from "../domain/scnTags.js";
+import type { FeatureFileScenarios, ClaimCodeError } from "../domain/scnTags.js";
 import { parseScenarioTags } from "../parse/scenarioReaders.test-utils.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./scenarioCodeError.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
@@ -28,43 +28,43 @@ function scenariosOf(files: readonly CorpusFile[]): FeatureFileScenarios[] {
   return files.map(({ slug, featureCode, source }) => ({ file: `${slug}.feature`, featureCode, scenarios: parseScenarioTags(source) }));
 }
 
-const duplicateFeatureCodes = (files: readonly CorpusFile[]): ScenarioCodeError[] =>
+const duplicateFeatureCodes = (files: readonly CorpusFile[]): ClaimCodeError[] =>
   scnTags.duplicateFeatureCodes(scenariosOf(files));
-const foreignScenarioCodes = (files: readonly CorpusFile[]): ScenarioCodeError[] =>
+const foreignScenarioCodes = (files: readonly CorpusFile[]): ClaimCodeError[] =>
   scnTags.foreignScenarioCodes(scenariosOf(files));
-const scenarioCodeErrorsOf = (files: readonly CorpusFile[]): ScenarioCodeError[] =>
+const scenarioCodeErrorsOf = (files: readonly CorpusFile[]): ClaimCodeError[] =>
   scnTags.scenarioCodeErrorsOf(scenariosOf(files));
 
-function balancedWith(scenarioCodeErrors: readonly ScenarioCodeError[]): EvidenceReconciliation {
+function balancedWith(claimCodeErrors: readonly ClaimCodeError[]): EvidenceReconciliation {
   const reconciliation = evidenceReconciliationOf(
     [
-      { scnId: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { scnId: "SCN-ONE-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-ONE-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-ONE-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ],
     [
-      { qualityCheckKind: "unit", scnId: "SCN-ONE-001", status: "passed" },
-      { qualityCheckKind: "unit", scnId: "SCN-ONE-002", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "SCN-ONE-001", status: "passed" },
+      { qualityCheckKind: "unit", claimCode: "SCN-ONE-002", status: "passed" },
     ],
     []
   );
-  return { ...reconciliation, scenarioCodeErrors };
+  return { ...reconciliation, claimCodeErrors };
 }
 
-describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors, and the run reds", () => {
+describe("[SCN-RPT-055] a foreign-claim-code is listed under Claim code errors, and the run reds", () => {
   let md: string;
   beforeEach(() => {
     md = renderMarkdown(balancedWith([FOREIGN]), ctx, publishedExitCodeOf);
   });
 
-  it("lists the error by its handle under the Scenario code errors heading", () => {
+  it("lists the error by its handle under the Claim code errors heading", () => {
     expect(md.split("\n")).toContain(HEADING());
-    expect(md.split("\n").filter((line) => line.startsWith("- `foreign-scn-code` — "))).toHaveLength(1);
+    expect(md.split("\n").filter((line) => line.startsWith("- `foreign-claim-code` — "))).toHaveLength(1);
   });
 
   function foreignLines(files: readonly CorpusFile[]): string[] {
     return renderMarkdown(balancedWith(foreignScenarioCodes(files)), ctx, publishedExitCodeOf)
       .split("\n")
-      .filter((line) => line.startsWith("- `foreign-scn-code` — "));
+      .filter((line) => line.startsWith("- `foreign-claim-code` — "));
   }
 
   it("words the error from its values, naming the one file that carries the named code", () => {
@@ -74,7 +74,7 @@ describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors,
         { slug: "two", featureCode: "TWO", source: "@TWO\nFeature: two\n\n  @unit @SCN-ONE-002\n  Scenario: s\n    Given a thing\n" },
       ])
     ).toEqual([
-      `- \`foreign-scn-code\` — ${coreMessage(CoreMessage.ForeignScnCodeCarried, { file: "two.feature", featureCode: "TWO", scnId: "SCN-ONE-002", named: "ONE", carrierCount: 1, carriers: "one.feature" })}`,
+      `- \`foreign-claim-code\` — ${coreMessage(CoreMessage.ForeignClaimCodeCarried, { file: "two.feature", featureCode: "TWO", claimCode: "SCN-ONE-002", named: "ONE", carrierCount: 1, carriers: "one.feature" })}`,
     ]);
   });
 
@@ -86,7 +86,7 @@ describe("[SCN-RPT-055] a foreign-scn-code is listed under Scenario code errors,
         { slug: "two", featureCode: "TWO", source: "@TWO\nFeature: two\n\n  @unit @SCN-ONE-002\n  Scenario: s\n    Given a thing\n" },
       ])
     ).toEqual([
-      `- \`foreign-scn-code\` — ${coreMessage(CoreMessage.ForeignScnCodeCarried, { file: "two.feature", featureCode: "TWO", scnId: "SCN-ONE-002", named: "ONE", carrierCount: 2, carriers: "one.feature, one-b.feature" })}`,
+      `- \`foreign-claim-code\` — ${coreMessage(CoreMessage.ForeignClaimCodeCarried, { file: "two.feature", featureCode: "TWO", claimCode: "SCN-ONE-002", named: "ONE", carrierCount: 2, carriers: "one.feature, one-b.feature" })}`,
     ]);
   });
 
@@ -120,7 +120,7 @@ describe("[SCN-RPT-057] a no-feature-code is worded from the file that carries n
   });
 });
 
-describe("[SCN-RPT-058] a foreign-scn-code whose named code no file carries is worded with no file to move to", () => {
+describe("[SCN-RPT-058] a foreign-claim-code whose named code no file carries is worded with no file to move to", () => {
   it("lists the error by its handle and the catalogue's words for no carrier, naming no header tag or file the corpus lacks", () => {
     const errors = foreignScenarioCodes([
       { slug: "one", featureCode: "ONE", source: "@ONE\nFeature: one\n" },
@@ -128,9 +128,9 @@ describe("[SCN-RPT-058] a foreign-scn-code whose named code no file carries is w
     ]);
     const lines = renderMarkdown(balancedWith(errors), ctx, publishedExitCodeOf)
       .split("\n")
-      .filter((line) => line.startsWith("- `foreign-scn-code` — "));
+      .filter((line) => line.startsWith("- `foreign-claim-code` — "));
     expect(lines).toEqual([
-      `- \`foreign-scn-code\` — ${coreMessage(CoreMessage.ForeignScnCodeNoCarrier, { file: "two.feature", featureCode: "TWO", scnId: "SCN-THR-002", named: "THR" })}`,
+      `- \`foreign-claim-code\` — ${coreMessage(CoreMessage.ForeignClaimCodeNoCarrier, { file: "two.feature", featureCode: "TWO", claimCode: "SCN-THR-002", named: "THR" })}`,
     ]);
     expect(lines[0]).toContain("SCN-THR-002");
     expect(lines[0]).toContain("@TWO");
@@ -139,7 +139,7 @@ describe("[SCN-RPT-058] a foreign-scn-code whose named code no file carries is w
   });
 });
 
-describe("[SCN-RPT-059] a several-scn-codes error is worded from its file, its scenario and its codes", () => {
+describe("[SCN-RPT-059] a several-claim-codes error is worded from its file, its scenario and its codes", () => {
   it("lists the error by its handle and the catalogue's words for its file, scenario and codes", () => {
     const errors = scenarioCodeErrorsOf([
       {
@@ -149,16 +149,16 @@ describe("[SCN-RPT-059] a several-scn-codes error is worded from its file, its s
       },
     ]);
     const md = renderMarkdown(balancedWith(errors), ctx, publishedExitCodeOf);
-    expect(md.split("\n").filter((line) => line.startsWith("- `several-scn-codes` — "))).toEqual([
-      `- \`several-scn-codes\` — ${coreMessage(CoreMessage.ScenarioSeveralScnCodes, { file: "two.feature", scenario: "carries codes", codeCount: 2, codes: "SCN-TWO-002, SCN-TWO-003" })}`,
+    expect(md.split("\n").filter((line) => line.startsWith("- `several-claim-codes` — "))).toEqual([
+      `- \`several-claim-codes\` — ${coreMessage(CoreMessage.ScenarioSeveralClaimCodes, { file: "two.feature", scenario: "carries codes", codeCount: 2, codes: "SCN-TWO-002, SCN-TWO-003" })}`,
     ]);
   });
 });
 
 const duplicateLine = (): string =>
-  coreMessage(CoreMessage.DuplicateScnCodeNotListed, { outcome: coreMessage(CoreMessage.OutcomeDuplicateScnCode) });
+  coreMessage(CoreMessage.DuplicateClaimCodeNotListed, { outcome: coreMessage(CoreMessage.OutcomeDuplicateClaimCode) });
 
-const HEADING = (): string => markdownHeading(3, coreMessage(CoreMessage.ScenarioCodeErrorsHeading));
+const HEADING = (): string => markdownHeading(3, coreMessage(CoreMessage.ClaimCodeErrorsHeading));
 
 function codedFeature(code: string): string {
   return `@${code}\nFeature: ${code.toLowerCase()}\n\n  @unit @SCN-${code}-001\n  Scenario: s\n    Given a thing\n`;
@@ -173,7 +173,7 @@ function judgedCorpus(codes: readonly string[], plain: number): EvidenceReconcil
     ),
     packageJson: {},
     ciWorkflows: [],
-    behaviouralObservations: codes.map((code) => ({ qualityCheckKind: "unit", scnId: `SCN-${code}-001`, status: "passed" })),
+    behaviouralObservations: codes.map((code) => ({ qualityCheckKind: "unit", claimCode: `SCN-${code}-001`, status: "passed" })),
     deferralTags: [],
   });
 }
@@ -287,14 +287,14 @@ describe("[SCN-RPT-093] no scenario code errors section prints when the scenario
       expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
       const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
       printsNoScenarioCodeErrorsSection(md);
-      expect(md).not.toContain(coreMessage(CoreMessage.ScenarioCodeErrorsHeadline));
+      expect(md).not.toContain(coreMessage(CoreMessage.ClaimCodeErrorsHeadline));
     });
   }
 });
 
 describe("[SCN-RPT-094] nothing is stated about scenario codes when no corpus was judged", () => {
   it("says nothing when no corpus was judged", () => {
-    const { scenarioCodeErrors: _judged, ...unjudged } = balancedWith([]);
+    const { claimCodeErrors: _judged, ...unjudged } = balancedWith([]);
     const report = newShapeReport(unjudged);
     expect(scenarioCodeErrorsOnReport(report)).toBeUndefined();
     expect(scenarioCodesOnReport(report)).toBeUndefined();
@@ -332,15 +332,15 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
     });
   }
 
-  function errorLine(kind: ScenarioCodeError["kind"], words: string): string {
+  function errorLine(kind: ClaimCodeError["kind"], words: string): string {
     return `- \`${kind}\` — ${words}`;
   }
 
   function foreignOneCarrier(): string {
-    return coreMessage(CoreMessage.ForeignScnCodeCarried, { file: "two.feature", featureCode: "TWO", scnId: "SCN-ONE-002", named: "ONE", carrierCount: 1, carriers: "one.feature" });
+    return coreMessage(CoreMessage.ForeignClaimCodeCarried, { file: "two.feature", featureCode: "TWO", claimCode: "SCN-ONE-002", named: "ONE", carrierCount: 1, carriers: "one.feature" });
   }
 
-  const framing = (count: string): string => coreMessage(CoreMessage.ScenarioCodeErrorsFraming, { count });
+  const framing = (count: string): string => coreMessage(CoreMessage.ClaimCodeErrorsFraming, { count });
 
   describe("a file headed @TWO holding a scenario coded @SCN-ONE-002, beside a file headed @ONE", () => {
     let md: string;
@@ -352,22 +352,22 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
       expect(errorsSectionOf(md)).toEqual([
         HEADING(),
         "",
-        framing(coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: 1 })),
+        framing(coreMessage(CoreMessage.ClaimCodeErrorCount, { count: 1 })),
         "",
-        errorLine("foreign-scn-code", foreignOneCarrier()),
+        errorLine("foreign-claim-code", foreignOneCarrier()),
         "",
         duplicateLine(),
         "",
       ]);
-      expect(md.split("\n").filter((line) => line.startsWith("- `foreign-scn-code` — "))).toEqual([
-        errorLine("foreign-scn-code", foreignOneCarrier()),
+      expect(md.split("\n").filter((line) => line.startsWith("- `foreign-claim-code` — "))).toEqual([
+        errorLine("foreign-claim-code", foreignOneCarrier()),
       ]);
     });
   });
 
   describe("a second file also headed @ONE, so the corpus holds a duplicate feature code and a foreign scenario code", () => {
     let files: CorpusFile[];
-    let parsed: ScenarioCodeError[];
+    let parsed: ClaimCodeError[];
     let md: string;
     beforeEach(() => {
       files = [
@@ -379,21 +379,21 @@ describe("[SCN-RPT-060] the scenario code errors section counts the errors the c
       md = renderMarkdown(reconciled(files), ctx, publishedExitCodeOf);
     });
 
-    it("is judged one duplicate-feature-code and one foreign-scn-code", () => {
-      expect(parsed.map((error) => error.kind)).toEqual(["duplicate-feature-code", "foreign-scn-code"]);
-      expect(reconciled(files).scenarioCodeErrors).toEqual(parsed);
+    it("is judged one duplicate-feature-code and one foreign-claim-code", () => {
+      expect(parsed.map((error) => error.kind)).toEqual(["duplicate-feature-code", "foreign-claim-code"]);
+      expect(reconciled(files).claimCodeErrors).toEqual(parsed);
     });
 
     it("counts the errors in the plural with their number, then lists each on its own line in the order judged", () => {
       expect(errorsSectionOf(md)).toEqual([
         HEADING(),
         "",
-        framing(coreMessage(CoreMessage.ScenarioCodeErrorCount, { count: 2 })),
+        framing(coreMessage(CoreMessage.ClaimCodeErrorCount, { count: 2 })),
         "",
         errorLine("duplicate-feature-code", coreMessage(CoreMessage.DuplicateFeatureCode, { code: "ONE", fileCount: 2, files: "one.feature, uno.feature" })),
         errorLine(
-          "foreign-scn-code",
-          coreMessage(CoreMessage.ForeignScnCodeCarried, { file: "two.feature", featureCode: "TWO", scnId: "SCN-ONE-002", named: "ONE", carrierCount: 2, carriers: "one.feature, uno.feature" })
+          "foreign-claim-code",
+          coreMessage(CoreMessage.ForeignClaimCodeCarried, { file: "two.feature", featureCode: "TWO", claimCode: "SCN-ONE-002", named: "ONE", carrierCount: 2, carriers: "one.feature, uno.feature" })
         ),
         "",
         duplicateLine(),
@@ -410,29 +410,29 @@ const INPUT_ERROR_CODES = [
   "not-checks-entry-matches-no-step",
   "not-checks-entry-not-a-step-name",
   "duplicate-feature-code",
-  "foreign-scn-code",
+  "foreign-claim-code",
   "no-feature-code",
-  "several-scn-codes",
+  "several-claim-codes",
 ];
 
 const codesOn = (line: string): string[] => INPUT_ERROR_CODES.flatMap((code) => line.split(`\`${code}\``).slice(1).map(() => code));
 
 const linesCarryingACode = (md: string): string[] => md.split("\n").filter((line) => codesOn(line).length > 0);
 
-const DUPLICATE_ONE: ScenarioCodeError = { kind: "duplicate-feature-code", featureCode: "ONE", files: ["one.feature", "uno.feature"] };
+const DUPLICATE_ONE: ClaimCodeError = { kind: "duplicate-feature-code", featureCode: "ONE", files: ["one.feature", "uno.feature"] };
 
 describe("[SCN-MSG-010] an error shows its reader the error code of what went wrong — a scenario carrying a code of another feature", () => {
   it("shows the misfiled code's entry with its code once, as the entry's lead", () => {
     const shown = linesCarryingACode(renderMarkdown(balancedWith([FOREIGN]), ctx, publishedExitCodeOf));
-    expect(shown.map(codesOn)).toEqual([["foreign-scn-code"]]);
-    expect(shown[0]!.startsWith("- `foreign-scn-code` — ")).toBe(true);
+    expect(shown.map(codesOn)).toEqual([["foreign-claim-code"]]);
+    expect(shown[0]!.startsWith("- `foreign-claim-code` — ")).toBe(true);
   });
 
   it("shows the code only on each entry when the inputs hold two errors, and none on the heading or the count line", () => {
     const md = renderMarkdown(balancedWith([DUPLICATE_ONE, FOREIGN]), ctx, publishedExitCodeOf);
     const shown = linesCarryingACode(md);
-    expect(shown.map(codesOn)).toEqual([["duplicate-feature-code"], ["foreign-scn-code"]]);
-    expect(shown.map((line) => line.split(" — ")[0])).toEqual(["- `duplicate-feature-code`", "- `foreign-scn-code`"]);
+    expect(shown.map(codesOn)).toEqual([["duplicate-feature-code"], ["foreign-claim-code"]]);
+    expect(shown.map((line) => line.split(" — ")[0])).toEqual(["- `duplicate-feature-code`", "- `foreign-claim-code`"]);
     expect(errorsSectionOf(md).filter((line) => !line.startsWith("- ")).flatMap(codesOn)).toEqual([]);
   });
 });
@@ -441,8 +441,8 @@ describe("[SCN-MSG-010] an error shows its reader the error code of what went wr
   it("shows the saved misfiled code's entry with its code once, as the entry's lead", () => {
     const saved = JSON.stringify(newShapeReport(balancedWith([FOREIGN])));
     const shown = linesCarryingACode(renderReportFromJson(saved, ctx.inputs, publishedExitCodeOf));
-    expect(shown.map(codesOn)).toEqual([["foreign-scn-code"]]);
-    expect(shown[0]!.startsWith("- `foreign-scn-code` — ")).toBe(true);
+    expect(shown.map(codesOn)).toEqual([["foreign-claim-code"]]);
+    expect(shown[0]!.startsWith("- `foreign-claim-code` — ")).toBe(true);
   });
 });
 
@@ -473,15 +473,15 @@ describe("[SCN-RPT-096] the excluded @SCN occurrences, the scenarios with no @SC
       excludedOccurrences: excluded,
       untaggedScenarios: others ? [{ feature: "three.feature", title: "the scenario with no code" }] : [],
       ...(others
-        ? { sharedScnCodes: [{ scnId: "SCN-ONE-001", scenarios: [{ feature: "one.feature", title: "the first" }, { feature: "two.feature", title: "the second" }] }] }
+        ? { sharedClaimCodes: [{ claimCode: "SCN-ONE-001", scenarios: [{ feature: "one.feature", title: "the first" }, { feature: "two.feature", title: "the second" }] }] }
         : {}),
     });
     const facts = [
-      `- ${coreMessage(CoreMessage.ExcludedScnOccurrences, { count: excluded })}`,
+      `- ${coreMessage(CoreMessage.ExcludedClaimOccurrences, { count: excluded })}`,
       ...(others
         ? [
             `- ${coreMessage(CoreMessage.UntaggedScenarios, { count: 1 })}`,
-            `- ${coreMessage(CoreMessage.SharedScnCodes, { scenarios: CODES[codes].scenarios, codes: 1 })}`,
+            `- ${coreMessage(CoreMessage.SharedClaimCodes, { scenarios: CODES[codes].scenarios, codes: 1 })}`,
             "  - SCN-ONE-001: one.feature : the first; two.feature : the second",
           ]
         : []),
@@ -508,19 +508,19 @@ describe("[SCN-MSG-015] a counted noun agrees with its count — the clean state
       "1 feature file and 1 code",
       ["ONE"],
       0,
-      `Scenario codes are clean over 1 feature file carrying 1 feature code ${DEFINED}: each file carries a code of its own, and every coded scenario sits in the file its code names.`,
+      `Claim codes are clean over 1 feature file carrying 1 feature code ${DEFINED}: each file carries a code of its own, and every coded scenario sits in the file its code names.`,
     ],
     [
       "3 feature files and 1 code",
       ["ONE"],
       2,
-      `Scenario codes are clean over 3 feature files carrying 1 feature code ${DEFINED}: each code is carried by exactly one file, every coded scenario sits in the file its code names, and the other 2 hold no coded scenario.`,
+      `Claim codes are clean over 3 feature files carrying 1 feature code ${DEFINED}: each code is carried by exactly one file, every coded scenario sits in the file its code names, and the other 2 hold no coded scenario.`,
     ],
     [
       "2 feature files and 0 codes",
       [],
       2,
-      `Scenario codes are clean over 2 feature files carrying 0 feature codes ${DEFINED}: no scenario in them carries an @SCN code to misfile.`,
+      `Claim codes are clean over 2 feature files carrying 0 feature codes ${DEFINED}: no scenario in them carries a claim code to misfile.`,
     ],
   ];
 

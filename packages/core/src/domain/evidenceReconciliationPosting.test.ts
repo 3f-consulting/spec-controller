@@ -21,21 +21,21 @@ const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, 
 
 describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactly one account, never to none", () => {
   const namedScenarios: Scenario[] = [
-    { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
+    { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "SCN-AAA-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "SCN-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
   ];
 
-  const accountFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
-    ledger.claimReconciliations.find((r) => r.claim === scnId);
+  const accountFor = (ledger: Ledger, claimCode: string): ClaimReconciliation | undefined =>
+    ledger.claimReconciliations.find((r) => r.claim === claimCode);
 
   it.each([
     ["posts a matched evidence observation to the account it cites", "SCN-AAA-001"],
     ["posts an evidence observation citing an unknown @SCN to that phantom claim's account", "SCN-ZZZ-999"],
-  ] as const)("%s", (_title, scnId) => {
-    const observation: EvidenceObservation = { scnId, qualityCheckKind: "unit", status: "passed" };
+  ] as const)("%s", (_title, claimCode) => {
+    const observation: EvidenceObservation = { claimCode, qualityCheckKind: "unit", status: "passed" };
     const ledger = reconcile(namedScenarios, [observation]);
-    expect(observationsOf(accountFor(ledger, scnId)!).map(postedOf)).toEqual([observation]);
+    expect(observationsOf(accountFor(ledger, claimCode)!).map(postedOf)).toEqual([observation]);
   });
 
   it("finds no evidence observation on any account when nothing posts", () => {
@@ -48,24 +48,24 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
 
 describe("[SCN-LDG-022] reconcile — every evidence observation is found once, inside the quality-check reconciliation of its kind of quality check", () => {
   const scenarios: Scenario[] = [
-    { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
-    { scnId: "SCN-FIT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "SCN-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
+    { claimCode: "SCN-FIT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
   const brokenNote = { kind: "check-step-did-not-run", code: "SCN-FIT-001" } as const;
   const everyObservation: EvidenceObservation[] = [
-    { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "passed", locator: "tests/a.test.ts" },
-    { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "failed", locator: "tests/b.test.ts" },
-    { qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "failed", broken: true, locator: "tests/c.test.ts" },
-    { qualityCheckKind: "e2e", scnId: "SCN-AAA-001", status: "passed", locator: "features/a.feature" },
-    { qualityCheckKind: "unit", scnId: "SCN-AAA-003", status: "passed", locator: "tests/pending.test.ts" },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:a", scnId: "SCN-FIT-001", exists: true, enforcedOverRealSource: true },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:b", scnId: "SCN-FIT-001", exists: false, enforcedOverRealSource: false, broken: true, notes: [brokenNote] },
-    { qualityCheckKind: "unit", scnId: "SCN-ZZZ-999", status: "passed", locator: "tests/phantom.test.ts" },
-    { qualityCheckKind: "unit", scnId: "SCN-ZZZ-999", status: "failed", broken: true, locator: "tests/phantom-broken.test.ts" },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:phantom", scnId: "SCN-ZZZ-998", exists: true, enforcedOverRealSource: false },
-    { qualityCheckKind: "unit", scnId: null, status: "passed", locator: "tests/nothing.test.ts" },
-    { qualityCheckKind: "unit", scnId: null, status: "failed", broken: true, locator: "tests/nothing-broken.test.ts" },
+    { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "passed", locator: "tests/a.test.ts" },
+    { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "failed", locator: "tests/b.test.ts" },
+    { qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "failed", broken: true, locator: "tests/c.test.ts" },
+    { qualityCheckKind: "e2e", claimCode: "SCN-AAA-001", status: "passed", locator: "features/a.feature" },
+    { qualityCheckKind: "unit", claimCode: "SCN-AAA-003", status: "passed", locator: "tests/pending.test.ts" },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:a", claimCode: "SCN-FIT-001", exists: true, enforcedOverRealSource: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:b", claimCode: "SCN-FIT-001", exists: false, enforcedOverRealSource: false, broken: true, notes: [brokenNote] },
+    { qualityCheckKind: "unit", claimCode: "SCN-ZZZ-999", status: "passed", locator: "tests/phantom.test.ts" },
+    { qualityCheckKind: "unit", claimCode: "SCN-ZZZ-999", status: "failed", broken: true, locator: "tests/phantom-broken.test.ts" },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:phantom", claimCode: "SCN-ZZZ-998", exists: true, enforcedOverRealSource: false },
+    { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "tests/nothing.test.ts" },
+    { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, locator: "tests/nothing-broken.test.ts" },
     { qualityCheckKind: "fitness", fitnessFunction: "lint:nothing", exists: true, enforcedOverRealSource: true },
     { qualityCheckKind: "fitness", fitnessFunction: "lint:nothing-broken", exists: false, enforcedOverRealSource: false, broken: true },
   ];
@@ -101,35 +101,35 @@ describe("[SCN-LDG-022] reconcile — every evidence observation is found once, 
 
 describe("[SCN-LDG-022] reconcile — a broken evidence observation posts to the claim it names, as a broken item carrying it", () => {
   const scenarios: Scenario[] = [
-    { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-    { scnId: "SCN-FIT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+    { claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+    { claimCode: "SCN-FIT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
 
   const note = { kind: "ambiguous-step", step: "a step" } as const;
   const brokenOnScenario: EvidenceObservation = {
-    qualityCheckKind: "unit", scnId: "SCN-AAA-001", status: "failed", broken: true,
+    qualityCheckKind: "unit", claimCode: "SCN-AAA-001", status: "failed", broken: true,
     locator: "tests/scenario.test.ts", message: "threw at import", notes: [note],
   };
   const brokenOnScenarioWithoutObligation: EvidenceObservation = {
-    qualityCheckKind: "e2e", scnId: "SCN-AAA-001", status: "failed", broken: true,
+    qualityCheckKind: "e2e", claimCode: "SCN-AAA-001", status: "failed", broken: true,
     locator: "features/scenario.feature", message: "a hook failed", notes: [note],
   };
   const brokenOnPhantom: EvidenceObservation = {
-    qualityCheckKind: "unit", scnId: "SCN-ZZZ-999", status: "failed", broken: true,
+    qualityCheckKind: "unit", claimCode: "SCN-ZZZ-999", status: "failed", broken: true,
     locator: "tests/phantom.test.ts", message: "threw at import", notes: [note],
   };
   const brokenOnNothing: EvidenceObservation = {
-    qualityCheckKind: "unit", scnId: null, status: "failed", broken: true,
+    qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true,
     locator: "tests/nothing.test.ts", message: "threw at import", notes: [note],
   };
   const brokenCheckOnScenario: EvidenceObservation = {
-    qualityCheckKind: "fitness", fitnessFunction: "lint:scenario", scnId: "SCN-FIT-001",
+    qualityCheckKind: "fitness", fitnessFunction: "lint:scenario", claimCode: "SCN-FIT-001",
     exists: false, enforcedOverRealSource: false, broken: true,
     locator: ".github/workflows/ci.yml", message: "the step did not run",
     notes: [{ kind: "check-step-did-not-run", code: "SCN-FIT-001" }],
   };
   const brokenCheckOnPhantom: EvidenceObservation = {
-    qualityCheckKind: "fitness", fitnessFunction: "lint:phantom", scnId: "SCN-ZZZ-998",
+    qualityCheckKind: "fitness", fitnessFunction: "lint:phantom", claimCode: "SCN-ZZZ-998",
     exists: false, enforcedOverRealSource: false, broken: true,
     locator: ".github/workflows/ci.yml", message: "the step did not run",
     notes: [{ kind: "check-step-did-not-run", code: "SCN-ZZZ-998" }],
@@ -169,18 +169,18 @@ describe("[SCN-LDG-022] reconcile — a broken evidence observation posts to the
     ["a fitness one naming a scenario", brokenCheckOnScenario, "SCN-FIT-001"],
     ["a fitness one naming no scenario carrying its code", brokenCheckOnPhantom, "SCN-ZZZ-998"],
     ["a fitness one naming no claim", brokenCheckOnNothing, "(unnamed claim)"],
-  ] as const)("posts %s on that claim's row alone, as one broken item carrying it", (_title, observation, scnId) => {
+  ] as const)("posts %s on that claim's row alone, as one broken item carrying it", (_title, observation, claimCode) => {
     const rows = ledger().claimReconciliations;
-    expect(rows.filter((row) => row.qualityCheckReconciliations.flatMap(linesOf).some(carrying(observation))).map((row) => row.claim)).toEqual([scnId]);
-    const row = rows.find((r) => r.claim === scnId)!;
+    expect(rows.filter((row) => row.qualityCheckReconciliations.flatMap(linesOf).some(carrying(observation))).map((row) => row.claim)).toEqual([claimCode]);
+    const row = rows.find((r) => r.claim === claimCode)!;
     expect(row.qualityCheckReconciliations.flatMap(linesOf).filter(carrying(observation))).toEqual([brokenItemFor(observation)]);
     expect(reconcilingItemsOf(row).filter(carrying(observation))).toEqual([brokenItemFor(observation)]);
   });
 
   it("leaves the obligation a broken evidence observation was meant to answer missing, on behavioural and fitness checks alike", () => {
     const rows = ledger().claimReconciliations;
-    const obligationItems = (scnId: string) =>
-      rows.find((r) => r.claim === scnId)!.qualityCheckReconciliations.flatMap(linesOf).filter((line) => line.evidenceObligation !== undefined);
+    const obligationItems = (claimCode: string) =>
+      rows.find((r) => r.claim === claimCode)!.qualityCheckReconciliations.flatMap(linesOf).filter((line) => line.evidenceObligation !== undefined);
     expect(obligationItems("SCN-AAA-001")).toEqual([
       { qualityCheckKind: "unit", outcome: "missing", evidenceObligation: { qualityCheckKind: "unit" } },
     ]);
@@ -197,14 +197,14 @@ describe("[SCN-LDG-022] reconcile — a broken evidence observation posts to the
 
   it("posts a broken evidence observation naming a code two scenarios share to the unnamed claim, naming the code, as one broken item carrying it", () => {
     const shared: Scenario[] = [
-      { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
-      { scnId: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
+      { claimCode: "SCN-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     const brokenOnShared: EvidenceObservation = {
-      qualityCheckKind: "unit", scnId: "SCN-DUP-001", status: "failed", broken: true,
+      qualityCheckKind: "unit", claimCode: "SCN-DUP-001", status: "failed", broken: true,
       locator: "tests/shared.test.ts", message: "threw at import",
     };
-    const namingTheCode: EvidenceObservation = { ...brokenOnShared, notes: [{ kind: "shared-scn-code", code: "SCN-DUP-001" }] };
+    const namingTheCode: EvidenceObservation = { ...brokenOnShared, notes: [{ kind: "shared-claim-code", code: "SCN-DUP-001" }] };
     const sharedLedger = reconcile(shared, [brokenOnShared]);
     expect(sharedLedger.claimReconciliations.map((row) => row.claim)).toEqual(["SCN-DUP-001", "SCN-DUP-001", "(unnamed claim)"]);
     expect(reconcilingItemsOf(sharedLedger.claimReconciliations[2]!).filter(carrying(namingTheCode))).toEqual([
@@ -222,21 +222,21 @@ describe("[SCN-LDG-022] reconcile — a broken evidence observation posts to the
 });
 
 describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOfBalance agreeing with the verdict", () => {
-  const accountFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
-    ledger.claimReconciliations.find((r) => r.claim === scnId);
+  const accountFor = (ledger: Ledger, claimCode: string): ClaimReconciliation | undefined =>
+    ledger.claimReconciliations.find((r) => r.claim === claimCode);
   const ctx: RunContext = { target: "obligations-only", inputs: HANDED_INPUT_NAMES, corpus: "features", runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
 
   it("a satisfied citation-routed check as the only evidence observation → balanced, no unnamed claim, summary.outOfBalance 0", () => {
     const fitness: Scenario[] = [
-      { scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+      { claimCode: "SCN-DEM-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
     ];
     const observation: EvidenceObservation = {
-      scnId: "SCN-DEM-001", qualityCheckKind: "fitness", fitnessFunction: "lint:obligations-only", exists: true, enforcedOverRealSource: true,
+      claimCode: "SCN-DEM-001", qualityCheckKind: "fitness", fitnessFunction: "lint:obligations-only", exists: true, enforcedOverRealSource: true,
     };
     const ledger = reconcile(fitness, [observation]);
 
     expect(accountFor(ledger, "SCN-DEM-001")?.qualityCheckReconciliations).toEqual([
-      { qualityCheckKind: "fitness", evidenceObligation: { qualityCheckKind: "fitness" }, evidenceObservations: [{ scnId: "SCN-DEM-001", qualityCheckKind: "fitness", fitnessFunction: "lint:obligations-only", exists: true, enforcedOverRealSource: true, outcome: "satisfied" }] },
+      { qualityCheckKind: "fitness", evidenceObligation: { qualityCheckKind: "fitness" }, evidenceObservations: [{ claimCode: "SCN-DEM-001", qualityCheckKind: "fitness", fitnessFunction: "lint:obligations-only", exists: true, enforcedOverRealSource: true, outcome: "satisfied" }] },
     ]);
     expect(accountFor(ledger, "SCN-DEM-001")?.verdict).toBe("balanced");
     expect(accountFor(ledger, "(unnamed claim)")).toBeUndefined();
@@ -246,14 +246,14 @@ describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOf
 });
 
 describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario names post to its ledger account", () => {
-  const accountFor = (ledger: Ledger, scnId: string): ClaimReconciliation | undefined =>
-    ledger.claimReconciliations.find((r) => r.claim === scnId);
+  const accountFor = (ledger: Ledger, claimCode: string): ClaimReconciliation | undefined =>
+    ledger.claimReconciliations.find((r) => r.claim === claimCode);
 
   it("posts no debits to the accounts no scenario names — the unnamed claim and a phantom claim", () => {
-    const namedScenarios: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
+    const namedScenarios: Scenario[] = [{ claimCode: "SCN-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] }];
     const ledger = reconcile(namedScenarios, [
-      { scnId: "SCN-ZZZ-999", qualityCheckKind: "unit", status: "passed" },
-      { scnId: null, qualityCheckKind: "unit", status: "passed" },
+      { claimCode: "SCN-ZZZ-999", qualityCheckKind: "unit", status: "passed" },
+      { claimCode: null, qualityCheckKind: "unit", status: "passed" },
     ]);
     expect(obligationsOf(accountFor(ledger, "SCN-ZZZ-999")!)).toEqual([]);
     expect(obligationsOf(accountFor(ledger, "(unnamed claim)")!)).toEqual([]);
