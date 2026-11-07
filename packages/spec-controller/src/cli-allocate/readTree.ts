@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { accessSync, constants, lstatSync, readdirSync, readFileSync, type Dirent } from "node:fs";
 import { join, relative, sep } from "node:path";
-import type { ScnOccurrence } from "@3f-consulting/spec-controller-core";
+import { CLAIM_CODE_PREFIXES, type ScnOccurrence } from "@3f-consulting/spec-controller-core";
 import { AppMessage } from "../messages.js";
 import { gitExited, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
 
@@ -13,7 +13,7 @@ export function readTree(top: string, part: string): ScnOccurrence[] {
   const listed = gitListing(top, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"]);
   const ignored = gitListing(top, ["ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"]);
   proveListable(top, "", new Set(ignored.filter(isDirectoryEntry).map((entry) => entry.slice(0, -1))));
-  return listed.flatMap((path) => occurrencesInListed(top, path, `SCN-${part}-`));
+  return listed.flatMap((path) => occurrencesInListed(top, path, needlesFor(part)));
 }
 
 function gitListing(top: string, args: readonly string[]): string[] {
@@ -44,19 +44,23 @@ function listedAndEntered(path: string): Dirent[] {
   return readdirSync(path, { withFileTypes: true });
 }
 
-function occurrencesInListed(top: string, path: string, needle: string): ScnOccurrence[] {
+function needlesFor(part: string): string[] {
+  return CLAIM_CODE_PREFIXES.map((prefix) => `${prefix}-${part}-`);
+}
+
+function occurrencesInListed(top: string, path: string, needles: readonly string[]): ScnOccurrence[] {
   const file = join(top, path);
   const kind = readOrRefuse(AppMessage.TreeFile, file, () => lstatSync(file, { throwIfNoEntry: false }));
   if (kind === undefined || !kind.isFile()) return [];
-  return linesCarrying(path, readOrRefuse(AppMessage.TreeFile, file, () => readFileSync(file)), needle);
+  return linesCarrying(path, readOrRefuse(AppMessage.TreeFile, file, () => readFileSync(file)), needles);
 }
 
-function linesCarrying(path: string, content: Buffer, needle: string): ScnOccurrence[] {
+function linesCarrying(path: string, content: Buffer, needles: readonly string[]): ScnOccurrence[] {
   if (content.subarray(0, BINARY_PROBE_BYTES).includes(0)) return [];
   return content
     .toString("utf8")
     .split("\n")
-    .flatMap((line, i) => (line.includes(needle) ? [{ path, line: i + 1, text: line }] : []));
+    .flatMap((line, i) => (needles.some((needle) => line.includes(needle)) ? [{ path, line: i + 1, text: line }] : []));
 }
 
 export function isWalkedDirectory(name: string): boolean {
@@ -66,7 +70,7 @@ export function isWalkedDirectory(name: string): boolean {
 export function walkTree(root: string, part: string): ScnOccurrence[] {
   return filesUnder(root).flatMap((file) => {
     const content = readOrRefuse(AppMessage.TreeFile, file, () => readFileSync(file));
-    return linesCarrying(relative(root, file).split(sep).join("/"), content, `SCN-${part}-`);
+    return linesCarrying(relative(root, file).split(sep).join("/"), content, needlesFor(part));
   });
 }
 

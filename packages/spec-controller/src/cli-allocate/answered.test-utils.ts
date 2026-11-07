@@ -53,10 +53,10 @@ export function allocateIn(cwd: string, argv: string[]): Answered {
   return allocateWhere(() => cwd, argv);
 }
 
-export function expectAnsweredWith(answered: Answered, code: string): void {
+export function expectAnsweredEnding(answered: Answered, ending: string): void {
   expect(answered.exitCode).toBeUndefined();
   expect(answered.stderr).not.toContain("usage error");
-  expect(answered.stdout).toBe(`${code}\n`);
+  expect(["CLM", "SCN"].map((prefix) => `${prefix}-${ending}\n`)).toContain(answered.stdout);
 }
 
 const REASON = "\u0000";

@@ -61,7 +61,7 @@ export function nextScnCode(request: AllocationRequest, occurrences: readonly Sc
   }
   const highest = highestOf(request.part, occurrences);
   const next = (highest === null ? 0 : numberOf(highest.code)) + 1;
-  const code = `SCN-${request.part}-${String(next).padStart(NUMBER_WIDTH, "0")}`;
+  const code = `CLM-${request.part}-${String(next).padStart(NUMBER_WIDTH, "0")}`;
   return headed && request.isNew === true ? { kind: "allocated", code, highest, alreadyHeaded: true } : { kind: "allocated", code, highest };
 }
 

@@ -42,11 +42,11 @@ describe("[SCN-ALC-004] With no history to read, a code is still offered and the
     repo = repositoryWhoseHistoryOnceCarried("SCN-ONE-001", "SCN-ONE-005");
   });
 
-  it("in a copy without git, whose packages and hidden directories mention SCN-ONE-900, answers SCN-ONE-002 and states no history was read", () => {
+  it("in a copy without git, whose packages and hidden directories mention SCN-ONE-900, answers a claim code ending ONE-002 and states no history was read", () => {
     expectAnsweredWithNoHistoryRead(copyWithoutGit(repo, "SCN-ONE-900"));
   });
 
-  it("in a clone one commit deep, answers SCN-ONE-002 and states history before the clone's first commit was not read", () => {
+  it("in a clone one commit deep, answers a claim code ending ONE-002 and states history before the clone's first commit was not read", () => {
     const clone = cloneOneCommitDeep(repo);
     expect(git(clone, ["rev-list", "--count", "HEAD"]).trim()).toBe("1");
 

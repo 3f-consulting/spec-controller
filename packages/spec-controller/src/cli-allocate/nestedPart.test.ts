@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, it, vi } from "vitest";
 import { commitAll, freshDirectory, git, writeInto } from "./repository.test-utils.js";
-import { allocateIn } from "./answered.test-utils.js";
+import { allocateIn, expectAnsweredEnding } from "./answered.test-utils.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -8,7 +8,7 @@ afterEach(() => {
 });
 
 describe("[SCN-ALC-023] a part headed only by a feature file in a subdirectory of features, at any depth, is a known part and is offered its next code", () => {
-  it("answers SCN-NEST-005 for NEST, headed two subdirectories down, without --new", () => {
+  it("answers a claim code ending NEST-005 for NEST, headed two subdirectories down, without --new", () => {
     const repo = freshDirectory("allocate-nested-part-");
     git(repo, ["init", "-q", "-b", "main"]);
     writeInto(repo, "features/outer/inner/nest.feature", "@NEST\nFeature: part NEST\n\n  @SCN-NEST-004 @unit\n  Scenario: scenario 1\n    Given a step\n");
@@ -16,7 +16,6 @@ describe("[SCN-ALC-023] a part headed only by a feature file in a subdirectory o
 
     const answered = allocateIn(repo, ["NEST"]);
 
-    expect(answered.stdout).toBe("SCN-NEST-005\n");
-    expect(answered.exitCode).toBeUndefined();
+    expectAnsweredEnding(answered, "NEST-005");
   });
 });

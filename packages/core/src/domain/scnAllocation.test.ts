@@ -11,23 +11,29 @@ function seen(text: string, path = "features/one.feature", line = 1): ScnOccurre
   return { text, path, line };
 }
 
+function endingOf(code: string): string {
+  const ending = /^(?:CLM|SCN)-(.+)$/.exec(code)?.[1];
+  if (ending === undefined) throw new Error(`${code} is not under CLM or SCN`);
+  return ending;
+}
+
 describe("[SCN-ALC-008] the code is printed alone, zero-padded to three digits", () => {
   const request = { part: "ONE", headerCodes: ["ONE"] };
 
   it.each([
-    ["offers one past the highest, padded to three digits", "    @SCN-ONE-7 @unit", "SCN-ONE-008"],
-    ["reads every code on a line", "[SCN-ONE-004] and [SCN-ONE-006] and SCN-ONE-005", "SCN-ONE-007"],
-  ])("%s", (_title, text, code) => {
-    expect(next(request, [seen(text)]).code).toBe(code);
+    ["offers one past the highest, padded to three digits", "    @SCN-ONE-7 @unit", "ONE-008"],
+    ["reads every code on a line", "[SCN-ONE-004] and [SCN-ONE-006] and SCN-ONE-005", "ONE-007"],
+  ])("%s", (_title, text, ending) => {
+    expect(endingOf(next(request, [seen(text)]).code)).toBe(ending);
   });
 
   it("counts only the part asked for", () => {
     const occurrences = [seen("@SCN-ONE-002"), seen("@SCN-TWO-040"), seen("SCN-ONEX-050")];
-    expect(next(request, occurrences).code).toBe("SCN-ONE-003");
+    expect(endingOf(next(request, occurrences).code)).toBe("ONE-003");
   });
 
   it("offers the first code when the part carries none", () => {
-    expect(next(request, []).code).toBe("SCN-ONE-001");
+    expect(endingOf(next(request, []).code)).toBe("ONE-001");
   });
 });
 
@@ -35,24 +41,30 @@ describe("[SCN-ALC-009] a part whose highest code is 999 is offered 1000", () =>
   const request = { part: "ONE", headerCodes: ["ONE"] };
 
   it.each([
-    ["grows past three digits rather than wrapping or refusing", "@SCN-ONE-999", "SCN-ONE-1000"],
-    ["keeps growing at every width", "@SCN-ONE-9999", "SCN-ONE-10000"],
-  ])("%s", (_title, text, code) => {
-    expect(next(request, [seen(text)]).code).toBe(code);
+    ["grows past three digits rather than wrapping or refusing", "@SCN-ONE-999", "ONE-1000"],
+    ["keeps growing at every width", "@SCN-ONE-9999", "ONE-10000"],
+  ])("%s", (_title, text, ending) => {
+    expect(endingOf(next(request, [seen(text)]).code)).toBe(ending);
+  });
+});
+
+describe("[SCN-ALC-026] allocate writes the next code under CLM, even when the repository holds only SCN codes", () => {
+  it("writes CLM after a part that carries only an SCN code", () => {
+    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [seen("@SCN-ONE-004")]).code).toMatch(/^CLM-/);
   });
 });
 
 describe("[SCN-ALC-002] a code carried only on a CI step id is never offered again", () => {
   it("reads a step id as a code in use", () => {
     const occurrences = [seen("@SCN-ONE-001"), seen("        id: SCN-ONE-007", ".github/workflows/ci.yml", 8)];
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, occurrences).code).toBe("SCN-ONE-008");
+    expect(endingOf(next({ part: "ONE", headerCodes: ["ONE"] }, occurrences).code)).toBe("ONE-008");
   });
 });
 
 describe("[SCN-ALC-003] a code carried only in a test title is never offered again", () => {
   it("reads a bracketed test-title citation as a code in use", () => {
     const occurrences = [seen("@SCN-ONE-001"), seen('it("[SCN-ONE-007] does the thing", () => {});', "src/thing.test.ts", 3)];
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, occurrences).code).toBe("SCN-ONE-008");
+    expect(endingOf(next({ part: "ONE", headerCodes: ["ONE"] }, occurrences).code)).toBe("ONE-008");
   });
 });
 
@@ -79,10 +91,9 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
   it("never lets a lower code in the tree displace a higher one history carried, read before it", () => {
     const inHistory = { ...seen("-  @SCN-ONE-007", "features/one.feature", 9), commit: "abc1234" };
     const inTree = seen("  @SCN-ONE-005 @unit", "features/one.feature", 8);
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [inHistory, inTree])).toMatchObject({
-      code: "SCN-ONE-008",
-      highest: { occurrence: inHistory },
-    });
+    const answer = next({ part: "ONE", headerCodes: ["ONE"] }, [inHistory, inTree]);
+    expect(endingOf(answer.code)).toBe("ONE-008");
+    expect(answer).toMatchObject({ highest: { occurrence: inHistory } });
   });
 });
 
@@ -103,15 +114,13 @@ describe("[SCN-ALC-010] a part no feature file's header carries is refused as an
 
 describe("[SCN-ALC-011] --new admits a part no feature file's header carries, and notes a part a header carries", () => {
   it("admits a part no header carries, from its first code", () => {
-    expect(nextScnCode({ part: "ZZ", headerCodes: ["ONE"], isNew: true }, [])).toMatchObject({ kind: "allocated", code: "SCN-ZZ-001" });
+    expect(endingOf(next({ part: "ZZ", headerCodes: ["ONE"], isNew: true }, []).code)).toBe("ZZ-001");
   });
 
   it("answers a headed part as usual, and says the header already carries it", () => {
-    expect(nextScnCode({ part: "ONE", headerCodes: ["ONE"], isNew: true }, [seen("@SCN-ONE-003")])).toMatchObject({
-      kind: "allocated",
-      code: "SCN-ONE-004",
-      alreadyHeaded: true,
-    });
+    const answer = next({ part: "ONE", headerCodes: ["ONE"], isNew: true }, [seen("@SCN-ONE-003")]);
+    expect(endingOf(answer.code)).toBe("ONE-004");
+    expect(answer).toMatchObject({ alreadyHeaded: true });
   });
 
   it("says nothing of a header when the part was not asked for as new", () => {

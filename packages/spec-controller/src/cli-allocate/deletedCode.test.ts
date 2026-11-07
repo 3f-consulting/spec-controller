@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { spawnSync } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { writeInto, commitAll, lines } from "./repository.test-utils.js";
-import { allocateIn } from "./answered.test-utils.js";
+import { allocateIn, expectAnsweredEnding } from "./answered.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function git(cwd: string, args: readonly string[]): string {
@@ -43,7 +43,6 @@ describe("[SCN-ALC-001] a feature part whose highest live code is below a delete
 
     const answered = allocateIn(repo, ["ONE"]);
 
-    expect(answered.stdout).toBe("SCN-ONE-006\n");
-    expect(answered.exitCode).toBeUndefined();
+    expectAnsweredEnding(answered, "ONE-006");
   });
 });

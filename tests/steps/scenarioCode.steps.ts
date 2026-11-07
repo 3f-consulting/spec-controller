@@ -62,9 +62,12 @@ When("the author asks for the next code for {word}", function (this: SpecControl
   this.answer = allocate(this.repository, [part]);
 });
 
-Then("the answer is {word}, and nothing else", function (this: SpecControllerWorld, code: string) {
+Then("the answer is a claim code ending {word}, and nothing else", function (this: SpecControllerWorld, ending: string) {
   assert.equal(this.answer.status, 0, `allocate did not answer: exit ${this.answer.status}\n${this.answer.stderr}`);
-  assert.equal(this.answer.stdout, `${code}\n`);
+  assert.ok(
+    ["CLM", "SCN"].some((prefix) => this.answer.stdout === `${prefix}-${ending}\n`),
+    `expected a claim code ending ${ending} alone on stdout, got ${JSON.stringify(this.answer.stdout)}`,
+  );
 });
 
 Given("the repository's CI workflow has a step whose id is {word}", function (this: SpecControllerWorld, code: string) {

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { realpathSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { git, writeInto, commitAllReturningHash as commitAll, lines } from "./repository.test-utils.js";
-import { allocateIn } from "./answered.test-utils.js";
+import { allocateIn, expectAnsweredEnding } from "./answered.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function newRepository(): string {
@@ -30,8 +30,7 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
 
     const answered = allocateIn(repo, ["ONE"]);
 
-    expect(answered.stdout).toBe("SCN-ONE-006\n");
-    expect(answered.exitCode).toBeUndefined();
+    expectAnsweredEnding(answered, "ONE-006");
     expect(answered.stderr).toBe("highest seen: SCN-ONE-005, features/one.feature:11\n");
   });
 
@@ -45,8 +44,7 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
 
     const answered = allocateIn(repo, ["ONE"]);
 
-    expect(answered.stdout).toBe("SCN-ONE-006\n");
-    expect(answered.exitCode).toBeUndefined();
+    expectAnsweredEnding(answered, "ONE-006");
     expect(answered.stderr).toBe(`highest seen: SCN-ONE-005, features/one.feature:17 in ${retiring}\n`);
   });
 
@@ -62,8 +60,7 @@ describe("[SCN-ALC-005] stderr names where the highest code was seen", () => {
 
     const answered = allocateIn(repo, ["ONE"]);
 
-    expect(answered.stdout).toBe("SCN-ONE-006\n");
-    expect(answered.exitCode).toBeUndefined();
+    expectAnsweredEnding(answered, "ONE-006");
     expect(answered.stderr).toBe(`highest seen: SCN-ONE-005, notes/data/retired.md:1 in ${retiring}\n`);
   });
 });

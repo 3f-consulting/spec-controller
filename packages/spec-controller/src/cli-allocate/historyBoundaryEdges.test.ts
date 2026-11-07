@@ -37,7 +37,7 @@ afterEach(() => {
 });
 
 describe("[SCN-ALC-004] With no history to read, a code is still offered and the boundary is stated on stderr", () => {
-  it("in a copy without git holding a symlink to a file that mentions SCN-ONE-900, answers SCN-ONE-002 and states no history was read", () => {
+  it("in a copy without git holding a symlink to a file that mentions SCN-ONE-900, answers a claim code ending ONE-002 and states no history was read", () => {
     const outside = freshDirectory("allocate-link-target-");
     writeInto(outside, "far.feature", corpusCarrying("SCN-ONE-900"));
 

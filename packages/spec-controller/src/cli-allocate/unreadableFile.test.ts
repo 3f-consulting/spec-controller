@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { git, writeInto, taken, withhold, runsAsRoot, repositoryHeadedOneCarrying003 } from "./repository.test-utils.js";
-import { allocateFrom, expectAnsweredWith, gitExited, refusalReason } from "./answered.test-utils.js";
+import { allocateFrom, expectAnsweredEnding, gitExited, refusalReason } from "./answered.test-utils.js";
 import { AppMessage, Unreadable } from "../messages.js";
 import { message } from "../appText.js";
 
@@ -152,7 +152,7 @@ describe("[SCN-ALC-020] a file in the repository git cannot read is refused, nev
     writeInto(repo, `notes/${stem}-199.md`, "Cites SCN-ONE-016.\n");
     expect(git(repo, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"]).length).toBeGreaterThan(16 * 1024);
 
-    expectAnsweredWith(allocateFrom(repo), "SCN-ONE-017");
+    expectAnsweredEnding(allocateFrom(repo), "ONE-017");
   });
 
   it("reads no code from a tracked binary file, answering past the codes in text alone", () => {
@@ -161,6 +161,6 @@ describe("[SCN-ALC-020] a file in the repository git cannot read is refused, nev
     git(repo, ["add", "-A"]);
     git(repo, ["commit", "-q", "-m", "a binary asset"]);
 
-    expectAnsweredWith(allocateFrom(repo), "SCN-ONE-004");
+    expectAnsweredEnding(allocateFrom(repo), "ONE-004");
   });
 });

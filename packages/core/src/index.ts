@@ -82,7 +82,7 @@ export { projectProvenanceObject } from "./render/provenanceFacts.js";
 export type { ProvenanceFacts, ProvenanceInput } from "./render/provenanceFacts.js";
 export type { RunContext, RunInput, RunInputName, RunInputs, ProvenanceObject } from "./domain/runProvenance.js";
 
-export { featureCodeOf, isFeaturePart } from "./domain/featureCode.js";
+export { CLAIM_CODE_PREFIXES, featureCodeOf, isFeaturePart } from "./domain/featureCode.js";
 export { relativizeToRoot } from "./lib/portablePath.js";
 
 export { messagesFrom } from "./render/message.js";

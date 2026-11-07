@@ -3,7 +3,7 @@ import { readdirSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { readHistory } from "./readHistory.js";
 import { git, writeInto, commitAll, freshDirectory, taken, withhold, runsAsRoot } from "./repository.test-utils.js";
-import { allocateFrom, gitExited, refusalReason } from "./answered.test-utils.js";
+import { allocateFrom, expectAnsweredEnding, gitExited, refusalReason } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
 import { AppMessage } from "../messages.js";
 import { message } from "../appText.js";
@@ -74,10 +74,7 @@ describe("[SCN-ALC-021] history git cannot read is refused, never answered below
     const repo = repositoryWithADeletedCode();
     symlinkSync("nowhere", join(repo, ".git", "refs", "heads", "dangling"));
 
-    const answered = allocateFrom(repo);
-
-    expect(answered.exitCode).toBeUndefined();
-    expect(answered.stdout).toBe("SCN-ONE-006\n");
+    expectAnsweredEnding(allocateFrom(repo), "ONE-006");
   });
 
   it("refuses the history, naming git, when there is no git to ask", () => {

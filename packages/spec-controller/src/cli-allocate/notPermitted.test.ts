@@ -11,7 +11,7 @@ import {
   HEADED_ONE_CARRYING_003,
   repositoryHeadedOneCarrying003,
 } from "./repository.test-utils.js";
-import { allocateFrom, expectAnsweredWith, refusalReason } from "./answered.test-utils.js";
+import { allocateFrom, expectAnsweredEnding, refusalReason } from "./answered.test-utils.js";
 import type { Answered } from "./answered.test-utils.js";
 import { Unreadable } from "../messages.js";
 import { message } from "../appText.js";
@@ -88,7 +88,7 @@ describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, nam
     writeInto(repo, "build/out.md", "Cites SCN-ONE-900.\n");
     withhold(join(repo, "build"), 0o000);
 
-    expectAnsweredWith(allocateFrom(repo), "SCN-ONE-004");
+    expectAnsweredEnding(allocateFrom(repo), "ONE-004");
   });
 
   it("answers ONE, refusing nothing, when the directory it may not enter lies in a repository nested in the tree", () => {
@@ -97,7 +97,7 @@ describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, nam
     git(join(repo, "vendor", "inner"), ["init", "-q"]);
     withhold(join(repo, "vendor", "inner", "withheld"), 0o000);
 
-    expectAnsweredWith(allocateFrom(repo), "SCN-ONE-004");
+    expectAnsweredEnding(allocateFrom(repo), "ONE-004");
   });
 
   it("answers ONE, refusing nothing, when the directory it may not enter lies in git's own store", () => {
@@ -105,6 +105,6 @@ describe("[SCN-ALC-018] a path allocate is not permitted to read is refused, nam
     mkdirSync(join(repo, ".git", "withheld"));
     withhold(join(repo, ".git", "withheld"), 0o000);
 
-    expectAnsweredWith(allocateFrom(repo), "SCN-ONE-004");
+    expectAnsweredEnding(allocateFrom(repo), "ONE-004");
   });
 });

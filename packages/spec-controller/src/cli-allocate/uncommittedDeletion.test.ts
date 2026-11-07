@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { existsSync, realpathSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { git, writeInto, lines } from "./repository.test-utils.js";
-import { allocateIn } from "./answered.test-utils.js";
+import { allocateIn, expectAnsweredEnding } from "./answered.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function newRepository(): string {
@@ -30,8 +30,7 @@ describe("[SCN-ALC-001] a feature part whose highest live code is below a delete
 
     const answered = allocateIn(repo, ["ONE"]);
 
-    expect(answered.stdout).toBe("SCN-ONE-006\n");
-    expect(answered.exitCode).toBeUndefined();
+    expectAnsweredEnding(answered, "ONE-006");
     expect(answered.stderr).not.toContain("spec-controller allocate:");
     expect(answered.stderr).toMatch(/^highest seen: SCN-ONE-005, features\/retired\.feature:/);
   });

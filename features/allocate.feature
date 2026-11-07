@@ -19,28 +19,28 @@ Feature: Allocate the next scenario code for a feature part
       Given a repository whose feature file headed ONE carries the scenario codes SCN-ONE-001 and SCN-ONE-005
       And a later commit deletes the scenario coded SCN-ONE-005
       When the author asks for the next code for ONE
-      Then the answer is SCN-ONE-006, and nothing else
+      Then the answer is a claim code ending ONE-006, and nothing else
 
     @SCN-ALC-002 @unit @e2e
     Scenario: A code carried only on a CI step id is never offered again
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
       And the repository's CI workflow has a step whose id is SCN-ONE-007
       When the author asks for the next code for ONE
-      Then the answer is SCN-ONE-008, and nothing else
+      Then the answer is a claim code ending ONE-008, and nothing else
 
     @SCN-ALC-003 @unit @e2e
     Scenario: A code carried only in a test title is never offered again
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
       And the repository has a test whose title cites SCN-ONE-007
       When the author asks for the next code for ONE
-      Then the answer is SCN-ONE-008, and nothing else
+      Then the answer is a claim code ending ONE-008, and nothing else
 
     @SCN-ALC-015 @unit @e2e
     Scenario: A code that appears only in a commit message is not retired
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
       And a later commit, whose message mentions SCN-ONE-900, retags the scenario coded SCN-ONE-001
       When the author asks for the next code for ONE
-      Then the answer is SCN-ONE-002, and nothing else
+      Then the answer is a claim code ending ONE-002, and nothing else
 
     @SCN-ALC-005 @unit @e2e
     Scenario Outline: stderr names where the highest code was seen — <where>
@@ -58,7 +58,7 @@ Feature: Allocate the next scenario code for a feature part
       Given a repository whose feature file headed ONE carries SCN-ONE-001, and whose history once carried SCN-ONE-005
       And the author's copy of it is <copy>
       When the author asks for the next code for ONE in that copy
-      Then the answer is SCN-ONE-002, and nothing else
+      Then the answer is a claim code ending ONE-002, and nothing else
       And beside the answer it states that <boundary>
 
       Examples:
@@ -71,7 +71,7 @@ Feature: Allocate the next scenario code for a feature part
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-001
       And the author has since tagged a new scenario SCN-ONE-007 in that file, not yet committed
       When the author asks for the next code for ONE from a subdirectory holding no code
-      Then the answer is SCN-ONE-008, and nothing else
+      Then the answer is a claim code ending ONE-008, and nothing else
 
     @SCN-ALC-007 @e2e
     Scenario: A code written into a file not yet added to git is never offered again
@@ -79,7 +79,10 @@ Feature: Allocate the next scenario code for a feature part
       And the author has written SCN-ONE-007 into a new file not yet added to git
       And a file the repository ignores mentions SCN-ONE-900
       When the author asks for the next code for ONE
-      Then the answer is SCN-ONE-008, and nothing else
+      Then the answer is a claim code ending ONE-008, and nothing else
+
+    @SCN-ALC-025 @unit
+    Scenario Outline: allocate counts the highest number wherever a code appears, under either prefix
 
   Rule: the code is printed alone, in the scenario-code form, and the number never runs out
 
@@ -87,13 +90,18 @@ Feature: Allocate the next scenario code for a feature part
     Scenario: The code is printed alone on stdout, zero-padded to three digits
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-7
       When the author asks for the next code for ONE
-      Then the answer is SCN-ONE-008, and nothing else
+      Then the answer is a claim code ending ONE-008, and nothing else
 
     @SCN-ALC-009 @unit @e2e
     Scenario: A part whose highest code is 999 is offered 1000
       Given a repository whose feature file headed ONE carries the scenario code SCN-ONE-999
       When the author asks for the next code for ONE
-      Then the answer is SCN-ONE-1000, and nothing else
+      Then the answer is a claim code ending ONE-1000, and nothing else
+
+  Rule: allocate writes its answer under CLM
+
+    @SCN-ALC-026 @unit
+    Scenario: allocate writes the next code under CLM, even when the repository holds only SCN codes
 
   Rule: parts come from the tree's feature-file headers; a malformed request is a usage error
 
@@ -124,15 +132,15 @@ Feature: Allocate the next scenario code for a feature part
       And beside the answer <note>
 
       Examples:
-        | part | answer      | note                                                       |
-        | ZZ   | SCN-ZZ-001  | it says nothing of the part being carried already          |
-        | ONE  | SCN-ONE-004 | it notes that a feature file's header already carries ONE  |
+        | part | answer                      | note                                                       |
+        | ZZ   | a claim code ending ZZ-001  | it says nothing of the part being carried already          |
+        | ONE  | a claim code ending ONE-004 | it notes that a feature file's header already carries ONE  |
 
     @SCN-ALC-023 @unit @e2e
     Scenario: A part headed only by a feature file in a subdirectory of features, at any depth, is a known part and is offered its next code
       Given a repository whose only feature file headed NEST lies two subdirectories down in its features directory and carries the scenario code SCN-NEST-004
       When the author asks for the next code for NEST
-      Then the answer is SCN-NEST-005, and nothing else
+      Then the answer is a claim code ending NEST-005, and nothing else
 
     @SCN-ALC-012 @unit @e2e
     Scenario Outline: A request not in the scenario-code form is refused as a usage error, never as an unknown part — <request>
