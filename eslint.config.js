@@ -178,7 +178,7 @@ const scenarioCodesIn = (text) => {
   const { feature } = new Parser(new AstBuilder(() => ""), new GherkinClassicTokenMatcher()).parse(text);
   return scenariosIn(feature?.children ?? [])
     .flatMap((scenario) => scenario.tags)
-    .map((tag) => /^@SCN-([A-Z0-9]+)-\d+$/.exec(tag.name)?.[1])
+    .map((tag) => /^@(?:CLM|SCN)-([A-Z0-9]+)-\d+$/.exec(tag.name)?.[1])
     .filter((code) => code !== undefined);
 };
 const CONCEPT_CODES = [
@@ -196,7 +196,7 @@ if (CONCEPT_CODES.length === 0) {
 }
 
 const TEST_TITLE = vitestCall("describe|it|test");
-const CONCEPT_CITATION = `/\\[SCN-(${CONCEPT_CODES.join("|")})-\\d+\\]/`;
+const CONCEPT_CITATION = `/\\[(?:CLM|SCN)-(${CONCEPT_CODES.join("|")})-\\d+\\]/`;
 const MISPLACED_TEST =
   "A test citing a domain concept's scenario tests a rule of core's domain. Move it to packages/core/src/domain/.";
 const DOMAIN_TEST_SELECTORS = [

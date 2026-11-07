@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: red-proof.sh <unit | integration | e2e> <scenario code, such as SCN-ABC-001>" >&2
+  echo "usage: red-proof.sh <unit | integration | e2e> <scenario code, such as CLM-ABC-001 or SCN-ABC-001>" >&2
   echo "       red-proof.sh judge <unit | integration | e2e> <the run's JSON report>" >&2
   exit 2
 }
@@ -48,7 +48,7 @@ fi
 layer=$1
 code=$2
 valid_layer "$layer"
-[[ $code =~ ^SCN-[A-Z]{2,5}-[0-9]{3}$ ]] || usage
+[[ $code =~ ^(CLM|SCN)-[A-Z]{2,5}-[0-9]{3}$ ]] || usage
 
 refuse_empty() {
   [ "$1" -gt 0 ] || { echo "no test selected: $code at $layer" >&2; exit 3; }

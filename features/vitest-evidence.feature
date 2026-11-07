@@ -9,6 +9,8 @@ Feature: A Vitest suite's results answer unit evidence obligations
 
   Rule: a Vitest test answers the scenario its own leaf title cites
 
+    A citation under CLM is held to the same bound on its feature part as one under SCN.
+
     @unit @SCN-VIT-001
     Scenario: a self-citing leaf discharges its own scenario while a bare sibling leaf still discharges the ancestor's
 

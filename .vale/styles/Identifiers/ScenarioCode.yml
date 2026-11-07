@@ -3,4 +3,4 @@ message: "'%s' is a scenario code; the scenario's tag line carries it, and nothi
 level: error
 nonword: true
 tokens:
-  - '@?SCN-[A-Z0-9]{2,5}-[0-9]+'
+  - '@?(?:CLM|SCN)-[A-Z0-9]{2,5}-[0-9]+'

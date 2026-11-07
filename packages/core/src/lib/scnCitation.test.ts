@@ -6,4 +6,8 @@ describe("[SCN-VIT-008] a title citing a feature part outside two to five charac
     expect(scnCitationsOf("cites [SCN-A-001] then [SCN-SIXCHR-001]")).toEqual([]);
     expect(scnCitationsOf("cites [SCN-SIXCHR-001] then [SCN-FIVEC-001]")).toEqual(["SCN-FIVEC-001"]);
   });
+
+  it("reads a citation under CLM as written, within the same bound", () => {
+    expect(scnCitationsOf("cites [CLM-SIXCHR-001] then [CLM-FIVEC-001]")).toEqual(["CLM-FIVEC-001"]);
+  });
 });

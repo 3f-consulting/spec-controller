@@ -10,6 +10,7 @@ const gates = Object.keys(scripts).filter((name) => name.startsWith("docs:") && 
 const probes = [
   ["Identifiers.TicketId", ["3F", "1234"].join("-")],
   ["Identifiers.ScenarioCode", ["SCN", "ABC", "001"].join("-")],
+  ["Identifiers.ScenarioCode", ["CLM", "ABC", "001"].join("-")],
   ["History.Narrated", ["used", "to"].join(" ")],
 ];
 const failed = [];
@@ -27,4 +28,4 @@ if (failed.length > 0) {
   console.error(`\ndocs:check failed: ${failed.join(", ")}`);
   process.exit(1);
 }
-console.log(`\ndocs:check passed: the Vale firing probes for ${probes.length} rules and ${gates.length} gates`);
+console.log(`\ndocs:check passed: the Vale firing probes for ${new Set(probes.map(([rule]) => rule)).size} rules and ${gates.length} gates`);

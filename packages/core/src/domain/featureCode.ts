@@ -5,11 +5,13 @@ export function featureCodeOf(scnId: string): string | null {
 
 const FEATURE_PART_SOURCE = "[A-Z0-9]{2,5}";
 
-export const SCN_ID_SOURCE = `SCN-${FEATURE_PART_SOURCE}-\\d+`;
+const PREFIX_SOURCE = "(?:CLM|SCN)";
+
+export const SCN_ID_SOURCE = `${PREFIX_SOURCE}-${FEATURE_PART_SOURCE}-\\d+`;
 
 export const SCN_CODE = new RegExp(`^${SCN_ID_SOURCE}$`);
 
-const FEATURE_CODE_OF = new RegExp(`^SCN-(${FEATURE_PART_SOURCE})-\\d+$`);
+const FEATURE_CODE_OF = new RegExp(`^${PREFIX_SOURCE}-(${FEATURE_PART_SOURCE})-\\d+$`);
 
 const FEATURE_PART = new RegExp(`^${FEATURE_PART_SOURCE}$`);
 
