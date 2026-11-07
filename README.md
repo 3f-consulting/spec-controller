@@ -8,7 +8,7 @@ You write each behaviour as a scenario in a `.feature` file. You give the scenar
 
 On every CI run, `balance` reconciles the scenarios against the test reports and CI steps that actually ran. Every check a scenario asks for must have run, be credited to that scenario, pass, and be able to fail. Any disagreement turns the build red.
 
-**What you need first:** your behaviours written as Gherkin scenarios with `@SCN` codes, and tests that cite them. For CI checks, you also need GitHub Actions (see *Who it fits*, below). `balance` keeps a codebase reconciled, but it does not name your behaviours for you.
+**What you need first:** your behaviours written as Gherkin scenarios with claim codes, and tests that cite them. For CI checks, you also need GitHub Actions (see *Who it fits*, below). `balance` keeps a codebase reconciled, but it does not name your behaviours for you.
 
 ## A small example
 
