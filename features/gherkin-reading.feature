@@ -33,3 +33,24 @@ Feature: balance reads each scenario's tags from its feature file
 
     @unit @SCN-GRD-004
     Scenario: a scenario tagged with two scenario codes is read under neither, and is not read as untagged
+
+  Rule: an Outline with a clm column is several claims, one for each row
+
+    @unit @SCN-GRD-005
+    Scenario: an Outline whose two rows hold CLM-ONE-001 and CLM-ONE-002 is two claims
+
+    @unit @SCN-GRD-006
+    Scenario: each row's claim raises the Evidence Obligations its Outline's tags name
+
+    @unit @SCN-GRD-007
+    Scenario Outline: a row whose code is wrong reconciles as a scenario whose code is wrong
+
+      Examples:
+        | case                       |
+        | not a code, empty included |
+        | one code in two rows       |
+        | a code on the Outline too  |
+        | a code on an Examples tag  |
+
+    @unit @SCN-GRD-008
+    Scenario: an Outline tagged with a code and with no clm column is one claim

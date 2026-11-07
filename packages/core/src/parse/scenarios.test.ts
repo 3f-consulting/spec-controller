@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { corpusCountsOfFeatures, countScnOccurrences } from "./scenarios.js";
-import { parseScenarios, parseUntaggedScenarios } from "./scenarioReaders.test-utils.js";
+import { parseScenarioTags, parseScenarios, parseUntaggedScenarios } from "./scenarioReaders.test-utils.js";
+import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
 import { parsedFeatures } from "./parsedFeatures.test-utils.js";
 
 describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence including non-tag context", () => {
@@ -178,5 +179,203 @@ describe("[SCN-GRD-004] a scenario tagged with two scenario codes raises no evid
       "SCN-AAA-001",
       "SCN-AAA-002",
     ]);
+  });
+});
+
+describe("[SCN-GRD-005] an Outline whose two rows hold CLM-ONE-001 and CLM-ONE-002 is two claims", () => {
+  it("reads one claim for each row, under the code in its clm cell", () => {
+    const source = [
+      "@ONE",
+      "Feature: one",
+      "",
+      "  @unit",
+      "  Scenario Outline: a claim for each row",
+      "",
+      "    Examples:",
+      "      | clm         |",
+      "      | CLM-ONE-001 |",
+      "      | CLM-ONE-002 |",
+    ].join("\n");
+    expect(parseScenarios(source).map((s) => s.claimCode)).toEqual(["CLM-ONE-001", "CLM-ONE-002"]);
+  });
+
+  it("reads each row's code from its clm column wherever the column stands, and none from another column", () => {
+    const source = [
+      "@ONE",
+      "Feature: one",
+      "",
+      "  @unit",
+      "  Scenario Outline: a claim for each row",
+      "",
+      "    Examples:",
+      "      | case        | clm         |",
+      "      | CLM-ONE-009 | CLM-ONE-001 |",
+      "      | CLM-ONE-008 | CLM-ONE-002 |",
+    ].join("\n");
+    expect(parseScenarios(source).map((s) => s.claimCode)).toEqual(["CLM-ONE-001", "CLM-ONE-002"]);
+  });
+
+  it("gives a row of a block with no clm column no code, beside a block that has one", () => {
+    const source = [
+      "@ONE",
+      "Feature: one",
+      "",
+      "  @unit",
+      "  Scenario Outline: a claim for each row",
+      "",
+      "    Examples:",
+      "      | clm         |",
+      "      | CLM-ONE-001 |",
+      "",
+      "    Examples:",
+      "      | thing       |",
+      "      | CLM-ONE-002 |",
+    ].join("\n");
+    expect(parseScenarios(source).map((s) => s.claimCode)).toEqual(["CLM-ONE-001"]);
+    expect(parseUntaggedScenarios(source)).toEqual(["a claim for each row"]);
+  });
+});
+
+describe("[SCN-GRD-006] each row's claim raises the Evidence Obligations its Outline's tags name", () => {
+  it("raises a unit and an integration obligation for a row of an Outline tagged @unit and @integration", () => {
+    const source = [
+      "@ONE",
+      "Feature: one",
+      "",
+      "  @unit @integration",
+      "  Scenario Outline: a claim for each row",
+      "",
+      "    Examples:",
+      "      | clm         |",
+      "      | CLM-ONE-001 |",
+    ].join("\n");
+    expect(parseScenarios(source)).toEqual([
+      {
+        claimCode: "CLM-ONE-001",
+        evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }],
+      },
+    ]);
+  });
+});
+
+describe("[SCN-GRD-007] a row whose code is wrong reconciles as a scenario whose code is wrong", () => {
+  const outline = (tags: string, examplesTags: string, cells: readonly string[]): string =>
+    [
+      "@ONE",
+      "Feature: one",
+      "",
+      `  ${tags}`,
+      "  Scenario Outline: a row whose code is wrong",
+      "",
+      `    ${examplesTags}`,
+      "    Examples:",
+      "      | clm |",
+      ...cells.map((cell) => `      | ${cell} |`),
+    ].join("\n");
+
+  const reconciled = (source: string) => {
+    const { ledger, claimCodeErrors } = evidenceReconciliationFromSources({
+      features: parsedFeatures([source], ["features/one.feature"]),
+      packageJson: {},
+      ciWorkflows: [],
+      behaviouralObservations: [],
+      deferralTags: [],
+    });
+    return {
+      rowTags: parseScenarioTags(source).map(({ tags }) => [...tags].sort()),
+      claims: ledger.claimReconciliations.map(({ claim, qualityCheckReconciliations }) => [
+        claim,
+        qualityCheckReconciliations.map(({ qualityCheckKind, outcome }) => [qualityCheckKind, outcome]),
+      ]),
+      claimCodeErrors: (claimCodeErrors ?? []).map((error) => ("codes" in error ? [error.kind, error.codes] : [error.kind])),
+    };
+  };
+
+  it.each([
+    {
+      case: "not a code, empty included",
+      tags: "@integration",
+      examplesTags: "",
+      cells: ["", "first", "unit"],
+      expected: {
+        rowTags: [
+          ["ONE", "integration"],
+          ["ONE", "integration"],
+          ["ONE", "integration"],
+        ],
+        claims: [
+          ["features/one.feature : a row whose code is wrong", [[undefined, "no-claim-code"]]],
+          ["features/one.feature : a row whose code is wrong", [[undefined, "no-claim-code"]]],
+          ["features/one.feature : a row whose code is wrong", [[undefined, "no-claim-code"]]],
+        ],
+        claimCodeErrors: [],
+      },
+    },
+    {
+      case: "one code in two rows",
+      tags: "@unit",
+      examplesTags: "",
+      cells: ["CLM-ONE-001", "CLM-ONE-001"],
+      expected: {
+        rowTags: [
+          ["CLM-ONE-001", "ONE", "unit"],
+          ["CLM-ONE-001", "ONE", "unit"],
+        ],
+        claims: [
+          ["CLM-ONE-001", [["unit", "duplicate-claim-code"]]],
+          ["CLM-ONE-001", [["unit", "duplicate-claim-code"]]],
+        ],
+        claimCodeErrors: [],
+      },
+    },
+    {
+      case: "a code on the Outline too",
+      tags: "@unit @CLM-ONE-009",
+      examplesTags: "",
+      cells: ["CLM-ONE-001"],
+      expected: {
+        rowTags: [["CLM-ONE-001", "CLM-ONE-009", "ONE", "unit"]],
+        claims: [],
+        claimCodeErrors: [["several-claim-codes", ["CLM-ONE-001", "CLM-ONE-009"]]],
+      },
+    },
+    {
+      case: "a code on an Examples tag",
+      tags: "@unit",
+      examplesTags: "@CLM-ONE-009",
+      cells: ["CLM-ONE-001"],
+      expected: {
+        rowTags: [["CLM-ONE-001", "CLM-ONE-009", "ONE", "unit"]],
+        claims: [],
+        claimCodeErrors: [["several-claim-codes", ["CLM-ONE-001", "CLM-ONE-009"]]],
+      },
+    },
+  ])("$case", ({ tags, examplesTags, cells, expected }) => {
+    expect(reconciled(outline(tags, examplesTags, cells))).toEqual(expected);
+  });
+});
+
+describe("[SCN-GRD-008] an Outline tagged with a code and with no clm column is one claim", () => {
+  it("reads one claim under the Outline's code, whatever its rows and their Examples tags hold", () => {
+    const source = [
+      "@ONE",
+      "Feature: one",
+      "",
+      "  @unit @CLM-ONE-001",
+      "  Scenario Outline: one claim for all its rows",
+      "    Given a <thing>",
+      "",
+      "    @CLM-ONE-002",
+      "    Examples:",
+      "      | thing       |",
+      "      | CLM-ONE-003 |",
+      "      | CLM-ONE-004 |",
+    ].join("\n");
+    expect(parseScenarios(source).map((s) => s.claimCode)).toEqual(["CLM-ONE-001"]);
+  });
+
+  it("reads one claim under the Outline's code when its Examples block has no table", () => {
+    const source = ["@ONE", "Feature: one", "", "  @unit @CLM-ONE-001", "  Scenario Outline: one claim", "", "    Examples:"].join("\n");
+    expect(parseScenarios(source).map((s) => s.claimCode)).toEqual(["CLM-ONE-001"]);
   });
 });

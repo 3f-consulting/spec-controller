@@ -1,7 +1,7 @@
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
-import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/messages";
+import { IdGenerator, type Examples, type FeatureChild, type GherkinDocument, type Scenario as GherkinScenario } from "@cucumber/messages";
 import { bareTerm } from "../lib/bareTerm.js";
-import { headerFeatureCode, SCN_ID_SOURCE } from "../domain/featureCode.js";
+import { headerFeatureCode, SCN_CODE, SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { scenarioCodesOf, type ScenarioTags } from "../domain/scnTags.js";
 import { corpusCountsOf, type EvidenceObligations, type ParsedFeatureCounts } from "../domain/corpusCounts.js";
 import { obligationsRaisedBy } from "../domain/scenarioObligations.js";
@@ -27,6 +27,28 @@ function gherkinDocumentOf(source: string): GherkinDocument {
   return new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher()).parse(source);
 }
 
+const CLAIM_COLUMN = "clm";
+
+function claimColumnOf(examples: Examples): number {
+  return examples.tableHeader?.cells.findIndex((cell) => cell.value === CLAIM_COLUMN) ?? -1;
+}
+
+function rowCodeOf(cell: string): string[] {
+  return SCN_CODE.test(cell) ? [cell] : [];
+}
+
+function rowClaimsOf(outline: GherkinScenario, outlineTags: readonly string[]): ScenarioTags[] | null {
+  if (!outline.examples.some((examples) => claimColumnOf(examples) >= 0)) return null;
+  return outline.examples.flatMap((examples) => {
+    const column = claimColumnOf(examples);
+    const blockTags = examples.tags.map((tag) => bareTerm(tag.name));
+    return examples.tableBody.map((row) => ({
+      name: outline.name,
+      tags: [...row.cells.filter((_, index) => index === column).flatMap((cell) => rowCodeOf(cell.value)), ...outlineTags, ...blockTags],
+    }));
+  });
+}
+
 function contentOf({ feature }: GherkinDocument, source: string): FeatureFileContent {
   const scnOccurrences = countScnOccurrences(source);
   if (feature === undefined) return { featureCode: null, scenarios: [], scnOccurrences, tagScnOccurrences: 0 };
@@ -48,7 +70,10 @@ function contentOf({ feature }: GherkinDocument, source: string): FeatureFileCon
       if (!child.scenario) continue;
       countTags(child.scenario.tags);
       for (const examples of child.scenario.examples) countTags(examples.tags);
-      scenarios.push({ name: child.scenario.name, tags: [...bare(child.scenario.tags), ...inherited] });
+      const tags = [...bare(child.scenario.tags), ...inherited];
+      const rows = rowClaimsOf(child.scenario, tags);
+      if (rows === null) scenarios.push({ name: child.scenario.name, tags });
+      else scenarios.push(...rows);
     }
   };
 
