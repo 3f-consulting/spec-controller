@@ -5,11 +5,22 @@ template: |
 
   Start
     ^\s*#\s?${Comment}
-    ^\s*(?:Feature|Rule|Background|Scenario Outline|Scenario Template|Scenario|Example|Examples|Scenarios): -> Description
+    ^\s*(?:Scenario Outline|Scenario Template|Scenario|Example): -> ScenarioDescription
+    ^\s*(?:Feature|Rule|Background|Examples|Scenarios): -> Description
 
   Description
     ^\s*#\s?${Comment}
-    ^\s*(?:Feature|Rule|Background|Scenario Outline|Scenario Template|Scenario|Example|Examples|Scenarios): -> Description
+    ^\s*(?:Scenario Outline|Scenario Template|Scenario|Example): -> ScenarioDescription
+    ^\s*(?:Feature|Rule|Background|Examples|Scenarios): -> Description
+    ^\s*(?:@|\||Given |When |Then |And |But |\* ) -> Start
+    ^\s*$$
+    ^\s*${Description}
+
+  ScenarioDescription
+    ^\s*#\s?${Comment}
+    ^\s*(?:Scenario Outline|Scenario Template|Scenario|Example): -> ScenarioDescription
+    ^\s*(?:Feature|Rule|Background|Examples|Scenarios): -> Description
+    ^\s*(?:given|when|then|and|but)\s+
     ^\s*(?:@|\||Given |When |Then |And |But |\* ) -> Start
     ^\s*$$
     ^\s*${Description}

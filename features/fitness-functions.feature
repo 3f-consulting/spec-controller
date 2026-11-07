@@ -113,6 +113,17 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-030
     Scenario: no Given, When or Then line in the corpus names an output channel, an exit code, a flag, a file name or the binary
 
+  Rule: a lowercase given, when, then, and or but line in a scenario is held to the rules for a step
+
+    @fitness @SCN-FIT-077
+    Scenario: a lowercase line naming an exit code or a file name is refused
+
+    @fitness @SCN-FIT-078
+    Scenario: the description gates leave a lowercase line naming a code alone
+
+    @fitness @SCN-FIT-079
+    Scenario: a scenario Cucumber does not run, with lowercase lines, still has no step
+
   Rule: a title or description states behaviour in the reader's language, never the code's
 
     @fitness @SCN-FIT-038

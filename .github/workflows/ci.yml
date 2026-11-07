@@ -313,6 +313,42 @@ jobs:
         if: always()
         run: pnpm docs:interface-mechanic
 
+      - name: A lowercase step line in a scenario is held to the step rules
+        id: SCN-FIT-077
+        if: always()
+        run: pnpm docs:lowercase-step
+
+      - name: The description gates leave a lowercase step line in a scenario alone
+        id: SCN-FIT-078
+        if: always()
+        run: pnpm docs:lowercase-description
+
+      - name: A scenario Cucumber does not run, with lowercase lines, still has no step
+        id: SCN-FIT-079
+        if: always()
+        shell: bash
+        run: |
+          plant="$RUNNER_TEMP/lowercase-lines/planted.feature"
+          mkdir -p "${plant%/*}"
+          printf '%s\n' \
+            'Feature: a planted feature' \
+            '' \
+            '  @unit' \
+            '  Scenario: lowercase lines only' \
+            '    given a planted precondition' \
+            '    and a second planted precondition' \
+            '    when a planted action happens' \
+            '    then a planted outcome holds' \
+            '    but a planted outcome does not' \
+            '' \
+            '  @unit' \
+            '  Scenario: a capitalised control' \
+            '    Given a planted precondition' > "$plant"
+          report=$(node_modules/.bin/cucumber-js --profile outside --dry-run --format message "$plant" | jq -rn '[inputs] | (map(.testCase.pickleId // empty)) as $run | .[] | .pickle // empty | select((.steps | length) > 0 and (.id | IN($run[]))) | "\(.uri): \(.name) carries \(.steps | length) step(s)"' | awk '{ print } END { exit NR > 0 }') || true
+          printf '%s\n' "$report"
+          grep -qF ': a capitalised control carries 1 step(s)' <<< "$report" || { echo "The step check did not report the planted scenario with a capitalised Given"; exit 1; }
+          if grep -qF ': lowercase lines only carries' <<< "$report"; then echo "The step check reported the planted scenario with only lowercase lines"; exit 1; fi
+
       - name: Dump this run's step record
         if: always()
         env:

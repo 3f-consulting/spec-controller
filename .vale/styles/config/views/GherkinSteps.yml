@@ -5,7 +5,13 @@ template: |
   Start
     ^\s*""" -> QuotedDocString
     ^\s*``` -> FencedDocString
+    ^\s*(?:Scenario(?: Outline| Template)?|Example): -> Scenario
     ^\s*(?:Given|When|Then|And|But|\*)\s+${Step}
+
+  Scenario
+    ^\s*(?:Given|When|Then|And|But|\*)\s+${Step} -> Start
+    ^\s*(?:given|when|then|and|but)\s+${Step}
+    ^\s*(?:Feature|Rule|Background|Examples|Scenarios): -> Start
 
   QuotedDocString
     ^\s*""" -> Start
