@@ -79,6 +79,7 @@ export function scenarioCodesOf(tags: readonly string[]): Attribution {
 export interface ScenarioTags {
   readonly name: string;
   readonly tags: readonly string[];
+  readonly line?: number;
 }
 
 export interface FeatureFileScenarios {

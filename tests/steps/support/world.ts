@@ -10,9 +10,14 @@ export interface ClaimReconciliation {
   verdict: string;
 }
 
-export interface InheritedCodeRun {
+export interface ReconciledTarget {
+  readonly cwd: string;
+  readonly inputs: readonly string[];
+}
+
+export interface ReconciledRun {
   status: number | null;
-  report: ClaimReconciliationsSection<ClaimReconciliation>;
+  report: unknown;
 }
 
 export interface PointedAt {
@@ -54,6 +59,12 @@ export interface GrammarRow {
   claim: string;
   kind: string;
   qualityCheckReconciliations: { outcome?: string; evidenceObservations?: { outcome: string }[] }[];
+}
+
+export interface RowReconciliation {
+  claim: string;
+  verdict: string;
+  qualityCheckReconciliations: { qualityCheckKind: string; evidenceObservations?: { outcome: string }[] }[];
 }
 
 export interface GrammarRun {
@@ -175,7 +186,8 @@ export class SpecControllerWorld extends World {
   target!: ArrangedTarget;
 
   ancestor!: string;
-  inheritedCodeRun!: InheritedCodeRun | null;
+  reconciledTarget!: ReconciledTarget;
+  reconciledRun!: ReconciledRun | null;
   nestedCorpus!: string;
   flatCorpus!: string;
   nestedRun!: CorpusRun | null;
@@ -184,6 +196,7 @@ export class SpecControllerWorld extends World {
   sameNameMarkdown!: string;
   grammarTarget!: { features: Record<string, string>; vitest?: unknown; cucumber?: unknown; ciSteps?: unknown };
   grammarRun!: GrammarRun;
+  rowsTarget!: string;
 
   report!: string;
   savedJson!: SavedLedger;

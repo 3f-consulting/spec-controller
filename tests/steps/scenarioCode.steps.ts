@@ -8,7 +8,7 @@ import { entryText, shownAmong, shownEntry, showsEntry } from "./support/catalog
 import { allocate, git } from "./support/codeAllocation.js";
 import { exitOn } from "./support/runExit.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
-import type { GrammarRow, GrammarRun, InheritedCodeRun, SpecControllerWorld } from "./support/world.js";
+import type { GrammarRow, GrammarRun, ClaimReconciliation, ReconciledRun, SpecControllerWorld } from "./support/world.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
 import { scenarioCodesOnReport } from "./support/reportScenarioCodes.js";
 import { publishedSchemaNamesScenarioCodeErrors, scenarioCodeErrorsOnReport } from "./support/reportErrorsInTheInputs.js";
@@ -624,40 +624,33 @@ Given(
   function (this: SpecControllerWorld, from: string) {
     assert.ok(SCENARIO_CODE_INHERITED_FROM[from], `no fixture inherits a scenario code from its ${from}`);
     this.ancestor = from;
-    this.inheritedCodeRun = null;
+    const target = `${INHERITED}/${from.toLowerCase()}`;
+    this.reconciledTarget = {
+      cwd: process.cwd(),
+      inputs: ["--features", `${target}/features`, "--vitest", `${target}/vitest.json`, "--package-json", `${target}/package.json`, "--ci", target],
+    };
+    this.reconciledRun = null;
   },
 );
 
 When("balance reconciles that target", function (this: SpecControllerWorld) {
-  const target = `${INHERITED}/${this.ancestor.toLowerCase()}`;
-  const result = spawnSync(
-    NODE,
-    [
-      ...SPEC_CONTROLLER_ARGV,
-      "balance",
-      "--features", `${target}/features`,
-      "--vitest", `${target}/vitest.json`,
-      "--package-json", `${target}/package.json`,
-      "--ci", target,
-      "--format", "json",
-    ],
-    { cwd: process.cwd(), encoding: "utf8" },
-  );
+  const { cwd, inputs } = this.reconciledTarget;
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...inputs, "--format", "json"], { cwd, encoding: "utf8" });
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
   try {
-    this.inheritedCodeRun = { status: result.status, report: JSON.parse(result.stdout) as InheritedCodeRun["report"] };
+    this.reconciledRun = { status: result.status, report: JSON.parse(result.stdout) as unknown };
   } catch {
     assert.fail(`expected a JSON reconciliation on stdout; exit ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
   }
 });
 
-function reconciled(world: SpecControllerWorld): InheritedCodeRun {
-  assert.ok(world.inheritedCodeRun, "the target was not reconciled");
-  return world.inheritedCodeRun;
+function reconciled(world: SpecControllerWorld): ReconciledRun {
+  assert.ok(world.reconciledRun, "the target was not reconciled");
+  return world.reconciledRun;
 }
 
 Then("the scenario is reconciled once, balanced, on its scenario code's row", function (this: SpecControllerWorld) {
-  const rows = claimReconciliationsOf(reconciled(this).report).filter(({ kind }) => kind === "scenario");
+  const rows = claimReconciliationsOf<ClaimReconciliation>(reconciled(this).report).filter(({ kind }) => kind === "scenario");
   assert.deepEqual(
     rows.map(({ claim, verdict }) => ({ claim, verdict })),
     [{ claim: SCENARIO_CODE_INHERITED_FROM[this.ancestor], verdict: "balanced" }],
@@ -668,7 +661,7 @@ Then("the scenario is reconciled once, balanced, on its scenario code's row", fu
 Then("no reconciliation names it as a scenario with no scenario code", function (this: SpecControllerWorld) {
   const { report } = reconciled(this);
   assert.deepEqual(scenarioCodesOnReport(report).untaggedScenarios, [], "the scenario was also listed as carrying no scenario code");
-  const named = claimReconciliationsOf(report).filter(({ claim }) => claim.endsWith(THE_ONE_SCENARIO));
+  const named = claimReconciliationsOf<ClaimReconciliation>(report).filter(({ claim }) => claim.endsWith(THE_ONE_SCENARIO));
   assert.deepEqual(named, [], "a reconciliation row names the scenario by its title, as one with no scenario code");
 });
 

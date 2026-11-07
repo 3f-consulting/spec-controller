@@ -3,9 +3,11 @@ import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { readingOf, readUtf8, type ReadFault } from "./inputReading.js";
 import { corpusPathOf, MissingFeatureCorpusError, readFeatureSources, slugOf, type FeatureFileSource } from "./ingestScenarios.js";
 import {
+  claimCodesAtOf,
   parseFeatureCorpus,
   parseWorkflows,
   type ParsedFeatureFile,
+  type ClaimCodesAt,
   type ParsedWorkflow,
   type Source,
   type SourceFault,
@@ -121,8 +123,8 @@ const OBSERVATION_READERS = {
   jest: (report, root) => parseVitestEvidenceObservations(report as VitestJsonReport, root),
   junit: (report) => parseJunitEvidenceObservations(report as JunitXmlReport),
   rspec: (report, root) => parseRspecEvidenceObservations(report as RspecJsonReport, root),
-  cucumber: (report, root) => parseCucumberEvidenceObservations(report as CucumberJsonReport, root),
-} satisfies Readonly<Record<string, (report: unknown, root: string) => EvidenceObservation[]>>;
+  cucumber: (report, root, claimCodesAt) => parseCucumberEvidenceObservations(report as CucumberJsonReport, root, claimCodesAt),
+} satisfies Readonly<Record<string, (report: unknown, root: string, claimCodesAt: ClaimCodesAt) => EvidenceObservation[]>>;
 
 type ObservationReader = keyof typeof OBSERVATION_READERS;
 
@@ -137,8 +139,8 @@ function isObservationReader(reader: EvidenceReader): reader is ObservationReade
   return Object.hasOwn(OBSERVATION_READERS, reader);
 }
 
-function observationsOf(reports: readonly EvidenceReport[], root: string): EvidenceObservation[] {
-  return reports.flatMap(({ reader, document }) => (isObservationReader(reader) ? OBSERVATION_READERS[reader](document, root) : []));
+function observationsOf(reports: readonly EvidenceReport[], root: string, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
+  return reports.flatMap(({ reader, document }) => (isObservationReader(reader) ? OBSERVATION_READERS[reader](document, root, claimCodesAt) : []));
 }
 
 function documentReadBy(reports: readonly EvidenceReport[], reader: EvidenceReader): unknown {
@@ -166,7 +168,7 @@ export function runReconcile(
     packageJson,
     ciWorkflows: workflows,
     ciStepRecord: documentReadBy(reports, "ci-step-record") as StepRecord | undefined,
-    behaviouralObservations: observationsOf(reports, root),
+    behaviouralObservations: observationsOf(reports, root, claimCodesAtOf(corpus)),
     deferralTags: BUILT_IN_DEFERRAL_TAGS,
     reconcilerInvocation: RECONCILER_INVOCATION,
   });

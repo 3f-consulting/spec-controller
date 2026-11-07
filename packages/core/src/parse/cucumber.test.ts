@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
+import { claimCodesAtOf } from "./scenarios.js";
+import { parsedFeatures } from "./parsedFeatures.test-utils.js";
 import type { BehaviouralEvidenceObservation } from "../model.js";
 import { CoreMessage } from "../render/messages.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
@@ -283,5 +285,79 @@ describe("[SCN-CUC-001] a Cucumber scenario tagged with two scenario codes credi
     expect(parseCucumberEvidenceObservations(reportOf(tagNames, "passed"))).toEqual([
       { qualityCheckKind: "integration", claimCode: "SCN-AAA-001", status: "passed", locator: "features/several.feature", testName: "two codes" },
     ]);
+  });
+});
+
+describe("[SCN-CUC-006] a passing row and a failing row of one Outline reconcile apart", () => {
+  const outline = [
+    "@ONE",
+    "Feature: one",
+    "",
+    "  @integration",
+    "  Scenario Outline: a claim for each row",
+    "    Given the row <result>",
+    "",
+    "    Examples:",
+    "      | clm         | result |",
+    "      | CLM-ONE-001 | passes |",
+    "      | CLM-ONE-002 | fails  |",
+  ];
+
+  const rowRan = (line: number, status: string) => ({
+    line,
+    name: "a claim for each row",
+    tags: [{ name: "@ONE" }, { name: "@integration" }],
+    steps: [{ keyword: "Given ", name: "the row", result: { status } }],
+  });
+
+  it("credits each row's result to the code in the clm cell of the row at that line of that feature file", () => {
+    const codesAt = claimCodesAtOf(parsedFeatures([outline.join("\n")], ["rows.feature"]));
+    const report: CucumberJsonReport = [{ uri: "features/rows.feature", elements: [rowRan(10, "passed"), rowRan(11, "failed")] }];
+    expect(parseCucumberEvidenceObservations(report, undefined, codesAt).map(({ claimCode, status }) => ({ claimCode, status }))).toEqual([
+      { claimCode: "CLM-ONE-001", status: "passed" },
+      { claimCode: "CLM-ONE-002", status: "failed" },
+    ]);
+  });
+
+  it.each([
+    { where: "Cucumber ran beside the features folder", uri: "features/rows.feature" },
+    { where: "Cucumber ran in a package of a larger repository", uri: "packages/app/features/rows.feature" },
+    { where: "the report names the file by an absolute path", uri: "/home/team/app/features/rows.feature" },
+    { where: "the report separates folders with backslashes", uri: "app\\features\\rows.feature" },
+  ])("ties a row's result to its code wherever $where", ({ uri }) => {
+    const codesAt = claimCodesAtOf(parsedFeatures([outline.join("\n")], ["rows.feature"]));
+    const report: CucumberJsonReport = [{ uri, elements: [rowRan(10, "passed")] }];
+    expect(parseCucumberEvidenceObservations(report, undefined, codesAt).map(({ claimCode }) => claimCode)).toEqual(["CLM-ONE-001"]);
+  });
+
+  it("ties a row to the corpus file whose path the report's path ends in most fully, not a shorter one it also ends in", () => {
+    const other = outline.map((line) => line.replace("CLM-ONE-001", "CLM-ONE-005").replace("CLM-ONE-002", "CLM-ONE-006"));
+    const codesAt = claimCodesAtOf(parsedFeatures([outline.join("\n"), other.join("\n")], ["rows.feature", "nested/rows.feature"]));
+    const report: CucumberJsonReport = [{ uri: "features/nested/rows.feature", elements: [rowRan(10, "passed")] }];
+    expect(parseCucumberEvidenceObservations(report, undefined, codesAt).map(({ claimCode }) => claimCode)).toEqual(["CLM-ONE-005"]);
+  });
+
+  it("ties no row of a corpus file the report's path does not end in", () => {
+    const codesAt = claimCodesAtOf(parsedFeatures([outline.join("\n")], ["rows.feature"]));
+    const report: CucumberJsonReport = [{ uri: "features/other-rows.feature", elements: [rowRan(10, "passed")] }];
+    expect(parseCucumberEvidenceObservations(report, undefined, codesAt).map(({ claimCode }) => claimCode)).toEqual([null]);
+  });
+});
+
+describe("[SCN-CUC-006] a Cucumber scenario the lookup cannot place reads its tags alone", () => {
+  const answersAnyRow = () => ["CLM-ONE-009"];
+  const passed = { tags: [{ name: "@CLM-ONE-001" }], steps: [{ result: { status: "passed" } }] };
+
+  it.each([
+    { shape: "a report element with no line", feature: { uri: "features/rows.feature", elements: [passed] }, claimCodesAt: answersAnyRow },
+    { shape: "a feature with no uri or name", feature: { elements: [{ ...passed, line: 10 }] }, claimCodesAt: answersAnyRow },
+    { shape: "no lookup handed in", feature: { uri: "features/rows.feature", elements: [{ ...passed, line: 10 }] }, claimCodesAt: undefined },
+  ])("$shape credits the code its tags carry", ({ feature, claimCodesAt }) => {
+    expect(parseCucumberEvidenceObservations([feature], undefined, claimCodesAt).map(({ claimCode }) => claimCode)).toEqual(["CLM-ONE-001"]);
+  });
+
+  it("credits neither of a code tag and a different code in the row at its line", () => {
+    const report: CucumberJsonReport = [{ uri: "features/rows.feature", elements: [{ ...passed, line: 10 }] }];
+    expect(parseCucumberEvidenceObservations(report, undefined, answersAnyRow).map(({ claimCode }) => claimCode)).toEqual([null]);
   });
 });

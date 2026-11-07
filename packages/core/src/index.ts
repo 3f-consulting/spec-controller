@@ -22,7 +22,9 @@ export {
   untaggedScenariosOf,
   featureCountsOf,
   corpusCountsOfFeatures,
+  claimCodesAtOf,
 } from "./parse/scenarios.js";
+export type { ClaimCodesAt } from "./parse/scenarios.js";
 export type { ParsedFeatureFile } from "./parse/scenarios.js";
 
 export { evidenceObligations, corpusCountsOf, sharedScnCodesOf, untaggedScenarioId } from "./domain/corpusCounts.js";

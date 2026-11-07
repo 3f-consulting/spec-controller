@@ -29,3 +29,12 @@ Feature: A Cucumber run's results answer integration and end-to-end evidence obl
 
     @unit @SCN-CUC-004
     Scenario: a Cucumber scenario whose steps all passed posts a passed observation, one with a failed step posts a failed one, and one with a skipped step posts nothing at any of its layers
+
+  Rule: Cucumber's result for a row credits that row's code
+
+    @unit @integration @SCN-CUC-006
+    Scenario: a passing row and a failing row of one Outline reconcile apart
+      Given a target whose one Outline is tagged @integration and has a clm column holding CLM-ONE-001 and CLM-ONE-002
+      And Cucumber's evidence report says CLM-ONE-001's row passed and CLM-ONE-002's row failed
+      When balance reconciles that target
+      Then CLM-ONE-001's Claim Reconciliation is balanced, and CLM-ONE-002's is out of balance with a failing reconciling item

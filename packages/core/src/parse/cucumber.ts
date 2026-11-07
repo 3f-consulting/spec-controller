@@ -3,12 +3,14 @@ import { relativizeToRoot } from "../lib/portablePath.js";
 import { withoutSigil } from "../lib/bareTerm.js";
 import { SCN_ID_SOURCE } from "../domain/featureCode.js";
 import { attributionOf } from "../domain/attribution.js";
+import type { ClaimCodesAt } from "./scenarios.js";
 import { evidenceOfRunResult, fallbackLayerOf, layersPostedAt, type RunResult } from "../domain/journal.js";
 
 export type CucumberJsonReport = ReadonlyArray<{
   readonly uri?: string;
   readonly name?: string;
   readonly elements?: ReadonlyArray<{
+    readonly line?: number;
     readonly name?: string;
     readonly tags?: ReadonlyArray<{ readonly name?: string }>;
     readonly steps?: ReadonlyArray<{
@@ -29,14 +31,16 @@ function ambiguousNote(step: { keyword?: string; name?: string }): ObservationNo
 
 export function parseCucumberEvidenceObservations(
   report: CucumberJsonReport,
-  root?: string
+  root?: string,
+  claimCodesAt: ClaimCodesAt = () => [],
 ): EvidenceObservation[] {
   const results: EvidenceObservation[] = [];
   for (const feature of report) {
     const named = feature.uri ?? feature.name;
     const locator = named && relativizeToRoot(named, root);
     for (const scenario of feature.elements ?? []) {
-      results.push(...scenarioObservations(scenario, locator));
+      const rowCodes = locator === undefined || scenario.line === undefined ? [] : claimCodesAt(locator, scenario.line);
+      results.push(...scenarioObservations(scenario, locator, rowCodes));
     }
   }
   return results;
@@ -53,11 +57,12 @@ function citedCodesOf(tagNames: readonly string[]): string[] {
 
 function scenarioObservations(
   scenario: CucumberScenario,
-  locator: string | undefined
+  locator: string | undefined,
+  rowCodes: readonly string[],
 ): EvidenceObservation[] {
   const tagNames = (scenario.tags ?? []).map((t) => withoutSigil(t.name ?? ""));
   const layers = layersPostedAt(tagNames, fallbackLayerOf("scenario-runs"));
-  const { claimCode, severalCodes } = attributionOf(citedCodesOf(tagNames));
+  const { claimCode, severalCodes } = attributionOf([...citedCodesOf(tagNames), ...rowCodes]);
   const severalNotes: ObservationNote[] = severalCodes ? [{ kind: "several-claim-codes", codes: severalCodes }] : [];
   const steps = scenario.steps ?? [];
   const evidence = evidenceOfRunResult(runResultOf(steps));

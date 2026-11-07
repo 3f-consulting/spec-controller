@@ -45,6 +45,7 @@ function rowClaimsOf(outline: GherkinScenario, outlineTags: readonly string[]): 
     return examples.tableBody.map((row) => ({
       name: outline.name,
       tags: [...row.cells.filter((_, index) => index === column).flatMap((cell) => rowCodeOf(cell.value)), ...outlineTags, ...blockTags],
+      line: row.location.line,
     }));
   });
 }
@@ -86,6 +87,22 @@ function contentOf({ feature }: GherkinDocument, source: string): FeatureFileCon
 
 export function parseFeatureCorpus(sources: readonly Source[]): SourcesParse<FeatureFileContent> {
   return parseSources(sources, gherkinDocumentOf, contentOf);
+}
+
+/** The claim codes of the row parsed at a line of the feature file a report names by a path ending in that file's path within the corpus. */
+export type ClaimCodesAt = (path: string, line: number) => readonly string[];
+
+const portable = (path: string): string => path.replaceAll("\\", "/");
+
+export function claimCodesAtOf(features: readonly ParsedFeatureFile[]): ClaimCodesAt {
+  const rows = features.flatMap(({ file, scenarios }) =>
+    scenarios.map(({ line, tags }) => ({ file: `/${portable(file)}`, line, codes: tags.filter((tag) => SCN_CODE.test(tag)) }))
+  );
+  return (path, line) => {
+    const reported = `/${portable(path)}`;
+    const matching = rows.filter((row) => row.line === line && reported.endsWith(row.file));
+    return matching.sort((a, b) => b.file.length - a.file.length)[0]?.codes ?? [];
+  };
 }
 
 interface TaggedScenario {
