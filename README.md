@@ -4,7 +4,7 @@
 
 `balance` fails your build when your scenarios and your tests stop agreeing.
 
-You write each behaviour as a scenario in a `.feature` file. You give the scenario two kinds of tag: the evidence it needs, such as `@unit` or `@e2e`, and a scenario code of the form `@SCN-<FFF>-<NNN>` or `@CLM-<FFF>-<NNN>`. Each test cites the code of the scenario it proves.
+You write each behaviour as a scenario in a `.feature` file. You give the scenario two kinds of tag: the evidence it needs, such as `@unit` or `@e2e`, and a claim code of the form `@SCN-<FFF>-<NNN>` or `@CLM-<FFF>-<NNN>`. Each test cites the code of the scenario it proves.
 
 On every CI run, `balance` reconciles the scenarios against the test reports and CI steps that actually ran. Every check a scenario asks for must have run, be credited to that scenario, pass, and be able to fail. Any disagreement turns the build red.
 
@@ -62,13 +62,13 @@ Each kind of disagreement has its own outcome. Every outcome except `satisfied` 
 | Skip a test | `missing`: a skipped test proves nothing |
 | Break the behaviour a test checks | `failing` |
 | Re-point a test at another scenario | `missing` on the original |
-| Drop the scenario code from a test's title | the test still runs but lands on the unnamed claim (`cites-no-scenario`), and its scenario reads `missing` |
+| Drop the claim code from a test's title | the test still runs but lands on the unnamed claim (`cites-no-scenario`), and its scenario reads `missing` |
 | Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-scenario`) |
 | Cite a scenario from a unit test when its tags ask only for `@e2e` | `no-evidence-obligation`: evidence the scenario never asked for |
 | Delete a CI check step | `missing` on its fitness function's scenario |
 | Let a CI check step or its job run under `continue-on-error` | without the run's step record: `watermelon`, passing, but its red might not fail the CI run. With the record, the step's own outcome decides: a red it swallowed reads `failing`, and a green reads `satisfied` |
-| Copy a scenario and keep its `@SCN` code | both copies share one row, and every Quality Check Reconciliation on it reads `duplicate-scn-code`: no evidence can be credited to either |
-| Write a scenario's tags but no `@SCN` code | `no-scn-code`: nothing can cite it |
+| Copy a scenario and keep its claim code | both copies share one row, and every Quality Check Reconciliation on it reads `duplicate-claim-code`: no evidence can be credited to either |
+| Write a scenario's tags but no claim code | `no-claim-code`: nothing can cite it |
 | Remove the tags naming a scenario's kinds of quality check while nothing cites it | `both-missing`: it asks for nothing, and nothing answers |
 | Leave a test file that fails before any of its tests runs | `broken`, on the unnamed claim: its proof never ran |
 
@@ -118,15 +118,15 @@ Here is part of the report for a larger set of scenarios: the run verdict and th
 - 8 Claim Reconciliation(s): 3 balanced, 5 out-of-balance.
 - 1 Claim Reconciliation(s) for cited scenario ids with no real scenario.
 - 1 Claim Reconciliation(s) for evidence observations no one scenario can take, aggregated into "(unnamed claim)".
-- 0 @SCN ids seen in non-tag context, excluded: each is an @SCN code written in a feature file's prose, a comment or step text rather than as a tag, so it marks no scenario and raises no claim
+- 0 claim codes seen in non-tag context, excluded: each is a claim code written in a feature file's prose, a comment or step text rather than as a tag, so it marks no scenario and raises no claim
 
 Key: each evidence cell reads *obligation*/*observations*.
 - The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means they raise none of that kind, as a pending tag raises none.
 - The number counts the scenario's Evidence Observations of that kind that ran. `-` means none.
 - For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that raises no unit obligation, which puts the row out of balance even where its unit evidence is pending.
 - A blank cell means no obligation and no Evidence Observation that ran; `—` marks the row of a phantom claim or of the unnamed claim.
-- A row named `feature file : scenario title` is a scenario that carries no @SCN code. The run reads none of its tags, so its evidence cells are blank, and its reconciling item says that no Evidence Observation can link to it.
-- In Reconciling items, `—` means the row has no reconciling item, and *untagged* means a scenario that carries an @SCN code and no tag that raises an Evidence Obligation.
+- A row named `feature file : scenario title` is a scenario that carries no claim code. The run reads none of its tags, so its evidence cells are blank, and its reconciling item says that no Evidence Observation can link to it.
+- In Reconciling items, `—` means the row has no reconciling item, and *untagged* means a scenario that carries a claim code and no tag that raises an Evidence Obligation.
 - On the unnamed claim's row, the counts after an item, such as `1 ran, 1 passed, 0 failed`, are of that item's own tests, and a fitness item counts its CI steps; a broken item stands alone, outside those counts.
 - CI steps names the steps the Evidence observations table gives for each kind of quality check other than fitness that the row obligates or observes, whether or not an Evidence Observation of that kind ran for the row, and the step each of the row's fitness Evidence Observations names: `U/-` beside a step names the step that runs unit tests, none of which answered this row. A blank CI steps cell means no such step is known.
 - Where a row's item says its CI step or its job sets `continue-on-error`, the name in parentheses after it is its fitness function. Remove `continue-on-error` from its CI step and from its job, or set it to false, and the check's red fails the CI run.

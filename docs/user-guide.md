@@ -24,7 +24,7 @@ You do not need feature files to start. A project with none, or with feature fil
 - [Wiring into CI](#wiring-into-ci)
 - [Reading the report](#reading-the-report)
 - [Command reference — `balance`](#command-reference--balance)
-- [Allocating the next scenario code — `spec-controller allocate`](#allocating-the-next-scenario-code--spec-controller-allocate)
+- [Allocating the next claim code — `spec-controller allocate`](#allocating-the-next-claim-code--spec-controller-allocate)
 - [Troubleshooting](#troubleshooting)
 - [What spec-controller assumes, and what it does not do](#what-spec-controller-assumes-and-what-it-does-not-do)
 
@@ -243,7 +243,7 @@ def test_offers_the_next_code():
 | exactly one `scn` property | answers that scenario: passing, or failing when it carries a `<failure>` |
 | skipped | nothing, as a skipped Vitest test posts nothing |
 | a code no feature file carries | makes a phantom claim |
-| no `scn` property, or a value that is not a scenario code | lands on the unnamed claim |
+| no `scn` property, or a value that is not a claim code | lands on the unnamed claim |
 | two or more `scn` properties | **credits none of them**; the unnamed claim's row names every code, because one test proves exactly one scenario |
 | a module that fails to collect, or a test whose setup or teardown errors | never ran its proof: it posts a broken item, the run is unsound (exit `4`), and the scenario it cites reads `missing` |
 
@@ -632,7 +632,7 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 
 **A deferral tag is scenario scope. `@<quality-check-kind>pending` is not.** `@integrationpending` defers only the integration obligation on its scenario, so a passing `@unit` beside it still reconciles satisfied. A deferral tag defers them all. The two compose: a scenario carrying both raises a Pending Item from each.
 
-**Neither defers anything on a scenario that shares its `@SCN` code with another.** It reads `duplicate-scn-code` at each kind of quality check it raises, deferred or not, or once when it raises none, and it has no Pending Item. Give it a code of its own before deferring it.
+**Neither defers anything on a scenario that shares its claim code with another.** It reads `duplicate-claim-code` at each kind of quality check it raises, deferred or not, or once when it raises none, and it has no Pending Item. Give it a code of its own before deferring it.
 
 `balance --help` prints the key and the built-in set.
 
@@ -780,7 +780,7 @@ Two limits:
 The output is the **Evidence Reconciliation**, the whole reconciliation, in two renderings of the same model:
 
 - **Markdown**, for people. One **Claim Reconciliation** per claim. Each carries a **verdict**, **balanced** or **out-of-balance**, and is broken into **Quality Check Reconciliations**, one per kind of quality check, each holding its **Reconciliation lines**. Each line carries an **outcome** (`satisfied`, `missing`, `failing`, `watermelon`, …). The non-`satisfied` lines are the **reconciling items**. A **Summary** gives the totals.
-- **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. `summary.runVerdict` names the run verdict the Markdown's headline states (`balanced`, `out-of-balance`, `scenario-code-errors`, `pending`, `unsound` or `nothing-to-reconcile`), so automation reads it instead of working it out from the ledger.
+- **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. `summary.runVerdict` names the run verdict the Markdown's headline states (`balanced`, `out-of-balance`, `claim-code-errors`, `pending`, `unsound` or `nothing-to-reconcile`), so automation reads it instead of working it out from the ledger.
 
 Both carry a **provenance** header recording what was reconciled (target, source SHA, input paths), so a reconciliation is reproducible and attributable.
 
@@ -805,8 +805,8 @@ The JSON names each outcome by its handle, and the Markdown prints the outcome's
 | `failing` | Evidence Observation is failing | a swallowed red also reads `failing`, given `--ci-steps` |
 | `watermelon` | Evidence Observation is passing but its CI step or its job sets `continue-on-error` so its red might not fail the CI run | see below |
 | `no-evidence-obligation` | Evidence Observation cites a Scenario with no matching Evidence Obligation | see [When a row reads `no-evidence-obligation`](#when-a-row-reads-no-evidence-obligation) |
-| `duplicate-scn-code` | Evidence Obligation's @SCN code is carried by another Scenario | see below |
-| `no-scn-code` | Evidence Obligation has no @SCN code for an Evidence Observation to link to | |
+| `duplicate-claim-code` | Evidence Obligation's claim code is carried by another Scenario | see below |
+| `no-claim-code` | Evidence Obligation has no claim code for an Evidence Observation to link to | |
 
 ### Watermelons
 
@@ -816,51 +816,51 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 An `@SCN` code has the form `SCN-<FFF>-<NNN>`: a feature part of two to five uppercase letters or digits, then a number of any width. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[SCN-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
 
-So an id such as `@SCN-TOOLONGCODE-001` is not an `@SCN` code. It opens no account and cites nothing. A scenario tagged only with it has no `@SCN` code, and reconciles as `no-scn-code`.
+So an id such as `@SCN-TOOLONGCODE-001` is not an `@SCN` code. It opens no account and cites nothing. A scenario tagged only with it has no claim code, and reconciles as `no-claim-code`.
 
-The tool judges scenario code errors only over the corpus that `--features` names.
+The tool judges claim code errors only over the corpus that `--features` names.
 
 ### Duplicate `@SCN` codes
 
 **An `@SCN` code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry can arise from the same id written twice, or from an `@SCN` on a `Feature:` or `Rule:` line that every scenario beneath it inherits. Either way:
 
-- Each scenario reconciles as a Claim Reconciliation of its own, under the code, and every Quality Check Reconciliation on it reads `duplicate-scn-code`: *Evidence Obligation's @SCN code is carried by another Scenario*. Each row's reconciling item names the scenario it reconciles (*this one is login.feature : a user with the right password is let in*), and the JSON carries it as `scenario: { feature, title }`.
+- Each scenario reconciles as a Claim Reconciliation of its own, under the code, and every Quality Check Reconciliation on it reads `duplicate-claim-code`: *Evidence Obligation's claim code is carried by another Scenario*. Each row's reconciling item names the scenario it reconciles (*this one is login.feature : a user with the right password is let in*), and the JSON carries it as `scenario: { feature, title }`.
 - No evidence citing that code can be attributed to either scenario, so both claims are out of balance whatever the evidence says. An evidence observation citing the code credits neither and posts to the unnamed claim, naming the code.
 - The rest of the report is unaffected. Every other account reconciles exactly as it would without the duplicate.
-- The report names each shared code with the file and the name of every scenario carrying it (`summary.scenarioCodes.sharedScnCodes` in the JSON).
+- The report names each shared code with the file and the name of every scenario carrying it (`summary.claimCodes.sharedClaimCodes` in the JSON).
 - The run exits `1`, the out-of-balance verdict, and the report is printed.
 
 ### Scenario code errors
 
-**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a scenario code error.** Every `balance` run judges the corpus it read. When the corpus holds an error, the run lists it under `### Scenario code errors` (`errorsInTheInputs.scenarioCodeErrors` in the JSON), in `## Errors in the inputs` right after the run provenance. Its entry opens with its code, as in `` - `foreign-scn-code` — … ``. There are four errors:
+**A feature file is the account class its scenarios' codes are filed under, and a misfiled code is a claim code error.** Every `balance` run judges the corpus it read. When the corpus holds an error, the run lists it under `### Claim code errors` (`errorsInTheInputs.claimCodeErrors` in the JSON), in `## Errors in the inputs` right after the run provenance. Its entry opens with its code, as in `` - `foreign-claim-code` — … ``. There are four errors:
 
 | Handle | The fault | The fix |
 | --- | --- | --- |
 | `foreign-claim-code` | a scenario's code names a feature its file does not carry, e.g. `@SCN-<FFF>-<NNN>` in a file headed with a code other than `@<FFF>` | re-code the scenario for its file, or move it to the file whose header carries the code its id names, when exactly one does; the finding names that file, or says no file carries the code |
-| `no-feature-code` | a feature file carries no header code while its scenarios carry `@SCN` codes (a header longer than five characters is no header code) | give the file a header code, and code its scenarios for it |
+| `no-feature-code` | a feature file carries no header code while its scenarios carry claim codes (a header longer than five characters is no header code) | give the file a header code, and code its scenarios for it |
 | `duplicate-feature-code` | two feature files carry one header code | give one of them a code of its own |
-| `several-claim-codes` | one scenario carries more than one distinct `@SCN` code, so it opens no account under any of them, and a test citing one of them cites a code no scenario carries | give the scenario one code |
+| `several-claim-codes` | one scenario carries more than one distinct claim code, so it opens no account under any of them, and a test citing one of them cites a code no scenario carries | give the scenario one code |
 
 - The first three misfile a code without making any posting ambiguous, so every account still reconciles exactly as it would if the code were filed correctly.
-- What a misfiled code falsifies is the by-feature cut, which groups on the code. So **any scenario code error fails the run at exit `1`**.
-- A run carrying both a scenario code error and an out-of-balance account exits `1`, and its verdict names both.
+- What a misfiled code falsifies is the by-feature cut, which groups on the code. So **any claim code error fails the run at exit `1`**.
+- A run carrying both a claim code error and an out-of-balance account exits `1`, and its verdict names both.
 - When the codes are clean, no section prints. The run verdict under `## Summary` is followed by one line saying so, with how many feature files the run judged, coded or not, and how many feature codes they carry, each counted on its own.
 - Over a corpus with no feature file, no section prints either. The line after the run verdict says that no feature file was judged, and states nothing clean.
-- The section always says that a duplicated `@SCN` is reported on its account's rows, never in this section.
+- The section always says that a duplicated claim code is reported on its account's rows, never in this section.
 
 ### Exit codes
 
 | Exit | Meaning |
 |---|---|
 | `0` | balanced; or any `1` or `3` verdict under `--exit-zero` |
-| `1` | out of balance, or scenario code errors |
+| `1` | out of balance, or claim code errors |
 | `2` | usage error |
 | `3` | Pending Items present under `--strict` |
 | `4` | unsound run |
 | `5` | nothing to reconcile |
 | `6` | unexpected error: the run stops before a verdict, and one line on stderr names the error |
 
-When several codes apply, this ladder decides: nothing to reconcile (`5`), then unsound (`4`), then scenario code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). An unexpected error (`6`) is not on the ladder. A run exits `6` only when it does not finish. A stored run that cannot write its `run.yaml` does not finish, so it exits `6`, and the reports it has already written stay in the run directory. A run already refused as a usage error keeps `2` if an error follows.
+When several codes apply, this ladder decides: nothing to reconcile (`5`), then unsound (`4`), then claim code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). An unexpected error (`6`) is not on the ladder. A run exits `6` only when it does not finish. A stored run that cannot write its `run.yaml` does not finish, so it exits `6`, and the reports it has already written stay in the run directory. A run already refused as a usage error keeps `2` if an error follows.
 
 An error after the run reaches its verdict does not change the exit code. One line goes to stderr, `spec-controller hit an unexpected error [unexpected-error-after-verdict] after its verdict: <name>: <message>`, and the run exits with the verdict's code: the report stands as written. A run writes at most one such line, whichever kind it is.
 
@@ -945,7 +945,7 @@ Run `spec-controller --help` for the top-level summary of the commands and host 
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See [`--format`](#--format--routing-the-output). |
 | `--render-from-json <path>` | Re-render Markdown from a saved Evidence Reconciliation JSON, with no reconciliation and no live inputs. See [Re-rendering a saved run](#re-rendering-a-saved-run). |
 | `--strict` | Fail the run (exit `3`) when it carries Pending Items. Otherwise, Pending Items do not affect the run's outcome. |
-| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance or scenario-code-error (`1`) verdict, or a `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`), nothing-to-reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. Use it as the on-ramp before gating. |
+| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance or claim-code-error (`1`) verdict, or a `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`), nothing-to-reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. Use it as the on-ramp before gating. |
 | `--help`, `-h` | Show `balance`'s help and exit. |
 
 ### `--format` — routing the output
@@ -1028,9 +1028,9 @@ spec-controller --store ~/spec-controller-runs --run-id 2026-07-09-ci balance \
 
 ---
 
-## Allocating the next scenario code — `spec-controller allocate`
+## Allocating the next claim code — `spec-controller allocate`
 
-Ask the tool for the next scenario code instead of inventing one:
+Ask the tool for the next claim code instead of inventing one:
 
 ```bash
 spec-controller allocate <FFF>
@@ -1055,7 +1055,7 @@ The code is one past the highest the repository has **ever** carried for that fe
   - when history is short, `history: not a git repository — none read` or `history: shallow clone — history before <commit> unread`, each followed by what that risks.
 - **Exit codes:**
   - `0` when it answers.
-  - `2` for a usage error (no part, a part not in the scenario-code form, a second part, a flag it does not take, or a host modifier such as `--store` before it) or an unknown part. The message says which of the two it was. An unknown part's refusal lists the parts the feature files carry.
+  - `2` for a usage error (no part, a part not in the claim-code form, a second part, a flag it does not take, or a host modifier such as `--store` before it) or an unknown part. The message says which of the two it was. An unknown part's refusal lists the parts the feature files carry.
   - It never refuses because history is short.
   - `--help` or `-h` anywhere among its arguments answers its help at `0`, even with a host modifier before it.
 
@@ -1089,9 +1089,9 @@ The code is one past the highest the repository has **ever** carried for that fe
 
 **A step I know is my test suite is reported as a check.** Runner recognition did not reach it. It recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. These are not reached: a suite run through a `uses:` action, one started by a launcher not on the list (`tox`, `nox`), one run as a project script (`hatch run test`), one with an option between a launcher and the runner (`uv run --frozen pytest`), one passed as an argument to a wrapper, or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
 
-**The verdict reads SCENARIO CODE ERRORS.** The corpus files a scenario code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one scenario code. `### Scenario code errors` names each by its handle and file, and says which fix it wants. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes has no account raised for it under any of them, and the verdict says so. The run exits `1` until the codes are filed correctly. See [Scenario code errors](#scenario-code-errors).
+**The verdict reads CLAIM CODE ERRORS.** The corpus files a claim code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one claim code. `### Claim code errors` names each by its handle and file, and says which fix it wants. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes has no account raised for it under any of them, and the verdict says so. The run exits `1` until the codes are filed correctly. See [Scenario code errors](#scenario-code-errors).
 
-**A row reads `duplicate-scn-code`.** Two scenarios carry that `@SCN` code, and each has a row of its own whose reconciling item names it by its file and title. Give one of them a code of its own. An `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. While two scenarios share it, the run exits `1`.
+**A row reads `duplicate-claim-code`.** Two scenarios carry that claim code, and each has a row of its own whose reconciling item names it by its file and title. Give one of them a code of its own. An `@SCN` hoisted onto a `Feature:` or `Rule:` line is inherited by every scenario beneath it, so move it onto the scenario. While two scenarios share it, the run exits `1`.
 
 **`--json` rejected.** There is no such flag. Use `--format json:<path>`.
 

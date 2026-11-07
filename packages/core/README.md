@@ -35,8 +35,8 @@ const ledger = reconcile(scenarios, observed);
 isBalanced(ledger); // false while any scenario names evidence that did not arrive
 ```
 
-- `parseFeatureCorpus` parses each feature file once. It returns every file parsed or, if any file does not parse, each file's fault in the parser's own words. `scenariosOf` reads the `@SCN` code and the tags naming its kinds of quality check off each parsed scenario and turns them into the **obligations** the scenario names.
-- `parseVitestEvidenceObservations` turns a test report into the **observations** that posted back, each citing the `@SCN` it claims.
+- `parseFeatureCorpus` parses each feature file once. It returns every file parsed or, if any file does not parse, each file's fault in the parser's own words. `scenariosOf` reads the claim code and the tags naming its kinds of quality check off each parsed scenario and turns them into the **obligations** the scenario names.
+- `parseVitestEvidenceObservations` turns a test report into the **observations** that posted back, each citing the claim code it claims.
 - `reconcile` sets the two sides against each other and gives an answer per scenario.
 
 Everything else the package exports is a variation on these three steps.

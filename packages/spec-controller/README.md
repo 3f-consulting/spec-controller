@@ -42,7 +42,7 @@ spec-controller balance --features ./features --vitest ./vitest-report.json --ex
 
 The report is byte for byte the one the gate prints: the same rows, the same out-of-balance count, and the same headline naming the code the gate would give. Only the exit status changes:
 
-- Out-of-balance and scenario code errors (`1`), and pending under `--strict` (`3`), exit `0`.
+- Out-of-balance and claim code errors (`1`), and pending under `--strict` (`3`), exit `0`.
 - Usage (`2`), unsound (`4`), nothing to reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. Each means the run could not reach a verdict, and a flag that suppresses verdicts does not suppress that.
 
 Work the out-of-balance rows down, then delete `--exit-zero`, and the gate is on. Do not wrap the step in `continue-on-error` or `|| true` instead. Those swallow the codes that mean the run could not be trusted, and leave nothing in the command to show the gate is off.
@@ -56,14 +56,14 @@ spec-controller balance \
   --cucumber ./cucumber-report.json
 ```
 
-A scenario tagged `@unit` names an obligation: a unit test must exist and pass. The evidence answers it by citing the scenario's `@SCN` code in its test name. Where the two agree, the row is **balanced**. Where they do not, the row says how: evidence missing, evidence failing, or evidence that cites a scenario nobody wrote.
+A scenario tagged `@unit` names an obligation: a unit test must exist and pass. The evidence answers it by citing the scenario's claim code in its test name. Where the two agree, the row is **balanced**. Where they do not, the row says how: evidence missing, evidence failing, or evidence that cites a scenario nobody wrote.
 
 ## Exit codes
 
 | Exit | What it says |
 | --- | --- |
 | `0` | balanced — every obligation has evidence, and it holds |
-| `1` | out-of-balance — the two records disagree, and the report says where; or a scenario code is misfiled, listed under `### Scenario code errors` |
+| `1` | out-of-balance — the two records disagree, and the report says where; or a claim code is misfiled, listed under `### Claim code errors` |
 | `2` | usage — the invocation was wrong |
 | `3` | balanced, but carrying Pending Items, and you asked for `--strict` |
 | `4` | unsound — a proving suite failed to collect, so the ledger could not be trusted to disagree |
@@ -96,7 +96,7 @@ The refusal names the input, the path, and what was wrong with it. A well-formed
 
 ### `allocate`
 
-`spec-controller allocate` prints the next scenario code for a feature part. It reaches no verdict: it exits `0` when it answers, and `2` for a usage error or an unknown part. A file or directory it cannot read, directly or through git, is a usage error: it is refused, naming the path and the reason, and no code is given.
+`spec-controller allocate` prints the next claim code for a feature part. It reaches no verdict: it exits `0` when it answers, and `2` for a usage error or an unknown part. A file or directory it cannot read, directly or through git, is a usage error: it is refused, naming the path and the reason, and no code is given.
 
 ## On CI
 
