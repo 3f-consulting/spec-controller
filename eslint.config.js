@@ -174,11 +174,18 @@ const DOMAIN = new URL("packages/core/src/domain/", import.meta.url);
 const camelCase = (slug) => slug.replace(/-([a-z0-9])/g, (_, letter) => letter.toUpperCase());
 const scenariosIn = (children) =>
   children.flatMap((child) => (child.rule ? scenariosIn(child.rule.children) : child.scenario ? [child.scenario] : []));
+// A claim's code is carried by a scenario's tag or, whole, by a cell of an Outline's clm column.
+const CLAIM_CODE = /^(?:CLM|SCN)-([A-Z0-9]{2,5})-\d+$/;
+const clmCellsOf = (scenario) =>
+  scenario.examples.flatMap((examples) => {
+    const column = examples.tableHeader?.cells.findIndex((cell) => cell.value === "clm") ?? -1;
+    return column === -1 ? [] : examples.tableBody.map((row) => row.cells[column]?.value ?? "");
+  });
 const scenarioCodesIn = (text) => {
   const { feature } = new Parser(new AstBuilder(() => ""), new GherkinClassicTokenMatcher()).parse(text);
   return scenariosIn(feature?.children ?? [])
-    .flatMap((scenario) => scenario.tags)
-    .map((tag) => /^@(?:CLM|SCN)-([A-Z0-9]+)-\d+$/.exec(tag.name)?.[1])
+    .flatMap((scenario) => [...scenario.tags.map((tag) => tag.name.slice(1)), ...clmCellsOf(scenario)])
+    .map((code) => CLAIM_CODE.exec(code)?.[1])
     .filter((code) => code !== undefined);
 };
 const CONCEPT_CODES = [

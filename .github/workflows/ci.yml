@@ -349,6 +349,46 @@ jobs:
           grep -qF ': a capitalised control carries 1 step(s)' <<< "$report" || { echo "The step check did not report the planted scenario with a capitalised Given"; exit 1; }
           if grep -qF ': lowercase lines only carries' <<< "$report"; then echo "The step check reported the planted scenario with only lowercase lines"; exit 1; fi
 
+      # The planted code is built at run time, so this file carries no claim code of its own.
+      - name: A test citing a code from a domain concept's clm cell is refused outside core's domain
+        id: SCN-FIT-080
+        if: always()
+        shell: bash
+        run: |
+          code=$(printf '%s-%s-%s' CLM ONE 001)
+          feature=features/outcome.feature
+          outside=packages/core/src/assemble/plantedCellCitation.test.ts
+          inside=packages/core/src/domain/plantedCellCitation.test.ts
+          for plant in "$feature" "$outside" "$inside"; do
+            [ ! -e "$plant" ] || { echo "$plant already exists, so it cannot be planted"; exit 1; }
+          done
+          trap 'rm -f "$feature" "$outside" "$inside"' EXIT
+          printf '%s\n' \
+            '@ONE' \
+            'Feature: a planted domain concept' \
+            '' \
+            '  Scenario Outline: a planted claim in a row' \
+            '' \
+            '    Examples:' \
+            '      | clm | case |' \
+            "      | $code | planted |" > "$feature"
+          for test in "$outside" "$inside"; do
+            printf '%s\n' 'import { it } from "vitest";' '' "it(\"[$code] a planted test\", () => {});" > "$test"
+          done
+          message="A test citing a domain concept's scenario tests a rule of core's domain."
+          # ESLint reports as JSON here: its default lines would become an error annotation on a run that passes.
+          for test in "$outside" "$inside"; do
+            status=0
+            report=$(node_modules/.bin/eslint --format json "$test" | jq -r '.[].messages[] | "\(.line):\(.column) \(.ruleId) \(.message)"') || status=$?
+            printf '%s\n' "$report"
+            [ "$status" -le 1 ] || { echo "ESLint could not lint $test"; exit 1; }
+            if [ "$test" = "$outside" ]; then
+              grep -qF "$message" <<< "$report" || { echo "The domain-tests rule did not refuse the planted test outside core's domain"; exit 1; }
+            elif grep -qF "$message" <<< "$report"; then
+              echo "The domain-tests rule refused the planted test inside core's domain"; exit 1
+            fi
+          done
+
       - name: Dump this run's step record
         if: always()
         env:

@@ -124,6 +124,11 @@ Feature: The fitness functions this repository carries, one scenario per check
     @fitness @SCN-FIT-079
     Scenario: a scenario Cucumber does not run, with lowercase lines, still has no step
 
+  Rule: the domain-tests rule finds a domain concept's codes in clm cells as well as tags
+
+    @fitness @SCN-FIT-080
+    Scenario Outline: a test citing a code from a domain concept's clm cell is refused outside core's domain
+
   Rule: a title or description states behaviour in the reader's language, never the code's
 
     @fitness @SCN-FIT-038
