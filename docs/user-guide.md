@@ -162,7 +162,7 @@ Each piece of evidence names the scenario it answers, **in the one form its runn
 | `@unit` | a JUnit 5 test in Kotlin | `[SCN-…]` in square brackets in the test's `@DisplayName`, which Gradle writes into the report (see [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin)) |
 | `@unit` | an RSpec example | `[SCN-…]` in square brackets in the example's description, given to `it`, or in an enclosing `describe` or `context` description (see [Citing a scenario from RSpec](#citing-a-scenario-from-rspec)) |
 | `@unit` | a pytest test | exactly one `scn` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.scn("SCN-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
-| `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag |
+| `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own `@SCN` tag, and a row of an Outline with a `clm` column is credited by Cucumber's result for that row |
 | `@fitness` | a CI step | the step's `id:` is the code (see [Fitness functions](#fitness-functions)) |
 
 A Vitest citation:
@@ -820,7 +820,7 @@ So an id such as `@SCN-TOOLONGCODE-001` is not an `@SCN` code. It opens no accou
 
 The tool judges claim code errors only over the corpus that `--features` names.
 
-**An Outline can make each of its rows a claim of its own.** Give its Examples table a column named `clm`, and put each row's claim code in it. Each row is then a claim under its own code, raising the Evidence Obligations its Outline's tags name, and evidence cites the row's code as it would a scenario's. Such an Outline carries no code of its own. A row whose `clm` cell is empty, or not a claim code, has no claim code, and two rows with one code are duplicates, as two scenarios would be. An Outline with no `clm` column is one claim, under the code its tags carry.
+**An Outline can make each of its rows a claim of its own.** Give its Examples table a column named `clm`, and put each row's claim code in it. Each row is then a claim under its own code, raising the Evidence Obligations its Outline's tags name, and evidence cites the row's code as it would a scenario's. Such an Outline carries no code of its own. A row whose `clm` cell is empty, or not a claim code, has no claim code, and two rows with one code are duplicates, as two scenarios would be. An Outline with no `clm` column is one claim, under the code its tags carry. When Cucumber runs an Outline with a `clm` column, each row is credited by Cucumber's own result for that row, so a passing row and a failing row reconcile apart. `balance` finds the row from the line and the feature file the Cucumber report names, whichever folder Cucumber ran from.
 
 ### Duplicate `@SCN` codes
 
