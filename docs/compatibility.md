@@ -6,7 +6,7 @@ This package is published at a `0.x` version. Under semantic versioning that car
 
 **What the reader reads.** Three `specController` keys in `package.json` (`runners`, `notChecks` and `deferralTags`) and the `--ci-steps` record. [`user-guide.md`](./user-guide.md) says what each one does. A fitness function becomes an Evidence Obligation through two things: a `@fitness` scenario, and its claim code as the `id:` of the CI step that runs the check (*Wiring into CI*).
 
-**The test reports it reads.** Vitest's and Jest's JSON, pytest's and other runners' JUnit XML, RSpec's JSON and Cucumber's JSON, each through its own flag. It reads no load runner's report, so a `@performance` obligation is answered only by a Cucumber report of a scenario carrying that tag.
+**The test reports it reads.** Vitest's and Jest's JSON, pytest's and other runners' JUnit XML, RSpec's JSON and Cucumber's JSON, each through its own flag. A pytest test cites its claim code by a `clm` property, written by `@pytest.mark.clm`; a row of an Outline cites its code from the Outline's `clm` column. It reads no load runner's report, so a `@performance` obligation is answered only by a Cucumber report of a scenario carrying that tag.
 
 **Any other key in the `specController` block is not read.** It is named under `### Configuration not read` in the report, in the same words whatever the key, and the run reconciles exactly as it would without it.
 
