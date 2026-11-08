@@ -21,22 +21,22 @@ export type FitnessFunctionPosting =
 
 export function postingOf(
   observation: BehaviouralEvidenceObservation,
-  scenarioIds: ReadonlySet<string>,
+  carriedClaimCodes: ReadonlySet<string>,
   sharedClaimCodes?: ReadonlySet<string>
 ): BehaviouralPosting;
 export function postingOf(
   observation: FitnessEvidenceObservation,
-  scenarioIds: ReadonlySet<string>,
+  carriedClaimCodes: ReadonlySet<string>,
   sharedClaimCodes?: ReadonlySet<string>
 ): FitnessFunctionPosting;
 export function postingOf(
   observation: EvidenceObservation,
-  scenarioIds: ReadonlySet<string>,
+  carriedClaimCodes: ReadonlySet<string>,
   sharedClaimCodes?: ReadonlySet<string>
 ): Posting;
 export function postingOf(
   observation: EvidenceObservation,
-  scenarioIds: ReadonlySet<string>,
+  carriedClaimCodes: ReadonlySet<string>,
   sharedClaimCodes: ReadonlySet<string> = new Set()
 ): Posting {
   const claimCode = observation.claimCode ?? null;
@@ -44,5 +44,5 @@ export function postingOf(
     if (observation.broken === true) return { kind: "unnamed-claim", posted: "broken" };
     return { kind: "unnamed-claim", posted: claimCode === null ? "cites-nothing" : "cites-shared-code" };
   }
-  return scenarioIds.has(claimCode) ? { kind: "scenario", claimCode } : { kind: "phantom-claim", claimCode };
+  return carriedClaimCodes.has(claimCode) ? { kind: "scenario", claimCode } : { kind: "phantom-claim", claimCode };
 }

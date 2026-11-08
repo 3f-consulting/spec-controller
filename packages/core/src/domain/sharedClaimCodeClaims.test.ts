@@ -79,9 +79,9 @@ describe("[CLM-LDG-046] two scenarios sharing one claim code are two claims, and
   });
 
   it("routes an observation citing a shared code to the unnamed claim, a broken one as broken", () => {
-    const scenarioIds = new Set([CODE]);
+    const carriedClaimCodes = new Set([CODE]);
     const sharedClaimCodes = new Set([CODE]);
-    expect(postingOf(passing, scenarioIds, sharedClaimCodes)).toEqual({ kind: "unnamed-claim", posted: "cites-shared-code" });
-    expect(postingOf(broken, scenarioIds, sharedClaimCodes)).toEqual({ kind: "unnamed-claim", posted: "broken" });
+    expect(postingOf(passing, carriedClaimCodes, sharedClaimCodes)).toEqual({ kind: "unnamed-claim", posted: "cites-shared-code" });
+    expect(postingOf(broken, carriedClaimCodes, sharedClaimCodes)).toEqual({ kind: "unnamed-claim", posted: "broken" });
   });
 });

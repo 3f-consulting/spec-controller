@@ -77,13 +77,13 @@ function namingSharedCode(observation: EvidenceObservation, code: string): Evide
 
 function routeObservations(
   evidenceObservations: readonly EvidenceObservation[],
-  scenarioIds: ReadonlySet<string>,
+  carriedClaimCodes: ReadonlySet<string>,
   sharedClaimCodes: ReadonlySet<string>
 ): RoutedObservations {
   const citations = citationIndex();
   const onUnnamedClaim: EvidenceObservation[] = [];
   for (const o of evidenceObservations) {
-    const posting = postingOf(o, scenarioIds, sharedClaimCodes);
+    const posting = postingOf(o, carriedClaimCodes, sharedClaimCodes);
     if (posting.kind !== "unnamed-claim") citations.file(posting, o);
     else if (o.claimCode !== null && o.claimCode !== undefined && sharedClaimCodes.has(o.claimCode)) onUnnamedClaim.push(namingSharedCode(o, o.claimCode));
     else onUnnamedClaim.push(o);
@@ -199,12 +199,12 @@ export function reconcile(
   evidenceObservations: EvidenceObservation[],
   untaggedScenarios: readonly string[] = []
 ): Ledger {
-  const scenarioIds = new Set(scenarios.map((d) => d.claimCode));
+  const carriedClaimCodes = new Set(scenarios.map((d) => d.claimCode));
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
   const observations = inEvidenceOrder(evidenceObservations);
   const accounts = accountsByCode(scenarios);
   const sharedClaimCodes = new Set(accounts.filter((sharers) => sharers.length > 1).map((sharers) => sharers[0]!.claimCode));
-  const { citations, ...unnamed } = routeObservations(observations, scenarioIds, sharedClaimCodes);
+  const { citations, ...unnamed } = routeObservations(observations, carriedClaimCodes, sharedClaimCodes);
   return {
     claimReconciliations: [
       ...accounts.flatMap((sharers) =>

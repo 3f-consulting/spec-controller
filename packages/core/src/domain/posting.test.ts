@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { postingOf } from "./posting.js";
 import type { FitnessEvidenceObservation } from "../model.js";
 
-const namedScenarioIds = new Set(["CLM-AAA-001", "CLM-AAA-002"]);
+const carriedClaimCodes = new Set(["CLM-AAA-001", "CLM-AAA-002"]);
 
 describe("[CLM-LDG-001] postingOf routes a BEHAVIOURAL evidence observation by its citation", () => {
   it.each([
@@ -11,13 +11,13 @@ describe("[CLM-LDG-001] postingOf routes a BEHAVIOURAL evidence observation by i
     ["posts an evidence observation citing an UNKNOWN claim code to a phantom claim's row", "CLM-ZZZ-009", { kind: "phantom-claim", claimCode: "CLM-ZZZ-009" }],
   ])("%s", (_title, claimCode, expected) => {
     expect(
-      postingOf({ qualityCheckKind: "unit", claimCode, status: "passed" }, namedScenarioIds)
+      postingOf({ qualityCheckKind: "unit", claimCode, status: "passed" }, carriedClaimCodes)
     ).toEqual(expected);
   });
 
   it("posts an UNCITED evidence observation (claimCode null) to the unnamed claim, never a phantom claim", () => {
     expect(
-      postingOf({ qualityCheckKind: "unit", claimCode: null, status: "passed" }, namedScenarioIds)
+      postingOf({ qualityCheckKind: "unit", claimCode: null, status: "passed" }, carriedClaimCodes)
     ).toEqual({ kind: "unnamed-claim", posted: "cites-nothing" });
   });
 });
@@ -35,15 +35,15 @@ describe("[CLM-LDG-001] postingOf routes a FITNESS evidence observation by its c
     ["posts a CITING run to the one row it cites — exactly as a behavioural evidence observation is posted", "CLM-AAA-001", { kind: "scenario", claimCode: "CLM-AAA-001" }],
     ["posts a run citing an UNKNOWN claim code to that phantom claim's row, never to the unnamed claim", "CLM-ZZZ-009", { kind: "phantom-claim", claimCode: "CLM-ZZZ-009" }],
   ])("%s", (_title, claimCode, expected) => {
-    expect(postingOf(check("lint:named", claimCode), namedScenarioIds)).toEqual(expected);
+    expect(postingOf(check("lint:named", claimCode), carriedClaimCodes)).toEqual(expected);
   });
 
   it("posts an UNCITED run to the unnamed claim — and there is no by-name fallback left to try", () => {
-    expect(postingOf(check("lint:named"), namedScenarioIds)).toEqual({
+    expect(postingOf(check("lint:named"), carriedClaimCodes)).toEqual({
       kind: "unnamed-claim",
       posted: "cites-nothing",
     });
-    expect(postingOf(check("lint:nobody-asked"), namedScenarioIds)).toEqual({
+    expect(postingOf(check("lint:nobody-asked"), carriedClaimCodes)).toEqual({
       kind: "unnamed-claim",
       posted: "cites-nothing",
     });
@@ -52,7 +52,7 @@ describe("[CLM-LDG-001] postingOf routes a FITNESS evidence observation by its c
 
 describe("[CLM-LDG-022] postingOf routes a BROKEN evidence observation by its citation, as every other", () => {
   const brokenTest = (claimCode: string | null) =>
-    postingOf({ qualityCheckKind: "unit", claimCode, status: "failed", broken: true }, namedScenarioIds);
+    postingOf({ qualityCheckKind: "unit", claimCode, status: "failed", broken: true }, carriedClaimCodes);
   const brokenCheck = (claimCode?: string) =>
     postingOf(
       {
@@ -63,7 +63,7 @@ describe("[CLM-LDG-022] postingOf routes a BROKEN evidence observation by its ci
         broken: true,
         ...(claimCode !== undefined ? { claimCode } : {}),
       },
-      namedScenarioIds
+      carriedClaimCodes
     );
 
   it.each([

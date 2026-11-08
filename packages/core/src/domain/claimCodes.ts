@@ -123,7 +123,7 @@ export function duplicateFeatureCodes(features: readonly FeatureFileScenarios[])
   return faults;
 }
 
-function codedScenarioIds(feature: FeatureFileScenarios): string[] {
+function claimCodesCarriedBy(feature: FeatureFileScenarios): string[] {
   return feature.scenarios.flatMap(({ tags }) => {
     const { claimCode } = claimCodesOf(tags);
     return claimCode === null ? [] : [claimCode];
@@ -135,7 +135,7 @@ export function foreignClaimCodes(features: readonly FeatureFileScenarios[]): Cl
   const faults: ClaimCodeError[] = [];
   for (const feature of features) {
     if (feature.featureCode === null) continue;
-    for (const claimCode of codedScenarioIds(feature)) {
+    for (const claimCode of claimCodesCarriedBy(feature)) {
       const named = featureCodeOf(claimCode);
       if (named === null || named === feature.featureCode) continue;
       const carriers = carriersByCode.get(named) ?? [];
@@ -154,7 +154,7 @@ export function foreignClaimCodes(features: readonly FeatureFileScenarios[]): Cl
 
 function noFeatureCodeFiles(features: readonly FeatureFileScenarios[]): ClaimCodeError[] {
   return features
-    .filter((feature) => feature.featureCode === null && codedScenarioIds(feature).length > 0)
+    .filter((feature) => feature.featureCode === null && claimCodesCarriedBy(feature).length > 0)
     .map((feature) => ({
       kind: "no-feature-code" as const,
       files: [feature.file],
