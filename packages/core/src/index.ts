@@ -43,7 +43,7 @@ export {
 export { BUILT_IN_DEFERRAL_TAGS } from "./domain/pendingItems.js";
 export type { RunVerdict } from "./domain/runVerdict.js";
 
-export { nextClaimCode, unknownPartCarried } from "./domain/claimCodeAllocation.js";
+export { ALLOCATION_COUNTED_PREFIXES, nextClaimCode, unknownPartCarried } from "./domain/claimCodeAllocation.js";
 export type { Allocation, AllocationRequest, ClaimCodeOccurrence, UnknownPart, UnknownPartCarried } from "./domain/claimCodeAllocation.js";
 
 export { parseVitestEvidenceObservations } from "./parse/vitest.js";

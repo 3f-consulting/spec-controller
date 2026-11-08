@@ -100,6 +100,22 @@ Feature: Allocate the next claim code for a feature part
     @CLM-ALC-026 @unit
     Scenario: allocate writes the next code under CLM
 
+  Rule: the next code is one past the highest number under either prefix
+
+    @CLM-ALC-027 @unit
+    Scenario Outline: allocate counts the highest number wherever a code appears, under either prefix
+      given a repository where <codes>
+      when the author asks for the next code for ONE
+      then the answer is a claim code ending ONE-005, and nothing else
+
+      Examples:
+        | case                  | codes                                                                          |
+        | SCN highest           | the feature file carries SCN-ONE-004 and CLM-ONE-002                           |
+        | CLM highest           | the feature file carries SCN-ONE-002 and CLM-ONE-004                           |
+        | the same number       | the feature file carries SCN-ONE-004 and CLM-ONE-004                           |
+        | in git's history only | SCN-ONE-004 was in a feature file and a later commit deleted it                |
+        | in a copy with no git | the feature file carries CLM-ONE-004, in a folder that is not a git repository |
+
   Rule: parts come from the tree's feature-file headers; a malformed request is a usage error
 
     A part is a feature of the corpus when a feature file in its features directory, at any depth, is

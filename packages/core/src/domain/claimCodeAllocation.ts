@@ -1,4 +1,4 @@
-import { CLAIM_CODE_SOURCE, featureCodeOf } from "./featureCode.js";
+import { CLAIM_CODE_PREFIXES } from "./featureCode.js";
 
 export interface ClaimCodeOccurrence {
   readonly text: string;
@@ -32,7 +32,10 @@ export interface Allocation {
 
 const NUMBER_WIDTH = 3;
 
-const CLAIM_CODES = new RegExp(CLAIM_CODE_SOURCE, "g");
+// A number a retired prefix carried is still never handed out again.
+export const ALLOCATION_COUNTED_PREFIXES: readonly string[] = [...CLAIM_CODE_PREFIXES, "SCN"];
+
+const COUNTED_CODES = new RegExp(`(?:${ALLOCATION_COUNTED_PREFIXES.join("|")})-([A-Z0-9]+)-\\d+`, "g");
 
 function numberOf(code: string): number {
   return Number(code.slice(code.lastIndexOf("-") + 1));
@@ -46,8 +49,8 @@ function outranks(code: string, occurrence: ClaimCodeOccurrence, highest: NonNul
 function highestOf(part: string, occurrences: readonly ClaimCodeOccurrence[]): Allocation["highest"] {
   let highest: Allocation["highest"] = null;
   for (const occurrence of occurrences) {
-    for (const [code] of occurrence.text.matchAll(CLAIM_CODES)) {
-      if (featureCodeOf(code) !== part) continue;
+    for (const [code, codePart] of occurrence.text.matchAll(COUNTED_CODES)) {
+      if (codePart !== part) continue;
       if (highest === null || outranks(code, occurrence, highest)) highest = { code, occurrence };
     }
   }

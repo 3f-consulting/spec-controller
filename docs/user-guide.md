@@ -1047,7 +1047,7 @@ spec-controller allocate <FFF> --new
 # CLM-<FFF>-001
 ```
 
-The code is written under `CLM`, one past the highest number a claim code in the repository has **ever** carried for that feature part. So a number is never handed out again once a claim code has carried it, and every old reference to a code, in history, a chat or a stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and grows past them (`999` is followed by `1000`).
+The code is written under `CLM`, one past the highest number a claim code in the repository has **ever** carried for that feature part. So a number is never handed out again once a claim code has carried it, a retired number included, and every old reference to a code, in history, a chat or a stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and grows past them (`999` is followed by `1000`).
 
 - **The argument** is the feature part, `<FFF>`: two to five characters, each `A`–`Z` or `0`–`9`. A part is known when a feature file in `features/` at the top of the repository is headed with it. That is the corpus `balance` reads by default. A part that only history or a test fixture carries is not known.
 - **`--new`** starts a part no feature file's header carries yet, such as a first code in a tree with no feature files. Its first code is `001`, or one past any number the repository already carries for the part. Given for a part a header already carries, it answers as usual and says so on stderr.

@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { accessSync, constants, lstatSync, readdirSync, readFileSync, type Dirent } from "node:fs";
 import { join, relative, sep } from "node:path";
-import { CLAIM_CODE_PREFIXES, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
+import { ALLOCATION_COUNTED_PREFIXES, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { AppMessage } from "../messages.js";
 import { gitExited, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
 
@@ -45,7 +45,7 @@ function listedAndEntered(path: string): Dirent[] {
 }
 
 function needlesFor(part: string): string[] {
-  return CLAIM_CODE_PREFIXES.map((prefix) => `${prefix}-${part}-`);
+  return ALLOCATION_COUNTED_PREFIXES.map((prefix) => `${prefix}-${part}-`);
 }
 
 function occurrencesInListed(top: string, path: string, needles: readonly string[]): ClaimCodeOccurrence[] {
