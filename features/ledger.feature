@@ -42,7 +42,7 @@ Feature: Ledger over obligation-vs-observation evidence
     not just evidence obligations. An evidence observation citing a claim code that NO feature carries
     posts to no real scenario — it lands on a PHANTOM claim
     (posting to a non-existent account). Each
-    cited id with no scenario behind it becomes ONE phantom claim's Claim Reconciliation, its
+    cited claim code with no scenario behind it becomes ONE phantom claim's Claim Reconciliation, its
     Quality Check Reconciliation carrying the outcome cites-unknown-scenario (and the
     evidence observation's locator as the where-to-fix), verdict always out of balance.
 
