@@ -22,7 +22,7 @@ Given(
   "a target, and the Vitest report option pointing at a report that exists but is not valid JSON",
   function (this: SpecControllerWorld) {
     const root = process.cwd();
-    this.unparseableReport = join(temporaryDirectory(this, "scn-cli-014-"), "unparseable-report.json");
+    this.unparseableReport = join(temporaryDirectory(this, "clm-cli-014-"), "unparseable-report.json");
     writeFileSync(this.unparseableReport, "not valid json at all {{{");
 
     assert.ok(existsSync(this.unparseableReport), "the fixture report must EXIST — this is not the missing-path case");
@@ -329,7 +329,7 @@ Given("a target whose scenario raises a unit evidence obligation", function (thi
 Given("a pytest report in which a passing test cites that scenario", function (this: SpecControllerWorld) {
   assert.ok(existsSync(PYTEST_TARGET.report), `missing the real pytest report: ${PYTEST_TARGET.report}`);
   const testcase = new RegExp(
-    `<testcase classname="test_cases" name="${PYTEST_CITING_TEST}"[^>]*><properties><property name="scn" value="${PYTEST_CITED}" /></properties></testcase>`,
+    `<testcase classname="test_cases" name="${PYTEST_CITING_TEST}"[^>]*><properties><property name="clm" value="${PYTEST_CITED}" /></properties></testcase>`,
   );
   assert.match(readFileSync(PYTEST_TARGET.report, "utf8"), testcase, `fixture invariant: ${PYTEST_CITING_TEST} passes and cites ${PYTEST_CITED}`);
   this.reportArgs = ["--pytest", PYTEST_TARGET.report];

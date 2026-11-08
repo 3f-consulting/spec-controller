@@ -81,9 +81,6 @@ Feature: Allocate the next claim code for a feature part
       When the author asks for the next code for ONE
       Then the answer is a claim code ending ONE-008, and nothing else
 
-    @CLM-ALC-025 @unit
-    Scenario Outline: allocate counts the highest number wherever a code appears, under either prefix
-
   Rule: the code is printed alone, in the claim-code form, and the number never runs out
 
     @CLM-ALC-008 @unit @e2e
@@ -101,7 +98,7 @@ Feature: Allocate the next claim code for a feature part
   Rule: allocate writes its answer under CLM
 
     @CLM-ALC-026 @unit
-    Scenario: allocate writes the next code under CLM, even when the repository holds only SCN codes
+    Scenario: allocate writes the next code under CLM
 
   Rule: parts come from the tree's feature-file headers; a malformed request is a usage error
 

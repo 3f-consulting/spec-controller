@@ -24,7 +24,7 @@ const isEntryOf = (words: string) => (line: string): boolean => line.startsWith(
 const block = { runners: { unit: "vitest" }, notChecks: ["ci.yml:ci:Checkout"], deferralTags: ["deferred"] };
 
 function targetOf(specController: unknown): string {
-  const dir = temporaryDirectory("scn-usg-config-");
+  const dir = temporaryDirectory("clm-usg-config-");
   mkdirSync(join(dir, "features"));
   writeFileSync(join(dir, "features", "own.feature"), "@OWN\nFeature: own\n\n  @unit @CLM-OWN-001\n  Scenario: own\n");
   writeFileSync(
@@ -93,7 +93,7 @@ describe("[CLM-CFG-006] a specController block whose every entry is a kind its r
 
 describe("[CLM-CFG-007] a saved run re-rendered names the same specController entries its live report named", () => {
   it("re-renders a saved run of a target holding a wrong kind and an unread key, naming both as the live report did and writing nothing to stderr", () => {
-    const dir = targetOf({ ...block, notChecks: "ci.yml:ci:Checkout", fitnessChecks: [{ scn: "CLM-OWN-001" }] });
+    const dir = targetOf({ ...block, notChecks: "ci.yml:ci:Checkout", fitnessChecks: [{ clm: "CLM-OWN-001" }] });
     const saved = join(dir, "saved.json");
     const live = captured([...inputsOf(dir), "--format", "md", "--format", `json:${saved}`]);
     const again = captured(["--render-from-json", saved]);
@@ -123,7 +123,7 @@ describe("[CLM-CFG-005] a key the specController block does not read, a retired 
 
 describe("[CLM-CLI-092] a target with no runners block reports every step of its pipeline but GitHub's plumbing as a candidate", () => {
   it("writes nothing to stderr for a target whose configuration names no runners and no non-checks", () => {
-    const dir = temporaryDirectory("scn-usg-017-unit-");
+    const dir = temporaryDirectory("clm-usg-017-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(join(dir, "features", "own.feature"), "@OWN\nFeature: own\n\n  @unit @CLM-OWN-001\n  Scenario: own\n");
     writeFileSync(

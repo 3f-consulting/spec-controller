@@ -32,8 +32,8 @@ export type { EvidenceObligations, SharedClaimCode } from "./domain/corpusCounts
 export type { ScenarioName } from "./domain/qualityCheckReconciliation.js";
 
 export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
-export { hasClaimCodeErrors } from "./domain/scnTags.js";
-export type { ClaimCodeError, ClaimCodeErrorKind, ClaimCodePopulation } from "./domain/scnTags.js";
+export { hasClaimCodeErrors } from "./domain/claimCodes.js";
+export type { ClaimCodeError, ClaimCodeErrorKind, ClaimCodePopulation } from "./domain/claimCodes.js";
 export {
   isBalanced,
   hasPendingItems,

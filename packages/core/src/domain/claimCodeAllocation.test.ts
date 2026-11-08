@@ -12,8 +12,8 @@ function seen(text: string, path = "features/one.feature", line = 1): ClaimCodeO
 }
 
 function endingOf(code: string): string {
-  const ending = /^(?:CLM|SCN)-(.+)$/.exec(code)?.[1];
-  if (ending === undefined) throw new Error(`${code} is not under CLM or SCN`);
+  const ending = /^CLM-(.+)$/.exec(code)?.[1];
+  if (ending === undefined) throw new Error(`${code} is not under CLM`);
   return ending;
 }
 
@@ -48,9 +48,9 @@ describe("[CLM-ALC-009] a part whose highest code is 999 is offered 1000", () =>
   });
 });
 
-describe("[CLM-ALC-026] allocate writes the next code under CLM, even when the repository holds only SCN codes", () => {
-  it("writes CLM after a part that carries only an SCN code", () => {
-    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [seen("@SCN-ONE-004")]).code).toMatch(/^CLM-/);
+describe("[CLM-ALC-026] allocate writes the next code under CLM", () => {
+  it("writes CLM after a part that carries a CLM code", () => {
+    expect(next({ part: "ONE", headerCodes: ["ONE"] }, [seen("@CLM-ONE-004")]).code).toMatch(/^CLM-/);
   });
 });
 

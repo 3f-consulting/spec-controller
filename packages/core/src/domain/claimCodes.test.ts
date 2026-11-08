@@ -5,7 +5,7 @@ import {
   claimCodePopulationOf,
   type FeatureFileScenarios,
   type ForeignClaimCodeError,
-} from "./scnTags.js";
+} from "./claimCodes.js";
 import { parseScenarioTags } from "../parse/scenarioReaders.test-utils.js";
 
 function file(slug: string, code: string | null, ids: readonly string[]): FeatureFileScenarios {

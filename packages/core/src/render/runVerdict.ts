@@ -1,7 +1,7 @@
 import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { Ledger } from "../model.js";
 import { isBalanced, hasPendingItems } from "../domain/ledger.js";
-import { claimCodeErrorsAre, type ClaimCodeError } from "../domain/scnTags.js";
+import { claimCodeErrorsAre, type ClaimCodeError } from "../domain/claimCodes.js";
 import type { RunVerdict } from "../domain/runVerdict.js";
 import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";

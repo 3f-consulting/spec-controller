@@ -64,10 +64,7 @@ When("the author asks for the next code for {word}", function (this: SpecControl
 
 Then("the answer is a claim code ending {word}, and nothing else", function (this: SpecControllerWorld, ending: string) {
   assert.equal(this.answer.status, 0, `allocate did not answer: exit ${this.answer.status}\n${this.answer.stderr}`);
-  assert.ok(
-    ["CLM", "SCN"].some((prefix) => this.answer.stdout === `${prefix}-${ending}\n`),
-    `expected a claim code ending ${ending} alone on stdout, got ${JSON.stringify(this.answer.stdout)}`,
-  );
+  assert.equal(this.answer.stdout, `CLM-${ending}\n`, `expected a claim code ending ${ending} alone on stdout, got ${JSON.stringify(this.answer.stdout)}`);
 });
 
 Given("the repository's CI workflow has a step whose id is {word}", function (this: SpecControllerWorld, code: string) {
@@ -486,7 +483,7 @@ function scenarioFile(claimCode: string): string {
 }
 
 function balanceGrammarTarget(world: SpecControllerWorld): GrammarRun {
-  const dir = temporaryDirectory(world, "scn-grammar-");
+  const dir = temporaryDirectory(world, "clm-grammar-");
   mkdirSync(join(dir, "features"));
   for (const [name, source] of Object.entries(world.grammarTarget.features)) writeFileSync(join(dir, "features", name), source);
   writeFileSync(join(dir, "ci.yml"), "jobs: {}\n");

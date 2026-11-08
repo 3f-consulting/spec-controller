@@ -42,7 +42,7 @@ Given(
 );
 
 function writeCorruptFeature(world: SpecControllerWorld, featureSource: string): void {
-  const dir = temporaryDirectory(world, `scn-cli-016-${process.pid}-`);
+  const dir = temporaryDirectory(world, `clm-cli-016-${process.pid}-`);
   mkdirSync(join(dir, "features"), { recursive: true });
   world.unparseableFeature = join(dir, "features", "target.feature");
   writeFileSync(world.unparseableFeature, featureSource);
@@ -94,7 +94,7 @@ Then("the refusal names the unparseable feature file and the parse failure", fun
 const ENUMERATED_STATUSES = [0, 1, 2, 3, 4, 5];
 
 Given("a target with no Gherkin corpus at all — no features directory on disk", function (this: SpecControllerWorld) {
-  const dir = temporaryDirectory(this, `scn-cli-017-${process.pid}-`);
+  const dir = temporaryDirectory(this, `clm-cli-017-${process.pid}-`);
   writeFileSync(
     join(dir, "package.json"),
     JSON.stringify({ name: "new-client-target", private: true, scripts: { test: "vitest run" } }),
@@ -196,7 +196,7 @@ function noCorpusRun(world: SpecControllerWorld, index: number): { shape: string
 Given(
   "a target with no corpus directory, a target whose corpus is empty, and a target whose corpus carries no scenario",
   function (this: SpecControllerWorld) {
-    const root = temporaryDirectory(this, `scn-cli-018-${process.pid}-`);
+    const root = temporaryDirectory(this, `clm-cli-018-${process.pid}-`);
     const manifest = JSON.stringify({ name: "new-client-target", private: true, scripts: {} });
     const shapes: { shape: string; build: (dir: string) => void }[] = [
       { shape: "no corpus directory", build: () => {} },

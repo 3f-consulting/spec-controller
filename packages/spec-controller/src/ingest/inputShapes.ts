@@ -130,7 +130,7 @@ export const SAVED_RECONCILIATION: Shape = {
           },
         },
       },
-      retired: { scenarioCodes: "claimCodeErrors", configuration: "configurationNotRead" },
+      retired: { configuration: "configurationNotRead" },
     },
   },
   required: ["runProvenance", "summary", "claimReconciliations"],

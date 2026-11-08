@@ -6,11 +6,11 @@ Feature: A pytest suite's results answer unit evidence obligations
   scenario in the team's feature files is reconciled against the pytest test that cites it,
   exactly as a Vitest suite's is.
 
-  A pytest test cites its scenario by a `clm` or `scn` property on its testcase: a
-  `@pytest.mark.clm` or `@pytest.mark.scn` marker that a `conftest.py` hook copies into the
+  A pytest test cites its scenario by a `clm` property on its testcase: a
+  `@pytest.mark.clm` marker that a `conftest.py` hook copies into the
   test's properties, or `record_property`.
 
-  Rule: a pytest test answers the scenario its testcase cites by exactly one scn property
+  Rule: a pytest test answers the scenario its testcase cites by exactly one clm property
 
     @unit @e2e @CLM-PYT-001
     Scenario: a passing pytest test that cites its scenario answers that scenario's unit evidence obligation, and the scenario reconciles satisfied
@@ -32,12 +32,7 @@ Feature: A pytest suite's results answer unit evidence obligations
     Scenario: a pytest test citing no scenario posts its passed observation to the unnamed claim
 
     @unit @CLM-PYT-006
-    Scenario: a pytest test whose testcase carries two scn properties credits neither scenario, and the unnamed claim's row names both codes
-
-  Rule: a pytest test cites its claim code by a clm property, as it does by scn
-
-    @unit @CLM-PYT-010
-    Scenario Outline: a pytest test credits a claim only when its properties name one code
+    Scenario: a pytest test whose testcase carries two clm properties credits neither scenario, and the unnamed claim's row names both codes
 
   Rule: a pytest run whose proof never ran is broken evidence, never missing or failing
 

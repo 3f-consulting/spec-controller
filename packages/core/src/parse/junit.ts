@@ -26,7 +26,7 @@ interface JunitTestcase {
   readonly skipped?: unknown;
 }
 
-const CLAIM_CODE_PROPERTY: ReadonlySet<string | undefined> = new Set(["scn", "clm"]);
+const CLAIM_CODE_PROPERTY = "clm";
 const GO_BUILD_FAILURE_TESTCASE = "TestMain";
 const GO_BUILD_FAILURE_MARK = "[build failed]";
 
@@ -93,7 +93,7 @@ function nameCitationsOf(name: string): string[] {
 
 function claimCodePropertyValues(testcase: JunitTestcase): string[] {
   return (testcase.properties?.property ?? [])
-    .filter((property) => CLAIM_CODE_PROPERTY.has(property.name))
+    .filter((property) => property.name === CLAIM_CODE_PROPERTY)
     .map((property) => property.value ?? "");
 }
 

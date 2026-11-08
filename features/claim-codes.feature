@@ -70,7 +70,7 @@ Feature: The claim code scheme polices itself — the rules a target runs from t
 
   Rule: a claim code is read by one grammar in every role — a feature part of two to five characters, and a number of any width
 
-    A claim code is CLM-<FFF>-<NNN> or SCN-<FFF>-<NNN>, the feature part two to five
+    A claim code is CLM-<FFF>-<NNN>, the feature part two to five
     characters and the number any width. Every place the tool reads an id — a scenario's tag, a
     Vitest title's citation, a Cucumber scenario's tag, a CI step's id and a prose mention — takes
     that one grammar, so an id that grammar says is not a claim code is not one anywhere, and no account,
@@ -137,9 +137,7 @@ Feature: The claim code scheme polices itself — the rules a target runs from t
     @unit @CLM-STG-034
     Scenario: A corpus's feature files are each counted, and a header code is counted once however many files carry it
 
-  Rule: a claim code is written under CLM or SCN
-
-    A code under CLM and one under SCN are two codes, each read and reported as written.
+  Rule: a claim code is written under CLM
 
     @unit @CLM-STG-036
     Scenario: a test citing a code under CLM answers the scenario tagged with it

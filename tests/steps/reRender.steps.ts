@@ -21,13 +21,13 @@ Given(
   "the re-render option pointing at a saved report that is {word}",
   function (this: SpecControllerWorld, defect: string) {
     if (defect === "missing") {
-      this.unreadableSavedReport = join(temporaryDirectory(this, "scn-cli-015-"), "missing-saved-report.json");
+      this.unreadableSavedReport = join(temporaryDirectory(this, "clm-cli-015-"), "missing-saved-report.json");
       assert.ok(
         !existsSync(this.unreadableSavedReport),
         "the missing-path fixture must NOT exist on disk",
       );
     } else {
-      this.unreadableSavedReport = join(temporaryDirectory(this, "scn-cli-015-"), "bad-saved-report.json");
+      this.unreadableSavedReport = join(temporaryDirectory(this, "clm-cli-015-"), "bad-saved-report.json");
       writeFileSync(this.unreadableSavedReport, "not a saved report at all {{{");
       assert.ok(existsSync(this.unreadableSavedReport), "the unparseable fixture must EXIST");
     }

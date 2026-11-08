@@ -7,7 +7,7 @@ import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function unconfiguredTarget(tag: string, layer = "unit"): string {
-  const root = temporaryDirectory(`scn-pnd-019-${process.pid}-`);
+  const root = temporaryDirectory(`clm-pnd-019-${process.pid}-`);
   writeFileSync(join(root, "package.json"), JSON.stringify({ name: "unconfigured-target", scripts: {} }));
   mkdirSync(join(root, "features"));
   writeFileSync(

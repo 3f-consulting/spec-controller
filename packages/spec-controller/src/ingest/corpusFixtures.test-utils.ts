@@ -32,7 +32,7 @@ export const EMPTY_CORPUS: Shape = {
 };
 
 export function targetIn({ build }: Shape): string {
-  const root = temporaryDirectory(`scn-cli-018-${process.pid}-`);
+  const root = temporaryDirectory(`clm-cli-018-${process.pid}-`);
   writeFileSync(
     join(root, "package.json"),
     JSON.stringify({ name: "new-client-target", scripts: {} })

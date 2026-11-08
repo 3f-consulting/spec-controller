@@ -9,7 +9,7 @@ import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function absentCorpus(): { features: string; packageJson: string; ci: string } {
-  const root = temporaryDirectory(`scn-cli-017-absent-${process.pid}-`);
+  const root = temporaryDirectory(`clm-cli-017-absent-${process.pid}-`);
   const packageJson = join(root, "package.json");
   writeFileSync(packageJson, JSON.stringify({ name: "new-client-target", scripts: {} }));
   const features = join(root, "features");
@@ -18,7 +18,7 @@ function absentCorpus(): { features: string; packageJson: string; ci: string } {
 }
 
 function unreadableCorpus(): { features: string; packageJson: string; file: string } {
-  const root = temporaryDirectory(`scn-cli-017-unreadable-${process.pid}-`);
+  const root = temporaryDirectory(`clm-cli-017-unreadable-${process.pid}-`);
   const packageJson = join(root, "package.json");
   writeFileSync(packageJson, JSON.stringify({ name: "new-client-target", scripts: {} }));
   const features = join(root, "features");
@@ -69,7 +69,7 @@ describe("[CLM-CLI-017] a corpus that is PRESENT and unreadable is still refused
 
 describe("[CLM-CLI-017] an absent feature corpus is a typed fact, not a raw ENOENT", () => {
   function absentDir(): string {
-    const dir = join(temporaryDirectory(`scn-cli-017-${process.pid}-`), "features");
+    const dir = join(temporaryDirectory(`clm-cli-017-${process.pid}-`), "features");
     expect(existsSync(dir)).toBe(false);
     return dir;
   }
@@ -82,7 +82,7 @@ describe("[CLM-CLI-017] an absent feature corpus is a typed fact, not a raw ENOE
   });
 
   it("leaves a `features` path that is a FILE to its own fault when the parse-error reader looks at it", () => {
-    const notADirectory = join(temporaryDirectory(`scn-cli-017-file-${process.pid}-`), "features");
+    const notADirectory = join(temporaryDirectory(`clm-cli-017-file-${process.pid}-`), "features");
     writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
 
     const reading = readCorpus(notADirectory);

@@ -11,7 +11,7 @@ import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[CLM-CLI-096] a feature part no file's header carries has no file behind its by-feature row", () => {
   it("maps no file to THR when the only scenario coded for it sits in a file headed @TWO", () => {
-    const root = temporaryDirectory(`scn-stg-022-${process.pid}-`);
+    const root = temporaryDirectory(`clm-stg-022-${process.pid}-`);
     const features = join(root, "features");
     mkdirSync(features);
     writeFileSync(

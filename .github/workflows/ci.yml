@@ -297,7 +297,7 @@ jobs:
         id: CLM-FIT-075
         if: always()
         run: |
-          for probe in "Identifiers.TicketId:$(printf '%s-%s' 3F 1234)" "Identifiers.ClaimCode:$(printf '%s-%s-%s' SCN ABC 001)" "Identifiers.ClaimCode:$(printf '%s-%s-%s' CLM ABC 001)" "History.Narrated:$(printf '%s %s' used to)"; do
+          for probe in "Identifiers.TicketId:$(printf '%s-%s' 3F 1234)" "Identifiers.ClaimCode:$(printf '%s-%s-%s' CLM ABC 001)" "History.Narrated:$(printf '%s %s' used to)"; do
             rule=${probe%%:*}
             printf '%s\n' "${probe#*:}" | vale --ext=.md --output=line | grep -q ":$rule:" || { echo "Vale's $rule rule did not fire on a line that breaks it"; exit 1; }
           done

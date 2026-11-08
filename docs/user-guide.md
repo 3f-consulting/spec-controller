@@ -137,7 +137,7 @@ A test cites a scenario that asks for no evidence of its kind. Move the test's c
 
 ## How your evidence finds its scenario
 
-A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `CLM-<FFF>-<NNN>`. A code may be written under `CLM` as well as `SCN`, and the two forms with one feature part and number are different codes: a scenario tagged under `CLM` is answered only by evidence citing its code under `CLM`. A tag naming a kind of quality check says which kind of run answers the obligation. Whether that run really is end-to-end is the test's job.
+A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `CLM-<FFF>-<NNN>`. A tag naming a kind of quality check says which kind of run answers the obligation. Whether that run really is end-to-end is the test's job.
 
 A feature file has a header code on the line above `Feature:`, then its Rules and scenarios. Each scenario carries its own code:
 
@@ -161,7 +161,7 @@ Each piece of evidence names the scenario it answers, **in the one form its runn
 | `@unit` | a JUnit 5 test in Java | `[CLM-…]` in square brackets in the test's `@DisplayName`, carried into the report by Surefire's phrased reporter (see [Citing a scenario from Java](#citing-a-scenario-from-java)) |
 | `@unit` | a JUnit 5 test in Kotlin | `[CLM-…]` in square brackets in the test's `@DisplayName`, which Gradle writes into the report (see [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin)) |
 | `@unit` | an RSpec example | `[CLM-…]` in square brackets in the example's description, given to `it`, or in an enclosing `describe` or `context` description (see [Citing a scenario from RSpec](#citing-a-scenario-from-rspec)) |
-| `@unit` | a pytest test | one claim code in a `clm` or `scn` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.clm("CLM-…")` or `@pytest.mark.scn("CLM-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
+| `@unit` | a pytest test | one claim code in a `clm` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.clm("CLM-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
 | `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own claim code, and a row of an Outline with a `clm` column is credited by Cucumber's result for that row |
 | `@fitness` | a CI step | the step's `id:` is the code (see [Fitness functions](#fitness-functions)) |
 
@@ -183,7 +183,7 @@ A CI step citation:
 
 ### Only these four forms are read
 
-The table above holds the only four forms that name a scenario: a bracketed code in a test's title or name, or in an enclosing title where the table allows it, a `scn` property on a pytest test, a Cucumber scenario's own claim code, and a CI step's `id:`. These name nothing:
+The table above holds the only four forms that name a scenario: a bracketed code in a test's title or name, or in an enclosing title where the table allows it, a `clm` property on a pytest test, a Cucumber scenario's own claim code, and a CI step's `id:`. These name nothing:
 
 - `CLM-<FFF>-<NNN>` or `@CLM-<FFF>-<NNN>` in a test title without the square brackets;
 - a code in a comment, including a `// @CLM-…` line in a step-definition file;
@@ -205,9 +205,9 @@ spec-controller balance --pytest reports/pytest.xml
 ```python
 def pytest_collection_modifyitems(items):
     for item in items:
-        for marker in item.iter_markers("scn"):
+        for marker in item.iter_markers("clm"):
             for code in marker.args:
-                item.user_properties.append(("scn", code))
+                item.user_properties.append(("clm", code))
 ```
 
 **2. Register the marker once**, in `pytest.ini`. An unregistered marker raises a warning, and an error under `--strict-markers`:
@@ -215,7 +215,7 @@ def pytest_collection_modifyitems(items):
 ```ini
 [pytest]
 markers =
-    scn(code): the scenario this test proves
+    clm(code): the scenario this test proves
 ```
 
 **3. Mark each test** with the one scenario it proves:
@@ -223,7 +223,7 @@ markers =
 ```python
 import pytest
 
-@pytest.mark.scn("CLM-<FFF>-<NNN>")
+@pytest.mark.clm("CLM-<FFF>-<NNN>")
 def test_offers_the_next_code():
     ...
 ```
@@ -231,22 +231,20 @@ def test_offers_the_next_code():
 `pytest --junitxml` then writes the code as a property of that test. This is what `balance` reads:
 
 ```xml
-<testcase classname="test_cases" name="test_offers_the_next_code" time="0.001"><properties><property name="scn" value="CLM-<FFF>-<NNN>" /></properties></testcase>
+<testcase classname="test_cases" name="test_offers_the_next_code" time="0.001"><properties><property name="clm" value="CLM-<FFF>-<NNN>" /></properties></testcase>
 ```
 
-**A `clm` property is read as a `scn` property is,** whichever prefix the code carries. To cite by `clm`, use it wherever the steps above say `scn`: `item.iter_markers("clm")` and `("clm", code)` in the hook, `clm(code)` in `pytest.ini`, and `@pytest.mark.clm("CLM-<FFF>-<NNN>")` on the test. `pytest --junitxml` then writes `<property name="clm" value="CLM-<FFF>-<NNN>" />`.
-
-**No hook?** Calling `record_property("scn", "CLM-<FFF>-<NNN>")` inside the test writes the same element. Under pytest's default `junit_family`, though, each such test raises a `PytestWarning`, so a suite run with `filterwarnings = error` fails them.
+**No hook?** Calling `record_property("clm", "CLM-<FFF>-<NNN>")` inside the test writes the same element. Under pytest's default `junit_family`, though, each such test raises a `PytestWarning`, so a suite run with `filterwarnings = error` fails them.
 
 **What a pytest report posts:**
 
 | The test | What it posts |
 |---|---|
-| `clm` or `scn` properties naming exactly one claim code | answers that scenario: passing, or failing when it carries a `<failure>` |
+| `clm` properties naming exactly one claim code | answers that scenario: passing, or failing when it carries a `<failure>` |
 | skipped | nothing, as a skipped Vitest test posts nothing |
 | a code no feature file carries | makes a phantom claim |
-| no `clm` or `scn` property, or a value that is not a claim code | lands on the unnamed claim |
-| `clm` or `scn` properties naming two or more different codes | **credits none of them**; the unnamed claim's row names every code, because one test proves exactly one scenario |
+| no `clm` property, or a value that is not a claim code | lands on the unnamed claim |
+| `clm` properties naming two or more different codes | **credits none of them**; the unnamed claim's row names every code, because one test proves exactly one scenario |
 | a module that fails to collect, or a test whose setup or teardown errors | never ran its proof: it posts a broken item, the run is unsound (exit `4`), and the scenario it cites reads `missing` |
 
 ### Citing a scenario from Jest
@@ -816,7 +814,7 @@ The outcome to watch for is the **watermelon**: a fitness function that is green
 
 ### What counts as a claim code
 
-A claim code has the form `CLM-<FFF>-<NNN>` or `SCN-<FFF>-<NNN>`: a prefix, a feature part of two to five uppercase letters or digits, then a number of any width. The two prefixes give two different codes. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[CLM-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
+A claim code has the form `CLM-<FFF>-<NNN>`: the prefix `CLM`, a feature part of two to five uppercase letters or digits, then a number of any width. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[CLM-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
 
 So an id such as `@CLM-TOOLONGCODE-001` is not a claim code. It opens no account and cites nothing. A scenario tagged only with it has no claim code, and reconciles as `no-claim-code`.
 
@@ -1049,13 +1047,13 @@ spec-controller allocate <FFF> --new
 # CLM-<FFF>-001
 ```
 
-The code is written under `CLM`, one past the highest number the repository has **ever** carried for that feature part, under `CLM` or `SCN`. So a retired code is never handed out again, and every old reference to it, in history, a chat or a stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and grows past them (`999` is followed by `1000`).
+The code is written under `CLM`, one past the highest number a claim code in the repository has **ever** carried for that feature part. So a number is never handed out again once a claim code has carried it, and every old reference to a code, in history, a chat or a stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and grows past them (`999` is followed by `1000`).
 
 - **The argument** is the feature part, `<FFF>`: two to five characters, each `A`–`Z` or `0`–`9`. A part is known when a feature file in `features/` at the top of the repository is headed with it. That is the corpus `balance` reads by default. A part that only history or a test fixture carries is not known.
 - **`--new`** starts a part no feature file's header carries yet, such as a first code in a tree with no feature files. Its first code is `001`, or one past any number the repository already carries for the part. Given for a part a header already carries, it answers as usual and says so on stderr.
 - **stdout** carries the code and nothing else, so a script or an agent can consume it.
 - **stderr** says what the answer rests on:
-  - `highest seen: <claim code>, features/<file>.feature:40`, the code as written, under `CLM` or `SCN`, with ` in <commit>` when only history carries it;
+  - `highest seen: <claim code>, features/<file>.feature:40`, the code as written, with ` in <commit>` when only history carries it;
   - `highest seen: none` for a first code;
   - when history is short, `history: not a git repository — none read` or `history: shallow clone — history before <commit> unread`, each followed by what that risks.
 - **Exit codes:**

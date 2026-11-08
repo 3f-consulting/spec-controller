@@ -5,7 +5,7 @@ export function featureCodeOf(claimCode: string): string | null {
 
 const FEATURE_PART_SOURCE = "[A-Z0-9]{2,5}";
 
-export const CLAIM_CODE_PREFIXES: readonly string[] = ["CLM", "SCN"];
+export const CLAIM_CODE_PREFIXES: readonly string[] = ["CLM"];
 
 const PREFIX_SOURCE = `(?:${CLAIM_CODE_PREFIXES.join("|")})`;
 

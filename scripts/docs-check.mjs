@@ -9,7 +9,6 @@ const gates = Object.keys(scripts).filter((name) => name.startsWith("docs:") && 
 
 const probes = [
   ["Identifiers.TicketId", ["3F", "1234"].join("-")],
-  ["Identifiers.ClaimCode", ["SCN", "ABC", "001"].join("-")],
   ["Identifiers.ClaimCode", ["CLM", "ABC", "001"].join("-")],
   ["History.Narrated", ["used", "to"].join(" ")],
 ];

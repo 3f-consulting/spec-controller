@@ -40,7 +40,7 @@ function corpusWithTwoUnreadableFiles(): {
   firstBad: string;
   secondBad: string;
 } {
-  const dir = join(temporaryDirectory(`scn-gpg-001-${process.pid}-`), "features");
+  const dir = join(temporaryDirectory(`clm-gpg-001-${process.pid}-`), "features");
   mkdirSync(dir, { recursive: true });
 
   const good = join(dir, "a-alpha.feature");
@@ -81,7 +81,7 @@ function featureNamed(code: string): string {
 }
 
 function flatCopyOfNested(): string {
-  const dir = join(temporaryDirectory(`scn-cli-085-flat-${process.pid}-`), "features");
+  const dir = join(temporaryDirectory(`clm-cli-085-flat-${process.pid}-`), "features");
   mkdirSync(dir);
   for (const file of NESTED_FILES) copyFileSync(join(NESTED_FEATURES, file), join(dir, basename(file)));
   return dir;
@@ -115,7 +115,7 @@ describe("[CLM-CLI-085] a feature file in a subdirectory of the corpus, at any d
   });
 
   it("does not enter a symlinked directory, and reads a symlinked feature file", () => {
-    const root = temporaryDirectory(`scn-cli-085-links-${process.pid}-`);
+    const root = temporaryDirectory(`clm-cli-085-links-${process.pid}-`);
     const outside = join(root, "outside");
     mkdirSync(outside);
     writeFileSync(join(outside, "elsewhere.feature"), featureNamed("ELS"));

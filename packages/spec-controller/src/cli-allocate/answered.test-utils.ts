@@ -56,7 +56,7 @@ export function allocateIn(cwd: string, argv: string[]): Answered {
 export function expectAnsweredEnding(answered: Answered, ending: string): void {
   expect(answered.exitCode).toBeUndefined();
   expect(answered.stderr).not.toContain("usage error");
-  expect(["CLM", "SCN"].map((prefix) => `${prefix}-${ending}\n`)).toContain(answered.stdout);
+  expect(answered.stdout).toBe(`CLM-${ending}\n`);
 }
 
 const REASON = "\u0000";

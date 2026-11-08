@@ -64,7 +64,7 @@ describe("[CLM-PYT-005] runReconcile posts a pytest test citing no scenario as i
   });
 });
 
-describe("[CLM-PYT-006] runReconcile credits neither scenario a pytest test carrying two scn properties cites, and the unnamed claim's row names both codes", () => {
+describe("[CLM-PYT-006] runReconcile credits neither scenario a pytest test carrying two clm properties cites, and the unnamed claim's row names both codes", () => {
   it.each(["CLM-PYF-004", "CLM-PYF-005"])("leaves %s missing, with no observation", (claimCode) => {
     expectMissingWithNoObservation(unitOf(claimCode));
   });

@@ -71,14 +71,14 @@ describe("[CLM-RPT-033] tests that cite no scenario are grouped on the unnamed c
   });
 
   it("keeps each distinct message once, after the file", () => {
-    const several = "2 scn properties cite CLM-A and CLM-B — a test cites exactly one scenario.\nmore detail";
+    const several = "2 clm properties cite CLM-A and CLM-B — a test cites exactly one scenario.\nmore detail";
     const items = unnamedClaimItemsOf(reportOf([
       unit("failed", "tests/p.py::test_x", several),
       unit("failed", "tests/p.py::test_x", several),
       unit("passed", "tests/p.py::test_x", "a | piped note"),
     ]));
     expect(items).toEqual([
-      `unit: ${CITES_NO_SCENARIO()} (tests/p.py::test_x: 2 scn properties cite CLM-A and CLM-B — a test cites exactly one scenario. / a \\| piped note) — 3 ran, 1 passed, 2 failed`,
+      `unit: ${CITES_NO_SCENARIO()} (tests/p.py::test_x: 2 clm properties cite CLM-A and CLM-B — a test cites exactly one scenario. / a \\| piped note) — 3 ran, 1 passed, 2 failed`,
     ]);
   });
 

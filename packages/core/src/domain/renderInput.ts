@@ -1,4 +1,4 @@
-import type { ClaimCodeError, ClaimCodePopulation } from "./scnTags.js";
+import type { ClaimCodeError, ClaimCodePopulation } from "./claimCodes.js";
 import type { ClaimReconciliation } from "./claimReconciliation.js";
 import type { Summary, WrongKindEntry } from "./evidenceReconciliation.js";
 import type { ProvenanceObject } from "./runProvenance.js";

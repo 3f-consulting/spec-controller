@@ -6,7 +6,7 @@ import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 describe("[CLM-RMD-006] the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and feature file", () => {
   it("names each coded feature by its code and its file's path under the corpus, the coded scenario in a file with no code by its code alone, and that file's scenario with no claim code by the file", () => {
-    const dir = temporaryDirectory("scn-rmd-006-unit-");
+    const dir = temporaryDirectory("clm-rmd-006-unit-");
     mkdirSync(join(dir, "features", "billing"), { recursive: true });
     writeFileSync(
       join(dir, "features", "config-vocabulary-lint.feature"),
@@ -25,7 +25,7 @@ describe("[CLM-RMD-006] the summary's out-of-balance view groups each out-of-bal
   });
 
   it("names each feature by the header code and its file however the header's tags are laid out, and takes no code from a comment", () => {
-    const dir = temporaryDirectory("scn-rmd-006-header-");
+    const dir = temporaryDirectory("clm-rmd-006-header-");
     const features = join(dir, "features");
     mkdirSync(features);
     const headers: Record<string, string> = {
@@ -61,7 +61,7 @@ describe("[CLM-RMD-006] the summary's out-of-balance view groups each out-of-bal
   });
 
   it("names each feature by its file read from the working directory's features/ when no directory is given", () => {
-    const dir = temporaryDirectory("scn-rmd-006-cwd-");
+    const dir = temporaryDirectory("clm-rmd-006-cwd-");
     mkdirSync(join(dir, "features"));
     writeFileSync(join(dir, "features", "default-corpus.feature"), "@DEF\nFeature: the default corpus\n\n  @unit\n  Scenario: one\n");
     const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(dir);

@@ -29,7 +29,7 @@ describe("[CLM-CLI-089] test and cucumber CI steps are not candidate fitness fun
 
 describe("[CLM-CLI-090] balance recognises the step that runs it as the reconciler, with nothing configured, named in its step accounting", () => {
   it("recognises the pipeline step running this command as the reconciler, with nothing configured, named in its step accounting", () => {
-    const root = temporaryDirectory(`scn-usg-014-${process.pid}-`);
+    const root = temporaryDirectory(`clm-usg-014-${process.pid}-`);
     const features = join(root, "features");
     mkdirSync(features);
     writeFileSync(

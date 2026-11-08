@@ -3,7 +3,7 @@ import { renderMarkdown } from "../assemble/composers.js";
 import { reconcile, summaryOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
-import type { ClaimCodeError } from "../domain/scnTags.js";
+import type { ClaimCodeError } from "../domain/claimCodes.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./claimCodeError.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CoreMessage } from "./messages.js";

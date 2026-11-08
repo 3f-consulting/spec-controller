@@ -1,6 +1,6 @@
 import type { Ledger } from "./ledger.js";
 import { hasBrokenEvidence, hasNothingToReconcile, hasPendingItems, isBalanced } from "./ledger.js";
-import { hasClaimCodeErrors, type ClaimCodeError } from "./scnTags.js";
+import { hasClaimCodeErrors, type ClaimCodeError } from "./claimCodes.js";
 
 export type RunVerdict =
   | "nothing-to-reconcile"

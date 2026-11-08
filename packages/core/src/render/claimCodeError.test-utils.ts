@@ -1,4 +1,4 @@
-import type { ClaimCodeError } from "../domain/scnTags.js";
+import type { ClaimCodeError } from "../domain/claimCodes.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
 

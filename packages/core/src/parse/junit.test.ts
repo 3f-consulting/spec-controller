@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parseJunitEvidenceObservations, parsePytestEvidenceObservations, type JunitXmlReport } from "./junit.js";
 import { remarkWordsOf } from "../render/remarkWords.js";
 
-describe("[CLM-PYT-001] parsePytestEvidenceObservations posts a passing testcase to the scenario its scn property cites", () => {
+describe("[CLM-PYT-001] parsePytestEvidenceObservations posts a passing testcase to the scenario its clm property cites", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -11,7 +11,7 @@ describe("[CLM-PYT-001] parsePytestEvidenceObservations posts a passing testcase
             {
               classname: "tests.test_widget",
               name: "test_the_widget_turns",
-              properties: { property: [{ name: "scn", value: "CLM-FOO-001" }] },
+              properties: { property: [{ name: "clm", value: "CLM-FOO-001" }] },
             },
           ],
         },
@@ -26,7 +26,7 @@ describe("[CLM-PYT-001] parsePytestEvidenceObservations posts a passing testcase
   });
 });
 
-describe("[CLM-PYT-002] parsePytestEvidenceObservations posts a failing testcase to the scenario its scn property cites", () => {
+describe("[CLM-PYT-002] parsePytestEvidenceObservations posts a failing testcase to the scenario its clm property cites", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -35,7 +35,7 @@ describe("[CLM-PYT-002] parsePytestEvidenceObservations posts a failing testcase
             {
               classname: "tests.test_widget",
               name: "test_the_widget_jams",
-              properties: { property: [{ name: "scn", value: "CLM-FOO-002" }] },
+              properties: { property: [{ name: "clm", value: "CLM-FOO-002" }] },
               failure: { message: "assert 1 == 2" },
             },
           ],
@@ -60,7 +60,7 @@ describe("[CLM-PYT-003] parsePytestEvidenceObservations posts nothing for a skip
             {
               classname: "tests.test_widget",
               name: "test_the_widget_is_not_built_yet",
-              properties: { property: [{ name: "scn", value: "CLM-FOO-003" }] },
+              properties: { property: [{ name: "clm", value: "CLM-FOO-003" }] },
               skipped: { message: "the behaviour is not built yet" },
             },
           ],
@@ -74,7 +74,7 @@ describe("[CLM-PYT-003] parsePytestEvidenceObservations posts nothing for a skip
   });
 });
 
-describe("[CLM-PYT-005] parsePytestEvidenceObservations posts a testcase with no scn property as a passed observation citing no scenario", () => {
+describe("[CLM-PYT-005] parsePytestEvidenceObservations posts a testcase with no clm property as a passed observation citing no scenario", () => {
   const reportOf = (properties?: { property: { name: string; value: string }[] }): JunitXmlReport => ({
     testsuites: {
       testsuite: [
@@ -85,15 +85,15 @@ describe("[CLM-PYT-005] parsePytestEvidenceObservations posts a testcase with no
     },
   });
 
-  it("emits one unit observation citing no scenario for a testcase with no scn property", () => {
+  it("emits one unit observation citing no scenario for a testcase with no clm property", () => {
     expect(parsePytestEvidenceObservations(reportOf())).toEqual([
       { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
 
-  it("emits one unit observation citing no scenario for a scn property whose value is not a claim code", () => {
+  it("emits one unit observation citing no scenario for a clm property whose value is not a claim code", () => {
     expect(
-      parsePytestEvidenceObservations(reportOf({ property: [{ name: "scn", value: "FOO-005" }] }))
+      parsePytestEvidenceObservations(reportOf({ property: [{ name: "clm", value: "FOO-005" }] }))
     ).toEqual([
       { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
@@ -108,7 +108,7 @@ describe("[CLM-PYT-005] parsePytestEvidenceObservations posts a testcase with no
   });
 });
 
-describe("[CLM-PYT-006] parsePytestEvidenceObservations credits no scenario for a testcase carrying two scn properties", () => {
+describe("[CLM-PYT-006] parsePytestEvidenceObservations credits no scenario for a testcase carrying two clm properties", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -119,8 +119,8 @@ describe("[CLM-PYT-006] parsePytestEvidenceObservations credits no scenario for 
               name: "test_the_widget_spins_and_turns",
               properties: {
                 property: [
-                  { name: "scn", value: "CLM-FOO-004" },
-                  { name: "scn", value: "CLM-FOO-005" },
+                  { name: "clm", value: "CLM-FOO-004" },
+                  { name: "clm", value: "CLM-FOO-005" },
                 ],
               },
             },
@@ -142,7 +142,7 @@ describe("[CLM-PYT-006] parsePytestEvidenceObservations credits no scenario for 
     ]);
   });
 
-  it("words its note as every reader words it, in claim codes rather than scn properties", () => {
+  it("words its note as every reader words it, in claim codes rather than clm properties", () => {
     const [observation] = parsePytestEvidenceObservations(report);
 
     expect(remarkWordsOf(observation ?? {})).toContain("2 claim codes cite CLM-FOO-004, CLM-FOO-005");
@@ -159,8 +159,8 @@ describe("[CLM-PYT-006] parsePytestEvidenceObservations credits no scenario for 
                 name: "test_the_widget_spins",
                 properties: {
                   property: [
-                    { name: "scn", value: "CLM-FOO-004" },
-                    { name: "scn", value: "CLM-FOO-004" },
+                    { name: "clm", value: "CLM-FOO-004" },
+                    { name: "clm", value: "CLM-FOO-004" },
                   ],
                 },
               },
@@ -172,51 +172,6 @@ describe("[CLM-PYT-006] parsePytestEvidenceObservations credits no scenario for 
 
     expect(parsePytestEvidenceObservations(repeated)).toEqual([
       { qualityCheckKind: "unit", claimCode: "CLM-FOO-004", status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
-    ]);
-  });
-});
-
-describe("[CLM-PYT-010] parsePytestEvidenceObservations credits a claim only when a testcase's scn and clm properties name one code", () => {
-  it.each([
-    {
-      case: "clm alone",
-      property: [{ name: "clm", value: "CLM-ONE-001" }],
-      claimCode: "CLM-ONE-001",
-      severalCodes: undefined,
-    },
-    {
-      case: "clm and scn, two codes",
-      property: [
-        { name: "clm", value: "CLM-ONE-001" },
-        { name: "scn", value: "SCN-ONE-002" },
-      ],
-      claimCode: null,
-      severalCodes: ["CLM-ONE-001", "SCN-ONE-002"],
-    },
-    {
-      case: "two clm properties",
-      property: [
-        { name: "clm", value: "CLM-ONE-001" },
-        { name: "clm", value: "CLM-ONE-002" },
-      ],
-      claimCode: null,
-      severalCodes: ["CLM-ONE-001", "CLM-ONE-002"],
-    },
-  ])("$case: credits $claimCode", ({ property, claimCode, severalCodes }) => {
-    const report: JunitXmlReport = {
-      testsuites: {
-        testsuite: [{ testcase: [{ classname: "tests.test_widget", name: "test_the_widget_spins", properties: { property } }] }],
-      },
-    };
-
-    expect(parsePytestEvidenceObservations(report)).toEqual([
-      {
-        qualityCheckKind: "unit",
-        claimCode,
-        status: "passed",
-        locator: "tests.test_widget::test_the_widget_spins",
-        ...(severalCodes ? { notes: [{ kind: "several-claim-codes", codes: severalCodes }] } : {}),
-      },
     ]);
   });
 });
@@ -264,7 +219,7 @@ describe("[CLM-PYT-008] parsePytestEvidenceObservations posts a test whose setup
             {
               classname: "tests.test_widget",
               name: "test_the_widget_needs_a_resource",
-              properties: { property: [{ name: "scn", value: "CLM-FOO-008" }] },
+              properties: { property: [{ name: "clm", value: "CLM-FOO-008" }] },
               error: {
                 message: 'failed on setup with "RuntimeError: no resource"',
                 "#text": "E       RuntimeError: no resource",

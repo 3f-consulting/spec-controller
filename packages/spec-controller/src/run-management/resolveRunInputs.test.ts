@@ -380,7 +380,7 @@ describe("[CLM-RPT-001] a run with no --target names the target's git origin bes
   const wholeRun = { timeout: 30_000 };
 
   function withCheckout(origin: string | null, use: (dir: string) => void): void {
-    const dir = temporaryDirectory("scn-rpt-001-unit-");
+    const dir = temporaryDirectory("clm-rpt-001-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(join(dir, "features", "widget.feature"), "Feature: widget\n\n  Scenario: a widget\n    Given a widget\n");
     execFileSync("git", ["init", "-q", dir]);

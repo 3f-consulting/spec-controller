@@ -93,7 +93,7 @@ When("it is asked for {}", function (this: SpecControllerWorld, request: string)
     this.hostResult = spawnController(known.argv);
     return;
   }
-  const storeRoot = temporaryDirectory(this, "scn-cli-056-");
+  const storeRoot = temporaryDirectory(this, "clm-cli-056-");
   this.hostResult = spawnController(["--store", storeRoot, ...known.argv]);
 });
 
@@ -218,7 +218,7 @@ function withoutFlag(args: readonly string[], flag: string): string[] {
 
 function standBesideAFileNamedTrue(world: SpecControllerWorld, args: readonly string[]): string[] {
   const root = process.cwd();
-  const dir = temporaryDirectory(world, "scn-cli-058-");
+  const dir = temporaryDirectory(world, "clm-cli-058-");
   writeFileSync(join(dir, "true"), readFileSync(join(root, OUT_OF_BALANCE_INPUTS.vitest), "utf8"));
   world.invocationCwd = dir;
   return args.map((arg) => (arg.startsWith("--") ? arg : join(root, arg)));
@@ -257,7 +257,7 @@ Then(/^the refusal names (.+) as a flag missing its value$/, function (this: Spe
 });
 
 Given("a target that reconciles out-of-balance, and an empty run store", function (this: SpecControllerWorld) {
-  this.storeParent = temporaryDirectory(this, "scn-cli-059-");
+  this.storeParent = temporaryDirectory(this, "clm-cli-059-");
   this.storeRoot = join(this.storeParent, "store");
   mkdirSync(this.storeRoot);
   const root = process.cwd();
@@ -423,7 +423,7 @@ const GIVEN_TWICE: Record<string, (store: string, target: string[], world: SpecC
     "balance",
     ...withoutFlag(target, "--features"),
     "--features",
-    join(temporaryDirectory(world, "scn-cli-064-"), "no-such-dir"),
+    join(temporaryDirectory(world, "clm-cli-064-"), "no-such-dir"),
     "--features",
     target[target.indexOf("--features") + 1] ?? "",
     "--exit-zero",
@@ -444,7 +444,7 @@ const GIVEN_TWICE: Record<string, (store: string, target: string[], world: SpecC
   ],
   "the store modifier before the command, the second time at the run store": (store, target, world) => [
     "--store",
-    join(temporaryDirectory(world, "scn-cli-064-"), "other-store"),
+    join(temporaryDirectory(world, "clm-cli-064-"), "other-store"),
     "--store",
     store,
     "balance",
@@ -676,7 +676,7 @@ const RUN_ID_WITHOUT_STORE: Record<string, (target: string[], world: SpecControl
 };
 
 function savedReportOf(world: SpecControllerWorld, target: string[]): string {
-  const saved = join(temporaryDirectory(world, "scn-cli-083-saved-"), "saved.json");
+  const saved = join(temporaryDirectory(world, "clm-cli-083-saved-"), "saved.json");
   const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...target, "--format", `json:${saved}`], {
     encoding: "utf8",
   });

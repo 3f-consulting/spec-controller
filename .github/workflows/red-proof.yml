@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       scenario:
-        description: The code of the scenario whose tests the proof runs, such as CLM-ABC-001 or SCN-ABC-001
+        description: The code of the scenario whose tests the proof runs, such as CLM-ABC-001
         required: true
         type: string
       layer:

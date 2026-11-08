@@ -1,6 +1,6 @@
 import type { ParsedFeatureCounts } from "../domain/corpusCounts.js";
 import type { ScenarioName } from "../domain/qualityCheckReconciliation.js";
-import type { ScenarioTags } from "../domain/scnTags.js";
+import type { ScenarioTags } from "../domain/claimCodes.js";
 import type { Scenario } from "../model.js";
 import { parsedFeatures } from "./parsedFeatures.test-utils.js";
 import { scenarioName } from "../domain/scenarioName.test-utils.js";

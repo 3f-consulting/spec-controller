@@ -36,7 +36,7 @@ import {
   qualityCheckReconciliationsOf,
   UNNAMED_CLAIM_ID,
 } from "./claimReconciliation.js";
-import type { ClaimCodeError, ClaimCodePopulation } from "./scnTags.js";
+import type { ClaimCodeError, ClaimCodePopulation } from "./claimCodes.js";
 import { postingOf } from "./posting.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
 

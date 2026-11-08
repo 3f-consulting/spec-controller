@@ -175,7 +175,7 @@ const camelCase = (slug) => slug.replace(/-([a-z0-9])/g, (_, letter) => letter.t
 const scenariosIn = (children) =>
   children.flatMap((child) => (child.rule ? scenariosIn(child.rule.children) : child.scenario ? [child.scenario] : []));
 // A claim's code is carried by a scenario's tag or, whole, by a cell of an Outline's clm column.
-const CLAIM_CODE = /^(?:CLM|SCN)-([A-Z0-9]{2,5})-\d+$/;
+const CLAIM_CODE = /^CLM-([A-Z0-9]{2,5})-\d+$/;
 const clmCellsOf = (scenario) =>
   scenario.examples.flatMap((examples) => {
     const column = examples.tableHeader?.cells.findIndex((cell) => cell.value === "clm") ?? -1;
@@ -203,7 +203,7 @@ if (CONCEPT_CODES.length === 0) {
 }
 
 const TEST_TITLE = vitestCall("describe|it|test");
-const CONCEPT_CITATION = `/\\[(?:CLM|SCN)-(${CONCEPT_CODES.join("|")})-\\d+\\]/`;
+const CONCEPT_CITATION = `/\\[CLM-(${CONCEPT_CODES.join("|")})-\\d+\\]/`;
 const MISPLACED_TEST =
   "A test citing a domain concept's scenario tests a rule of core's domain. Move it to packages/core/src/domain/.";
 const DOMAIN_TEST_SELECTORS = [

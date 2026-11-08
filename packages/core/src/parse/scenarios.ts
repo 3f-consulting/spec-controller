@@ -2,7 +2,7 @@ import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherki
 import { IdGenerator, type Examples, type FeatureChild, type GherkinDocument, type Scenario as GherkinScenario } from "@cucumber/messages";
 import { bareTerm } from "../lib/bareTerm.js";
 import { headerFeatureCode, CLAIM_CODE, CLAIM_CODE_SOURCE } from "../domain/featureCode.js";
-import { claimCodesOf, type ScenarioTags } from "../domain/scnTags.js";
+import { claimCodesOf, type ScenarioTags } from "../domain/claimCodes.js";
 import { corpusCountsOf, type EvidenceObligations, type ParsedFeatureCounts } from "../domain/corpusCounts.js";
 import { obligationsRaisedBy } from "../domain/scenarioObligations.js";
 import type { Scenario } from "../model.js";

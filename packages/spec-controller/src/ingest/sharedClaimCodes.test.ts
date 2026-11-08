@@ -6,7 +6,7 @@ import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { scenarioName } from "../../../../tests/steps/support/scenarioName.js";
 
 function corpus(files: Record<string, string>): string {
-  const dir = join(temporaryDirectory("scn-stg-017-"), "features");
+  const dir = join(temporaryDirectory("clm-stg-017-"), "features");
   mkdirSync(dir);
   for (const [name, source] of Object.entries(files)) writeFileSync(join(dir, name), source);
   return dir;

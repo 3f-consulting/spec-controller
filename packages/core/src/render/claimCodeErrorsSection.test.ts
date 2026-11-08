@@ -9,8 +9,8 @@ import { markdownHeading } from "./heading.js";
 import { coreMessage } from "./coreText.js";
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import * as scnTags from "../domain/scnTags.js";
-import type { FeatureFileScenarios, ClaimCodeError } from "../domain/scnTags.js";
+import * as claimCodeScheme from "../domain/claimCodes.js";
+import type { FeatureFileScenarios, ClaimCodeError } from "../domain/claimCodes.js";
 import { parseScenarioTags } from "../parse/scenarioReaders.test-utils.js";
 import { codeErrorsCtx as ctx, FOREIGN } from "./claimCodeError.test-utils.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
@@ -29,11 +29,11 @@ function scenariosOf(files: readonly CorpusFile[]): FeatureFileScenarios[] {
 }
 
 const duplicateFeatureCodes = (files: readonly CorpusFile[]): ClaimCodeError[] =>
-  scnTags.duplicateFeatureCodes(scenariosOf(files));
+  claimCodeScheme.duplicateFeatureCodes(scenariosOf(files));
 const foreignClaimCodes = (files: readonly CorpusFile[]): ClaimCodeError[] =>
-  scnTags.foreignClaimCodes(scenariosOf(files));
+  claimCodeScheme.foreignClaimCodes(scenariosOf(files));
 const claimCodeErrorsOf = (files: readonly CorpusFile[]): ClaimCodeError[] =>
-  scnTags.claimCodeErrorsOf(scenariosOf(files));
+  claimCodeScheme.claimCodeErrorsOf(scenariosOf(files));
 
 function balancedWith(claimCodeErrors: readonly ClaimCodeError[]): EvidenceReconciliation {
   const reconciliation = evidenceReconciliationOf(

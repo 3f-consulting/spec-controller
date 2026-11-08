@@ -24,7 +24,7 @@ describe("[CLM-RPT-001] sourceTarget sources the provenance target from --target
 
 describe("[CLM-RPT-002] the JSON report carries a provenance object", () => {
   it("runBalance's written JSON states the Cucumber report and the CI step record among its inputs, and reads the Cucumber report's scenario as an integration evidence observation", () => {
-    const dir = temporaryDirectory("scn-rpt-002-unit-");
+    const dir = temporaryDirectory("clm-rpt-002-unit-");
     cpSync("tests/fixtures/evidence-observation/features", join(dir, "features"), { recursive: true });
     cpSync("tests/fixtures/evidence-observation/cucumber.json", join(dir, "cucumber.json"));
     cpSync("tests/fixtures/ci-steps-passing/ci-steps.json", join(dir, "ci-steps.json"));
@@ -72,7 +72,7 @@ describe("[CLM-RPT-031] a feature file's scenarios carrying no claim code count 
   }
 
   it("writes one row named by the file read off the feature files, and renders it again the same from the saved JSON", () => {
-    const dir = temporaryDirectory("scn-rpt-031-unit-");
+    const dir = temporaryDirectory("clm-rpt-031-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "checkout.feature"),

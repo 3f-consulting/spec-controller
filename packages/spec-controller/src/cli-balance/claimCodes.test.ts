@@ -12,7 +12,7 @@ const wholeRun = { timeout: 30_000 };
 
 describe("[CLM-CLI-093] runBalance over a duplicated claim code exits 1 with the report in full, never refusing the corpus", () => {
   function duplicateTarget(withDuplicate = true): string {
-    const dir = temporaryDirectory("scn-stg-018-unit-");
+    const dir = temporaryDirectory("clm-stg-018-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "dup.feature"),
@@ -59,14 +59,14 @@ describe("[CLM-CLI-093] runBalance over a duplicated claim code exits 1 with the
     expect(rows.filter((r) => r.claim === "CLM-DUP-001")).toHaveLength(2);
     expect(rows.find((r) => r.claim === "CLM-DUP-002")?.verdict).toBe("balanced");
     expect(exitCode).toBe(1);
-    expect(stderr).not.toMatch(/names the same @SCN on more than one scenario/);
+    expect(stderr).toBe("");
     expect(ownRowOf(dir)).toEqual(ownRowOf(duplicateTarget(false)));
   });
 });
 
 describe("[CLM-CLI-094] a prose mention of a feature part outside two to five characters is not a claim code seen in non-tag context", () => {
   it("counts the two- and five-character prose mentions as excluded, and lists no claim code error", wholeRun, () => {
-    const dir = temporaryDirectory("scn-stg-028-unit-");
+    const dir = temporaryDirectory("clm-stg-028-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "own.feature"),
@@ -83,7 +83,7 @@ describe("[CLM-CLI-094] a prose mention of a feature part outside two to five ch
 
 describe("[CLM-CLI-095] a scenario tagged with two claim codes raises no evidence obligation under either, and is listed as a claim code error naming both", () => {
   function target(ids: string): string {
-    const dir = temporaryDirectory("scn-stg-029-unit-");
+    const dir = temporaryDirectory("clm-stg-029-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
       join(dir, "features", "two.feature"),

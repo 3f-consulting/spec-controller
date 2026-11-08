@@ -10,7 +10,7 @@ import { readCorpus } from "./ingestQualityChecks.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 function corpusOf(files: Record<string, string>): { features: string; paths: Record<string, string> } {
-  const root = temporaryDirectory(`scn-cli-016-${process.pid}-`);
+  const root = temporaryDirectory(`clm-cli-016-${process.pid}-`);
   const features = join(root, "features");
   mkdirSync(features);
   const paths: Record<string, string> = {};

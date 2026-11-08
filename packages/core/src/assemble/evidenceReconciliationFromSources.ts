@@ -6,7 +6,7 @@ import { fitnessObservationsOf, recordedAtSteps } from "../domain/fitnessReconci
 import { recordedCheckStepsOf, type StepRecord } from "../parse/ciStepRecord.js";
 import { fitnessFunctionsAmong } from "../parse/runningFitnessFunctions.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
-import { claimCodeErrorsOf, claimCodePopulationOf } from "../domain/scnTags.js";
+import { claimCodeErrorsOf, claimCodePopulationOf } from "../domain/claimCodes.js";
 import { untaggedScenariosOf, type ParsedFeatureFile } from "../parse/scenarios.js";
 import { untaggedScenarioId } from "../domain/corpusCounts.js";
 import { qualifiedStepName } from "../parse/stepNames.js";

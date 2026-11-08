@@ -92,7 +92,7 @@ See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--run
 
 A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `CLM-<FFF>-<NNN>`.
 
-`CLM-<FFF>-<NNN>` is the scenario's **claim code**. It may also be written `SCN-<FFF>-<NNN>`; the two forms with one feature part and number are two different codes, so a test cites the one its scenario carries. `<FFF>` is a feature part of two to five uppercase letters or digits, and `<NNN>` is a number. Each feature file carries a header code, `@<FFF>`, and its scenarios' codes must match it. A misfiled code fails the run. [Claim code errors](./user-guide.md#claim-code-errors) explains the header code and the four ways a code can be misfiled.
+`CLM-<FFF>-<NNN>` is the scenario's **claim code**. `<FFF>` is a feature part of two to five uppercase letters or digits, and `<NNN>` is a number. Each feature file carries a header code, `@<FFF>`, and its scenarios' codes must match it. A misfiled code fails the run. [Claim code errors](./user-guide.md#claim-code-errors) explains the header code and the four ways a code can be misfiled.
 
 A `@unit` scenario needs no step definitions. A title and its tags are the whole scenario.
 
@@ -113,7 +113,7 @@ describe("[CLM-<FFF>-<NNN>] a feature part whose highest live code is below a de
 
 For Vitest, Jest, Go, JUnit 5 and RSpec tests, only the bracketed form counts. A code without brackets, or in a comment, names nothing: the test still runs, but it lands on the unnamed claim, and the scenario reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.**
 
-Other evidence cites differently: a pytest test through a `scn` property, a Cucumber run through the scenario's own claim code, and a CI check through its step's `id:`. See [Only these four forms are read](./user-guide.md#only-these-four-forms-are-read).
+Other evidence cites differently: a pytest test through a `clm` property, a Cucumber run through the scenario's own claim code, and a CI check through its step's `id:`. See [Only these four forms are read](./user-guide.md#only-these-four-forms-are-read).
 
 For how each other runner cites a scenario, see [Citing a scenario from pytest](./user-guide.md#citing-a-scenario-from-pytest), [Citing a scenario from Jest](./user-guide.md#citing-a-scenario-from-jest), [Citing a scenario from Go](./user-guide.md#citing-a-scenario-from-go), [Citing a scenario from Java](./user-guide.md#citing-a-scenario-from-java), [Citing a scenario from Kotlin](./user-guide.md#citing-a-scenario-from-kotlin) and [Citing a scenario from RSpec](./user-guide.md#citing-a-scenario-from-rspec).
 

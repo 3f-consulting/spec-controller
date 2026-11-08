@@ -6,7 +6,7 @@ import {
   type ForeignClaimCodeError,
   type ClaimCodeCleanliness,
   type ClaimCodeError,
-} from "../domain/scnTags.js";
+} from "../domain/claimCodes.js";
 import { CoreError, CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
