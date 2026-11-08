@@ -215,7 +215,7 @@ const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessage
   [CoreMessage.StepAccountingNotAppliedWorkflowsReadLabel]: { key: "`specController.notChecks`", workflows: "`ci.yml`" },
   [CoreMessage.StepAccountingNotAppliedNoWorkflowReadLabel]: { key: "`specController.notChecks`" },
   [CoreMessage.ScenarioClaimReconciliationsOutOfBalance]: { outOfBalance: 1, claimReconciliations: 3 },
-  [CoreMessage.NotGroupedByFeature]: { ungrouped: "1 Claim Reconciliation(s) for cited scenario ids with no real scenario" },
+  [CoreMessage.NotGroupedByFeature]: { ungrouped: "1 Claim Reconciliation(s) for cited claim codes with no real scenario" },
   [CoreMessage.PhantomClaimReconciliations]: { count: 1 },
   [CoreMessage.UnnamedClaimReconciliations]: { count: 1 },
   [CoreMessage.NoClaimCodeScenarios]: { count: 1 },

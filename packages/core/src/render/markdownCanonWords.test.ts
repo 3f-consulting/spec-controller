@@ -31,7 +31,7 @@ describe("[CLM-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
     expect(md).toContain(coreMessage(CoreMessage.NotGroupedByFeature, { ungrouped }));
   });
 
-  it("sums the test volume over scenarios, cited scenario ids with no real scenario, and observations citing no scenario", () => {
+  it("sums the test volume over scenarios, cited claim codes with no real scenario, and observations citing no scenario", () => {
     const md = renderMarkdown(__er(unbalanced(), true), ctx, publishedExitCodeOf);
     expect(md).toContain(coreMessage(CoreMessage.EvidenceObservationsSum, { total: 3, onScenario: 1, onPhantomClaim: 1, onUnnamedClaim: 1 }));
   });
