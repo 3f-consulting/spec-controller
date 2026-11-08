@@ -77,10 +77,10 @@ describe("[CLM-RMD-009] a row reads its evidence in one order, whatever order th
   it("orders evidence observations at one location by the scenario they cite — the phantom claims' rows they mint follow it", () => {
     const ghost2: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "CLM-GHOST-002", status: "passed", locator: "p.test.ts" };
     const ghost1: EvidenceObservation = { qualityCheckKind: "unit", claimCode: "CLM-GHOST-001", status: "passed", locator: "p.test.ts" };
-    const phantomClaimIds = reconcile(scenarios, [ghost2, ghost1])
+    const phantomClaimCodes = reconcile(scenarios, [ghost2, ghost1])
       .claimReconciliations.filter((r) => r.kind === "phantom-claim")
       .map((r) => r.claim);
-    expect(phantomClaimIds).toEqual(["CLM-GHOST-001", "CLM-GHOST-002"]);
+    expect(phantomClaimCodes).toEqual(["CLM-GHOST-001", "CLM-GHOST-002"]);
   });
 
   it("reads an evidence observation citing no scenario before the evidence observations at its location that cite one", () => {

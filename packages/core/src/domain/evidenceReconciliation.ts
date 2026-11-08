@@ -45,23 +45,23 @@ type CitedPosting = { readonly kind: "scenario" | "phantom-claim"; readonly clai
 interface CitationIndex {
   file(posting: CitedPosting, observation: EvidenceObservation): void;
   observationsFor(claimCode: string): readonly EvidenceObservation[];
-  readonly phantomClaimIds: readonly string[];
+  readonly phantomClaimCodes: readonly string[];
 }
 
 function citationIndex(): CitationIndex {
   const byClaimCode = new Map<string, EvidenceObservation[]>();
-  const phantomClaimIds: string[] = [];
+  const phantomClaimCodes: string[] = [];
   return {
     file(posting, observation) {
       const list = byClaimCode.get(posting.claimCode) ?? [];
       list.push(observation);
       byClaimCode.set(posting.claimCode, list);
-      if (posting.kind === "phantom-claim" && !phantomClaimIds.includes(posting.claimCode)) {
-        phantomClaimIds.push(posting.claimCode);
+      if (posting.kind === "phantom-claim" && !phantomClaimCodes.includes(posting.claimCode)) {
+        phantomClaimCodes.push(posting.claimCode);
       }
     },
     observationsFor: (claimCode) => byClaimCode.get(claimCode) ?? [],
-    phantomClaimIds,
+    phantomClaimCodes,
   };
 }
 
@@ -150,7 +150,7 @@ function duplicateClaimCodeRow(sharer: Scenario): ClaimReconciliation {
 
 function phantomClaimRows(citations: CitationIndex): ClaimReconciliation[] {
   const rows: ClaimReconciliation[] = [];
-  for (const claimCode of citations.phantomClaimIds) {
+  for (const claimCode of citations.phantomClaimCodes) {
     const observations = citations.observationsFor(claimCode);
     const items = citesUnknownScenarioReconciliationsOf(observations);
     rows.push({
