@@ -17,6 +17,14 @@ const CODE_OF: Readonly<Record<ClaimCodeError["kind"], CoreError>> = {
   "foreign-claim-code": CoreError.ForeignClaimCode,
   "no-feature-code": CoreError.NoFeatureCode,
   "several-claim-codes": CoreError.SeveralClaimCodes,
+  "claim-code-beside-clm-column": CoreError.ClaimCodeBesideClmColumn,
+};
+
+const NO_ACCOUNT_MESSAGE_OF: Readonly<
+  Record<"several-claim-codes" | "claim-code-beside-clm-column", CoreMessage.ScenarioSeveralClaimCodes | CoreMessage.ClaimCodeBesideClmColumn>
+> = {
+  "several-claim-codes": CoreMessage.ScenarioSeveralClaimCodes,
+  "claim-code-beside-clm-column": CoreMessage.ClaimCodeBesideClmColumn,
 };
 
 function claimCodeErrorsFraming(errors: readonly ClaimCodeError[], count: string): string {
@@ -60,7 +68,7 @@ function worded(error: ClaimCodeError): string {
   }
   if (error.kind === "foreign-claim-code") return foreignWorded(error);
   if (error.kind === "no-feature-code") return coreMessage(CoreMessage.NoFeatureCode, { file: error.files.join(", ") });
-  return coreMessage(CoreMessage.ScenarioSeveralClaimCodes, {
+  return coreMessage(NO_ACCOUNT_MESSAGE_OF[error.kind], {
     file: error.files.join(", "),
     scenario: error.scenario,
     codeCount: error.codes.length,

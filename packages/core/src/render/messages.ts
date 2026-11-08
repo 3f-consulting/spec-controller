@@ -22,6 +22,7 @@ export enum CoreMessage {
   ForeignClaimCodeNoCarrier = "foreign-claim-code-no-carrier",
   NoFeatureCode = "no-feature-code",
   ScenarioSeveralClaimCodes = "several-claim-codes",
+  ClaimCodeBesideClmColumn = "claim-code-beside-clm-column",
   RunnerKeyNotALayer = "runner-key-not-a-layer",
   NotChecksEntryMatchesNoStep = "not-checks-entry-matches-no-step",
   NotChecksEntryNotAStepName = "not-checks-entry-not-a-step-name",
@@ -169,6 +170,7 @@ export enum CoreError {
   ForeignClaimCode = "foreign-claim-code",
   NoFeatureCode = "no-feature-code",
   SeveralClaimCodes = "several-claim-codes",
+  ClaimCodeBesideClmColumn = "claim-code-beside-clm-column",
 }
 
 
@@ -204,6 +206,7 @@ export interface CoreMessageValues {
   readonly [CoreMessage.ForeignClaimCodeNoCarrier]: { readonly file: string; readonly featureCode: string; readonly claimCode: string; readonly named: string };
   readonly [CoreMessage.NoFeatureCode]: { readonly file: string };
   readonly [CoreMessage.ScenarioSeveralClaimCodes]: { readonly file: string; readonly scenario: string; readonly codeCount: number; readonly codes: string };
+  readonly [CoreMessage.ClaimCodeBesideClmColumn]: { readonly file: string; readonly scenario: string; readonly codeCount: number; readonly codes: string };
   readonly [CoreMessage.ProvenanceTargetRepo]: { readonly target: string };
   readonly [CoreMessage.ProvenanceTargetRepoUntargeted]: { readonly target: string; readonly origin: string };
   readonly [CoreMessage.ProvenanceNotSupplied]: { readonly flags: string };

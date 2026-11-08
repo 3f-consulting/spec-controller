@@ -49,8 +49,19 @@ Feature: balance reads each scenario's tags from its feature file
         | case                       |
         | not a code, empty included |
         | one code in two rows       |
-        | a code on the Outline too  |
-        | a code on an Examples tag  |
 
     @unit @CLM-GRD-008
     Scenario: an Outline tagged with a code and with no clm column is one claim
+
+  Rule: an Outline carries a claim code of its own or a clm column, never both
+
+    @unit @CLM-GRD-009
+    Scenario Outline: an Outline with a code and a clm column reaches claim code errors, whatever its cells hold
+
+      Examples:
+        | case                      |
+        | on the Outline            |
+        | from its Rule             |
+        | from its Feature          |
+        | a code on the Outline too |
+        | a code on an Examples tag |

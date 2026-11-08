@@ -844,6 +844,7 @@ The tool judges claim code errors only over the corpus that `--features` names.
 | `no-feature-code` | a feature file carries no header code while its scenarios carry claim codes (a header longer than five characters is no header code) | give the file a header code, and code its scenarios for it |
 | `duplicate-feature-code` | two feature files carry one header code | give one of them a code of its own |
 | `several-claim-codes` | one scenario carries more than one distinct claim code, so it opens no account under any of them, and a test citing one of them cites a code no scenario carries | give the scenario one code |
+| `claim-code-beside-clm-column` | an Outline carries a claim code, its own, its Rule's, its Feature's or an Examples block's, and has a `clm` column, so it opens no account under its code or any row's | take the code off the Outline, or drop its `clm` column |
 
 - The first three misfile a code without making any posting ambiguous, so every account still reconciles exactly as it would if the code were filed correctly.
 - What a misfiled code falsifies is the by-feature cut, which groups on the code. So **any claim code error fails the run at exit `1`**.

@@ -192,6 +192,7 @@ const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessage
   [CoreMessage.ForeignClaimCodeNoCarrier]: { file: "a.feature", featureCode: "ABC", claimCode: "CLM-DEF-001", named: "DEF" },
   [CoreMessage.NoFeatureCode]: { file: "a.feature" },
   [CoreMessage.ScenarioSeveralClaimCodes]: { file: "a.feature", scenario: "a scenario", codeCount: 2, codes: "CLM-ABC-001, CLM-ABC-002" },
+  [CoreMessage.ClaimCodeBesideClmColumn]: { file: "a.feature", scenario: "an Outline", codeCount: 1, codes: "CLM-ABC-001" },
   [CoreMessage.ProvenanceTargetRepo]: { target: "/repo" },
   [CoreMessage.ProvenanceTargetRepoUntargeted]: { target: "unknown-target", origin: "owner/repo" },
   [CoreMessage.ProvenanceNotSupplied]: { flags: "--results" },

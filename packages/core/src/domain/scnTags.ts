@@ -35,7 +35,19 @@ interface SeveralClaimCodesError {
   readonly codes: readonly string[];
 }
 
-export type ClaimCodeError = DuplicateFeatureCodeError | ForeignClaimCodeError | NoFeatureCodeError | SeveralClaimCodesError;
+interface ClaimCodeBesideClmColumnError {
+  readonly kind: "claim-code-beside-clm-column";
+  readonly files: readonly string[];
+  readonly scenario: string;
+  readonly codes: readonly string[];
+}
+
+export type ClaimCodeError =
+  | DuplicateFeatureCodeError
+  | ForeignClaimCodeError
+  | NoFeatureCodeError
+  | SeveralClaimCodesError
+  | ClaimCodeBesideClmColumnError;
 
 export type ClaimCodeErrorKind = ClaimCodeError["kind"];
 
@@ -53,7 +65,7 @@ export function hasClaimCodeErrors(reconciliation: {
 type ClaimCodeErrorsAre = "misfilings" | "several-codes" | "both";
 
 export function claimCodeErrorsAre(errors: readonly ClaimCodeError[]): ClaimCodeErrorsAre {
-  const several = errors.filter((error) => error.kind === "several-claim-codes").length;
+  const several = errors.filter((error) => error.kind === "several-claim-codes" || error.kind === "claim-code-beside-clm-column").length;
   if (several === 0) return "misfilings";
   return several === errors.length ? "several-codes" : "both";
 }
@@ -80,6 +92,7 @@ export interface ScenarioTags {
   readonly name: string;
   readonly tags: readonly string[];
   readonly line?: number;
+  readonly clmColumn?: true;
 }
 
 export interface FeatureFileScenarios {
@@ -165,6 +178,19 @@ function severalClaimCodes(features: readonly FeatureFileScenarios[]): ClaimCode
   );
 }
 
+function claimCodesBesideClmColumn(features: readonly FeatureFileScenarios[]): ClaimCodeError[] {
+  return features.flatMap((feature) =>
+    feature.scenarios
+      .filter(({ clmColumn }) => clmColumn === true)
+      .map(({ name, tags }) => ({
+        kind: "claim-code-beside-clm-column" as const,
+        files: [feature.file],
+        scenario: name,
+        codes: [...new Set(tags.filter((tag) => CLAIM_CODE.test(tag)))],
+      }))
+  );
+}
+
 export function claimCodePopulationOf(features: readonly FeatureFileScenarios[]): ClaimCodePopulation {
   return { featureFiles: features.length, featureCodes: headerFilesByCode(features).size };
 }
@@ -175,5 +201,6 @@ export function claimCodeErrorsOf(features: readonly FeatureFileScenarios[]): Cl
     ...foreignClaimCodes(features),
     ...noFeatureCodeFiles(features),
     ...severalClaimCodes(features),
+    ...claimCodesBesideClmColumn(features),
   ];
 }

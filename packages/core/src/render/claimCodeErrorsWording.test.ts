@@ -19,11 +19,16 @@ function source({ slug, featureCode, scenarios }: File): string {
   return `@${featureCode}\nFeature: ${slug}\n\n${body.join("\n")}`;
 }
 
-function markdownOf(files: readonly File[]): string {
-  const codes = files.flatMap((file) => file.scenarios.filter((tags) => !tags.includes(" ")).map((tags) => tags.slice(1)));
+function markdownOf(files: readonly (File | string)[]): string {
+  const codes = files.flatMap((file) =>
+    typeof file === "string" ? [] : file.scenarios.filter((tags) => !tags.includes(" ")).map((tags) => tags.slice(1))
+  );
   return renderMarkdown(
     evidenceReconciliationFromSources({
-      features: parsedFeatures(files.map(source), files.map(({ slug }) => `${slug}.feature`)),
+      features: parsedFeatures(
+        files.map((file) => (typeof file === "string" ? file : source(file))),
+        files.map((file, i) => (typeof file === "string" ? `outline${i}.feature` : `${file.slug}.feature`))
+      ),
       packageJson: {},
       ciWorkflows: [],
       behaviouralObservations: codes.map((claimCode) => ({ qualityCheckKind: "unit", claimCode, status: "passed" })),
@@ -52,14 +57,29 @@ const SEVERAL: File = { slug: "one", featureCode: "ONE", scenarios: ["@CLM-ONE-0
 const FOREIGN: File = { slug: "two", featureCode: "TWO", scenarios: ["@CLM-TWO-001", "@CLM-ONE-004"] };
 const ONE_ALONE: File = { slug: "one", featureCode: "ONE", scenarios: ["@CLM-ONE-001"] };
 
-const SEVERAL_CODES = "more than one claim code";
+const BESIDE_CLM_COLUMN = `@THREE
+Feature: three
+
+  @unit @CLM-THREE-009
+  Scenario Outline: an Outline with a code and a clm column
+    Given a thing
+
+    Examples:
+      | clm |
+      | CLM-THREE-001 |
+`;
+
+const SEVERAL_CODES = "more than one claim code, or a claim code beside a clm column";
 const NO_ACCOUNT = "no account was raised for it";
 
 describe("[CLM-RPT-061] a scenario carrying several codes is described in the report as a scenario no account was raised for, never as a misfiled code whose accounts still reconcile", () => {
-  describe("when every listed error is several-claim-codes", () => {
+  describe.each([
+    { kind: "several-claim-codes", files: [SEVERAL] },
+    { kind: "claim-code-beside-clm-column", files: [ONE_ALONE, BESIDE_CLM_COLUMN] },
+  ])("when every listed error is $kind", ({ files }) => {
     let md: string;
     beforeEach(() => {
-      md = markdownOf([SEVERAL]);
+      md = markdownOf(files);
     });
 
     it("frames the section as a scenario carrying more than one code that no account was raised for, never as a misfiling whose accounts reconcile", () => {

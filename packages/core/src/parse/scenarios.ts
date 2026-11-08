@@ -39,6 +39,8 @@ function rowCodeOf(cell: string): string[] {
 
 function rowClaimsOf(outline: GherkinScenario, outlineTags: readonly string[]): ScenarioTags[] | null {
   if (!outline.examples.some((examples) => claimColumnOf(examples) >= 0)) return null;
+  const tags = [...outlineTags, ...outline.examples.flatMap((examples) => examples.tags.map((tag) => bareTerm(tag.name)))];
+  if (tags.some((tag) => CLAIM_CODE.test(tag))) return [{ name: outline.name, tags, clmColumn: true }];
   return outline.examples.flatMap((examples) => {
     const column = claimColumnOf(examples);
     const blockTags = examples.tags.map((tag) => bareTerm(tag.name));
@@ -117,9 +119,9 @@ function scenariosByClaimCodeOf({ scenarios }: ParsedFeatureFile): {
 } {
   const taggedScenarios: TaggedScenario[] = [];
   const untaggedScenarios: string[] = [];
-  for (const { name, tags } of scenarios) {
+  for (const { name, tags, clmColumn } of scenarios) {
     const { claimCode, severalCodes } = claimCodesOf(tags);
-    if (severalCodes !== undefined) continue;
+    if (clmColumn === true || severalCodes !== undefined) continue;
     if (claimCode === null) untaggedScenarios.push(name);
     else taggedScenarios.push({ claimCode, tags, name });
   }
