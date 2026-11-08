@@ -143,6 +143,7 @@ jobs:
         if: ${{ !cancelled() && steps.CLM-FIT-012.outcome != 'skipped' }}
         shell: bash
         run: |
+          jq -e 'type == "object" and length > 0' coverage/coverage-final.json > /dev/null || { echo "CRAP refuses to run: coverage/coverage-final.json is not a readable coverage report, so no function can be scored."; exit 1; }
           node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}" packages || [ $? -eq 2 ]
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}"
 
