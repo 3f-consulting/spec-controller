@@ -92,7 +92,7 @@ See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--run
 
 A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `CLM-<FFF>-<NNN>`.
 
-`CLM-<FFF>-<NNN>` is the scenario's **claim code**. `<FFF>` is a feature part of two to five uppercase letters or digits, and `<NNN>` is a number. Each feature file carries a header code, `@<FFF>`, and its scenarios' codes must match it. A misfiled code fails the run. [Claim code errors](./user-guide.md#claim-code-errors) explains the header code and the four ways a code can be misfiled.
+`CLM-<FFF>-<NNN>` is the scenario's **claim code**. `<FFF>` is a feature part of two to five uppercase letters or digits, and `<NNN>` is a number. Each feature file carries a header code, `@<FFF>`, and its scenarios' codes must match it. A misfiled code fails the run. [Claim code errors](./user-guide.md#claim-code-errors) explains the header code and the five claim code errors.
 
 A `@unit` scenario needs no step definitions. A title and its tags are the whole scenario.
 
