@@ -94,9 +94,10 @@ Each link has two sides, and the same cells. Each link keeps its own words for t
 | **On the first side only** | unmet: a claim in the document specification with no quality check | `missing`: an obligation with no observation |
 | **On the second side only** | unstated: a quality check of behaviour the document specification does not state | `no-evidence-obligation`; `cites-unknown-scenario`, a `phantom claim`; `cites-no-scenario`, the `unnamed claim` |
 | **On both sides, disagreeing** | conflict: the document specification and a quality check assert different outcomes | `failing`: the check ran, and the application did not do what it checks |
-| **On neither side** | | `both-missing`: an executable claim with no obligation and no observation |
+| **On both sides, but the evidence cannot be trusted** | | `broken`: the check never reached its assertions; `watermelon`: the check passed, but its step cannot fail the build |
+| **The claim is written so it cannot be reconciled** | | `no-claim-code`: the claim carries no code; `duplicate-claim-code`: two claims share one code; `both-missing`: the claim asks for no quality check, carrying a claim code and no kind-of-check tag, and nothing cites it |
 
-Outside the cells are faults that stop the comparison. In `balance`: evidence that cannot be trusted (`broken`, `watermelon`) and claim codes that are wrong (`no-claim-code`, `duplicate-claim-code`), behind the run verdicts *unsound* and *claim code errors*. In `analyse`: a structural contract, a test asserting an invariant rather than one input and one outcome.
+A structural contract, in `analyse`, is not a claim at all: a test asserting an invariant rather than one input and one outcome.
 
 #### Reconciling
 
