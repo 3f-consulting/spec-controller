@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
 import { fitnessObservationsOf, type RecordedCheckStep } from "./fitnessReconciliation.js";
 import type { Scenario } from "./journal.js";
-import { hasBrokenEvidence } from "./ledger.js";
+import { hasNeverRanEvidence } from "./ledger.js";
 import { lineReadingsOf } from "./qualityCheckReconciliation.test-utils.js";
 
 const scenarios: Scenario[] = [
@@ -39,6 +39,6 @@ describe("[CLM-LNT-028] a check step the run's record says failed posts a failin
       outcome: "failing",
     }]);
 
-    expect(hasBrokenEvidence(reconciliation.ledger)).toBe(false);
+    expect(hasNeverRanEvidence(reconciliation.ledger)).toBe(false);
   });
 });

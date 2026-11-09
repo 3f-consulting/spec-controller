@@ -40,18 +40,18 @@ function loadErrorsOf(report: RspecJsonReport, layer: Layer, root?: string): Evi
   const count = report.summary?.errors_outside_of_examples_count ?? 0;
   if (count === 0) return [];
   const evidence = evidenceOfRunResult("never-reached-its-assertions")!;
-  const broken: EvidenceObservation[] = [];
+  const neverRan: EvidenceObservation[] = [];
   const unnamed: string[] = [];
   for (const message of report.messages ?? []) {
     const file = LOADED_FILE.exec(message);
     const path = file?.[1] ?? file?.[2];
     if (path === undefined) unnamed.push(message);
-    else broken.push({ qualityCheckKind: layer, claimCode: null, status: evidence.status, locator: locatorOf(path, root), neverRan: evidence.neverRan, message });
+    else neverRan.push({ qualityCheckKind: layer, claimCode: null, status: evidence.status, locator: locatorOf(path, root), neverRan: evidence.neverRan, message });
   }
-  if (count > broken.length) {
-    broken.push({ qualityCheckKind: layer, claimCode: null, status: evidence.status, neverRan: evidence.neverRan, message: unnamed.length > 0 ? unnamed.join("\n") : undefined });
+  if (count > neverRan.length) {
+    neverRan.push({ qualityCheckKind: layer, claimCode: null, status: evidence.status, neverRan: evidence.neverRan, message: unnamed.length > 0 ? unnamed.join("\n") : undefined });
   }
-  return broken;
+  return neverRan;
 }
 
 function locatorOf(filePath: string, root?: string): string {

@@ -24,7 +24,7 @@ const UNNAMED_CLAIM_STEPS = {
   ci: "tests/fixtures/unnamed-claim-steps",
 };
 
-const CITES_UNKNOWN_SCENARIO_STATUS = {
+const CITES_UNKNOWN_CLAIM_STATUS = {
   features: "tests/fixtures/cites-unknown-claim-status/features",
   vitest: "tests/fixtures/cites-unknown-claim-status/vitest.json",
   packageJson: "tests/fixtures/cites-unknown-claim-status/package.json",
@@ -101,7 +101,7 @@ function unnamedClaimItemsFor(world: SpecControllerWorld, locator: string): stri
 }
 
 function uncitedOutcomeCount(world: SpecControllerWorld): number {
-  const uncitedOutcomeRow = entryText("outcome-cites-no-scenario");
+  const uncitedOutcomeRow = entryText("outcome-cites-no-claim");
   const outcomeRow = world.report.split("\n").find((line) => line.startsWith(`| ${uncitedOutcomeRow} |`));
   assert.ok(outcomeRow, `expected a "${uncitedOutcomeRow}" row in the report; got:\n${world.report}`);
   return Number(outcomeRow.split(" | ")[3]);
@@ -171,7 +171,7 @@ Given("a target whose CI runs two checks that cite no claim, beside a test that 
 Given(
   "a target with two tests that cite a scenario no feature carries, one that failed and one that passed",
   function (this: SpecControllerWorld) {
-    this.invocationArgs = argsFor(CITES_UNKNOWN_SCENARIO_STATUS);
+    this.invocationArgs = argsFor(CITES_UNKNOWN_CLAIM_STATUS);
   },
 );
 

@@ -76,9 +76,9 @@ describe("[CLM-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
 
   it("reads each fitness evidence obligation's reconciling item on its claim's row as its kind of quality check and its outcome's sentence, with no symbol", () => {
     const md = renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf);
-    const watermelon = reconcilingItemsOf(md, "CLM-NGL-003");
-    expect(watermelon.some((item) => item.startsWith(`fitness: ${outcomeDescription("cannot-fail")}`))).toBe(true);
-    expect(symbolCharactersIn(watermelon.join("\n"))).toEqual([]);
+    const cannotFail = reconcilingItemsOf(md, "CLM-NGL-003");
+    expect(cannotFail.some((item) => item.startsWith(`fitness: ${outcomeDescription("cannot-fail")}`))).toBe(true);
+    expect(symbolCharactersIn(cannotFail.join("\n"))).toEqual([]);
     expect(reconcilingItemsOf(md, "CLM-NGL-001").filter((item) => item.startsWith("fitness")), "a satisfied obligation adds no item").toEqual([]);
   });
 

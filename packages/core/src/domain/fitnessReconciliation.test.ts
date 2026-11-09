@@ -136,7 +136,7 @@ describe("[CLM-LNT-004] a scenario raising Evidence Obligations for both a unit 
 
     expect(scenario?.verdict).toBe("out-of-balance");
 
-    const watermelonObservation = { ...fitnessObservations[0]!, outcome: "cannot-fail" };
+    const cannotFailObservation = { ...fitnessObservations[0]!, outcome: "cannot-fail" };
     expect(scenario?.qualityCheckReconciliations).toEqual([
       {
         qualityCheckKind: "unit",
@@ -146,7 +146,7 @@ describe("[CLM-LNT-004] a scenario raising Evidence Obligations for both a unit 
       {
         qualityCheckKind: "fitness",
         evidenceObligation: { qualityCheckKind: "fitness" },
-        evidenceObservations: [watermelonObservation],
+        evidenceObservations: [cannotFailObservation],
       },
     ]);
 
@@ -155,7 +155,7 @@ describe("[CLM-LNT-004] a scenario raising Evidence Obligations for both a unit 
         qualityCheckKind: "fitness",
         outcome: "cannot-fail",
         evidenceObligation: { qualityCheckKind: "fitness" },
-        evidenceObservation: watermelonObservation,
+        evidenceObservation: cannotFailObservation,
       },
     ]);
   });

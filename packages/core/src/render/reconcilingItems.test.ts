@@ -125,13 +125,13 @@ describe("[CLM-RPT-004] the markdown report renders the reconciliation totals as
   });
 
   describe("evidence that never ran on the unnamed claim's row names where it broke and what it said", () => {
-    const brokenRow = (observations: EvidenceObservation[]) => rowFor(render([], observations), UNNAMED_CLAIM_ROW);
+    const neverRanRow = (observations: EvidenceObservation[]) => rowFor(render([], observations), UNNAMED_CLAIM_ROW);
 
     it("a file that failed to collect, with its error, names the locator and the error joined by a colon", () => {
       const observations = parseVitestEvidenceObservations(
         { testResults: [{ name: "src/never-ran.test.ts", status: "failed", message: "Cannot find module './gone.js'" }] }
       );
-      expect(brokenRow(observations)).toEqual({
+      expect(neverRanRow(observations)).toEqual({
         verdict: "out-of-balance",
         items: item("never-ran", "unit", "src/never-ran.test.ts: Cannot find module './gone.js'"),
       });
@@ -150,7 +150,7 @@ describe("[CLM-RPT-004] the markdown report renders the reconciliation totals as
       ],
     ])("%s", (_title, testResult, locator) => {
       const observations = parseVitestEvidenceObservations({ testResults: [testResult] });
-      expect(brokenRow(observations)).toEqual({
+      expect(neverRanRow(observations)).toEqual({
         verdict: "out-of-balance",
         items: item("never-ran", "unit", locator),
       });
@@ -160,7 +160,7 @@ describe("[CLM-RPT-004] the markdown report renders the reconciliation totals as
       const observations = parseVitestEvidenceObservations(
         { testResults: [{ name: "", status: "failed" }] }
       );
-      expect(brokenRow(observations)).toEqual({
+      expect(neverRanRow(observations)).toEqual({
         verdict: "out-of-balance",
         items: item("never-ran", "unit"),
       });

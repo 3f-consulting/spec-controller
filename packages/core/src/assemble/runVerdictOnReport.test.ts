@@ -26,7 +26,7 @@ const HEADLINE: Readonly<Record<RunVerdict, Exclude<WordedCoreMessage, keyof Cor
   "claim-code-errors": CoreMessage.ClaimCodeErrorsHeadline,
 };
 
-const broken: EvidenceObservation = {
+const neverRan: EvidenceObservation = {
   qualityCheckKind: "unit",
   claimCode: null,
   status: "passed",
@@ -65,7 +65,7 @@ interface Row {
 const ROWS: readonly Row[] = [
   { verdict: "balanced", run: "every account balances", reconciliation: () => fromLedger(reconcile([scenario], [passed])), ctx },
   { verdict: "out-of-balance", run: "a scenario has no evidence", reconciliation: () => fromLedger(reconcile([scenario], [])), ctx },
-  { verdict: "unsound", run: "a proof errored before it ran", reconciliation: () => fromLedger(reconcile([scenario], [passed, broken])), ctx },
+  { verdict: "unsound", run: "a proof errored before it ran", reconciliation: () => fromLedger(reconcile([scenario], [passed, neverRan])), ctx },
   {
     verdict: "pending",
     run: "a Pending Item is outstanding under --strict",

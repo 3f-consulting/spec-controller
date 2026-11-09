@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evidenceReconciliationOf, type EvidenceReconciliation } from "./evidenceReconciliation.js";
 import { fitnessObservationsOf, type RecordedCheckStep } from "./fitnessReconciliation.js";
-import { brokenItemsOf, hasBrokenEvidence } from "./ledger.js";
+import { neverRanItemsOf, hasNeverRanEvidence } from "./ledger.js";
 import { readingsOf } from "./qualityCheckReconciliation.test-utils.js";
 import { linesOf } from "./claimReconciliation.js";
 import { FITNESS_SCENARIOS } from "./checkStep.test-utils.js";
@@ -57,9 +57,9 @@ describe("[CLM-LNT-026] a check step's outcome answers its row's obligation only
   it("stamps the run unsound, carrying for each step it has no reading for a note with the cited code and what the record said", () => {
     const reconciliation = reconcile();
     expect(
-      hasBrokenEvidence({ claimReconciliations: reconciliation.ledger.claimReconciliations })
+      hasNeverRanEvidence({ claimReconciliations: reconciliation.ledger.claimReconciliations })
     ).toBe(true);
-    const items = brokenItemsOf(reconciliation.ledger);
+    const items = neverRanItemsOf(reconciliation.ledger);
     const observations = items.flatMap((line) => line.evidenceObservation ?? []);
     expect(items.map((line) => [line.outcome, line.evidenceObservation?.notes])).toEqual([
       ["never-ran", [{ kind: "check-step-did-not-run", code: "CLM-CVT-003", outcome: "skipped" }]],

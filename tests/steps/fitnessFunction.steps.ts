@@ -204,9 +204,9 @@ Then(
       `expected CLM-TGS-001's fitness evidence obligation satisfied, adding no reconciling item; got: ${reconcilingItems}`,
     );
     const report = JSON.parse(this.jsonText) as JsonReport;
-    const watermelons = reconciliationTotalsOf(report).reconciliationLines.byOutcome["cannot-fail"];
+    const cannotFails = reconciliationTotalsOf(report).reconciliationLines.byOutcome["cannot-fail"];
     assert.equal(
-      watermelons,
+      cannotFails,
       0,
       `expected NO cannot-fail in the summary, whose count of cannot-fail lines is present even at zero: a ` +
         `pass that cannot fail says a cited check is passing but fabricated, and this one genuinely runs. Report:\n${this.jsonText}`,

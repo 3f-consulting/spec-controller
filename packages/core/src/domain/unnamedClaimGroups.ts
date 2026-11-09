@@ -25,7 +25,7 @@ interface UnnamedClaimStepsGroup {
 
 export type UnnamedClaimGroup = UnnamedClaimFileGroup | UnnamedClaimStepsGroup;
 
-function citingNoScenario(lines: readonly ReconciliationLine[]): EvidenceObservation[] {
+function citingNoClaim(lines: readonly ReconciliationLine[]): EvidenceObservation[] {
   return lines
     .filter((line) => line.outcome === "cites-no-claim")
     .flatMap((line) => line.evidenceObservation ?? []);
@@ -73,7 +73,7 @@ function stepsGroupsOf(observations: readonly EvidenceObservation[]): UnnamedCla
 }
 
 export function unnamedClaimGroupsOf(lines: readonly ReconciliationLine[]): UnnamedClaimGroup[] {
-  const observations = citingNoScenario(lines);
+  const observations = citingNoClaim(lines);
   const byFile = new Map<string, { code: string | null; members: BehaviouralEvidenceObservation[] }>();
   for (const o of observations) {
     if (isFitnessObservation(o)) continue;

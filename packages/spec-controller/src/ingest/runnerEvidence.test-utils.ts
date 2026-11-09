@@ -35,17 +35,17 @@ export function expectMissingWithNoObservation(unit: UnitReconciliation): void {
 
 type ReconcilingItem = ReturnType<typeof reconcilingItemsOf>[number];
 
-export function brokenItemsOf(balance: EvidenceReconciliation): { kind: ClaimReconciliation["kind"]; item: ReconcilingItem }[] {
+export function neverRanItemsOf(balance: EvidenceReconciliation): { kind: ClaimReconciliation["kind"]; item: ReconcilingItem }[] {
   return balance.ledger.claimReconciliations.flatMap((row) =>
     reconcilingItemsOf(row).filter((item) => item.outcome === "never-ran").map((item) => ({ kind: row.kind, item }))
   );
 }
 
-export function soleBrokenObservationOnUnnamedClaim(balance: EvidenceReconciliation): ReconcilingItem["evidenceObservation"] {
-  const broken = brokenItemsOf(balance);
-  expect(broken).toHaveLength(1);
-  expect(broken[0]?.kind).toBe("unnamed-claim");
-  return broken[0]?.item.evidenceObservation;
+export function soleNeverRanObservationOnUnnamedClaim(balance: EvidenceReconciliation): ReconcilingItem["evidenceObservation"] {
+  const neverRan = neverRanItemsOf(balance);
+  expect(neverRan).toHaveLength(1);
+  expect(neverRan[0]?.kind).toBe("unnamed-claim");
+  return neverRan[0]?.item.evidenceObservation;
 }
 
 const contextOf = (target: string): RunContext =>

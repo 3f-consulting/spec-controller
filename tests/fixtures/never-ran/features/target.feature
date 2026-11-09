@@ -10,7 +10,7 @@ Feature: an unsound reconciliation fixture target
 
   The run is therefore BOTH out-of-balance (the never-ran item sits on the unnamed claim's row)
   and UNSOUND — which is exactly the trap @CLM-CLI-012 exists to close: without
-  checking `hasBrokenEvidence` FIRST, this run exits 1 and the collection failure is
+  checking `hasNeverRanEvidence` FIRST, this run exits 1 and the collection failure is
   masked as an honest disagreement.
 
   This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,

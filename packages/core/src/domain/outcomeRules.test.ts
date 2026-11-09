@@ -3,8 +3,8 @@ import { reconcile } from "./evidenceReconciliation.js";
 import { UNNAMED_CLAIM_ID } from "./claimReconciliation.js";
 
 import {
-  noEvidenceObligationReconciliationsOf,
-  citesUnknownScenarioReconciliationsOf,
+  notAskedForReconciliationsOf,
+  citesUnknownClaimReconciliationsOf,
   unnamedClaimReconciliationsOf,
 } from "./qualityCheckReconciliation.js";
 import type {
@@ -18,17 +18,17 @@ const observation = (
   extra: Partial<BehaviouralEvidenceObservation> = {}
 ): BehaviouralEvidenceObservation => ({ qualityCheckKind, claimCode, status: "passed", ...extra });
 
-describe("[CLM-LDG-001] noEvidenceObligationReconciliationsOf lists evidence observations at kinds of quality check with no evidence obligation", () => {
+describe("[CLM-LDG-001] notAskedForReconciliationsOf lists evidence observations at kinds of quality check with no evidence obligation", () => {
   const pairs = new Set(["CLM-AAA-001 unit"]);
 
   it("skips an evidence observation at a NAMED pair — that one reconciles as a matched obligation", () => {
     expect(
-      noEvidenceObligationReconciliationsOf("CLM-AAA-001", [observation("unit", "CLM-AAA-001")], pairs)
+      notAskedForReconciliationsOf("CLM-AAA-001", [observation("unit", "CLM-AAA-001")], pairs)
     ).toEqual([]);
   });
 
   it("lists an evidence observation at a kind of quality check with NO evidence obligation, evidence observation only, carrying its locator", () => {
-    const items = noEvidenceObligationReconciliationsOf(
+    const items = notAskedForReconciliationsOf(
       "CLM-AAA-001",
       [observation("e2e", "CLM-AAA-001", { locator: "tests/a.e2e.ts" })],
       pairs
@@ -44,7 +44,7 @@ describe("[CLM-LDG-008] an evidence observation at a kind of quality check the s
   const pairs = new Set(["CLM-AAA-001 unit"]);
 
   it("holds a behavioural evidence observation from no test file with only the keys it has", () => {
-    const [item] = noEvidenceObligationReconciliationsOf("CLM-AAA-001", [observation("e2e", "CLM-AAA-001")], pairs);
+    const [item] = notAskedForReconciliationsOf("CLM-AAA-001", [observation("e2e", "CLM-AAA-001")], pairs);
     expect(item).toStrictEqual({
       qualityCheckKind: "e2e",
       evidenceObservations: [{ qualityCheckKind: "e2e", claimCode: "CLM-AAA-001", status: "passed", outcome: "not-asked-for" }],
@@ -59,7 +59,7 @@ describe("[CLM-LDG-008] an evidence observation at a kind of quality check the s
       exists: true,
       enforcedOverRealSource: true,
     };
-    const [item] = noEvidenceObligationReconciliationsOf("CLM-AAA-001", [untagged], pairs);
+    const [item] = notAskedForReconciliationsOf("CLM-AAA-001", [untagged], pairs);
     expect(item).toStrictEqual({
       qualityCheckKind: "fitness",
       evidenceObservations: [
@@ -76,9 +76,9 @@ describe("[CLM-LDG-008] an evidence observation at a kind of quality check the s
   });
 });
 
-describe("[CLM-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom claim's row's items", () => {
+describe("[CLM-LDG-001] citesUnknownClaimReconciliationsOf builds a phantom claim's row's items", () => {
   it("posts one cites-unknown-claim item, with an evidence observation and no obligation, per citing evidence observation, in citation order", () => {
-    const items = citesUnknownScenarioReconciliationsOf([
+    const items = citesUnknownClaimReconciliationsOf([
       observation("unit", "CLM-ZZZ-009", { locator: "tests/z1.test.ts" }),
       observation("integration", "CLM-ZZZ-009", { locator: "features/z2.feature" }),
     ]);
@@ -115,7 +115,7 @@ describe("[CLM-LDG-034] an observation on a phantom claim's row carries the keys
       enforcedOverRealSource: true,
       locator: "packages/core/src/parse/fitnessCitations.ts",
     };
-    const [item] = citesUnknownScenarioReconciliationsOf([guardWithLocator]);
+    const [item] = citesUnknownClaimReconciliationsOf([guardWithLocator]);
     expect(item).toStrictEqual({
       qualityCheckKind: "fitness",
       evidenceObservations: [
@@ -140,7 +140,7 @@ describe("[CLM-LDG-034] an observation on a phantom claim's row carries the keys
       exists: true,
       enforcedOverRealSource: true,
     };
-    const [item] = citesUnknownScenarioReconciliationsOf([guard]);
+    const [item] = citesUnknownClaimReconciliationsOf([guard]);
     expect(item).toStrictEqual({
       qualityCheckKind: "fitness",
       evidenceObservations: [
@@ -158,10 +158,10 @@ describe("[CLM-LDG-034] an observation on a phantom claim's row carries the keys
 });
 
 describe("[CLM-LDG-001] unnamedClaimReconciliationsOf orders the unnamed claim's row's items", () => {
-  let broken: ReturnType<typeof observation>;
+  let neverRan: ReturnType<typeof observation>;
   let uncited: ReturnType<typeof observation>;
   beforeEach(() => {
-    broken = observation("unit", null, {
+    neverRan = observation("unit", null, {
       status: "failed",
       neverRan: true,
       locator: "tests/never-ran.test.ts",
@@ -177,7 +177,7 @@ describe("[CLM-LDG-001] unnamedClaimReconciliationsOf orders the unnamed claim's
   };
 
   it("holds the unnamed claim's evidence in one reconciliation per kind of quality check, each observation a line in evidence order, one that never ran reading never-ran", () => {
-    const row = reconcile([], [guard, uncited, broken]).claimReconciliations.find((r) => r.claim === UNNAMED_CLAIM_ID)!;
+    const row = reconcile([], [guard, uncited, neverRan]).claimReconciliations.find((r) => r.claim === UNNAMED_CLAIM_ID)!;
     expect(row.qualityCheckReconciliations.map((i) => [i.qualityCheckKind, i.outcome, i.evidenceObservations?.map((o) => [o.locator, o.outcome])])).toEqual([
       ["unit", undefined, [["tests/never-ran.test.ts", "never-ran"], ["tests/orphan.test.ts", "cites-no-claim"]]],
       ["fitness", undefined, [[undefined, "cites-no-claim"]]],

@@ -223,7 +223,7 @@ describe("[CLM-RPT-007] the corpus census is recoverable from the ledger scenari
     const md = renderMarkdown(__er(reconciliationFixture), ctx, publishedExitCodeOf);
     expect(md).toContain(`- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 3, balanced: 1, outOfBalance: 2 })}`);
     expect(md).toContain("CLM-C");
-    expect(md).toContain(`| out-of-balance | ${coreMessage(CoreMessage.OutcomeBothMissing)} |`);
+    expect(md).toContain(`| out-of-balance | ${coreMessage(CoreMessage.OutcomeNoQualityCheck)} |`);
   });
 });
 
@@ -292,7 +292,7 @@ describe("[CLM-RPT-009] the markdown report renders summary-first, ledger-last",
     expect(table.rowOf("CLM-LDG-002").cell(VERDICT_COLUMN())).toBe("out-of-balance");
     expect(table.rowOf("CLM-LDG-002").cell(RECONCILING_ITEMS_COLUMN())).toBe(`unit: ${coreMessage(CoreMessage.OutcomeMissing)}`);
     expect(table.rowOf("CLM-LNT-001").cell(VERDICT_COLUMN())).toBe("out-of-balance");
-    expect(table.rowOf("CLM-LNT-001").cell(RECONCILING_ITEMS_COLUMN()).startsWith(`fitness: ${coreMessage(CoreMessage.OutcomeWatermelon)}`)).toBe(true);
+    expect(table.rowOf("CLM-LNT-001").cell(RECONCILING_ITEMS_COLUMN()).startsWith(`fitness: ${coreMessage(CoreMessage.OutcomeCannotFail)}`)).toBe(true);
     expect(md).not.toContain("runtime/");
     expect(md).not.toContain("static:");
   });

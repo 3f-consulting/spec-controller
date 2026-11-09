@@ -27,15 +27,15 @@ export function hasPendingItems(ledger: Ledger): boolean {
   return ledger.claimReconciliations.some((row) => row.pendingItems.length > 0);
 }
 
-export function hasBrokenEvidence(ledger: Ledger): boolean {
-  return brokenItemsOf(ledger).length > 0;
+export function hasNeverRanEvidence(ledger: Ledger): boolean {
+  return neverRanItemsOf(ledger).length > 0;
 }
 
 export function hasNothingToReconcile(ledger: Ledger): boolean {
   return ledger.claimReconciliations.length === 0;
 }
 
-export function brokenItemsOf(ledger: Ledger): ReconciliationLine[] {
+export function neverRanItemsOf(ledger: Ledger): ReconciliationLine[] {
   return ledger.claimReconciliations.flatMap((row) =>
     reconcilingItemsOf(row).filter((item) => item.outcome === "never-ran")
   );

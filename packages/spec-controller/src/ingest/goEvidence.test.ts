@@ -8,7 +8,7 @@ import {
   expectSoleObservation,
   reconcileFixture,
   runVerdictOf,
-  soleBrokenObservationOnUnnamedClaim,
+  soleNeverRanObservationOnUnnamedClaim,
   unitReconciliationOf,
   unnamedClaimRowOf,
 } from "./runnerEvidence.test-utils.js";
@@ -81,14 +81,14 @@ describe("[CLM-GOT-006] runReconcile reads a Go subtest whose enclosing test fai
 
   it("posts the enclosing test's failure to the unnamed claim, under its own name", () => {
     expect(unnamedClaimRowOf(balance(), TARGET)).toContain(
-      `${coreMessage(CoreMessage.OutcomeCitesNoScenario)} (example.com/gofixture/cited::TestEnclosingFailsFirst) — ${coreMessage(CoreMessage.UnnamedClaimGroupCounts, { ran: 1, passed: 0, failed: 1 })}`,
+      `${coreMessage(CoreMessage.OutcomeCitesNoClaim)} (example.com/gofixture/cited::TestEnclosingFailsFirst) — ${coreMessage(CoreMessage.UnnamedClaimGroupCounts, { ran: 1, passed: 0, failed: 1 })}`,
     );
   });
 });
 
 describe("[CLM-GOT-007] runReconcile reads a Go package that failed to compile as evidence that never ran, and the run is unsound", () => {
   it("posts one never-ran item, on the unnamed claim's row, naming the package and saying its build failed", () => {
-    const observation = soleBrokenObservationOnUnnamedClaim(balance());
+    const observation = soleNeverRanObservationOnUnnamedClaim(balance());
 
     expect(observation?.locator).toBe("example.com/gofixture/broken");
     expect(observation?.message).toContain("example.com/gofixture/broken [build failed]");

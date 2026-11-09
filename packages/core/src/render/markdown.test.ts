@@ -88,7 +88,7 @@ describe("[CLM-RPT-004] the markdown report tallies Reconciliation lines by reco
     expect(md).toContain(`\n| ${coreMessage(CoreMessage.OutcomeMissing)} |`);
     expect(md).toContain("1 unit + 1 integration");
     expect(md).toContain(`\n| ${coreMessage(CoreMessage.OutcomeFailing)} |`);
-    expect(md).toContain(`\n| ${coreMessage(CoreMessage.OutcomeWatermelon)} |`);
+    expect(md).toContain(`\n| ${coreMessage(CoreMessage.OutcomeCannotFail)} |`);
   });
 
   it("renders a missing fitness-function evidenceObligation as the bare 'fitness' bucket, fitness-first in the split", () => {

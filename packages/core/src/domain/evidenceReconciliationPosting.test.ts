@@ -2,9 +2,9 @@ import { isDeepStrictEqual } from "node:util";
 import { describe, it, expect } from "vitest";
 import { linesOf, obligationsOf, observationsOf, reconcilingItemsOf } from "./claimReconciliation.js";
 import type { ReconciliationLine } from "./claimReconciliation.js";
-import { brokenReconciliationsOf } from "./qualityCheckReconciliation.js";
+import { neverRanReconciliationsOf } from "./qualityCheckReconciliation.js";
 import { reconcile } from "./evidenceReconciliation.js";
-import { isBalanced, brokenItemsOf } from "./ledger.js";
+import { isBalanced, neverRanItemsOf } from "./ledger.js";
 import { assembleRenderInput } from "../assemble/renderInput.js";
 import { reconciliationTotalsOf } from "../assemble/reportReconciliationTotals.test-utils.js";
 import type { RunContext } from "./runProvenance.js";
@@ -52,7 +52,7 @@ describe("[CLM-LDG-022] reconcile — every evidence observation is found once, 
     { claimCode: "CLM-AAA-003", evidenceObligations: [{ qualityCheckKind: "unit", pending: true }] },
     { claimCode: "CLM-FIT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
   ];
-  const brokenNote = { kind: "check-step-did-not-run", code: "CLM-FIT-001" } as const;
+  const neverRanNote = { kind: "check-step-did-not-run", code: "CLM-FIT-001" } as const;
   const everyObservation: EvidenceObservation[] = [
     { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "passed", locator: "tests/a.test.ts" },
     { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "failed", locator: "tests/b.test.ts" },
@@ -60,7 +60,7 @@ describe("[CLM-LDG-022] reconcile — every evidence observation is found once, 
     { qualityCheckKind: "e2e", claimCode: "CLM-AAA-001", status: "passed", locator: "features/a.feature" },
     { qualityCheckKind: "unit", claimCode: "CLM-AAA-003", status: "passed", locator: "tests/pending.test.ts" },
     { qualityCheckKind: "fitness", fitnessFunction: "lint:a", claimCode: "CLM-FIT-001", exists: true, enforcedOverRealSource: true },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:b", claimCode: "CLM-FIT-001", exists: false, enforcedOverRealSource: false, neverRan: true, notes: [brokenNote] },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:b", claimCode: "CLM-FIT-001", exists: false, enforcedOverRealSource: false, neverRan: true, notes: [neverRanNote] },
     { qualityCheckKind: "unit", claimCode: "CLM-ZZZ-999", status: "passed", locator: "tests/phantom.test.ts" },
     { qualityCheckKind: "unit", claimCode: "CLM-ZZZ-999", status: "failed", neverRan: true, locator: "tests/phantom-never-ran.test.ts" },
     { qualityCheckKind: "fitness", fitnessFunction: "lint:phantom", claimCode: "CLM-ZZZ-998", exists: true, enforcedOverRealSource: false },
@@ -106,54 +106,54 @@ describe("[CLM-LDG-022] reconcile — an evidence observation that never ran pos
   ];
 
   const note = { kind: "ambiguous-step", step: "a step" } as const;
-  const brokenOnScenario: EvidenceObservation = {
+  const neverRanOnScenario: EvidenceObservation = {
     qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "failed", neverRan: true,
     locator: "tests/scenario.test.ts", message: "threw at import", notes: [note],
   };
-  const brokenOnScenarioWithoutObligation: EvidenceObservation = {
+  const neverRanOnScenarioWithoutObligation: EvidenceObservation = {
     qualityCheckKind: "e2e", claimCode: "CLM-AAA-001", status: "failed", neverRan: true,
     locator: "features/scenario.feature", message: "a hook failed", notes: [note],
   };
-  const brokenOnPhantom: EvidenceObservation = {
+  const neverRanOnPhantom: EvidenceObservation = {
     qualityCheckKind: "unit", claimCode: "CLM-ZZZ-999", status: "failed", neverRan: true,
     locator: "tests/phantom.test.ts", message: "threw at import", notes: [note],
   };
-  const brokenOnNothing: EvidenceObservation = {
+  const neverRanOnNothing: EvidenceObservation = {
     qualityCheckKind: "unit", claimCode: null, status: "failed", neverRan: true,
     locator: "tests/nothing.test.ts", message: "threw at import", notes: [note],
   };
-  const brokenCheckOnScenario: EvidenceObservation = {
+  const neverRanCheckOnScenario: EvidenceObservation = {
     qualityCheckKind: "fitness", fitnessFunction: "lint:scenario", claimCode: "CLM-FIT-001",
     exists: false, enforcedOverRealSource: false, neverRan: true,
     locator: ".github/workflows/ci.yml", message: "the step did not run",
     notes: [{ kind: "check-step-did-not-run", code: "CLM-FIT-001" }],
   };
-  const brokenCheckOnPhantom: EvidenceObservation = {
+  const neverRanCheckOnPhantom: EvidenceObservation = {
     qualityCheckKind: "fitness", fitnessFunction: "lint:phantom", claimCode: "CLM-ZZZ-998",
     exists: false, enforcedOverRealSource: false, neverRan: true,
     locator: ".github/workflows/ci.yml", message: "the step did not run",
     notes: [{ kind: "check-step-did-not-run", code: "CLM-ZZZ-998" }],
   };
-  const brokenCheckOnNothing: EvidenceObservation = {
+  const neverRanCheckOnNothing: EvidenceObservation = {
     qualityCheckKind: "fitness", fitnessFunction: "lint:nothing",
     exists: false, enforcedOverRealSource: false, neverRan: true,
     locator: ".github/workflows/ci.yml", message: "the step did not run",
     notes: [{ kind: "check-step-did-not-run", code: "lint:nothing" }],
   };
 
-  const everyBroken = [
-    brokenOnScenario,
-    brokenOnScenarioWithoutObligation,
-    brokenOnPhantom,
-    brokenOnNothing,
-    brokenCheckOnScenario,
-    brokenCheckOnPhantom,
-    brokenCheckOnNothing,
+  const everyNeverRan = [
+    neverRanOnScenario,
+    neverRanOnScenarioWithoutObligation,
+    neverRanOnPhantom,
+    neverRanOnNothing,
+    neverRanCheckOnScenario,
+    neverRanCheckOnPhantom,
+    neverRanCheckOnNothing,
   ];
-  const ledger = (): Ledger => reconcile(scenarios, [...everyBroken]);
+  const ledger = (): Ledger => reconcile(scenarios, [...everyNeverRan]);
 
-  const brokenItemFor = (observation: EvidenceObservation): ReconciliationLine =>
-    linesOf(brokenReconciliationsOf([observation])[0]!)[0]!;
+  const neverRanItemFor = (observation: EvidenceObservation): ReconciliationLine =>
+    linesOf(neverRanReconciliationsOf([observation])[0]!)[0]!;
 
   const carrying = (observation: EvidenceObservation) => (line: ReconciliationLine): boolean => {
     if (line.evidenceObservation === undefined) return false;
@@ -162,19 +162,19 @@ describe("[CLM-LDG-022] reconcile — an evidence observation that never ran pos
   };
 
   it.each([
-    ["a behavioural one naming a scenario, at a check with an obligation", brokenOnScenario, "CLM-AAA-001"],
-    ["a behavioural one naming a scenario, at a check with no obligation", brokenOnScenarioWithoutObligation, "CLM-AAA-001"],
-    ["a behavioural one naming no scenario carrying its code", brokenOnPhantom, "CLM-ZZZ-999"],
-    ["a behavioural one naming no claim", brokenOnNothing, "(unnamed claim)"],
-    ["a fitness one naming a scenario", brokenCheckOnScenario, "CLM-FIT-001"],
-    ["a fitness one naming no scenario carrying its code", brokenCheckOnPhantom, "CLM-ZZZ-998"],
-    ["a fitness one naming no claim", brokenCheckOnNothing, "(unnamed claim)"],
+    ["a behavioural one naming a scenario, at a check with an obligation", neverRanOnScenario, "CLM-AAA-001"],
+    ["a behavioural one naming a scenario, at a check with no obligation", neverRanOnScenarioWithoutObligation, "CLM-AAA-001"],
+    ["a behavioural one naming no scenario carrying its code", neverRanOnPhantom, "CLM-ZZZ-999"],
+    ["a behavioural one naming no claim", neverRanOnNothing, "(unnamed claim)"],
+    ["a fitness one naming a scenario", neverRanCheckOnScenario, "CLM-FIT-001"],
+    ["a fitness one naming no scenario carrying its code", neverRanCheckOnPhantom, "CLM-ZZZ-998"],
+    ["a fitness one naming no claim", neverRanCheckOnNothing, "(unnamed claim)"],
   ] as const)("posts %s on that claim's row alone, as one never-ran item carrying it", (_title, observation, claimCode) => {
     const rows = ledger().claimReconciliations;
     expect(rows.filter((row) => row.qualityCheckReconciliations.flatMap(linesOf).some(carrying(observation))).map((row) => row.claim)).toEqual([claimCode]);
     const row = rows.find((r) => r.claim === claimCode)!;
-    expect(row.qualityCheckReconciliations.flatMap(linesOf).filter(carrying(observation))).toEqual([brokenItemFor(observation)]);
-    expect(reconcilingItemsOf(row).filter(carrying(observation))).toEqual([brokenItemFor(observation)]);
+    expect(row.qualityCheckReconciliations.flatMap(linesOf).filter(carrying(observation))).toEqual([neverRanItemFor(observation)]);
+    expect(reconcilingItemsOf(row).filter(carrying(observation))).toEqual([neverRanItemFor(observation)]);
   });
 
   it("leaves the obligation an evidence observation that never ran was meant to answer missing, on behavioural and fitness checks alike", () => {
@@ -200,23 +200,23 @@ describe("[CLM-LDG-022] reconcile — an evidence observation that never ran pos
       { claimCode: "CLM-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       { claimCode: "CLM-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
-    const brokenOnShared: EvidenceObservation = {
+    const neverRanOnShared: EvidenceObservation = {
       qualityCheckKind: "unit", claimCode: "CLM-DUP-001", status: "failed", neverRan: true,
       locator: "tests/shared.test.ts", message: "threw at import",
     };
-    const namingTheCode: EvidenceObservation = { ...brokenOnShared, notes: [{ kind: "shared-claim-code", code: "CLM-DUP-001" }] };
-    const sharedLedger = reconcile(shared, [brokenOnShared]);
+    const namingTheCode: EvidenceObservation = { ...neverRanOnShared, notes: [{ kind: "shared-claim-code", code: "CLM-DUP-001" }] };
+    const sharedLedger = reconcile(shared, [neverRanOnShared]);
     expect(sharedLedger.claimReconciliations.map((row) => row.claim)).toEqual(["CLM-DUP-001", "CLM-DUP-001", "(unnamed claim)"]);
     expect(reconcilingItemsOf(sharedLedger.claimReconciliations[2]!).filter(carrying(namingTheCode))).toEqual([
-      brokenItemFor(namingTheCode),
+      neverRanItemFor(namingTheCode),
     ]);
-    expect(brokenItemsOf(sharedLedger)).toHaveLength(1);
+    expect(neverRanItemsOf(sharedLedger)).toHaveLength(1);
   });
 
   it("counts one never-ran item per evidence observation that never ran, wherever each posts", () => {
-    expect(brokenItemsOf(ledger())).toHaveLength(everyBroken.length);
-    expect(brokenItemsOf(ledger()).flatMap((line) => line.evidenceObservation ?? [])).toEqual(
-      expect.arrayContaining(everyBroken.map((observation) => ({ ...observation, outcome: "never-ran" })))
+    expect(neverRanItemsOf(ledger())).toHaveLength(everyNeverRan.length);
+    expect(neverRanItemsOf(ledger()).flatMap((line) => line.evidenceObservation ?? [])).toEqual(
+      expect.arrayContaining(everyNeverRan.map((observation) => ({ ...observation, outcome: "never-ran" })))
     );
   });
 });

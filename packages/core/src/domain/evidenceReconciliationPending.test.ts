@@ -51,10 +51,10 @@ describe("[CLM-PND-005] the pending deferral governs even when a matching observ
 
     expect(scenario?.pendingItems).toEqual([{ qualityCheckKind: "integration" }]);
     expect(scenario?.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.outcome === "satisfied")).toBe(false);
-    const noEvidenceObligation = balance.claimReconciliations.flatMap((s) =>
+    const notAskedFor = balance.claimReconciliations.flatMap((s) =>
       reconcilingItemsOf(s).filter((r) => r.outcome === "not-asked-for")
     );
-    expect(noEvidenceObligation).toEqual([{ qualityCheckKind: "integration", outcome: "not-asked-for", evidenceObservation: { qualityCheckKind: "integration", claimCode: "CLM-PND-005", status: "passed", outcome: "not-asked-for" } }]);
+    expect(notAskedFor).toEqual([{ qualityCheckKind: "integration", outcome: "not-asked-for", evidenceObservation: { qualityCheckKind: "integration", claimCode: "CLM-PND-005", status: "passed", outcome: "not-asked-for" } }]);
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(reconcilingItemsOf(scenario!)).toEqual([
       { qualityCheckKind: "integration", outcome: "not-asked-for", evidenceObservation: { qualityCheckKind: "integration", claimCode: "CLM-PND-005", status: "passed", outcome: "not-asked-for" } },

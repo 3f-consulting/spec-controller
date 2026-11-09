@@ -26,7 +26,7 @@ const lockedOut: Scenario = {
 };
 
 const passing: EvidenceObservation = { qualityCheckKind: "unit", claimCode: CODE, status: "passed", locator: "tests/login.test.ts" };
-const broken: EvidenceObservation = {
+const neverRan: EvidenceObservation = {
   qualityCheckKind: "unit", claimCode: CODE, status: "failed", neverRan: true, locator: "tests/login-never-ran.test.ts",
 };
 
@@ -59,13 +59,13 @@ describe("[CLM-LDG-046] two scenarios sharing one claim code are two claims, and
   });
 
   it("posts a passing and an observation that never ran citing the code to the unnamed claim, each naming the code, and to neither sharer", () => {
-    const rows = reconcile([letIn, turnedAway], [passing, broken]).claimReconciliations;
+    const rows = reconcile([letIn, turnedAway], [passing, neverRan]).claimReconciliations;
     const unnamed = rowsFor(rows, UNNAMED_CLAIM_ID);
     expect(unnamed.flatMap((row) => row.qualityCheckReconciliations.flatMap(linesOf))).toEqual([
       {
         qualityCheckKind: "unit",
         outcome: "never-ran",
-        evidenceObservation: { ...broken, notes: [{ kind: "shared-claim-code", code: CODE }], outcome: "never-ran" },
+        evidenceObservation: { ...neverRan, notes: [{ kind: "shared-claim-code", code: CODE }], outcome: "never-ran" },
       },
       {
         qualityCheckKind: "unit",
@@ -82,6 +82,6 @@ describe("[CLM-LDG-046] two scenarios sharing one claim code are two claims, and
     const carriedClaimCodes = new Set([CODE]);
     const sharedClaimCodes = new Set([CODE]);
     expect(postingOf(passing, carriedClaimCodes, sharedClaimCodes)).toEqual({ kind: "unnamed-claim", posted: "cites-shared-code" });
-    expect(postingOf(broken, carriedClaimCodes, sharedClaimCodes)).toEqual({ kind: "unnamed-claim", posted: "never-ran" });
+    expect(postingOf(neverRan, carriedClaimCodes, sharedClaimCodes)).toEqual({ kind: "unnamed-claim", posted: "never-ran" });
   });
 });

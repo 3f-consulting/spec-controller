@@ -13,8 +13,8 @@ import {
 } from "./journal.js";
 import {
   reconcileEvidenceObligation,
-  noEvidenceObligationReconciliationsOf,
-  citesUnknownScenarioReconciliationsOf,
+  notAskedForReconciliationsOf,
+  citesUnknownClaimReconciliationsOf,
   unnamedClaimReconciliationsOf,
   noClaimCodeReconciliations,
   duplicateClaimCodeReconciliationsOf,
@@ -103,7 +103,7 @@ function scenarioRow(
     reconcileEvidenceObligation(d.claimCode, obligation, evidenceObservations)
   );
 
-  const noEvidenceObligationItems = noEvidenceObligationReconciliationsOf(
+  const notAskedForItems = notAskedForReconciliationsOf(
     d.claimCode,
     citations.observationsFor(d.claimCode),
     evidenceObligationPairs
@@ -111,7 +111,7 @@ function scenarioRow(
 
   const qualityCheckReconciliations = qualityCheckReconciliationsOf(
     reconciledEvidenceObligations,
-    noEvidenceObligationItems,
+    notAskedForItems,
     pendingItems
   );
   return {
@@ -152,7 +152,7 @@ function phantomClaimRows(citations: CitationIndex): ClaimReconciliation[] {
   const rows: ClaimReconciliation[] = [];
   for (const claimCode of citations.phantomClaimCodes) {
     const observations = citations.observationsFor(claimCode);
-    const items = citesUnknownScenarioReconciliationsOf(observations);
+    const items = citesUnknownClaimReconciliationsOf(observations);
     rows.push({
       claim: claimCode,
       kind: "phantom-claim",

@@ -12,7 +12,7 @@ import { markdownHeading } from "./heading.js";
 
 const keyLines = (): string[] => [
   ...coreMessage(CoreMessage.EvidenceCellKey).split("\n"),
-  coreMessage(CoreMessage.WatermelonItemKey),
+  coreMessage(CoreMessage.CannotFailItemKey),
 ];
 
 describe("[CLM-RPT-044] a reader finds a key to the evidence cells before the Claim Reconciliations table, and none where the table has no evidence cell", () => {

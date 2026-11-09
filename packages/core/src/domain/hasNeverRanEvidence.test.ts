@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";
-import { isBalanced, hasPendingItems, hasBrokenEvidence } from "./ledger.js";
+import { isBalanced, hasPendingItems, hasNeverRanEvidence } from "./ledger.js";
 import type { EvidenceObservation } from "../model.js";
 
-describe("[CLM-LDG-018] hasBrokenEvidence — the whole-run soundness predicate", () => {
-  const brokenObservation: EvidenceObservation = {
+describe("[CLM-LDG-018] hasNeverRanEvidence — the whole-run soundness predicate", () => {
+  const neverRanObservation: EvidenceObservation = {
     qualityCheckKind: "unit",
     claimCode: null,
     status: "failed",
@@ -20,14 +20,14 @@ describe("[CLM-LDG-018] hasBrokenEvidence — the whole-run soundness predicate"
       [],
     );
     expect(hasPendingItems(pendingOnly)).toBe(true);
-    expect(hasBrokenEvidence(pendingOnly)).toBe(false);
+    expect(hasNeverRanEvidence(pendingOnly)).toBe(false);
 
-    const brokenOnly = reconcile(
+    const neverRanOnly = reconcile(
       [{ claimCode: "CLM-HNS-018", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
-      [brokenObservation],
+      [neverRanObservation],
     );
-    expect(hasBrokenEvidence(brokenOnly)).toBe(true);
-    expect(hasPendingItems(brokenOnly)).toBe(false);
-    expect(isBalanced(brokenOnly)).toBe(false);
+    expect(hasNeverRanEvidence(neverRanOnly)).toBe(true);
+    expect(hasPendingItems(neverRanOnly)).toBe(false);
+    expect(isBalanced(neverRanOnly)).toBe(false);
   });
 });

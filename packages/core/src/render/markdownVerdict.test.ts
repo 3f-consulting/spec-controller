@@ -25,28 +25,28 @@ describe("[CLM-RPT-021] the markdown names the evidence that never ran and its e
     return row!;
   };
 
-  const brokenObservation = (
+  const neverRanObservation = (
     layer: Layer,
     locator: string,
     message: string
   ): EvidenceObservation => ({ qualityCheckKind: layer, claimCode: null, status: "passed", neverRan: true, locator, message });
 
-  const balanceWithBroken = (observation: EvidenceObservation): Ledger => {
+  const balanceWithNeverRan = (observation: EvidenceObservation): Ledger => {
     const scenarios: Scenario[] = [
       { claimCode: "CLM-HNS-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     return reconcile(scenarios, [observation]);
   };
 
-  let vitestBroken: Ledger;
-  let cucumberBroken: Ledger;
+  let vitestNeverRan: Ledger;
+  let cucumberNeverRan: Ledger;
   beforeEach(() => {
-    vitestBroken = balanceWithBroken(brokenObservation("unit", VITEST_LOCATOR, VITEST_MESSAGE));
-    cucumberBroken = balanceWithBroken(brokenObservation("integration", CUCUMBER_LOCATOR, cucumberMessage()));
+    vitestNeverRan = balanceWithNeverRan(neverRanObservation("unit", VITEST_LOCATOR, VITEST_MESSAGE));
+    cucumberNeverRan = balanceWithNeverRan(neverRanObservation("integration", CUCUMBER_LOCATOR, cucumberMessage()));
   });
 
   it("stamps each run unsound, above the Summary", () => {
-    for (const balance of [vitestBroken, cucumberBroken]) {
+    for (const balance of [vitestNeverRan, cucumberNeverRan]) {
       const md = renderMarkdown(__er(balance), ctx, publishedExitCodeOf);
       expect(md).toContain(markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)));
       const iProvenance = md.indexOf("## Run provenance");
@@ -59,18 +59,18 @@ describe("[CLM-RPT-021] the markdown names the evidence that never ran and its e
   });
 
   it("carries the locator on the unnamed claim's never-ran item — a proof that never ran, not an absent one", () => {
-    const vitestMd = renderMarkdown(__er(vitestBroken), ctx, publishedExitCodeOf);
+    const vitestMd = renderMarkdown(__er(vitestNeverRan), ctx, publishedExitCodeOf);
     const unnamedClaimRow = rowFor(vitestMd, "(unnamed claim)");
-    expect(unnamedClaimRow).toContain(`unit: ${coreMessage(CoreMessage.OutcomeBroken)}`);
+    expect(unnamedClaimRow).toContain(`unit: ${coreMessage(CoreMessage.OutcomeNeverRan)}`);
     expect(unnamedClaimRow).toContain(VITEST_LOCATOR);
     expect(unnamedClaimRow).toContain("Cannot find package '@cucumber/tag-expressions'");
     expect(unnamedClaimRow).not.toContain("at packageResolve");
     const namedRow = rowFor(vitestMd, "CLM-HNS-002");
     expect(namedRow).toContain(`unit: ${coreMessage(CoreMessage.OutcomeMissing)}`);
-    expect(namedRow).not.toContain(coreMessage(CoreMessage.OutcomeBroken));
+    expect(namedRow).not.toContain(coreMessage(CoreMessage.OutcomeNeverRan));
 
-    const cucumberUnnamedClaimRow = rowFor(renderMarkdown(__er(cucumberBroken), ctx, publishedExitCodeOf), "(unnamed claim)");
-    expect(cucumberUnnamedClaimRow).toContain(`integration: ${coreMessage(CoreMessage.OutcomeBroken)}`);
+    const cucumberUnnamedClaimRow = rowFor(renderMarkdown(__er(cucumberNeverRan), ctx, publishedExitCodeOf), "(unnamed claim)");
+    expect(cucumberUnnamedClaimRow).toContain(`integration: ${coreMessage(CoreMessage.OutcomeNeverRan)}`);
     expect(cucumberUnnamedClaimRow).toContain(CUCUMBER_LOCATOR);
     expect(cucumberUnnamedClaimRow).toContain("is ambiguous");
   });

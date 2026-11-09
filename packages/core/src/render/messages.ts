@@ -46,9 +46,9 @@ export enum CoreMessage {
   ProvenanceToolVersion = "provenance-tool-version",
   RunIntegrityHeading = "run-integrity-heading",
   RunUnsound = "run-unsound",
-  BrokenEvidenceNotNamed = "broken-evidence-not-named",
-  BrokenEvidenceWhatBroke = "broken-evidence-what-broke",
-  BrokenEvidenceNoMessage = "broken-evidence-no-message",
+  NeverRanEvidenceNotNamed = "never-ran-evidence-not-named",
+  NeverRanEvidenceWhatBroke = "never-ran-evidence-what-broke",
+  NeverRanEvidenceNoMessage = "never-ran-evidence-no-message",
   SummaryHeading = "summary-heading",
   RunVerdictHeading = "run-verdict-heading",
   VerdictExit = "verdict-exit",
@@ -130,7 +130,7 @@ export enum CoreMessage {
   ReconcilingItemsColumn = "reconciling-items-column",
   CiStepsColumn = "ci-steps-column",
   EvidenceCellKey = "evidence-cell-key",
-  WatermelonItemKey = "watermelon-item-key",
+  CannotFailItemKey = "cannot-fail-item-key",
   PendingItem = "pending-item",
   PendingItemFor = "pending-item-for",
   CheckStepNoOutcome = "check-step-no-outcome",
@@ -141,14 +141,14 @@ export enum CoreMessage {
   OutcomeSatisfied = "outcome-satisfied",
   OutcomeMissing = "outcome-missing",
   OutcomeFailing = "outcome-failing",
-  OutcomeWatermelon = "outcome-watermelon",
+  OutcomeCannotFail = "outcome-cannot-fail",
   OutcomeNoClaimCode = "outcome-no-claim-code",
   OutcomeDuplicateClaimCode = "outcome-duplicate-claim-code",
-  OutcomeCitesUnknownScenario = "outcome-cites-unknown-scenario",
-  OutcomeCitesNoScenario = "outcome-cites-no-scenario",
-  OutcomeNoEvidenceObligation = "outcome-no-evidence-obligation",
-  OutcomeBroken = "outcome-broken",
-  OutcomeBothMissing = "outcome-both-missing",
+  OutcomeCitesUnknownClaim = "outcome-cites-unknown-claim",
+  OutcomeCitesNoClaim = "outcome-cites-no-claim",
+  OutcomeNotAskedFor = "outcome-not-asked-for",
+  OutcomeNeverRan = "outcome-never-ran",
+  OutcomeNoQualityCheck = "outcome-no-quality-check",
   ObservationPassed = "observation-passed",
   ObservationFailed = "observation-failed",
   UnnamedClaimGroupCounts = "unnamed-claim-group-counts",
@@ -215,7 +215,7 @@ export interface CoreMessageValues {
   readonly [CoreMessage.ProvenanceToolSha]: { readonly sha: string };
   readonly [CoreMessage.ProvenanceToolVersion]: { readonly version: string };
   readonly [CoreMessage.RunUnsound]: { readonly proofs: string };
-  readonly [CoreMessage.BrokenEvidenceWhatBroke]: { readonly locator: string };
+  readonly [CoreMessage.NeverRanEvidenceWhatBroke]: { readonly locator: string };
   readonly [CoreMessage.VerdictExit]: { readonly code: number };
   readonly [CoreMessage.ClaimCodeErrorsGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };
   readonly [CoreMessage.SeveralClaimCodesGloss]: { readonly heading: string; readonly alsoOutOfBalance: string };

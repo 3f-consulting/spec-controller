@@ -12,7 +12,7 @@ import { reportedName } from "./reportedName.js";
 import { isObservationOnly } from "../domain/qualityCheckReconciliation.js";
 import { isFitnessObservation } from "../domain/journal.js";
 import { type SharedClaimCode } from "../domain/corpusCounts.js";
-import { brokenItemsOf, type QualityCheckKindObservations } from "../domain/ledger.js";
+import { neverRanItemsOf, type QualityCheckKindObservations } from "../domain/ledger.js";
 import {
   isScenario,
   ciStepsOf,
@@ -24,7 +24,7 @@ import {
 } from "../domain/claimReconciliation.js";
 import type { ExitCodeOf, RenderInput } from "../domain/renderInput.js";
 import type { RunInputName } from "../domain/runProvenance.js";
-import { hasBrokenEvidence } from "../domain/ledger.js";
+import { hasNeverRanEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
 import { claimCodesCleanStatement } from "./claimCodeErrorsSection.js";
 import { provenanceSection } from "./provenanceSection.js";
@@ -49,7 +49,7 @@ function renderLine(line: ReconciliationLine): string {
   const observation = line.evidenceObservation;
   if (observation === undefined) return head;
   if (!isObservationOnly(line.outcome)) return `${head}${namedSuffix(observation)}`;
-  return `${head}${line.outcome === "never-ran" ? brokenSuffix(observation) : observationSuffix(observation)}`;
+  return `${head}${line.outcome === "never-ran" ? neverRanSuffix(observation) : observationSuffix(observation)}`;
 }
 
 function quotedSuffix(parts: readonly (string | undefined)[]): string {
@@ -67,7 +67,7 @@ function scenarioClauseOf({ scenario }: ReconciliationLine): string {
   return scenario === undefined ? "" : ` — ${coreMessage(CoreMessage.SharedClaimCodeScenario, { feature: reportedName(scenario.feature), title: reportedName(scenario.title) })}`;
 }
 
-function brokenSuffix(o: EvidenceObservation): string {
+function neverRanSuffix(o: EvidenceObservation): string {
   return quotedSuffix([reported(o.locator), remarkHeadlineOf(o, reportedName)]);
 }
 
@@ -129,8 +129,8 @@ function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
 }
 
 function renderUnnamedClaimItems(lines: readonly ReconciliationLine[]): string[] {
-  const broken = lines.filter((line) => line.outcome === "never-ran");
-  return [...broken.map(renderLine), ...unnamedClaimGroupsOf(lines).map(renderUnnamedClaimGroup)];
+  const neverRan = lines.filter((line) => line.outcome === "never-ran");
+  return [...neverRan.map(renderLine), ...unnamedClaimGroupsOf(lines).map(renderUnnamedClaimGroup)];
 }
 
 function renderRowExceptions(s: ClaimReconciliation): string {
@@ -145,31 +145,31 @@ type SectionEmitter = (report: RenderInput, inputNames: readonly RunInputName[],
 
 const titleSection: SectionEmitter = () => [markdownHeading(1, coreMessage(CoreMessage.ReportTitle)), ""];
 
-type BrokenEvidenceName = { readonly kind: "unnamed" } | { readonly kind: "named"; readonly locator: string };
+type NeverRanEvidenceName = { readonly kind: "unnamed" } | { readonly kind: "named"; readonly locator: string };
 
-export function brokenEvidenceNameOf({ locator }: EvidenceObservation): BrokenEvidenceName {
+export function neverRanEvidenceNameOf({ locator }: EvidenceObservation): NeverRanEvidenceName {
   return locator?.trim() ? { kind: "named", locator } : { kind: "unnamed" };
 }
 
-function brokenEvidenceNameWords(name: BrokenEvidenceName): string {
-  return name.kind === "named" ? name.locator : coreMessage(CoreMessage.BrokenEvidenceNotNamed);
+function neverRanEvidenceNameWords(name: NeverRanEvidenceName): string {
+  return name.kind === "named" ? name.locator : coreMessage(CoreMessage.NeverRanEvidenceNotNamed);
 }
 
 const runIntegritySection: SectionEmitter = (report) => {
-  if (!hasBrokenEvidence(report)) return [];
-  const brokenObservations = brokenItemsOf(report).flatMap((line) => line.evidenceObservation ?? []);
-  const proofs = coreMessage(CoreMessage.ProofsNeverRan, { count: brokenObservations.length });
+  if (!hasNeverRanEvidence(report)) return [];
+  const neverRanObservations = neverRanItemsOf(report).flatMap((line) => line.evidenceObservation ?? []);
+  const proofs = coreMessage(CoreMessage.ProofsNeverRan, { count: neverRanObservations.length });
   const lines = [
     markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
     "",
     coreMessage(CoreMessage.RunUnsound, { proofs }),
     "",
   ];
-  for (const item of brokenObservations) {
-    const locator = brokenEvidenceNameWords(brokenEvidenceNameOf(item));
-    lines.push(`- ${coreMessage(CoreMessage.BrokenEvidenceWhatBroke, { locator: `\`${locator}\`` })}`);
+  for (const item of neverRanObservations) {
+    const locator = neverRanEvidenceNameWords(neverRanEvidenceNameOf(item));
+    lines.push(`- ${coreMessage(CoreMessage.NeverRanEvidenceWhatBroke, { locator: `\`${locator}\`` })}`);
     lines.push("");
-    lines.push(...fencedBlockLines("text", remarkWordsOf(item) ?? coreMessage(CoreMessage.BrokenEvidenceNoMessage)));
+    lines.push(...fencedBlockLines("text", remarkWordsOf(item) ?? coreMessage(CoreMessage.NeverRanEvidenceNoMessage)));
     lines.push("");
   }
   return lines;
@@ -318,7 +318,7 @@ const ledgerSection: SectionEmitter = (report) => {
 
 function evidenceKeyLines(columns: readonly EvidenceColumn[]): string[] {
   if (columns.length === 0) return [];
-  return [...coreMessage(CoreMessage.EvidenceCellKey).split("\n"), coreMessage(CoreMessage.WatermelonItemKey), ""];
+  return [...coreMessage(CoreMessage.EvidenceCellKey).split("\n"), coreMessage(CoreMessage.CannotFailItemKey), ""];
 }
 
 function ledgerTallyLines(totals: ClaimReconciliationTotals): string[] {

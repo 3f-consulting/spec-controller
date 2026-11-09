@@ -54,10 +54,10 @@ describe("[CLM-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   it("builds the fixture through the reconciler — the not-asked-for evidence observation is OUT of an evidence obligation", () => {
-    const noEvidenceObligation = balance.claimReconciliations.flatMap((s) =>
+    const notAskedFor = balance.claimReconciliations.flatMap((s) =>
       s.qualityCheckReconciliations.flatMap(linesOf).filter((line) => line.outcome === "not-asked-for")
     );
-    expect(noEvidenceObligation).toHaveLength(2);
+    expect(notAskedFor).toHaveLength(2);
     const claimC = balance.claimReconciliations.find((s) => s.claim === "CLM-C")!;
     expect(claimC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheckKind === "integration" && line.outcome === "not-asked-for")).toBe(true);
     expect(claimC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheckKind === "integration" && line.outcome === "satisfied")).toBe(false);
@@ -112,7 +112,7 @@ describe("[CLM-RPT-011] the markdown ledger renders per-scenario evidence column
     ]);
   });
 
-  const citesNoScenario = (qualityCheckKind: string): string =>
+  const citesNoClaim = (qualityCheckKind: string): string =>
     `${qualityCheckKind}: ${outcomeDescription("cites-no-claim")}`;
 
   it.each([
@@ -142,7 +142,7 @@ describe("[CLM-RPT-011] the markdown ledger renders per-scenario evidence column
       ["(unnamed claim)", "—"],
     ]);
     for (const qualityCheckKind of qualityCheckKinds) {
-      expect(unnamedClaimItemsOf(table)).toContain(citesNoScenario(qualityCheckKind));
+      expect(unnamedClaimItemsOf(table)).toContain(citesNoClaim(qualityCheckKind));
     }
   });
 
@@ -161,7 +161,7 @@ describe("[CLM-RPT-011] the markdown ledger renders per-scenario evidence column
       ["CLM-D", "", "U/-"],
       ["(unnamed claim)", "—", "—"],
     ]);
-    expect(unnamedClaimItemsOf(table)).toContain(citesNoScenario("unit"));
+    expect(unnamedClaimItemsOf(table)).toContain(citesNoClaim("unit"));
   });
 
   it("letters the Fitness cell only for a scenario that raises a fitness obligation that is not pending, however its one fitness observation reconciles", () => {
@@ -169,13 +169,13 @@ describe("[CLM-RPT-011] the markdown ledger renders per-scenario evidence column
       [
         { claimCode: "CLM-UNASKED", evidenceObligations: [{ qualityCheckKind: "unit" }] },
         { claimCode: "CLM-PENDING", evidenceObligations: [{ qualityCheckKind: "fitness", pending: true }] },
-        { claimCode: "CLM-WATERMELON", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
+        { claimCode: "CLM-CANNOTFAIL", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
       ],
       [
         { qualityCheckKind: "unit", claimCode: "CLM-UNASKED", status: "passed" },
         { qualityCheckKind: "fitness", fitnessFunction: "guard-a", claimCode: "CLM-UNASKED", exists: true, enforcedOverRealSource: true },
         { qualityCheckKind: "fitness", fitnessFunction: "guard-b", claimCode: "CLM-PENDING", exists: true, enforcedOverRealSource: true },
-        { qualityCheckKind: "fitness", fitnessFunction: "guard-c", claimCode: "CLM-WATERMELON", exists: true, enforcedOverRealSource: false },
+        { qualityCheckKind: "fitness", fitnessFunction: "guard-c", claimCode: "CLM-CANNOTFAIL", exists: true, enforcedOverRealSource: false },
       ]
     );
     const table = claimReconciliationsTable(renderMarkdown(__er(fitness, true), ctx, publishedExitCodeOf));
@@ -183,7 +183,7 @@ describe("[CLM-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(evidenceRowsOf(table)).toEqual([
       ["CLM-UNASKED", "-/1", "U/1"],
       ["CLM-PENDING", "-/1", ""],
-      ["CLM-WATERMELON", "F/1", ""],
+      ["CLM-CANNOTFAIL", "F/1", ""],
     ]);
   });
 

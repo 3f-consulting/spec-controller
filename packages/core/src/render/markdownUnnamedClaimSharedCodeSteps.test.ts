@@ -10,7 +10,7 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 import { coreMessage } from "./coreText.js";
 
-const CITES_NO_SCENARIO = (): string => outcomeDescription("cites-no-claim");
+const CITES_NO_CLAIM = (): string => outcomeDescription("cites-no-claim");
 
 const sharers: Scenario[] = [
   { claimCode: "CLM-DUP-001", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/ci.feature", title: "the build has no lint errors" },
@@ -48,16 +48,16 @@ describe("[CLM-RPT-076] a CI step citing a code more than one scenario carries i
       step("guard-other"),
     ];
     expect(unnamedClaimItemsOf(observations)).toEqual([
-      `unit: ${CITES_NO_SCENARIO()} (tests/x.test.ts) — 1 ran, 1 passed, 0 failed`,
-      `fitness: ${CITES_NO_SCENARIO()} — 2 CI steps: guard-none, guard-other`,
-      `fitness: ${CITES_NO_SCENARIO()} (${remark("CLM-DUP-001")}) — 2 CI steps: guard-lint, guard-types`,
-      `fitness: ${CITES_NO_SCENARIO()} (${remark("CLM-DUP-002")}) — 1 CI step: guard-pins`,
+      `unit: ${CITES_NO_CLAIM()} (tests/x.test.ts) — 1 ran, 1 passed, 0 failed`,
+      `fitness: ${CITES_NO_CLAIM()} — 2 CI steps: guard-none, guard-other`,
+      `fitness: ${CITES_NO_CLAIM()} (${remark("CLM-DUP-001")}) — 2 CI steps: guard-lint, guard-types`,
+      `fitness: ${CITES_NO_CLAIM()} (${remark("CLM-DUP-002")}) — 1 CI step: guard-pins`,
     ]);
   });
 
   it("reads as one entry, with no remark, when no CI step cites a shared code", () => {
     expect(unnamedClaimItemsOf([step("guard-none"), step("guard-other")])).toEqual([
-      `fitness: ${CITES_NO_SCENARIO()} — 2 CI steps: guard-none, guard-other`,
+      `fitness: ${CITES_NO_CLAIM()} — 2 CI steps: guard-none, guard-other`,
     ]);
   });
 });

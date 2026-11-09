@@ -64,7 +64,7 @@ describe("[CLM-LDG-001] isScenario names only the named thing", () => {
 describe("[CLM-RPT-011] observationCountOf counts a row's fitness evidence observations as it counts any other", () => {
   const posted = { qualityCheckKind: "fitness", claimCode: "CLM-AAA-001", exists: true } as const;
   const satisfied: EvidenceObservation = { ...posted, fitnessFunction: "lint:satisfied", enforcedOverRealSource: true, status: "passed" };
-  const watermelon: EvidenceObservation = { ...posted, fitnessFunction: "lint:cannot-fail", enforcedOverRealSource: false };
+  const cannotFail: EvidenceObservation = { ...posted, fitnessFunction: "lint:cannot-fail", enforcedOverRealSource: false };
   const failing: EvidenceObservation = { ...posted, fitnessFunction: "lint:failing", enforcedOverRealSource: true, status: "failed" };
   const rowPostedWith = (observations: EvidenceObservation[]) =>
     reconcile([{ claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] }], observations)
@@ -72,7 +72,7 @@ describe("[CLM-RPT-011] observationCountOf counts a row's fitness evidence obser
 
   it.each([
     ["a satisfied one", [satisfied], "satisfied"],
-    ["a cannot-fail one", [watermelon], "cannot-fail"],
+    ["a cannot-fail one", [cannotFail], "cannot-fail"],
     ["a failing one", [failing], "failing"],
   ] as const)("counts %s as one observation", (_title, observations, outcome) => {
     const row = rowPostedWith([...observations]);
@@ -81,7 +81,7 @@ describe("[CLM-RPT-011] observationCountOf counts a row's fitness evidence obser
   });
 
   it("counts every one of several, whatever each one's outcome", () => {
-    expect(observationCountOf(rowPostedWith([satisfied, watermelon, failing]), "fitness")).toBe(3);
+    expect(observationCountOf(rowPostedWith([satisfied, cannotFail, failing]), "fitness")).toBe(3);
   });
 
   it("counts nothing for a row with no fitness evidence observation", () => {

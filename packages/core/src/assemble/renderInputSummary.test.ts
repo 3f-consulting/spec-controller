@@ -155,7 +155,7 @@ describe("[CLM-RMD-008] each quality-check reconciliation carries a single kind 
     "    @unit @fitness @CLM-RMD-008",
     "    Scenario: a fixture scenario",
   ];
-  const brokenFitness: EvidenceObservation = {
+  const neverRanFitness: EvidenceObservation = {
     qualityCheckKind: "fitness",
     fitnessFunction: "lint:rmd",
     claimCode: "CLM-RMD-008",
@@ -166,7 +166,7 @@ describe("[CLM-RMD-008] each quality-check reconciliation carries a single kind 
   };
   const report = () =>
     JSON.parse(
-      JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(featureLines.join("\n")), [brokenFitness])), ctx))
+      JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(featureLines.join("\n")), [neverRanFitness])), ctx))
     ) as unknown;
 
   it("carries a fitness reconciliation keyed by qualityCheckKind 'fitness' alone, its fitness function named only on its observation", () => {

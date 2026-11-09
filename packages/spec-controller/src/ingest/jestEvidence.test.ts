@@ -4,7 +4,7 @@ import {
   expectSoleObservation,
   reconcileFixture,
   runVerdictOf,
-  soleBrokenObservationOnUnnamedClaim,
+  soleNeverRanObservationOnUnnamedClaim,
   unitReconciliationOf,
   unnamedClaimRowOf,
 } from "./runnerEvidence.test-utils.js";
@@ -87,7 +87,7 @@ describe("[CLM-JST-006] runReconcile reads a Jest test under a failing beforeAll
 
 describe("[CLM-JST-007] runReconcile reads a Jest test file that failed to run as evidence that never ran, and the run is unsound", () => {
   it("posts one never-ran item, on the unnamed claim's row, naming the file and carrying the error that stopped it", () => {
-    const observation = soleBrokenObservationOnUnnamedClaim(balance());
+    const observation = soleNeverRanObservationOnUnnamedClaim(balance());
 
     expect(observation?.locator).toMatch(/tests\/fixtures\/jest\/project\/unloadable\.test\.js$/);
     expect(observation?.message).toContain("Test suite failed to run");

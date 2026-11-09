@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { observationsOf, outcomeDescription } from "@3f-consulting/spec-controller-core/internal";
 import {
-  brokenItemsOf,
+  neverRanItemsOf,
   expectMissingWithNoObservation,
   postedOf,
   reconcileFixture,
   reportLinesOf,
   runVerdictOf,
-  soleBrokenObservationOnUnnamedClaim,
+  soleNeverRanObservationOnUnnamedClaim,
   unitReconciliationOf,
   unnamedClaimRowOf,
 } from "./runnerEvidence.test-utils.js";
@@ -82,7 +82,7 @@ describe("[CLM-PYT-007] runReconcile reads a real pytest run that failed to coll
   const uncollectable = () => reconcileFixture(TARGET, { pytest: `${TARGET}/uncollectable-report.xml` });
 
   it("posts one never-ran item, on the unnamed claim's row, naming the module and carrying the collection error", () => {
-    const observation = soleBrokenObservationOnUnnamedClaim(uncollectable());
+    const observation = soleNeverRanObservationOnUnnamedClaim(uncollectable());
 
     expect(observation?.locator).toBe("test_uncollectable");
     expect(observation?.message).toContain("ModuleNotFoundError: No module named 'module_that_does_not_exist'");
@@ -102,17 +102,17 @@ describe("[CLM-PYT-008] runReconcile reads a test whose setup errored in a real 
   });
 
   it("posts one never-ran item, naming the test and carrying the setup error", () => {
-    const broken = brokenItemsOf(balance());
+    const neverRan = neverRanItemsOf(balance());
 
-    expect(broken).toHaveLength(1);
-    expect(broken[0]?.item.evidenceObservation?.locator).toBe("test_cases::test_setup_error");
-    expect(broken[0]?.item.evidenceObservation?.message).toContain("RuntimeError: the resource could not be set up");
+    expect(neverRan).toHaveLength(1);
+    expect(neverRan[0]?.item.evidenceObservation?.locator).toBe("test_cases::test_setup_error");
+    expect(neverRan[0]?.item.evidenceObservation?.message).toContain("RuntimeError: the resource could not be set up");
   });
 
   it("renders the never-ran item as a proof that errored before it ran, naming the test, never as a suite that failed to collect", () => {
-    const brokenItemLine = reportLinesOf(balance(), TARGET).find((line) => line.startsWith("| ") && line.includes("test_cases::test_setup_error"));
+    const neverRanItemLine = reportLinesOf(balance(), TARGET).find((line) => line.startsWith("| ") && line.includes("test_cases::test_setup_error"));
 
-    expect(brokenItemLine ?? "").toContain(`${outcomeDescription("never-ran")} (test_cases::test_setup_error`);
-    expect(brokenItemLine ?? "").not.toContain("failed to collect");
+    expect(neverRanItemLine ?? "").toContain(`${outcomeDescription("never-ran")} (test_cases::test_setup_error`);
+    expect(neverRanItemLine ?? "").not.toContain("failed to collect");
   });
 });

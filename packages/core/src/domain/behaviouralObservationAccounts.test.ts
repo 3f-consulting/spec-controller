@@ -3,8 +3,8 @@ import { describe, it, expect } from "vitest";
 import { behaviouralObservationTally, evidenceObservationTally } from "./ledger.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import {
-  citesUnknownScenarioReconciliationsOf,
-  noEvidenceObligationReconciliationsOf,
+  citesUnknownClaimReconciliationsOf,
+  notAskedForReconciliationsOf,
   unnamedClaimReconciliationsOf,
 } from "./qualityCheckReconciliation.js";
 import { UNNAMED_CLAIM_ID } from "../model.js";
@@ -36,9 +36,9 @@ const fitnessObservationOf = (claimCode?: string, ran: { exists?: boolean; never
 
 const RECONCILIATIONS_OF_KIND = {
   scenario: (claim: string, observations: readonly EvidenceObservation[]) =>
-    noEvidenceObligationReconciliationsOf(claim, observations, new Set()),
+    notAskedForReconciliationsOf(claim, observations, new Set()),
   "phantom-claim": (_claim: string, observations: readonly EvidenceObservation[]) =>
-    citesUnknownScenarioReconciliationsOf(observations),
+    citesUnknownClaimReconciliationsOf(observations),
   "unnamed-claim": (_claim: string, observations: readonly EvidenceObservation[]) =>
     unnamedClaimReconciliationsOf(observations),
 } as const;

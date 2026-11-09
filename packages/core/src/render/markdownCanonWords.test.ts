@@ -56,7 +56,7 @@ describe("[CLM-RPT-039] the markdown counts phantom-claim and unnamed-claim rows
 
 describe("[CLM-RPT-040] the markdown's prose refers to an outcome by its sentence, never by its handle", () => {
   const proven = { claimCode: "CLM-CWD-001", evidenceObligations: [{ qualityCheckKind: "unit" as const }] };
-  const brokenObservation = {
+  const neverRanObservation = {
     qualityCheckKind: "unit" as const,
     claimCode: "CLM-CWD-001",
     status: "failed" as const,
@@ -66,7 +66,7 @@ describe("[CLM-RPT-040] the markdown's prose refers to an outcome by its sentenc
   const provenObservation = { qualityCheckKind: "unit" as const, claimCode: "CLM-CWD-001", status: "passed" as const };
 
   it("the unsound stamp quotes the missing outcome's sentence", () => {
-    const md = renderMarkdown(__er(reconcile([proven], [brokenObservation])), ctx, publishedExitCodeOf);
+    const md = renderMarkdown(__er(reconcile([proven], [neverRanObservation])), ctx, publishedExitCodeOf);
     const stamp = coreMessage(CoreMessage.RunUnsound, { proofs: coreMessage(CoreMessage.ProofsNeverRan, { count: 1 }) });
     expect(md.split("\n")).toContain(stamp);
     expect(stamp).toContain(`"${coreMessage(CoreMessage.OutcomeMissing)}"`);

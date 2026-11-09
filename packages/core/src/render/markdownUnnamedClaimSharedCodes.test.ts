@@ -9,7 +9,7 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 import { coreMessage } from "./coreText.js";
 
-const CITES_NO_SCENARIO = (): string => coreMessage(CoreMessage.OutcomeCitesNoScenario);
+const CITES_NO_CLAIM = (): string => coreMessage(CoreMessage.OutcomeCitesNoClaim);
 
 const sharers: Scenario[] = [
   { claimCode: "CLM-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }], feature: "features/login.feature", title: "the right password lets a user in" },
@@ -39,20 +39,20 @@ describe("[CLM-RPT-075] in one file, the tests citing a code more than one scena
   it("gives the file one entry per shared code and one for its tests citing nothing, each counting and naming only its own tests", () => {
     const remark = (code: string): string => coreMessage(CoreMessage.SharedClaimCode, { code });
     expect(unnamedClaimItemsOf(mixedFile())).toEqual([
-      `unit: ${CITES_NO_SCENARIO()} (tests/x.test.ts) — 2 ran, 1 passed, 1 failed (failed: parses the flags)`,
-      `unit: ${CITES_NO_SCENARIO()} (tests/x.test.ts: ${remark("CLM-DUP-001")}) — 2 ran, 1 passed, 1 failed (failed: lets the right password in)`,
-      `unit: ${CITES_NO_SCENARIO()} (tests/x.test.ts: ${remark("CLM-DUP-002")}) — 1 ran, 1 passed, 0 failed`,
-      `unit: ${CITES_NO_SCENARIO()} (tests/y.test.ts) — 1 ran, 1 passed, 0 failed`,
+      `unit: ${CITES_NO_CLAIM()} (tests/x.test.ts) — 2 ran, 1 passed, 1 failed (failed: parses the flags)`,
+      `unit: ${CITES_NO_CLAIM()} (tests/x.test.ts: ${remark("CLM-DUP-001")}) — 2 ran, 1 passed, 1 failed (failed: lets the right password in)`,
+      `unit: ${CITES_NO_CLAIM()} (tests/x.test.ts: ${remark("CLM-DUP-002")}) — 1 ran, 1 passed, 0 failed`,
+      `unit: ${CITES_NO_CLAIM()} (tests/y.test.ts) — 1 ran, 1 passed, 0 failed`,
     ]);
   });
 
   it("names the code once, then the first line of each different message its failing tests give", () => {
     const failing = (testName: string, message: string): BehaviouralEvidenceObservation => ({ ...observed("CLM-DUP-001", "failed", testName), message });
     const code = coreMessage(CoreMessage.SharedClaimCode, { code: "CLM-DUP-001" });
-    const said = `unit: ${CITES_NO_SCENARIO()} (tests/x.test.ts: ${code}`;
+    const said = `unit: ${CITES_NO_CLAIM()} (tests/x.test.ts: ${code}`;
     const one = (o: BehaviouralEvidenceObservation): string[] => unnamedClaimItemsOf([o]).map((item) => item.replace(" — 1 ran, 0 passed, 1 failed (failed: t1)", ""));
-    expect([failing("t1", ""), failing("t1", "   "), { ...failing("t1", ""), locator: "" }].map(one).flat()).toEqual([`${said})`, `${said})`, `unit: ${CITES_NO_SCENARIO()} (${code})`]);
-    expect(one({ qualityCheckKind: "unit", claimCode: "CLM-DUP-001", status: "failed", testName: "t1" })).toEqual([`unit: ${CITES_NO_SCENARIO()} (${code})`]);
+    expect([failing("t1", ""), failing("t1", "   "), { ...failing("t1", ""), locator: "" }].map(one).flat()).toEqual([`${said})`, `${said})`, `unit: ${CITES_NO_CLAIM()} (${code})`]);
+    expect(one({ qualityCheckKind: "unit", claimCode: "CLM-DUP-001", status: "failed", testName: "t1" })).toEqual([`unit: ${CITES_NO_CLAIM()} (${code})`]);
     expect(unnamedClaimItemsOf([failing("t1", "expected 1 to be 2\n    at foo (x.ts:1)")])).toEqual([
       `${said} / expected 1 to be 2) — 1 ran, 0 passed, 1 failed (failed: t1)`,
     ]);

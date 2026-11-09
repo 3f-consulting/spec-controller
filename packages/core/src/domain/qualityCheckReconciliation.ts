@@ -195,13 +195,13 @@ function reconciliationsByQualityCheckKind(
   );
 }
 
-export function brokenReconciliationsOf(
+export function neverRanReconciliationsOf(
   postedObservations: readonly EvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return reconciliationsByQualityCheckKind(postedObservations.filter((o) => o.neverRan === true), "scenario");
 }
 
-export function noEvidenceObligationReconciliationsOf(
+export function notAskedForReconciliationsOf(
   claimCode: string,
   postedObservations: readonly EvidenceObservation[],
   evidenceObligationPairs: ReadonlySet<string>
@@ -214,7 +214,7 @@ export function noEvidenceObligationReconciliationsOf(
   );
 }
 
-export function citesUnknownScenarioReconciliationsOf(
+export function citesUnknownClaimReconciliationsOf(
   observations: readonly EvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return reconciliationsByQualityCheckKind(observations, "phantom-claim");
@@ -252,7 +252,7 @@ export function duplicateClaimCodeReconciliationsOf(
   );
 }
 
-export function bothMissingReconciliation(): QualityCheckReconciliation {
+export function noQualityCheckReconciliation(): QualityCheckReconciliation {
   return makeQualityCheckReconciliation({ outcome: "no-quality-check" });
 }
 

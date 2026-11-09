@@ -1,5 +1,5 @@
 import type { Ledger } from "./ledger.js";
-import { hasBrokenEvidence, hasNothingToReconcile, hasPendingItems, isBalanced } from "./ledger.js";
+import { hasNeverRanEvidence, hasNothingToReconcile, hasPendingItems, isBalanced } from "./ledger.js";
 import { hasClaimCodeErrors, type ClaimCodeError } from "./claimCodes.js";
 
 export type RunVerdict =
@@ -18,7 +18,7 @@ export interface VerdictInputs {
 
 export function runVerdict(run: VerdictInputs): RunVerdict {
   if (hasNothingToReconcile(run.ledger)) return "nothing-to-reconcile";
-  if (hasBrokenEvidence(run.ledger)) return "unsound";
+  if (hasNeverRanEvidence(run.ledger)) return "unsound";
   if (hasClaimCodeErrors(run)) return "claim-code-errors";
   if (!isBalanced(run.ledger)) return "out-of-balance";
   if (run.strict && hasPendingItems(run.ledger)) return "pending";

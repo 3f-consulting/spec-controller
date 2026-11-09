@@ -19,8 +19,8 @@ describe("[CLM-WRN-001] a scenario naming no evidence obligations is reported as
 
     const balance = reconcile(scenarios, evidenceObservations);
 
-    const bothMissing = balance.claimReconciliations.find((s) => s.claim === "CLM-WRN-001");
-    expect(reconcilingItemsOf(bothMissing!)).toEqual([{ outcome: "no-quality-check" }]);
+    const noQualityCheck = balance.claimReconciliations.find((s) => s.claim === "CLM-WRN-001");
+    expect(reconcilingItemsOf(noQualityCheck!)).toEqual([{ outcome: "no-quality-check" }]);
     const verdictScenario = balance.claimReconciliations.find((s) => s.claim === "CLM-WRN-002");
     expect(verdictScenario?.verdict).toBe("balanced");
     expect(balance.claimReconciliations.map((s) => s.claim)).toEqual([

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { reconcilingItemsOf, UNNAMED_CLAIM_ID } from "./claimReconciliation.js";
 import type { ClaimReconciliation } from "./claimReconciliation.js";
-import { brokenItemsOf, hasBrokenEvidence, isBalanced, ledgerTally } from "./ledger.js";
+import { neverRanItemsOf, hasNeverRanEvidence, isBalanced, ledgerTally } from "./ledger.js";
 import type { Ledger } from "./ledger.js";
 import type { EvidenceObservation, QualityCheckKind, Scenario } from "./journal.js";
 import type { QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
@@ -15,7 +15,7 @@ const unit = (status: "passed" | "failed", locator: string): EvidenceObservation
   status,
   locator,
 });
-const brokenUnit = (locator: string): EvidenceObservation => ({
+const neverRanUnit = (locator: string): EvidenceObservation => ({
   qualityCheckKind: "unit",
   claimCode: CLAIM_CODE,
   status: "failed",
@@ -69,20 +69,20 @@ describe("[CLM-LDG-047] each evidence observation a quality-check reconciliation
   });
 
   it("reads satisfied and never-ran for a passing test and one that never ran, in one reconciliation, out of balance and the run unsound", () => {
-    const broken = brokenUnit("b.test.ts");
-    const { ledger, row } = reconciledOneScenario([unit("passed", "a.test.ts"), broken]);
+    const neverRan = neverRanUnit("b.test.ts");
+    const { ledger, row } = reconciledOneScenario([unit("passed", "a.test.ts"), neverRan]);
 
     expect(qcrOf(row, "unit").map(lineOutcomesOf)).toEqual([["satisfied", "never-ran"]]);
     expect(reconcilingItemsOf(row).map((line) => line.outcome)).toEqual(["never-ran"]);
     expect(row.verdict).toBe("out-of-balance");
     expect(isBalanced(ledger)).toBe(false);
-    expect(hasBrokenEvidence(ledger)).toBe(true);
-    expect(brokenItemsOf(ledger)).toHaveLength(1);
+    expect(hasNeverRanEvidence(ledger)).toBe(true);
+    expect(neverRanItemsOf(ledger)).toHaveLength(1);
   });
 
   it("reads missing and never-ran for an obligation whose only test never ran", () => {
-    const broken = brokenUnit("a.test.ts");
-    const { row } = reconciledOneScenario([broken]);
+    const neverRan = neverRanUnit("a.test.ts");
+    const { row } = reconciledOneScenario([neverRan]);
 
     expect(qcrOf(row, "unit")).toHaveLength(1);
     expect(qcrOf(row, "unit")[0]!.outcome).toBe("missing");
@@ -127,12 +127,12 @@ describe("[CLM-LDG-047] each evidence observation a quality-check reconciliation
   });
 
   it("reads each observation no obligation asks for as its own not-asked-for line, and one that never ran as never-ran", () => {
-    const integration = (status: "passed" | "failed", locator: string, broken?: true): EvidenceObservation => ({
+    const integration = (status: "passed" | "failed", locator: string, neverRan?: true): EvidenceObservation => ({
       qualityCheckKind: "integration",
       claimCode: CLAIM_CODE,
       status,
       locator,
-      ...(broken ? { neverRan: broken } : {}),
+      ...(neverRan ? { neverRan: neverRan } : {}),
     });
     const { row } = reconciledOneScenario([
       unit("passed", "a.test.ts"),
@@ -156,12 +156,12 @@ describe("[CLM-LDG-047] each evidence observation a quality-check reconciliation
   });
 
   it("reads each observation on the unnamed claim as its own cites-no-claim line, and one that never ran as never-ran, in one reconciliation per kind of quality check", () => {
-    const uncited = (locator: string, broken?: true): EvidenceObservation => ({
+    const uncited = (locator: string, neverRan?: true): EvidenceObservation => ({
       qualityCheckKind: "unit",
       claimCode: null,
-      status: broken ? "failed" : "passed",
+      status: neverRan ? "failed" : "passed",
       locator,
-      ...(broken ? { neverRan: broken } : {}),
+      ...(neverRan ? { neverRan: neverRan } : {}),
     });
     const ledger = reconcile([], [uncited("a.test.ts"), uncited("b.test.ts"), uncited("c.test.ts", true)]);
     const row = rowOf(ledger, UNNAMED_CLAIM_ID);

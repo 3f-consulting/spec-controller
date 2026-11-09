@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { observationsOf } from "@3f-consulting/spec-controller-core/internal";
 import {
-  brokenItemsOf,
+  neverRanItemsOf,
   expectMissingWithNoObservation,
   expectSoleObservation,
   postedOf,
   reconcileFixture,
   runVerdictOf,
-  soleBrokenObservationOnUnnamedClaim,
+  soleNeverRanObservationOnUnnamedClaim,
   unitReconciliationOf,
   unnamedClaimRowOf,
 } from "./runnerEvidence.test-utils.js";
@@ -106,15 +106,15 @@ describe("[CLM-JAV-008] runReconcile reads a JUnit 5 test that throws, in its bo
   });
 
   it("posts no never-ran item for either test", () => {
-    const brokenLocators = brokenItemsOf(balance()).flatMap(({ item }) => (item.evidenceObservation === undefined ? [] : [item.evidenceObservation.locator]));
+    const neverRanLocators = neverRanItemsOf(balance()).flatMap(({ item }) => (item.evidenceObservation === undefined ? [] : [item.evidenceObservation.locator]));
 
-    expect(brokenLocators.join("\n")).not.toMatch(/CLM-JVF-01[01]/);
+    expect(neverRanLocators.join("\n")).not.toMatch(/CLM-JVF-01[01]/);
   });
 });
 
 describe("[CLM-JAV-009] runReconcile reads a JUnit 5 class whose setup before all its tests failed as evidence that never ran, and the run is unsound", () => {
   it("posts one never-ran item, on the unnamed claim's row, naming the class and carrying the error that stopped it", () => {
-    const observation = soleBrokenObservationOnUnnamedClaim(balance());
+    const observation = soleNeverRanObservationOnUnnamedClaim(balance());
 
     expect(observation?.locator).toBe("example.BeforeAllFailsTest");
     expect(observation?.message).toContain("the shared resource could not be set up");

@@ -73,14 +73,14 @@ const CAUSE_ROW_SENTENCE: Record<Outcome, WordedCoreMessage> = {
   satisfied: CoreMessage.OutcomeSatisfied,
   missing: CoreMessage.OutcomeMissing,
   failing: CoreMessage.OutcomeFailing,
-  "cannot-fail": CoreMessage.OutcomeWatermelon,
+  "cannot-fail": CoreMessage.OutcomeCannotFail,
   "no-claim-code": CoreMessage.OutcomeNoClaimCode,
   "duplicate-claim-code": CoreMessage.OutcomeDuplicateClaimCode,
-  "cites-unknown-claim": CoreMessage.OutcomeCitesUnknownScenario,
-  "cites-no-claim": CoreMessage.OutcomeCitesNoScenario,
-  "not-asked-for": CoreMessage.OutcomeNoEvidenceObligation,
-  "never-ran": CoreMessage.OutcomeBroken,
-  "no-quality-check": CoreMessage.OutcomeBothMissing,
+  "cites-unknown-claim": CoreMessage.OutcomeCitesUnknownClaim,
+  "cites-no-claim": CoreMessage.OutcomeCitesNoClaim,
+  "not-asked-for": CoreMessage.OutcomeNotAskedFor,
+  "never-ran": CoreMessage.OutcomeNeverRan,
+  "no-quality-check": CoreMessage.OutcomeNoQualityCheck,
 };
 
 function expectedTable(

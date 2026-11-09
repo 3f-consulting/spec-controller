@@ -7,7 +7,7 @@ import type { EvidenceObservation, Scenario } from "../model.js";
 import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 import { markdownHeading } from "./heading.js";
-import { brokenEvidenceNameOf } from "./markdown.js";
+import { neverRanEvidenceNameOf } from "./markdown.js";
 import { outcomeDescription } from "./outcomeDescription.js";
 import type { RunContext } from "../domain/runProvenance.js";
 import { FEATURES, VITEST, PYTEST, JEST, JUNIT, RSPEC, CUCUMBER, CI, PACKAGE_JSON, CI_STEPS } from "../runInputs.test-utils.js";
@@ -51,8 +51,8 @@ const SCENARIOS: readonly Scenario[] = [
   { claimCode: "CLM-RIN-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
 ];
 
-function render(...broken: readonly EvidenceObservation[]): string {
-  const ledger = reconcile(SCENARIOS, [...broken]);
+function render(...neverRan: readonly EvidenceObservation[]): string {
+  const ledger = reconcile(SCENARIOS, [...neverRan]);
   const reconciliation: EvidenceReconciliation = { summary: summaryOf(ledger, false), ledger };
   return renderMarkdown(reconciliation, ctx, publishedExitCodeOf);
 }
@@ -71,9 +71,9 @@ function reconcilingItemsCell(md: string, claim: string): string {
 }
 
 const whatBroke = (locator: string): string =>
-  `- ${coreMessage(CoreMessage.BrokenEvidenceWhatBroke, { locator: `\`${locator}\`` })}`;
+  `- ${coreMessage(CoreMessage.NeverRanEvidenceWhatBroke, { locator: `\`${locator}\`` })}`;
 
-const brokenCell = (qualityCheckKind: string, where: string): string =>
+const neverRanCell = (qualityCheckKind: string, where: string): string =>
   `${qualityCheckKind}: ${outcomeDescription("never-ran")} (${where})`;
 
 const unsoundStamp = (proofs: string): string => coreMessage(CoreMessage.RunUnsound, { proofs });
@@ -104,7 +104,7 @@ describe("[CLM-RPT-021] the markdown names the evidence that never ran and its e
       whatBroke(COLLECTION_FAILED_LOCATOR),
       "",
       `${fence}text`,
-      ...(shown ?? coreMessage(CoreMessage.BrokenEvidenceNoMessage)).split("\n"),
+      ...(shown ?? coreMessage(CoreMessage.NeverRanEvidenceNoMessage)).split("\n"),
       fence,
       "",
     ]);
@@ -117,7 +117,7 @@ describe("[CLM-RPT-021] the markdown names the evidence that never ran and its e
       "",
       unsoundStamp(coreMessage(CoreMessage.ProofsNeverRan, { count: 1 })),
       "",
-      whatBroke(coreMessage(CoreMessage.BrokenEvidenceNotNamed)),
+      whatBroke(coreMessage(CoreMessage.NeverRanEvidenceNotNamed)),
       "",
       "```text",
       checkDidNotRun,
@@ -133,7 +133,7 @@ describe("[CLM-RPT-021] the markdown names the evidence that never ran and its e
       "",
       unsoundStamp(coreMessage(CoreMessage.ProofsNeverRan, { count: 2 })),
       "",
-      whatBroke(coreMessage(CoreMessage.BrokenEvidenceNotNamed)),
+      whatBroke(coreMessage(CoreMessage.NeverRanEvidenceNotNamed)),
       "",
       "```text",
       checkDidNotRun,
@@ -152,21 +152,21 @@ describe("[CLM-RPT-021] the markdown names the evidence that never ran and its e
     const message = "  \n\t\nCannot   find | package\n    at packageResolve (node:internal)";
     const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, message), SKIPPED_CHECK);
     expect(reconcilingItemsCell(md, UNNAMED_CLAIM_ID)).toBe(
-      brokenCell("unit", `${COLLECTION_FAILED_LOCATOR}: Cannot find \\| package`),
+      neverRanCell("unit", `${COLLECTION_FAILED_LOCATOR}: Cannot find \\| package`),
     );
     expect(reconcilingItemsCell(md, "CLM-RIN-001")).toBe(
-      [`fitness: ${outcomeDescription("missing")}`, brokenCell("fitness", checkDidNotRun)].join("; "),
+      [`fitness: ${outcomeDescription("missing")}`, neverRanCell("fitness", checkDidNotRun)].join("; "),
     );
   });
 
-  it("the unnamed claim's row trims a broken file's locator that begins with a space, when the runner reports no error", () => {
+  it("the unnamed claim's row trims the locator of a file that never ran when it begins with a space, when the runner reports no error", () => {
     const md = render(collectionFailed(" spaced/collect.test.ts"));
-    expect(reconcilingItemsCell(md, UNNAMED_CLAIM_ID)).toBe(brokenCell("unit", "spaced/collect.test.ts"));
+    expect(reconcilingItemsCell(md, UNNAMED_CLAIM_ID)).toBe(neverRanCell("unit", "spaced/collect.test.ts"));
   });
 
-  it("a broken file whose locator is whitespace only is listed as unnamed, as one with no locator is", () => {
+  it("a file that never ran whose locator is whitespace only is listed as unnamed, as one with no locator is", () => {
     const md = render(collectionFailed("  ", COLLECTION_FAILED_MESSAGE));
-    expect(runIntegrityLines(md)).toContain(whatBroke(coreMessage(CoreMessage.BrokenEvidenceNotNamed)));
+    expect(runIntegrityLines(md)).toContain(whatBroke(coreMessage(CoreMessage.NeverRanEvidenceNotNamed)));
   });
 
   it.each([
@@ -175,7 +175,7 @@ describe("[CLM-RPT-021] the markdown names the evidence that never ran and its e
     { shape: "a locator of whitespace only", locator: " \t ", name: { kind: "unnamed" } },
     { shape: "a locator", locator: " spaced/collect.test.ts", name: { kind: "named", locator: " spaced/collect.test.ts" } },
   ])("an evidence observation that never ran with $shape is named by whether its locator names anything", ({ locator, name }) => {
-    expect(brokenEvidenceNameOf(collectionFailed(locator))).toEqual(name);
+    expect(neverRanEvidenceNameOf(collectionFailed(locator))).toEqual(name);
   });
 });
 
@@ -210,8 +210,8 @@ describe("[CLM-MSG-015] a counted noun agrees with its count — the run-integri
   });
 
   it("1000 proofs", () => {
-    const broken = Array.from({ length: 1000 }, (_, i) => collectionFailed(`src/collect${i}.test.ts`));
-    const stamp = stampOf(render(...broken));
+    const neverRan = Array.from({ length: 1000 }, (_, i) => collectionFailed(`src/collect${i}.test.ts`));
+    const stamp = stampOf(render(...neverRan));
     expect(stamp).toContain("1000 Evidence Observations never ran to a result, so the behaviours they prove were never exercised.");
   });
 });

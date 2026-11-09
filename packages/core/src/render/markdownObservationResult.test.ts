@@ -8,8 +8,8 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
 
-const CITES_UNKNOWN = (): string => coreMessage(CoreMessage.OutcomeCitesUnknownScenario);
-const NO_OBLIGATION = (): string => coreMessage(CoreMessage.OutcomeNoEvidenceObligation);
+const CITES_UNKNOWN = (): string => coreMessage(CoreMessage.OutcomeCitesUnknownClaim);
+const NOT_ASKED_FOR = (): string => coreMessage(CoreMessage.OutcomeNotAskedFor);
 
 function rowOf(md: string, rowName: string): string {
   const row = md.split("\n").find((line) => line.startsWith(`| ${rowName} |`));
@@ -55,12 +55,12 @@ describe("[CLM-RPT-035] a test observed at a check its scenario holds no obligat
 
   it("shows the test that failed as failed", () => {
     const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "CLM-NOS-001");
-    expect(row).toContain(`unit: ${NO_OBLIGATION()} (src/broken-spawn.test.ts) — failed`);
+    expect(row).toContain(`unit: ${NOT_ASKED_FOR()} (src/broken-spawn.test.ts) — failed`);
   });
 
   it("shows the test that passed as passed", () => {
     const row = rowOf(renderMarkdown(__er(ledger), ctx, publishedExitCodeOf), "CLM-NOS-001");
-    expect(row).toContain(`unit: ${NO_OBLIGATION()} (src/sound.test.ts) — passed`);
+    expect(row).toContain(`unit: ${NOT_ASKED_FOR()} (src/sound.test.ts) — passed`);
   });
 });
 

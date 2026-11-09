@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";
-import { isBalanced, hasPendingItems, hasBrokenEvidence, hasNothingToReconcile } from "./ledger.js";
+import { isBalanced, hasPendingItems, hasNeverRanEvidence, hasNothingToReconcile } from "./ledger.js";
 import { runVerdict } from "./runVerdict.js";
 import type {
   Ledger,
@@ -75,7 +75,7 @@ describe("[CLM-CLI-020] a corpus-less run carrying uncited evidence observations
   it("is out of balance, so it reaches the verdict exit 5 would have replaced", () => {
     const ledger = corpusLessWithObservations();
     expect(isBalanced(ledger)).toBe(false);
-    expect(hasBrokenEvidence(ledger)).toBe(false);
+    expect(hasNeverRanEvidence(ledger)).toBe(false);
     expect(hasPendingItems(ledger)).toBe(false);
   });
 });

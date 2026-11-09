@@ -59,12 +59,12 @@ describe("[CLM-LNT-037] a cannot-fail fitness evidence observation beside a wire
   it.each([
     ["the cannot-fail run's file sorts first", "a.feature", "z.feature"],
     ["the wired run's file sorts first", "z.feature", "a.feature"],
-  ])("holds both runs in one fitness reconciliation, a cannot-fail line and a satisfied line in evidence order, with the row and the run out of balance, when %s", (_order, watermelonLocator, wiredLocator) => {
-    const watermelon = { ...runOf(false, watermelonLocator), outcome: "cannot-fail" };
+  ])("holds both runs in one fitness reconciliation, a cannot-fail line and a satisfied line in evidence order, with the row and the run out of balance, when %s", (_order, cannotFailLocator, wiredLocator) => {
+    const cannotFail = { ...runOf(false, cannotFailLocator), outcome: "cannot-fail" };
     const wired = { ...runOf(true, wiredLocator), outcome: "satisfied" };
-    expect(itemOf([runOf(true, wiredLocator), runOf(false, watermelonLocator)])).toEqual({
+    expect(itemOf([runOf(true, wiredLocator), runOf(false, cannotFailLocator)])).toEqual({
       outcome: undefined,
-      carried: watermelonLocator < wiredLocator ? [watermelon, wired] : [wired, watermelon],
+      carried: cannotFailLocator < wiredLocator ? [cannotFail, wired] : [wired, cannotFail],
       verdict: "out-of-balance",
       balanced: false,
     });

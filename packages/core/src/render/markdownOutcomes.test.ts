@@ -30,14 +30,14 @@ describe("[CLM-RPT-020] the markdown renders each outcome's sentence, not the ba
   const CAUSE_ROW_ENTRIES = [
     ["missing", CoreMessage.OutcomeMissing],
     ["failing", CoreMessage.OutcomeFailing],
-    ["cannot-fail", CoreMessage.OutcomeWatermelon],
+    ["cannot-fail", CoreMessage.OutcomeCannotFail],
     ["no-claim-code", CoreMessage.OutcomeNoClaimCode],
     ["duplicate-claim-code", CoreMessage.OutcomeDuplicateClaimCode],
-    ["cites-unknown-claim", CoreMessage.OutcomeCitesUnknownScenario],
-    ["cites-no-claim", CoreMessage.OutcomeCitesNoScenario],
-    ["not-asked-for", CoreMessage.OutcomeNoEvidenceObligation],
-    ["never-ran", CoreMessage.OutcomeBroken],
-    ["no-quality-check", CoreMessage.OutcomeBothMissing],
+    ["cites-unknown-claim", CoreMessage.OutcomeCitesUnknownClaim],
+    ["cites-no-claim", CoreMessage.OutcomeCitesNoClaim],
+    ["not-asked-for", CoreMessage.OutcomeNotAskedFor],
+    ["never-ran", CoreMessage.OutcomeNeverRan],
+    ["no-quality-check", CoreMessage.OutcomeNoQualityCheck],
   ] as const satisfies readonly (readonly [Outcome, WordedCoreMessage])[];
   // A new out-of-balance outcome fails the typecheck here until its entry has a row.
   const everyCauseHasARow: [Exclude<Outcome, "satisfied" | (typeof CAUSE_ROW_ENTRIES)[number][0]>] extends [never]
@@ -65,7 +65,7 @@ describe("[CLM-RPT-020] the markdown renders each outcome's sentence, not the ba
 
   it("renders a fitness claim's reconciling item with the outcome's sentence, not the bare handle", () => {
     const items = reconcilingItemsOf(renderMarkdown(__er(rich), ctx, publishedExitCodeOf), "CLM-A");
-    expect(items.some((item) => item.startsWith(`fitness: ${coreMessage(CoreMessage.OutcomeWatermelon)}`))).toBe(true);
+    expect(items.some((item) => item.startsWith(`fitness: ${coreMessage(CoreMessage.OutcomeCannotFail)}`))).toBe(true);
     expect(items.some((item) => item.startsWith("fitness: cannot-fail"))).toBe(false);
   });
 });

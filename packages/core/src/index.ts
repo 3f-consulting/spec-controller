@@ -37,7 +37,7 @@ export type { ClaimCodeError, ClaimCodeErrorKind, ClaimCodePopulation } from "./
 export {
   isBalanced,
   hasPendingItems,
-  hasBrokenEvidence,
+  hasNeverRanEvidence,
   hasNothingToReconcile,
 } from "./domain/ledger.js";
 export { BUILT_IN_DEFERRAL_TAGS } from "./domain/pendingItems.js";

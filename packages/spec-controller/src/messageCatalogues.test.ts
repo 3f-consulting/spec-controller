@@ -201,7 +201,7 @@ const SAMPLE_CORE_VALUES: { readonly [C in keyof CoreMessageValues]: CoreMessage
   [CoreMessage.ProvenanceToolSha]: { sha: "def5678" },
   [CoreMessage.ProvenanceToolVersion]: { version: "1.0.0" },
   [CoreMessage.RunUnsound]: { proofs: "2 proofs never ran." },
-  [CoreMessage.BrokenEvidenceWhatBroke]: { locator: "features/a.feature:3" },
+  [CoreMessage.NeverRanEvidenceWhatBroke]: { locator: "features/a.feature:3" },
   [CoreMessage.VerdictExit]: { code: 1 },
   [CoreMessage.ClaimCodeErrorsGloss]: { heading: "### Claim code errors", alsoOutOfBalance: "" },
   [CoreMessage.SeveralClaimCodesGloss]: { heading: "### Claim code errors", alsoOutOfBalance: "" },

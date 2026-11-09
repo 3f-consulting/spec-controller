@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { linesOf } from "./claimReconciliation.js";
-import { brokenItemsOf, hasBrokenEvidence, fitnessFunctionTally } from "./ledger.js";
+import { neverRanItemsOf, hasNeverRanEvidence, fitnessFunctionTally } from "./ledger.js";
 import type { Scenario, EvidenceObservation } from "./journal.js";
 
 describe("[CLM-LNT-026] a fitness-function evidence observation that NEVER RAN is excluded from the obligation match whatever else it carries", () => {
@@ -46,13 +46,13 @@ describe("[CLM-LNT-026] a fitness-function evidence observation that NEVER RAN i
         evidenceObservation: { ...evidenceObservations[0], outcome: "never-ran" },
       },
     ]);
-    expect(brokenItemsOf(balance).flatMap((line) => line.evidenceObservation ?? [])).toMatchObject([
+    expect(neverRanItemsOf(balance).flatMap((line) => line.evidenceObservation ?? [])).toMatchObject([
       {
         locator: "features/fitness-functions.feature",
         message: "the run's record says this check's step was skipped",
       },
     ]);
-    expect(hasBrokenEvidence(balance)).toBe(true);
+    expect(hasNeverRanEvidence(balance)).toBe(true);
     expect(fitnessFunctionTally(balance)).toEqual({
       runningFitnessFunctionCount: 0,
       uncitedFitnessFunctionCount: 0,

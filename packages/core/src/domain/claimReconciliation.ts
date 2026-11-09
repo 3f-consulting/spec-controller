@@ -11,7 +11,7 @@ import type {
   ReconciledEvidenceObservation,
   ScenarioName,
 } from "./qualityCheckReconciliation.js";
-import { bothMissingReconciliation, carriesEvidenceObligation, isObligationLineOutcome } from "./qualityCheckReconciliation.js";
+import { noQualityCheckReconciliation, carriesEvidenceObligation, isObligationLineOutcome } from "./qualityCheckReconciliation.js";
 
 export type Verdict = "balanced" | "out-of-balance";
 
@@ -168,9 +168,9 @@ export function ciStepsOf(
 
 export function qualityCheckReconciliationsOf(
   reconciledEvidenceObligations: readonly QualityCheckReconciliation[],
-  noEvidenceObligationItems: readonly QualityCheckReconciliation[],
+  notAskedForItems: readonly QualityCheckReconciliation[],
   pendingItems: readonly PendingItem[]
 ): QualityCheckReconciliation[] {
-  const rows = [...reconciledEvidenceObligations, ...noEvidenceObligationItems];
-  return rows.length === 0 && pendingItems.length === 0 ? [bothMissingReconciliation()] : rows;
+  const rows = [...reconciledEvidenceObligations, ...notAskedForItems];
+  return rows.length === 0 && pendingItems.length === 0 ? [noQualityCheckReconciliation()] : rows;
 }

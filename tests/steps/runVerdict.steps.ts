@@ -14,7 +14,7 @@ const PENDING_ONLY = {
   packageJson: "tests/fixtures/pending-only/package.json",
 };
 
-const BROKEN = {
+const NEVER_RAN = {
   features: "tests/fixtures/never-ran/features",
   vitest: "tests/fixtures/never-ran/vitest.json",
   packageJson: "tests/fixtures/never-ran/package.json",
@@ -85,15 +85,15 @@ Given("a target that reconciles all-balanced", aBalancedTargetWithAVitestReport)
 
 Given("a target whose vitest report carries a collection-failed suite", function (this: SpecControllerWorld) {
   const root = process.cwd();
-  assert.ok(existsSync(join(root, BROKEN.features)), `missing fixture features: ${BROKEN.features}`);
-  assert.ok(existsSync(join(root, BROKEN.vitest)), `missing fixture vitest report: ${BROKEN.vitest}`);
+  assert.ok(existsSync(join(root, NEVER_RAN.features)), `missing fixture features: ${NEVER_RAN.features}`);
+  assert.ok(existsSync(join(root, NEVER_RAN.vitest)), `missing fixture vitest report: ${NEVER_RAN.vitest}`);
   this.invocationArgs = [
     "--features",
-    BROKEN.features,
+    NEVER_RAN.features,
     "--vitest",
-    BROKEN.vitest,
+    NEVER_RAN.vitest,
     "--package-json",
-    BROKEN.packageJson,
+    NEVER_RAN.packageJson,
     ...NO_WORKFLOWS("tests/fixtures/never-ran"),
   ];
 });

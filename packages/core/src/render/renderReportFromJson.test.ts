@@ -79,13 +79,13 @@ describe("[CLM-RMD-007] the markdown regenerates from a saved spec-reconciliatio
   it("carries the whole document — the three-way evidence observations line and the materialised summary totals", () => {
     const savedJson = renderJson(__er(balance, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson, HANDED_INPUT_NAMES, publishedExitCodeOf);
-    const citesNoScenario = outcomeDescription("cites-no-claim");
+    const citesNoClaim = outcomeDescription("cites-no-claim");
     expect(regenerated).toContain(coreMessage(CoreMessage.EvidenceObservationsSum, { total: 5, onScenario: 2, onPhantomClaim: 1, onUnnamedClaim: 2 }));
     expect(regenerated).toContain("| fitness | 2 |");
     expect(regenerated).toContain(coreMessage(CoreMessage.UnnamedClaimTally, { count: 1, unnamedClaimId: UNNAMED_CLAIM_ID }));
     const unnamedClaimRow = regenerated.split("\n").find((line) => line.startsWith("| (unnamed claim) |"));
-    expect(unnamedClaimRow).toContain(`unit: ${citesNoScenario} (src/b.test.ts)`);
-    expect(unnamedClaimRow).toContain(`fitness: ${citesNoScenario}`);
+    expect(unnamedClaimRow).toContain(`unit: ${citesNoClaim} (src/b.test.ts)`);
+    expect(unnamedClaimRow).toContain(`fitness: ${citesNoClaim}`);
     expect(unnamedClaimRow).toMatch(/fitness: [^;|]*\blint:bar\b/);
   });
 
