@@ -10,7 +10,6 @@ import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { renderJson, renderMarkdown, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { inputPathsOf } from "../cli-balance/evidenceInputs.js";
 import { reportedExitCodeOf } from "../cli-balance/exitStatus.js";
-import { reRender } from "../cli-balance/reRender.js";
 import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
 import { temporaryDirectory, test } from "../temporaryDirectory.test-utils.js";
 
@@ -413,17 +412,16 @@ describe("[CLM-RPT-001] a run with no --target names the target's git origin bes
   // checkout's.
   // The checkout's path, as created and as resolved, and the tool's own commit are run facts the remote does not supply, so a
   // leak is read with them removed.
-  function reportOf(dir: string, root: string, balance: EvidenceReconciliation): { md: string; json: string; rerendered: string; leaked: (secret: string) => string | undefined } {
+  function reportOf(dir: string, root: string, balance: EvidenceReconciliation): { md: string; json: string; leaked: (secret: string) => string | undefined } {
     const args = { features: join(dir, "features") };
     const ctx = runContextOf(args, inputPathsOf(args), new Date("2026-10-22T09:00:00.000Z"), root);
     const json = renderJson(balance, ctx);
     const md = renderMarkdown(balance, ctx, reportedExitCodeOf);
-    const rerendered = reRender(JSON.parse(json), false).markdown;
     const runFacts = [realpathSync(dir), dir, ctx.toolSha].filter((fact): fact is string => typeof fact === "string" && fact !== "");
-    const surfaces = { markdown: md, JSON: json, "re-render": rerendered };
+    const surfaces = { markdown: md, JSON: json };
     const leaked = (secret: string): string | undefined =>
       Object.entries(surfaces).find(([, text]) => runFacts.reduce((t, fact) => t.replaceAll(fact, ""), text).includes(secret))?.[0];
-    return { md, json, rerendered, leaked };
+    return { md, json, leaked };
   }
 
   function nameOf(sharedDirectory: string, origin: string): string | null {
@@ -546,28 +544,25 @@ describe("[CLM-RPT-001] a run with no --target names the target's git origin bes
     ["https://deploy:p@ss@github.com/ekino/veggies.git?private_token=abc#s3cret", "ekino/veggies", ["deploy", "p@ss", "ss@", "private_token", "abc", "s3cret"]],
     ["https://usrK7:Zq1/Xw9@github.com/ekino/veggies.git", null, ["usrK7", "Zq1", "Xw9"]],
     ["file:///srv/git/veg#gies.git", "file:///srv/git/veg#gies.git", []],
-  ])("in the run balance assembles, carries the origin %s's name, %s, into the markdown, the JSON and a re-render, with none of %j in any of them", ([origin, shown, secrets], { sharedDirectory }) => {
+  ])("in the run balance assembles, carries the origin %s's name, %s, into the markdown and the JSON, with none of %j in either", ([origin, shown, secrets], { sharedDirectory }) => {
     withOrigin(sharedDirectory, origin, (dir, root, balance) => {
-      const { md, json, rerendered, leaked } = reportOf(dir, root, balance);
+      const { md, json, leaked } = reportOf(dir, root, balance);
       for (const secret of secrets) expect(leaked(secret), `${secret} reached a surface`).toBeUndefined();
       expect(namedOrigin(json)).toBe(shown ?? undefined);
       expect(targetRepo(md)).toBe(
         `- ${shown === null ? coreMessage(CoreMessage.ProvenanceTargetRepo, { target: "unknown-target" }) : coreMessage(CoreMessage.ProvenanceTargetRepoUntargeted, { target: "unknown-target", origin: shown })}`,
       );
-      expect(targetRepo(rerendered)).toBe(targetRepo(md));
     });
   });
 
-  it("names the origin in the markdown and in the JSON, and a report rendered from that JSON reads the same, with none of the remote's credentials in any of them", wholeRun, () => {
+  it("names the origin in the markdown and in the JSON, with none of the remote's credentials in either", wholeRun, () => {
     withCheckout("https://deploy:p@ss@github.com/ekino/veggies.git?private_token=qwz#s3cret", (dir) => {
       const { md, json, saved } = report(dir);
-      const rerendered = runBalanceCaptured(["--render-from-json", saved]).stdout;
-      for (const text of [md, readFileSync(saved, "utf8"), rerendered]) {
+      for (const text of [md, readFileSync(saved, "utf8")]) {
         for (const secret of ["deploy", "p@ss", "private_token", "qwz", "s3cret"]) expect(text.replaceAll(dir, "")).not.toContain(secret);
       }
       expect(targetRepo(md)).toBe(`- ${coreMessage(CoreMessage.ProvenanceTargetRepoUntargeted, { target: "unknown-target", origin: "ekino/veggies" })}`);
       expect({ target: json["target"], targetOrigin: json["targetOrigin"] }).toEqual({ target: "unknown-target", targetOrigin: "ekino/veggies" });
-      expect(targetRepo(rerendered)).toBe(targetRepo(md));
     });
   });
 

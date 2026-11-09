@@ -1,4 +1,4 @@
-import { closeSync, constants, fstatSync, lstatSync, openSync, readlinkSync, realpathSync, statSync, unlinkSync } from "node:fs";
+import { closeSync, constants, fstatSync, lstatSync, openSync, readlinkSync, realpathSync, statSync } from "node:fs";
 import { dirname, resolve, sep } from "node:path";
 
 import { endRunOn, USAGE_EXIT_CODE, USAGE_REFUSAL } from "./exitCode.js";
@@ -11,13 +11,14 @@ class UsageRefusal extends Error {
   readonly exitCode = USAGE_EXIT_CODE;
 }
 
-export type Unwritable = { readonly kind: "report"; readonly format: string } | { readonly kind: "stored-run-directory" };
+export interface Unwritable {
+  readonly kind: "report";
+  readonly format: string;
+}
 
 export function unwritableRefusal(what: Unwritable, path: string, err: unknown): Refusal {
   const reason = err instanceof Error ? err.message : String(err);
-  return what.kind === "report"
-    ? refusal(AppError.ReportNotWritten, { format: what.format, path, reason })
-    : refusal(AppError.StoredRunDirectoryNotCreated, { path, reason });
+  return refusal(AppError.ReportNotWritten, { format: what.format, path, reason });
 }
 
 export function writeOrRefuse(what: Unwritable, path: string, write: () => void): void {
@@ -71,32 +72,6 @@ export function probeDestination(path: string): ProbedDestination {
   return { identity, created: realpathSync(path) };
 }
 
-export function firstSharingFile(file: string, others: readonly string[]): string | undefined {
-  const created: string[] = [];
-  try {
-    const identity = identityOrNone(file, created);
-    if (identity === undefined) return undefined;
-    return others.find((other) => sameIdentity(identityOrNone(other, created), identity));
-  } finally {
-    for (const path of created) unlinkSync(path);
-  }
-}
-
-function identityOrNone(path: string, created: string[]): RegularFileIdentity | undefined {
-  try {
-    const probed = probeDestination(path);
-    if (probed.created !== undefined) created.push(probed.created);
-    return probed.identity;
-  } catch {
-    // A path that cannot be opened for writing shares no file with the one being checked.
-  }
-  return undefined;
-}
-
-function sameIdentity(a: RegularFileIdentity | undefined, b: RegularFileIdentity): boolean {
-  return a !== undefined && a.dev === b.dev && a.ino === b.ino;
-}
-
 export function regularFileIdentity(path: string): RegularFileIdentity | undefined {
   try {
     return regularIdentity(statSync(path, { bigint: true }));
@@ -104,12 +79,6 @@ export function regularFileIdentity(path: string): RegularFileIdentity | undefin
     // A path that cannot be stat'd is no file, so it is no input's file either.
   }
   return undefined;
-}
-
-export function inputAt(path: string, inputs: readonly ReadInput[]): ReadInput | undefined {
-  const identity = regularFileIdentity(path);
-  if (identity === undefined) return undefined;
-  return inputs.find((input) => sameIdentity(regularFileIdentity(input.path), identity));
 }
 
 export function stdoutIdentity(): RegularFileIdentity | undefined {

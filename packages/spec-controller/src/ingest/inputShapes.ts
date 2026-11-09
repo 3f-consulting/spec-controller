@@ -7,12 +7,10 @@ export type Shape =
   | "string"
   | "number"
   | "boolean"
-  | "anything"
   | { readonly list: Shape }
   | {
       readonly fields: Readonly<Record<string, Shape>>;
       readonly required?: readonly string[];
-      readonly retired?: Readonly<Record<string, string>>;
     }
   | { readonly entries: Shape; readonly keys?: (key: string) => boolean };
 
@@ -81,62 +79,6 @@ export const CI_STEP_RECORD: Shape = {
 
 export const PACKAGE_MANIFEST: Shape = { fields: { scripts: { entries: "string" } } };
 
-const SCENARIO_NAME: Shape = { fields: { title: "string" }, required: ["title"] };
-
-export const SAVED_RECONCILIATION: Shape = {
-  fields: {
-    runProvenance: { fields: { corpus: "string" }, required: ["corpus"] },
-    summary: {
-      fields: {
-        reconciliationTotals: {
-          fields: {
-            reconciliationLines: {
-              fields: {
-                missingByQualityCheckKind: { list: { fields: { qualityCheckKind: "string" }, required: ["qualityCheckKind"] } },
-              },
-            },
-          },
-        },
-        evidenceObservations: { fields: {} },
-        claimCodes: {
-          fields: {
-            untaggedScenarios: { list: SCENARIO_NAME },
-            sharedClaimCodes: { list: { fields: { scenarios: { list: SCENARIO_NAME } } } },
-          },
-        },
-      },
-      required: ["reconciliationTotals", "evidenceObservations", "claimCodes"],
-    },
-    claimReconciliations: {
-      list: {
-        fields: {
-          qualityCheckReconciliations: {
-            list: { fields: { evidenceObligation: { fields: { qualityCheckKind: "anything" }, required: ["qualityCheckKind"] } } },
-          },
-          pendingItems: { list: { fields: { qualityCheckKind: "anything" }, required: ["qualityCheckKind"] } },
-        },
-      },
-    },
-    errorsInTheInputs: {
-      fields: {
-        claimCodeErrors: { list: "anything" },
-        configurationNotRead: {
-          fields: {
-            keysNotRead: { list: "anything" },
-            ofWrongKind: { list: "anything" },
-            runnerKeysNotALayer: { list: "anything" },
-            nonChecksMatchingNoStep: { list: "anything" },
-            nonChecksNotAStepName: { list: "anything" },
-          },
-        },
-      },
-      retired: { configuration: "configurationNotRead" },
-    },
-  },
-  required: ["runProvenance", "summary", "claimReconciliations"],
-  retired: { errors: "errorsInTheInputs" },
-};
-
 // Kinds are compared unworded, so a well-shaped report formats no message.
 function kindOf(value: unknown): string {
   if (value === null) return "null";
@@ -144,7 +86,7 @@ function kindOf(value: unknown): string {
   return typeof value;
 }
 
-function expectedKindOf(shape: Exclude<Shape, "anything">): string {
+function expectedKindOf(shape: Shape): string {
   if (typeof shape === "string") return shape;
   return "list" in shape ? "list" : "object";
 }
@@ -182,7 +124,6 @@ export function shapeFaultIn(value: unknown, shape: Shape): string | null {
 }
 
 function faultAt(value: unknown, shape: Shape, where: Position): string | null {
-  if (shape === "anything") return null;
   const found = kindOf(value);
   const expected = expectedKindOf(shape);
   if (found !== expected)
@@ -202,9 +143,6 @@ function listFault(items: readonly unknown[], item: Shape, where: Position): str
 }
 
 function fieldsFault(record: Record<string, unknown>, shape: Fields, where: Position): string | null {
-  for (const [old, replacement] of Object.entries(shape.retired ?? {}))
-    if (record[old] !== undefined && record[replacement] === undefined)
-      return message(AppMessage.ShapeFieldMissing, { path: fieldOf(where, replacement).path });
   for (const [key, field] of Object.entries(shape.fields)) {
     const position = fieldOf(where, key);
     if (record[key] === undefined) {

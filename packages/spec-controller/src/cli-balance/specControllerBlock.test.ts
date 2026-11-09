@@ -91,18 +91,6 @@ describe("[CLM-CFG-006] a specController block whose every entry is a kind its r
   });
 });
 
-describe("[CLM-CFG-007] a saved run re-rendered names the same specController entries its live report named", () => {
-  it("re-renders a saved run of a target holding a wrong kind and an unread key, naming both as the live report did and writing nothing to stderr", () => {
-    const dir = targetOf({ ...block, notChecks: "ci.yml:ci:Checkout", fitnessChecks: [{ clm: "CLM-OWN-001" }] });
-    const saved = join(dir, "saved.json");
-    const live = captured([...inputsOf(dir), "--format", "md", "--format", `json:${saved}`]);
-    const again = captured(["--render-from-json", saved]);
-    expect(configurationEntries(live.report)).toHaveLength(2);
-    expect(configurationEntries(again.report)).toEqual(configurationEntries(live.report));
-    expect(again.stderr).toBe("");
-  });
-});
-
 describe("[CLM-CFG-005] a key the specController block does not read, a retired one included, is named on the report as unknown in the same words as any other, and the run is not refused over it", () => {
   const accounts = (report: string): string => report.slice(report.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))));
 

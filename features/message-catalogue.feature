@@ -94,8 +94,6 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
         | the clean statement's feature files and codes   | 1 feature file and 1 code   |
         | the clean statement's feature files and codes   | 3 feature files and 1 code  |
         | the clean statement's feature files and codes   | 2 feature files and 0 codes |
-        | a re-render's flags it does not read            | 1 flag                      |
-        | a re-render's flags it does not read            | 2 flags                     |
 
   Rule: every error a reader is shown carries one error code, and nothing else the tool prints carries one
 
@@ -108,7 +106,6 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
       Examples:
         | error                                                      | what went wrong                      |
         | a flag the command does not take                           | the flag unknown to the command      |
-        | a flag the command has retired                             | the retired flag                     |
         | a command the tool does not have                           | the unknown command                  |
         | a request for a claim code not in its form              | the request not in the code's form   |
         | an unexpected error before its verdict                     | the unexpected error                 |
@@ -117,7 +114,6 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
         | an input it cannot read                                    | the input that could not be read     |
         | a configuration entry of a kind it does not read           | the entry of the wrong kind          |
         | a scenario carrying a code of another feature              | the misfiled code                    |
-        | a saved report holding an error in its inputs, re-rendered | the error the saved report holds     |
 
     @unit @CLM-MSG-011
     Scenario: a balanced run shows no error code

@@ -131,15 +131,14 @@ export default {
     },
 
     {
-      name: "yaml-parsed-by-its-two-homes",
+      name: "yaml-parsed-by-its-one-home",
       severity: "error",
       comment:
-        "only core's workflow module, which reads another tool's workflows, and the run store, which reads and writes spec-controller's own run manifest, import the YAML parser",
+        "only core's workflow module, which reads another tool's workflows, imports the YAML parser",
       from: {
         path: "^packages/[^/]+/src/",
         pathNot: [
           "^packages/core/src/parse/checkScriptsRunInCI\\.ts$",
-          "^packages/spec-controller/src/run-management/keptRun\\.ts$",
           "\\.(test|test-utils)\\.ts$",
         ],
       },

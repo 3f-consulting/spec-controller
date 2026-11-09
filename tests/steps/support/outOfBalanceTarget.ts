@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { OUT_OF_BALANCE, specController } from "./specControllerRun.js";
 
-export const TARGET = "unwritable";
+const TARGET = "unwritable";
 
 export const TARGET_ARGS = [
   "--features",

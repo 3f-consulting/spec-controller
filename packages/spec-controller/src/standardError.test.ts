@@ -46,15 +46,6 @@ describe("[CLM-ALC-012] a command's usage error opens with the command's usage-e
   });
 });
 
-describe("[CLM-ALC-014] a refusal at the host's scope opens with the tool's usage-error prefix", () => {
-  it("opens the first line with the tool alone when no command is given", () => {
-    const given = refusal(AppError.ModifiersNotTaken, { command: "allocate", modifiers: "--store" });
-    expect(errorText(given)).toBe(
-      "spec-controller: usage error [modifiers-not-taken] — 'allocate' takes no host modifier, and was given --store: it answers a query and keeps no run.",
-    );
-  });
-});
-
 describe("[CLM-CLI-056] an unknown command is named after the tool", () => {
   it("opens with the tool's name, then the entry", () => {
     expect(errorText(refusal(AppError.UnknownCommand, { command: "frobnicate" }, ["", "help"]))).toBe(
@@ -85,22 +76,22 @@ describe("[CLM-ALC-005] a note is printed on its own line", () => {
 
 describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong", () => {
   const withPointers = (): ReturnType<typeof refusal> =>
-    refusal(AppError.RunIdWithoutStore, { runId: "r1" }, ["first pointer", "second pointer"]);
-  const words = "--run-id names a stored run, and was given 'r1' with no --store, so no run is kept under it.";
+    refusal(AppError.GivenTwice, { flag: "--target", scope: "spec-controller balance" }, ["first pointer", "second pointer"]);
+  const words = "The --target flag of 'spec-controller balance' was given more than once, and is read once: give it once.";
 
   it("opens a command's refusal with the command's usage-error prefix and the refusal's code, then each pointer line as given", () => {
     expect(printedBy("balance", (shown) => shown.error(withPointers()))).toEqual([
-      `spec-controller balance: usage error [run-id-without-store] — ${words}\nfirst pointer\nsecond pointer\n`,
+      `spec-controller balance: usage error [given-twice] — ${words}\nfirst pointer\nsecond pointer\n`,
     ]);
   });
 
   it("opens a refusal at the host's scope with the tool's usage-error prefix and the refusal's code", () => {
     expect(printedBy(undefined, (shown) => shown.error(withPointers()))).toEqual([
-      `spec-controller: usage error [run-id-without-store] — ${words}\nfirst pointer\nsecond pointer\n`,
+      `spec-controller: usage error [given-twice] — ${words}\nfirst pointer\nsecond pointer\n`,
     ]);
   });
 
   it("shows the code once, on the first line only, never on a pointer line after it", () => {
-    expect(errorCodesShown(errorText(withPointers(), "balance"))).toEqual({ opening: ["run-id-without-store"], after: [] });
+    expect(errorCodesShown(errorText(withPointers(), "balance"))).toEqual({ opening: ["given-twice"], after: [] });
   });
 });

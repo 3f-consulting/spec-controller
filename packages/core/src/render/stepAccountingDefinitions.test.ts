@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderJson, renderMarkdown, renderReportFromJson } from "../assemble/composers.js";
+import { renderMarkdown } from "../assemble/composers.js";
 import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 import { CoreMessage } from "./messages.js";
 import { coreMessage } from "./coreText.js";
@@ -71,13 +71,6 @@ describe("[CLM-RPT-092] the step-accounting section defines its Candidates, Reco
     const reconciliation = reconcile([ci], ["ci.yml"], { scripts: { test: "vitest run" } });
 
     expect(linesBeforeTable(markdownOf(reconciliation))).toStrictEqual(["", ...DEFINITIONS(), ""]);
-  });
-
-  it("prints the same five when a saved report is re-rendered from its JSON", () => {
-    const saved = renderJson(reconcile([ci]), ctx);
-    const regenerated = renderReportFromJson(saved, ctx.inputs, publishedExitCodeOf);
-
-    expect(linesBeforeTable(regenerated)).toStrictEqual(["", ...DEFINITIONS(), ""]);
   });
 });
 

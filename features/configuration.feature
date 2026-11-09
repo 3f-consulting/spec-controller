@@ -18,7 +18,7 @@ Feature: balance reads the specController block of the target's package.json
     the kind that is read there; every other entry takes effect as it would without it.
 
     A key the block does not read, a retired key included, is named as unknown in the same words as
-    any other. A saved run, re-rendered, names the same entries its live report named.
+    any other.
 
     @unit @CLM-CFG-004
     Scenario Outline: a specController entry of a kind its reader does not take is named on the report with the kind it is and the kind that is read, and every other entry takes effect as without it
@@ -28,6 +28,3 @@ Feature: balance reads the specController block of the target's package.json
 
     @unit @CLM-CFG-006
     Scenario Outline: a specController block whose every entry is a kind its reader takes names nothing as the wrong kind
-
-    @unit @CLM-CFG-007
-    Scenario: a saved run re-rendered names the same specController entries its live report named

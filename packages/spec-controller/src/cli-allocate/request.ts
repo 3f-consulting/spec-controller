@@ -1,7 +1,6 @@
 import { isFeaturePart } from "@3f-consulting/spec-controller-core";
 import {
   checkArgvShape,
-  checkMisplacedHostModifiers,
   checkUnknownFlags,
   parseArgs,
   positionalArguments,
@@ -28,7 +27,6 @@ export function readRequest(
 function argvRefusal(argv: readonly string[], registry: CliRegistry, toolVersion: string): Refusal | null {
   const args = parseArgs(argv);
   return (
-    checkMisplacedHostModifiers(args, registry, "allocate") ??
     checkArgvShape(argv, registry, "allocate") ??
     checkUnknownFlags(args, registry, "allocate", toolVersion)
   );

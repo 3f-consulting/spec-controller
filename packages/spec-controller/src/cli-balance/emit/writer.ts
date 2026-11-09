@@ -7,8 +7,7 @@ import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { probeDestination, refuse, unwritableRefusal, writeOrRefuse, type Unwritable } from "../../outputLocation.js";
-import { AppError } from "../../messages.js";
-import { refusal, type Refusal } from "../../refusal.js";
+import type { Refusal } from "../../refusal.js";
 import { reportedExitCodeOf } from "../exitStatus.js";
 
 export interface OutputPayloads {
@@ -29,10 +28,9 @@ export function writeOutputs(
   payloads: OutputPayloads,
   stdoutFile: () => FileIdentity | undefined,
   inputs: readonly IdentifiedInput[],
-  earlierStoredRunDirOf: (path: string) => string | undefined,
 ): void {
   const emissions = plan.outputs.map((output) => ({ output, text: render(output.fmt, payloads) + "\n" }));
-  const refused = vetDestinations(plan.outputs, stdoutFile, inputs) ?? earlierStoredRunRefusal(plan.outputs, earlierStoredRunDirOf);
+  const refused = vetDestinations(plan.outputs, stdoutFile, inputs);
   if (refused !== undefined) refuse(refused);
   for (const { output, text } of emissions) emit(output, text);
 }
@@ -54,18 +52,6 @@ function vetDestinations(
   } finally {
     for (const path of created) unlinkSync(path);
   }
-}
-
-function earlierStoredRunRefusal(
-  outputs: readonly PlannedOutput[],
-  earlierStoredRunDirOf: (path: string) => string | undefined,
-): Refusal | undefined {
-  for (const { dest } of outputs) {
-    if (dest.kind === "stdout") continue;
-    const runDir = earlierStoredRunDirOf(dest.path);
-    if (runDir !== undefined) return refusal(AppError.OutputOverwritesStoredRun, { path: dest.path, runDir });
-  }
-  return undefined;
 }
 
 type Probe = { readonly kind: "identified"; readonly identity: FileIdentity | undefined } | { readonly kind: "refused"; readonly refusal: Refusal };

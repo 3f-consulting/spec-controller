@@ -81,18 +81,13 @@ The whole report is written before the exit code is set, so a failing run still 
 - a mistyped path, or a path it is not permitted to read;
 - a file where a directory belongs, or the reverse;
 - an unparseable report, or a report that parses but is not in the shape its runner writes;
-- a saved reconciliation it cannot render;
 - a corpus the Gherkin parser rejects.
 
 The refusal names the input, the path, and what was wrong with it. A well-formed report that holds nothing, such as a Vitest run that matched no test file, is read, not refused.
 
-**An output location it cannot write is also `2`**: a `--format` path that is read-only, a directory, under a regular file or in a directory that does not exist, or a `--store` root the run directory cannot be created under. It is refused before any report is printed, naming the location and the operating system's reason.
+**An output location it cannot write is also `2`**: a `--format` path that is read-only, a directory, under a regular file or in a directory that does not exist. It is refused before any report is printed, naming the location and the operating system's reason.
 
 `--exit-zero` changes `1` and `3` to `0` and leaves every other code alone (see *Report first, gate later*).
-
-### Re-rendering a saved report
-
-`balance --render-from-json <saved.json>` re-renders a saved report from the same table and exits with the code its verdict names, so a saved run that failed fails again when read back. A report saved under `--strict` records that, so its re-render exits `3` too. `--strict` and `--exit-zero` work beside the re-render as they do on a live run. Any other flag beside it is refused with `2`, because a re-render reads no live input and writes only to stdout.
 
 ### `allocate`
 

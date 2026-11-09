@@ -5,11 +5,9 @@ import {
   type EvidenceReport,
   type WorkflowReading,
 } from "../ingest/ingestQualityChecks.js";
-import { readUtf8, reasonOf, type InputReadFault, type ReadFault } from "../ingest/inputReading.js";
-import { SAVED_RECONCILIATION, shapeFaultIn } from "../ingest/inputShapes.js";
+import { readUtf8, type InputReadFault, type ReadFault } from "../ingest/inputReading.js";
 import { junitReportPathsOf } from "../ingest/junitReportPaths.js";
-import { readReport, type DocumentReading, type ReportFormat, type ReportReading } from "../ingest/reportReading.js";
-import { reRender, type ReRendered } from "./reRender.js";
+import { readReport, type ReportFormat, type ReportReading } from "../ingest/reportReading.js";
 import { AppError, AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 import { refusal, refusals, type Refusal } from "../refusal.js";
@@ -138,36 +136,6 @@ export function checkInputPaths(
     return pathRefusal(workflowsSubjectOf(args), workflowReading.fault);
   }
   return null;
-}
-
-export function savedReportRefusal(path: string, reading: Exclude<DocumentReading, { kind: "parsed" }>): Refusal {
-  return refusal(AppError.CouldNotBeRead, {
-    subject: message(AppMessage.FlaggedSavedReport, { flag: "--render-from-json" }),
-    path,
-    reason: reading.kind === "read-fault" ? reading.fault.reason : reading.reason,
-  });
-}
-
-export function checkSavedReconciliation(path: string, saved: unknown): Refusal | null {
-  const fault = shapeFaultIn(saved, SAVED_RECONCILIATION);
-  if (fault === null) return null;
-  return refusal(AppError.NotASavedReconciliation, {
-    subject: message(AppMessage.FlaggedFile, { flag: "--render-from-json" }),
-    path,
-    fault,
-  });
-}
-
-export function reRenderOrRefusal(path: string, saved: unknown, strict: boolean): ReRendered | Refusal {
-  try {
-    return reRender(saved, strict);
-  } catch (err) {
-    return refusal(AppError.NotRenderableAsSaved, {
-      subject: message(AppMessage.FlaggedFile, { flag: "--render-from-json" }),
-      path,
-      reason: reasonOf(err),
-    });
-  }
 }
 
 function workflowsSubjectOf(args: Record<string, string>): string {

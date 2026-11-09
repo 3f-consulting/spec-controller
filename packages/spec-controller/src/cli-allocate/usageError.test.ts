@@ -36,12 +36,6 @@ const MALFORMED_REQUEST: readonly Malformed[] = [
       `${message(AppMessage.PinDrifted, { command: "allocate", flag: "--bogus" })}\n` +
       message(AppMessage.OtherwiseSeeFlags, { scope: ALLOCATE }),
   ],
-  [
-    "the part ONE and a host modifier given after the command",
-    ["ONE", "--store", "runs"],
-    AppError.MisplacedModifier,
-    () => `${message(AppError.MisplacedModifier, { modifier: "--store", command: "allocate" })}\n` + message(AppMessage.SeeModifiers),
-  ],
 ];
 
 describe("[CLM-ALC-012] A request not in the claim-code form is refused as a usage error, never as an unknown part", () => {

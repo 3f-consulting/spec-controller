@@ -1,48 +1,27 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import {
   checkInputPaths,
   checkInputShapes,
-  checkSavedReconciliation,
   checkWorkflowsParse,
   corpusDirRefusal,
   jsonInputsOf,
   readReports,
-  reRenderOrRefusal,
 } from "./unreadableInputs.js";
 import { checkInputsExist } from "./cli.js";
 import { refusalLine, UnparseableFeatureFiles, UnreadableInput } from "../cli-allocate/unreadable.js";
-import { executeKeptRun } from "../run-management/keptRun.js";
 import { errorText, type RefusalLines } from "../standardError.js";
-import { usageStatusOf } from "../usageStatus.test-utils.js";
 import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import { DEFAULT_CI_PATH, readCorpus, readWorkflows } from "../ingest/ingestQualityChecks.js";
-import { reRender } from "./reRender.js";
 import { AppError, AppMessage, Unreadable } from "../messages.js";
 import { message } from "../appText.js";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { captured, expectRefused } from "./balanceRun.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
-import {
-  CLAIM_RECONCILIATIONS_PATH,
-  CLAIM_RECONCILIATIONS_SECTION,
-  claimReconciliationsOf,
-  claimReconciliationsSection,
-  withClaimReconciliations,
-  withoutClaimReconciliations,
-} from "../../../../tests/steps/support/reportClaimReconciliations.js";
-import {
-  RECONCILIATION_TOTALS_PATH,
-  reconciliationTotalsOf,
-  reconciliationTotalsSection,
-  withReconciliationTotals,
-  withReconciliationTotalsUnderEarlierKey,
-} from "../../../../tests/steps/support/reportReconciliationTotals.js";
-import { CLAIM_CODES_PATH, withClaimCodesOnReport } from "../../../../tests/steps/support/reportClaimCodes.js";
+import { claimReconciliationsOf } from "../../../../tests/steps/support/reportClaimReconciliations.js";
 import { shownText } from "../shownText.test-utils.js";
-import { scenarioName } from "../../../../tests/steps/support/scenarioName.js";
 
 const nothingByDefault = (): boolean => false;
 const reading = (content: string) => (): string => content;
@@ -614,133 +593,6 @@ describe("[CLM-CLI-102] checkWorkflowsParse refuses a workflow that does not par
   });
 });
 
-const claimCodes = () => ({ featureFiles: 1, featureCodes: 0, excludedOccurrences: 0, untaggedScenarios: [scenarioName("a.feature", "one")] });
-const saved = () => withClaimCodesOnReport({"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"corpus":"feat","strict":false},"summary":{...reconciliationTotalsSection({"claimReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantomClaim":0,"unnamedClaim":0},"reconciliationLines":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"cannot-fail":0,"cites-unknown-claim":0,"cites-no-claim":0,"no-claim-code":1,"duplicate-claim-code":0,"never-ran":0,"not-asked-for":0,"no-quality-check":0},"outOfBalance":1,"missingByQualityCheckKind":[]},"pending":0}),"evidenceObservations":{"total":0,"onScenario":0,"onPhantomClaim":0,"onUnnamedClaim":0,"byQualityCheckKind":[{"qualityCheckKind":"unit","count":0},{"qualityCheckKind":"integration","count":0},{"qualityCheckKind":"e2e","count":0},{"qualityCheckKind":"performance","count":0},{"qualityCheckKind":"fitness","count":0}]},"claimReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantomClaim":0,"unnamedClaim":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"cannot-fail":0,"cites-unknown-claim":0,"cites-no-claim":0,"no-claim-code":1,"duplicate-claim-code":0,"never-ran":0,"not-asked-for":0,"no-quality-check":0},"outOfBalance":1,"missingByQualityCheckKind":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomClaim":0,"onUnnamedClaim":0},"rawByBehaviouralQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"fitnessFunctions":{"runningFitnessFunctionCount":0,"uncitedFitnessFunctionCount":0},"fitness":{"satisfied":0,"total":0}},...claimReconciliationsSection([{"claim":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-claim-code","evidenceObligation":{"qualityCheckKind":null}}],"reconcilingItems":[{"outcome":"no-claim-code","evidenceObligation":{"qualityCheckKind":null}}],"pendingItems":[]}]),"claimCodeErrors":[],"claimCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[scenarioName("a.feature", "one")],"proseOnlyCodes":[]}}, claimCodes());
-type Saved = ReturnType<typeof saved>;
-const SAVED_BEFORE_RECONCILIATION_TOTALS = {"runProvenance":{"target":"unknown-target","sourceSha":null,"toolSha":null,"toolVersion":"0.1.0-alpha.5","runTimestamp":"2026-09-27T10:03:01Z","inputs":{"features":"feat"},"corpus":"feat","strict":false},"summary":{"scenarioReconciliations":{"total":1,"balanced":0,"outOfBalance":1,"phantom":0,"suspense":0},"qualityCheckReconciliations":{"total":1,"byOutcome":{"satisfied":0,"missing":0,"failing":0,"cannot-fail":0,"cites-unknown-claim":0,"cites-no-claim":0,"no-claim-code":1,"duplicate-claim-code":0,"never-ran":0,"not-asked-for":0,"no-quality-check":0},"outOfBalance":1,"missingByQualityCheckKind":[]},"pending":0,"testVolume":{"totalEvidenceObservations":0,"onScenario":0,"onPhantomScenario":0,"onSuspenseScenario":0},"rawByBehaviouralQualityCheck":{"unit":0,"integration":0,"e2e":0,"performance":0},"fitnessFunctions":{"runningFitnessFunctionCount":0,"uncitedFitnessFunctionCount":0},"fitness":{"satisfied":0,"total":0}},"ledger":{"scenarioReconciliations":[{"claim":"a.feature : one","kind":"scenario","verdict":"out-of-balance","evidenceObservations":[],"evidenceObligations":[],"qualityCheckReconciliations":[{"outcome":"no-claim-code","evidenceObligation":{}}],"reconcilingItems":[{"outcome":"no-claim-code","evidenceObligation":{}}],"pendingItems":[]}]},"claimCodeErrors":[],"claimCodePopulation":{"featureFiles":1,"featureCodes":0},"evidenceObligations":{"excludedOccurrences":0,"untaggedScenarios":[{"feature":"a.feature","scenario":"one"}],"proseOnlyCodes":[]}};
-
-const savedWithSections = () => withClaimCodesOnReport({
-  ...saved(),
-  errorsInTheInputs: {
-    claimCodeErrors: [{ kind: "several-claim-codes", files: ["a.feature"], scenario: "one", codes: ["@CLM-AAA-001", "@CLM-AAA-002"] }],
-    configurationNotRead: {
-      keysNotRead: ["runner"],
-      ofWrongKind: [{ entry: "tiers", is: "string", reads: "list" }],
-      runnerKeysNotALayer: ["smoke"],
-      nonChecksMatchingNoStep: ["lint"],
-      nonChecksNotAStepName: ["Deploy"],
-    },
-  },
-}, claimCodes());
-
-describe("[CLM-CLI-074] a saved file that is not a saved reconciliation is refused, naming a section of the wrong kind by its place in the report, and one in an earlier report shape by its missing section", () => {
-  it.each([
-    ["the top level is a list, not an object", () => []],
-    ["runProvenance is missing", (s: Saved) => ({ ...s, runProvenance: undefined })],
-    ["summary is missing", (s: Saved) => ({ ...s, summary: undefined })],
-    [`${CLAIM_RECONCILIATIONS_PATH} is missing`, (s: Saved) => withClaimReconciliations(s, undefined)],
-    [`${RECONCILIATION_TOTALS_PATH} is missing`, () => SAVED_BEFORE_RECONCILIATION_TOTALS],
-    [`${RECONCILIATION_TOTALS_PATH} is missing`, (s: Saved) => withReconciliationTotalsUnderEarlierKey(s)],
-    [
-      "summary.claimCodes is missing",
-      (s: Saved) => {
-        const { claimCodes, ...summary } = s.summary as Saved["summary"] & { claimCodes: unknown };
-        return { ...s, summary, claimCodes };
-      },
-    ],
-    ["claimReconciliations is missing", (s: Saved) => ({ ...withoutClaimReconciliations(s), ledger: claimReconciliationsSection(claimReconciliationsOf(s)) })],
-    ["summary.evidenceObservations is missing", (s: Saved) => ({ ...s, summary: { ...s.summary, evidenceObservations: undefined } })],
-    [`${CLAIM_RECONCILIATIONS_PATH} is an object, not a list`, (s: Saved) => withClaimReconciliations(s, {})],
-    [
-      `${CLAIM_RECONCILIATIONS_PATH}[0].qualityCheckReconciliations[0].evidenceObligation.qualityCheckKind is missing`,
-      (s: Saved) => withClaimReconciliations(s, [{ qualityCheckReconciliations: [{ outcome: "no-claim-code", evidenceObligation: {} }] }]),
-    ],
-    [
-      `${CLAIM_RECONCILIATIONS_PATH}[0].pendingItems[0].qualityCheckKind is missing`,
-      (s: Saved) => withClaimReconciliations(s, [{ pendingItems: [{}] }]),
-    ],
-    ["errorsInTheInputs.claimCodeErrors is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { claimCodeErrors: "x" } })],
-    ["errorsInTheInputs.configurationNotRead.keysNotRead is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { keysNotRead: "x" } } })],
-    ["errorsInTheInputs.configurationNotRead.ofWrongKind is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { ofWrongKind: "x" } } })],
-    ["errorsInTheInputs.configurationNotRead.runnerKeysNotALayer is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { runnerKeysNotALayer: "x" } } })],
-    ["errorsInTheInputs.configurationNotRead.nonChecksMatchingNoStep is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { nonChecksMatchingNoStep: "x" } } })],
-    ["errorsInTheInputs.configurationNotRead.nonChecksNotAStepName is a string, not a list", (s: Saved) => ({ ...s, errorsInTheInputs: { configurationNotRead: { nonChecksNotAStepName: "x" } } })],
-    ["errorsInTheInputs is missing", (s: Saved) => ({ ...s, errors: { configuration: { keysNotRead: ["runner"] } } })],
-    ["errorsInTheInputs is missing", (s: Saved) => ({ ...s, errors: { claimCodeErrors: [], configurationNotRead: { keysNotRead: ["runner"] } } })],
-    ["errorsInTheInputs.configurationNotRead is missing", (s: Saved) => ({ ...s, errorsInTheInputs: { configuration: { keysNotRead: ["runner"] } } })],
-    [`${CLAIM_CODES_PATH} is a string, not an object`, (s: Saved) => withClaimCodesOnReport(s, "x")],
-    ["runProvenance.corpus is missing", (s: Saved) => ({ ...s, runProvenance: { ...s.runProvenance, corpus: undefined } })],
-    [
-      `${RECONCILIATION_TOTALS_PATH}.reconciliationLines.missingByQualityCheckKind[0].qualityCheckKind is missing`,
-      (s: Saved) =>
-        withReconciliationTotals(s, {
-          ...reconciliationTotalsOf(s),
-          reconciliationLines: { ...reconciliationTotalsOf(s).reconciliationLines, missingByQualityCheckKind: [{ subject: "unit", count: 1 }] },
-        }),
-    ],
-    [
-      `${CLAIM_CODES_PATH}.untaggedScenarios[0].title is missing`,
-      (s: Saved) => withClaimCodesOnReport(s, { featureFiles: 1, featureCodes: 0, excludedOccurrences: 0, untaggedScenarios: [{ feature: "a.feature", scenario: "one" }] }),
-    ],
-    [
-      `${CLAIM_CODES_PATH}.sharedClaimCodes[0].scenarios[0].title is missing`,
-      (s: Saved) =>
-        withClaimCodesOnReport(s, {
-          featureFiles: 1,
-          featureCodes: 1,
-          excludedOccurrences: 0,
-          untaggedScenarios: [],
-          sharedClaimCodes: [{ claimCode: "CLM-AAA-001", scenarios: [{ feature: "a.feature", scenario: "one" }, { feature: "a.feature", scenario: "two" }] }],
-        }),
-    ],
-  ] as const)("names where a saved file departs from a saved reconciliation: %s", (fault, documentOf: (s: Saved) => unknown) => {
-    const error = shownText(checkSavedReconciliation("saved.json", documentOf(saved())));
-
-    expect(error).toContain("--render-from-json");
-    expect(error).toContain("saved.json");
-    expect(error).toContain(fault);
-    expect(error).toContain("Run balance again to save one.");
-  });
-
-  it("passes a reconciliation saved with its input faults and its corpus's facts", () => {
-    expect(shownText(checkSavedReconciliation("saved.json", savedWithSections()))).toBeNull();
-  });
-
-  function reRendering(document: unknown): { path: string; report: string; stderr: string; exitCode: unknown } {
-    const dir = temporaryDirectory("render-not-saved-");
-    const path = join(dir, "spec-reconciliation.json");
-    writeFileSync(path, JSON.stringify(document));
-    const { stdout, stderr, exitCode } = runBalanceCaptured(["--render-from-json", path]);
-    return { path, report: stdout, stderr, exitCode };
-  }
-
-  let theFile: string;
-
-  beforeEach(() => {
-    theFile = message(AppMessage.FlaggedFile, { flag: "--render-from-json" });
-  });
-
-  it("runBalance refuses a saved file with NO LEDGER at exit 2, naming the file and the missing part, rendering nothing", () => {
-    const run = reRendering(withoutClaimReconciliations(saved()));
-
-    expectRefused(run, message(AppError.NotASavedReconciliation, { subject: theFile, path: run.path, fault: `${CLAIM_RECONCILIATIONS_SECTION} is missing` }));
-  });
-
-  it("runBalance refuses a saved file the renderer cannot read BELOW ITS TOP at exit 2, naming the file and the renderer's reason, rendering nothing", () => {
-    const broken = withClaimReconciliations(saved(), [{}]);
-    let reason = "";
-    try {
-      reRender(broken, false);
-    } catch (e) {
-      reason = (e as Error).message;
-    }
-    expect(reason).not.toBe("");
-    const run = reRendering(broken);
-
-    expectRefused(run, message(AppError.NotRenderableAsSaved, { subject: theFile, path: run.path, reason }));
-  });
-});
-
 describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — an input it cannot read", () => {
   const BALANCE_INPUTS = ["--features", "tests/fixtures/evidence-observation/features", "--vitest", "tests/fixtures/evidence-observation/vitest.json"];
   const NOT_GHERKIN = "not gherkin at all {{{\n";
@@ -749,20 +601,6 @@ describe("[CLM-MSG-010] an error shows its reader the error code of what went wr
     const file = join(temporaryDirectory("coded-input-refusal-"), "a-file");
     writeFileSync(file, "a regular file\n");
     return file;
-  }
-
-  function stderrOfRefused(run: () => unknown): string {
-    const written: string[] = [];
-    const spy = vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
-      written.push(String(chunk));
-      return true;
-    });
-    try {
-      expect(usageStatusOf(run)).toBe(2);
-    } finally {
-      spy.mockRestore();
-    }
-    return written.join("");
   }
 
   function workflowsNotYaml(): ReturnType<typeof readWorkflows> {
@@ -789,12 +627,9 @@ describe("[CLM-MSG-010] an error shows its reader the error code of what went wr
     ["a --jest report that is not JSON", "not-valid-json-in-shape", "balance", () => checkInputShapes(readReports(jsonInputsOf({ jest: "j.json" }, nothingByDefault), reading("{{{")))],
     ["a --pytest report that is not XML", "not-valid-xml", "balance", () => checkInputShapes(readReports(jsonInputsOf({ pytest: "p.xml" }, nothingByDefault), reading("not xml")))],
     ["a --vitest report not in the reporter's shape", "not-in-shape", "balance", () => checkInputShapes(readReports(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading('{"testResults":"x"}')))],
-    ["a saved file with no ledger", "not-a-saved-reconciliation", "balance", () => checkSavedReconciliation("saved.json", withoutClaimReconciliations(saved()))],
-    ["a saved file the renderer cannot read", "not-renderable-as-saved", "balance", () => reRenderOrRefusal("saved.json", withClaimReconciliations(saved(), [null]), false)],
     ["allocate's feature file the parser rejects", "corpus-file-unparseable", "allocate", () => refusalLine(new UnparseableFeatureFiles([{ file: "features/a.feature", message: "(1:1): expected: #Feature" }]))],
     ["a --ci workflow that is not YAML", "workflow-not-yaml", "balance", () => checkWorkflowsParse({ ci: "ci" }, workflowsNotYaml())],
     ["a --format file that cannot be written", "report-not-written", "balance", () => runBalanceCaptured([...BALANCE_INPUTS, "--format", `json:${join(regularFile(), "report.json")}`]).stderr],
-    ["a stored run's directory that cannot be created", "stored-run-directory-not-created", "balance", () => stderrOfRefused(() => executeKeptRun({ storeRoot: join(regularFile(), "store"), target: "t", runId: "r1" }, { sourceSha: "unknown", toolSha: "unknown", toolVersion: "0.0.0", mode: "balance", date: "2026-11-03T00:00:00.000Z" }, () => true))],
   ];
 
   it.each(ROWS)("refuses %s with [%s] once, after %s's usage-error prefix", (_input, code, command, shown) => {

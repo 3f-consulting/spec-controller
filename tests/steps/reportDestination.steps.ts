@@ -10,7 +10,7 @@ import { entriesUnder } from "./support/entriesUnder.js";
 import { assertTargetOutOfBalance, BALANCED_ARGS, TARGET_ARGS } from "./support/outOfBalanceTarget.js";
 import { REASON_CODE } from "./support/refusalReason.js";
 import { FORMAT_FLAG } from "./support/reportFormat.js";
-import { BALANCED, OUT_OF_BALANCE, RUN_ID, specController, USAGE } from "./support/specControllerRun.js";
+import { BALANCED, OUT_OF_BALANCE, specController, USAGE } from "./support/specControllerRun.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { CommandRun, InputRow, PointedAt, SpecControllerWorld } from "./support/world.js";
 
@@ -301,14 +301,13 @@ Given(/^a path to that input that is (.+)$/, function (this: SpecControllerWorld
 });
 
 When(
-  /^the operator (runs|stores a run of) it and asks for the (json|markdown) report at that path, and a second report at a file of its own$/,
-  function (this: SpecControllerWorld, runs: string, format: string) {
+  /^the operator runs it and asks for the (json|markdown) report at that path, and a second report at a file of its own$/,
+  function (this: SpecControllerWorld, format: string) {
     const flag = FORMAT_FLAG[format]!;
     const second = flag === "json" ? "md:second.md" : "json:second.json";
     const spec = this.throughStdout ? flag : `${flag}:${this.aimedAt}`;
     this.namedOutput = this.throughStdout ? entryText("format-on-standard-output", { fmt: flag }) : spec;
-    const store = runs === "runs" ? [] : ["--store", join(this.destinationTargetDir, "store"), "--run-id", "r1"];
-    const args = [...store, "balance", ...pointedArgs(this.inputRow.pointedAt), "--format", spec, "--format", second];
+    const args = ["balance", ...pointedArgs(this.inputRow.pointedAt), "--format", spec, "--format", second];
     this.destinationInputsBefore = entriesUnder(this.destinationTargetDir);
     if (!this.throughStdout) {
       this.run = specControllerInTarget(this, args);
@@ -572,9 +571,4 @@ Then("the json report is written into the file the link points to, and the link 
   assert.match(readFileSync(this.linkTargetPath, "utf8"), /^\{/, `${this.linkTargetPath} does not hold the json report`);
   assert.ok(lstatSync(this.linkPath).isSymbolicLink(), `${this.linkPath} is no longer a link`);
   assert.equal(readlinkSync(this.linkPath), this.linkTargetPath, `${this.linkPath} no longer points at ${this.linkTargetPath}`);
-});
-
-When(/^the operator makes (a bare run|a run stored under another run id) of it and also asks for the (markdown|json) report at that link$/, function (this: SpecControllerWorld, how: string, format: string) {
-  const storeArgs = how === "a bare run" ? [] : ["--store", this.storeRoot, "--run-id", RUN_ID];
-  this.run = specController([...storeArgs, "balance", ...TARGET_ARGS, "--format", `${FORMAT_FLAG[format]}:${this.earlierRunLink}`]);
 });

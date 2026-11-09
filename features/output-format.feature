@@ -242,5 +242,3 @@ Feature: Emit each output format to stdout or a caller-given path
         | balanced       | a feature file of the corpus, named through a linked folder | its own path                                     | runs            | json     |
         | balanced       | the unit test report                                        | where the default report destination is appended | runs            | markdown |
         | out-of-balance | the workflow file it was pointed at                         | where the default report destination is appended | runs            | markdown |
-        | balanced       | the unit test report                                        | its own path                                     | stores a run of | json     |
-        | balanced       | the manifest it reads by default                            | its own path                                     | stores a run of | markdown |

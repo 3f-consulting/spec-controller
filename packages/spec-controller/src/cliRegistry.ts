@@ -21,19 +21,10 @@ export interface CommandSpec {
   summary: string;
   flags: FlagSpec[];
   positionals?: PositionalSpec[];
-  acceptsHostModifiers?: false;
   configHelp?: string[];
-  retiredFlags?: RetiredFlagSpec[];
-}
-
-interface RetiredFlagSpec {
-  name: string;
-  retiredIn: string;
-  replacement: string;
 }
 
 export interface CliRegistry {
-  global: FlagSpec[];
   commands: CommandSpec[];
 }
 
@@ -54,11 +45,6 @@ const balanceFlags: FlagSpec[] = [
     arg: "<fmt>[:<path>]",
     repeatable: true,
     description: message(AppMessage.FormatFlag),
-  },
-  {
-    name: "--render-from-json",
-    arg: "<path>",
-    description: message(AppMessage.RenderFromJsonFlag),
   },
   {
     name: "--strict",
@@ -86,39 +72,16 @@ const balanceConfigHelp: string[] = [
   ...explainingLines(message(AppMessage.BuiltInDeferralTags, { tags: BUILT_IN_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", ") })),
 ];
 
-const balanceRetiredFlags: RetiredFlagSpec[] = [
-  {
-    name: "--measurements",
-    retiredIn: "0.1.0-alpha.5",
-    replacement: message(AppMessage.MeasurementsReplacement),
-  },
-];
-
-const globalFlags: FlagSpec[] = [
-  {
-    name: "--store",
-    arg: "<root>",
-    description: message(AppMessage.StoreModifier),
-  },
-  {
-    name: "--run-id",
-    arg: "<id>",
-    description: message(AppMessage.RunIdModifier),
-  },
-];
-
 export const balanceCommand: CommandSpec = {
   name: "balance",
   summary: message(AppMessage.BalanceSummary),
   flags: balanceFlags,
   configHelp: balanceConfigHelp,
-  retiredFlags: balanceRetiredFlags,
 };
 
 export const allocateCommand: CommandSpec = {
   name: "allocate",
   summary: message(AppMessage.AllocateSummary),
-  acceptsHostModifiers: false,
   positionals: [
     { name: "<FFF>", description: message(AppMessage.FeaturePartArgument) },
   ],
@@ -132,7 +95,6 @@ export const allocateCommand: CommandSpec = {
 };
 
 export const cliRegistry: CliRegistry = {
-  global: globalFlags,
   commands: [balanceCommand, allocateCommand],
 };
 
@@ -177,23 +139,14 @@ export function renderTopLevelHelp(registry: CliRegistry): string {
   const commandLines = registry.commands.map(
     (command) => `  ${command.name.padEnd(commandWidth + commandGutter)}${command.summary}`,
   );
-  const modifierGutter = 3;
-  const modifierWidth = Math.max(0, ...registry.global.map((f) => flagLabel(f).length));
-  const modifierLines = registry.global.map(
-    (flag) => `  ${flagLabel(flag).padEnd(modifierWidth + modifierGutter)}${flag.description}`,
-  );
-  const modifierUsage = registry.global.map((flag) => `[${flagLabel(flag)}]`).join(" ");
   return [
     message(AppMessage.HelpTitle),
     "",
     message(AppMessage.HelpUsage),
-    `  ${message(AppMessage.HelpUsageLine, { modifierUsage })}`,
+    `  ${message(AppMessage.HelpUsageLine)}`,
     "",
     message(AppMessage.HelpCommands),
     ...commandLines,
-    "",
-    message(AppMessage.HelpHostModifiers),
-    ...modifierLines,
     "",
     message(AppMessage.HelpPointer),
   ].join("\n");

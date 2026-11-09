@@ -77,7 +77,6 @@ npx spec-controller balance --features ./features …
 
 ```
 cd ~/code/your-project
-STORE=~/spec-controller-runs        # optional: kept runs, outside the repository
 
 # 1. Produce the evidence your tools already write.
 npx vitest run --reporter=json --outputFile=reports/vitest.json
@@ -88,7 +87,7 @@ gotestsum --junitfile reports/go.xml ./...         # if you use Go
 bundle exec rspec --format progress --format json --out reports/rspec.json   # if you use RSpec
 
 # 2. Reconcile it.
-npx spec-controller --store "$STORE" balance \
+npx spec-controller balance \
   --target your-project \
   --features features \
   --vitest reports/vitest.json \
@@ -102,7 +101,6 @@ npx spec-controller --store "$STORE" balance \
 ```
 
 - **Leave out any input you don't have.**
-- **`STORE` is optional.** It sits outside the repository on purpose. A kept run lists a codebase's gaps, so it belongs in a store you chose, not under version control beside the code it describes. See [Storing a run](#storing-a-run----store----run-id).
 - **`--target` names the project in the report.** Without it the report reads `unknown-target`. When the project is a git checkout with an `origin` remote, the report adds that origin beside it, as in `unknown-target (no --target given; origin is owner/repo)`.
   - The origin is named without any user, password, token, query or fragment its remote carries.
   - Only a URL, a transport to a URL, an scp remote or a local path is named. Any other form names no origin, and neither does a remote whose user part can only be guessed at.
@@ -863,7 +861,7 @@ The tool judges claim code errors only over the corpus that `--features` names.
 | `5` | nothing to reconcile |
 | `6` | unexpected error: the run stops before a verdict, and one line on stderr names the error |
 
-When several codes apply, this ladder decides: nothing to reconcile (`5`), then unsound (`4`), then claim code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). An unexpected error (`6`) is not on the ladder. A run exits `6` only when it does not finish. A stored run that cannot write its `run.yaml` does not finish, so it exits `6`, and the reports it has already written stay in the run directory. A run already refused as a usage error keeps `2` if an error follows.
+When several codes apply, this ladder decides: nothing to reconcile (`5`), then unsound (`4`), then claim code errors (`1`), then out of balance (`1`), then pending under `--strict` (`3`). An unexpected error (`6`) is not on the ladder. A run exits `6` only when it does not finish. A run already refused as a usage error keeps `2` if an error follows.
 
 An error after the run reaches its verdict does not change the exit code. One line goes to stderr, `spec-controller hit an unexpected error [unexpected-error-after-verdict] after its verdict: <name>: <message>`, and the run exits with the verdict's code: the report stands as written. A run writes at most one such line, whichever kind it is.
 
@@ -874,7 +872,6 @@ An error after the run reaches its verdict does not change the exit code. One li
 | Code | Meaning |
 |---|---|
 | `unknown-flag` | the command does not take the flag given |
-| `retired-flag` | the flag given is retired: an earlier version took it, and this one does not |
 | `unknown-command` | the tool has no command of the name given |
 | `missing-value` | a flag that takes a value was given none |
 | `given-twice` | a flag that is read once was given more than once |
@@ -882,22 +879,12 @@ An error after the run reaches its verdict does not change the exit code. One li
 | `takes-no-value` | a flag that takes no value was given one |
 | `extra-argument` | an argument is more than the command takes |
 | `not-a-flag` | an argument is neither a flag nor the value of the flag before it |
-| `misplaced-modifier` | a host modifier, such as `--store`, was given after the command; it goes before it |
 | `flag-before-command` | a command's own flag was given before the command; it goes after it |
-| `no-command-after-modifiers` | host modifiers were given with no command after them |
-| `modifier-took-command` | a host modifier took a command's name as its value, and left no command to run |
-| `modifiers-not-taken` | a command that keeps no run, such as `allocate`, was given a host modifier |
-| `re-render-not-stored` | a re-render was given a host modifier; a re-render keeps no run |
-| `run-id-without-store` | `--run-id` was given without `--store`, so no run is kept under it |
 | `legacy-json-removed` | `--json <path>` was given; it is removed, and `--format json:<path>` writes the JSON report |
-| `re-render-reads-only` | a re-render was given a flag it would ignore; it reads only `--strict` and `--exit-zero` |
 | `unknown-format` | `--format` was given a format the tool does not write |
 | `more-than-one-to-stdout` | more than one output routes to stdout; at most one may |
 | `outputs-share-file` | two outputs name the same file |
 | `output-overwrites-input` | an output names a file the run reads |
-| `output-overwrites-stored-run` | an output names a file of an earlier stored run |
-| `format-names-stored-run-manifest` | an output names the stored run's own `run.yaml` |
-| `stored-run-reads-its-manifest` | a file the stored run reads is its own `run.yaml` |
 | `unknown-part-refused` | `allocate` was given a feature part no feature file's header carries |
 | `no-feature-part-given` | `allocate` was given no feature part |
 | `not-a-feature-part` | `allocate` was given a feature part not in its form: two to five characters, each `A`–`Z` or `0`–`9` |
@@ -908,12 +895,9 @@ An error after the run reaches its verdict does not change the exit code. One li
 | `not-valid-json-in-shape` | a report read as JSON is not valid JSON, so not in the shape its tool writes |
 | `not-valid-xml` | a report read as JUnit XML is not valid XML |
 | `not-in-shape` | a report parses, but is not in the shape its tool writes |
-| `not-a-saved-reconciliation` | the `--render-from-json` file is not a saved reconciliation |
-| `not-renderable-as-saved` | the `--render-from-json` file could not be rendered as a saved reconciliation |
 | `corpus-file-unparseable` | a feature file in the corpus could not be parsed as Gherkin; each such file has its own coded line, with the parser's words beneath it |
 | `workflow-not-yaml` | a CI workflow is not valid YAML |
 | `report-not-written` | a report could not be written to the path its `--format` names |
-| `stored-run-directory-not-created` | the stored run's directory could not be created under the `--store` root |
 | `unexpected-error` | the run stopped on an unexpected error before its verdict, and exits `6`, or keeps `2` if it was already refused as a usage error |
 | `unexpected-error-after-verdict` | an unexpected error came after the run's verdict; the run exits with the verdict's code |
 
@@ -927,7 +911,7 @@ spec-controller balance --features ./features \
   --cucumber ./cucumber-report.json
 ```
 
-Run `spec-controller --help` for the top-level summary of the commands and host modifiers. Run `spec-controller balance --help` for the full list of `balance`'s flags.
+Run `spec-controller --help` for the top-level summary of the commands. Run `spec-controller balance --help` for the full list of `balance`'s flags. A `--help` or `-h` before the command answers the top-level help at exit `0`, whatever else is given there, even a token that would otherwise be refused. After the command, it is that command's own help.
 
 ### Flags
 
@@ -946,7 +930,6 @@ Run `spec-controller --help` for the top-level summary of the commands and host 
 | `--target <name>` | A name recorded verbatim in the report's provenance: the project this run reconciled. |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See [`--format`](#--format--routing-the-output). |
-| `--render-from-json <path>` | Re-render Markdown from a saved Evidence Reconciliation JSON, with no reconciliation and no live inputs. See [Re-rendering a saved run](#re-rendering-a-saved-run). |
 | `--strict` | Fail the run (exit `3`) when it carries Pending Items. Otherwise, Pending Items do not affect the run's outcome. |
 | `--exit-zero` | Print the same report, but exit `0` on an out-of-balance or claim-code-error (`1`) verdict, or a `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`), nothing-to-reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. Use it as the on-ramp before gating. |
 | `--help`, `-h` | Show `balance`'s help and exit. |
@@ -978,57 +961,6 @@ The file is recognised by its identity, as above. So a link, a hard link, or ano
 
 **A path is written as given.** The directory it names must already exist, since `--format` creates none. A path that is a symbolic link to a file that does not exist yet is written through the link, creating the file it points to. A path that cannot be written (read-only, an existing directory, under a regular file, or in a directory that does not exist) is refused, naming the path and the operating system's reason.
 
-### Re-rendering a saved run
-
-`--render-from-json <path>` re-renders Markdown from a saved Evidence Reconciliation JSON. It does not reconcile and reads no live inputs.
-
-- The re-render exits the code the saved verdict names.
-- It is strict if the saved run was strict, or if `--strict` is given beside it.
-- `--exit-zero` composes with it as it does live.
-- Every other flag beside it (a live input, `--target`, `--source-sha`, `--format`) is refused at exit `2`.
-- A re-render keeps no run, so under `--store` it is refused at exit `2`, naming `--store`, and no store root is made. `--run-id` with a re-render is refused the same way.
-
-### Storing a run — `--store` / `--run-id`
-
-`--store` and `--run-id` are **host modifiers**. They go *before* the command, not among `balance`'s own flags:
-
-```sh
-spec-controller [--store <root>] [--run-id <id>] balance [options]
-```
-
-| Modifier | Purpose |
-|---|---|
-| `--store <root>` | Store the run: write `<root>/<target>/<run-id>/` with the reconciliation outputs plus a `run.yaml` manifest. Required to store. There is no default, because a default would write inside the repository. |
-| `--run-id <id>` | Name the stored run (default: an ISO-8601 UTC timestamp). Read only with `--store`. |
-
-```sh
-spec-controller --store ~/spec-controller-runs --run-id 2026-07-09-ci balance \
-  --features ./features \
-  --vitest ./vitest-report.json \
-  --target my-project
-# → ~/spec-controller-runs/my-project/2026-07-09-ci/  (reconciliation outputs + run.yaml)
-#
-# The root is OUTSIDE the repository being reconciled, which is why there is no default.
-# A report enumerates a codebase's gaps, dangling anchors and passes that cannot fail — more sensitive
-# than the code itself — so a kept run belongs in a store you chose, not under version
-# control alongside the thing it is about.
-```
-
-**How storing works.** Storage belongs to the host, not to `balance`. A leading `--store` turns any run into a **stored** run: the host writes the run directory and hands `balance` its own clean args unchanged. A run without `--store` stays emit-only and byte-identical, and writes nothing to disk beyond what `--format …:<path>` requests. Missing parents of the root are created.
-
-**Host modifier rules:**
-
-- **A host modifier needs a command, or `--help`, after it.** Given with nothing after it, it is refused at exit `2` and nothing runs.
-- **`--help` or `-h` before the command** answers the top-level help at exit `0`, whatever else is given there, even a token that would otherwise be refused. After the command, it is that command's own help.
-- **A command's `--help` or `-h` is answered before the store is touched.** Nothing is written under the root, even a root that cannot be written.
-- **`--run-id` without `--store`** is refused at exit `2` and nothing runs, because no run would be kept under the name.
-
-**Refusals, all at exit `2`:**
-
-- **A root the run directory cannot be created under** (a regular file, a path under one, or a directory the tool may not write) is refused, naming the run directory and the operating system's reason. No run directory is printed.
-- **A `--format` beside `--store` may not name a file the stored run writes itself** (its `spec-reconciliation.md`, its `spec-reconciliation.json` or its `run.yaml`), however the path is spelled. The refusal names the file. No run directory is printed, and an earlier run under the same run-id is left as it was.
-- **The stored run's own files may not land on a file the run reads.** A stored run whose report or `run.yaml` would be written over one of its inputs is refused the same way.
-
 ---
 
 ## Allocating the next claim code — `spec-controller allocate`
@@ -1058,9 +990,9 @@ The code is written under `CLM`, one past the highest number a claim code in the
   - when history is short, `history: not a git repository — none read` or `history: shallow clone — history before <commit> unread`, each followed by what that risks.
 - **Exit codes:**
   - `0` when it answers.
-  - `2` for a usage error (no part, a part not in the claim-code form, a second part, a flag it does not take, or a host modifier such as `--store` before it) or an unknown part. The message says which of the two it was. An unknown part's refusal lists the parts the feature files carry.
+  - `2` for a usage error (no part, a part not in the claim-code form, a second part, or a flag it does not take) or an unknown part. The message says which of the two it was. An unknown part's refusal lists the parts the feature files carry.
   - It never refuses because history is short.
-  - `--help` or `-h` anywhere among its arguments answers its help at `0`, even with a host modifier before it.
+  - `--help` or `-h` anywhere among its arguments answers its help at `0`.
 
 **What it reads.**
 

@@ -36,7 +36,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model that states each fact once, whose summary totals count every Claim Reconciliation
 
     @unit @CLM-RMD-029
-    Scenario: the JSON report's summary states the run verdict first, on a fresh run and on a saved report concluded again
+    Scenario: the JSON report's summary states the run verdict first
 
   Rule: the ledger is the detail beside the summary's totals
 
@@ -107,24 +107,6 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     @unit @CLM-RMD-006
     Scenario: the summary's out-of-balance view groups each out-of-balance scenario under its feature, named by its code and feature file
 
-  Rule: the markdown regenerates from a saved spec-reconciliation.json alone
-
-    The load-bearing proof that the JSON IS the model. A seam reads a saved
-    spec-reconciliation.json, parses it back into the report model, and renders the human markdown
-    through the markdown renderer — no run context, no live inputs, the JSON alone: the package's
-    exported render-from-JSON function, and the CLI's "--render-from-json <path>" mode, which reads the
-    file, prints the regenerated markdown to stdout, and exits before any reconcile, on the code
-    the saved verdict names. Drift-equality is the acceptance: the markdown regenerated from the
-    saved JSON EQUALS the markdown rendered directly from the same run, the by-feature feature
-    files included. Its unit tests hold the parse→render drift-equality over a corpus spanning
-    the whole document (the three-way evidence observations line, the materialised summary totals, and a coded
-    out-of-balance feature, so the by-feature feature files have teeth), and the CLI, run over a
-    fixture whose by-feature cut names a coded feature, reconciles, saves the JSON, and regenerates
-    from it the markdown it rendered directly, exiting the code the saved run exited.
-
-    @unit @CLM-RMD-007
-    Scenario: the markdown regenerates from a saved spec-reconciliation.json byte-identical to the direct render, and exits the code its saved verdict names
-
   Rule: each evidence sub-row is keyed by one flat coordinate, its kind of quality check
 
     The evidence coordinate is ONE flat kind of quality check ∈ {fitness, unit, integration, e2e,
@@ -157,7 +139,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   Rule: a behavioural evidence observation carries the name its runner gave the test
 
-    The unnamed claim's row names what failed, and it regenerates from the saved JSON alone, so the name
+    The unnamed claim's row names what failed by the test's name, which
     travels on the evidence observation itself. Each parser translates its runner's name for the
     test into one neutral field at the edge: a Vitest test's full name, or its title where it has
     none, and a Cucumber scenario's name. No runner's shape reaches the domain. The JSON serialises

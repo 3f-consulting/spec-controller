@@ -368,8 +368,6 @@ export default [
     ignores: [
       // A test title in each of these is built from a call over the CLI registry, so the call must run at collection.
       "packages/spec-controller/src/host.helpAtHostScope.test.ts",
-      "packages/spec-controller/src/host.helpOfCommandTakingNoModifier.test.ts",
-      "packages/spec-controller/src/host.noCommand.test.ts",
     ],
     languageOptions: tsLanguageOptions,
     rules: {

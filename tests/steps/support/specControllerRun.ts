@@ -3,8 +3,6 @@ import { spawnSync } from "node:child_process";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./builtCli.js";
 import type { CommandRun } from "./world.js";
 
-export const RUN_ID = "r1";
-
 export const USAGE = 2;
 
 export function specController(args: readonly string[]): CommandRun {

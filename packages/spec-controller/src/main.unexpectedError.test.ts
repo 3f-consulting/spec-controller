@@ -1,11 +1,12 @@
+import { EventEmitter } from "node:events";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { installCrashGuards } from "./crashGuards.js";
 import { main } from "./main.js";
 import { refuse } from "./outputLocation.js";
 import { crashLine } from "./crashGuards.test-utils.js";
-import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
-import { recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
+import { forgetWhatTheProgramWrote, recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
 
 interface Answered {
   stderr: string;
@@ -122,50 +123,54 @@ describe("[CLM-CLI-103] an error that cannot be formatted still ends the run at 
   });
 });
 
+// The guards hold the real process's exit code and write to its stderr; only their stdout is a stand-in, so the test can fail it once main has returned, the way a closed pipe does.
+function afterTheVerdict(argv: string[], stdoutFails: boolean): Answered & { stdout: string } {
+  const proc = Object.assign(new EventEmitter(), { exit: (): void => {} });
+  Object.defineProperty(proc, "exitCode", {
+    get: () => process.exitCode,
+    set: (code: typeof process.exitCode) => {
+      process.exitCode = code;
+    },
+  });
+  const guardedStdout = new EventEmitter();
+  const guardedStderr = Object.assign(new EventEmitter(), { write: (chunk: string): boolean => process.stderr.write(chunk) });
+  installCrashGuards(proc as EventEmitter & { exitCode: number | undefined; exit(): void }, guardedStdout, guardedStderr);
+  main(argv);
+  if (stdoutFails) guardedStdout.emit("error", closedPipe());
+  const { stdout, stderr } = whatTheProgramWrote();
+  return { stdout, stderr, exitCode: process.exitCode };
+}
+
 describe("[CLM-CLI-104] an error raised after the verdict is set keeps the verdict's exit code", () => {
   describe.each([
-    { run: "a kept balance run", flags: [] },
-    { run: "a kept balance run under --exit-zero", flags: ["--exit-zero"] },
-  ])("$run whose run-directory line meets a closed pipe", ({ flags }) => {
-    let store: string;
-
-    beforeEach(() => {
-      store = temporaryDirectory("spec-controller-kept-");
-    });
-
-    const kept = (): string[] => ["--store", store, ...balance(...flags)];
-
-    const runDirectoryLine = (throws: boolean) => (chunk: string | Uint8Array): boolean => {
-      if (throws && String(chunk).startsWith(store)) throw closedPipe();
-      return true;
-    };
+    { run: "a balance run", flags: [] },
+    { run: "a balance run under --exit-zero", flags: ["--exit-zero"] },
+  ])("$run whose stdout meets a closed pipe once its verdict is set", ({ flags }) => {
+    const live = (): string[] => balance(...flags);
 
     const verdictWithNoThrow = (): typeof process.exitCode => {
-      const { exitCode } = answer(kept(), runDirectoryLine(false));
+      const { exitCode } = afterTheVerdict(live(), false);
       process.exitCode = undefined;
+      forgetWhatTheProgramWrote();
       return exitCode;
     };
 
-    it("prints the run directory when nothing throws, so the planted throw lands on that line", () => {
-      const printed: string[] = [];
-      vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
-        printed.push(String(chunk));
-        return true;
-      });
-      main(kept());
-      expect(printed.some((line) => line.startsWith(store))).toBe(true);
+    it("writes its report and nothing to stderr when nothing throws, so the planted throw lands after the verdict", () => {
+      const { stdout: written, stderr: said } = afterTheVerdict(live(), false);
+      expect(written.length).toBeGreaterThan(0);
+      expect(said).toBe("");
     });
 
     it("ends on the code the same run gives with no throw, never 6", () => {
       const verdict = verdictWithNoThrow();
-      const { exitCode } = answer(kept(), runDirectoryLine(true));
+      const { exitCode } = afterTheVerdict(live(), true);
       expect(verdict).toBeDefined();
       expect(verdict).not.toBe(6);
       expect(exitCode).toBe(verdict);
     });
 
     it("names the error on one line, saying it came after the verdict and never that the run gives none", () => {
-      const { stderr: said } = answer(kept(), runDirectoryLine(true));
+      const { stderr: said } = afterTheVerdict(live(), true);
       expect(said).toBe(`${crashLine("Error", FIRST_LINE, true)}\n`);
       expect(said).not.toContain("gives no verdict");
     });
@@ -192,13 +197,8 @@ describe("[CLM-MSG-010] an error shows its reader the error code of what went wr
 });
 
 describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — an unexpected error after its verdict", () => {
-  it("names a kept run's closed pipe on its run-directory line with [unexpected-error-after-verdict] once", () => {
-    const store = temporaryDirectory("spec-controller-kept-");
-    const onTheRunDirectoryLine = (chunk: string | Uint8Array): boolean => {
-      if (String(chunk).startsWith(store)) throw closedPipe();
-      return true;
-    };
-    expect(answer(["--store", store, ...balance()], onTheRunDirectoryLine).stderr).toBe(
+  it("names a balance run's closed pipe after its verdict with [unexpected-error-after-verdict] once", () => {
+    expect(afterTheVerdict(balance(), true).stderr).toBe(
       `spec-controller hit an unexpected error [unexpected-error-after-verdict] after its verdict: Error: ${FIRST_LINE}\n`,
     );
   });

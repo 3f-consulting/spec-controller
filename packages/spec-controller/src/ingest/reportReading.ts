@@ -21,7 +21,7 @@ interface ParsedDocument {
   readonly document: unknown;
 }
 
-export type DocumentReading = ReadFault | Unparseable | ParsedDocument;
+type DocumentReading = ReadFault | Unparseable | ParsedDocument;
 
 export type ReportReading = DocumentReading | { readonly kind: "misshapen"; readonly fault: string };
 
@@ -33,7 +33,7 @@ function documentOf(text: string, parse: (text: string) => unknown): Unparseable
   }
 }
 
-export function readDocument(path: string, format: ReportFormat, read: (path: string) => string = readUtf8): DocumentReading {
+function readDocument(path: string, format: ReportFormat, read: (path: string) => string = readUtf8): DocumentReading {
   return readingOf(path, () => read(path), (text) => documentOf(text, PARSER_OF[format]));
 }
 

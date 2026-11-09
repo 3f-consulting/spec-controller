@@ -14,22 +14,17 @@ import { namesStdout, refuse, settlingRefusal, stdoutIdentity } from "../outputL
 import { identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "./inputsRead.js";
 import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
 import { corpusDirOf } from "./corpusDir.js";
-import { checkReRenderFlags } from "./reRender.js";
 import {
   checkInputPaths,
   checkWorkflowsParse,
   checkInputShapes,
   corpusDirRefusal,
-  checkSavedReconciliation,
   corpusUnparseableRefusal,
   jsonInputsOf,
   readReports,
   reportRefusal,
-  reRenderOrRefusal,
-  savedReportRefusal,
   type ReportsReading,
 } from "./unreadableInputs.js";
-import { readDocument } from "../ingest/reportReading.js";
 import { exitCodeOf } from "./exitStatus.js";
 import { endRunOn } from "../exitCode.js";
 import {
@@ -39,7 +34,6 @@ import {
   type ParsedWorkflow,
 } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
-import { earlierStoredRunDirOf } from "../run-management/keptRun.js";
 import { balanceCommand, cliRegistry, renderCommandHelp } from "../cliRegistry.js";
 import {
   asksForHelp,
@@ -47,13 +41,12 @@ import {
   checkArgvShape,
   checkUnknownFlags,
   checkMissingValues,
-  checkMisplacedHostModifiers,
 } from "../cliArgs.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import { AppError } from "../messages.js";
 import { refusal, type Refusal } from "../refusal.js";
 
-function collectFormatSpecs(argv: string[]): string[] {
+export function collectFormatSpecs(argv: readonly string[]): string[] {
   // checkMissingValues has already refused a --format given no value.
   return argv.flatMap((token, i) => (token === "--format" ? [argv[i + 1]!] : []));
 }
@@ -91,25 +84,22 @@ export function checkInputsParse(reports: ReportsReading): Refusal | null {
   return null;
 }
 
-export function runBalance(argv: string[], ownRunDir?: string): boolean {
-  return settlingRefusal(() => balance(argv, ownRunDir), false);
+export function runBalance(argv: string[]): boolean {
+  return settlingRefusal(() => balance(argv), false);
 }
 
-function balance(argv: string[], ownRunDir: string | undefined): boolean {
+function balance(argv: string[]): boolean {
   const helped = asksForHelp(argv);
   if (helped) process.stdout.write(renderCommandHelp(balanceCommand) + "\n");
-  return !helped && reconcile(argv, ownRunDir);
+  return !helped && reconcile(argv);
 }
 
-function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
+function reconcile(argv: string[]): boolean {
   const runStart = new Date();
   const args = parseArgs(argv);
 
   const legacyJsonError = checkLegacyJson(args);
   if (legacyJsonError) refuse(legacyJsonError);
-
-  const misplacedModifierError = checkMisplacedHostModifiers(args, cliRegistry, "balance");
-  if (misplacedModifierError) refuse(misplacedModifierError);
 
   const shapeError = checkArgvShape(argv, cliRegistry, "balance");
   if (shapeError) refuse(shapeError);
@@ -120,7 +110,6 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
   const missingValueError = checkMissingValues(argv, cliRegistry, "balance");
   if (missingValueError) refuse(missingValueError);
 
-  if (renderSavedReport(args)) return true;
   const { corpus, workflows, reports } = refuseUnreadableInputs(args);
 
   const inputs = inputPathsOf(args);
@@ -139,28 +128,10 @@ function reconcile(argv: string[], ownRunDir: string | undefined): boolean {
     payloads,
     stdoutIdentity,
     identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)),
-    (path) => earlierStoredRunDirOf(path, ownRunDir),
   );
 
   const verdict = assembleRenderInput(balance, ctx).summary.runVerdict;
   endRunOn({ kind: "verdict", code: exitCodeOf(verdict, args["exit-zero"] !== undefined) });
-  return true;
-}
-
-function renderSavedReport(args: Record<string, string>): boolean {
-  const ignoredFlagError = checkReRenderFlags(args);
-  if (ignoredFlagError) refuse(ignoredFlagError);
-
-  const rehydratePath = args["render-from-json"];
-  if (rehydratePath === undefined) return false;
-  const savedReading = readDocument(rehydratePath, "json");
-  if (savedReading.kind !== "parsed") refuse(savedReportRefusal(rehydratePath, savedReading));
-  const notSavedError = checkSavedReconciliation(rehydratePath, savedReading.document);
-  if (notSavedError) refuse(notSavedError);
-  const saved = reRenderOrRefusal(rehydratePath, savedReading.document, args["strict"] !== undefined);
-  if ("code" in saved) refuse(saved);
-  process.stdout.write(saved.markdown + "\n");
-  endRunOn({ kind: "verdict", code: exitCodeOf(saved.verdict, args["exit-zero"] !== undefined) });
   return true;
 }
 

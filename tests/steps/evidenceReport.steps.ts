@@ -7,14 +7,7 @@ import { BALANCED_INPUTS } from "./support/balanceTarget.js";
 import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { entryText, shownAmong, shownEntry, showsEntry } from "./support/catalogue.js";
 import { showsHeading } from "./support/reportLines.js";
-import {
-  CLAIM_RECONCILIATIONS_SECTION,
-  claimReconciliationsOf,
-  claimReconciliationsSection,
-  withClaimReconciliations,
-  withoutClaimReconciliations,
-} from "./support/reportClaimReconciliations.js";
-import { RECONCILIATION_TOTALS_PATH, reconciliationTotalsSection, withReconciliationTotalsUnderEarlierKey } from "./support/reportReconciliationTotals.js";
+import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { ArrangedTarget, ExpectedEntry, ReportedRun, SpecControllerWorld } from "./support/world.js";
 
@@ -665,92 +658,6 @@ Given("a target in which {} is not permitted to be read", function (this: SpecCo
   const dir = targetDir(this);
   const [args, named, where] = rowOf(NOT_PERMITTED, input)(dir);
   this.target = { dir, args, named, where };
-});
-
-const notSaved = (fault: string): ExpectedEntry => ["not-a-saved-reconciliation", { fault }];
-
-type SavedShape = readonly [(saved: Record<string, unknown>) => unknown, ExpectedEntry];
-
-const NOT_A_SAVED_RECONCILIATION: Record<string, readonly SavedShape[]> = {
-  "a list, not a reconciliation": [[() => [], notSaved(atTop(LIST, OBJECT))]],
-  "a reconciliation with no ledger": [[withoutClaimReconciliations, notSaved(missing(CLAIM_RECONCILIATIONS_SECTION))]],
-  "holding a section of the wrong kind": [
-    [(saved) => ({ ...saved, errorsInTheInputs: { claimCodeErrors: "x" } }), notSaved(wrongKind("errorsInTheInputs.claimCodeErrors", kindOf("string"), LIST))],
-  ],
-  "unreadable below its top": [[(saved) => withClaimReconciliations(saved, [{}]), ["not-renderable-as-saved", {}]]],
-  "a reconciliation that does not name its corpus": [
-    [(saved) => ({ ...saved, runProvenance: { ...(saved["runProvenance"] as object), corpus: undefined } }), notSaved(missing("runProvenance.corpus"))],
-  ],
-  "in an earlier report shape": [
-    [
-      (saved) => ({
-        ...saved,
-        summary: { ...(saved["summary"] as object), ...reconciliationTotalsSection(undefined), evidenceObservations: undefined },
-      }),
-      notSaved(missing(RECONCILIATION_TOTALS_PATH)),
-    ],
-    [(saved) => withReconciliationTotalsUnderEarlierKey(saved as { summary: object }), notSaved(missing(RECONCILIATION_TOTALS_PATH))],
-    [
-      (saved) => ({ ...withoutClaimReconciliations(saved), ledger: claimReconciliationsSection(claimReconciliationsOf(saved)) }),
-      notSaved(missing(CLAIM_RECONCILIATIONS_SECTION)),
-    ],
-    [(saved) => ({ ...saved, errors: { configuration: { keysNotRead: ["x"] } } }), notSaved(missing("errorsInTheInputs"))],
-  ],
-};
-
-function savedReconciliation(dir: string): Record<string, unknown> {
-  const run = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", "--features", "features", "--format", "json:good.json"], {
-    cwd: dir,
-    encoding: "utf8",
-  });
-  assert.equal(run.status, 1, `expected the target to save an out-of-balance run; got ${run.status}\n${run.stderr}`);
-  return JSON.parse(readFileSync(join(dir, "good.json"), "utf8")) as Record<string, unknown>;
-}
-
-Given("a saved report that parses but is {}", function (this: SpecControllerWorld, defect: string) {
-  const dir = targetDir(this);
-  const good = savedReconciliation(dir);
-  const [first, ...more] = rowOf(NOT_A_SAVED_RECONCILIATION, defect).map(([broken, refusal], i): ArrangedTarget => {
-    const file = i === 0 ? "saved.json" : `saved-${i + 1}.json`;
-    writeFileSync(join(dir, file), JSON.stringify(broken(good)));
-    return { dir, args: ["--render-from-json", file], named: file, where: "", refusal };
-  });
-  this.target = { ...first!, more };
-});
-
-const STORED: Record<string, (dir: string) => readonly [readonly string[], string]> = {
-  "feature corpus": (dir) => {
-    writeFileSync(join(dir, "corpus.txt"), "not a directory\n");
-    return [["--features", "corpus.txt"], "corpus.txt"];
-  },
-  "Cucumber report": (dir) => {
-    writeFileSync(join(dir, "cucumber.json"), "{}");
-    return [["--features", "features", "--cucumber", "cucumber.json"], "cucumber.json"];
-  },
-};
-
-Given("a stored run's target whose {} is one the tool cannot read in shape", function (this: SpecControllerWorld, input: string) {
-  const dir = targetDir(this);
-  this.storeRoot = join(dir, "store");
-  mkdirSync(this.storeRoot);
-  const [args, named] = rowOf(STORED, input)(dir);
-  this.target = { dir, args, named, where: named };
-});
-
-When("a stored balance run reads that input", function (this: SpecControllerWorld) {
-  const argv = ["--store", this.storeRoot, "--run-id", "r1", "balance", ...this.target.args];
-  this.balanceResult = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, ...argv], { cwd: this.target.dir, encoding: "utf8" });
-  assert.equal(this.balanceResult.error, undefined, `CLI failed to spawn: ${this.balanceResult.error?.message}`);
-});
-
-function filesUnder(dir: string): string[] {
-  return readdirSync(dir, { recursive: true, withFileTypes: true })
-    .filter((entry) => entry.isFile())
-    .map((entry) => join(entry.parentPath, entry.name).slice(dir.length + 1));
-}
-
-Then("the refused run leaves nothing in the run store", function (this: SpecControllerWorld) {
-  assert.deepEqual(filesUnder(this.storeRoot), [], "a refused run must store nothing: no run.yaml and no report");
 });
 
 const NOT_YAML = "jobs:\n  ci: [\n";

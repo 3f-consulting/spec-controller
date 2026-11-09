@@ -1,7 +1,7 @@
 import { beforeEach, describe, it, expect } from "vitest";
 import { balanceCommand, cliRegistry, type CliRegistry, type FlagSpec } from "./cliRegistry.js";
 import { checkArgvShape, positionalArguments } from "./cliArgs.js";
-import { formatFilePaths } from "./host.js";
+import { collectFormatSpecs } from "./cli-balance/cli.js";
 import { AppError, AppMessage } from "./messages.js";
 import { message } from "./appText.js";
 import { runBalanceCaptured } from "./runBalance.test-utils.js";
@@ -119,7 +119,7 @@ describe("[CLM-CLI-064] a flag that does not repeat, given twice, is refused nam
   it("reads --format given twice as the list it is, both values read", () => {
     const argv = ["--format", "json:a.json", "--format", "md:b.md"];
     expect(shownText(checkArgvShape(argv, cliRegistry, "balance"))).toBeNull();
-    expect(formatFilePaths(argv)).toEqual(["a.json", "b.md"]);
+    expect(collectFormatSpecs(argv)).toEqual(["json:a.json", "md:b.md"]);
   });
 });
 
@@ -139,7 +139,6 @@ describe("[CLM-CLI-065] a flag written --flag=value is refused naming the form a
   it.each([
     ["refuses --features=dir, giving the value flag and its value as '--features dir'", "--features=dir", "--features dir"],
     ["gives the registry's value placeholder for a form written with no value", "--features=", "--features <dir>"],
-    ["refuses the form of a flag the scope does not have, before the unknown-flag check can advise a pin", "--store=/s", "--store /s"],
   ] as const)("%s", (_title, written, spelling) => {
     expect(shownText(checkArgvShape([written], cliRegistry, "balance"))).toBe(equalsForm(written, spelling));
   });

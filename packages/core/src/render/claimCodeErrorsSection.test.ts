@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderMarkdown } from "../assemble/composers.js";
-import { renderReportFromJson } from "../assemble/composers.js";
+import { renderReportAfresh } from "./reportRenderedAfresh.test-utils.js";
 import { assembleRenderInput } from "../assemble/renderInput.js";
 import type { RenderInput } from "../domain/renderInput.js";
 import { evidenceReconciliationFromSources } from "../assemble/evidenceReconciliationFromSources.js";
@@ -207,7 +207,7 @@ function afterRunVerdictOf(md: string): string[] {
 }
 
 function statedAloneAfterRunVerdict(report: RenderInput, statement: string): string {
-  const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
+  const md = renderReportAfresh(report, ctx.inputs, publishedExitCodeOf);
   expect(afterRunVerdictOf(md)).toEqual(["", statement, ""]);
   expect(md.split("\n").filter((line) => line === statement)).toHaveLength(1);
   return md;
@@ -271,7 +271,7 @@ describe("[CLM-RPT-062] clean claim codes are stated after the run verdict under
   it("states no clean line when the corpus's facts carry no count of feature files", () => {
     const report = withClaimCodesOnReport(newShapeReport(judgedCorpus(["ONE", "TWO"], 1)), { excludedOccurrences: 0, untaggedScenarios: [] });
     expect(claimCodeErrorsOnReport(report)).toBeUndefined();
-    const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
+    const md = renderReportAfresh(report, ctx.inputs, publishedExitCodeOf);
     const cleanHead = `${cleanOpening()} over `;
     expect(cleanHead).not.toBe("");
     expect(md).not.toContain(HEADING());
@@ -285,7 +285,7 @@ describe("[CLM-RPT-093] no claim code errors section prints when the claim codes
     it(`prints no claim code errors section over ${codes.length + plain} files carrying ${codes.length} codes`, () => {
       const report = newShapeReport(judgedCorpus(codes, plain));
       expect(claimCodeErrorsOnReport(report)).toBeUndefined();
-      const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
+      const md = renderReportAfresh(report, ctx.inputs, publishedExitCodeOf);
       printsNoClaimCodeErrorsSection(md);
       expect(md).not.toContain(coreMessage(CoreMessage.ClaimCodeErrorsHeadline));
     });
@@ -298,7 +298,7 @@ describe("[CLM-RPT-094] nothing is stated about claim codes when no corpus was j
     const report = newShapeReport(unjudged);
     expect(claimCodeErrorsOnReport(report)).toBeUndefined();
     expect(claimCodesOnReport(report)).toBeUndefined();
-    const md = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf);
+    const md = renderReportAfresh(report, ctx.inputs, publishedExitCodeOf);
     expect(md).not.toContain(HEADING());
     expect(afterRunVerdictOf(md)).toEqual([""]);
   });
@@ -437,15 +437,6 @@ describe("[CLM-MSG-010] an error shows its reader the error code of what went wr
   });
 });
 
-describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — a saved report holding an error in its inputs, re-rendered", () => {
-  it("shows the saved misfiled code's entry with its code once, as the entry's lead", () => {
-    const saved = JSON.stringify(newShapeReport(balancedWith([FOREIGN])));
-    const shown = linesCarryingACode(renderReportFromJson(saved, ctx.inputs, publishedExitCodeOf));
-    expect(shown.map(codesOn)).toEqual([["foreign-claim-code"]]);
-    expect(shown[0]!.startsWith("- `foreign-claim-code` — ")).toBe(true);
-  });
-});
-
 describe("[CLM-RPT-096] the excluded claim code occurrences, the scenarios with no claim code and the codes several scenarios share are stated after the run verdict, whether the codes are clean, hold errors or come from no feature file", () => {
   const CODES = {
     clean: { judged: () => newShapeReport(judgedCorpus(["ONE", "TWO"], 0)), scenarios: 2 },
@@ -486,7 +477,7 @@ describe("[CLM-RPT-096] the excluded claim code occurrences, the scenarios with 
           ]
         : []),
     ];
-    const lines = renderReportFromJson(JSON.stringify(report), ctx.inputs, publishedExitCodeOf).split("\n");
+    const lines = renderReportAfresh(report, ctx.inputs, publishedExitCodeOf).split("\n");
     const verdict = lines.indexOf(runVerdictHeading());
     const next = lines.indexOf(RECONCILIATION_TOTALS_HEADING());
     expect(verdict).toBeGreaterThan(lines.indexOf(markdownHeading(2, coreMessage(CoreMessage.SummaryHeading))));
@@ -525,7 +516,7 @@ describe("[CLM-MSG-015] a counted noun agrees with its count — the clean state
   ];
 
   it.each(rows)("%s", (_, codes, plain, line) => {
-    const md = renderReportFromJson(JSON.stringify(newShapeReport(judgedCorpus(codes, plain))), ctx.inputs, publishedExitCodeOf);
+    const md = renderReportAfresh(newShapeReport(judgedCorpus(codes, plain)), ctx.inputs, publishedExitCodeOf);
     expect(afterRunVerdictOf(md)).toEqual(["", line, ""]);
   });
 });

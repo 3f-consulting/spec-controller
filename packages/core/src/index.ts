@@ -74,9 +74,7 @@ export type {
 
 export { evidenceReconciliationFromSources } from "./assemble/evidenceReconciliationFromSources.js";
 
-export { renderJson, renderMarkdown, renderReportFromJson, projectProvenance } from "./assemble/composers.js";
-export { assembleSavedReport } from "./assemble/savedReport.js";
-export type { SavedReport } from "./assemble/savedReport.js";
+export { renderJson, renderMarkdown, projectProvenance } from "./assemble/composers.js";
 export { renderReport } from "./render/markdown.js";
 
 export { provenanceObject } from "./provenance/provenance.js";

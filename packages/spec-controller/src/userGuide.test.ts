@@ -66,13 +66,13 @@ describe("[CLM-MSG-012] every code the tool can give is documented", () => {
     const planted = userGuide()
       .replace(/^\| `unknown-flag` \|.*\n/m, "")
       .replace(/^\| `6` \|.*\n/m, "")
-      .replace(/^(\| `retired-flag` \|.*\n)/m, "$1$1")
+      .replace(/^(\| `unknown-command` \|.*\n)/m, "$1$1")
       .replace(/^\| `2` \|.*$/m, "| `2` |  |");
     expect(documentationFindings(planted)).toEqual([
       { section: "Exit codes", code: "2", fault: "listed with no meaning" },
       { section: "Exit codes", code: "6", fault: "not listed" },
       { section: "Error codes", code: "unknown-flag", fault: "not listed" },
-      { section: "Error codes", code: "retired-flag", fault: "listed twice" },
+      { section: "Error codes", code: "unknown-command", fault: "listed twice" },
     ]);
   });
 });

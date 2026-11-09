@@ -1,15 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { cliRegistry } from "./cliRegistry.js";
 import { parseHostInvocation } from "./host.js";
 import { AppError, AppMessage } from "./messages.js";
 import { message } from "./appText.js";
 import { withShownRefusal } from "./shownText.test-utils.js";
 
-const HOST_MODIFIERS = "--store, --run-id";
+const HOST_MODIFIER = /--store|--run-id|host modifier/;
 
 const flagBeforeCommand = (flag: string): string =>
-  `${message(AppError.FlagBeforeCommand, { flag, modifiers: HOST_MODIFIERS })}\n` +
-  message(AppMessage.SeeCommandsAndModifiers);
+  `${message(AppError.FlagBeforeCommand, { flag })}\n` + message(AppMessage.SeeCommands);
 
 const EXAMPLES: [string, { flag: string; argv: string[] }][] = [
   ["the report-only option, before balance", { flag: "--exit-zero", argv: ["--exit-zero", "balance"] }],
@@ -21,19 +19,10 @@ const EXAMPLES: [string, { flag: string; argv: string[] }][] = [
 describe("[CLM-CLI-060] a flag given before the command is refused as a flag out of place", () => {
 
   for (const [row, { flag, argv }] of EXAMPLES) {
-    it(`refuses ${row} as a flag before the command, listing the host's modifiers, and takes no command arguments`, () => {
-      expect(withShownRefusal(parseHostInvocation(argv))).toEqual({ commandArgs: [], refusal: flagBeforeCommand(flag) });
+    it(`refuses ${row} as a flag before the command, naming where it belongs and no host modifier, and takes no command arguments`, () => {
+      const inv = withShownRefusal(parseHostInvocation(argv));
+      expect(inv.refusal).not.toMatch(HOST_MODIFIER);
+      expect(inv).toEqual({ commandArgs: [], refusal: flagBeforeCommand(flag) });
     });
   }
-
-  for (const { flags } of [...cliRegistry.commands, { flags: [{ name: "--bogus" }] }]) {
-    for (const { name: flag } of flags) {
-      if (flag === "--help") continue;
-    }
-  }
-
-  it("refuses it after a modifier too, before any store is taken", () => {
-    const inv = withShownRefusal(parseHostInvocation(["--store", "/s", "--exit-zero", "balance"]));
-    expect(inv).toEqual({ commandArgs: [], refusal: flagBeforeCommand("--exit-zero") });
-  });
 });

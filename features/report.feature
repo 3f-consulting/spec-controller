@@ -97,8 +97,7 @@ Feature: The report renders the ledger as sectioned facts
 
     A scenario's feature is the feature code in its claim code. The Feature cell reads
     "<file> (<code>)", where the file is the path under the corpus of the feature file carrying
-    that code. A code no feature file carries shows bare. Every code shows bare when the report
-    is re-rendered from saved JSON that carries no feature files.
+    that code. A code no feature file carries shows bare.
 
     The total line accounts for every out-of-balance row. A phantom claim's row and the unnamed
     claim's row name no feature file, so the total line states each of their out-of-balance
@@ -111,7 +110,7 @@ Feature: The report renders the ledger as sectioned facts
     A scenario with no claim code counts on the row of the feature file it sits in: under the
     file's header code when it has one, and under the file's name when it has none. Its cell
     states how many such scenarios the row holds rather than naming them; the list of scenarios
-    with no claim code names each one. A re-render from saved JSON groups them the same way.
+    with no claim code names each one.
 
     @unit @CLM-RPT-006
     Scenario: the by-feature cut names each out-of-balance feature by its feature file and code, falling back to the bare code for a foreign-claim-code

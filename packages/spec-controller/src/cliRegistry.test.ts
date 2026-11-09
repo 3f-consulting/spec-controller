@@ -31,7 +31,6 @@ describe("[CLM-CLI-006] renderCommandHelp renders a line per flag the registry g
       "--target",
       "--source-sha",
       "--format",
-      "--render-from-json",
       "--help",
     ]) {
       expect(names).toContain(expected);
@@ -52,7 +51,6 @@ describe("[CLM-CLI-006] renderCommandHelp renders a line per flag the registry g
 
   it("renders whichever command it is given, not the one the renderer was written against", () => {
     const twoCommands: CliRegistry = {
-      global: cliRegistry.global,
       commands: [
         ...cliRegistry.commands,
         {
@@ -66,7 +64,7 @@ describe("[CLM-CLI-006] renderCommandHelp renders a line per flag the registry g
     expect(out).toContain("--only-mine");
     expect(out).toContain("A flag only the second command carries.");
     expect(out).toContain("A second registered command — the case the renderer was blind to.");
-    expect(out).not.toContain("--render-from-json");
+    expect(out).not.toContain("--source-sha");
     expect(out).not.toContain("specController.deferralTags");
   });
 
@@ -137,7 +135,7 @@ describe("[CLM-CLI-006] renderCommandHelp renders a line per flag the registry g
   });
 });
 
-describe("[CLM-CLI-007] renderTopLevelHelp renders the commands and the global scope", () => {
+describe("[CLM-CLI-007] renderTopLevelHelp renders the commands", () => {
   it("lists each registered command by name and its exact registry summary", () => {
     expect(cliRegistry.commands.length).toBeGreaterThan(0);
     const out = renderTopLevelHelp(cliRegistry);
@@ -147,22 +145,9 @@ describe("[CLM-CLI-007] renderTopLevelHelp renders the commands and the global s
     }
   });
 
-  it("documents each global host modifier — name, arg-placeholder and exact description", () => {
-    expect(cliRegistry.global.length).toBeGreaterThanOrEqual(2);
-    const out = renderTopLevelHelp(cliRegistry);
-    for (const flag of cliRegistry.global) {
-      expect(out).toContain(flag.name);
-      expect(out).toContain(flag.description);
-      if (flag.arg !== undefined) expect(out).toContain(flag.arg);
-    }
-    expect(out).toContain("--store");
-    expect(out).toContain("--run-id");
-  });
-
-  it("lays out the title, usage, commands, host modifiers and pointer as blank-line-separated blocks", () => {
+  it("opens with the title, usage and commands as blank-line-separated blocks, and ends with the pointer", () => {
     const lines = renderTopLevelHelp(cliRegistry).split("\n");
     const commandsAt = 6;
-    const modifiersAt = commandsAt + cliRegistry.commands.length + 2;
     expect(lines.slice(0, commandsAt)).toEqual([
       message(AppMessage.HelpTitle),
       "",
@@ -171,24 +156,8 @@ describe("[CLM-CLI-007] renderTopLevelHelp renders the commands and the global s
       "",
       message(AppMessage.HelpCommands),
     ]);
-    expect(lines[modifiersAt - 2]).toBe("");
-    expect(lines[modifiersAt - 1]).toBe(message(AppMessage.HelpHostModifiers));
-    expect(lines.slice(modifiersAt + cliRegistry.global.length)).toEqual(["", message(AppMessage.HelpPointer)]);
-  });
-
-  it("lists every host modifier on the usage line in brackets, in registry order, before the command", () => {
-    const usage = renderTopLevelHelp(cliRegistry).split("\n")[3] ?? "";
-    const match = /^ {2}spec-controller (.*) <command> \[command-args\]$/.exec(usage);
-    expect(match).not.toBeNull();
-    const groups = (match?.[1] ?? "").split("] [");
-    expect(groups).toHaveLength(cliRegistry.global.length);
-    expect(match?.[1]?.startsWith("[")).toBe(true);
-    expect(match?.[1]?.endsWith("]")).toBe(true);
-    cliRegistry.global.forEach((flag, i) => {
-      const group = (groups[i] ?? "").replace(/^\[|\]$/g, "");
-      expect(group.startsWith(flag.name)).toBe(true);
-      if (flag.arg !== undefined) expect(group.endsWith(` ${flag.arg}`)).toBe(true);
-    });
+    expect(lines[commandsAt + cliRegistry.commands.length]).toBe("");
+    expect(lines.slice(-2)).toEqual(["", message(AppMessage.HelpPointer)]);
   });
 
   function rowsOf(block: string[], descriptions: string[]): { label: string; column: number }[] {
@@ -212,26 +181,9 @@ describe("[CLM-CLI-007] renderTopLevelHelp renders the commands and the global s
     expect(rows.map((r) => r.label)).toEqual(commands.map((c) => c.name));
     for (const row of rows) expect(row.column).toBe(2 + longest + 4);
   });
-
-  it("aligns every host modifier's description one gutter of three past the longest modifier label", () => {
-    const lines = renderTopLevelHelp(cliRegistry).split("\n");
-    const modifiers = cliRegistry.global;
-    const at = 6 + cliRegistry.commands.length + 2;
-    const rows = rowsOf(
-      lines.slice(at, at + modifiers.length),
-      modifiers.map((f) => f.description),
-    );
-    const usageGroups = (/^ {2}spec-controller (.*) <command>/.exec(lines[3] ?? "")?.[1] ?? "")
-      .split("] [")
-      .map((group) => group.replace(/^\[|\]$/g, ""));
-    expect(rows.map((r) => r.label)).toEqual(usageGroups);
-    const longest = Math.max(...rows.map((r) => r.label.length));
-    expect(new Set(rows.map((r) => r.label.length)).size).toBeGreaterThan(1);
-    for (const row of rows) expect(row.column).toBe(2 + longest + 3);
-  });
 });
 
-describe("[CLM-CLI-008] the completeness guard — no registry entry is missing from its help surface", () => {
+describe("[CLM-CLI-008] the completeness guard — no command's registry entry is missing from its --help", () => {
   it("finds every command's registry entries in that command's --help render (per-command scope)", () => {
     const entryCount = cliRegistry.commands.reduce(
       (total, command) =>

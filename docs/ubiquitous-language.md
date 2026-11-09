@@ -130,8 +130,6 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 |---|---|
 | `balance` | The command that reconciles the Gherkin scenarios against the test and CI evidence and writes the Evidence Reconciliation. It is a gate: an out-of-balance run exits `1`. |
 | `allocate` | The command that prints the next claim code for a feature part: one past the highest code the repository has ever carried. |
-| host modifier | A flag that goes before the command (`--store`, `--run-id`). A command, or `--help`, must follow it. |
-| re-render | `--render-from-json`: Markdown rebuilt from a saved Evidence Reconciliation JSON, with no reconciliation and no live inputs. |
 | evidence report | A report a test runner writes, which `balance` reads as runtime test evidence: the Vitest, Cucumber, pytest, Jest, JUnit or RSpec report, each named by its own flag. |
 | report of test results | An evidence report of tests that are not scenarios run step by step: the Vitest, Jest, pytest, JUnit or RSpec report. Its fallback is `unit`. |
 | report of scenario runs | An evidence report of Gherkin scenarios run step by step: the Cucumber report. Its fallback is `integration`. |
@@ -143,7 +141,6 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | nothing to reconcile | The ledger carries no Claim Reconciliation at all, so the run has no basis for a verdict (exit `5`). |
 | usage error | A malformed invocation, refused before anything runs (exit `2`). |
 | error code | The stable code an error shows its reader in square brackets, such as `[unknown-flag]`, so the error can be quoted and looked up in the user guide whatever its words. Nothing that is not an error carries one. |
-| retired flag | A flag refused as retired. The refusal names what replaced it. |
 | target | The repository being reconciled. `--target` names it in the report's provenance. |
 | provenance | The report's header recording what was reconciled (the target, its source SHA, the tool SHA and the input paths), so a reconciliation is reproducible and attributable. |
 | source SHA | The target's commit, by default its resolved `HEAD`. |
@@ -168,16 +165,6 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | converted fitness function | A fitness function whose CI step carries its `@fitness` scenario's claim code as its `id:`, so `balance` credits its result to that scenario. |
 | unconverted fitness function | A fitness function that runs in CI with no scenario's claim code as its step's `id:`. `balance` finds it running and reports it as an uncited fitness function. |
 | step record | The CI run's own record of what each of its steps did: the `toJSON(steps)` dump `--ci-steps` reads. |
-
-### The run store
-
-| Term | Meaning |
-|---|---|
-| store | The root `--store` names. It turns any run into a stored run, and spec-controller holds no opinion on where it lives. |
-| stored run | A run written to `<store>/<target>/<run-id>/`: its reports plus a `run.yaml` manifest. |
-| run directory | `<store>/<target>/<run-id>/`. |
-| run id | The stored run's name, by default an ISO-8601 UTC timestamp. |
-| run manifest | The `run.yaml` a stored run stamps. It records only a run that wrote its report. |
 
 ### Configuration
 

@@ -4,10 +4,10 @@ rules:
     severity: ERROR
     message: >-
       This writes to the file system outside the modules that check an output location before
-      writing, so it can overwrite a stored run or follow a link to a file it should not touch.
+      writing, so it can overwrite a file it should not touch or follow a link to one.
       Write through the output location instead.
-    # Product source only: test code never runs against a user's stored run, which is what this
-    # rule protects, and its temporary directories are set up and removed in place.
+    # Product source only: test code never runs against a user's files, which is what this rule
+    # protects, and its temporary directories are set up and removed in place.
     paths:
       include:
         - "packages/*/src/**"
@@ -16,7 +16,6 @@ rules:
         - "*.test-utils.ts"
         - "packages/spec-controller/src/outputLocation.ts"
         - "packages/spec-controller/src/cli-balance/emit/writer.ts"
-        - "packages/spec-controller/src/run-management/keptRun.ts"
     patterns:
       - pattern-either:
           - pattern: $F(...)

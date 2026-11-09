@@ -62,7 +62,7 @@ Feature: The fitness functions this repository carries, one scenario per check
     through the domain, a driven module of the command-line app never reaches into another, and a
     test of the app reaches the engine only through its front door or its internal seam. Each input
     format's parser stays in its homes among the packages' source: only core's Gherkin module
-    imports the Gherkin parser, and only core's workflow module and the run store import the YAML
+    imports the Gherkin parser, and only core's workflow module imports the YAML
     parser. Every break fails the
     check; there is no list of tolerated breaks.
 

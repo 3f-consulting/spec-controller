@@ -25,13 +25,13 @@ export function parseArgs(argv: readonly string[]): Record<string, string> {
   return args;
 }
 
-export type ValueFlagSpec = FlagSpec & { arg: string };
+type ValueFlagSpec = FlagSpec & { arg: string };
 
 function takesValue(flag: FlagSpec): flag is ValueFlagSpec {
   return flag.arg !== undefined;
 }
 
-export function valueFlagsOf(flags: readonly FlagSpec[]): Map<string, ValueFlagSpec> {
+function valueFlagsOf(flags: readonly FlagSpec[]): Map<string, ValueFlagSpec> {
   const valueFlags = new Map<string, ValueFlagSpec>();
   for (const flag of flags) {
     if (!takesValue(flag)) continue;
@@ -40,7 +40,7 @@ export function valueFlagsOf(flags: readonly FlagSpec[]): Map<string, ValueFlagS
   return valueFlags;
 }
 
-export function givenValue(next: string | undefined): string | undefined {
+function givenValue(next: string | undefined): string | undefined {
   return next === undefined || next === "" || next.startsWith("--") ? undefined : next;
 }
 
@@ -59,7 +59,7 @@ export function checkMissingValues(
   return null;
 }
 
-export function missingValueRefusal(given: string, flag: ValueFlagSpec, scope: string): Refusal {
+function missingValueRefusal(given: string, flag: ValueFlagSpec, scope: string): Refusal {
   return refusal(AppError.MissingValue, { flag: given, scope, arg: flag.arg }, [message(AppMessage.SeeFlagsAndValues, { scope })]);
 }
 
@@ -97,7 +97,7 @@ function positionalsOf(registry: CliRegistry, command: string): readonly Positio
   return commandEntry(registry, command).positionals ?? [];
 }
 
-type CommandEntry = Pick<CommandSpec, "flags" | "positionals" | "retiredFlags">;
+type CommandEntry = Pick<CommandSpec, "flags" | "positionals">;
 
 function commandEntry(registry: CliRegistry, command: string): CommandEntry {
   return registry.commands.find((c) => c.name === command) ?? { flags: [] };
@@ -143,7 +143,7 @@ function registeredFlagRefusal(
   return undefined;
 }
 
-export function givenTwiceRefusal(given: string, scope: string): Refusal {
+function givenTwiceRefusal(given: string, scope: string): Refusal {
   return refusal(AppError.GivenTwice, { flag: given, scope }, [message(AppMessage.SeeFlags, { scope })]);
 }
 
@@ -211,17 +211,6 @@ function notAFlagRefusal(token: string, command: string): Refusal {
   return refusal(AppError.NotAFlag, { token, scope }, [message(AppMessage.SeeFlags, { scope })]);
 }
 
-export function checkMisplacedHostModifiers(
-  args: Record<string, string>,
-  registry: CliRegistry,
-  command: string,
-): Refusal | null {
-  const modifiers = new Set(registry.global.map((flag) => bareName(flag.name)));
-  const key = Object.keys(args).find((k) => modifiers.has(k));
-  if (key === undefined) return null;
-  return refusal(AppError.MisplacedModifier, { modifier: `--${key}`, command }, [message(AppMessage.SeeModifiers)]);
-}
-
 export function checkUnknownFlags(
   args: Record<string, string>,
   registry: CliRegistry,
@@ -236,7 +225,7 @@ export function checkUnknownFlags(
   }
   for (const key of Object.keys(args)) {
     if (!accepted.has(key)) {
-      return retiredFlagRefusal(entry, key, command, toolVersion) ?? unknownFlagRefusal(`--${key}`, command, toolVersion);
+      return unknownFlagRefusal(`--${key}`, command, toolVersion);
     }
   }
   return null;
@@ -247,20 +236,5 @@ function unknownFlagRefusal(flag: string, command: string, toolVersion: string):
   return refusal(AppError.UnknownFlag, { flag, scope, toolVersion, command }, [
     message(AppMessage.PinDrifted, { command, flag }),
     message(AppMessage.OtherwiseSeeFlags, { scope }),
-  ]);
-}
-
-function retiredFlagRefusal(
-  entry: CommandEntry,
-  key: string,
-  command: string,
-  toolVersion: string,
-): Refusal | undefined {
-  const retired = entry.retiredFlags?.find((flag) => bareName(flag.name) === key);
-  if (retired === undefined) return undefined;
-  const scope = `spec-controller ${command}`;
-  return refusal(AppError.RetiredFlag, { flag: retired.name, scope, retiredIn: retired.retiredIn, toolVersion }, [
-    `${message(AppMessage.DoNotPinRetired)} ${retired.replacement}`,
-    message(AppMessage.SeeFlags, { scope }),
   ]);
 }

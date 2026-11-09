@@ -23,7 +23,7 @@ export interface ReportInput {
 
 export interface EvidenceInput {
   readonly flag: string;
-  // Held, not derived from the flag: it keys the saved report's JSON, a published format.
+  // Held, not derived from the flag: it names a field of the JSON report, a published format.
   readonly key: string;
   readonly arg: string;
   readonly description: PlainWordedAppMessage;
@@ -152,7 +152,7 @@ export function inputPathsOf(args: Readonly<Record<string, string>>): InputPaths
   return Object.fromEntries(EVIDENCE_INPUTS.map(({ flag, key }) => [key, args[flag]]));
 }
 
-export const INPUT_NAMES: readonly RunInputName[] = EVIDENCE_INPUTS.map(({ flag, key }) => ({ name: key, flag: `--${flag}` }));
+const INPUT_NAMES: readonly RunInputName[] = EVIDENCE_INPUTS.map(({ flag, key }) => ({ name: key, flag: `--${flag}` }));
 
 export function runInputsOf(paths: InputPaths): RunInput[] {
   return INPUT_NAMES.map((input) => {

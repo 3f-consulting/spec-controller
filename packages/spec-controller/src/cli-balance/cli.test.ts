@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { CoreMessage, coreMessage, markdownHeading } from "@3f-consulting/spec-controller-core/internal";
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { checkInputsExist, checkInputsParse } from "./cli.js";
 import { jsonInputsOf, readReports } from "./unreadableInputs.js";
@@ -74,29 +74,6 @@ describe("[CLM-CLI-014] checkInputsParse rejects a supplied report that exists b
       expect(error).toBe(message(AppError.NotValidJson, { subject: message(subject, { flag: `--${flag}` }), path, reason: reasonOf("not valid json at all {{{") }));
     },
   );
-});
-
-describe("[CLM-CLI-015] balance rejects a saved report the tool cannot read", () => {
-  function failureOf(act: () => unknown): string {
-    try {
-      act();
-    } catch (err) {
-      return (err as Error).message;
-    }
-    throw new Error("expected the act to fail");
-  }
-
-
-  it("runBalance refuses a MISSING saved report at exit 2, naming it and the file system's reason, rendering nothing", () => {
-    const dir = temporaryDirectory("render-missing-");
-    const missing = join(dir, "does-not-exist.json");
-    const reason = failureOf(() => readFileSync(missing, "utf8"));
-
-    expectRefused(
-      captured(["--render-from-json", missing]),
-      message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedSavedReport, { flag: "--render-from-json" }), path: missing, reason }),
-    );
-  });
 });
 
 describe("[CLM-CLI-004] runBalance sets the out-of-balance exit code AFTER emitting the report in full, never a truncating process.exit", () => {
@@ -195,21 +172,6 @@ describe("[CLM-CLI-009] checkUnknownFlags bounds balance to the flags the regist
     const { stdout, stderr, exitCode } = runBalanceCaptured(argv);
     return { stdout, stderr, exitCode };
   }
-
-  it("refuses each host modifier given after balance as a modifier out of place, not as unregistered, reconciling nothing", () => {
-    for (const modifier of cliRegistry.global) {
-      expect(runRefused(["--features", "dir", modifier.name, "x"]), modifier.name).toEqual({
-        stdout: "",
-        stderr:
-          printedRefusal(
-            AppError.MisplacedModifier,
-            `${message(AppError.MisplacedModifier, { modifier: modifier.name, command: "balance" })}\n${message(AppMessage.SeeModifiers)}`,
-            "balance",
-          ) + "\n",
-        exitCode: 2,
-      });
-    }
-  });
 
   it("refuses --nosuch as unregistered at balance's scope, naming the version that refused, reconciling nothing", () => {
     const scope = "spec-controller balance";

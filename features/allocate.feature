@@ -121,8 +121,6 @@ Feature: Allocate the next claim code for a feature part
     A part is a feature of the corpus when a feature file in its features directory, at any depth, is
     headed with it.
     History and test fixtures say which numbers a part has used, never whether the part exists.
-    A host modifier before allocate is refused, because allocate keeps no run; a request for
-    allocate's help is answered first, whatever stands before it.
 
     @CLM-ALC-010 @unit @e2e
     Scenario Outline: A part no feature file's header carries is refused as an unknown part, listing the header codes and nothing else — <part>
@@ -183,41 +181,6 @@ Feature: Allocate the next claim code for a feature part
         | after a part                               |
         | after a part not in the claim-code form |
         | beside a flag the command does not take    |
-
-    @CLM-ALC-014 @unit @e2e
-    Scenario Outline: A host modifier before allocate is refused, and nothing is stored — <modifiers>
-      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
-      When the author asks for the next code for ONE with <modifiers> before the command
-      Then it is refused as a usage error naming <modifiers>, and no code is given
-      And nothing is stored, in the run store or the repository
-
-      Examples:
-        | modifiers                                    |
-        | the store modifier                           |
-        | the run-name modifier                        |
-        | the store modifier and the run-name modifier |
-
-    @CLM-ALC-016 @unit @e2e
-    Scenario Outline: a host modifier before allocate does not stop a request for allocate's help, which answers as it does alone, at exit 0, and stores nothing — <modifiers> <request>
-      Given a repository whose feature file headed ONE carries the claim code CLM-ONE-003
-      When the author gives <modifiers> before allocate and asks it for its help <request>
-      Then it answers with allocate's help, exactly as it does with nothing before it, and gives no code
-      And nothing is stored, in the run store or the repository
-
-      Examples:
-        | modifiers                                    | request                                                    |
-        | the store modifier                           | alone                                                      |
-        | the store modifier                           | by its short name, alone                                   |
-        | the store modifier                           | after a part                                               |
-        | the store modifier                           | by its short name, beside a flag the command does not take |
-        | the run-name modifier                        | alone                                                      |
-        | the run-name modifier                        | by its short name, alone                                   |
-        | the run-name modifier                        | after a part                                               |
-        | the run-name modifier                        | by its short name, beside a flag the command does not take |
-        | the store modifier and the run-name modifier | alone                                                      |
-        | the store modifier and the run-name modifier | by its short name, alone                                   |
-        | the store modifier and the run-name modifier | after a part                                               |
-        | the store modifier and the run-name modifier | by its short name, beside a flag the command does not take |
 
   Rule: a file allocate cannot read is a usage error, never a crash and never an answer without it
 

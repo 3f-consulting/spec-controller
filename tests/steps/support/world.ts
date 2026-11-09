@@ -142,8 +142,6 @@ export class SpecControllerWorld extends World {
   balanceResult!: SpawnSyncReturns<string>;
   moreBalanceResults: readonly (readonly [ArrangedTarget, SpawnSyncReturns<string>])[] = [];
   hostResult!: SpawnSyncReturns<string>;
-  retiredFlagResult!: SpawnSyncReturns<string>;
-  balanceHelpAlone!: SpawnSyncReturns<string>;
   exitZeroPair!: ExitZeroPair | null;
   run!: CommandRun;
 
@@ -152,32 +150,18 @@ export class SpecControllerWorld extends World {
   answer!: SpawnSyncReturns<string>;
   answerAlone!: SpawnSyncReturns<string>;
 
-  storeRoot!: string;
-  storeParent!: string;
-  runDir!: string;
-  storeBefore!: ReadonlyMap<string, string>;
-  earlierRunLink!: string;
-  filesBefore!: Map<string, string>;
-  rootBefore!: { exists: boolean; isFile: boolean; bytes: string | undefined };
-  invocation!: readonly string[];
-  savedReport!: string;
-  reRendered!: SpawnSyncReturns<string>;
   refusalCwd!: string;
-  storeScratch!: string;
-  storedRunTargetDir!: string;
-  storedRunInputsBefore!: ReadonlyMap<string, string>;
 
   missingPath!: string;
   unknownCommand!: string;
   unparseableReport!: string;
   unparseableFeature!: string;
-  unreadableSavedReport!: string;
   uncitedJsonPath!: string;
   noCorpusTargets!: { shape: string; root: string }[];
   noCorpusRuns!: { shape: string; stdout: string }[];
   flagOutOfPlace!: string;
+  workingDirectory!: string;
   argumentNamed!: string;
-  modifiersGiven!: string[];
 
   reportedRun!: ReportedRun;
   citedScenario!: string;

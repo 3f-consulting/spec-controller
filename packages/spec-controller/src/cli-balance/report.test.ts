@@ -71,7 +71,7 @@ describe("[CLM-RPT-031] a feature file's scenarios carrying no claim code count 
     return runBalanceCaptured(argv).stdout;
   }
 
-  it("writes one row named by the file read off the feature files, and renders it again the same from the saved JSON", () => {
+  it("writes one row named by the file read off the feature files", () => {
     const dir = temporaryDirectory("clm-rpt-031-unit-");
     mkdirSync(join(dir, "features"));
     writeFileSync(
@@ -82,6 +82,5 @@ describe("[CLM-RPT-031] a feature file's scenarios carrying no claim code count 
     const saved = join(dir, "report.json");
     const written = stdoutOf(["--features", join(dir, "features"), "--format", "md", "--format", `json:${saved}`]);
     expect(byFeatureRows(written)).toEqual([["checkout.feature", "3", "3 with no claim code"]]);
-    expect(stdoutOf(["--render-from-json", saved])).toEqual(written);
   });
 });

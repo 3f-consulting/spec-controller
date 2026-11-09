@@ -16,10 +16,3 @@ export function expectRefused(run: { report: string; stderr: string; exitCode: u
   expect(shown).toHaveLength(lines.length + 1);
   lines.forEach((line, at) => expect(shown[at]).toContain(line));
 }
-
-export function headlineExit(stdout: string): number | undefined {
-  const after = stdout.split("### Run verdict")[1] ?? "";
-  const line = after.split("\n").find((l) => l.trim() !== "") ?? "";
-  const match = /\(exit (\d)\)$/.exec(line);
-  return match ? Number(match[1]) : undefined;
-}
