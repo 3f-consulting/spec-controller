@@ -7,7 +7,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
   Its top-level keys, in document order, are runProvenance, then errorsInTheInputs when the inputs
   hold a fault, then summary and claimReconciliations. The claim codes sit in the summary, straight
   after its run verdict. There is no
-  `warnings` key: a zero-evidence scenario is a both-missing row on the ledger, not a separate
+  `warnings` key: a zero-evidence scenario is a no-quality-check row on the ledger, not a separate
   axis. The machine file is spec-reconciliation.json, the machine form of the WHOLE document
   beside spec-reconciliation.md, and the markdown renderer reads the same assembled model, so
   the JSON key names live in the assembler and nowhere else.
@@ -16,7 +16,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The foundation. One report model, assembled from the reconciliation and the facts of the
     run, is serialised glue-free as spec-reconciliation.json. Its summary is materialised: the
-    totals the markdown's Summary shows. There is no `warnings` key: a zero-evidence scenario is a both-missing row on
+    totals the markdown's Summary shows. There is no `warnings` key: a zero-evidence scenario is a no-quality-check row on
     the ledger. Each fact is stated once: a fault in the inputs only under errorsInTheInputs, a fact of the
     corpus only under claimCodes, and the summary carries no fault. Its unit tests
     hold the assembly and the glue-free serialisation in isolation.
@@ -69,7 +69,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     fitness Quality Check Reconciliations are counted there with the rest. The summary states
     its evidence observations as one section: the total, the
     counts on each kind of claim, and a count for each of the five kinds of quality check, fitness last.
-    A behavioural count is every evidence observation of that layer, a broken one
+    A behavioural count is every evidence observation of that layer, one that never ran
     included; the fitness count is every fitness function that ran. The total is the sum of the
     five counts and the sum of the counts on each kind of claim, on the persisted file too. A layer
     names the steps the step accounting counts as runners of the runner the target declares for it,
@@ -132,9 +132,9 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     claimReconciliations[].qualityCheckReconciliations[] is keyed by qualityCheckKind alone,
     and the summary's missing split, missingByQualityCheckKind under the reconciliationLines
     of the summary's reconciliation totals, counts the missing Reconciliation lines by the same flat
-    kind of quality check: an obligation answered only by a broken observation is one missing line
-    beside the broken one, so it counts once. One reconcile function
-    serves every kind of quality check, and the fitness value is what tells a watermelon apart. The
+    kind of quality check: an obligation answered only by an observation that never ran is one missing line
+    beside the one that never ran, so it counts once. One reconcile function
+    serves every kind of quality check, and the fitness value is what tells a pass that cannot fail apart. The
     glossary names the kind of quality check fitness, and lint is on its Double-check line
     (docs/ubiquitous-language.md, Kind of quality check). The markdown labels each item by its tag word, which IS the kind of quality check
     value, so the round-trip holds. Its unit tests hold the reconcile → assemble shape in
@@ -168,7 +168,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @CLM-RMD-010 @unit @e2e
     Scenario: the JSON report carries each test's name on its evidence observation, from Vitest and Cucumber alike
-      Given a target whose tests that cite no scenario ran under Vitest and under Cucumber
+      Given a target whose tests that cite no claim ran under Vitest and under Cucumber
       When the target's evidence is reconciled and saved as the JSON report
       Then the JSON report's evidence observation for the Vitest test carries the test's title as its name
       And the JSON report's evidence observation for the Cucumber scenario carries the scenario's name as its name
@@ -247,7 +247,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
       Examples:
         | target                                                                                                                       |
-        | a target whose tests that cite no scenario ran under Vitest and under Cucumber                                               |
+        | a target whose tests that cite no claim ran under Vitest and under Cucumber                                               |
         | a target whose evidence reconciles to every outcome there is                                                                 |
         | a target whose pipeline runs its unit tests and a fitness check, under its named runner, two of whose scenarios share a code |
 

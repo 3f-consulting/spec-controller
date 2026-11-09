@@ -73,7 +73,7 @@ describe("[CLM-JST-005] runReconcile posts no evidence observation for a todo or
 });
 
 describe("[CLM-JST-006] runReconcile reads a Jest test under a failing beforeAll as a failing unit evidence observation", () => {
-  it("reconciles the scenario that test cites as failing, not broken, by that test", () => {
+  it("reconciles the scenario that test cites as failing, not never-ran, by that test", () => {
     const unit = unitOf("CLM-JSF-009");
 
     expectSoleObservation(unit, "failing", {
@@ -81,12 +81,12 @@ describe("[CLM-JST-006] runReconcile reads a Jest test under a failing beforeAll
       locator: expect.stringMatching(CASES_FILE),
       testName: "a describe block whose beforeAll fails [CLM-JSF-009] a test under a failing beforeAll cites its scenario",
     });
-    expect(unit?.evidenceObservations?.[0]?.broken).toBeUndefined();
+    expect(unit?.evidenceObservations?.[0]?.neverRan).toBeUndefined();
   });
 });
 
-describe("[CLM-JST-007] runReconcile reads a Jest test file that failed to run as broken evidence, and the run is unsound", () => {
-  it("posts one broken item, on the unnamed claim's row, naming the file and carrying the error that stopped it", () => {
+describe("[CLM-JST-007] runReconcile reads a Jest test file that failed to run as evidence that never ran, and the run is unsound", () => {
+  it("posts one never-ran item, on the unnamed claim's row, naming the file and carrying the error that stopped it", () => {
     const observation = soleBrokenObservationOnUnnamedClaim(balance());
 
     expect(observation?.locator).toMatch(/tests\/fixtures\/jest\/project\/unloadable\.test\.js$/);

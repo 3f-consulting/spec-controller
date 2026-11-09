@@ -9,12 +9,12 @@ describe("[CLM-LDG-018] hasBrokenEvidence — the whole-run soundness predicate"
     qualityCheckKind: "unit",
     claimCode: null,
     status: "failed",
-    broken: true,
+    neverRan: true,
     locator: "packages/core/src/collection-failed.test.ts",
     message: "Error: Cannot find package '@cucumber/tag-expressions'",
   };
 
-  it("the three whole-run predicates are INDEPENDENT: pending-without-broken is sound; broken-without-pending is unsound", () => {
+  it("the three whole-run predicates are INDEPENDENT: pending-without-never-ran is sound; never-ran-without-pending is unsound", () => {
     const pendingOnly = reconcile(
       [{ claimCode: "CLM-HNS-019", evidenceObligations: [{ qualityCheckKind: "integration", pending: true }] }],
       [],

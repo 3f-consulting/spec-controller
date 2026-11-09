@@ -1,8 +1,8 @@
 @SST
-Feature: a fixture target whose tests cite no scenario, one failing and one passing
+Feature: a fixture target whose tests cite no claim, one failing and one passing
 
   A fixture standing in for a target that has adopted nothing: its one scenario is
-  proven, and its other tests cite no scenario, so they post to the unnamed claim's row. They
+  proven, and its other tests cite no claim, so they post to the unnamed claim's row. They
   ran in two files: one file holds a test that failed and a test that passed, and the
   other a single test that passed.
 

@@ -10,7 +10,7 @@ import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 import { reconcilingItemsOf } from "./claimReconciliationsTable.test-utils.js";
 import { coreMessage } from "./coreText.js";
 
-const CITES_NO_SCENARIO = (): string => outcomeDescription("cites-no-scenario");
+const CITES_NO_SCENARIO = (): string => outcomeDescription("cites-no-claim");
 
 const sharers: Scenario[] = [
   { claimCode: "CLM-DUP-001", evidenceObligations: [{ qualityCheckKind: "fitness" }], feature: "features/ci.feature", title: "the build has no lint errors" },
@@ -36,7 +36,7 @@ function unnamedClaimItemsOf(observations: EvidenceObservation[]): string[] {
   return reconcilingItemsOf(renderMarkdown(__er(reconcile(sharers, observations)), ctx, publishedExitCodeOf), "(unnamed claim)");
 }
 
-describe("[CLM-RPT-076] a CI step citing a code more than one scenario carries is listed apart from the CI steps citing no scenario, and its entry names the code", () => {
+describe("[CLM-RPT-076] a CI step citing a code more than one scenario carries is listed apart from the CI steps citing no claim, and its entry names the code", () => {
   it("lists the CI steps citing nothing as one entry and the CI steps citing each shared code as an entry of their own naming the code, after the file entries", () => {
     const remark = (code: string): string => coreMessage(CoreMessage.SharedClaimCode, { code });
     const observations = [

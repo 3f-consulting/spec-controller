@@ -36,7 +36,7 @@ describe("[CLM-CFG-003] a runners key that is not one of the four layers is repo
   it("names the key outside the four layers, and keeps the check it names on the books as uncited", () => {
     const reconciliation = reconcile({ unit: "vitest", lint: "eslint" });
     expect(reconciliation.summary.runnerKeysNotALayer).toStrictEqual(["lint"]);
-    expect(unnamedClaimChecks(reconciliation)).toStrictEqual([[["lint"], "cites-no-scenario"]]);
+    expect(unnamedClaimChecks(reconciliation)).toStrictEqual([[["lint"], "cites-no-claim"]]);
   });
 
   it("names no unrecognised runner key for a target whose every runners key is a layer", () => {

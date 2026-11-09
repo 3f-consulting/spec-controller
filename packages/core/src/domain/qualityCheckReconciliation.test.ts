@@ -78,22 +78,22 @@ type Fields = Parameters<typeof makeQualityCheckReconciliation>[0];
 const sampleObligation: ReconciledEvidenceObligation = { qualityCheckKind: "unit" };
 
 function observationLine(outcome: Outcome, ran: boolean): ReconciledEvidenceObservation {
-  return { qualityCheckKind: "unit", claimCode: "CLM-LDG-030", status: "passed", ...(ran ? {} : { broken: true as const }), outcome };
+  return { qualityCheckKind: "unit", claimCode: "CLM-LDG-030", status: "passed", ...(ran ? {} : { neverRan: true as const }), outcome };
 }
 
 /** The outcomes only an evidence observation's line reads; a reconciliation's own outcome is never one of them. */
 const OBSERVATION_LINE_OUTCOMES: readonly Outcome[] = [
   "satisfied",
   "failing",
-  "watermelon",
-  "cites-unknown-scenario",
-  "cites-no-scenario",
-  "no-evidence-obligation",
-  "broken",
+  "cannot-fail",
+  "cites-unknown-claim",
+  "cites-no-claim",
+  "not-asked-for",
+  "never-ran",
 ];
 
 /** The outcomes an evidence obligation's own line reads when no evidence observation that ran answers it. */
-const OBLIGATION_LINE_OUTCOMES: readonly Outcome[] = ["missing", "both-missing", "no-claim-code", "duplicate-claim-code"];
+const OBLIGATION_LINE_OUTCOMES: readonly Outcome[] = ["missing", "no-quality-check", "no-claim-code", "duplicate-claim-code"];
 
 function isObligationsOwnLine(profile: OutcomeSides): boolean {
   return profile.observation === "None";
@@ -106,7 +106,7 @@ function obligationSide(presence: SidePresence): Pick<Fields, "evidenceObligatio
 /** A reconciliation holding one line of the outcome, its sides as the outcome's definition requires. */
 function lineAsDefined(outcome: Outcome, profile: OutcomeSides): Fields {
   if (isObligationsOwnLine(profile)) return { outcome, ...obligationSide(profile.obligation) };
-  return { ...obligationSide(profile.obligation), evidenceObservations: [observationLine(outcome, outcome !== "broken")] };
+  return { ...obligationSide(profile.obligation), evidenceObservations: [observationLine(outcome, outcome !== "never-ran")] };
 }
 
 /** The same line with its obligation side flipped: an observation's line carries the obligation exactly when it ran against one. */
@@ -119,13 +119,13 @@ function lineWithObligationFlipped(outcome: Outcome, profile: OutcomeSides): Fie
 /** The same line with its observation side flipped: the obligation's own line answered by an observation that ran, or an observation's outcome on the obligation's own line. */
 function lineWithObservationFlipped(outcome: Outcome, profile: OutcomeSides): Fields {
   if (!isObligationsOwnLine(profile)) return { outcome, ...obligationSide(profile.obligation) };
-  const answering: Outcome = profile.obligation === "Exists" ? "satisfied" : "no-evidence-obligation";
+  const answering: Outcome = profile.obligation === "Exists" ? "satisfied" : "not-asked-for";
   return { outcome, ...obligationSide(profile.obligation), evidenceObservations: [observationLine(answering, true)] };
 }
 
 function expectUnconstructibleBesideAnObservationThatRan(outcome: Outcome): void {
   const profile = OUTCOME_SIDE_PROFILE[outcome];
-  const answering: Outcome = profile.obligation === "Exists" ? "satisfied" : "no-evidence-obligation";
+  const answering: Outcome = profile.obligation === "Exists" ? "satisfied" : "not-asked-for";
 
   expect(() =>
     makeQualityCheckReconciliation({

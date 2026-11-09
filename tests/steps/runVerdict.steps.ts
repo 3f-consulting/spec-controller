@@ -15,9 +15,9 @@ const PENDING_ONLY = {
 };
 
 const BROKEN = {
-  features: "tests/fixtures/broken/features",
-  vitest: "tests/fixtures/broken/vitest.json",
-  packageJson: "tests/fixtures/broken/package.json",
+  features: "tests/fixtures/never-ran/features",
+  vitest: "tests/fixtures/never-ran/vitest.json",
+  packageJson: "tests/fixtures/never-ran/package.json",
 };
 
 const UNNAMED_CLAIM_ONLY = {
@@ -94,7 +94,7 @@ Given("a target whose vitest report carries a collection-failed suite", function
     BROKEN.vitest,
     "--package-json",
     BROKEN.packageJson,
-    ...NO_WORKFLOWS("tests/fixtures/broken"),
+    ...NO_WORKFLOWS("tests/fixtures/never-ran"),
   ];
 });
 

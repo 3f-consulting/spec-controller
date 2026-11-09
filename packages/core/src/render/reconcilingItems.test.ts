@@ -41,11 +41,11 @@ function item(outcome: Outcome, subject?: string, suffix?: string, result?: stri
 
 describe("[CLM-RPT-004] the markdown report renders the reconciliation totals as subjects-rows with balanced and out-of-balance columns", () => {
   describe("an obligation side with nothing to show for it", () => {
-    it("a scenario with no obligation and no observation renders the both-missing sentence alone", () => {
+    it("a scenario with no obligation and no observation renders the no-quality-check sentence alone", () => {
       const md = render([{ claimCode: "CLM-RCI-002", evidenceObligations: [] }], []);
       expect(rowFor(md, "CLM-RCI-002")).toEqual({
         verdict: "out-of-balance",
-        items: item("both-missing"),
+        items: item("no-quality-check"),
       });
     });
 
@@ -70,7 +70,7 @@ describe("[CLM-RPT-004] the markdown report renders the reconciliation totals as
       );
       expect(rowFor(md, "CLM-RCI-003")).toEqual({
         verdict: "out-of-balance",
-        items: item("no-evidence-obligation", "integration", "tests/steps/c.steps.ts", "passed"),
+        items: item("not-asked-for", "integration", "tests/steps/c.steps.ts", "passed"),
       });
     });
 
@@ -90,50 +90,50 @@ describe("[CLM-RPT-004] the markdown report renders the reconciliation totals as
       );
       expect(rowFor(md, "CLM-RCI-004")).toEqual({
         verdict: "out-of-balance",
-        items: item("no-evidence-obligation", "fitness", "lint:rci"),
+        items: item("not-asked-for", "fitness", "lint:rci"),
       });
     });
 
-    it("a behavioural evidence observation citing an unknown scenario names its locator on the phantom claim's row", () => {
+    it("a behavioural evidence observation citing an unknown claim names its locator on the phantom claim's row", () => {
       const md = render(
         [],
         [{ qualityCheckKind: "unit", claimCode: "CLM-GHO-001", status: "passed", locator: "src/ghost.test.ts" }]
       );
       expect(rowFor(md, "CLM-GHO-001")).toEqual({
         verdict: "out-of-balance",
-        items: item("cites-unknown-scenario", "unit", "src/ghost.test.ts", "passed"),
+        items: item("cites-unknown-claim", "unit", "src/ghost.test.ts", "passed"),
       });
     });
 
-    it("a behavioural evidence observation citing an unknown scenario with no locator names no locator", () => {
+    it("a behavioural evidence observation citing an unknown claim with no locator names no locator", () => {
       const md = render([], [{ qualityCheckKind: "unit", claimCode: "CLM-GHO-002", status: "passed" }]);
       expect(rowFor(md, "CLM-GHO-002")).toEqual({
         verdict: "out-of-balance",
-        items: item("cites-unknown-scenario", "unit", undefined, "passed"),
+        items: item("cites-unknown-claim", "unit", undefined, "passed"),
       });
     });
 
-    it("a behavioural evidence observation citing no scenario names its check, outcome and file on the unnamed claim's row, and that it passed", () => {
+    it("a behavioural evidence observation citing no claim names its check, outcome and file on the unnamed claim's row, and that it passed", () => {
       const md = render([], [{ qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "src/uncited.test.ts" }]);
       const { verdict, items } = rowFor(md, UNNAMED_CLAIM_ROW);
       expect(verdict).toBe("out-of-balance");
       const [named, result, ...rest] = items.split(" — ");
       expect(rest).toEqual([]);
-      expect(named).toBe(item("cites-no-scenario", "unit", "src/uncited.test.ts"));
+      expect(named).toBe(item("cites-no-claim", "unit", "src/uncited.test.ts"));
       expect(result).toMatch(/^(?:passed|1 ran, 1 passed, 0 failed)$/);
     });
   });
 
-  describe("broken evidence on the unnamed claim's row names where it broke and what it said", () => {
+  describe("evidence that never ran on the unnamed claim's row names where it broke and what it said", () => {
     const brokenRow = (observations: EvidenceObservation[]) => rowFor(render([], observations), UNNAMED_CLAIM_ROW);
 
     it("a file that failed to collect, with its error, names the locator and the error joined by a colon", () => {
       const observations = parseVitestEvidenceObservations(
-        { testResults: [{ name: "src/broken.test.ts", status: "failed", message: "Cannot find module './gone.js'" }] }
+        { testResults: [{ name: "src/never-ran.test.ts", status: "failed", message: "Cannot find module './gone.js'" }] }
       );
       expect(brokenRow(observations)).toEqual({
         verdict: "out-of-balance",
-        items: item("broken", "unit", "src/broken.test.ts: Cannot find module './gone.js'"),
+        items: item("never-ran", "unit", "src/never-ran.test.ts: Cannot find module './gone.js'"),
       });
     });
 
@@ -152,7 +152,7 @@ describe("[CLM-RPT-004] the markdown report renders the reconciliation totals as
       const observations = parseVitestEvidenceObservations({ testResults: [testResult] });
       expect(brokenRow(observations)).toEqual({
         verdict: "out-of-balance",
-        items: item("broken", "unit", locator),
+        items: item("never-ran", "unit", locator),
       });
     });
 
@@ -162,7 +162,7 @@ describe("[CLM-RPT-004] the markdown report renders the reconciliation totals as
       );
       expect(brokenRow(observations)).toEqual({
         verdict: "out-of-balance",
-        items: item("broken", "unit"),
+        items: item("never-ran", "unit"),
       });
     });
   });
@@ -183,10 +183,10 @@ describe("[CLM-RPT-082] each failing test on a scenario's row is named by its fi
   });
 });
 
-describe("[CLM-RPT-083] a failing or watermelon fitness evidence observation on a scenario's row is named by its fitness function", () => {
+describe("[CLM-RPT-083] a failing or cannot-fail fitness evidence observation on a scenario's row is named by its fitness function", () => {
   it.each([
     ["failing", { status: "failed", enforcedOverRealSource: true }],
-    ["watermelon", { status: "passed", enforcedOverRealSource: false }],
+    ["cannot-fail", { status: "passed", enforcedOverRealSource: false }],
   ] as const)("a %s fitness item names its fitness function", (outcome, ran) => {
     const md = render(
       [{ claimCode: "CLM-DEM-002", evidenceObligations: [{ qualityCheckKind: "fitness" }] }],
@@ -205,20 +205,20 @@ describe("[CLM-RPT-084] every reconciling item quotes what the run reported whol
     ["a test name and no file", { testName: "renders" }, "failing", "renders"],
     ["neither a file nor a test name", {}, "failing", undefined],
     ["a fitness function with an empty name", { qualityCheckKind: "fitness", fitnessFunction: "", exists: true, enforcedOverRealSource: true }, "failing", undefined],
-    ["an observation-only item whose file holds a pipe", { claimCode: "CLM-GHO-003", locator: "src/a|b.test.ts" }, "cites-unknown-scenario", "src/a\\|b.test.ts", "failed"],
+    ["an observation-only item whose file holds a pipe", { claimCode: "CLM-GHO-003", locator: "src/a|b.test.ts" }, "cites-unknown-claim", "src/a\\|b.test.ts", "failed"],
     ["a test's name holding a backslash and a pipe", { locator: "src/a.test.ts", testName: "a \\| b" }, "failing", "src/a.test.ts: a \\\\\\| b"],
-    ["a file group's file holding a pipe", { claimCode: null, status: "passed", locator: "src/a|b.test.ts" }, "cites-no-scenario", "src/a\\|b.test.ts", "1 ran, 1 passed, 0 failed"],
-    ["a CI step's name holding a pipe", { qualityCheckKind: "fitness", claimCode: null, fitnessFunction: "lint | x", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step: lint \\| x"],
-    ["a broken item whose file is whitespace only", { claimCode: null, broken: true, locator: " " }, "broken", undefined],
-    ["a CI step whose name is empty", { qualityCheckKind: "fitness", claimCode: null, fitnessFunction: "", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step"],
-    ["a CI step whose name is whitespace only", { qualityCheckKind: "fitness", claimCode: null, fitnessFunction: " ", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step"],
+    ["a file group's file holding a pipe", { claimCode: null, status: "passed", locator: "src/a|b.test.ts" }, "cites-no-claim", "src/a\\|b.test.ts", "1 ran, 1 passed, 0 failed"],
+    ["a CI step's name holding a pipe", { qualityCheckKind: "fitness", claimCode: null, fitnessFunction: "lint | x", exists: true, enforcedOverRealSource: true }, "cites-no-claim", undefined, "1 CI step: lint \\| x"],
+    ["a never-ran item whose file is whitespace only", { claimCode: null, neverRan: true, locator: " " }, "never-ran", undefined],
+    ["a CI step whose name is empty", { qualityCheckKind: "fitness", claimCode: null, fitnessFunction: "", exists: true, enforcedOverRealSource: true }, "cites-no-claim", undefined, "1 CI step"],
+    ["a CI step whose name is whitespace only", { qualityCheckKind: "fitness", claimCode: null, fitnessFunction: " ", exists: true, enforcedOverRealSource: true }, "cites-no-claim", undefined, "1 CI step"],
     ["a test's name holding a semicolon", { locator: "src/a.test.ts", testName: "a; b" }, "failing", "src/a.test.ts: `a; b`"],
     ["a file holding a colon", { locator: "src/a: b.test.ts" }, "failing", "`src/a: b.test.ts`"],
     ["a fitness function holding a comma", { qualityCheckKind: "fitness", fitnessFunction: "lint, x", exists: true, enforcedOverRealSource: true }, "failing", "`lint, x`"],
-    ["a CI step's name holding a slash", { qualityCheckKind: "fitness", claimCode: null, fitnessFunction: "lint / x", exists: true, enforcedOverRealSource: true }, "cites-no-scenario", undefined, "1 CI step: `lint / x`"],
-    ["a file group's failed test name holding a slash", { claimCode: null, locator: "src/a.test.ts", testName: "a / b" }, "cites-no-scenario", "src/a.test.ts", "1 ran, 0 passed, 1 failed (failed: `a / b`)"],
-    ["a broken item's message holding a colon", { claimCode: null, broken: true, locator: "src/a.test.ts", message: "Error: gone" }, "broken", "src/a.test.ts: `Error: gone`"],
-    ["a file group's message holding a colon", { claimCode: null, status: "passed", locator: "src/a.test.ts", message: "Error: gone" }, "cites-no-scenario", "src/a.test.ts: `Error: gone`", "1 ran, 1 passed, 0 failed"],
+    ["a CI step's name holding a slash", { qualityCheckKind: "fitness", claimCode: null, fitnessFunction: "lint / x", exists: true, enforcedOverRealSource: true }, "cites-no-claim", undefined, "1 CI step: `lint / x`"],
+    ["a file group's failed test name holding a slash", { claimCode: null, locator: "src/a.test.ts", testName: "a / b" }, "cites-no-claim", "src/a.test.ts", "1 ran, 0 passed, 1 failed (failed: `a / b`)"],
+    ["a never-ran item's message holding a colon", { claimCode: null, neverRan: true, locator: "src/a.test.ts", message: "Error: gone" }, "never-ran", "src/a.test.ts: `Error: gone`"],
+    ["a file group's message holding a colon", { claimCode: null, status: "passed", locator: "src/a.test.ts", message: "Error: gone" }, "cites-no-claim", "src/a.test.ts: `Error: gone`", "1 ran, 1 passed, 0 failed"],
     ["a test's name holding a semicolon and a backslash", { locator: "src/a.test.ts", testName: "a; b\\c" }, "failing", "src/a.test.ts: `a; b\\c`"],
     ["a test's name holding a semicolon and a pipe", { locator: "src/a.test.ts", testName: "a; b | c" }, "failing", "src/a.test.ts: `a; b \\| c`"],
     ["a test's name holding a semicolon, a backtick and a backslash", { locator: "src/a.test.ts", testName: "a`b; c\\d" }, "failing", "src/a.test.ts: ``a`b; c\\d``"],
@@ -231,7 +231,7 @@ describe("[CLM-RPT-084] every reconciling item quotes what the run reported whol
   it("a CI step with a blank name beside one named lint", () => {
     const step = (fitnessFunction: string): EvidenceObservation => ({ qualityCheckKind: "fitness", fitnessFunction, exists: true, enforcedOverRealSource: true });
     const md = render([], [step(""), step("lint")]);
-    expect(rowFor(md, UNNAMED_CLAIM_ROW).items).toBe(item("cites-no-scenario", "fitness", undefined, "2 CI steps: lint"));
+    expect(rowFor(md, UNNAMED_CLAIM_ROW).items).toBe(item("cites-no-claim", "fitness", undefined, "2 CI steps: lint"));
   });
 
   it.each([
@@ -246,8 +246,8 @@ describe("[CLM-RPT-084] every reconciling item quotes what the run reported whol
   it.each([
     ["several claim codes", { kind: "several-claim-codes", codes: ["CLM-A", "CLM-B"] }, { kind: "several-claim-codes", codes: ["CLM-A", "CLM-B"] }],
     ["an ambiguous step whose name holds a line break", { kind: "ambiguous-step", step: "run\n  lint" }, { kind: "ambiguous-step", step: "run lint" }],
-  ] as const)("a broken item's message holding no separator, with a note on %s, reads as written and leaves the note's words outside any code span", (_title, note, shown) => {
-    const md = render([], [{ qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, locator: "src/a.test.ts", message: "gone", notes: [note] }]);
-    expect(rowFor(md, UNNAMED_CLAIM_ROW).items).toBe(item("broken", "unit", `src/a.test.ts: gone ${remarkWordsOf({ notes: [shown] })}`));
+  ] as const)("a never-ran item's message holding no separator, with a note on %s, reads as written and leaves the note's words outside any code span", (_title, note, shown) => {
+    const md = render([], [{ qualityCheckKind: "unit", claimCode: null, status: "failed", neverRan: true, locator: "src/a.test.ts", message: "gone", notes: [note] }]);
+    expect(rowFor(md, UNNAMED_CLAIM_ROW).items).toBe(item("never-ran", "unit", `src/a.test.ts: gone ${remarkWordsOf({ notes: [shown] })}`));
   });
 });

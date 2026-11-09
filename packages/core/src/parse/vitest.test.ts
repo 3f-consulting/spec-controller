@@ -104,7 +104,7 @@ describe("[CLM-VIT-003] a leaf's prose mention does not override its describe's 
   });
 });
 
-describe("[CLM-VIT-005] a collection-failed vitest file emits a broken observation naming the file and its error", () => {
+describe("[CLM-VIT-005] a collection-failed vitest file emits an observation that never ran naming the file and its error", () => {
   const collectionFailed: VitestJsonReport = {
     testResults: [
       {
@@ -116,20 +116,20 @@ describe("[CLM-VIT-005] a collection-failed vitest file emits a broken observati
     ],
   };
 
-  it("emits ONE broken observation carrying the file locator and the collection message", () => {
+  it("emits ONE observation that never ran carrying the file locator and the collection message", () => {
     expect(parseVitestEvidenceObservations(collectionFailed)).toEqual([
       {
         qualityCheckKind: "unit",
         claimCode: null,
         status: "failed",
         locator: "/r/harness.test.ts",
-        broken: true,
+        neverRan: true,
         message: "Error: Cannot find package '@cucumber/tag-expressions'",
       },
     ]);
   });
 
-  it("relativises the broken observation's locator to the run root, as it does every evidence observation", () => {
+  it("relativises the locator of an observation that never ran to the run root, as it does every evidence observation", () => {
     const out = parseVitestEvidenceObservations(collectionFailed, "/r");
     expect(out).toHaveLength(1);
     const observation = out[0]!;
@@ -138,7 +138,7 @@ describe("[CLM-VIT-005] a collection-failed vitest file emits a broken observati
     expect(observation.locator).toBe("harness.test.ts");
   });
 
-  it("BOUNDARY: a failed file that DID collect emits its assertions and no broken observation", () => {
+  it("BOUNDARY: a failed file that DID collect emits its assertions and no observation that never ran", () => {
     const failedButCollected: VitestJsonReport = {
       testResults: [
         {
@@ -154,7 +154,7 @@ describe("[CLM-VIT-005] a collection-failed vitest file emits a broken observati
     ]);
   });
 
-  it("a PASSING file with zero assertions emits nothing — only a FAILED collection is broken", () => {
+  it("a PASSING file with zero assertions emits nothing — only a FAILED collection never ran", () => {
     expect(
       parseVitestEvidenceObservations(
         { testResults: [{ name: "/r/empty.test.ts", status: "passed", assertionResults: [] }] }
@@ -189,7 +189,7 @@ describe("[CLM-VIT-004] a Vitest test whose title cites two scenarios credits ne
   });
   const several = () => reportOf({ title: "[CLM-AAA-001] [CLM-AAA-002] two" });
 
-  it("emits one evidence observation citing no scenario, with a note of both codes and no message", () => {
+  it("emits one evidence observation citing no claim, with a note of both codes and no message", () => {
     expect(parseVitestEvidenceObservations(several())).toEqual([
       {
         qualityCheckKind: "unit",

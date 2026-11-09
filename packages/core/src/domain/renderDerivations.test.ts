@@ -19,14 +19,14 @@ const scenarios: Scenario[] = [
 const evidenceObservations: EvidenceObservation[] = [
   { qualityCheckKind: "fitness", fitnessFunction: "lint:wired", claimCode: "CLM-AAA-001", exists: true, enforcedOverRealSource: true },
   { qualityCheckKind: "fitness", fitnessFunction: "lint:unwired", claimCode: "CLM-AAA-004", exists: true, enforcedOverRealSource: false },
-  { qualityCheckKind: "fitness", fitnessFunction: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
+  { qualityCheckKind: "fitness", fitnessFunction: "lint:not-asked-for", exists: true, enforcedOverRealSource: true },
   { qualityCheckKind: "unit", claimCode: "CLM-AAA-003", status: "passed" },
   {
     qualityCheckKind: "unit",
     claimCode: null,
     status: "failed",
-    broken: true,
-    locator: "tests/broken.test.ts",
+    neverRan: true,
+    locator: "tests/never-ran.test.ts",
     message: "Failed to collect",
   },
 ];
@@ -64,7 +64,7 @@ describe("[CLM-LDG-001] isScenario names only the named thing", () => {
 describe("[CLM-RPT-011] observationCountOf counts a row's fitness evidence observations as it counts any other", () => {
   const posted = { qualityCheckKind: "fitness", claimCode: "CLM-AAA-001", exists: true } as const;
   const satisfied: EvidenceObservation = { ...posted, fitnessFunction: "lint:satisfied", enforcedOverRealSource: true, status: "passed" };
-  const watermelon: EvidenceObservation = { ...posted, fitnessFunction: "lint:watermelon", enforcedOverRealSource: false };
+  const watermelon: EvidenceObservation = { ...posted, fitnessFunction: "lint:cannot-fail", enforcedOverRealSource: false };
   const failing: EvidenceObservation = { ...posted, fitnessFunction: "lint:failing", enforcedOverRealSource: true, status: "failed" };
   const rowPostedWith = (observations: EvidenceObservation[]) =>
     reconcile([{ claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] }], observations)
@@ -72,7 +72,7 @@ describe("[CLM-RPT-011] observationCountOf counts a row's fitness evidence obser
 
   it.each([
     ["a satisfied one", [satisfied], "satisfied"],
-    ["a watermelon one", [watermelon], "watermelon"],
+    ["a cannot-fail one", [watermelon], "cannot-fail"],
     ["a failing one", [failing], "failing"],
   ] as const)("counts %s as one observation", (_title, observations, outcome) => {
     const row = rowPostedWith([...observations]);

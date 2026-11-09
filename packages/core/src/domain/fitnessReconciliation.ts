@@ -43,7 +43,7 @@ export function recordedObservationOf(step: RecordedCheckStep): FitnessEvidenceO
       ...namedOf(step),
       exists: false,
       enforcedOverRealSource: false,
-      broken: true,
+      neverRan: true,
       notes: [checkDidNotRunNote(step)],
     };
   }

@@ -114,15 +114,15 @@ describe("[CLM-CLI-004] runBalance sets the out-of-balance exit code AFTER emitt
   });
 });
 
-describe("[CLM-CLI-012] runBalance exits 4 for a run carrying broken evidence, PRE-EMPTING the out-of-balance verdict", () => {
+describe("[CLM-CLI-012] runBalance exits 4 for a run carrying evidence that never ran, PRE-EMPTING the out-of-balance verdict", () => {
   it("emits the report in full AND sets process.exitCode = 4 — not the 1 the same run's out-of-balance verdict would otherwise give", () => {
     const { stdout: emitted, exitCode } = runBalanceCaptured([
       "--features",
-      "tests/fixtures/broken/features",
+      "tests/fixtures/never-ran/features",
       "--vitest",
-      "tests/fixtures/broken/vitest.json",
+      "tests/fixtures/never-ran/vitest.json",
       "--package-json",
-      "tests/fixtures/broken/package.json",
+      "tests/fixtures/never-ran/package.json",
     ]);
 
     expect(`\n${emitted}`).toContain(`\n${markdownHeading(1, coreMessage(CoreMessage.ReportTitle))}`);
@@ -281,10 +281,10 @@ describe("[CLM-CLI-013] the tally, the verdict headline and the process exit cod
     {
       name: "an unsound run carrying a collection-failed suite",
       argv: [
-        "--features", "tests/fixtures/broken/features",
-        "--vitest", "tests/fixtures/broken/vitest.json",
-        "--package-json", "tests/fixtures/broken/package.json",
-        "--ci", "tests/fixtures/broken",
+        "--features", "tests/fixtures/never-ran/features",
+        "--vitest", "tests/fixtures/never-ran/vitest.json",
+        "--package-json", "tests/fixtures/never-ran/package.json",
+        "--ci", "tests/fixtures/never-ran",
       ],
       outOfBalance: 2,
       word: "UNSOUND",

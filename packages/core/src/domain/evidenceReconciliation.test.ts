@@ -125,13 +125,13 @@ describe("[CLM-LDG-027] a quality-check reconciliation carries every evidence ob
     const integration = qcrsOf("CLM-LDG-027", "integration");
     expect(integration).toHaveLength(1);
     expect(integration[0]!.evidenceObligation).toBeUndefined();
-    expect(integration[0]!.evidenceObservations).toEqual([integrationOne, integrationTwo].map((o) => ({ ...o, outcome: "no-evidence-obligation" })));
+    expect(integration[0]!.evidenceObservations).toEqual([integrationOne, integrationTwo].map((o) => ({ ...o, outcome: "not-asked-for" })));
   });
 
   it("holds both uncited unit observations in one unit reconciliation on the unnamed claim", () => {
     const unnamed = qcrsOf(UNNAMED_CLAIM_ID, "unit");
     expect(unnamed).toHaveLength(1);
-    expect(unnamed[0]!.evidenceObservations).toEqual([uncitedOne, uncitedTwo].map((o) => ({ ...o, outcome: "cites-no-scenario" })));
+    expect(unnamed[0]!.evidenceObservations).toEqual([uncitedOne, uncitedTwo].map((o) => ({ ...o, outcome: "cites-no-claim" })));
   });
 
   it("carries no copy of an observation's keys on any reconciliation", () => {
@@ -142,8 +142,8 @@ describe("[CLM-LDG-027] a quality-check reconciliation carries every evidence ob
   });
 });
 
-describe("[CLM-LDG-010] a zero-evidence obligation scenario cited by a stray evidence observation is no-evidence-obligation, not both-missing", () => {
-  it("emits a no-evidence-obligation row (NOT a warning, NOT both-missing) when a zero-evidence obligation scenario is cited by a stray evidence observation", () => {
+describe("[CLM-LDG-010] a zero-evidence obligation scenario cited by a stray evidence observation is not-asked-for, not no-quality-check", () => {
+  it("emits a not-asked-for row (NOT a warning, NOT no-quality-check) when a zero-evidence obligation scenario is cited by a stray evidence observation", () => {
     const scenarios: Scenario[] = [
       { claimCode: "CLM-LDG-010", evidenceObligations: [] },
     ];
@@ -157,15 +157,15 @@ describe("[CLM-LDG-010] a zero-evidence obligation scenario cited by a stray evi
     expect(row?.kind).toBe("scenario");
     expect(row?.verdict).toBe("out-of-balance");
     expect(reconcilingItemsOf(row!)).toEqual([
-      { qualityCheckKind: "unit", outcome: "no-evidence-obligation", evidenceObservation: { qualityCheckKind: "unit", claimCode: "CLM-LDG-010", status: "passed", outcome: "no-evidence-obligation" } },
+      { qualityCheckKind: "unit", outcome: "not-asked-for", evidenceObservation: { qualityCheckKind: "unit", claimCode: "CLM-LDG-010", status: "passed", outcome: "not-asked-for" } },
     ]);
-    expect(reconcilingItemsOf(row!).some((r) => r.outcome === "both-missing")).toBe(false);
+    expect(reconcilingItemsOf(row!).some((r) => r.outcome === "no-quality-check")).toBe(false);
   });
 });
 
-describe("[CLM-LDG-009] a scenario with zero rows on both sides is reported as both-missing, out of balance", () => {
+describe("[CLM-LDG-009] a scenario with zero rows on both sides is reported as no-quality-check, out of balance", () => {
 
-  it("does NOT emit both-missing when the scenario names an evidence obligation (a one-sided row is a debit, not both-missing)", () => {
+  it("does NOT emit no-quality-check when the scenario names an evidence obligation (a one-sided row is a debit, not no-quality-check)", () => {
     const scenarios: Scenario[] = [
       { claimCode: "CLM-LDG-009", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
@@ -176,6 +176,6 @@ describe("[CLM-LDG-009] a scenario with zero rows on both sides is reported as b
 
     expect(row?.verdict).toBe("out-of-balance");
     expect(reconcilingItemsOf(row!)).toEqual([{ qualityCheckKind: "unit", outcome: "missing", evidenceObligation: { qualityCheckKind: "unit" } }]);
-    expect(reconcilingItemsOf(row!).some((r) => r.outcome === "both-missing")).toBe(false);
+    expect(reconcilingItemsOf(row!).some((r) => r.outcome === "no-quality-check")).toBe(false);
   });
 });

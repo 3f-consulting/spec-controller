@@ -133,7 +133,7 @@ Then("the run ends on the exit its verdict headline names, rather than on a stac
 
 const NEW_CLIENT_UNCITED = "tests/fixtures/new-client-uncited";
 
-Given("a target with no Gherkin corpus whose unit evidence cites no scenario", function (this: SpecControllerWorld) {
+Given("a target with no Gherkin corpus whose unit evidence cites no claim", function (this: SpecControllerWorld) {
   const dir = join(process.cwd(), NEW_CLIENT_UNCITED);
   assert.ok(
     !existsSync(join(dir, "features")),
@@ -161,9 +161,9 @@ Then("the uncited evidence observations are posted to the unnamed claim's reconc
   );
   const { reconciliationLines } = reconciliationTotalsOf(report);
   assert.equal(
-    reconciliationLines.byOutcome["cites-no-scenario"],
+    reconciliationLines.byOutcome["cites-no-claim"],
     2,
-    `expected the two evidence observations reconciled as cites-no-scenario; got: ${JSON.stringify(reconciliationLines)}`,
+    `expected the two evidence observations reconciled as cites-no-claim; got: ${JSON.stringify(reconciliationLines)}`,
   );
 });
 

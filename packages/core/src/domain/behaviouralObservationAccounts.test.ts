@@ -18,20 +18,20 @@ const tallyOfEveryObservationKind = () => {
     { qualityCheckKind: "integration", claimCode: "CLM-A", status: "passed" },
     { qualityCheckKind: "unit", claimCode: "CLM-PHX-999", status: "passed" },
     { qualityCheckKind: "integration", claimCode: null, status: "passed" },
-    { qualityCheckKind: "e2e", claimCode: "CLM-A", status: "failed", broken: true, locator: "features/x.feature" },
+    { qualityCheckKind: "e2e", claimCode: "CLM-A", status: "failed", neverRan: true, locator: "features/x.feature" },
     { qualityCheckKind: "fitness", fitnessFunction: "guard-x", exists: true, enforcedOverRealSource: true },
   ];
   const ledger: Ledger = reconcile(scenarios, observations);
   return behaviouralObservationTally(ledger);
 };
 
-const fitnessObservationOf = (claimCode?: string, ran: { exists?: boolean; broken?: true } = {}): EvidenceObservation => ({
+const fitnessObservationOf = (claimCode?: string, ran: { exists?: boolean; neverRan?: true } = {}): EvidenceObservation => ({
   qualityCheckKind: "fitness",
   fitnessFunction: "guard-x",
   ...(claimCode !== undefined ? { claimCode } : {}),
   exists: ran.exists ?? true,
   enforcedOverRealSource: true,
-  ...(ran.broken !== undefined ? { broken: ran.broken, locator: ".github/workflows/ci.yml" } : {}),
+  ...(ran.neverRan !== undefined ? { neverRan: ran.neverRan, locator: ".github/workflows/ci.yml" } : {}),
 });
 
 const RECONCILIATIONS_OF_KIND = {
@@ -59,27 +59,27 @@ describe("the behavioural-observation tally reports the raw counts and the inven
     expect(tallyOfEveryObservationKind().rawByLayer).toEqual({ unit: 3, integration: 2, e2e: 1, performance: 0 });
   });
 
-  it("[CLM-RPT-023] Evidence observations counts each evidence observation by the kind of claim its row reconciles, a broken behavioural one included, and each fitness function that ran", () => {
+  it("[CLM-RPT-023] Evidence observations counts each evidence observation by the kind of claim its row reconciles, a behavioural one that never ran included, and each fitness function that ran", () => {
     const ledger: Ledger = {
       claimReconciliations: [
         rowOf("CLM-A", "scenario", [
           { qualityCheckKind: "unit", claimCode: "CLM-A", status: "passed" },
           { qualityCheckKind: "integration", claimCode: "CLM-A", status: "passed" },
-          { qualityCheckKind: "e2e", claimCode: "CLM-A", status: "failed", broken: true, locator: "features/a.feature" },
+          { qualityCheckKind: "e2e", claimCode: "CLM-A", status: "failed", neverRan: true, locator: "features/a.feature" },
           fitnessObservationOf("CLM-A"),
           fitnessObservationOf("CLM-A", { exists: false }),
         ]),
         rowOf("CLM-PHX-999", "phantom-claim", [
           { qualityCheckKind: "unit", claimCode: "CLM-PHX-999", status: "passed" },
-          { qualityCheckKind: "unit", claimCode: "CLM-PHX-999", status: "failed", broken: true, locator: "src/phx.test.ts" },
+          { qualityCheckKind: "unit", claimCode: "CLM-PHX-999", status: "failed", neverRan: true, locator: "src/phx.test.ts" },
           fitnessObservationOf("CLM-PHX-999"),
-          fitnessObservationOf("CLM-PHX-999", { broken: true }),
+          fitnessObservationOf("CLM-PHX-999", { neverRan: true }),
         ]),
         rowOf(UNNAMED_CLAIM_ID, "unnamed-claim", [
           { qualityCheckKind: "unit", claimCode: null, status: "passed" },
           { qualityCheckKind: "integration", claimCode: null, status: "passed" },
           { qualityCheckKind: "performance", claimCode: null, status: "failed" },
-          { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, locator: "src/collect.test.ts" },
+          { qualityCheckKind: "unit", claimCode: null, status: "failed", neverRan: true, locator: "src/collect.test.ts" },
           fitnessObservationOf(),
         ]),
       ],

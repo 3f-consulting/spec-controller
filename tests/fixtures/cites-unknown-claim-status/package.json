@@ -1,5 +1,5 @@
 {
-  "name": "byfeature-cites-unknown-scenario-fixture-target",
+  "name": "cites-unknown-claim-status-fixture-target",
   "private": true,
   "scripts": {
     "test": "vitest run"

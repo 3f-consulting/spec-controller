@@ -68,11 +68,11 @@ describe("[CLM-LNT-009] a fitness evidence observation citing a claim code no sc
     expect(phantomClaimRow?.claim).toBe("CLM-AAA-001");
     expect(phantomClaimRow?.verdict).toBe("out-of-balance");
     expect(obligationsOf(phantomClaimRow!)).toEqual([]);
-    expect(observationsOf(phantomClaimRow!)).toEqual([{ ...observation, outcome: "cites-unknown-scenario" }]);
+    expect(observationsOf(phantomClaimRow!)).toEqual([{ ...observation, outcome: "cites-unknown-claim" }]);
     expect(phantomClaimRow?.qualityCheckReconciliations).toEqual([
       {
         qualityCheckKind: "fitness",
-        evidenceObservations: [{ ...observation, outcome: "cites-unknown-scenario" }],
+        evidenceObservations: [{ ...observation, outcome: "cites-unknown-claim" }],
       },
     ]);
     expect(reconcilingItemsOf(phantomClaimRow!)).toEqual(phantomClaimRow?.qualityCheckReconciliations.flatMap(linesOf));
@@ -89,7 +89,7 @@ describe("[CLM-LNT-009] a fitness evidence observation citing a claim code no sc
 const SEVERED_SCRIPT = "lint:severed-check";
 
 describe("[CLM-LNT-004] a scenario raising Evidence Obligations for both a unit test and a fitness function reports each independently", () => {
-  it("answers each obligation from an evidence observation of its own kind of quality check — the unit evidence observation satisfies the unit obligation, the citing fitness evidence observation the watermelon — and never one from the other", () => {
+  it("answers each obligation from an evidence observation of its own kind of quality check — the unit evidence observation satisfies the unit obligation, the citing fitness evidence observation the cannot-fail — and never one from the other", () => {
     const { ciSource: plantedCi, packageJson: plantedPackageJson } =
       severedWiringFor(SEVERED_SCRIPT);
 
@@ -136,7 +136,7 @@ describe("[CLM-LNT-004] a scenario raising Evidence Obligations for both a unit 
 
     expect(scenario?.verdict).toBe("out-of-balance");
 
-    const watermelonObservation = { ...fitnessObservations[0]!, outcome: "watermelon" };
+    const watermelonObservation = { ...fitnessObservations[0]!, outcome: "cannot-fail" };
     expect(scenario?.qualityCheckReconciliations).toEqual([
       {
         qualityCheckKind: "unit",
@@ -153,7 +153,7 @@ describe("[CLM-LNT-004] a scenario raising Evidence Obligations for both a unit 
     expect(reconcilingItemsOf(scenario!)).toEqual([
       {
         qualityCheckKind: "fitness",
-        outcome: "watermelon",
+        outcome: "cannot-fail",
         evidenceObligation: { qualityCheckKind: "fitness" },
         evidenceObservation: watermelonObservation,
       },

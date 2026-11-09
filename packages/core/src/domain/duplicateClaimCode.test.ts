@@ -52,7 +52,7 @@ describe("[CLM-STG-013] two scenarios in one file sharing a claim code are two c
     expect(isBalanced(ledger)).toBe(false);
   });
 
-  it("with no kind of quality check named at all, carries ONE duplicate-claim-code sub-row on each claim, never both-missing", () => {
+  it("with no kind of quality check named at all, carries ONE duplicate-claim-code sub-row on each claim, never no-quality-check", () => {
     const bare = reconcile(
       [
         { claimCode: "CLM-DUP-002", evidenceObligations: [] },

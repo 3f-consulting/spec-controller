@@ -46,10 +46,10 @@ function loadErrorsOf(report: RspecJsonReport, layer: Layer, root?: string): Evi
     const file = LOADED_FILE.exec(message);
     const path = file?.[1] ?? file?.[2];
     if (path === undefined) unnamed.push(message);
-    else broken.push({ qualityCheckKind: layer, claimCode: null, status: evidence.status, locator: locatorOf(path, root), broken: evidence.broken, message });
+    else broken.push({ qualityCheckKind: layer, claimCode: null, status: evidence.status, locator: locatorOf(path, root), neverRan: evidence.neverRan, message });
   }
   if (count > broken.length) {
-    broken.push({ qualityCheckKind: layer, claimCode: null, status: evidence.status, broken: evidence.broken, message: unnamed.length > 0 ? unnamed.join("\n") : undefined });
+    broken.push({ qualityCheckKind: layer, claimCode: null, status: evidence.status, neverRan: evidence.neverRan, message: unnamed.length > 0 ? unnamed.join("\n") : undefined });
   }
   return broken;
 }

@@ -121,7 +121,7 @@ describe("[CLM-CLI-095] a scenario tagged with two claim codes raises no evidenc
 
   type Row = { claim: string; kind: string; verdict: string };
 
-  it("opens no account under either code, so a test citing one reads as citing an unknown scenario, and counts nothing untagged", wholeRun, () => {
+  it("opens no account under either code, so a test citing one reads as citing an unknown claim, and counts nothing untagged", wholeRun, () => {
     const report = JSON.parse(balance(target("@CLM-TWO-002 @CLM-TWO-003"), "json").stdout);
     const rows = claimReconciliationsOf<Row>(report);
     expect(rows.filter((r) => r.kind === "scenario").map((r) => r.claim)).toEqual(["CLM-TWO-001"]);

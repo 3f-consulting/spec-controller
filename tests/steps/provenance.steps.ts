@@ -417,7 +417,7 @@ Then(
     assert.ok(unnamedClaimRow, `expected the unnamed claim's row carrying the uncited evidence observations; got:\n${this.jsonText}`);
     const locators = unnamedClaimRow!.qualityCheckReconciliations
       .flatMap((o) => o.evidenceObservations ?? [])
-      .filter((o) => o.outcome === "cites-no-scenario")
+      .filter((o) => o.outcome === "cites-no-claim")
       .flatMap((o) => (typeof o.locator === "string" ? [o.locator] : []));
     assert.ok(
       locators.length > 0 && locators.every((l) => !l.startsWith("/")),

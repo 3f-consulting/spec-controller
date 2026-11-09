@@ -42,7 +42,7 @@ Feature: A Java suite's results answer unit evidence obligations
     Scenario: a JUnit 5 test that throws, in its body or in its setup before each test, posts a failing observation
 
     @unit @CLM-JAV-009
-    Scenario: a JUnit 5 class whose setup before all its tests fails posts a broken item and the run is unsound
+    Scenario: a JUnit 5 class whose setup before all its tests fails posts a never-ran item and the run is unsound
 
   Rule: Surefire's reports are read as Surefire writes them
 

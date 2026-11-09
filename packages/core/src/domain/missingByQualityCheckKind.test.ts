@@ -27,12 +27,12 @@ describe("[CLM-RMD-008] the missing split counts the missing Reconciliation line
     ]);
   });
 
-  it("counts an obligation answered only by a broken observation as one missing line, beside its broken line", () => {
+  it("counts an obligation answered only by an observation that never ran as one missing line, beside its never-ran line", () => {
     const tally = ledgerTally(
       reconcile(
         [{ claimCode: "CLM-RMD-008", evidenceObligations: [{ qualityCheckKind: "unit" }, { qualityCheckKind: "integration" }] }],
         [
-          { qualityCheckKind: "unit", claimCode: "CLM-RMD-008", status: "failed", broken: true, message: "the test file failed to load" },
+          { qualityCheckKind: "unit", claimCode: "CLM-RMD-008", status: "failed", neverRan: true, message: "the test file failed to load" },
           { qualityCheckKind: "integration", claimCode: "CLM-RMD-008", status: "passed" },
         ]
       )
@@ -40,7 +40,7 @@ describe("[CLM-RMD-008] the missing split counts the missing Reconciliation line
 
     const totals = tally.reconciliationLines;
     expect(totals.total).toBe(3);
-    expect(totals.byOutcome).toMatchObject({ missing: 1, broken: 1, satisfied: 1 });
+    expect(totals.byOutcome).toMatchObject({ missing: 1, "never-ran": 1, satisfied: 1 });
     expect(totals.missingByQualityCheckKind).toEqual([{ qualityCheckKind: "unit", count: 1 }]);
   });
 });

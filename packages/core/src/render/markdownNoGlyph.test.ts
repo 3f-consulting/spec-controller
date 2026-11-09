@@ -43,7 +43,7 @@ describe("[CLM-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
         { qualityCheckKind: "unit", claimCode: "CLM-NGL-999", status: "passed", locator: "src/ghost.test.ts" },
         { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "src/uncited.test.ts" },
         { qualityCheckKind: "fitness", fitnessFunction: "lint:uncited", exists: true, enforcedOverRealSource: true },
-        { qualityCheckKind: "unit", claimCode: null, status: "passed", broken: true, locator: "src/broken.test.ts" },
+        { qualityCheckKind: "unit", claimCode: null, status: "passed", neverRan: true, locator: "src/never-ran.test.ts" },
       ],
       [UNTAGGED],
     );
@@ -70,14 +70,14 @@ describe("[CLM-RPT-066] a verdict reads balanced or out-of-balance, and a reconc
     expect(items.length).toBeGreaterThan(0);
     for (const item of items) expect(readsInWords(item), item).toBe(true);
     expect(items).toContain(outcomeDescription("no-claim-code"));
-    expect(items).toContain(outcomeDescription("both-missing"));
+    expect(items).toContain(outcomeDescription("no-quality-check"));
     expect(items.some((item) => item.startsWith(`unit: ${outcomeDescription("failing")}`))).toBe(true);
   });
 
   it("reads each fitness evidence obligation's reconciling item on its claim's row as its kind of quality check and its outcome's sentence, with no symbol", () => {
     const md = renderMarkdown(__er(everyOutcome), ctx, publishedExitCodeOf);
     const watermelon = reconcilingItemsOf(md, "CLM-NGL-003");
-    expect(watermelon.some((item) => item.startsWith(`fitness: ${outcomeDescription("watermelon")}`))).toBe(true);
+    expect(watermelon.some((item) => item.startsWith(`fitness: ${outcomeDescription("cannot-fail")}`))).toBe(true);
     expect(symbolCharactersIn(watermelon.join("\n"))).toEqual([]);
     expect(reconcilingItemsOf(md, "CLM-NGL-001").filter((item) => item.startsWith("fitness")), "a satisfied obligation adds no item").toEqual([]);
   });

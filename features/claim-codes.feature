@@ -11,7 +11,7 @@ Feature: The claim code scheme polices itself — the rules a target runs from t
   cut, so it is listed as a claim code error and reds the run.
 
   WHAT THE LEDGER ALREADY SAYS IS NOT SAID TWICE. An unparked scenario with a claim code and no evidence tag reconciles
-  both-missing and is named by id in the report's own cut, and a tag the tool does not
+  no-quality-check and is named by id in the report's own cut, and a tag the tool does not
   read is a consumer's own tag, not a fault (the `unrecognised-tag` diagnosis left). The
   `tags` command that ran the older Rules here left the tool with them.
 
@@ -49,7 +49,7 @@ Feature: The claim code scheme polices itself — the rules a target runs from t
     Reconciliation under the code, and every kind of quality check each one raises reads `duplicate-claim-code`.
     No evidence observation citing that code can be attributed to either of them, so it credits
     neither and posts to the unnamed claim. Each `duplicate-claim-code` is a reconciling item, so each
-    claim is out of balance by the ordinary rule: no new verdict, no precedence. It is not `broken` —
+    claim is out of balance by the ordinary rule: no new verdict, no precedence. It is not `never-ran` —
     the proofs ran; what fails is the attribution.
 
     `balance` does not refuse such a corpus as unreadable, so one bad code does not blank the
@@ -81,19 +81,19 @@ Feature: The claim code scheme polices itself — the rules a target runs from t
     Scenario: A claim code has a feature part of two to five characters and a number of any width, so a part of one or of six characters makes no code
 
     @integration @CLM-STG-025
-    Scenario: A Vitest title citing a feature part outside two to five characters cites no scenario, beside citations of two and five characters that are read
+    Scenario: A Vitest title citing a feature part outside two to five characters cites no claim, beside citations of two and five characters that are read
       Given a target with one scenario of its own, and a Vitest report whose passing titles cite feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
       Then the two- and five-character citations open phantom claims
-      And the one- and six-character titles cite no scenario, so both evidence observations post to the unnamed claim
+      And the one- and six-character titles cite no claim, so both evidence observations post to the unnamed claim
       And the grammar target lists no claim code error
 
     @integration @CLM-STG-026
-    Scenario: A Cucumber scenario tagged with a feature part outside two to five characters cites no scenario, beside tags of two and five characters that are read
+    Scenario: A Cucumber scenario tagged with a feature part outside two to five characters cites no claim, beside tags of two and five characters that are read
       Given a target with one scenario of its own, and a Cucumber report whose passing scenarios are tagged with feature parts of one, two, five and six characters that no scenario carries
       When balance reconciles that grammar target
       Then the two- and five-character citations open phantom claims
-      And the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the unnamed claim
+      And the one- and six-character Cucumber scenarios cite no claim, so both evidence observations post to the unnamed claim
       And the grammar target lists no claim code error
 
     @integration @CLM-STG-027

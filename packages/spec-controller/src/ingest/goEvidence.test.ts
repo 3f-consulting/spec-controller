@@ -86,8 +86,8 @@ describe("[CLM-GOT-006] runReconcile reads a Go subtest whose enclosing test fai
   });
 });
 
-describe("[CLM-GOT-007] runReconcile reads a Go package that failed to compile as broken evidence, and the run is unsound", () => {
-  it("posts one broken item, on the unnamed claim's row, naming the package and saying its build failed", () => {
+describe("[CLM-GOT-007] runReconcile reads a Go package that failed to compile as evidence that never ran, and the run is unsound", () => {
+  it("posts one never-ran item, on the unnamed claim's row, naming the package and saying its build failed", () => {
     const observation = soleBrokenObservationOnUnnamedClaim(balance());
 
     expect(observation?.locator).toBe("example.com/gofixture/broken");

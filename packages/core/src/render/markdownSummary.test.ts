@@ -219,7 +219,7 @@ describe("[CLM-RPT-007] the corpus census is recoverable from the ledger scenari
     ]);
   });
 
-  it("recovers the census from the ledger scenario-count alone — the zero-obligation scenario is a both-missing row, not a second axis", () => {
+  it("recovers the census from the ledger scenario-count alone — the zero-obligation scenario is a no-quality-check row, not a second axis", () => {
     const md = renderMarkdown(__er(reconciliationFixture), ctx, publishedExitCodeOf);
     expect(md).toContain(`- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 3, balanced: 1, outOfBalance: 2 })}`);
     expect(md).toContain("CLM-C");

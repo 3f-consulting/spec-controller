@@ -47,9 +47,9 @@ describe("[CLM-CLI-058] balance refuses a flag given no value as a usage fault, 
     const vitest = valueFlags.find((flag) => flag.name === "--vitest");
     expect(vitest).toBeDefined();
     const { stdout, stderr, exitCode } = runBalanceCaptured([
-      "--features", "tests/fixtures/broken/features",
-      "--package-json", "tests/fixtures/broken/package.json",
-      "--ci", "tests/fixtures/broken",
+      "--features", "tests/fixtures/never-ran/features",
+      "--package-json", "tests/fixtures/never-ran/package.json",
+      "--ci", "tests/fixtures/never-ran",
       "--vitest",
     ]);
 
@@ -62,9 +62,9 @@ describe("[CLM-CLI-058] balance refuses a flag given no value as a usage fault, 
     const pytest = valueFlags.find((flag) => flag.name === "--pytest");
     expect(pytest).toBeDefined();
     const { stdout, stderr, exitCode } = runBalanceCaptured([
-      "--features", "tests/fixtures/broken/features",
-      "--package-json", "tests/fixtures/broken/package.json",
-      "--ci", "tests/fixtures/broken",
+      "--features", "tests/fixtures/never-ran/features",
+      "--package-json", "tests/fixtures/never-ran/package.json",
+      "--ci", "tests/fixtures/never-ran",
       "--pytest",
     ]);
 
@@ -77,9 +77,9 @@ describe("[CLM-CLI-058] balance refuses a flag given no value as a usage fault, 
     const jest = valueFlags.find((flag) => flag.name === "--jest");
     expect(jest).toBeDefined();
     const { stdout, stderr, exitCode } = runBalanceCaptured([
-      "--features", "tests/fixtures/broken/features",
-      "--package-json", "tests/fixtures/broken/package.json",
-      "--ci", "tests/fixtures/broken",
+      "--features", "tests/fixtures/never-ran/features",
+      "--package-json", "tests/fixtures/never-ran/package.json",
+      "--ci", "tests/fixtures/never-ran",
       "--jest",
     ]);
 
@@ -92,9 +92,9 @@ describe("[CLM-CLI-058] balance refuses a flag given no value as a usage fault, 
     const junit = valueFlags.find((flag) => flag.name === "--junit");
     expect(junit).toBeDefined();
     const { stdout, stderr, exitCode } = runBalanceCaptured([
-      "--features", "tests/fixtures/broken/features",
-      "--package-json", "tests/fixtures/broken/package.json",
-      "--ci", "tests/fixtures/broken",
+      "--features", "tests/fixtures/never-ran/features",
+      "--package-json", "tests/fixtures/never-ran/package.json",
+      "--ci", "tests/fixtures/never-ran",
       "--junit",
     ]);
 
@@ -107,9 +107,9 @@ describe("[CLM-CLI-058] balance refuses a flag given no value as a usage fault, 
     const rspec = valueFlags.find((flag) => flag.name === "--rspec");
     expect(rspec).toBeDefined();
     const { stdout, stderr, exitCode } = runBalanceCaptured([
-      "--features", "tests/fixtures/broken/features",
-      "--package-json", "tests/fixtures/broken/package.json",
-      "--ci", "tests/fixtures/broken",
+      "--features", "tests/fixtures/never-ran/features",
+      "--package-json", "tests/fixtures/never-ran/package.json",
+      "--ci", "tests/fixtures/never-ran",
       "--rspec",
     ]);
 

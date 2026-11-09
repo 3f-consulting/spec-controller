@@ -67,14 +67,14 @@ function scenarioObservations(
   const steps = scenario.steps ?? [];
   const evidence = evidenceOfRunResult(runResultOf(steps));
   if (evidence === undefined) return [];
-  if (evidence.broken) {
+  if (evidence.neverRan) {
     const ambiguous = steps.find(isAmbiguous)!;
     return [{
       qualityCheckKind: layers[0]!,
       claimCode,
       status: evidence.status,
       locator,
-      broken: evidence.broken,
+      neverRan: evidence.neverRan,
       notes: [ambiguousNote(ambiguous), ...severalNotes],
     }];
   }

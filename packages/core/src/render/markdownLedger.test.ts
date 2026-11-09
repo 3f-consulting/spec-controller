@@ -53,13 +53,13 @@ describe("[CLM-RPT-011] the markdown ledger renders per-scenario evidence column
     balance = reconcile(scenarios, observations);
   });
 
-  it("builds the fixture through the reconciler — the no-evidence-obligation evidence observation is OUT of an evidence obligation", () => {
+  it("builds the fixture through the reconciler — the not-asked-for evidence observation is OUT of an evidence obligation", () => {
     const noEvidenceObligation = balance.claimReconciliations.flatMap((s) =>
-      s.qualityCheckReconciliations.flatMap(linesOf).filter((line) => line.outcome === "no-evidence-obligation")
+      s.qualityCheckReconciliations.flatMap(linesOf).filter((line) => line.outcome === "not-asked-for")
     );
     expect(noEvidenceObligation).toHaveLength(2);
     const claimC = balance.claimReconciliations.find((s) => s.claim === "CLM-C")!;
-    expect(claimC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheckKind === "integration" && line.outcome === "no-evidence-obligation")).toBe(true);
+    expect(claimC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheckKind === "integration" && line.outcome === "not-asked-for")).toBe(true);
     expect(claimC.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.qualityCheckKind === "integration" && line.outcome === "satisfied")).toBe(false);
   });
 
@@ -70,7 +70,7 @@ describe("[CLM-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).not.toContain(" E2e ");
   });
 
-  it("encodes the four cell cases two-sided — named+met, named+missing, no-evidence-obligation, and absent", () => {
+  it("encodes the four cell cases two-sided — named+met, named+missing, not-asked-for, and absent", () => {
     const table = claimReconciliationsTable(renderMarkdown(__er(balance, true), ctx, publishedExitCodeOf));
     const evidence = (claim: string): string[] => table.evidenceOf(table.rowOf(claim));
     expect(evidence("CLM-A")).toEqual(["F/1", "U/2", ""]);
@@ -82,7 +82,7 @@ describe("[CLM-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it.each([
     ["[CLM-RPT-018] renders both cells for a scenario naming two layers — neither reads as missing", "CLM-G", ["", "U/1", "I/1"]],
-    ["renders -/N for an evidence observation at a PENDING pair — no-evidence-obligation, no evidence-obligation letter", "CLM-F", ["", "-/1", ""]],
+    ["renders -/N for an evidence observation at a PENDING pair — not-asked-for, no evidence-obligation letter", "CLM-F", ["", "-/1", ""]],
   ])("%s", (_title, claim, evidence) => {
     const table = claimReconciliationsTable(renderMarkdown(__er(balance, true), ctx, publishedExitCodeOf));
     expect(table.evidenceOf(table.rowOf(claim))).toEqual(evidence);
@@ -113,7 +113,7 @@ describe("[CLM-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   const citesNoScenario = (qualityCheckKind: string): string =>
-    `${qualityCheckKind}: ${outcomeDescription("cites-no-scenario")}`;
+    `${qualityCheckKind}: ${outcomeDescription("cites-no-claim")}`;
 
   it.each([
     [
@@ -262,28 +262,28 @@ describe("[CLM-RPT-019] the Reconciliation totals section lists the ten leaf out
   const LEAVES = [
     "missing",
     "failing",
-    "watermelon",
+    "cannot-fail",
     "no-claim-code",
     "duplicate-claim-code",
-    "cites-unknown-scenario",
-    "cites-no-scenario",
-    "no-evidence-obligation",
-    "broken",
-    "both-missing",
+    "cites-unknown-claim",
+    "cites-no-claim",
+    "not-asked-for",
+    "never-ran",
+    "no-quality-check",
   ] as const;
 
   const ALL_OUTCOMES: Record<Outcome, true> = {
     satisfied: true,
     failing: true,
-    watermelon: true,
+    "cannot-fail": true,
     missing: true,
-    "cites-unknown-scenario": true,
-    "cites-no-scenario": true,
+    "cites-unknown-claim": true,
+    "cites-no-claim": true,
     "no-claim-code": true,
     "duplicate-claim-code": true,
-    broken: true,
-    "no-evidence-obligation": true,
-    "both-missing": true,
+    "never-ran": true,
+    "not-asked-for": true,
+    "no-quality-check": true,
   };
   let EXPECTED_LEAVES: Outcome[];
   beforeEach(() => {
@@ -360,7 +360,7 @@ describe("[CLM-RPT-099] the Reconciliation totals section lists no group rows am
   });
 });
 
-describe("[CLM-RPT-069] the evidence grid counts only the evidence observations that ran, so a broken observation fills no cell and adds no column", () => {
+describe("[CLM-RPT-069] the evidence grid counts only the evidence observations that ran, so an observation that never ran fills no cell and adds no column", () => {
   const ranNever = () => evidenceOfRunResult("never-reached-its-assertions")!;
 
   const gridOf = (scenarios: Scenario[], observations: EvidenceObservation[]): { columns: readonly string[]; cells: Map<string, string[]> } => {
@@ -380,7 +380,7 @@ describe("[CLM-RPT-069] the evidence grid counts only the evidence observations 
     expect(grid.cells.get("CLM-U")).toEqual(["U/-"]);
   });
 
-  it("adds no E2e column for a broken e2e observation on a scenario that raises no e2e obligation", () => {
+  it("adds no E2e column for an e2e observation that never ran on a scenario that raises no e2e obligation", () => {
     const grid = gridOf(
       [{ claimCode: "CLM-U", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [
@@ -392,7 +392,7 @@ describe("[CLM-RPT-069] the evidence grid counts only the evidence observations 
     expect(grid.cells.get("CLM-U")).toEqual(["U/1"]);
   });
 
-  it("counts the observation that ran beside a broken one at the same check", () => {
+  it("counts the observation that ran beside one that never ran at the same check", () => {
     const grid = gridOf(
       [{ claimCode: "CLM-U", evidenceObligations: [{ qualityCheckKind: "unit" }] }],
       [

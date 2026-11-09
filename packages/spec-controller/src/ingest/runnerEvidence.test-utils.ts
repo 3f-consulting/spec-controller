@@ -37,7 +37,7 @@ type ReconcilingItem = ReturnType<typeof reconcilingItemsOf>[number];
 
 export function brokenItemsOf(balance: EvidenceReconciliation): { kind: ClaimReconciliation["kind"]; item: ReconcilingItem }[] {
   return balance.ledger.claimReconciliations.flatMap((row) =>
-    reconcilingItemsOf(row).filter((item) => item.outcome === "broken").map((item) => ({ kind: row.kind, item }))
+    reconcilingItemsOf(row).filter((item) => item.outcome === "never-ran").map((item) => ({ kind: row.kind, item }))
   );
 }
 

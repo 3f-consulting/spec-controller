@@ -102,18 +102,18 @@ describe("[CLM-JAV-008] runReconcile reads a JUnit 5 test that throws, in its bo
     const unit = unitOf(claimCode);
 
     expectSoleObservation(unit, "failing", { status: "failed", locator });
-    expect(unit?.evidenceObservations?.[0]?.broken).toBeUndefined();
+    expect(unit?.evidenceObservations?.[0]?.neverRan).toBeUndefined();
   });
 
-  it("posts no broken item for either test", () => {
+  it("posts no never-ran item for either test", () => {
     const brokenLocators = brokenItemsOf(balance()).flatMap(({ item }) => (item.evidenceObservation === undefined ? [] : [item.evidenceObservation.locator]));
 
     expect(brokenLocators.join("\n")).not.toMatch(/CLM-JVF-01[01]/);
   });
 });
 
-describe("[CLM-JAV-009] runReconcile reads a JUnit 5 class whose setup before all its tests failed as broken evidence, and the run is unsound", () => {
-  it("posts one broken item, on the unnamed claim's row, naming the class and carrying the error that stopped it", () => {
+describe("[CLM-JAV-009] runReconcile reads a JUnit 5 class whose setup before all its tests failed as evidence that never ran, and the run is unsound", () => {
+  it("posts one never-ran item, on the unnamed claim's row, naming the class and carrying the error that stopped it", () => {
     const observation = soleBrokenObservationOnUnnamedClaim(balance());
 
     expect(observation?.locator).toBe("example.BeforeAllFailsTest");

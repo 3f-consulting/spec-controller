@@ -6,7 +6,7 @@ This guide takes you from nothing to a first `spec-controller balance` run on yo
 
 You write each behaviour of your software as a scenario in a Gherkin `.feature` file. Its tags say what proof it needs, such as `@unit` or `@e2e`. These needs are its **evidence obligations**.
 
-Your test tools and CI already write reports of what ran. Each result in them is an **evidence observation**, which is `broken` if it never ran to a result.
+Your test tools and CI already write reports of what ran. Each result in them is an **evidence observation**, which is `never-ran` if it never ran to a result.
 
 `balance` matches each observation to the obligation it answers, scenario by scenario, like a ledger. When the two sides disagree, the build goes red. `spec-controller` does not run your tests. It reads the reports your tools already produce.
 
@@ -201,14 +201,14 @@ The [README's sample report](../README.md) shows every kind of row in one small 
 - **Each evidence cell** reads *obligation*/*observations*. The letter marks an obligation of that kind, and the number counts the evidence posted. `U/1` is a unit obligation answered by one unit test.
 - **The verdict** is **balanced** or **out-of-balance**.
 - **A reconciling item** is a reason a row does not balance, such as `missing` (no proof arrived) or `failing` (the proof failed).
-- **A phantom claim's row** holds evidence that cites a code no scenario carries, usually a typo or the code of a deleted scenario. Each unknown code gets one such row, named by that code, like the sample's row whose item cites an unknown Scenario.
+- **A phantom claim's row** holds evidence that cites a code no scenario carries, usually a typo or the code of a deleted scenario. Each unknown code gets one such row, named by that code, like the sample's row whose item cites an unknown claim.
 - **The unnamed claim's row**, `(unnamed claim)`, holds evidence that cites nothing.
 
-Watch for a **watermelon**: a check that is green, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run. Given `--ci-steps`, the step's own outcome answers the row instead, and a swallowed red reads `failing`.
+Watch for a **cannot-fail** check: one that is green, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run. Given `--ci-steps`, the step's own outcome answers the row instead, and a swallowed red reads `failing`.
 
 If your first run shows a wall of uncited checks, read the report's **Step accounting** section. It names each workflow and job, how many steps were read and what became of every one.
 
-See [Reading the report](./user-guide.md#reading-the-report), [Report rows to know](./user-guide.md#report-rows-to-know) and [Watermelons](./user-guide.md#watermelons).
+See [Reading the report](./user-guide.md#reading-the-report), [Report rows to know](./user-guide.md#report-rows-to-know) and [Passes that cannot fail](./user-guide.md#passes-that-cannot-fail).
 
 ## Where to go next
 

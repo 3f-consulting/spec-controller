@@ -26,7 +26,7 @@ const NEVER_RAN: EvidenceObservation = {
   claimCode: null,
   status: "failed",
   locator: "src/collect.test.ts",
-  broken: true,
+  neverRan: true,
 };
 
 const KEY_NOT_READ: Partial<Summary> = { configurationKeysNotRead: ["zzz"] };

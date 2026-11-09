@@ -38,7 +38,7 @@ describe("[CLM-LNT-036] a failed fitness evidence observation beside a passing o
   });
 });
 
-describe("[CLM-LNT-037] a watermelon fitness evidence observation beside a wired one for the same check reads a watermelon line beside a satisfied one, and the ledger is out of balance, whichever one's locator sorts first", () => {
+describe("[CLM-LNT-037] a cannot-fail fitness evidence observation beside a wired one for the same check reads a cannot-fail line beside a satisfied one, and the ledger is out of balance, whichever one's locator sorts first", () => {
   const obligation = { qualityCheckKind: "fitness" } as const;
   const rowNamingCheck: Scenario[] = [{ claimCode: CLAIM_CODE, evidenceObligations: [obligation] }];
   const runOf = (enforcedOverRealSource: boolean, locator: string): EvidenceObservation => ({
@@ -57,10 +57,10 @@ describe("[CLM-LNT-037] a watermelon fitness evidence observation beside a wired
   };
 
   it.each([
-    ["the watermelon run's file sorts first", "a.feature", "z.feature"],
+    ["the cannot-fail run's file sorts first", "a.feature", "z.feature"],
     ["the wired run's file sorts first", "z.feature", "a.feature"],
-  ])("holds both runs in one fitness reconciliation, a watermelon line and a satisfied line in evidence order, with the row and the run out of balance, when %s", (_order, watermelonLocator, wiredLocator) => {
-    const watermelon = { ...runOf(false, watermelonLocator), outcome: "watermelon" };
+  ])("holds both runs in one fitness reconciliation, a cannot-fail line and a satisfied line in evidence order, with the row and the run out of balance, when %s", (_order, watermelonLocator, wiredLocator) => {
+    const watermelon = { ...runOf(false, watermelonLocator), outcome: "cannot-fail" };
     const wired = { ...runOf(true, wiredLocator), outcome: "satisfied" };
     expect(itemOf([runOf(true, wiredLocator), runOf(false, watermelonLocator)])).toEqual({
       outcome: undefined,
@@ -80,7 +80,7 @@ describe("[CLM-LNT-037] a watermelon fitness evidence observation beside a wired
   });
 });
 
-describe("[CLM-LNT-038] a failed fitness evidence observation beside a watermelon one for the same check reads a failing line and a watermelon line, each carrying its own observation, whichever one's locator sorts first", () => {
+describe("[CLM-LNT-038] a failed fitness evidence observation beside a cannot-fail one for the same check reads a failing line and a cannot-fail line, each carrying its own observation, whichever one's locator sorts first", () => {
   const obligation = { qualityCheckKind: "fitness" } as const;
   const rowNamingCheck: Scenario[] = [{ claimCode: CLAIM_CODE, evidenceObligations: [obligation] }];
   const failedRun = (locator: string): EvidenceObservation => ({
@@ -104,9 +104,9 @@ describe("[CLM-LNT-038] a failed fitness evidence observation beside a watermelo
   it.each([
     ["the failed run's file sorts first", "a.feature", "z.feature"],
     ["the severed run's file sorts first", "z.feature", "a.feature"],
-  ])("reads a failing line carrying the failed run and a watermelon line carrying the severed run, in evidence order, and the Markdown row reads both, when %s", (_order, failedLocator, severedLocator) => {
+  ])("reads a failing line carrying the failed run and a cannot-fail line carrying the severed run, in evidence order, and the Markdown row reads both, when %s", (_order, failedLocator, severedLocator) => {
     const failed = { ...failedRun(failedLocator), outcome: "failing" };
-    const severed = { ...severedRun(severedLocator), outcome: "watermelon" };
+    const severed = { ...severedRun(severedLocator), outcome: "cannot-fail" };
     const ledger = reconcile(rowNamingCheck, [severedRun(severedLocator), failedRun(failedLocator)]);
     const row = ledger.claimReconciliations.find((r) => r.claim === CLAIM_CODE)!;
     const item = row.qualityCheckReconciliations.find((i) => i.qualityCheckKind === "fitness")!;
@@ -117,7 +117,7 @@ describe("[CLM-LNT-038] a failed fitness evidence observation beside a watermelo
       "out-of-balance",
       false,
     ]);
-    const lines = (failedFirst ? ["failing", "watermelon"] as const : ["watermelon", "failing"] as const)
+    const lines = (failedFirst ? ["failing", "cannot-fail"] as const : ["cannot-fail", "failing"] as const)
       .map((outcome) => `fitness: ${outcomeDescription(outcome)}`);
     const markdown = renderMarkdown(__er(ledger), ctx, publishedExitCodeOf);
     expect(reconcilingItemsOf(markdown, CLAIM_CODE).map((item, i) => item.startsWith(lines[i]!))).toEqual([true, true]);

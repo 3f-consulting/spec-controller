@@ -138,7 +138,7 @@ describe("[CLM-CUC-002] parseCucumberEvidenceObservations derives NO non-unit le
   });
 });
 
-describe("[CLM-CUC-003] parseCucumberEvidenceObservations emits a broken observation for an ambiguous step — a broken harness, not an absent test", () => {
+describe("[CLM-CUC-003] parseCucumberEvidenceObservations emits an observation that never ran for an ambiguous step — a broken harness, not an absent test", () => {
   const ambiguousReport = (tags: Array<{ name?: string }>): CucumberJsonReport => [
     {
       uri: "features/ldg019.feature",
@@ -153,7 +153,7 @@ describe("[CLM-CUC-003] parseCucumberEvidenceObservations emits a broken observa
     },
   ];
 
-  it("emits ONE broken observation carrying the scenario's claimCode, the feature-file locator, and a note naming the ambiguous step", () => {
+  it("emits ONE observation that never ran carrying the scenario's claimCode, the feature-file locator, and a note naming the ambiguous step", () => {
     const observations = parseCucumberEvidenceObservations(
       ambiguousReport([{ name: "@integration" }, { name: "@CLM-HNS-020" }])
     );
@@ -164,7 +164,7 @@ describe("[CLM-CUC-003] parseCucumberEvidenceObservations emits a broken observa
         claimCode: "CLM-HNS-020",
         status: "failed",
         locator: "features/ldg019.feature",
-        broken: true,
+        neverRan: true,
         notes: [{ kind: "ambiguous-step", step: "Given a step two definitions both match" }],
       },
     ]);
@@ -183,7 +183,7 @@ describe("[CLM-CUC-003] parseCucumberEvidenceObservations emits a broken observa
     ];
     const [observation] = parseCucumberEvidenceObservations(report) as BehaviouralEvidenceObservation[];
 
-    expect(observation).toMatchObject({ broken: true, notes: [note] });
+    expect(observation).toMatchObject({ neverRan: true, notes: [note] });
     expect(observation).not.toHaveProperty("message");
     expect(observation?.notes?.[0]).toStrictEqual(note);
     expect(remarkWordsOf(observation ?? {})).toBe(wordsOf());
@@ -223,7 +223,7 @@ describe("[CLM-CUC-001] a Cucumber scenario tagged with two claim codes credits 
     },
   ];
 
-  it("emits every layer's evidence observation citing no scenario, each with a note of both codes and no message", () => {
+  it("emits every layer's evidence observation citing no claim, each with a note of both codes and no message", () => {
     const report = reportOf(["@integration", "@e2e", "@CLM-AAA-001", "@CLM-AAA-002"], "passed");
 
     expect(parseCucumberEvidenceObservations(report)).toEqual(
@@ -238,7 +238,7 @@ describe("[CLM-CUC-001] a Cucumber scenario tagged with two claim codes credits 
     );
   });
 
-  it("carries the ambiguous step as a note on the broken observation, then the note naming both codes", () => {
+  it("carries the ambiguous step as a note on the observation that never ran, then the note naming both codes", () => {
     const report = reportOf(["@integration", "@CLM-AAA-001", "@CLM-AAA-002"], "ambiguous");
 
     expect(parseCucumberEvidenceObservations(report)).toEqual([
@@ -247,7 +247,7 @@ describe("[CLM-CUC-001] a Cucumber scenario tagged with two claim codes credits 
         claimCode: null,
         status: "failed",
         locator: "features/several.feature",
-        broken: true,
+        neverRan: true,
         notes: [{ kind: "ambiguous-step", step: "Given a step" }, severalNote],
       },
     ]);

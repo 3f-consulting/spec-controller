@@ -42,10 +42,10 @@ Feature: A pending evidence obligation raises a Pending Item
         | e2e                |
         | performance        |
 
-  Rule: A Pending Item is one-sided: it never affects the verdict itself, and an evidence observation at its deferred kind of quality check is no-evidence-obligation
+  Rule: A Pending Item is one-sided: it never affects the verdict itself, and an evidence observation at its deferred kind of quality check is not-asked-for
 
     @unit @CLM-PND-005
-    Scenario: a passing observation at a deferred kind of quality check is no-evidence-obligation — the Pending Item stands and the row is out of balance until the deferral tag is removed
+    Scenario: a passing observation at a deferred kind of quality check is not-asked-for — the Pending Item stands and the row is out of balance until the deferral tag is removed
 
     @unit @CLM-PND-006
     Scenario: a Pending Item is not a Reconciling Item (it is not an error)
@@ -98,4 +98,4 @@ Feature: A pending evidence obligation raises a Pending Item
     Scenario: the recognised deferral-tag set is configuration — a project-configured tag defers like the built-in set
 
     @unit @CLM-PND-022
-    Scenario: a deferred scenario raising no obligations is a Pending Item, not both-missing
+    Scenario: a deferred scenario raising no obligations is a Pending Item, not no-quality-check

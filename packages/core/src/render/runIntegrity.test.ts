@@ -32,7 +32,7 @@ const collectionFailed = (locator: string | undefined, message?: string): Eviden
   claimCode: null,
   status: "failed",
   ...(locator !== undefined ? { locator } : {}),
-  broken: true,
+  neverRan: true,
   ...(message !== undefined ? { message } : {}),
 });
 
@@ -42,7 +42,7 @@ const SKIPPED_CHECK: EvidenceObservation = {
   claimCode: "CLM-RIN-001",
   exists: false,
   enforcedOverRealSource: false,
-  broken: true,
+  neverRan: true,
   notes: [{ kind: "check-step-did-not-run", code: "CLM-RIN-001", outcome: "skipped" }],
 };
 
@@ -74,11 +74,11 @@ const whatBroke = (locator: string): string =>
   `- ${coreMessage(CoreMessage.BrokenEvidenceWhatBroke, { locator: `\`${locator}\`` })}`;
 
 const brokenCell = (qualityCheckKind: string, where: string): string =>
-  `${qualityCheckKind}: ${outcomeDescription("broken")} (${where})`;
+  `${qualityCheckKind}: ${outcomeDescription("never-ran")} (${where})`;
 
 const unsoundStamp = (proofs: string): string => coreMessage(CoreMessage.RunUnsound, { proofs });
 
-describe("[CLM-RPT-021] the markdown names the broken evidence and its error, and stamps the run unsound", () => {
+describe("[CLM-RPT-021] the markdown names the evidence that never ran and its error, and stamps the run unsound", () => {
   let checkDidNotRun: string;
   beforeEach(() => {
     checkDidNotRun = coreMessage(CoreMessage.CheckStepSkipped, { claimCode: "CLM-RIN-001" });
@@ -94,7 +94,7 @@ describe("[CLM-RPT-021] the markdown names the broken evidence and its error, an
     ],
     ["an empty error as no message", "", "```", null],
     ["an error of whitespace only as no message", "  \n\t", "```", null],
-  ])("one broken evidence: the stamp counts one proof, then names its file and prints %s, each block followed by a blank line", (_, message, fence, shown) => {
+  ])("one evidence that never ran: the stamp counts one proof, then names its file and prints %s, each block followed by a blank line", (_, message, fence, shown) => {
     const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, message));
     expect(runIntegrityLines(md)).toEqual([
       markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
@@ -110,7 +110,7 @@ describe("[CLM-RPT-021] the markdown names the broken evidence and its error, an
     ]);
   });
 
-  it("a broken item whose error is empty and which carries a note is printed with the note's words alone", () => {
+  it("a never-ran item whose error is empty and which carries a note is printed with the note's words alone", () => {
     const md = render({ ...SKIPPED_CHECK, message: "" });
     expect(runIntegrityLines(md)).toEqual([
       markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
@@ -126,7 +126,7 @@ describe("[CLM-RPT-021] the markdown names the broken evidence and its error, an
     ]);
   });
 
-  it("two broken evidences: the stamp counts them in the plural, and the one the runner did not name is listed as unnamed", () => {
+  it("two evidences that never ran: the stamp counts them in the plural, and the one the runner did not name is listed as unnamed", () => {
     const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, COLLECTION_FAILED_MESSAGE), SKIPPED_CHECK);
     expect(runIntegrityLines(md)).toEqual([
       markdownHeading(2, coreMessage(CoreMessage.RunIntegrityHeading)),
@@ -148,7 +148,7 @@ describe("[CLM-RPT-021] the markdown names the broken evidence and its error, an
     ]);
   });
 
-  it("each row headlines its broken item by its error's first non-blank line, whitespace collapsed and the cell's pipe escaped, the skipped check's on the scenario it names", () => {
+  it("each row headlines its never-ran item by its error's first non-blank line, whitespace collapsed and the cell's pipe escaped, the skipped check's on the scenario it names", () => {
     const message = "  \n\t\nCannot   find | package\n    at packageResolve (node:internal)";
     const md = render(collectionFailed(COLLECTION_FAILED_LOCATOR, message), SKIPPED_CHECK);
     expect(reconcilingItemsCell(md, UNNAMED_CLAIM_ID)).toBe(
@@ -174,7 +174,7 @@ describe("[CLM-RPT-021] the markdown names the broken evidence and its error, an
     { shape: "an empty locator", locator: "", name: { kind: "unnamed" } },
     { shape: "a locator of whitespace only", locator: " \t ", name: { kind: "unnamed" } },
     { shape: "a locator", locator: " spaced/collect.test.ts", name: { kind: "named", locator: " spaced/collect.test.ts" } },
-  ])("a broken evidence observation with $shape is named by whether its locator names anything", ({ locator, name }) => {
+  ])("an evidence observation that never ran with $shape is named by whether its locator names anything", ({ locator, name }) => {
     expect(brokenEvidenceNameOf(collectionFailed(locator))).toEqual(name);
   });
 });
@@ -183,7 +183,7 @@ describe("[CLM-RPT-085] an item quoting what an evidence observation said states
   const codes = ["CLM-RIN-001", "CLM-RIN-002"];
   const said = { locator: "src/x.test.ts", message: "\nexpected 1 to be 2\n    at foo (x.ts:1)", notes: [{ kind: "several-claim-codes", codes }] } as const;
   const rows: [string, EvidenceObservation][] = [
-    ["a broken item", { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, ...said }],
+    ["a never-ran item", { qualityCheckKind: "unit", claimCode: null, status: "failed", neverRan: true, ...said }],
     ["a file's group on the unnamed claim's row", { qualityCheckKind: "unit", claimCode: null, status: "failed", testName: "t1", ...said }],
   ];
   it.each(rows)("%s", (_, observation) => {

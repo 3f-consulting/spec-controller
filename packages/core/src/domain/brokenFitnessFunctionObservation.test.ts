@@ -4,7 +4,7 @@ import { linesOf } from "./claimReconciliation.js";
 import { brokenItemsOf, hasBrokenEvidence, fitnessFunctionTally } from "./ledger.js";
 import type { Scenario, EvidenceObservation } from "./journal.js";
 
-describe("[CLM-LNT-026] a BROKEN fitness-function evidence observation is excluded from the obligation match whatever else it carries", () => {
+describe("[CLM-LNT-026] a fitness-function evidence observation that NEVER RAN is excluded from the obligation match whatever else it carries", () => {
   it("leaves the obligation missing and stamps the run unsound even when the evidence observation says the check exists and ran", () => {
     const scenarios: Scenario[] = [
       {
@@ -21,7 +21,7 @@ describe("[CLM-LNT-026] a BROKEN fitness-function evidence observation is exclud
         claimCode: "CLM-LNT-026",
         exists: true,
         enforcedOverRealSource: true,
-        broken: true,
+        neverRan: true,
         message: "the run's record says this check's step was skipped",
         locator: "features/fitness-functions.feature",
       },
@@ -42,8 +42,8 @@ describe("[CLM-LNT-026] a BROKEN fitness-function evidence observation is exclud
       },
       {
         qualityCheckKind: "fitness",
-        outcome: "broken",
-        evidenceObservation: { ...evidenceObservations[0], outcome: "broken" },
+        outcome: "never-ran",
+        evidenceObservation: { ...evidenceObservations[0], outcome: "never-ran" },
       },
     ]);
     expect(brokenItemsOf(balance).flatMap((line) => line.evidenceObservation ?? [])).toMatchObject([

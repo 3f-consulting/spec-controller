@@ -74,7 +74,7 @@ describe("[CLM-PYT-003] parsePytestEvidenceObservations posts nothing for a skip
   });
 });
 
-describe("[CLM-PYT-005] parsePytestEvidenceObservations posts a testcase with no clm property as a passed observation citing no scenario", () => {
+describe("[CLM-PYT-005] parsePytestEvidenceObservations posts a testcase with no clm property as a passed observation citing no claim", () => {
   const reportOf = (properties?: { property: { name: string; value: string }[] }): JunitXmlReport => ({
     testsuites: {
       testsuite: [
@@ -85,13 +85,13 @@ describe("[CLM-PYT-005] parsePytestEvidenceObservations posts a testcase with no
     },
   });
 
-  it("emits one unit observation citing no scenario for a testcase with no clm property", () => {
+  it("emits one unit observation citing no claim for a testcase with no clm property", () => {
     expect(parsePytestEvidenceObservations(reportOf())).toEqual([
       { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "tests.test_widget::test_the_widget_spins" },
     ]);
   });
 
-  it("emits one unit observation citing no scenario for a clm property whose value is not a claim code", () => {
+  it("emits one unit observation citing no claim for a clm property whose value is not a claim code", () => {
     expect(
       parsePytestEvidenceObservations(reportOf({ property: [{ name: "clm", value: "FOO-005" }] }))
     ).toEqual([
@@ -99,7 +99,7 @@ describe("[CLM-PYT-005] parsePytestEvidenceObservations posts a testcase with no
     ]);
   });
 
-  it("emits one unit observation citing no scenario for a testcase whose only property of another name holds a claim code", () => {
+  it("emits one unit observation citing no claim for a testcase whose only property of another name holds a claim code", () => {
     expect(
       parsePytestEvidenceObservations(reportOf({ property: [{ name: "owner", value: "CLM-PYT-001" }] }))
     ).toEqual([
@@ -130,7 +130,7 @@ describe("[CLM-PYT-006] parsePytestEvidenceObservations credits no scenario for 
     },
   };
 
-  it("emits one unit observation citing no scenario, with a note of both codes and no message", () => {
+  it("emits one unit observation citing no claim, with a note of both codes and no message", () => {
     expect(parsePytestEvidenceObservations(report)).toEqual([
       {
         qualityCheckKind: "unit",
@@ -176,7 +176,7 @@ describe("[CLM-PYT-006] parsePytestEvidenceObservations credits no scenario for 
   });
 });
 
-describe("[CLM-PYT-007] parsePytestEvidenceObservations posts a collection failure as broken evidence citing no scenario", () => {
+describe("[CLM-PYT-007] parsePytestEvidenceObservations posts a collection failure as evidence that never ran citing no claim", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -196,21 +196,21 @@ describe("[CLM-PYT-007] parsePytestEvidenceObservations posts a collection failu
     },
   };
 
-  it("emits one broken unit observation citing no scenario, located at the module, carrying the error text", () => {
+  it("emits one unit observation that never ran citing no claim, located at the module, carrying the error text", () => {
     expect(parsePytestEvidenceObservations(report)).toEqual([
       {
         qualityCheckKind: "unit",
         claimCode: null,
         status: "failed",
         locator: "test_widget",
-        broken: true,
+        neverRan: true,
         message: "E   ModuleNotFoundError: No module named 'widget'",
       },
     ]);
   });
 });
 
-describe("[CLM-PYT-008] parsePytestEvidenceObservations posts a test whose setup errored as broken evidence citing its scenario", () => {
+describe("[CLM-PYT-008] parsePytestEvidenceObservations posts a test whose setup errored as evidence that never ran citing its scenario", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -231,21 +231,21 @@ describe("[CLM-PYT-008] parsePytestEvidenceObservations posts a test whose setup
     },
   };
 
-  it("emits one broken unit observation citing that code, located at the test, carrying the error text", () => {
+  it("emits one unit observation that never ran citing that code, located at the test, carrying the error text", () => {
     expect(parsePytestEvidenceObservations(report)).toEqual([
       {
         qualityCheckKind: "unit",
         claimCode: "CLM-FOO-008",
         status: "failed",
         locator: "tests.test_widget::test_the_widget_needs_a_resource",
-        broken: true,
+        neverRan: true,
         message: "E       RuntimeError: no resource",
       },
     ]);
   });
 });
 
-describe("[CLM-GOT-007] parseJunitEvidenceObservations posts a Go package that failed to compile as broken evidence naming the package", () => {
+describe("[CLM-GOT-007] parseJunitEvidenceObservations posts a Go package that failed to compile as evidence that never ran naming the package", () => {
   type Testcase = NonNullable<NonNullable<NonNullable<JunitXmlReport["testsuites"]>["testsuite"]>[number]["testcase"]>[number];
   const observationsOf = (testcase: Testcase) =>
     parseJunitEvidenceObservations({ testsuites: { testsuite: [{ name: "example.com/m/broken", testcase: [testcase] }] } });
@@ -253,14 +253,14 @@ describe("[CLM-GOT-007] parseJunitEvidenceObservations posts a Go package that f
   it.each([
     ["with its failure's text read from the element", { "#text": "FAIL\texample.com/m/broken [build failed]" }],
     ["with its failure written as bare text", "FAIL\texample.com/m/broken [build failed]"],
-  ])("reads gotestsum's build-failure row as broken, %s", (_how, failure) => {
+  ])("reads gotestsum's build-failure row as never-ran, %s", (_how, failure) => {
     expect(observationsOf({ classname: "", name: "TestMain", failure })).toEqual([
       {
         qualityCheckKind: "unit",
         claimCode: null,
         status: "failed",
         locator: "example.com/m/broken",
-        broken: true,
+        neverRan: true,
         message: "FAIL\texample.com/m/broken [build failed]",
       },
     ]);
@@ -272,7 +272,7 @@ describe("[CLM-GOT-007] parseJunitEvidenceObservations posts a Go package that f
     ["a failing TestMain row with no package whose build did not fail", { classname: "", name: "TestMain", failure: { "#text": "FAIL\texample.com/m/broken" } }],
     ["a passing TestMain row with no package", { classname: "", name: "TestMain" }],
   ])("reads %s as a test that ran, not as a build failure", (_what, testcase) => {
-    expect(observationsOf(testcase)[0]?.broken).toBeUndefined();
+    expect(observationsOf(testcase)[0]?.neverRan).toBeUndefined();
   });
 });
 
@@ -349,7 +349,7 @@ describe("[CLM-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that
     },
   };
 
-  it("emits one failing unit observation citing that code, located at the test, never broken", () => {
+  it("emits one failing unit observation citing that code, located at the test, never reading never-ran", () => {
     expect(parseJunitEvidenceObservations(report)).toEqual([
       {
         qualityCheckKind: "unit",
@@ -360,12 +360,12 @@ describe("[CLM-JAV-008] parseJunitEvidenceObservations posts a JUnit 5 test that
     ]);
   });
 
-  it("keeps the same testcase broken when it is read as a pytest report", () => {
-    expect(parsePytestEvidenceObservations(report)[0]?.broken).toBe(true);
+  it("reads the same testcase as never-ran when it is read as a pytest report", () => {
+    expect(parsePytestEvidenceObservations(report)[0]?.neverRan).toBe(true);
   });
 });
 
-describe("[CLM-JAV-009] parseJunitEvidenceObservations posts a JUnit 5 class whose setup before all its tests failed as broken evidence citing no scenario", () => {
+describe("[CLM-JAV-009] parseJunitEvidenceObservations posts a JUnit 5 class whose setup before all its tests failed as evidence that never ran citing no claim", () => {
   const report: JunitXmlReport = {
     testsuites: {
       testsuite: [
@@ -385,14 +385,14 @@ describe("[CLM-JAV-009] parseJunitEvidenceObservations posts a JUnit 5 class who
     },
   };
 
-  it("emits one broken observation located at the class, carrying the error that stopped it", () => {
+  it("emits one observation that never ran located at the class, carrying the error that stopped it", () => {
     expect(parseJunitEvidenceObservations(report)).toEqual([
       {
         qualityCheckKind: "unit",
         claimCode: null,
         status: "failed",
         locator: "[CLM-JVF-014] a class that cites a scenario",
-        broken: true,
+        neverRan: true,
         message: "java.lang.IllegalStateException: the shared resource could not be set up",
       },
     ]);

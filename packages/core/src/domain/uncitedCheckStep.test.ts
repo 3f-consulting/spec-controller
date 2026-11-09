@@ -64,9 +64,9 @@ describe("[CLM-LNT-029] an unannotated pipeline is reported as every check it ru
         "unnamed-claim",
         "out-of-balance",
         [
-          [["lint:alpha"], "cites-no-scenario"],
-          [["lint:beta"], "cites-no-scenario"],
-          [["typecheck"], "cites-no-scenario"],
+          [["lint:alpha"], "cites-no-claim"],
+          [["lint:beta"], "cites-no-claim"],
+          [["typecheck"], "cites-no-claim"],
         ],
       ],
     ]);

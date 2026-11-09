@@ -18,7 +18,7 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
       cell must read `-/1`, NOT `U/-`. This is the CLM-CLI-054 shape — the bug this scenario fixes.
     - @CLM-CEL-004 — @unitpending: the unit obligation is DEFERRED, so it partitions to a one-sided
       Pending Item and posts NO reconciled row; the vitest observation citing it answers no
-      obligation, so it posts as a no-evidence-obligation row → its Unit cell reads `-/1`, beside
+      obligation, so it posts as a not-asked-for row → its Unit cell reads `-/1`, beside
       its pending item.
 
   No scenario here puts two checks on one row. A Quality Check is the check ITSELF as a

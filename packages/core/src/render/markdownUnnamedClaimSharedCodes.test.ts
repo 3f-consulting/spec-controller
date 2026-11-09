@@ -35,7 +35,7 @@ function unnamedClaimItemsOf(observations: BehaviouralEvidenceObservation[]): st
   return reconcilingItemsOf(renderMarkdown(__er(reconcile(sharers, observations)), ctx, publishedExitCodeOf), "(unnamed claim)");
 }
 
-describe("[CLM-RPT-075] in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code, once, whatever its tests' messages say, even where the runner names no file", () => {
+describe("[CLM-RPT-075] in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no claim, and only their group names the code, once, whatever its tests' messages say, even where the runner names no file", () => {
   it("gives the file one entry per shared code and one for its tests citing nothing, each counting and naming only its own tests", () => {
     const remark = (code: string): string => coreMessage(CoreMessage.SharedClaimCode, { code });
     expect(unnamedClaimItemsOf(mixedFile())).toEqual([

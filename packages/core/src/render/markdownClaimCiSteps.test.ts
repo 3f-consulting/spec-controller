@@ -87,7 +87,7 @@ const observations: EvidenceObservation[] = [
     status: "passed",
   },
   { qualityCheckKind: "integration", claimCode: "CLM-BRK-001", status: "passed" },
-  { qualityCheckKind: "unit", claimCode: "CLM-BRK-001", status: "failed", broken: true },
+  { qualityCheckKind: "unit", claimCode: "CLM-BRK-001", status: "failed", neverRan: true },
   {
     qualityCheckKind: "fitness",
     fitnessFunction: "pnpm lint",
@@ -95,7 +95,7 @@ const observations: EvidenceObservation[] = [
     step: "ci.yml:checks:Lint",
     exists: false,
     enforcedOverRealSource: false,
-    broken: true,
+    neverRan: true,
   },
   {
     qualityCheckKind: "fitness",
@@ -155,7 +155,7 @@ const table = (): ClaimReconciliationsTable => tableOf(scenarios, observations);
 
 const ciStepsOf = (claim: string): string => table().rowOf(claim).cell(CI_STEPS_COLUMN);
 
-describe("[CLM-RPT-080] each Claim Reconciliation names, after its reconciling items, the CI steps behind each kind of quality check it obligates or observes, each step once, the step of a fitness function it observes only through broken evidence included", () => {
+describe("[CLM-RPT-080] each Claim Reconciliation names, after its reconciling items, the CI steps behind each kind of quality check it obligates or observes, each step once, the step of a fitness function it observes only through evidence that never ran included", () => {
   it("ends the table with the CI steps column, after Reconciling items", () => {
     const header = table().header;
     expect(header.slice(-2)).toStrictEqual([RECONCILING_ITEMS_COLUMN(), CI_STEPS_COLUMN]);
@@ -181,11 +181,11 @@ describe("[CLM-RPT-080] each Claim Reconciliation names, after its reconciling i
     expect(ciStepsOf("CLM-OBS-001")).toBe("Test, Cucumber");
   });
 
-  it("names the steps of a layer the row observes only through broken evidence", () => {
+  it("names the steps of a layer the row observes only through evidence that never ran", () => {
     expect(ciStepsOf("CLM-BRK-001")).toBe("Test, Cucumber");
   });
 
-  it("names the step of a fitness function the row observes only through broken evidence", () => {
+  it("names the step of a fitness function the row observes only through evidence that never ran", () => {
     expect(ciStepsOf("CLM-FBK-001")).toBe("ci.yml:checks:Lint");
   });
 

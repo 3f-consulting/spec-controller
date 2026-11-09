@@ -34,8 +34,8 @@ describe("[CLM-PND-004] a named-pending obligation reconciles as a one-sided Pen
   });
 });
 
-describe("[CLM-PND-005] the pending deferral governs even when a matching observation exists — the Pending Item is raised, the observation IS no-evidence-obligation", () => {
-  it("raises the Pending Item and posts the matching observation as no-evidence-obligation (obligation never satisfied; the row reds via the evidence observation)", () => {
+describe("[CLM-PND-005] the pending deferral governs even when a matching observation exists — the Pending Item is raised, the observation IS not-asked-for", () => {
+  it("raises the Pending Item and posts the matching observation as not-asked-for (obligation never satisfied; the row reds via the evidence observation)", () => {
     const scenarios: Scenario[] = [
       {
         claimCode: "CLM-PND-005",
@@ -52,12 +52,12 @@ describe("[CLM-PND-005] the pending deferral governs even when a matching observ
     expect(scenario?.pendingItems).toEqual([{ qualityCheckKind: "integration" }]);
     expect(scenario?.qualityCheckReconciliations.flatMap(linesOf).some((line) => line.outcome === "satisfied")).toBe(false);
     const noEvidenceObligation = balance.claimReconciliations.flatMap((s) =>
-      reconcilingItemsOf(s).filter((r) => r.outcome === "no-evidence-obligation")
+      reconcilingItemsOf(s).filter((r) => r.outcome === "not-asked-for")
     );
-    expect(noEvidenceObligation).toEqual([{ qualityCheckKind: "integration", outcome: "no-evidence-obligation", evidenceObservation: { qualityCheckKind: "integration", claimCode: "CLM-PND-005", status: "passed", outcome: "no-evidence-obligation" } }]);
+    expect(noEvidenceObligation).toEqual([{ qualityCheckKind: "integration", outcome: "not-asked-for", evidenceObservation: { qualityCheckKind: "integration", claimCode: "CLM-PND-005", status: "passed", outcome: "not-asked-for" } }]);
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(reconcilingItemsOf(scenario!)).toEqual([
-      { qualityCheckKind: "integration", outcome: "no-evidence-obligation", evidenceObservation: { qualityCheckKind: "integration", claimCode: "CLM-PND-005", status: "passed", outcome: "no-evidence-obligation" } },
+      { qualityCheckKind: "integration", outcome: "not-asked-for", evidenceObservation: { qualityCheckKind: "integration", claimCode: "CLM-PND-005", status: "passed", outcome: "not-asked-for" } },
     ]);
     expect(isBalanced(balance)).toBe(false);
     expect(balance.claimReconciliations.every((s) => s.kind === "scenario")).toBe(true);

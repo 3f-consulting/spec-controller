@@ -254,10 +254,10 @@ describe("[CLM-RMD-015] each kind of quality check in the summary's evidence obs
       .filter((row) => row.kind === "unnamed-claim")
       .flatMap((row) => lineReadingsOf(row.qualityCheckReconciliations));
     expect(unnamedClaimRowItems).toStrictEqual([
-      [["Install"], "cites-no-scenario"],
-      [["github/codeql-action/analyze@v3"], "cites-no-scenario"],
-      [["lint"], "cites-no-scenario"],
-      [["test"], "cites-no-scenario"],
+      [["Install"], "cites-no-claim"],
+      [["github/codeql-action/analyze@v3"], "cites-no-claim"],
+      [["lint"], "cites-no-claim"],
+      [["test"], "cites-no-claim"],
     ]);
     expect(entries(reconciliation)).toStrictEqual([
       { qualityCheckKind: "unit", count: 0 },

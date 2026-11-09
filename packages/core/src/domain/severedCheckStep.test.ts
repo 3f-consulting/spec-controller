@@ -19,8 +19,8 @@ function reconcileSevered() {
   return reconcileTheWorkflow(FITNESS_SCENARIOS, severedSteps);
 }
 
-describe("[CLM-LNT-032] a check its job's verdict does not depend on reconciles as the watermelon, beside a sibling check whose red is the job's verdict", () => {
-  it("reconciles each severed check as the watermelon and leaves the siblings satisfied", () => {
+describe("[CLM-LNT-032] a check its job's verdict does not depend on reconciles as cannot-fail, beside a sibling check whose red is the job's verdict", () => {
+  it("reconciles each severed check as cannot-fail and leaves the siblings satisfied", () => {
     expect(
       reconcileSevered().ledger.claimReconciliations.map((row) => [
         row.claim,
@@ -29,8 +29,8 @@ describe("[CLM-LNT-032] a check its job's verdict does not depend on reconciles 
         lineReadingsOf(row.qualityCheckReconciliations),
       ])
     ).toEqual([
-      ["CLM-CVT-001", "scenario", "out-of-balance", [[["lint:alpha"], "watermelon"]]],
-      ["CLM-CVT-002", "scenario", "out-of-balance", [[["lint:beta"], "watermelon"]]],
+      ["CLM-CVT-001", "scenario", "out-of-balance", [[["lint:alpha"], "cannot-fail"]]],
+      ["CLM-CVT-002", "scenario", "out-of-balance", [[["lint:beta"], "cannot-fail"]]],
       ["CLM-CVT-003", "scenario", "balanced", [[["lint:gamma"], "satisfied"]]],
       ["CLM-CVT-004", "scenario", "balanced", [[["lint:delta"], "satisfied"]]],
       ["CLM-CVT-005", "scenario", "balanced", [[["lint:epsilon"], "satisfied"]]],

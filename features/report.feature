@@ -129,7 +129,7 @@ Feature: The report renders the ledger as sectioned facts
 
     The report has no census section under any name.
 
-    Every scenario is a ledger row, and a scenario with no obligation is a both-missing row, so
+    Every scenario is a ledger row, and a scenario with no obligation is a no-quality-check row, so
     the ledger's scenario count ("- N Claim Reconciliation(s): …") is the corpus census.
 
     @unit @CLM-RPT-007
@@ -239,9 +239,9 @@ Feature: The report renders the ledger as sectioned facts
     Wherever the table has an evidence column, its last column, CI steps, follows Reconciling
     items. It names the CI steps behind each kind of quality check the row obligates or observes,
     in column order, each step once. A layer's steps are the ones the summary names for it. A
-    layer the row observes only through broken evidence counts as observed, so its steps are
-    named. A fitness function's step is the one its evidence observation names, a broken
-    observation's included. The rule is the same on every row: a scenario, each scenario sharing
+    layer the row observes only through evidence that never ran counts as observed, so its steps are
+    named. A fitness function's step is the one its evidence observation names, that of an observation that never
+    ran included. The rule is the same on every row: a scenario, each scenario sharing
     a code, a phantom claim and the unnamed claim.
 
     A kind of quality check with no known step adds none: a layer no CI step is found running, a
@@ -257,7 +257,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: a fitness function whose step ran and failed shows as one observation in its Fitness cell, as a failed test does in its column
 
     @unit @CLM-RPT-080
-    Scenario: each Claim Reconciliation names, after its reconciling items, the CI steps behind each kind of quality check it obligates or observes, each step once, the step of a fitness function it observes only through broken evidence included
+    Scenario: each Claim Reconciliation names, after its reconciling items, the CI steps behind each kind of quality check it obligates or observes, each step once, the step of a fitness function it observes only through evidence that never ran included
 
     @unit @CLM-RPT-081
     Scenario: a kind of quality check with no known step adds no CI step to any Claim Reconciliation, and a Claim Reconciliation with none has a blank cell
@@ -270,7 +270,7 @@ Feature: The report renders the ledger as sectioned facts
     counted.
 
     @unit @CLM-RPT-069
-    Scenario: the evidence grid counts only the evidence observations that ran, so a broken observation fills no cell and adds no column
+    Scenario: the evidence grid counts only the evidence observations that ran, so an observation that never ran fills no cell and adds no column
 
   Rule: the report counts the scenarios with no claim code and lists each on its own ledger row
 
@@ -318,8 +318,8 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the Reconciliation line out-of-balance count decomposes into a flat list of the ten leaf outcomes, with no group-side subtotal rows
 
     Each of the ten out-of-balance outcomes is a counted row that reads the outcome's sentence
-    alone, in this order: missing, failing, watermelon, no-claim-code, duplicate-claim-code,
-    cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing. Their
+    alone, in this order: missing, failing, cannot-fail, no-claim-code, duplicate-claim-code,
+    cites-unknown-claim, cites-no-claim, not-asked-for, never-ran, no-quality-check. Their
     counts sum to the out-of-balance total.
 
     Every outcome except satisfied has a row. No debit-side, credit-side or neither-side subtotal
@@ -339,7 +339,7 @@ Feature: The report renders the ledger as sectioned facts
 
     The "missing" cause row reads "Evidence Observation is missing". A reconciling item for a
     missing unit observation reads "unit: Evidence Observation is missing". A reconciling item for
-    a "watermelon" fitness observation opens with "fitness: " and the watermelon outcome's
+    a "cannot-fail" fitness observation opens with "fitness: " and the cannot-fail outcome's
     sentence, and its fitness function follows.
 
     The Detail column shows no sentence. The JSON keeps the bare handle.
@@ -380,17 +380,17 @@ Feature: The report renders the ledger as sectioned facts
     @unit @CLM-RPT-067
     Scenario: the markdown report's own words hold no symbol character, whatever its outcomes, Pending Items or run integrity
 
-  Rule: the report surfaces broken evidence as a proof that never ran, and stamps the run unsound
+  Rule: the report surfaces evidence that never ran, and stamps the run unsound
 
-    A broken observation is a proof that never ran, such as a Vitest suite that failed to collect
+    An observation that never ran is a proof that never reached its assertions, such as a Vitest suite that failed to collect
     or a Cucumber step that two step definitions match. The markdown does three things for it that
     a missing row cannot.
 
-    First, it names the broken evidence by the locator the runner gave it: a test file or a
+    First, it names the evidence that never ran by the locator the runner gave it: a test file or a
     feature file.
 
     Second, it prints what broke. The message appears verbatim, in a fenced block, in the
-    run-integrity section, and the broken item on the ledger carries the same locator and the
+    run-integrity section, and the never-ran item on the ledger carries the same locator and the
     message's first line. Where the runner gives its own message, the report shows it unchanged.
     Where it gives none, as for an ambiguous Cucumber step, the report shows a diagnosis built from
     what the runner reported. Either way it names what failed and where, in one shape, and never
@@ -399,8 +399,8 @@ Feature: The report renders the ledger as sectioned facts
     whitespace reads as no message.
 
     Third, it stamps the run "unsound" under a "## Run integrity: unsound" heading. It tells the
-    reader that a broken proof sits on the row of the claim it names, where an Evidence Obligation
-    of its kind of quality check that no other proof answers reads as missing. A broken proof on
+    reader that a proof that never ran sits on the row of the claim it names, where an Evidence Obligation
+    of its kind of quality check that no other proof answers reads as missing. A proof that never ran on
     the row of a phantom claim or of the unnamed claim may be the proof behind any missing item of
     its kind of quality check, on any row, rather than a test still to write.
 
@@ -408,10 +408,10 @@ Feature: The report renders the ledger as sectioned facts
     such as its test, the code it loads, its step definitions, its runner or the CI job that runs
     it, and regenerate.
 
-    A run with no broken evidence has no run-integrity section. The section is markdown only.
+    A run with no evidence that never ran has no run-integrity section. The section is markdown only.
 
     @unit @CLM-RPT-021
-    Scenario: the markdown names the broken evidence and its error, and stamps the run unsound
+    Scenario: the markdown names the evidence that never ran and its error, and stamps the run unsound
 
     @unit @CLM-RPT-065
     Scenario: a check step that did not run is worded by what the record said, skipped, ended with another outcome or carrying none, prefixed by the code it cites
@@ -422,7 +422,7 @@ Feature: The report renders the ledger as sectioned facts
     never opens with a line that reads as a pass.
 
     The verdict agrees with the "## Run integrity: unsound" stamp and with the Pending Items line.
-    It is decided in the same order as the exit code: broken evidence first, then out of balance,
+    It is decided in the same order as the exit code: evidence that never ran first, then out of balance,
     then pending items.
 
     Unsound names exit 4, out-of-balance names exit 1, and balanced names exit 0. Under --strict,
@@ -432,16 +432,16 @@ Feature: The report renders the ledger as sectioned facts
     @unit @CLM-RPT-022
     Scenario: the summary opens with the run verdict and the exit code it maps to
 
-  Rule: Evidence observations counts each evidence observation on the kind of claim its row reconciles, a broken behavioural one included, and each fitness function that ran
+  Rule: Evidence observations counts each evidence observation on the kind of claim its row reconciles, a behavioural one that never ran included, and each fitness function that ran
 
-    A behavioural evidence observation counts whether it passed, failed or is broken. A fitness
+    A behavioural evidence observation counts whether it passed, failed or never ran. A fitness
     evidence observation counts when its fitness function ran, on the kind of row it sits on, so
-    an uncited one counts on the unnamed claim. A broken fitness evidence observation does not
+    an uncited one counts on the unnamed claim. A fitness evidence observation that never ran does not
     count. The total is the sum of the counts of the five kinds of quality check and the sum of
     the counts on each kind of claim.
 
     @unit @CLM-RPT-023
-    Scenario: Evidence observations counts each evidence observation by the kind of claim its row reconciles, a broken behavioural one included, and each fitness function that ran
+    Scenario: Evidence observations counts each evidence observation by the kind of claim its row reconciles, a behavioural one that never ran included, and each fitness function that ran
 
   Rule: the reconciliation collection renders as "Claim Reconciliation(s)", never "Scenario Reconciliation(s)" or "scenario(s)", on every surface that names it
 
@@ -519,17 +519,17 @@ Feature: The report renders the ledger as sectioned facts
     @unit @CLM-RPT-086
     Scenario: a test that answers no evidence obligation is named by its file and its test name, so two such tests in one file read as two items
 
-  Rule: a failing or watermelon reconciling item names the evidence observation it carries
+  Rule: a failing or cannot-fail reconciling item names the evidence observation it carries
 
     A failing item names, after its outcome's sentence, the test that failed by its file and its
-    name, or the fitness function that failed by its name. A watermelon item names its fitness
+    name, or the fitness function that failed by its name. A cannot-fail item names its fitness
     function. So two failing tests on one scenario read as two different items.
 
     @unit @CLM-RPT-082
     Scenario: each failing test on a scenario's row is named by its file and its test name, so two failing tests read as two items
 
     @unit @CLM-RPT-083
-    Scenario: a failing or watermelon fitness evidence observation on a scenario's row is named by its fitness function
+    Scenario: a failing or cannot-fail fitness evidence observation on a scenario's row is named by its fitness function
 
   Rule: every reconciling item quotes what the run reported whole in its cell
 
@@ -545,12 +545,12 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the unnamed claim's row groups what ran by where it ran, counting what passed and naming what failed
 
-    The row groups its observations that cite no scenario by the file they ran in. The CI steps
+    The row groups its observations that cite no claim by the file they ran in. The CI steps
     form one group of their own, listed after the files.
 
     Each group counts what ran, passed and failed. It names each failed test, by its test title or
     Cucumber scenario name, and each CI step by its workflow, job and step, which holds no result.
-    Broken items are listed individually.
+    Never-ran items are listed individually.
 
     Evidence citing a claim code that more than one scenario carries is grouped apart from evidence
     citing nothing. In one file, the tests citing such a code form a group of their own, and the CI
@@ -561,44 +561,44 @@ Feature: The report renders the ledger as sectioned facts
     The grouping is not stored; the JSON carries each observation's test name.
 
     @CLM-RPT-033 @unit @e2e
-    Scenario: tests that cite no scenario are grouped on the unnamed claim's row by the file they ran in, each group counting how many ran, passed and failed
-      Given a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed
+    Scenario: tests that cite no claim are grouped on the unnamed claim's row by the file they ran in, each group counting how many ran, passed and failed
+      Given a target whose tests that cite no claim ran in two files, one file holding a test that failed and a test that passed
       When the target's evidence is reconciled into a report
       Then the unnamed claim's row lists each of the two files once
       And each file's entry counts how many of its tests ran, how many passed and how many failed
-      And the counts of tests that ran add up to the count of evidence observations that cite no scenario
+      And the counts of tests that ran add up to the count of evidence observations that cite no claim
 
     @CLM-RPT-036 @unit @e2e
-    Scenario: a failed test that cites no scenario is named on the unnamed claim's row by its test title
-      Given a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed
+    Scenario: a failed test that cites no claim is named on the unnamed claim's row by its test title
+      Given a target whose tests that cite no claim ran in two files, one file holding a test that failed and a test that passed
       When the target's evidence is reconciled into a report
       Then the file's entry on the unnamed claim's row names the test that failed by its title
       And the file's entry does not name the test that passed
 
     @CLM-RPT-037 @unit @e2e
-    Scenario: a failed Cucumber scenario that cites no scenario is named on the unnamed claim's row by its scenario name
-      Given a target whose Cucumber scenarios that cite no scenario ran in one feature file, one that failed and one that passed
+    Scenario: a failed Cucumber scenario that cites no claim is named on the unnamed claim's row by its scenario name
+      Given a target whose Cucumber scenarios that cite no claim ran in one feature file, one that failed and one that passed
       When the target's evidence is reconciled into a report
       Then the feature file's entry on the unnamed claim's row names the Cucumber scenario that failed by its name
       And the feature file's entry does not name the Cucumber scenario that passed
 
     @CLM-RPT-038 @unit @e2e
-    Scenario: the CI steps that cite no scenario are grouped together on the unnamed claim's row, each named
-      Given a target whose CI runs two checks that cite no scenario, beside a test that cites no scenario
+    Scenario: the CI steps that cite no claim are grouped together on the unnamed claim's row, each named
+      Given a target whose CI runs two checks that cite no claim, beside a test that cites no claim
       When the target's evidence is reconciled into a report
       Then the unnamed claim's row lists the CI steps together once, after the test's file
       And the CI steps' entry names each of the two checks
-      And what the unnamed claim's row counts adds up to the count of evidence observations that cite no scenario
+      And what the unnamed claim's row counts adds up to the count of evidence observations that cite no claim
 
     @unit @CLM-RPT-075
-    Scenario: in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no scenario, and only their group names the code, once, whatever its tests' messages say, even where the runner names no file
+    Scenario: in one file, the tests citing a code more than one scenario carries are grouped apart from the tests citing no claim, and only their group names the code, once, whatever its tests' messages say, even where the runner names no file
 
     @unit @CLM-RPT-076
-    Scenario: a CI step citing a code more than one scenario carries is listed apart from the CI steps citing no scenario, and its entry names the code
+    Scenario: a CI step citing a code more than one scenario carries is listed apart from the CI steps citing no claim, and its entry names the code
 
   Rule: an item quoting what an evidence observation said states the first line of its message and every note it carries
 
-    Where a reconciling item quotes what an evidence observation said, as a broken item does and
+    Where a reconciling item quotes what an evidence observation said, as a never-ran item does and
     as a file's group on the unnamed claim's row does, it states the first line of the message that
     holds text, then the words of each note the observation carries, however many lines the message
     runs to. A file's group states each such line once, however the run spaced it.

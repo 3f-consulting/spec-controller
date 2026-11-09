@@ -37,14 +37,14 @@ describe('[CLM-RPT-024] the verdict tally names the collection "Claim Reconcilia
     expect(tallyBlock([known])).toEqual([`- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 1, balanced: 1, outOfBalance: 0 })}`]);
   });
 
-  it("follows the total with the unnamed claim's count when one evidence observation cites no scenario", () => {
+  it("follows the total with the unnamed claim's count when one evidence observation cites no claim", () => {
     expect(tallyBlock([known, uncitedObservation("src/a.test.ts")])).toEqual([
       `- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 2, balanced: 1, outOfBalance: 1 })}`,
       `- ${coreMessage(CoreMessage.UnnamedClaimTally, { count: 1, unnamedClaimId: UNNAMED_CLAIM_ID })}`,
     ]);
   });
 
-  it("counts the real, phantom claims' and unnamed claim's rows in the total, then the phantom claims' count, then the unnamed claim's one row however many evidence observations cite no scenario", () => {
+  it("counts the real, phantom claims' and unnamed claim's rows in the total, then the phantom claims' count, then the unnamed claim's one row however many evidence observations cite no claim", () => {
     expect(tallyBlock([known, phantomClaimObservation, uncitedObservation("src/a.test.ts"), uncitedObservation("src/b.test.ts")])).toEqual([
       `- ${coreMessage(CoreMessage.ClaimReconciliationTally, { total: 3, balanced: 1, outOfBalance: 2 })}`,
       `- ${coreMessage(CoreMessage.PhantomClaimTally, { count: 1 })}`,

@@ -3,7 +3,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
   Every check a CI step runs is reported. A check whose step cites a scenario posts to that
   scenario's row; a check whose step cites none lands on the unnamed claim's row as an uncited fitness
-  function, and the report counts it among the evidence observations citing no scenario.
+  function, and the report counts it among the evidence observations citing no claim.
 
   A fitness function is any CI step left once the manifest's named runners, the reconciler,
   GitHub's plumbing actions and the steps the manifest names non-checks are taken out. A step's
@@ -13,7 +13,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
 
     A step cites a scenario by carrying that scenario's code as its `id:`. A step with no `id:`
     cites nothing: its check lands on the unnamed claim's row under its own name, marked
-    cites-no-scenario, counts among the uncited fitness functions, and reds the run. The check is
+    cites-no-claim, counts among the uncited fitness functions, and reds the run. The check is
     never dropped from the count.
 
     A step whose `id:` names a code no scenario carries posts to a phantom claim's row under that code,
@@ -45,7 +45,7 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
   Rule: a CI check whose script name matches no convention of the tool's is reported as an uncited fitness function
 
     A check is found whatever its script is called, and reported uncited when its step cites no
-    scenario.
+    claim.
 
     @unit @CLM-USG-004
     Scenario: an uncited check whose script name carries no prefix of ours is an uncited fitness function
@@ -53,15 +53,15 @@ Feature: Detect uncited fitness-functions — a CI check no scenario cites
   Rule: a fitness function is observed wherever in the workflows it runs
 
     By default every workflow file in the target's workflow directory is read. A cited check
-    running in a sibling workflow is satisfied, and no watermelon is raised against it. An uncited
+    running in a sibling workflow is satisfied, and no cannot-fail is raised against it. An uncited
     check running in a sibling workflow is reported uncited.
 
     @integration @CLM-USG-006
-    Scenario: a cited fitness function enforced from a sibling workflow is satisfied, with no watermelon raised against it
+    Scenario: a cited fitness function enforced from a sibling workflow is satisfied, with no cannot-fail raised against it
       Given a target whose ci.yml runs no fitness function and whose nightly.yml runs lint:nightly
       And a scenario cites lint:nightly
       When the reconciliation report is rendered over the target's workflow directory
-      Then lint:nightly reconciles satisfied, with no watermelon raised against it
+      Then lint:nightly reconciles satisfied, with no cannot-fail raised against it
 
     @unit @CLM-USG-007
     Scenario: an uncited fitness function running in a sibling workflow is reported uncited

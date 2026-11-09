@@ -80,12 +80,12 @@ export type RunResult = "passed" | "failed" | "never-reached-its-assertions" | "
 
 export interface RunEvidence {
   readonly status: EvidenceStatus;
-  readonly broken?: true;
+  readonly neverRan?: true;
 }
 
 export function evidenceOfRunResult(result: RunResult): RunEvidence | undefined {
   if (result === "inconclusive") return undefined;
-  if (result === "never-reached-its-assertions") return { status: "failed", broken: true };
+  if (result === "never-reached-its-assertions") return { status: "failed", neverRan: true };
   return { status: result };
 }
 
@@ -117,7 +117,7 @@ export interface BehaviouralEvidenceObservation {
   readonly claimCode: string | null;
   readonly status: EvidenceStatus;
   readonly locator?: string;
-  readonly broken?: true;
+  readonly neverRan?: true;
   readonly message?: string;
   readonly notes?: readonly ObservationNote[];
   readonly testName?: string;
@@ -132,7 +132,7 @@ export interface FitnessEvidenceObservation {
   readonly exists: boolean;
   readonly enforcedOverRealSource: boolean;
   readonly status?: EvidenceStatus;
-  readonly broken?: true;
+  readonly neverRan?: true;
   readonly message?: string;
   readonly notes?: readonly ObservationNote[];
   readonly locator?: string;
@@ -145,7 +145,7 @@ export function isFitnessObservation(
 }
 
 export function ranAsFitnessFunction(observation: EvidenceObservation): observation is FitnessEvidenceObservation {
-  return isFitnessObservation(observation) && observation.broken !== true && observation.exists;
+  return isFitnessObservation(observation) && observation.neverRan !== true && observation.exists;
 }
 
 export type EvidenceObservation = BehaviouralEvidenceObservation | FitnessEvidenceObservation;

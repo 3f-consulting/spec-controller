@@ -13,17 +13,17 @@ Feature: A Cucumber run's results answer integration and end-to-end evidence obl
     Scenario: a Cucumber scenario tagged with two claim codes credits neither, and the unnamed claim's row names both codes
 
     @unit @CLM-CUC-005
-    Scenario: a Cucumber scenario tagged with a feature part outside two to five characters cites no scenario, beside tags of two and five characters that do
+    Scenario: a Cucumber scenario tagged with a feature part outside two to five characters cites no claim, beside tags of two and five characters that do
 
   Rule: a Cucumber scenario's observations are posted at each layer beyond @unit that its tags name, its own and those it inherits, or at integration when there are none
 
     @unit @CLM-CUC-002
     Scenario: a Cucumber scenario tagged @e2e, by its own tag or one it inherits, is posted at e2e, and one tagged only @unit, or with no layer tag, at integration
 
-  Rule: an ambiguous Cucumber step is broken, not absent
+  Rule: an ambiguous Cucumber step never ran, and is not absent
 
     @unit @CLM-CUC-003
-    Scenario: an ambiguous Cucumber step posts a broken observation naming the step and citing the scenario it would have proven
+    Scenario: an ambiguous Cucumber step posts an observation that never ran naming the step and citing the scenario it would have proven
 
   Rule: a Cucumber scenario's step results give its run result: passed when every step passed, failed when one failed, inconclusive when one was skipped
 

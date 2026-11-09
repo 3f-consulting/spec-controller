@@ -30,7 +30,7 @@ export function parseVitestEvidenceObservations(report: VitestJsonReport, root?:
         claimCode: null,
         status: evidence.status,
         locator,
-        broken: evidence.broken,
+        neverRan: evidence.neverRan,
         message: file.message,
       });
       continue;

@@ -39,7 +39,7 @@ const OBSERVATIONS: EvidenceObservation[] = [
   { qualityCheckKind: "unit", claimCode: "CLM-NSY-999", status: "passed", locator: "src/ghost.test.ts" },
   { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "src/uncited.test.ts" },
   { qualityCheckKind: "fitness", fitnessFunction: "lint:uncited", exists: true, enforcedOverRealSource: true },
-  { qualityCheckKind: "unit", claimCode: null, status: "passed", broken: true, locator: "src/broken.test.ts" },
+  { qualityCheckKind: "unit", claimCode: null, status: "passed", neverRan: true, locator: "src/never-ran.test.ts" },
 ];
 
 function render(scenarios: Scenario[], observations: EvidenceObservation[], untagged: string[] = []): string {

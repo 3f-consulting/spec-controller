@@ -10,9 +10,9 @@ Feature: a fixture target citing one of the two checks its CI runs
   run in this CI too and carry no check prefix, so they are never observed on this axis.
 
   ONE CHECK CITING AND ONE NOT IS WHAT GIVES THE PAIR ITS TEETH. Leaving lint:bar's step
-  at cites-no-scenario produces the same report for the reason a step naming no row always does — a
+  at cites-no-claim produces the same report for the reason a step naming no row always does — a
   step nothing names reaches nothing — and the target could then go on passing under a
-  rule that never asked whether anything CITED the check. One citing and one at cites-no-scenario is the shape
+  rule that never asked whether anything CITED the check. One citing and one at cites-no-claim is the shape
   only the one posting rule can produce, so it is the one this fixture holds.
 
   THE @unit TAG BELOW IS LOAD-BEARING AND IS NOT THIS FEATURE FILE'S. This target is shared

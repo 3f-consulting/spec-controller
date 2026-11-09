@@ -39,7 +39,7 @@ Feature: An RSpec suite's results answer unit evidence obligations
     Scenario: an RSpec example whose before hook fails posts a failing observation
 
     @unit @CLM-RSP-008
-    Scenario: an RSpec spec file that fails to load posts a broken item and the run is unsound
+    Scenario: an RSpec spec file that fails to load posts a never-ran item and the run is unsound
 
   Rule: the report given to --rspec is read only in the shape RSpec's JSON formatter writes
 

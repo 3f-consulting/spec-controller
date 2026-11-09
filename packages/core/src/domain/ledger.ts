@@ -37,7 +37,7 @@ export function hasNothingToReconcile(ledger: Ledger): boolean {
 
 export function brokenItemsOf(ledger: Ledger): ReconciliationLine[] {
   return ledger.claimReconciliations.flatMap((row) =>
-    reconcilingItemsOf(row).filter((item) => item.outcome === "broken")
+    reconcilingItemsOf(row).filter((item) => item.outcome === "never-ran")
   );
 }
 
@@ -108,14 +108,14 @@ function reconciliationLineTotals(ledger: Ledger): ReconciliationLineTotals {
     satisfied: 0,
     "missing": 0,
     "failing": 0,
-    "watermelon": 0,
-    "cites-unknown-scenario": 0,
-    "cites-no-scenario": 0,
+    "cannot-fail": 0,
+    "cites-unknown-claim": 0,
+    "cites-no-claim": 0,
     "no-claim-code": 0,
     "duplicate-claim-code": 0,
-    "broken": 0,
-    "no-evidence-obligation": 0,
-    "both-missing": 0,
+    "never-ran": 0,
+    "not-asked-for": 0,
+    "no-quality-check": 0,
   };
   const missing = new Map<string, number>();
   for (const s of ledger.claimReconciliations) {

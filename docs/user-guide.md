@@ -129,7 +129,7 @@ Every CI step is listed as a check, except a declared runner (see [Naming your r
 
 The full rules are in [Naming your non-checks](#naming-your-non-checks--notchecks).
 
-### When a row reads `no-evidence-obligation`
+### When a row reads `not-asked-for`
 
 A test cites a scenario that asks for no evidence of its kind. Move the test's citation to the scenario it really proves, or split off a new scenario for it. Never re-point a citation just to turn a row green.
 
@@ -189,7 +189,7 @@ The table above holds the only four forms that name a scenario: a bracketed code
 - a code in a comment, including a `// @CLM-…` line in a step-definition file;
 - a code anywhere else.
 
-A test that names nothing still runs and is still reported. It lands on the **unnamed claim**'s row, *Evidence Observation cites no Scenario*, and the scenario it was meant for reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.**
+A test that names nothing still runs and is still reported. It lands on the **unnamed claim**'s row, *Evidence Observation cites no single claim*, and the scenario it was meant for reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.**
 
 ### Citing a scenario from pytest
 
@@ -245,7 +245,7 @@ def test_offers_the_next_code():
 | a code no feature file carries | makes a phantom claim |
 | no `clm` property, or a value that is not a claim code | lands on the unnamed claim |
 | `clm` properties naming two or more different codes | **credits none of them**; the unnamed claim's row names every code, because one test proves exactly one scenario |
-| a module that fails to collect, or a test whose setup or teardown errors | never ran its proof: it posts a broken item, the run is unsound (exit `4`), and the scenario it cites reads `missing` |
+| a module that fails to collect, or a test whose setup or teardown errors | never ran its proof: it posts a never-ran item, the run is unsound (exit `4`), and the scenario it cites reads `missing` |
 
 ### Citing a scenario from Jest
 
@@ -289,7 +289,7 @@ describe("allocating the next number", () => {
 | failing, including a test under a `beforeAll` that threw | answers that scenario as failing |
 | todo or skipped | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its title | **credits none of them**; the unnamed claim's row names every code |
-| a test file that failed to run | never ran its proof: it posts a broken item and the run is unsound (exit `4`) |
+| a test file that failed to run | never ran its proof: it posts a never-ran item and the run is unsound (exit `4`) |
 
 ### Citing a scenario from Go
 
@@ -336,7 +336,7 @@ A nested subtest's name carries every enclosing subtest's name too. `balance` re
 | skipped | nothing, so the scenario it cites reads `missing` |
 | never started, because its enclosing test failed first, or a panic stopped its package | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its own name | **credits none of them**; the unnamed claim's row names every code |
-| in a package that failed to compile | never ran its proof: the package posts a broken item and the run is unsound (exit `4`) |
+| in a package that failed to compile | never ran its proof: the package posts a never-ran item and the run is unsound (exit `4`) |
 
 ### Citing a scenario from Java
 
@@ -437,7 +437,7 @@ Gradle writes that test into `TEST-example.allocate.NextNumberTest.xml` under it
 Gradle's report differs from Surefire's in two ways:
 
 - **A class's display name cites nothing.** Gradle writes the class's own name as the test's `classname`, so a code in a class's `@DisplayName` never reaches a test. Cite the scenario on each test.
-- **A class whose setup before all its tests fails posts a failing item that cites no scenario.** Gradle writes the failure as one test named `initializationError`, and the class's own tests do not appear. That item lands on the unnamed claim's row, the scenarios the class's tests cite read `missing`, and the run is not marked unsound.
+- **A class whose setup before all its tests fails posts a failing item that cites no claim.** Gradle writes the failure as one test named `initializationError`, and the class's own tests do not appear. That item lands on the unnamed claim's row, the scenarios the class's tests cite read `missing`, and the run is not marked unsound.
 
 `--junit` names one directory. In a build with several modules, each module writes its own `build/test-results/test/`, and `balance` reads only the one given.
 
@@ -492,7 +492,7 @@ Name the runner in the `specController` block as `"unit": "rspec"` (see [Naming 
 | `pending` and passing | answers that scenario as failing |
 | `skip`, `xit`, or `pending` and failing | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its own description | **credits none of them**; the unnamed claim's row names every code |
-| in a spec file that failed to load | never ran its proof: the file posts a broken item and the run is unsound (exit `4`) |
+| in a spec file that failed to load | never ran its proof: the file posts a never-ran item and the run is unsound (exit `4`) |
 
 ---
 
@@ -724,7 +724,7 @@ Each check step carries its claim code as its `id:`, and the job ends with one d
   run: printf '%s' "$STEPS_JSON" > ci-steps.json
 ```
 
-- **Put `if: always()` on every check step, not just the dump.** Without it, the first red aborts the job and every later check is skipped. The ledger then reports one `failing` and N `broken`: a worse account from a correct mechanism.
+- **Put `if: always()` on every check step, not just the dump.** Without it, the first red aborts the job and every later check is skipped. The ledger then reports one `failing` and N `never-ran`: a worse account from a correct mechanism.
 - **The dump must be `toJSON(steps)`.** It is the only place a step's `id` and its `outcome` travel together. `outcome` is the field that survives `continue-on-error`; `conclusion` does not.
 - **Pass the dump through an environment variable,** never write `${{ toJSON(steps) }}` into the command itself. A step's output can hold a quote, and the shell would then run what follows it.
 - **A check that runs on a schedule stays on its own schedule, and no push step records it.** A check too slow for every push, such as a mutation sweep, holds its bar in its own run: a scope's nightly job concludes `failure` below the bar. No push step reads that verdict, so it has no row in a push's ledger. Its red needs a stop of its own where work starts, not in CI: no new work starts while the newest full sweep is red, lapsed or measured nothing, other than the fix, which merges on its own CI. Without that stop, a red sweep blocks nothing.
@@ -746,7 +746,7 @@ spec-controller balance --features ./features \
 
 Drop `--ci-steps` if you have converted nothing.
 
-**Keep the reports as build artefacts, but do not commit them to the repository.** An Evidence Reconciliation lists a codebase's gaps, phantom claims and watermelons. It is more sensitive than the code itself, so it belongs outside version control.
+**Keep the reports as build artefacts, but do not commit them to the repository.** An Evidence Reconciliation lists a codebase's gaps, phantom claims and passes that cannot fail. It is more sensitive than the code itself, so it belongs outside version control.
 
 ### GitHub Actions — put the report on the run summary
 
@@ -779,7 +779,7 @@ Two limits:
 
 The output is the **Evidence Reconciliation**, the whole reconciliation, in two renderings of the same model:
 
-- **Markdown**, for people. One **Claim Reconciliation** per claim. Each carries a **verdict**, **balanced** or **out-of-balance**, and is broken into **Quality Check Reconciliations**, one per kind of quality check, each holding its **Reconciliation lines**. Each line carries an **outcome** (`satisfied`, `missing`, `failing`, `watermelon`, …). The non-`satisfied` lines are the **reconciling items**. A **Summary** gives the totals.
+- **Markdown**, for people. One **Claim Reconciliation** per claim. Each carries a **verdict**, **balanced** or **out-of-balance**, and is broken into **Quality Check Reconciliations**, one per kind of quality check, each holding its **Reconciliation lines**. Each line carries an **outcome** (`satisfied`, `missing`, `failing`, `cannot-fail`, …). The non-`satisfied` lines are the **reconciling items**. A **Summary** gives the totals.
 - **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. `summary.runVerdict` names the run verdict the Markdown's headline states (`balanced`, `out-of-balance`, `claim-code-errors`, `pending`, `unsound` or `nothing-to-reconcile`), so automation reads it instead of working it out from the ledger.
 
 Both carry a **provenance** header recording what was reconciled (target, source SHA, input paths), so a reconciliation is reproducible and attributable.
@@ -799,18 +799,18 @@ The JSON names each outcome by its handle, and the Markdown prints the outcome's
 
 | Row or outcome | The Markdown prints | Note |
 |---|---|---|
-| unnamed claim | Claim Reconciliation(s) for evidence observations no one scenario can take | this includes evidence citing no code, several codes, or a code several scenarios share, and such evidence that never ran (`broken`); broken evidence that names one scenario's code sits on that scenario's row |
+| unnamed claim | Claim Reconciliation(s) for evidence observations no one scenario can take | this includes evidence citing no code, several codes, or a code several scenarios share, and such evidence that never ran (`never-ran`); evidence that never ran and names one scenario's code sits on that scenario's row |
 | phantom claim | Claim Reconciliation(s) for cited claim codes with no real scenario | |
 | `missing` | Evidence Observation is missing | |
 | `failing` | Evidence Observation is failing | a swallowed red also reads `failing`, given `--ci-steps` |
-| `watermelon` | Evidence Observation is passing but its CI step or its job sets `continue-on-error` so its red might not fail the CI run | see below |
-| `no-evidence-obligation` | Evidence Observation cites a Scenario with no matching Evidence Obligation | see [When a row reads `no-evidence-obligation`](#when-a-row-reads-no-evidence-obligation) |
+| `cannot-fail` | Evidence Observation is passing, but its CI step or its job sets `continue-on-error`, so its red might not fail the build | see below |
+| `not-asked-for` | Evidence Observation is of a kind of quality check its claim did not ask for | see [When a row reads `not-asked-for`](#when-a-row-reads-not-asked-for) |
 | `duplicate-claim-code` | Evidence Obligation's claim code is carried by another Scenario | see below |
 | `no-claim-code` | Evidence Obligation has no claim code for an Evidence Observation to link to | |
 
-### Watermelons
+### Passes that cannot fail
 
-The outcome to watch for is the **watermelon**: a fitness function that is green, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run. That makes a green CI lie. A watermelon is what the workflow file shows on its own. Given the run's step record (`--ci-steps`), the step's own outcome answers the row instead, and a swallowed red reads `failing`.
+The outcome to watch for is **cannot-fail**: a fitness function that is green, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run. That makes a green CI lie. A pass that cannot fail is what the workflow file shows on its own. Given the run's step record (`--ci-steps`), the step's own outcome answers the row instead, and a swallowed red reads `failing`.
 
 ### What counts as a claim code
 
@@ -1009,7 +1009,7 @@ spec-controller --store ~/spec-controller-runs --run-id 2026-07-09-ci balance \
 # → ~/spec-controller-runs/my-project/2026-07-09-ci/  (reconciliation outputs + run.yaml)
 #
 # The root is OUTSIDE the repository being reconciled, which is why there is no default.
-# A report enumerates a codebase's gaps, dangling anchors and watermelons — more sensitive
+# A report enumerates a codebase's gaps, dangling anchors and passes that cannot fail — more sensitive
 # than the code itself — so a kept run belongs in a store you chose, not under version
 # control alongside the thing it is about.
 ```
@@ -1082,9 +1082,9 @@ The code is written under `CLM`, one past the highest number a claim code in the
 
 **A `@unit` scenario reads `missing` while its test passes.** Check the square brackets around the code in the test title first. See [Only these four forms are read](#only-these-four-forms-are-read).
 
-**A fitness function shows `missing` or `watermelon` when you didn't expect it.** `missing` means no CI step carries that scenario's claim code as its `id:`; `package.json` scripts play no part in it. `watermelon` means the step that cites it runs under `continue-on-error`, and no `--ci-steps` record answered it. Both are real findings, not tool errors.
+**A fitness function shows `missing` or `cannot-fail` when you didn't expect it.** `missing` means no CI step carries that scenario's claim code as its `id:`; `package.json` scripts play no part in it. `cannot-fail` means the step that cites it runs under `continue-on-error`, and no `--ci-steps` record answered it. Both are real findings, not tool errors.
 
-**My first run fails with a wall of uncited checks.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise. A candidate that cites no scenario posts to the unnamed claim, so `balance` exits `1`.
+**My first run fails with a wall of uncited checks.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise. A candidate that cites no claim posts to the unnamed claim, so `balance` exits `1`.
 
 1. Read the report's **Step accounting** section. It names each workflow and job, how many steps were read, and what became of every one. GitHub's own checkout, setup, cache and artifact actions are already counted out as plumbing.
 2. Name your runners, name your non-checks, or narrow `--ci`. See [Configuration](#configuration--the-speccontroller-block).

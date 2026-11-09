@@ -69,8 +69,8 @@ describe("[CLM-LNT-029] a check step citing no claim code posts to the unnamed c
         "unnamed-claim",
         "out-of-balance",
         [
-          [["lint:beta"], "cites-no-scenario"],
-          [["typecheck"], "cites-no-scenario"],
+          [["lint:beta"], "cites-no-claim"],
+          [["typecheck"], "cites-no-claim"],
         ],
       ],
     ]);

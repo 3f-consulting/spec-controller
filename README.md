@@ -62,15 +62,15 @@ Each kind of disagreement has its own outcome. Every outcome except `satisfied` 
 | Skip a test | `missing`: a skipped test proves nothing |
 | Break the behaviour a test checks | `failing` |
 | Re-point a test at another scenario | `missing` on the original |
-| Drop the claim code from a test's title | the test still runs but lands on the unnamed claim (`cites-no-scenario`), and its scenario reads `missing` |
-| Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-scenario`) |
-| Cite a scenario from a unit test when its tags ask only for `@e2e` | `no-evidence-obligation`: evidence the scenario never asked for |
+| Drop the claim code from a test's title | the test still runs but lands on the unnamed claim (`cites-no-claim`), and its scenario reads `missing` |
+| Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-claim`) |
+| Cite a scenario from a unit test when its tags ask only for `@e2e` | `not-asked-for`: evidence the scenario never asked for |
 | Delete a CI check step | `missing` on its fitness function's scenario |
-| Let a CI check step or its job run under `continue-on-error` | without the run's step record: `watermelon`, passing, but its red might not fail the CI run. With the record, the step's own outcome decides: a red it swallowed reads `failing`, and a green reads `satisfied` |
+| Let a CI check step or its job run under `continue-on-error` | without the run's step record: `cannot-fail`, passing, but its red might not fail the CI run. With the record, the step's own outcome decides: a red it swallowed reads `failing`, and a green reads `satisfied` |
 | Copy a scenario and keep its claim code | both copies share one row, and every Quality Check Reconciliation on it reads `duplicate-claim-code`: no evidence can be credited to either |
 | Write a scenario's tags but no claim code | `no-claim-code`: nothing can cite it |
-| Remove the tags naming a scenario's kinds of quality check while nothing cites it | `both-missing`: it asks for nothing, and nothing answers |
-| Leave a test file that fails before any of its tests runs | `broken`, on the unnamed claim: its proof never ran |
+| Remove the tags naming a scenario's kinds of quality check while nothing cites it | `no-quality-check`: it asks for nothing, and nothing answers |
+| Leave a test file that fails before any of its tests runs | `never-ran`, on the unnamed claim: its proof never ran |
 
 To remove a behaviour cleanly, you change both the scenario and its evidence. That change shows in the diff, where review judges it.
 
@@ -127,7 +127,7 @@ Key: each evidence cell reads *obligation*/*observations*.
 - A blank cell means no obligation and no Evidence Observation that ran; `—` marks the row of a phantom claim or of the unnamed claim.
 - A row named `feature file : scenario title` is a scenario that carries no claim code. The run reads none of its tags, so its evidence cells are blank, and its reconciling item says that no Evidence Observation can link to it.
 - In Reconciling items, `—` means the row has no reconciling item, and *untagged* means a scenario that carries a claim code and no tag that raises an Evidence Obligation.
-- On the unnamed claim's row, the counts after an item, such as `1 ran, 1 passed, 0 failed`, are of that item's own tests, and a fitness item counts its CI steps; a broken item stands alone, outside those counts.
+- On the unnamed claim's row, the counts after an item, such as `1 ran, 1 passed, 0 failed`, are of that item's own tests, and a fitness item counts its CI steps; a never-ran item stands alone, outside those counts.
 - CI steps names the steps the Evidence observations table gives for each kind of quality check other than fitness that the row obligates or observes, whether or not an Evidence Observation of that kind ran for the row, and the step each of the row's fitness Evidence Observations names: `U/-` beside a step names the step that runs unit tests, none of which answered this row. A blank CI steps cell means no such step is known.
 - Where a row's item says its CI step or its job sets `continue-on-error`, the name in parentheses after it is its fitness function. Remove `continue-on-error` from its CI step and from its job, or set it to false, and the check's red fails the CI run.
 
@@ -139,8 +139,8 @@ Key: each evidence cell reads *obligation*/*observations*.
 | CLM-CHK-005 |  | U/3 | E/2 | balanced | — | ci.yml:build:Unit tests, ci.yml:build:End-to-end tests |
 | CLM-CHK-006 | F/1 |  |  | balanced | — | ci.yml:build:Complexity |
 | CLM-CHK-007 | F/1 |  |  | out-of-balance | fitness: Evidence Observation is failing (CLM-CHK-007) | ci.yml:build:Lint |
-| CLM-CHK-004 | — | — | — | out-of-balance | unit: Evidence Observation cites an unknown Scenario (src/checkout.test.ts: [CLM-CHK-004] applies the discount) — passed | ci.yml:build:Unit tests |
-| (unnamed claim) | — | — | — | out-of-balance | unit: Evidence Observation cites no Scenario (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed | ci.yml:build:Unit tests |
+| CLM-CHK-004 | — | — | — | out-of-balance | unit: Evidence Observation cites a claim code no executable claim carries: a phantom claim (src/checkout.test.ts: [CLM-CHK-004] applies the discount) — passed | ci.yml:build:Unit tests |
+| (unnamed claim) | — | — | — | out-of-balance | unit: Evidence Observation cites no single claim (src/checkout.test.ts) — 1 ran, 1 passed, 0 failed | ci.yml:build:Unit tests |
 ```
 
 </div>
@@ -163,7 +163,7 @@ The report uses these exact terms:
 - A *Claim Reconciliation* is one row of the ledger, one per claim. A claim is usually a scenario. The row sets the evidence the claim asks for, if any (its *Evidence Obligations*), against the results reported for it (its *Evidence Observations*).
 - A *phantom claim* comes from a test that names a scenario which does not exist. The cause is usually a typo, or a scenario since deleted.
 - The *unnamed claim* takes any test that names no scenario at all, or a code several scenarios share.
-- A *watermelon* is a check that passes, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run.
+- A *cannot-fail* check is one that passes, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run.
 
 [`docs/ubiquitous-language.md`](./docs/ubiquitous-language.md) has the rest.
 

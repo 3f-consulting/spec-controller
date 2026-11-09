@@ -27,22 +27,22 @@ Feature: every-outcome corpus — a fixture shaped so the REAL reconcile emits e
 
   # STEPLESS and configuring one row — CLM-TOC-004 — whose CI step carries that
   # row's code as its own `id:` AND `continue-on-error: true`. The step RUNS, but its red does not
-  # gate the job, so the running-check observer reads it exists-and-unenforced: the watermelon by
+  # gate the job, so the running-check observer reads it exists-and-unenforced: the cannot-fail by
   # the SEVERED-STEP route (@CLM-LNT-032).
   @fitness @CLM-TOC-004
-  Scenario: watermelon — a fitness function whose step runs but whose red the job swallows
+  Scenario: cannot-fail — a fitness function whose step runs but whose red the job swallows
 
   @e2e @CLM-TOC-005
-  Scenario: no-evidence-obligation — a real scenario cited at a quality-check it never named
+  Scenario: not-asked-for — a real scenario cited at a quality-check it never named
     Given an e2e obligation discharged by an e2e observation
     When a unit observation also cites this scenario
-    Then the unit evidence observation reconciles no-evidence-obligation
+    Then the unit evidence observation reconciles not-asked-for
 
   @CLM-TOC-006
-  Scenario: both-missing — a scenario with no obligation and no citation
+  Scenario: no-quality-check — a scenario with no obligation and no citation
     Given a scenario naming no obligation
     When nothing cites it
-    Then it reconciles both-missing
+    Then it reconciles no-quality-check
 
   @unit
   Scenario: no-claim-code — an ordinary scenario carrying no claim code

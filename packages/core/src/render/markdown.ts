@@ -42,14 +42,14 @@ import { unnamedClaimGroupsOf, type UnnamedClaimGroup, type UnnamedClaimFileGrou
 
 function renderLine(line: ReconciliationLine): string {
   const sentence = `${outcomeDescription(line.outcome)}${scenarioClauseOf(line)}`;
-  if (line.outcome === "both-missing" || line.outcome === "no-claim-code" || line.qualityCheckKind === undefined) {
+  if (line.outcome === "no-quality-check" || line.outcome === "no-claim-code" || line.qualityCheckKind === undefined) {
     return sentence;
   }
   const head = `${line.qualityCheckKind}: ${sentence}`;
   const observation = line.evidenceObservation;
   if (observation === undefined) return head;
   if (!isObservationOnly(line.outcome)) return `${head}${namedSuffix(observation)}`;
-  return `${head}${line.outcome === "broken" ? brokenSuffix(observation) : observationSuffix(observation)}`;
+  return `${head}${line.outcome === "never-ran" ? brokenSuffix(observation) : observationSuffix(observation)}`;
 }
 
 function quotedSuffix(parts: readonly (string | undefined)[]): string {
@@ -98,7 +98,7 @@ function renderFileGroup(group: UnnamedClaimFileGroup): string {
   const counts = coreMessage(CoreMessage.UnnamedClaimGroupCounts, { ran: group.ran, passed: group.passed, failed: group.failed });
   const names = group.failedNames.map(reportedName).filter((name) => name !== "");
   const failed = names.length === 0 ? "" : ` ${coreMessage(CoreMessage.UnnamedClaimFailedNames, { names: names.join(" / ") })}`;
-  return `${group.qualityCheckKind}: ${outcomeDescription("cites-no-scenario")}${quotedSuffix([reported(group.locator), said])} — ${counts}${failed}`;
+  return `${group.qualityCheckKind}: ${outcomeDescription("cites-no-claim")}${quotedSuffix([reported(group.locator), said])} — ${counts}${failed}`;
 }
 
 interface UnnamedClaimCiStepsView {
@@ -125,11 +125,11 @@ function renderUnnamedClaimGroup(group: UnnamedClaimGroup): string {
   const steps = unnamedClaimCiSteps(unnamedClaimCiStepsViewOf(group.names.map(reportedName)));
   const remark =
     group.sharedClaimCode === undefined ? "" : ` (${coreMessage(CoreMessage.SharedClaimCode, { code: group.sharedClaimCode })})`;
-  return `fitness: ${outcomeDescription("cites-no-scenario")}${remark} — ${steps}`;
+  return `fitness: ${outcomeDescription("cites-no-claim")}${remark} — ${steps}`;
 }
 
 function renderUnnamedClaimItems(lines: readonly ReconciliationLine[]): string[] {
-  const broken = lines.filter((line) => line.outcome === "broken");
+  const broken = lines.filter((line) => line.outcome === "never-ran");
   return [...broken.map(renderLine), ...unnamedClaimGroupsOf(lines).map(renderUnnamedClaimGroup)];
 }
 

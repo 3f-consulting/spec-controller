@@ -6,7 +6,7 @@ import type { Scenario, EvidenceObservation } from "./journal.js";
 
 const postedOf = <T extends { readonly outcome: unknown }>({ outcome: _outcome, ...posted }: T) => posted;
 
-describe("[CLM-LDG-007] an evidence observation citing no scenario is reported as the unnamed claim's reconciliation, out of balance", () => {
+describe("[CLM-LDG-007] an evidence observation citing no claim is reported as the unnamed claim's reconciliation, out of balance", () => {
   const scenarios: Scenario[] = [
     { claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
   ];
@@ -31,13 +31,13 @@ describe("[CLM-LDG-007] an evidence observation citing no scenario is reported a
     expect(unnamedClaimRows[0]!.claim).toBe("(unnamed claim)");
   });
 
-  it("gives each uncited evidence observation a cites-no-scenario item carrying its locator", () => {
+  it("gives each uncited evidence observation a cites-no-claim item carrying its locator", () => {
     const unnamedClaimRows = unnamedClaimRowsOf(reconciled());
     const items = unnamedClaimRows[0]!.qualityCheckReconciliations;
     expect(items.flatMap((i) => i.evidenceObservations ?? []).map((o) => o.outcome)).toEqual([
-      "cites-no-scenario",
-      "cites-no-scenario",
-      "cites-no-scenario",
+      "cites-no-claim",
+      "cites-no-claim",
+      "cites-no-claim",
     ]);
     expect(items.flatMap((i) => i.evidenceObservations ?? []).map((o) => o.locator).sort()).toEqual([
       "features/orphan-b.feature",

@@ -20,7 +20,7 @@ const vitestResult: VitestJsonReport = {
         { fullName: "[CLM-FIX-001] a fixture behaviour holds", title: "holds", status: "passed" },
         { fullName: "[CLM-FIX-001] a fixture behaviour holds again", title: "holds again", status: "passed" },
         { fullName: "[CLM-PHX-999] a scenario no feature carries", title: "is cited", status: "passed" },
-        { fullName: "a test citing no scenario", title: "a test citing no scenario", status: "passed" },
+        { fullName: "a test citing no claim", title: "a test citing no claim", status: "passed" },
       ],
     },
   ],

@@ -29,18 +29,18 @@ Feature: A pytest suite's results answer unit evidence obligations
     Scenario: a pytest test citing a scenario no feature file carries posts to a phantom claim
 
     @unit @CLM-PYT-005
-    Scenario: a pytest test citing no scenario posts its passed observation to the unnamed claim
+    Scenario: a pytest test citing no claim posts its passed observation to the unnamed claim
 
     @unit @CLM-PYT-006
     Scenario: a pytest test whose testcase carries two clm properties credits neither scenario, and the unnamed claim's row names both codes
 
-  Rule: a pytest run whose proof never ran is broken evidence, never missing or failing
+  Rule: a pytest run whose proof never ran is evidence that never ran, never missing or failing
 
     @unit @CLM-PYT-007
-    Scenario: a pytest run that failed to collect posts a broken item and the run is unsound
+    Scenario: a pytest run that failed to collect posts a never-ran item and the run is unsound
 
     @unit @CLM-PYT-008
-    Scenario: a pytest test whose setup errored posts a broken line naming the test, and the scenario it cites reads a missing line beside it
+    Scenario: a pytest test whose setup errored posts a never-ran line naming the test, and the scenario it cites reads a missing line beside it
 
   Rule: the report given to --pytest is read only in the shape pytest writes
 

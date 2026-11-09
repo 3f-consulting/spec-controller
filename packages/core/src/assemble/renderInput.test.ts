@@ -244,7 +244,7 @@ describe("[CLM-RMD-003] the summary counts the evidence observations of each of 
   const rmd003Observations: EvidenceObservation[] = [
     { qualityCheckKind: "unit", claimCode: "CLM-RMD-001", status: "passed" },
     { qualityCheckKind: "unit", claimCode: "CLM-RMD-001", status: "passed" },
-    { qualityCheckKind: "unit", claimCode: "CLM-RMD-001", status: "failed", broken: true, locator: "src/rmd.test.ts" },
+    { qualityCheckKind: "unit", claimCode: "CLM-RMD-001", status: "failed", neverRan: true, locator: "src/rmd.test.ts" },
     { qualityCheckKind: "integration", claimCode: "CLM-RMD-001", status: "passed" },
     { qualityCheckKind: "unit", claimCode: "CLM-PHX-999", status: "passed" },
     { qualityCheckKind: "integration", claimCode: null, status: "passed" },
@@ -257,7 +257,7 @@ describe("[CLM-RMD-003] the summary counts the evidence observations of each of 
       claimCode: "CLM-RMD-010",
       exists: true,
       enforcedOverRealSource: true,
-      broken: true,
+      neverRan: true,
       locator: ".github/workflows/ci.yml",
     },
     { qualityCheckKind: "fitness", fitnessFunction: "lint:baz", exists: true, enforcedOverRealSource: true },
@@ -280,7 +280,7 @@ describe("[CLM-RMD-003] the summary counts the evidence observations of each of 
     rmd003Balance = reconcile(rmd003Scenarios, rmd003Observations);
   });
 
-  it("states the evidence observations under the summary: a broken behavioural one counted, and each fitness function that ran", () => {
+  it("states the evidence observations under the summary: a behavioural one that never ran counted, and each fitness function that ran", () => {
     const report = assembleRenderInput(__er(rmd003Balance, true), ctx);
     expect(report.summary.evidenceObservations).toEqual(evidenceObservations);
   });

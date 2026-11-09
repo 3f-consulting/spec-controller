@@ -10,7 +10,7 @@ import { sampleReportCtx as ctx } from "./runContext.test-utils.js";
 import { __er } from "../evidenceReconciliation.test-utils.js";
 import { publishedExitCodeOf } from "./publishedExitCodes.test-utils.js";
 
-describe("[CLM-RPT-021] the markdown names the broken evidence and its error, stamped unsound", () => {
+describe("[CLM-RPT-021] the markdown names the evidence that never ran and its error, stamped unsound", () => {
   const VITEST_LOCATOR = "tests/harness/cucumber.trigger.test.ts";
   const VITEST_MESSAGE =
     "Error: Cannot find package '@cucumber/tag-expressions' imported from " +
@@ -29,7 +29,7 @@ describe("[CLM-RPT-021] the markdown names the broken evidence and its error, st
     layer: Layer,
     locator: string,
     message: string
-  ): EvidenceObservation => ({ qualityCheckKind: layer, claimCode: null, status: "passed", broken: true, locator, message });
+  ): EvidenceObservation => ({ qualityCheckKind: layer, claimCode: null, status: "passed", neverRan: true, locator, message });
 
   const balanceWithBroken = (observation: EvidenceObservation): Ledger => {
     const scenarios: Scenario[] = [
@@ -58,7 +58,7 @@ describe("[CLM-RPT-021] the markdown names the broken evidence and its error, st
     }
   });
 
-  it("carries the locator on the unnamed claim's broken item — a broken proof, not an absent one", () => {
+  it("carries the locator on the unnamed claim's never-ran item — a proof that never ran, not an absent one", () => {
     const vitestMd = renderMarkdown(__er(vitestBroken), ctx, publishedExitCodeOf);
     const unnamedClaimRow = rowFor(vitestMd, "(unnamed claim)");
     expect(unnamedClaimRow).toContain(`unit: ${coreMessage(CoreMessage.OutcomeBroken)}`);

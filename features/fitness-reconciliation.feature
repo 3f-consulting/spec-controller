@@ -7,7 +7,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
   A @fitness scenario has a title and tags and no steps, and nothing runs it. Only a run: step
   in the CI config over the real tree satisfies its obligation. A check not wired into CI
   leaves its obligation missing. One whose CI step or job sets `continue-on-error` reconciles
-  as watermelon, unless the run reads the CI run's step record, where the step's own outcome
+  as cannot-fail, unless the run reads the CI run's step record, where the step's own outcome
   answers the obligation.
 
   No other key or tag names a check. A specController.checkRegistry key settles nothing and is
@@ -61,18 +61,18 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
 
       The missing obligation is reported on the scenario's own row and nowhere else.
 
-  Rule: a check that did not run is broken evidence rather than an absent one
+  Rule: a check that did not run is evidence that never ran rather than an absent one
 
-    A broken check carries where to fix it and what broke. The obligation it cites reconciles
+    A check that never ran carries where to fix it and what broke. The obligation it cites reconciles
     missing, and the run is stamped unsound.
 
     @unit @CLM-LNT-026
-    Scenario: a check step's outcome answers its scenario's obligation only where it says what the check did, and every other reading is broken evidence, which answers no obligation, read over every line on the scenario's row
+    Scenario: a check step's outcome answers its scenario's obligation only where it says what the check did, and every other reading is evidence that never ran, which answers no obligation, read over every line on the scenario's row
 
       A step that succeeded or failed answers its obligation. A skipped step, or any status the
-      reader does not recognise, is broken evidence.
+      reader does not recognise, is evidence that never ran.
 
-  Rule: a pipeline nobody has annotated is reported as every check it runs, each citing no scenario
+  Rule: a pipeline nobody has annotated is reported as every check it runs, each citing no claim
 
     With no @fitness scenarios and no annotated steps, the report lists every check the pipeline
     runs, each on the unnamed claim. Steps the target lists as not checks, such as checkout,
@@ -95,14 +95,14 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
   Rule: a check its job's verdict does not depend on is not enforced over the real source
 
     @unit @CLM-LNT-032
-    Scenario: a check its job's verdict does not depend on reconciles as the watermelon, beside a sibling check whose red is the job's verdict
+    Scenario: a check its job's verdict does not depend on reconciles as cannot-fail, beside a sibling check whose red is the job's verdict
 
     @unit @CLM-LNT-033
     Scenario: the fitness-function census counts a check whose red its job survives as a check that ran, on both of its counts
 
       The census counts checks that ran, and how many of those no scenario names. Both counts take
-      the same rule: a check is counted when it is present and its Evidence Observation is not
-      broken, so a check whose red its job survives counts as run. A missing or broken check is in
+      the same rule: a check is counted when it is present and its Evidence Observation
+      ran, so a check whose red its job survives counts as run. A missing check, or one that never ran, is in
       neither.
 
   Rule: a check step's outcome in the CI run's record is the fitness Evidence Observation
@@ -121,7 +121,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     @unit @CLM-LNT-028
     Scenario: a check step that failed posts a failing observation, out of balance whatever the job concluded
 
-      A failed step reconciles failing, not broken or missing, exactly as a failed unit test does.
+      A failed step reconciles failing, not never-ran or missing, exactly as a failed unit test does.
       The row is read from its own step alone, never from the run as a whole.
 
   Rule: a fitness obligation answered by several evidence observations reads one Reconciliation line per observation
@@ -134,7 +134,7 @@ Feature: Reconcile every fitness function as a @fitness scenario citing its own 
     Scenario: a failed fitness evidence observation beside a passing one for the same check reads a failing line beside a satisfied one, and the ledger is out of balance
 
     @unit @CLM-LNT-037
-    Scenario: a watermelon fitness evidence observation beside a wired one for the same check reads a watermelon line beside a satisfied one, and the ledger is out of balance, whichever one's locator sorts first
+    Scenario: a cannot-fail fitness evidence observation beside a wired one for the same check reads a cannot-fail line beside a satisfied one, and the ledger is out of balance, whichever one's locator sorts first
 
     @unit @CLM-LNT-038
-    Scenario: a failed fitness evidence observation beside a watermelon one for the same check reads a failing line and a watermelon line, each carrying its own observation, whichever one's locator sorts first
+    Scenario: a failed fitness evidence observation beside a cannot-fail one for the same check reads a failing line and a cannot-fail line, each carrying its own observation, whichever one's locator sorts first

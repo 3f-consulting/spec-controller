@@ -35,19 +35,19 @@ describe("[CLM-LDG-001] noEvidenceObligationReconciliationsOf lists evidence obs
     );
     expect(items).toHaveLength(1);
     expect(items[0]).not.toHaveProperty("outcome");
-    expect(items[0]!.evidenceObservations?.map((o) => [o.outcome, o.locator])).toEqual([["no-evidence-obligation", "tests/a.e2e.ts"]]);
+    expect(items[0]!.evidenceObservations?.map((o) => [o.outcome, o.locator])).toEqual([["not-asked-for", "tests/a.e2e.ts"]]);
     expect(items[0]!.evidenceObligation).toBeUndefined();
   });
 });
 
-describe("[CLM-LDG-008] an evidence observation at a kind of quality check the scenario never raised is reported as no-evidence-obligation, its payload asserted on the observation", () => {
+describe("[CLM-LDG-008] an evidence observation at a kind of quality check the scenario never raised is reported as not-asked-for, its payload asserted on the observation", () => {
   const pairs = new Set(["CLM-AAA-001 unit"]);
 
   it("holds a behavioural evidence observation from no test file with only the keys it has", () => {
     const [item] = noEvidenceObligationReconciliationsOf("CLM-AAA-001", [observation("e2e", "CLM-AAA-001")], pairs);
     expect(item).toStrictEqual({
       qualityCheckKind: "e2e",
-      evidenceObservations: [{ qualityCheckKind: "e2e", claimCode: "CLM-AAA-001", status: "passed", outcome: "no-evidence-obligation" }],
+      evidenceObservations: [{ qualityCheckKind: "e2e", claimCode: "CLM-AAA-001", status: "passed", outcome: "not-asked-for" }],
     });
   });
 
@@ -69,7 +69,7 @@ describe("[CLM-LDG-008] an evidence observation at a kind of quality check the s
           fitnessFunction: "lint:nobody-asked",
           exists: true,
           enforcedOverRealSource: true,
-          outcome: "no-evidence-obligation",
+          outcome: "not-asked-for",
         },
       ],
     });
@@ -77,14 +77,14 @@ describe("[CLM-LDG-008] an evidence observation at a kind of quality check the s
 });
 
 describe("[CLM-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom claim's row's items", () => {
-  it("posts one cites-unknown-scenario item, with an evidence observation and no obligation, per citing evidence observation, in citation order", () => {
+  it("posts one cites-unknown-claim item, with an evidence observation and no obligation, per citing evidence observation, in citation order", () => {
     const items = citesUnknownScenarioReconciliationsOf([
       observation("unit", "CLM-ZZZ-009", { locator: "tests/z1.test.ts" }),
       observation("integration", "CLM-ZZZ-009", { locator: "features/z2.feature" }),
     ]);
     expect(items.map((i) => i.evidenceObservations?.map((o) => o.outcome))).toEqual([
-      ["cites-unknown-scenario"],
-      ["cites-unknown-scenario"],
+      ["cites-unknown-claim"],
+      ["cites-unknown-claim"],
     ]);
     expect(items.map((i) => i.evidenceObservations?.map((o) => o.locator))).toEqual([["tests/z1.test.ts"], ["features/z2.feature"]]);
     expect(items[0]!.evidenceObligation).toBeUndefined();
@@ -99,7 +99,7 @@ describe("[CLM-LDG-006] an evidence observation citing a scenario no feature car
     expect(row.qualityCheckReconciliations).toStrictEqual([
       {
         qualityCheckKind: "unit",
-        evidenceObservations: [{ qualityCheckKind: "unit", claimCode: "CLM-ZZZ-009", status: "passed", outcome: "cites-unknown-scenario" }],
+        evidenceObservations: [{ qualityCheckKind: "unit", claimCode: "CLM-ZZZ-009", status: "passed", outcome: "cites-unknown-claim" }],
       },
     ]);
   });
@@ -126,7 +126,7 @@ describe("[CLM-LDG-034] an observation on a phantom claim's row carries the keys
           exists: true,
           enforcedOverRealSource: true,
           locator: "packages/core/src/parse/fitnessCitations.ts",
-          outcome: "cites-unknown-scenario",
+          outcome: "cites-unknown-claim",
         },
       ],
     });
@@ -150,7 +150,7 @@ describe("[CLM-LDG-034] an observation on a phantom claim's row carries the keys
           claimCode: "CLM-ZZZ-009",
           exists: true,
           enforcedOverRealSource: true,
-          outcome: "cites-unknown-scenario",
+          outcome: "cites-unknown-claim",
         },
       ],
     });
@@ -163,8 +163,8 @@ describe("[CLM-LDG-001] unnamedClaimReconciliationsOf orders the unnamed claim's
   beforeEach(() => {
     broken = observation("unit", null, {
       status: "failed",
-      broken: true,
-      locator: "tests/broken.test.ts",
+      neverRan: true,
+      locator: "tests/never-ran.test.ts",
       message: "Failed to collect",
     });
     uncited = observation("unit", null, { locator: "tests/orphan.test.ts" });
@@ -176,22 +176,22 @@ describe("[CLM-LDG-001] unnamedClaimReconciliationsOf orders the unnamed claim's
     enforcedOverRealSource: true,
   };
 
-  it("holds the unnamed claim's evidence in one reconciliation per kind of quality check, each observation a line in evidence order, a broken one reading broken", () => {
+  it("holds the unnamed claim's evidence in one reconciliation per kind of quality check, each observation a line in evidence order, one that never ran reading never-ran", () => {
     const row = reconcile([], [guard, uncited, broken]).claimReconciliations.find((r) => r.claim === UNNAMED_CLAIM_ID)!;
     expect(row.qualityCheckReconciliations.map((i) => [i.qualityCheckKind, i.outcome, i.evidenceObservations?.map((o) => [o.locator, o.outcome])])).toEqual([
-      ["unit", undefined, [["tests/broken.test.ts", "broken"], ["tests/orphan.test.ts", "cites-no-scenario"]]],
-      ["fitness", undefined, [[undefined, "cites-no-scenario"]]],
+      ["unit", undefined, [["tests/never-ran.test.ts", "never-ran"], ["tests/orphan.test.ts", "cites-no-claim"]]],
+      ["fitness", undefined, [[undefined, "cites-no-claim"]]],
     ]);
   });
 });
 
 describe("[CLM-LDG-007] an observation on the unnamed claim's row omits the payload keys it has no value for", () => {
-  it("omits BOTH the locator and the message key on a broken observation that carries neither", () => {
-    const silent = observation("unit", null, { broken: true, status: "failed" });
+  it("omits BOTH the locator and the message key on an observation that never ran and carries neither", () => {
+    const silent = observation("unit", null, { neverRan: true, status: "failed" });
     const [item] = unnamedClaimReconciliationsOf([silent]);
     expect(item).toStrictEqual({
       qualityCheckKind: "unit",
-      evidenceObservations: [{ qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, outcome: "broken" }],
+      evidenceObservations: [{ qualityCheckKind: "unit", claimCode: null, status: "failed", neverRan: true, outcome: "never-ran" }],
     });
   });
 
@@ -200,7 +200,7 @@ describe("[CLM-LDG-007] an observation on the unnamed claim's row omits the payl
     const [item] = unnamedClaimReconciliationsOf([anonymous]);
     expect(item).toStrictEqual({
       qualityCheckKind: "integration",
-      evidenceObservations: [{ ...anonymous, outcome: "cites-no-scenario" }],
+      evidenceObservations: [{ ...anonymous, outcome: "cites-no-claim" }],
     });
     expect(item).not.toHaveProperty("locator");
   });

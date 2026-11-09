@@ -69,8 +69,8 @@ function observationOf(
   const { claimCode: soleCode, severalCodes } = attributionOf(citingCodesOf(testcase));
   const claimCode = soleCode === null ? null : citedCode(soleCode);
   const locator = `${testcase.classname}::${testcase.name}`;
-  if (evidence.broken) {
-    return { qualityCheckKind: layer, claimCode, status: evidence.status, locator, broken: evidence.broken, message: errorTextOf(testcase) };
+  if (evidence.neverRan) {
+    return { qualityCheckKind: layer, claimCode, status: evidence.status, locator, neverRan: evidence.neverRan, message: errorTextOf(testcase) };
   }
   return {
     qualityCheckKind: layer,
@@ -115,7 +115,7 @@ function collectionFailureOf(
     claimCode: null,
     status: evidence.status,
     locator: testcase.name ?? "",
-    broken: evidence.broken,
+    neverRan: evidence.neverRan,
     message: errorTextOf(testcase),
   };
 }
@@ -134,7 +134,7 @@ function classSetupFailureOf(
     claimCode: null,
     status: evidence.status,
     locator: testcase.classname,
-    broken: evidence.broken,
+    neverRan: evidence.neverRan,
     message: errorTextOf(testcase),
   };
 }
@@ -156,7 +156,7 @@ function buildFailureOf(
     claimCode: null,
     status: evidence.status,
     locator: suite.name,
-    broken: evidence.broken,
+    neverRan: evidence.neverRan,
     message: failureTextOf(testcase),
   };
 }

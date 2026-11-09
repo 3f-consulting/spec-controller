@@ -84,7 +84,7 @@ describe("[CLM-RMD-027] each fitness evidence observation names the CI step it w
         fitnessFunction: "lint",
         exists: true,
         enforcedOverRealSource: true,
-        outcome: "cites-no-scenario",
+        outcome: "cites-no-claim",
         step: "workflow-0.yml:quality:Lint",
       },
     ]);
@@ -97,7 +97,7 @@ describe("[CLM-RMD-027] each fitness evidence observation names the CI step it w
         fitnessFunction: "audit",
         exists: true,
         enforcedOverRealSource: true,
-        outcome: "cites-no-scenario",
+        outcome: "cites-no-claim",
         step: "nightly.yml:sweep:Audit",
       },
       {
@@ -105,7 +105,7 @@ describe("[CLM-RMD-027] each fitness evidence observation names the CI step it w
         fitnessFunction: "lint",
         exists: true,
         enforcedOverRealSource: true,
-        outcome: "cites-no-scenario",
+        outcome: "cites-no-claim",
         step: "ci.yml:quality:Lint",
       },
     ]);
@@ -130,7 +130,7 @@ describe("[CLM-RMD-027] each fitness evidence observation names the CI step it w
         fitnessFunction: "lint",
         exists: true,
         enforcedOverRealSource: true,
-        outcome: "cites-no-scenario",
+        outcome: "cites-no-claim",
         step: "ci.yml:quality:Lint",
       },
     ]);
@@ -154,7 +154,7 @@ describe("[CLM-RMD-027] each fitness evidence observation names the CI step it w
         fitnessFunction: "lint",
         exists: true,
         enforcedOverRealSource: true,
-        outcome: "cites-no-scenario",
+        outcome: "cites-no-claim",
         step: "ci.yml:quality:Lint",
       },
     ]);

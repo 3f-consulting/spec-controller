@@ -56,18 +56,18 @@ describe("[CLM-LDG-022] reconcile — every evidence observation is found once, 
   const everyObservation: EvidenceObservation[] = [
     { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "passed", locator: "tests/a.test.ts" },
     { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "failed", locator: "tests/b.test.ts" },
-    { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "failed", broken: true, locator: "tests/c.test.ts" },
+    { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "failed", neverRan: true, locator: "tests/c.test.ts" },
     { qualityCheckKind: "e2e", claimCode: "CLM-AAA-001", status: "passed", locator: "features/a.feature" },
     { qualityCheckKind: "unit", claimCode: "CLM-AAA-003", status: "passed", locator: "tests/pending.test.ts" },
     { qualityCheckKind: "fitness", fitnessFunction: "lint:a", claimCode: "CLM-FIT-001", exists: true, enforcedOverRealSource: true },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:b", claimCode: "CLM-FIT-001", exists: false, enforcedOverRealSource: false, broken: true, notes: [brokenNote] },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:b", claimCode: "CLM-FIT-001", exists: false, enforcedOverRealSource: false, neverRan: true, notes: [brokenNote] },
     { qualityCheckKind: "unit", claimCode: "CLM-ZZZ-999", status: "passed", locator: "tests/phantom.test.ts" },
-    { qualityCheckKind: "unit", claimCode: "CLM-ZZZ-999", status: "failed", broken: true, locator: "tests/phantom-broken.test.ts" },
+    { qualityCheckKind: "unit", claimCode: "CLM-ZZZ-999", status: "failed", neverRan: true, locator: "tests/phantom-never-ran.test.ts" },
     { qualityCheckKind: "fitness", fitnessFunction: "lint:phantom", claimCode: "CLM-ZZZ-998", exists: true, enforcedOverRealSource: false },
     { qualityCheckKind: "unit", claimCode: null, status: "passed", locator: "tests/nothing.test.ts" },
-    { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, locator: "tests/nothing-broken.test.ts" },
+    { qualityCheckKind: "unit", claimCode: null, status: "failed", neverRan: true, locator: "tests/nothing-never-ran.test.ts" },
     { qualityCheckKind: "fitness", fitnessFunction: "lint:nothing", exists: true, enforcedOverRealSource: true },
-    { qualityCheckKind: "fitness", fitnessFunction: "lint:nothing-broken", exists: false, enforcedOverRealSource: false, broken: true },
+    { qualityCheckKind: "fitness", fitnessFunction: "lint:nothing-never-ran", exists: false, enforcedOverRealSource: false, neverRan: true },
   ];
   const rows = (): readonly ClaimReconciliation[] => reconcile(scenarios, [...everyObservation]).claimReconciliations;
 
@@ -99,7 +99,7 @@ describe("[CLM-LDG-022] reconcile — every evidence observation is found once, 
   });
 });
 
-describe("[CLM-LDG-022] reconcile — a broken evidence observation posts to the claim it names, as a broken item carrying it", () => {
+describe("[CLM-LDG-022] reconcile — an evidence observation that never ran posts to the claim it names, as a never-ran item carrying it", () => {
   const scenarios: Scenario[] = [
     { claimCode: "CLM-AAA-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     { claimCode: "CLM-FIT-001", evidenceObligations: [{ qualityCheckKind: "fitness" }] },
@@ -107,36 +107,36 @@ describe("[CLM-LDG-022] reconcile — a broken evidence observation posts to the
 
   const note = { kind: "ambiguous-step", step: "a step" } as const;
   const brokenOnScenario: EvidenceObservation = {
-    qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "failed", broken: true,
+    qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "failed", neverRan: true,
     locator: "tests/scenario.test.ts", message: "threw at import", notes: [note],
   };
   const brokenOnScenarioWithoutObligation: EvidenceObservation = {
-    qualityCheckKind: "e2e", claimCode: "CLM-AAA-001", status: "failed", broken: true,
+    qualityCheckKind: "e2e", claimCode: "CLM-AAA-001", status: "failed", neverRan: true,
     locator: "features/scenario.feature", message: "a hook failed", notes: [note],
   };
   const brokenOnPhantom: EvidenceObservation = {
-    qualityCheckKind: "unit", claimCode: "CLM-ZZZ-999", status: "failed", broken: true,
+    qualityCheckKind: "unit", claimCode: "CLM-ZZZ-999", status: "failed", neverRan: true,
     locator: "tests/phantom.test.ts", message: "threw at import", notes: [note],
   };
   const brokenOnNothing: EvidenceObservation = {
-    qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true,
+    qualityCheckKind: "unit", claimCode: null, status: "failed", neverRan: true,
     locator: "tests/nothing.test.ts", message: "threw at import", notes: [note],
   };
   const brokenCheckOnScenario: EvidenceObservation = {
     qualityCheckKind: "fitness", fitnessFunction: "lint:scenario", claimCode: "CLM-FIT-001",
-    exists: false, enforcedOverRealSource: false, broken: true,
+    exists: false, enforcedOverRealSource: false, neverRan: true,
     locator: ".github/workflows/ci.yml", message: "the step did not run",
     notes: [{ kind: "check-step-did-not-run", code: "CLM-FIT-001" }],
   };
   const brokenCheckOnPhantom: EvidenceObservation = {
     qualityCheckKind: "fitness", fitnessFunction: "lint:phantom", claimCode: "CLM-ZZZ-998",
-    exists: false, enforcedOverRealSource: false, broken: true,
+    exists: false, enforcedOverRealSource: false, neverRan: true,
     locator: ".github/workflows/ci.yml", message: "the step did not run",
     notes: [{ kind: "check-step-did-not-run", code: "CLM-ZZZ-998" }],
   };
   const brokenCheckOnNothing: EvidenceObservation = {
     qualityCheckKind: "fitness", fitnessFunction: "lint:nothing",
-    exists: false, enforcedOverRealSource: false, broken: true,
+    exists: false, enforcedOverRealSource: false, neverRan: true,
     locator: ".github/workflows/ci.yml", message: "the step did not run",
     notes: [{ kind: "check-step-did-not-run", code: "lint:nothing" }],
   };
@@ -169,7 +169,7 @@ describe("[CLM-LDG-022] reconcile — a broken evidence observation posts to the
     ["a fitness one naming a scenario", brokenCheckOnScenario, "CLM-FIT-001"],
     ["a fitness one naming no scenario carrying its code", brokenCheckOnPhantom, "CLM-ZZZ-998"],
     ["a fitness one naming no claim", brokenCheckOnNothing, "(unnamed claim)"],
-  ] as const)("posts %s on that claim's row alone, as one broken item carrying it", (_title, observation, claimCode) => {
+  ] as const)("posts %s on that claim's row alone, as one never-ran item carrying it", (_title, observation, claimCode) => {
     const rows = ledger().claimReconciliations;
     expect(rows.filter((row) => row.qualityCheckReconciliations.flatMap(linesOf).some(carrying(observation))).map((row) => row.claim)).toEqual([claimCode]);
     const row = rows.find((r) => r.claim === claimCode)!;
@@ -177,7 +177,7 @@ describe("[CLM-LDG-022] reconcile — a broken evidence observation posts to the
     expect(reconcilingItemsOf(row).filter(carrying(observation))).toEqual([brokenItemFor(observation)]);
   });
 
-  it("leaves the obligation a broken evidence observation was meant to answer missing, on behavioural and fitness checks alike", () => {
+  it("leaves the obligation an evidence observation that never ran was meant to answer missing, on behavioural and fitness checks alike", () => {
     const rows = ledger().claimReconciliations;
     const obligationItems = (claimCode: string) =>
       rows.find((r) => r.claim === claimCode)!.qualityCheckReconciliations.flatMap(linesOf).filter((line) => line.evidenceObligation !== undefined);
@@ -189,19 +189,19 @@ describe("[CLM-LDG-022] reconcile — a broken evidence observation posts to the
     ]);
   });
 
-  it("makes no no-evidence-obligation or cites-unknown-scenario item for a broken evidence observation", () => {
+  it("makes no not-asked-for or cites-unknown-claim item for an evidence observation that never ran", () => {
     const outcomes = ledger().claimReconciliations.flatMap((row) => row.qualityCheckReconciliations.flatMap(linesOf).map((line) => line.outcome));
-    expect(outcomes).not.toContain("no-evidence-obligation");
-    expect(outcomes).not.toContain("cites-unknown-scenario");
+    expect(outcomes).not.toContain("not-asked-for");
+    expect(outcomes).not.toContain("cites-unknown-claim");
   });
 
-  it("posts a broken evidence observation naming a code two scenarios share to the unnamed claim, naming the code, as one broken item carrying it", () => {
+  it("posts an evidence observation that never ran naming a code two scenarios share to the unnamed claim, naming the code, as one never-ran item carrying it", () => {
     const shared: Scenario[] = [
       { claimCode: "CLM-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
       { claimCode: "CLM-DUP-001", evidenceObligations: [{ qualityCheckKind: "unit" }] },
     ];
     const brokenOnShared: EvidenceObservation = {
-      qualityCheckKind: "unit", claimCode: "CLM-DUP-001", status: "failed", broken: true,
+      qualityCheckKind: "unit", claimCode: "CLM-DUP-001", status: "failed", neverRan: true,
       locator: "tests/shared.test.ts", message: "threw at import",
     };
     const namingTheCode: EvidenceObservation = { ...brokenOnShared, notes: [{ kind: "shared-claim-code", code: "CLM-DUP-001" }] };
@@ -213,10 +213,10 @@ describe("[CLM-LDG-022] reconcile — a broken evidence observation posts to the
     expect(brokenItemsOf(sharedLedger)).toHaveLength(1);
   });
 
-  it("counts one broken item per broken evidence observation, wherever each posts", () => {
+  it("counts one never-ran item per evidence observation that never ran, wherever each posts", () => {
     expect(brokenItemsOf(ledger())).toHaveLength(everyBroken.length);
     expect(brokenItemsOf(ledger()).flatMap((line) => line.evidenceObservation ?? [])).toEqual(
-      expect.arrayContaining(everyBroken.map((observation) => ({ ...observation, outcome: "broken" })))
+      expect.arrayContaining(everyBroken.map((observation) => ({ ...observation, outcome: "never-ran" })))
     );
   });
 });

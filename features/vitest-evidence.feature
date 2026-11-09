@@ -13,7 +13,7 @@ Feature: A Vitest suite's results answer unit evidence obligations
     Scenario: a self-citing leaf discharges its own scenario while a bare sibling leaf still discharges the ancestor's
 
     @unit @CLM-VIT-002
-    Scenario: a test whose only claim-code-shaped token is prose cites no scenario, and its evidence observation posts to the unnamed claim
+    Scenario: a test whose only claim-code-shaped token is prose cites no claim, and its evidence observation posts to the unnamed claim
 
     @unit @CLM-VIT-003
     Scenario: a leaf naming a claim code in prose does not override its describe's bracketed citation
@@ -22,12 +22,12 @@ Feature: A Vitest suite's results answer unit evidence obligations
     Scenario: a Vitest test whose title cites two scenarios credits neither, and the unnamed claim's row names both codes
 
     @unit @CLM-VIT-008
-    Scenario: a title citing a feature part outside two to five characters cites no scenario, beside a citation of five characters that is read
+    Scenario: a title citing a feature part outside two to five characters cites no claim, beside a citation of five characters that is read
 
-  Rule: a Vitest file that failed to collect is broken, not absent
+  Rule: a Vitest file that failed to collect never ran, and is not absent
 
     @unit @CLM-VIT-005
-    Scenario: a Vitest file that failed to collect posts a broken item naming the file and its error to the unnamed claim's row, while the scenario it would have proven still reads missing
+    Scenario: a Vitest file that failed to collect posts a never-ran item naming the file and its error to the unnamed claim's row, while the scenario it would have proven still reads missing
 
   Rule: a Vitest observation is posted at unit, because a Vitest report is a report of test results
 

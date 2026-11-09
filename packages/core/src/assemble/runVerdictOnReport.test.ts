@@ -30,8 +30,8 @@ const broken: EvidenceObservation = {
   qualityCheckKind: "unit",
   claimCode: null,
   status: "passed",
-  broken: true,
-  locator: "tests/harness/broken.test.ts",
+  neverRan: true,
+  locator: "tests/harness/never-ran.test.ts",
   message: "Error: Cannot find package 'missing-package'",
 };
 

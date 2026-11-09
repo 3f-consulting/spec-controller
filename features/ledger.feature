@@ -43,7 +43,7 @@ Feature: Ledger over obligation-vs-observation evidence
     posts to no real scenario — it lands on a PHANTOM claim
     (posting to a non-existent account). Each
     cited claim code with no scenario behind it becomes ONE phantom claim's Claim Reconciliation, its
-    Quality Check Reconciliation carrying the outcome cites-unknown-scenario (and the
+    Quality Check Reconciliation carrying the outcome cites-unknown-claim (and the
     evidence observation's locator as the where-to-fix), verdict always out of balance.
 
     @unit @CLM-LDG-006
@@ -52,55 +52,55 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @CLM-LDG-034
     Scenario: an observation on a phantom claim's row carries the keys it has a value for and omits the rest
 
-  Rule: an evidence observation citing no scenario is the unnamed claim's reconciliation
+  Rule: an evidence observation citing no claim is the unnamed claim's reconciliation
 
-    The bidirectional reconciler also consumes evidence observations that cite NO scenario at
+    The bidirectional reconciler also consumes evidence observations that cite NO claim at
     all — a behavioural result carrying no claim code anchor, or a CI fitness function no scenario cites.
     An evidence observation that posts to no scenario lands on the UNNAMED claim
     (a suspense account holds postings that match no
     real account). ALL uncited evidence observations aggregate into ONE unnamed claim's Claim
     Reconciliation, sentinel id "(unnamed claim)", each Quality Check Reconciliation carrying
-    the outcome cites-no-scenario (and the evidence observation's locator as the where-to-fix),
+    the outcome cites-no-claim (and the evidence observation's locator as the where-to-fix),
     verdict always out of balance. Every uncited evidence observation is listed on this row.
 
     @unit @CLM-LDG-007
-    Scenario: an evidence observation citing no scenario is reported as the unnamed claim's reconciliation, out of balance
+    Scenario: an evidence observation citing no claim is reported as the unnamed claim's reconciliation, out of balance
 
-  Rule: an evidence observation at a kind of quality check the scenario never raised is no-evidence-obligation
+  Rule: an evidence observation at a kind of quality check the scenario never raised is not-asked-for
 
     The bidirectional reconciler also consumes evidence observations that cite a REAL
     scenario at a layer that scenario NEVER raised — a behavioural result attributed to
     a scenario, but at a kind of quality check the scenario has no evidence obligation for. Such an evidence observation posts
-    to a real account, but against no evidence obligation on it: outcome no-evidence-obligation (the GENERAL case —
+    to a real account, but against no evidence obligation on it: outcome not-asked-for (the GENERAL case —
     it applies whether or not the scenario carries other evidence obligations). It becomes an evidence-observation
     Quality Check Reconciliation ON THE REAL scenario's row (carrying the evidence observation locator as
     the where-to-fix, ruling Q5); the row's own evidence obligations reconcile as normal. So
     the count of behavioural observations never silently counts a
-    stray evidence observation at a never-raised layer as one that matched an evidence obligation — no-evidence-obligation
+    stray evidence observation at a never-raised layer as one that matched an evidence obligation — not-asked-for
     appears in summary.byOutcome, while the Evidence observations attributed (evidence observations citing a real
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
 
     @unit @CLM-LDG-008
-    Scenario: an evidence observation at a kind of quality check the scenario never raised is reported as no-evidence-obligation, its payload asserted on the observation
+    Scenario: an evidence observation at a kind of quality check the scenario never raised is reported as not-asked-for, its payload asserted on the observation
 
     @unit @CLM-LDG-010
-    Scenario: a zero-evidence obligation scenario cited by a stray evidence observation is no-evidence-obligation, not both-missing
+    Scenario: a zero-evidence obligation scenario cited by a stray evidence observation is not-asked-for, not no-quality-check
 
-  Rule: a scenario with zero rows on both sides is both-missing
+  Rule: a scenario with zero rows on both sides is no-quality-check
 
     The neither-side reconciling item — the last shape the
     bidirectional reconciler emits. A scenario that reconciles to ZERO rows on
     BOTH sides — no evidence obligation AND no citing evidence observation — has nothing
     to balance in either direction. It posts one degenerate Quality Check Reconciliation,
-    blank on both sides, outcome both-missing (label: "Evidence Obligation and
-    Evidence Observation are both missing — the Scenario is untagged and uncited"), verdict out of balance. Detection keys
+    blank on both sides, outcome no-quality-check (label: "Executable claim asks for no quality check: it carries a claim
+    code and no kind-of-check tag, and nothing cites it"), verdict out of balance. Detection keys
     on the reconciler emitting NOTHING either way — NOT a hard qualityCheckReconciliations.length
-    === 0 map: a zero-evidence obligation scenario cited by a stray evidence observation is no-evidence-obligation (LDG-010),
-    not both-missing. The report has no warnings section: this row is where such a scenario
+    === 0 map: a zero-evidence obligation scenario cited by a stray evidence observation is not-asked-for (LDG-010),
+    not no-quality-check. The report has no warnings section: this row is where such a scenario
     is reported.
 
     @unit @CLM-LDG-009
-    Scenario: a scenario with zero evidence obligations and zero evidence observations is reported as both-missing, out of balance
+    Scenario: a scenario with zero evidence obligations and zero evidence observations is reported as no-quality-check, out of balance
 
   Rule: a behavioural observation from a report of scenario runs is posted at each layer beyond @unit that its scenario's tags name, or at integration when there are none; one from a report of test results is posted at unit
 
@@ -128,10 +128,10 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @CLM-LDG-045
     Scenario: a report of test results falls back to unit, and a report of scenario runs to integration
 
-  Rule: a run carrying broken evidence is unsound
+  Rule: a run carrying evidence that never ran is unsound
 
     @unit @CLM-LDG-018
-    Scenario: a reconciliation carrying a broken item is unsound, and one carrying none is sound
+    Scenario: a reconciliation carrying a never-ran item is unsound, and one carrying none is sound
 
   Rule: a scenario carrying no claim code reconciles no-claim-code — no-claim-code work is never invisible
 
@@ -141,12 +141,12 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: every evidence observation posts to exactly one ledger account, never to none — the evidence observation cites, on both axes
 
     An evidence observation is found once on its account, inside the quality-check reconciliation
-    of its kind of quality check, and nowhere else on the row. A broken evidence observation posts to the
-    claim it names, as every other does, as a broken item carrying it. The obligation it was meant
+    of its kind of quality check, and nowhere else on the row. An evidence observation that never ran posts to the
+    claim it names, as every other does, as a never-ran item carrying it. The obligation it was meant
     to answer reconciles from the evidence that reached its proof.
 
     @unit @CLM-LDG-022
-    Scenario: every evidence observation posts to exactly one ledger account and is found once there, inside the quality-check reconciliation of its kind of quality check, a broken one on the claim it names
+    Scenario: every evidence observation posts to exactly one ledger account and is found once there, inside the quality-check reconciliation of its kind of quality check, one that never ran on the claim it names
 
     @unit @CLM-LDG-035
     Scenario: a fitness-function evidence observation discharges only the obligation on the row whose claim code it cites
@@ -211,16 +211,16 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @CLM-LDG-046
     Scenario: two scenarios sharing one claim code reconcile as two duplicate-claim-code Claim Reconciliations under that code, each naming its own scenario, and an observation citing the code posts to the unnamed claim
 
-  Rule: a test's run result gives the same evidence whatever the runner: broken when it never reached its assertions, nothing when it is inconclusive
+  Rule: a test's run result gives the same evidence whatever the runner: never-ran when it never reached its assertions, nothing when it is inconclusive
 
     A test that ran its assertions posts what they said, passed or failed. A test its runner reports as
-    never having reached them posts broken evidence. A test whose result is inconclusive posts nothing.
+    never having reached them posts evidence that never ran. A test whose result is inconclusive posts nothing.
     Each runner's reader says which of its runner's results is which, as that runner's own scenarios
     state: a test file that failed to load, or a Cucumber step matching more than one definition, never
     reached its assertions, while a failed setup reads as failed for some runners and as skipped for others.
 
     @unit @CLM-LDG-043
-    Scenario: a test that never reached its assertions posts broken evidence, whatever the runner
+    Scenario: a test that never reached its assertions posts evidence that never ran, whatever the runner
 
     @unit @CLM-LDG-044
     Scenario: a test whose result is inconclusive posts no evidence observation, whatever the runner

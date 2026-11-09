@@ -29,13 +29,13 @@ function scenarioRows(reconciliation: EvidenceReconciliation): [string, string, 
 }
 
 describe("[CLM-LNT-026] a check step's outcome answers its row's obligation only where it says what the check did", () => {
-  it("answers the obligation for the step that succeeded and the step that failed, and for none of the other three, whose rows each read one missing line and one broken line and nothing else", () => {
+  it("answers the obligation for the step that succeeded and the step that failed, and for none of the other three, whose rows each read one missing line and one never-ran line and nothing else", () => {
     expect(scenarioRows(reconcile())).toEqual([
       ["CLM-CVT-001", "balanced", [[["CLM-CVT-001"], "satisfied"]]],
       ["CLM-CVT-002", "out-of-balance", [[["CLM-CVT-002"], "failing"]]],
-      ["CLM-CVT-003", "out-of-balance", [[[], "missing"], [["CLM-CVT-003"], "broken"]]],
-      ["CLM-CVT-004", "out-of-balance", [[[], "missing"], [["CLM-CVT-004"], "broken"]]],
-      ["CLM-CVT-005", "out-of-balance", [[[], "missing"], [["CLM-CVT-005"], "broken"]]],
+      ["CLM-CVT-003", "out-of-balance", [[[], "missing"], [["CLM-CVT-003"], "never-ran"]]],
+      ["CLM-CVT-004", "out-of-balance", [[[], "missing"], [["CLM-CVT-004"], "never-ran"]]],
+      ["CLM-CVT-005", "out-of-balance", [[[], "missing"], [["CLM-CVT-005"], "never-ran"]]],
     ]);
   });
 
@@ -62,9 +62,9 @@ describe("[CLM-LNT-026] a check step's outcome answers its row's obligation only
     const items = brokenItemsOf(reconciliation.ledger);
     const observations = items.flatMap((line) => line.evidenceObservation ?? []);
     expect(items.map((line) => [line.outcome, line.evidenceObservation?.notes])).toEqual([
-      ["broken", [{ kind: "check-step-did-not-run", code: "CLM-CVT-003", outcome: "skipped" }]],
-      ["broken", [{ kind: "check-step-did-not-run", code: "CLM-CVT-004", outcome: "neutral" }]],
-      ["broken", [{ kind: "check-step-did-not-run", code: "CLM-CVT-005" }]],
+      ["never-ran", [{ kind: "check-step-did-not-run", code: "CLM-CVT-003", outcome: "skipped" }]],
+      ["never-ran", [{ kind: "check-step-did-not-run", code: "CLM-CVT-004", outcome: "neutral" }]],
+      ["never-ran", [{ kind: "check-step-did-not-run", code: "CLM-CVT-005" }]],
     ]);
     expect(observations.map((o) => o.notes?.[0])).toStrictEqual([
       { kind: "check-step-did-not-run", code: "CLM-CVT-003", outcome: "skipped" },
@@ -83,7 +83,7 @@ describe("[CLM-LNT-026] a check step's outcome answers its row's obligation only
         o.claimCode,
         "exists" in o ? o.exists : undefined,
         "enforcedOverRealSource" in o ? o.enforcedOverRealSource : undefined,
-        o.broken,
+        o.neverRan,
       ])
     ).toEqual([
       ["CLM-CVT-003", false, false, true],

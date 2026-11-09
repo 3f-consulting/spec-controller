@@ -7,17 +7,17 @@ import type {
 export type Posting =
   | { readonly kind: "scenario"; readonly claimCode: string }
   | { readonly kind: "phantom-claim"; readonly claimCode: string }
-  | { readonly kind: "unnamed-claim"; readonly posted: "broken" | "cites-nothing" | "cites-shared-code" };
+  | { readonly kind: "unnamed-claim"; readonly posted: "never-ran" | "cites-nothing" | "cites-shared-code" };
 
 export type BehaviouralPosting =
   | { readonly kind: "scenario"; readonly claimCode: string }
   | { readonly kind: "phantom-claim"; readonly claimCode: string }
-  | { readonly kind: "unnamed-claim"; readonly posted: "broken" | "cites-nothing" | "cites-shared-code" };
+  | { readonly kind: "unnamed-claim"; readonly posted: "never-ran" | "cites-nothing" | "cites-shared-code" };
 
 export type FitnessFunctionPosting =
   | { readonly kind: "scenario"; readonly claimCode: string }
   | { readonly kind: "phantom-claim"; readonly claimCode: string }
-  | { readonly kind: "unnamed-claim"; readonly posted: "broken" | "cites-nothing" | "cites-shared-code" };
+  | { readonly kind: "unnamed-claim"; readonly posted: "never-ran" | "cites-nothing" | "cites-shared-code" };
 
 export function postingOf(
   observation: BehaviouralEvidenceObservation,
@@ -41,7 +41,7 @@ export function postingOf(
 ): Posting {
   const claimCode = observation.claimCode ?? null;
   if (claimCode === null || sharedClaimCodes.has(claimCode)) {
-    if (observation.broken === true) return { kind: "unnamed-claim", posted: "broken" };
+    if (observation.neverRan === true) return { kind: "unnamed-claim", posted: "never-ran" };
     return { kind: "unnamed-claim", posted: claimCode === null ? "cites-nothing" : "cites-shared-code" };
   }
   return carriedClaimCodes.has(claimCode) ? { kind: "scenario", claimCode } : { kind: "phantom-claim", claimCode };

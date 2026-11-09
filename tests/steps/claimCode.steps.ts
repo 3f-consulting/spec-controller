@@ -537,7 +537,7 @@ function unnamedClaimObservations(world: SpecControllerWorld): number {
   return rowsOfKind(world, "unnamed-claim")
     .flatMap((row) => row.qualityCheckReconciliations)
     .flatMap((qcr) => qcr.evidenceObservations ?? [])
-    .filter((observation) => observation.outcome === "cites-no-scenario").length;
+    .filter((observation) => observation.outcome === "cites-no-claim").length;
 }
 
 Given(
@@ -564,7 +564,7 @@ function bothOutsideCitationsPostToTheUnnamedClaim(this: SpecControllerWorld): v
 }
 
 Then(
-  "the one- and six-character titles cite no scenario, so both evidence observations post to the unnamed claim",
+  "the one- and six-character titles cite no claim, so both evidence observations post to the unnamed claim",
   bothOutsideCitationsPostToTheUnnamedClaim,
 );
 
@@ -584,7 +584,7 @@ Given(
 );
 
 Then(
-  "the one- and six-character Cucumber scenarios cite no scenario, so both evidence observations post to the unnamed claim",
+  "the one- and six-character Cucumber scenarios cite no claim, so both evidence observations post to the unnamed claim",
   bothOutsideCitationsPostToTheUnnamedClaim,
 );
 

@@ -34,7 +34,7 @@ describe("[CLM-RSP-004] parseRspecEvidenceObservations credits neither code an e
     return parseRspecEvidenceObservations(report)[0];
   };
 
-  it("posts one observation citing no scenario, with a note of both codes", () => {
+  it("posts one observation citing no claim, with a note of both codes", () => {
     expect(observationOf("[CLM-AAA-001] [CLM-AAA-002] two", "group [CLM-AAA-001] [CLM-AAA-002] two")).toEqual({
       qualityCheckKind: "unit",
       claimCode: null,
@@ -121,7 +121,7 @@ describe("[CLM-RSP-007] parseRspecEvidenceObservations posts a failing observati
   });
 });
 
-describe("[CLM-RSP-008] parseRspecEvidenceObservations posts a broken item for a spec file that failed to load", () => {
+describe("[CLM-RSP-008] parseRspecEvidenceObservations posts a never-ran item for a spec file that failed to load", () => {
   const syntaxError = "\nWhile loading ./spec/unloadable_spec.rb a `raise SyntaxError` occurred, RSpec will now quit.\nFailure/Error: __send__(method, file)\n";
   const raisedWhileLoading = "\nAn error occurred while loading ./spec/raising_spec.rb.\nFailure/Error: raise \"no\"\n";
   const passing = { description: "[CLM-AAA-001] leaf", full_description: "group [CLM-AAA-001] leaf", status: "passed", file_path: "./spec/a_spec.rb" };
@@ -129,15 +129,15 @@ describe("[CLM-RSP-008] parseRspecEvidenceObservations posts a broken item for a
   it.each([
     ["a syntax error", syntaxError, "spec/unloadable_spec.rb"],
     ["an error raised while loading", raisedWhileLoading, "spec/raising_spec.rb"],
-  ])("posts one broken item citing no scenario for a file that failed to load with %s, located at that file, carrying RSpec's message", (_, message, locator) => {
+  ])("posts one never-ran item citing no claim for a file that failed to load with %s, located at that file, carrying RSpec's message", (_, message, locator) => {
     const report: RspecJsonReport = { examples: [], summary: { errors_outside_of_examples_count: 1 }, messages: [message] };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator, broken: true, message },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator, neverRan: true, message },
     ]);
   });
 
-  it("relativises the broken item's locator to the run root, as it does every example's", () => {
+  it("relativises the never-ran item's locator to the run root, as it does every example's", () => {
     const report: RspecJsonReport = {
       examples: [],
       summary: { errors_outside_of_examples_count: 1 },
@@ -147,22 +147,22 @@ describe("[CLM-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     expect(parseRspecEvidenceObservations(report, "/r")[0]?.locator).toBe("spec/raising_spec.rb");
   });
 
-  it("posts the broken item beside the observations of the examples other files ran", () => {
+  it("posts the never-ran item beside the observations of the examples other files ran", () => {
     const report: RspecJsonReport = { examples: [passing], summary: { errors_outside_of_examples_count: 1 }, messages: [syntaxError] };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
       { qualityCheckKind: "unit", claimCode: "CLM-AAA-001", status: "passed", locator: "spec/a_spec.rb", testName: "group [CLM-AAA-001] leaf" },
-      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", neverRan: true, message: syntaxError },
     ]);
   });
 
-  it("posts one broken item for each file that failed to load", () => {
+  it("posts one never-ran item for each file that failed to load", () => {
     const report: RspecJsonReport = { examples: [], summary: { errors_outside_of_examples_count: 2 }, messages: [syntaxError, raisedWhileLoading] };
 
     expect(parseRspecEvidenceObservations(report).map((o) => o.locator)).toEqual(["spec/unloadable_spec.rb", "spec/raising_spec.rb"]);
   });
 
-  it("posts one more broken item for the run, holding the other messages, when RSpec counts more errors than files it names", () => {
+  it("posts one more never-ran item for the run, holding the other messages, when RSpec counts more errors than files it names", () => {
     const suiteHook = "\nAn error occurred in a `before(:suite)` hook.\nFailure/Error: raise \"no\"\n";
     const report: RspecJsonReport = {
       examples: [],
@@ -171,24 +171,24 @@ describe("[CLM-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
-      { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, message: suiteHook },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", neverRan: true, message: syntaxError },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", neverRan: true, message: suiteHook },
     ]);
   });
 
-  it("posts the run's extra broken item with no message when RSpec gives none beside the files it names", () => {
+  it("posts the run's extra never-ran item with no message when RSpec gives none beside the files it names", () => {
     const report: RspecJsonReport = { examples: [], summary: { errors_outside_of_examples_count: 2 }, messages: [syntaxError] };
 
     const observations = parseRspecEvidenceObservations(report);
 
     expect(observations).toEqual([
-      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
-      { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, message: undefined },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", neverRan: true, message: syntaxError },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", neverRan: true, message: undefined },
     ]);
     expect(observations[1]?.message).toBeUndefined();
   });
 
-  it("posts the run's extra broken item with every other message, each on its own line, when RSpec gives several", () => {
+  it("posts the run's extra never-ran item with every other message, each on its own line, when RSpec gives several", () => {
     const hookA = "\nAn error occurred in a `before(:suite)` hook.\nFailure/Error: raise \"a\"\n";
     const hookB = "\nAn error occurred in an `after(:suite)` hook.\nFailure/Error: raise \"b\"\n";
     const report: RspecJsonReport = {
@@ -198,8 +198,8 @@ describe("[CLM-RSP-008] parseRspecEvidenceObservations posts a broken item for a
     };
 
     expect(parseRspecEvidenceObservations(report)).toEqual([
-      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", broken: true, message: syntaxError },
-      { qualityCheckKind: "unit", claimCode: null, status: "failed", broken: true, message: hookA + "\n" + hookB },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", locator: "spec/unloadable_spec.rb", neverRan: true, message: syntaxError },
+      { qualityCheckKind: "unit", claimCode: null, status: "failed", neverRan: true, message: hookA + "\n" + hookB },
     ]);
   });
 

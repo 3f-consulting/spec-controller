@@ -4,7 +4,7 @@
     "name": "every-outcome corpus",
     "elements": [
       {
-        "name": "no-evidence-obligation — a real scenario cited at a quality-check it never named",
+        "name": "not-asked-for — a real scenario cited at a quality-check it never named",
         "tags": [{ "name": "@CLM-TOC-005" }, { "name": "@e2e" }],
         "steps": [
           {

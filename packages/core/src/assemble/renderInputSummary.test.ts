@@ -32,14 +32,14 @@ describe("[CLM-RMD-005] the summary states its reconciliation totals: its Claim 
         satisfied: 2,
         missing: 1,
         failing: 0,
-        watermelon: 0,
-        "cites-unknown-scenario": 1,
-        "cites-no-scenario": 1,
+        "cannot-fail": 0,
+        "cites-unknown-claim": 1,
+        "cites-no-claim": 1,
         "no-claim-code": 0,
         "duplicate-claim-code": 0,
-        broken: 0,
-        "no-evidence-obligation": 0,
-        "both-missing": 0,
+        "never-ran": 0,
+        "not-asked-for": 0,
+        "no-quality-check": 0,
       },
       outOfBalance: 3,
     },
@@ -161,7 +161,7 @@ describe("[CLM-RMD-008] each quality-check reconciliation carries a single kind 
     claimCode: "CLM-RMD-008",
     exists: false,
     enforcedOverRealSource: false,
-    broken: true,
+    neverRan: true,
     message: "the check's step never ran",
   };
   const report = () =>
@@ -185,18 +185,18 @@ describe("[CLM-RMD-008] each quality-check reconciliation carries a single kind 
             claimCode: "CLM-RMD-008",
             exists: false,
             enforcedOverRealSource: false,
-            broken: true,
+            neverRan: true,
             message: "the check's step never ran",
-            outcome: "broken",
+            outcome: "never-ran",
           },
         ],
       },
     ]);
   });
 
-  it("counts the missing Reconciliation lines by kind of quality check, an obligation answered only by a broken observation once", () => {
+  it("counts the missing Reconciliation lines by kind of quality check, an obligation answered only by an observation that never ran once", () => {
     const totals = reconciliationTotalsOf(report()).reconciliationLines;
-    expect(totals).toMatchObject({ total: 3, byOutcome: { missing: 2, broken: 1 } });
+    expect(totals).toMatchObject({ total: 3, byOutcome: { missing: 2, "never-ran": 1 } });
     expect(totals.missingByQualityCheckKind).toEqual([
       { qualityCheckKind: "fitness", count: 1 },
       { qualityCheckKind: "unit", count: 1 },

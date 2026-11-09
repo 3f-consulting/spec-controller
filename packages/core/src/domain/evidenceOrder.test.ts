@@ -83,7 +83,7 @@ describe("[CLM-RMD-009] a row reads its evidence in one order, whatever order th
     expect(phantomClaimCodes).toEqual(["CLM-GHOST-001", "CLM-GHOST-002"]);
   });
 
-  it("reads an evidence observation citing no scenario before the evidence observations at its location that cite one", () => {
+  it("reads an evidence observation citing no claim before the evidence observations at its location that cite one", () => {
     const atLocation = { qualityCheckKind: "unit", status: "passed", locator: "a.test.ts" } as const;
     const citing: EvidenceObservation = { ...atLocation, claimCode: "CLM-CITED-001" };
     const citingNone: EvidenceObservation = { ...atLocation, claimCode: null };

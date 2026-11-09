@@ -50,9 +50,9 @@ describe("[CLM-LDG-001] postingOf routes a FITNESS evidence observation by its c
   });
 });
 
-describe("[CLM-LDG-022] postingOf routes a BROKEN evidence observation by its citation, as every other", () => {
+describe("[CLM-LDG-022] postingOf routes an evidence observation that NEVER RAN by its citation, as every other", () => {
   const brokenTest = (claimCode: string | null) =>
-    postingOf({ qualityCheckKind: "unit", claimCode, status: "failed", broken: true }, carriedClaimCodes);
+    postingOf({ qualityCheckKind: "unit", claimCode, status: "failed", neverRan: true }, carriedClaimCodes);
   const brokenCheck = (claimCode?: string) =>
     postingOf(
       {
@@ -60,7 +60,7 @@ describe("[CLM-LDG-022] postingOf routes a BROKEN evidence observation by its ci
         fitnessFunction: "lint:named",
         exists: false,
         enforcedOverRealSource: false,
-        broken: true,
+        neverRan: true,
         ...(claimCode !== undefined ? { claimCode } : {}),
       },
       carriedClaimCodes
@@ -69,13 +69,13 @@ describe("[CLM-LDG-022] postingOf routes a BROKEN evidence observation by its ci
   it.each([
     ["behavioural", brokenTest],
     ["fitness", brokenCheck],
-  ] as const)("posts a broken %s evidence observation to the claim it names", (_kind, post) => {
+  ] as const)("posts a %s evidence observation that never ran to the claim it names", (_kind, post) => {
     expect(post("CLM-AAA-001")).toEqual({ kind: "scenario", claimCode: "CLM-AAA-001" });
     expect(post("CLM-ZZZ-009")).toEqual({ kind: "phantom-claim", claimCode: "CLM-ZZZ-009" });
   });
 
-  it("posts a broken evidence observation that names no claim to the unnamed claim, as broken", () => {
-    expect(brokenTest(null)).toEqual({ kind: "unnamed-claim", posted: "broken" });
-    expect(brokenCheck()).toEqual({ kind: "unnamed-claim", posted: "broken" });
+  it("posts an evidence observation that never ran and names no claim to the unnamed claim, as never-ran", () => {
+    expect(brokenTest(null)).toEqual({ kind: "unnamed-claim", posted: "never-ran" });
+    expect(brokenCheck()).toEqual({ kind: "unnamed-claim", posted: "never-ran" });
   });
 });

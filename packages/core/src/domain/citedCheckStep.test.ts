@@ -31,7 +31,7 @@ describe("[CLM-LNT-031] a check step stating its row's code supplies that row's 
     ).toEqual([
       ["CLM-CVT-001", "scenario", "balanced", [[["lint:alpha"], "satisfied"]]],
       ["CLM-CVT-002", "scenario", "out-of-balance", [[[], "missing"]]],
-      ["(unnamed claim)", "unnamed-claim", "out-of-balance", [[["lint:beta"], "cites-no-scenario"]]],
+      ["(unnamed claim)", "unnamed-claim", "out-of-balance", [[["lint:beta"], "cites-no-claim"]]],
     ]);
   });
 });

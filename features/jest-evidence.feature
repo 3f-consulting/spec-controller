@@ -35,7 +35,7 @@ Feature: A Jest suite's results answer unit evidence obligations
     Scenario: a Jest test whose shared setup fails before it runs posts a failing observation
 
     @unit @CLM-JST-007
-    Scenario: a Jest test file that failed to run posts a broken item and the run is unsound
+    Scenario: a Jest test file that failed to run posts a never-ran item and the run is unsound
 
   Rule: the report given to --jest is read only in the shape Jest writes
 

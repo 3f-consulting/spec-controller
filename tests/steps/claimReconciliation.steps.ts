@@ -25,10 +25,10 @@ const UNNAMED_CLAIM_STEPS = {
 };
 
 const CITES_UNKNOWN_SCENARIO_STATUS = {
-  features: "tests/fixtures/cites-unknown-scenario-status/features",
-  vitest: "tests/fixtures/cites-unknown-scenario-status/vitest.json",
-  packageJson: "tests/fixtures/cites-unknown-scenario-status/package.json",
-  ci: "tests/fixtures/cites-unknown-scenario-status",
+  features: "tests/fixtures/cites-unknown-claim-status/features",
+  vitest: "tests/fixtures/cites-unknown-claim-status/vitest.json",
+  packageJson: "tests/fixtures/cites-unknown-claim-status/package.json",
+  ci: "tests/fixtures/cites-unknown-claim-status",
 };
 
 const NO_OBLIGATION_STATUS = {
@@ -74,9 +74,9 @@ const UNCITED_TEST_FILE = "tests/fixtures/unnamed-claim-steps/sound.test.ts";
 
 const PHANTOM_CLAIM = "CLM-PST-901";
 
-const PHANTOM_CLAIM_FAILED_TEST = "tests/fixtures/cites-unknown-scenario-status/broken-spawn.test.ts";
+const PHANTOM_CLAIM_FAILED_TEST = "tests/fixtures/cites-unknown-claim-status/broken-spawn.test.ts";
 
-const PHANTOM_CLAIM_PASSED_TEST = "tests/fixtures/cites-unknown-scenario-status/sound.test.ts";
+const PHANTOM_CLAIM_PASSED_TEST = "tests/fixtures/cites-unknown-claim-status/sound.test.ts";
 
 const NO_OBLIGATION_SCENARIO = "CLM-NOS-001";
 
@@ -135,20 +135,20 @@ function endsWithResult(locator: string, result: string): RegExp {
 }
 
 Given(
-  "a target whose tests that cite no scenario ran in two files, one file holding a test that failed and a test that passed",
+  "a target whose tests that cite no claim ran in two files, one file holding a test that failed and a test that passed",
   function (this: SpecControllerWorld) {
     this.invocationArgs = argsFor(UNNAMED_CLAIM_STATUS);
   },
 );
 
 Given(
-  "a target whose Cucumber scenarios that cite no scenario ran in one feature file, one that failed and one that passed",
+  "a target whose Cucumber scenarios that cite no claim ran in one feature file, one that failed and one that passed",
   function (this: SpecControllerWorld) {
     this.invocationArgs = [...argsFor(UNNAMED_CLAIM_STATUS), "--cucumber", "tests/fixtures/unnamed-claim-status/cucumber.json"];
   },
 );
 
-Given("a target whose tests that cite no scenario ran under Vitest and under Cucumber", function (this: SpecControllerWorld) {
+Given("a target whose tests that cite no claim ran under Vitest and under Cucumber", function (this: SpecControllerWorld) {
   this.invocationArgs = [...argsFor(UNNAMED_CLAIM_STATUS), "--cucumber", "tests/fixtures/unnamed-claim-status/cucumber.json"];
 });
 
@@ -164,7 +164,7 @@ Given(
   },
 );
 
-Given("a target whose CI runs two checks that cite no scenario, beside a test that cites no scenario", function (this: SpecControllerWorld) {
+Given("a target whose CI runs two checks that cite no claim, beside a test that cites no claim", function (this: SpecControllerWorld) {
   this.invocationArgs = argsFor(UNNAMED_CLAIM_STEPS);
 });
 
@@ -220,7 +220,7 @@ Then("each file's entry counts how many of its tests ran, how many passed and ho
   }
 });
 
-Then("the counts of tests that ran add up to the count of evidence observations that cite no scenario", function (this: SpecControllerWorld) {
+Then("the counts of tests that ran add up to the count of evidence observations that cite no claim", function (this: SpecControllerWorld) {
   const uncited = uncitedOutcomeCount(this);
   const ran = unnamedClaimItems(this).reduce((sum, item) => sum + Number(groupCounts(item)?.["ran"] ?? Number.NaN), 0);
   assert.equal(ran, uncited, `the unnamed claim's row's ran counts must add up to ${uncited}; got:\n${unnamedClaimItems(this).join("\n")}`);
@@ -279,7 +279,7 @@ Then("the CI steps' entry names each of the two checks", function (this: SpecCon
   );
 });
 
-Then("what the unnamed claim's row counts adds up to the count of evidence observations that cite no scenario", function (this: SpecControllerWorld) {
+Then("what the unnamed claim's row counts adds up to the count of evidence observations that cite no claim", function (this: SpecControllerWorld) {
   const uncited = uncitedOutcomeCount(this);
   const counted = unnamedClaimItems(this).reduce(
     (sum, item) => sum + Number(groupCounts(item)?.["ran"] ?? ciStepsCount(item) ?? Number.NaN),

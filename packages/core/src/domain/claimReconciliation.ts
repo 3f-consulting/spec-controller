@@ -124,14 +124,14 @@ export function fitnessFunctionReconciliationsOf(
   );
 }
 
-/** A row's evidence observations that ran: a broken one never reached its assertions, so backs nothing. */
+/** A row's evidence observations that ran: one that never reached its assertions backs nothing. */
 function ranObservationsOf(row: ClaimReconciliation): readonly ReconciledEvidenceObservation[] {
-  return observationsOf(row).filter((o) => o.broken !== true);
+  return observationsOf(row).filter((o) => o.neverRan !== true);
 }
 
 export function carriesQualityCheckKind(row: ClaimReconciliation, qualityCheckKind: QualityCheckKind): boolean {
   return row.qualityCheckReconciliations.some(
-    (r) => r.qualityCheckKind === qualityCheckKind && linesOf(r).some((line) => line.outcome !== "broken")
+    (r) => r.qualityCheckKind === qualityCheckKind && linesOf(r).some((line) => line.outcome !== "never-ran")
   );
 }
 

@@ -6,9 +6,9 @@ import type {
   EvidenceObservation,
 } from "../model.js";
 
-describe("[CLM-WRN-001] a scenario naming no evidence obligations is reported as a both-missing reconciliation", () => {
+describe("[CLM-WRN-001] a scenario naming no evidence obligations is reported as a no-quality-check reconciliation", () => {
 
-  it("keeps a scenario that DOES name an evidenceObligation on the verdict axis, alongside a both-missing scenario (the WITH-evidenceObligations path is untouched)", () => {
+  it("keeps a scenario that DOES name an evidenceObligation on the verdict axis, alongside a no-quality-check scenario (the WITH-evidenceObligations path is untouched)", () => {
     const scenarios: Scenario[] = [
       { claimCode: "CLM-WRN-001", evidenceObligations: [] },
       { claimCode: "CLM-WRN-002", evidenceObligations: [{ qualityCheckKind: "unit" }] },
@@ -20,7 +20,7 @@ describe("[CLM-WRN-001] a scenario naming no evidence obligations is reported as
     const balance = reconcile(scenarios, evidenceObservations);
 
     const bothMissing = balance.claimReconciliations.find((s) => s.claim === "CLM-WRN-001");
-    expect(reconcilingItemsOf(bothMissing!)).toEqual([{ outcome: "both-missing" }]);
+    expect(reconcilingItemsOf(bothMissing!)).toEqual([{ outcome: "no-quality-check" }]);
     const verdictScenario = balance.claimReconciliations.find((s) => s.claim === "CLM-WRN-002");
     expect(verdictScenario?.verdict).toBe("balanced");
     expect(balance.claimReconciliations.map((s) => s.claim)).toEqual([

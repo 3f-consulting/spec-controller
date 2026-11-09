@@ -30,7 +30,7 @@ describe("[CLM-CLI-069] a re-render of a saved reconciliation exits the code its
     { verdict: "all-balanced", fixture: "balanced", code: 0 },
     { verdict: "out-of-balance", fixture: "evidence-observation", code: 1 },
     { verdict: "balanced-with-claim-code-errors", fixture: "claim-code-error", code: 1 },
-    { verdict: "unsound", fixture: "broken", code: 4 },
+    { verdict: "unsound", fixture: "never-ran", code: 4 },
     { verdict: "nothing to reconcile", fixture: "nothing-to-reconcile", code: 5 },
   ] as const;
 
@@ -77,7 +77,7 @@ describe("[CLM-CLI-071] under --exit-zero a re-render moves 1 and 3 to 0 and nev
   const ROWS = [
     { verdict: "out-of-balance", fixture: "evidence-observation", liveFlags: [], code: 1, zeroed: 0 },
     { verdict: "only-Pending-Items under --strict", fixture: "pending-only", liveFlags: ["--strict"], code: 3, zeroed: 0 },
-    { verdict: "unsound", fixture: "broken", liveFlags: [], code: 4, zeroed: 4 },
+    { verdict: "unsound", fixture: "never-ran", liveFlags: [], code: 4, zeroed: 4 },
     { verdict: "nothing to reconcile", fixture: "nothing-to-reconcile", liveFlags: [], code: 5, zeroed: 5 },
   ] as const;
 
@@ -121,7 +121,7 @@ describe("[CLM-MSG-011] a balanced run shows no error code", () => {
   const VERDICTS = [
     { verdict: "balanced", fixture: "balanced", code: 0 },
     { verdict: "out-of-balance", fixture: "evidence-observation", code: 1 },
-    { verdict: "unsound", fixture: "broken", code: 4 },
+    { verdict: "unsound", fixture: "never-ran", code: 4 },
   ] as const;
 
   for (const { verdict, fixture, code } of VERDICTS) {

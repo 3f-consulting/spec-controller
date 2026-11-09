@@ -35,7 +35,7 @@ describe("[CLM-USG-001] fitnessFunctionTally folds the posted fitness-function e
     tally = fitnessFunctionTally(reconcile(scenarios, observations));
   });
 
-  it("counts every check that ran, the watermelon included, and not the missing one", () => {
+  it("counts every check that ran, the cannot-fail one included, and not the missing one", () => {
     expect(tally.runningFitnessFunctionCount).toBe(3);
   });
 
@@ -111,11 +111,11 @@ describe("[CLM-USG-001] a fitness function no scenario cites is banked on the un
     ]);
   });
 
-  it("banks the uncited evidence observation on the unnamed claim's row as cites-no-scenario, naming the handle that ran", () => {
+  it("banks the uncited evidence observation on the unnamed claim's row as cites-no-claim, naming the handle that ran", () => {
     expect(rowFor(ledger, "(unnamed claim)")?.qualityCheckReconciliations).toEqual([
       {
         qualityCheckKind: "fitness",
-        evidenceObservations: [{ ...uncitedObservations[0], outcome: "cites-no-scenario" }],
+        evidenceObservations: [{ ...uncitedObservations[0], outcome: "cites-no-claim" }],
       },
     ]);
   });

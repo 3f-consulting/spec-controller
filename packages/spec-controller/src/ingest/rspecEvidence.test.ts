@@ -92,8 +92,8 @@ describe("[CLM-RSP-007] runReconcile reads an RSpec example a failing before hoo
   });
 });
 
-describe("[CLM-RSP-008] runReconcile reads a real RSpec run with a spec file that failed to load as broken evidence, and the run is unsound", () => {
-  it("posts one broken item, on the unnamed claim's row, naming the file and carrying RSpec's load error", () => {
+describe("[CLM-RSP-008] runReconcile reads a real RSpec run with a spec file that failed to load as evidence that never ran, and the run is unsound", () => {
+  it("posts one never-ran item, on the unnamed claim's row, naming the file and carrying RSpec's load error", () => {
     const observation = soleBrokenObservationOnUnnamedClaim(balance());
 
     expect(observation?.locator).toBe("tests/fixtures/rspec/project/spec/unloadable_spec.rb");

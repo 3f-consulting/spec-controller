@@ -43,7 +43,7 @@ function named(status: "passed" | "failed", testName: string | undefined): Behav
   return { ...unit(status, "src/a.test.ts"), ...(testName === undefined ? {} : { testName }) };
 }
 
-describe("[CLM-RPT-033] tests that cite no scenario are grouped on the unnamed claim's row by the file they ran in, each group counting how many ran, passed and failed", () => {
+describe("[CLM-RPT-033] tests that cite no claim are grouped on the unnamed claim's row by the file they ran in, each group counting how many ran, passed and failed", () => {
   const mixedReport = (): string =>
     reportOf([unit("passed", "src/b.test.ts"), unit("failed", "src/a.test.ts"), unit("passed", "src/a.test.ts")]);
 
@@ -54,7 +54,7 @@ describe("[CLM-RPT-033] tests that cite no scenario are grouped on the unnamed c
     ]);
   });
 
-  it("counts tests that ran adding up to the count of evidence observations that cite no scenario", () => {
+  it("counts tests that ran adding up to the count of evidence observations that cite no claim", () => {
     const md = mixedReport();
     const ran = unnamedClaimItemsOf(md).map((item) => Number(/ — (\d+) ran,/.exec(item)![1]));
     const uncited = Number(rowCells(md, CITES_NO_SCENARIO())[3]);
@@ -86,19 +86,19 @@ describe("[CLM-RPT-033] tests that cite no scenario are grouped on the unnamed c
     expect(unnamedClaimItemsOf(reportOf([unit("passed", undefined)]))).toEqual([`unit: ${CITES_NO_SCENARIO()} — 1 ran, 1 passed, 0 failed`]);
   });
 
-  it("lists a broken item before the groups, as before", () => {
+  it("lists a never-ran item before the groups, as before", () => {
     const cell = unnamedClaimCell(reportOf([
       unit("passed", "src/a.test.ts"),
-      { ...unit("failed", "src/broken.test.ts", "Cannot find module"), broken: true },
+      { ...unit("failed", "src/never-ran.test.ts", "Cannot find module"), neverRan: true },
     ]));
     expect(cell).toBe(
-      `unit: ${coreMessage(CoreMessage.OutcomeBroken)} (src/broken.test.ts: Cannot find module); ` +
+      `unit: ${coreMessage(CoreMessage.OutcomeBroken)} (src/never-ran.test.ts: Cannot find module); ` +
         `unit: ${CITES_NO_SCENARIO()} (src/a.test.ts) — 1 ran, 1 passed, 0 failed`
     );
   });
 });
 
-describe("[CLM-RPT-036] a failed test that cites no scenario is named on the unnamed claim's row by its test title", () => {
+describe("[CLM-RPT-036] a failed test that cites no claim is named on the unnamed claim's row by its test title", () => {
   it("names the test that failed by its title, and not the test that passed", () => {
     expect(unnamedClaimItemsOf(reportOf([named("failed", "spawns yarn"), named("passed", "reads the lockfile")]))).toEqual([
       `unit: ${CITES_NO_SCENARIO()} (src/a.test.ts) — 2 ran, 1 passed, 1 failed (failed: spawns yarn)`,
@@ -122,7 +122,7 @@ function step(fitnessFunction: string, at: string): FitnessEvidenceObservation {
   return { qualityCheckKind: "fitness", fitnessFunction, step: at, exists: true, enforcedOverRealSource: true };
 }
 
-describe("[CLM-RPT-038] the CI steps that cite no scenario are grouped together on the unnamed claim's row, each named", () => {
+describe("[CLM-RPT-038] the CI steps that cite no claim are grouped together on the unnamed claim's row, each named", () => {
   it("lists the CI steps once, after the file groups, naming each", () => {
     expect(unnamedClaimItemsOf(reportOf([step("lint:bar", "ci.yml:ci:pnpm lint:bar"), step("lint:foo", "ci.yml:ci:pnpm lint:foo"), unit("passed", "src/a.test.ts")]))).toEqual([
       `unit: ${CITES_NO_SCENARIO()} (src/a.test.ts) — 1 ran, 1 passed, 0 failed`,
@@ -130,14 +130,14 @@ describe("[CLM-RPT-038] the CI steps that cite no scenario are grouped together 
     ]);
   });
 
-  it("lists the CI steps after a broken item and the file groups", () => {
+  it("lists the CI steps after a never-ran item and the file groups", () => {
     const cell = unnamedClaimCell(reportOf([
       step("lint:uncited", "ci.yml:ci:pnpm lint:uncited"),
       unit("passed", "src/a.test.ts"),
-      { ...unit("failed", "src/broken.test.ts", "Cannot find module"), broken: true },
+      { ...unit("failed", "src/never-ran.test.ts", "Cannot find module"), neverRan: true },
     ]));
     expect(cell).toBe(
-      `unit: ${coreMessage(CoreMessage.OutcomeBroken)} (src/broken.test.ts: Cannot find module); ` +
+      `unit: ${coreMessage(CoreMessage.OutcomeBroken)} (src/never-ran.test.ts: Cannot find module); ` +
         `unit: ${CITES_NO_SCENARIO()} (src/a.test.ts) — 1 ran, 1 passed, 0 failed; fitness: ${CITES_NO_SCENARIO()} — 1 CI step: ci.yml:ci:pnpm lint:uncited`
     );
   });
@@ -146,7 +146,7 @@ describe("[CLM-RPT-038] the CI steps that cite no scenario are grouped together 
     expect(unnamedClaimItemsOf(reportOf([step("lint:solo", "ci.yml:ci:pnpm lint:solo")]))).toEqual([`fitness: ${CITES_NO_SCENARIO()} — 1 CI step: ci.yml:ci:pnpm lint:solo`]);
   });
 
-  it("counts what ran adding up to the count of evidence observations that cite no scenario", () => {
+  it("counts what ran adding up to the count of evidence observations that cite no claim", () => {
     const md = reportOf([step("lint:bar", "ci.yml:ci:pnpm lint:bar"), step("lint:foo", "ci.yml:ci:pnpm lint:foo"), unit("failed", "src/a.test.ts"), unit("passed", "src/b.test.ts")]);
     const counted = unnamedClaimItemsOf(md).map((item) => Number(/ — (\d+) (?:ran,|CI steps?:)/.exec(item)![1]));
     const uncited = Number(rowCells(md, CITES_NO_SCENARIO())[3]);

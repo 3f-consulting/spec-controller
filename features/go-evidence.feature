@@ -36,7 +36,7 @@ Feature: A Go suite's results answer unit evidence obligations
     Scenario: a Go subtest whose enclosing test fails before starting it posts nothing, so the scenario it cites reads missing
 
     @unit @CLM-GOT-007
-    Scenario: a Go package that fails to compile posts a broken item and the run is unsound
+    Scenario: a Go package that fails to compile posts a never-ran item and the run is unsound
 
     @unit @CLM-GOT-008
     Scenario: a Go subtest that panics posts a failing observation

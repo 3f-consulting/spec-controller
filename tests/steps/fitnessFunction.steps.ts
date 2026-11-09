@@ -189,7 +189,7 @@ Then("lint:sweep is not counted among the running fitness functions", function (
 });
 
 Then(
-  "lint:nightly reconciles satisfied, with no watermelon raised against it",
+  "lint:nightly reconciles satisfied, with no cannot-fail raised against it",
   function (this: SpecControllerWorld) {
     assert.equal(
       claimReconciliationCell(this.markdown, "CLM-TGS-001", "Fitness"),
@@ -204,21 +204,21 @@ Then(
       `expected CLM-TGS-001's fitness evidence obligation satisfied, adding no reconciling item; got: ${reconcilingItems}`,
     );
     const report = JSON.parse(this.jsonText) as JsonReport;
-    const watermelons = reconciliationTotalsOf(report).reconciliationLines.byOutcome["watermelon"];
+    const watermelons = reconciliationTotalsOf(report).reconciliationLines.byOutcome["cannot-fail"];
     assert.equal(
       watermelons,
       0,
-      `expected NO watermelon in the summary, whose count of watermelon lines is present even at zero: a ` +
-        `watermelon says a cited check is passing but fabricated, and this one genuinely runs. Report:\n${this.jsonText}`,
+      `expected NO cannot-fail in the summary, whose count of cannot-fail lines is present even at zero: a ` +
+        `pass that cannot fail says a cited check is passing but fabricated, and this one genuinely runs. Report:\n${this.jsonText}`,
     );
     const onScenarios = claimReconciliationsOf(report)
       .filter((row) => row.kind === "scenario")
       .flatMap((row) => row.qualityCheckReconciliations.flatMap((line) => [line, ...(line.evidenceObservations ?? [])]))
-      .filter((carrier) => carrier.outcome === "watermelon");
+      .filter((carrier) => carrier.outcome === "cannot-fail");
     assert.deepEqual(
       onScenarios,
       [],
-      `expected NO watermelon on any scenario's row: a watermelon says a cited check is passing but ` +
+      `expected NO cannot-fail on any scenario's row: a pass that cannot fail says a cited check is passing but ` +
         `fabricated, and this one genuinely runs. Accusing a real gate of being fake is ` +
         `worse than missing it. Report:\n${this.jsonText}`,
     );

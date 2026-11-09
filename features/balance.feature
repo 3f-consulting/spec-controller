@@ -51,7 +51,7 @@ Feature: spec-controller balance runs standalone
 
     An out-of-balance reconciliation exits exactly 1. A run is out of balance when any
     Claim Reconciliation carries a reconciling item: a scenario's, a phantom claim's or the
-    unnamed claim's, including a fitness function's watermelon. A run whose only reconciling
+    unnamed claim's, including a fitness function's pass that cannot fail. A run whose only reconciling
     item is on the unnamed claim still exits 1.
 
     The exit codes are: 0 balanced, 1 out of balance, 2 usage error, 3 pending under --strict,
@@ -449,7 +449,7 @@ Feature: spec-controller balance runs standalone
 
     @CLM-CLI-020 @unit @e2e
     Scenario: a corpus-less run carrying uncited evidence observations is an ordinary out-of-balance report at exit 1
-      Given a target with no Gherkin corpus whose unit evidence cites no scenario
+      Given a target with no Gherkin corpus whose unit evidence cites no claim
       When balance is asked to reconcile that target
       Then the uncited evidence observations are posted to the unnamed claim's reconciliation
       And the verdict headline reads OUT-OF-BALANCE and names the exit it ends with

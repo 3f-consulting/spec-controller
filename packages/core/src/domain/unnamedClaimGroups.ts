@@ -27,7 +27,7 @@ export type UnnamedClaimGroup = UnnamedClaimFileGroup | UnnamedClaimStepsGroup;
 
 function citingNoScenario(lines: readonly ReconciliationLine[]): EvidenceObservation[] {
   return lines
-    .filter((line) => line.outcome === "cites-no-scenario")
+    .filter((line) => line.outcome === "cites-no-claim")
     .flatMap((line) => line.evidenceObservation ?? []);
 }
 

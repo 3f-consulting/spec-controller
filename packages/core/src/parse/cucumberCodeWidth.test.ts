@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
 
-describe("[CLM-CUC-005] a Cucumber scenario tagged with a feature part outside two to five characters cites no scenario", () => {
+describe("[CLM-CUC-005] a Cucumber scenario tagged with a feature part outside two to five characters cites no claim", () => {
   const tagged = (id: string) => ({ tags: [{ name: `@${id}` }], steps: [{ result: { status: "passed" as const } }] });
   let report: CucumberJsonReport;
   beforeEach(() => {

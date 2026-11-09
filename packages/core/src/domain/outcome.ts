@@ -1,13 +1,13 @@
 export type Outcome =
   | "satisfied"
   | "failing"
-  | "watermelon"
+  | "cannot-fail"
   | "missing"
-  | "cites-unknown-scenario"
-  | "cites-no-scenario"
-  | "broken"
-  | "no-evidence-obligation"
+  | "cites-unknown-claim"
+  | "cites-no-claim"
+  | "never-ran"
+  | "not-asked-for"
   | "no-claim-code"
   | "duplicate-claim-code"
-  | "both-missing";
+  | "no-quality-check";
 export type SidePresence = "Exists" | "None";

@@ -23,11 +23,11 @@
       ]
     },
     {
-      "name": "tests/fixtures/every-outcome-corpus/toc-005-no-evidence-obligation.test.ts",
+      "name": "tests/fixtures/every-outcome-corpus/toc-005-not-asked-for.test.ts",
       "status": "passed",
       "assertionResults": [
         {
-          "fullName": "no-evidence-obligation unit evidence observation [CLM-TOC-005]",
+          "fullName": "not-asked-for unit evidence observation [CLM-TOC-005]",
           "title": "[CLM-TOC-005] a unit evidence observation at a quality-check the scenario never named",
           "status": "passed"
         }
@@ -56,9 +56,9 @@
       ]
     },
     {
-      "name": "tests/fixtures/every-outcome-corpus/toc-broken.test.ts",
+      "name": "tests/fixtures/every-outcome-corpus/toc-never-ran.test.ts",
       "status": "failed",
-      "message": "Failed to collect: SyntaxError: Unexpected token in tests/fixtures/every-outcome-corpus/toc-broken.test.ts",
+      "message": "Failed to collect: SyntaxError: Unexpected token in tests/fixtures/every-outcome-corpus/toc-never-ran.test.ts",
       "assertionResults": []
     }
   ]

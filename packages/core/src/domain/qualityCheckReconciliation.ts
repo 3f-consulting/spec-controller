@@ -49,14 +49,14 @@ export const OUTCOME_SIDE_PROFILE: Record<
   satisfied: { obligation: "Exists", observation: "Exists" },
   missing: { obligation: "Exists", observation: "None" },
   failing: { obligation: "Exists", observation: "Exists" },
-  watermelon: { obligation: "Exists", observation: "Exists" },
+  "cannot-fail": { obligation: "Exists", observation: "Exists" },
   "no-claim-code": { obligation: "Exists", observation: "None" },
   "duplicate-claim-code": { obligation: "Exists", observation: "None" },
-  "cites-unknown-scenario": { obligation: "None", observation: "Exists" },
-  "cites-no-scenario": { obligation: "None", observation: "Exists" },
-  "no-evidence-obligation": { obligation: "None", observation: "Exists" },
-  broken: { obligation: "None", observation: "Exists" },
-  "both-missing": { obligation: "None", observation: "None" },
+  "cites-unknown-claim": { obligation: "None", observation: "Exists" },
+  "cites-no-claim": { obligation: "None", observation: "Exists" },
+  "not-asked-for": { obligation: "None", observation: "Exists" },
+  "never-ran": { obligation: "None", observation: "Exists" },
+  "no-quality-check": { obligation: "None", observation: "None" },
 };
 
 export const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = (
@@ -86,7 +86,7 @@ export function carriesEvidenceObligation(
   fields: QualityCheckReconciliationFields,
   observation: EvidenceObservation
 ): boolean {
-  return fields.evidenceObligation !== undefined && observation.broken !== true;
+  return fields.evidenceObligation !== undefined && observation.neverRan !== true;
 }
 
 function divergence(
@@ -125,7 +125,7 @@ export function makeQualityCheckReconciliation(
     refuseDivergentLine(
       fields.outcome,
       presenceOf(fields.evidenceObligation !== undefined),
-      presenceOf(observations.some((o) => o.broken !== true))
+      presenceOf(observations.some((o) => o.neverRan !== true))
     );
   }
   for (const observation of observations) {
@@ -138,18 +138,18 @@ export function makeQualityCheckReconciliation(
 type LineAnswering = "evidence-obligation" | ClaimKind;
 
 const UNOBLIGED_OUTCOME: Record<ClaimKind, Outcome> = {
-  scenario: "no-evidence-obligation",
-  "phantom-claim": "cites-unknown-scenario",
-  "unnamed-claim": "cites-no-scenario",
+  scenario: "not-asked-for",
+  "phantom-claim": "cites-unknown-claim",
+  "unnamed-claim": "cites-no-claim",
 };
 
 /** The outcome of the Reconciliation line one evidence observation is. */
 function lineOutcomeOf(observation: EvidenceObservation, answering: LineAnswering): Outcome {
-  if (observation.broken === true) return "broken";
+  if (observation.neverRan === true) return "never-ran";
   if (answering !== "evidence-obligation") return UNOBLIGED_OUTCOME[answering];
   if (!isFitnessObservation(observation)) return observation.status === "passed" ? "satisfied" : "failing";
   if (observation.status === "failed") return "failing";
-  return observation.enforcedOverRealSource ? "satisfied" : "watermelon";
+  return observation.enforcedOverRealSource ? "satisfied" : "cannot-fail";
 }
 
 function linesFor(
@@ -173,7 +173,7 @@ export function reconcileEvidenceObligation(
   const citing = evidenceObservations.filter(
     (o) => o.qualityCheckKind === obligation.qualityCheckKind && o.claimCode === claimCode
   );
-  const answered = citing.some((o) => o.broken !== true);
+  const answered = citing.some((o) => o.neverRan !== true);
   return makeQualityCheckReconciliation({
     qualityCheckKind: obligation.qualityCheckKind,
     ...(answered ? {} : { outcome: "missing" as const }),
@@ -198,7 +198,7 @@ function reconciliationsByQualityCheckKind(
 export function brokenReconciliationsOf(
   postedObservations: readonly EvidenceObservation[]
 ): QualityCheckReconciliation[] {
-  return reconciliationsByQualityCheckKind(postedObservations.filter((o) => o.broken === true), "scenario");
+  return reconciliationsByQualityCheckKind(postedObservations.filter((o) => o.neverRan === true), "scenario");
 }
 
 export function noEvidenceObligationReconciliationsOf(
@@ -253,6 +253,6 @@ export function duplicateClaimCodeReconciliationsOf(
 }
 
 export function bothMissingReconciliation(): QualityCheckReconciliation {
-  return makeQualityCheckReconciliation({ outcome: "both-missing" });
+  return makeQualityCheckReconciliation({ outcome: "no-quality-check" });
 }
 

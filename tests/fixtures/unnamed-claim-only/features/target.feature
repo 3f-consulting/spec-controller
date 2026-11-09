@@ -4,7 +4,7 @@ Feature: a fixture target whose ONLY out-of-balance row is the unnamed claim's r
   A FIXTURE feature (NOT under features/) standing in for a target whose
   run is clean everywhere but the unnamed claim's row. EVERY SCENARIO BALANCES: both @unit obligations are
   satisfied by a passing observation, no observation cites a phantom claim (no
-  phantom claim), no suite failed to collect (no broken item, so the run is SOUND and exit 4
+  phantom claim), no suite failed to collect (no never-ran item, so the run is SOUND and exit 4
   never pre-empts). The one and only reconciling item in the whole run sits on the
   UNNAMED CLAIM's row: the target's CI runs `lint:uncited` and NO scenario cites it — the
   target registers no check for that handle and carries no scenario for one — so it is an

@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { evidenceOfRunResult } from "./journal.js";
 
-describe("[CLM-LDG-043] a test that never reached its assertions posts broken evidence, whatever the runner", () => {
-  it("gives failed and broken evidence", () => {
-    expect(evidenceOfRunResult("never-reached-its-assertions")).toStrictEqual({ status: "failed", broken: true });
+describe("[CLM-LDG-043] a test that never reached its assertions posts evidence that never ran, whatever the runner", () => {
+  it("gives failed evidence that never ran", () => {
+    expect(evidenceOfRunResult("never-reached-its-assertions")).toStrictEqual({ status: "failed", neverRan: true });
   });
 
-  it.each(["passed", "failed"] as const)("CONTROL: a test that %s gives that status and is not broken", (result) => {
+  it.each(["passed", "failed"] as const)("CONTROL: a test that %s gives that status and does not read never-ran", (result) => {
     expect(evidenceOfRunResult(result)).toStrictEqual({ status: result });
   });
 });
