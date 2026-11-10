@@ -14,10 +14,10 @@ function totalsTable({ claimReconciliations, qualityCheckReconciliations, eviden
     [coreText("counted-column"), coreText("count-column")],
     [
       counted("claim-reconciliations-total", claimReconciliations.total),
-      counted("balanced-label", claimReconciliations.balanced),
-      counted("out-of-balance-label", claimReconciliations.outOfBalance),
+      counted("claim-reconciliations-balanced", claimReconciliations.balanced),
+      counted("claim-reconciliations-out-of-balance", claimReconciliations.outOfBalance),
       counted("quality-check-reconciliations-total", qualityCheckReconciliations.total),
-      counted("out-of-balance-label", qualityCheckReconciliations.outOfBalance),
+      counted("quality-check-reconciliations-out-of-balance", qualityCheckReconciliations.outOfBalance),
       ...qualityCheckReconciliations.byOutcome.map(({ outcome, count }) => [outcome, String(count)]),
       ...qualityCheckReconciliations.missingByKind.map(({ kind, count }) => [`${coreText("missing-label")} ${kind}`, String(count)]),
       counted("evidence-observations-total", evidenceObservations.total),
