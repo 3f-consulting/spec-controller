@@ -81,11 +81,11 @@ const OUTLINE_WITH_CLM_COLUMN = (outlineTags: string, examplesTags: string): str
   `  ${outlineTags}\n  Scenario Outline: an outline\n    Given a <x>\n\n    ${examplesTags}\n    Examples:\n      | clm         | x |\n      | CLM-ONE-001 | y |\n`;
 
 describe("a misplaced or clashing claim code will be a claim code error", () => {
-  it.each<[string, string, Readonly<Record<string, string>>, ClaimCodeError]>([
+  it.each<[string, string, () => Readonly<Record<string, string>>, ClaimCodeError]>([
     [
       "CLM-STG-054",
       "a code under another file's feature code",
-      { "one.feature": featureFile("@ONE", scenarioTagged("@CLM-TWO-001")), "two.feature": featureFile("@TWO", "") },
+      () => ({ "one.feature": featureFile("@ONE", scenarioTagged("@CLM-TWO-001")), "two.feature": featureFile("@TWO", "") }),
       {
         kind: "foreign-claim-code",
         files: ["one.feature"],
@@ -98,7 +98,7 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
     [
       "CLM-STG-055",
       "a code under a feature code no file has",
-      { "one.feature": featureFile("@ONE", scenarioTagged("@CLM-ZZZ-001")) },
+      () => ({ "one.feature": featureFile("@ONE", scenarioTagged("@CLM-ZZZ-001")) }),
       {
         kind: "foreign-claim-code",
         files: ["one.feature"],
@@ -111,34 +111,35 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
     [
       "CLM-STG-056",
       "a code in a file with no feature code",
-      { "three.feature": featureFile("", scenarioTagged("@CLM-ONE-002")) },
+      () => ({ "three.feature": featureFile("", scenarioTagged("@CLM-ONE-002")) }),
       { kind: "no-feature-code", files: ["three.feature"] },
     ],
     [
       "CLM-STG-057",
       "two files with one feature code",
-      { "one.feature": featureFile("@ONE", ""), "uno.feature": featureFile("@ONE", "") },
+      () => ({ "one.feature": featureFile("@ONE", ""), "uno.feature": featureFile("@ONE", "") }),
       { kind: "duplicate-feature-code", featureCode: "ONE", files: ["one.feature", "uno.feature"] },
     ],
     [
       "CLM-STG-058",
       "two codes on one scenario",
-      { "one.feature": featureFile("@ONE", scenarioTagged("@CLM-ONE-001 @CLM-ONE-002")) },
+      () => ({ "one.feature": featureFile("@ONE", scenarioTagged("@CLM-ONE-001 @CLM-ONE-002")) }),
       { kind: "several-claim-codes", files: ["one.feature"], scenario: "a claim", codes: ["CLM-ONE-001", "CLM-ONE-002"] },
     ],
     [
       "CLM-STG-059",
       "a code beside a clm column",
-      { "one.feature": featureFile("@ONE", OUTLINE_WITH_CLM_COLUMN("@CLM-ONE-009", "")) },
+      () => ({ "one.feature": featureFile("@ONE", OUTLINE_WITH_CLM_COLUMN("@CLM-ONE-009", "")) }),
       { kind: "claim-code-beside-clm-column", files: ["one.feature"], scenario: "an outline", codes: ["CLM-ONE-009"] },
     ],
     [
       "CLM-STG-060",
       "a code on an Examples block, with a clm column",
-      { "one.feature": featureFile("@ONE", OUTLINE_WITH_CLM_COLUMN("", "@CLM-ONE-009")) },
+      () => ({ "one.feature": featureFile("@ONE", OUTLINE_WITH_CLM_COLUMN("", "@CLM-ONE-009")) }),
       { kind: "claim-code-beside-clm-column", files: ["one.feature"], scenario: "an outline", codes: ["CLM-ONE-009"] },
     ],
-  ])("[%s] %s", (_clm, _files, sources, error) => {
+  ])("[%s] %s", (_clm, _files, sourcesOf, error) => {
+    const sources = sourcesOf();
     const features = parsedFeatures(Object.values(sources), Object.keys(sources));
 
     expect(claimCodeErrorsOf(features)).toEqual([error]);
@@ -290,11 +291,12 @@ function damagedRepository(): void {
 }
 
 describe("when git cannot answer, it stops and gives no code", () => {
-  it.skipIf(runsAsRoot()).each([
+  it.for([
     ["CLM-STG-072", "a file git cannot read", withheldFile],
     ["CLM-STG-073", "history git failed to read", withheldHistory],
     ["CLM-STG-074", "a damaged repository", damagedRepository],
-  ])("[%s] %s", (_clm, _what, stopsUnread) => {
+  ] as const)("[%s] %s", ([, , stopsUnread], { skip }) => {
+    skip(runsAsRoot());
     stopsUnread();
   });
 });

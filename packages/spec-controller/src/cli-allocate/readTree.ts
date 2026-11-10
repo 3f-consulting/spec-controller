@@ -59,7 +59,7 @@ function linesCarrying(path: string, content: Buffer, marks: readonly string[]):
     .flatMap((line, i) => (marks.some((mark) => line.includes(mark)) ? [{ path, line: i + 1, text: line }] : []));
 }
 
-export function isWalkedDirectory(name: string): boolean {
+function isWalkedDirectory(name: string): boolean {
   return name !== "node_modules" && !name.startsWith(".");
 }
 

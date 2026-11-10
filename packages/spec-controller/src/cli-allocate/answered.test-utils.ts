@@ -9,15 +9,10 @@ export interface Answered {
   exitCode: typeof process.exitCode;
 }
 
-export interface AnsweredOrThrown extends Answered {
-  threw: boolean;
-  thrown: unknown;
-}
-
-export function allocateRecording(cwd: () => string, argv: readonly string[]): AnsweredOrThrown {
+export function allocateIn(cwd: string, argv: string[]): Answered {
   const stdout: string[] = [];
   const stderr: string[] = [];
-  vi.spyOn(process, "cwd").mockImplementation(cwd);
+  vi.spyOn(process, "cwd").mockImplementation(() => cwd);
   vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
     stdout.push(String(chunk));
     return true;
@@ -26,31 +21,12 @@ export function allocateRecording(cwd: () => string, argv: readonly string[]): A
     stderr.push(String(chunk));
     return true;
   });
-  let threw = false;
-  let thrown: unknown;
   try {
     runAllocate([...argv]);
-  } catch (err) {
-    threw = true;
-    thrown = err;
   } finally {
     vi.restoreAllMocks();
   }
-  return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode: process.exitCode, threw, thrown };
-}
-
-export function allocateWhere(cwd: () => string, argv: readonly string[]): Answered {
-  const { threw, thrown, ...answered } = allocateRecording(cwd, argv);
-  if (threw) throw thrown;
-  return answered;
-}
-
-export function allocateFrom(cwd: string): Answered {
-  return allocateWhere(() => cwd, ["ONE"]);
-}
-
-export function allocateIn(cwd: string, argv: string[]): Answered {
-  return allocateWhere(() => cwd, argv);
+  return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode: process.exitCode };
 }
 
 export function expectAnsweredEnding(answered: Answered, ending: string): void {
@@ -77,13 +53,4 @@ export function refusalReason(answered: Answered, subject: string, path: string)
 export function gitExited(command: string, status: number): RegExp {
   const opening = message(AppMessage.GitExited, { command, status: String(status), said: "" });
   return new RegExp(`^${opening.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\S`);
-}
-
-export function thrownBy(read: () => unknown): unknown {
-  try {
-    read();
-  } catch (err) {
-    return err;
-  }
-  throw new Error("expected the read to be refused, and it read");
 }

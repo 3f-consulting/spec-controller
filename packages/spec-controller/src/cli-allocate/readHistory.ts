@@ -76,7 +76,7 @@ interface PatchPosition {
   newLine: number;
 }
 
-export function diffLineOccurrences(logOutput: string): ClaimCodeOccurrence[] {
+function diffLineOccurrences(logOutput: string): ClaimCodeOccurrence[] {
   const at: PatchPosition = { inFileHeader: false, oldPath: "", newPath: "", oldLine: 0, newLine: 0 };
   const occurrences: ClaimCodeOccurrence[] = [];
   for (const line of logOutput.split("\n")) {

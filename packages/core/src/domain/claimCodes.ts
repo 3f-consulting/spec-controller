@@ -153,7 +153,7 @@ export interface AllocationRequest {
   readonly isNew: boolean;
 }
 
-export interface HighestSeen {
+interface HighestSeen {
   readonly code: string;
   readonly occurrence: ClaimCodeOccurrence;
 }
