@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { AppError } from "./messages.js";
 import { errorText, standardError, type CodedLine } from "./standardError.js";
 import { refusal } from "./refusal.js";
-import { errorCodesShown } from "./shownText.test-utils.js";
 
 function printedBy(command: string | undefined, print: (shown: ReturnType<typeof standardError>) => void): string[] {
   const chunks: string[] = [];
