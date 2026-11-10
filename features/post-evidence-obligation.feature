@@ -67,16 +67,17 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
 
   Rule: a strict run reads every claim as if nothing were put off
 
+    @unit
     Scenario Outline: a strict run will raise the Evidence Obligations a deferral put off
-      Given a scenario with the code CLM-ONE-001 had <tags>
-      When balance reads the corpus in a strict run
-      Then its claim will raise <Evidence Obligations>
+      given a scenario with the code CLM-ONE-001 had <tags>
+      when balance reads the corpus in a strict run
+      then its claim will raise <Evidence Obligations>
 
       Examples:
         | clm         | tags                      | Evidence Obligations                          |
-        | CLM-PND-NEW | @wip @unit                | a unit Evidence Obligation                    |
-        | CLM-PND-NEW | @integrationpending       | an integration Evidence Obligation            |
-        | CLM-PND-NEW | @unit @integrationpending | a unit and an integration Evidence Obligation |
+        | CLM-OBL-017 | @wip @unit                | a unit Evidence Obligation                    |
+        | CLM-OBL-018 | @integrationpending       | an integration Evidence Obligation            |
+        | CLM-OBL-019 | @unit @integrationpending | a unit and an integration Evidence Obligation |
 
   Rule: an executable claim raises its Evidence Obligations under the one claim code it has
 

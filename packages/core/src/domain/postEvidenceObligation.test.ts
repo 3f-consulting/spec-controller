@@ -18,6 +18,10 @@ function scenarioTagged(tags: string): string {
   return `@ONE\nFeature: one\n\n  ${tags}\n  Scenario: a claim\n    Given a step`;
 }
 
+function claimRaising(kinds: readonly string[]): readonly unknown[] {
+  return [{ claimCode: ONE_001, file: "one.feature", title: "a claim", obligations: kinds.map((kind) => ({ kind })) }];
+}
+
 describe("an Outline will be one executable claim for each row only when it has a clm column", () => {
   it.each([
     [
@@ -47,10 +51,6 @@ describe("each deferral tag, built in or configured, will remove the claim", () 
 });
 
 describe("an executable claim will raise an Evidence Obligation for each kind-of-check tag that applies to it", () => {
-  const claimRaising = (kinds: readonly string[]): readonly unknown[] => [
-    { claimCode: ONE_001, file: "one.feature", title: "a claim", obligations: kinds.map((kind) => ({ kind })) },
-  ];
-
   it.each([
     ["CLM-OBL-009", "@unit", ["unit"]],
     ["CLM-OBL-010", "@unit @e2e", ["unit", "e2e"]],
@@ -66,5 +66,15 @@ describe("an executable claim will raise an Evidence Obligation for each kind-of
   it("[CLM-OBL-016] a row raises the Evidence Obligations of its Outline's tags", () => {
     const table = "      | clm         | x |\n      | CLM-ONE-001 | y |";
     expect(claimsRead(outline("@unit @integration", table))).toEqual(claimRaising(["unit", "integration"]));
+  });
+});
+
+describe("a strict run will raise the Evidence Obligations a deferral put off", () => {
+  it.each([
+    ["CLM-OBL-017", "@wip @unit", ["unit"]],
+    ["CLM-OBL-018", "@integrationpending", ["integration"]],
+    ["CLM-OBL-019", "@unit @integrationpending", ["unit", "integration"]],
+  ])("[%s] in a strict run, a claim tagged '%s' raises what was put off", (_clm, tags, kinds) => {
+    expect(claimsRead(scenarioTagged(`@CLM-ONE-001 ${tags}`), { deferralTags: [], strict: true })).toEqual(claimRaising(kinds));
   });
 });
