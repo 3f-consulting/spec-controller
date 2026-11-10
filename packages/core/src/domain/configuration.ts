@@ -21,33 +21,70 @@ export interface ConfigurationRead {
   readonly errors: readonly ConfigurationError[];
 }
 
-const isBlock = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const stringsIn = (value: unknown): string[] => (Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : []);
+const SETTINGS: readonly string[] = ["runners", "notChecks", "deferralTags"];
 
 const LAYERS: readonly Layer[] = ["unit", "integration", "e2e", "performance"];
+
+const NOTHING_READ: TargetConfiguration = { runners: {}, notChecks: [], deferralTags: [] };
+
+const isBlock = (value: unknown): value is Readonly<Record<string, unknown>> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isLayer = (key: string): key is Layer => (LAYERS as readonly string[]).includes(key);
 
 const isRunner = (runner: unknown): runner is string | null => typeof runner === "string" || runner === null;
 
-function runnersIn(block: Readonly<Record<string, unknown>>): TargetConfiguration["runners"] {
-  return Object.fromEntries(Object.entries(block).filter(([key, runner]) => isLayer(key) && isRunner(runner)));
+const wrongKind = (entry: string): ConfigurationError => ({ kind: "configuration-wrong-kind", entry });
+
+function runnersIn(value: unknown, errors: ConfigurationError[]): TargetConfiguration["runners"] {
+  if (value === undefined) return {};
+  if (!isBlock(value)) return errors.push(wrongKind("runners")), {};
+  const runners: Partial<Record<Layer, string | null>> = {};
+  for (const [key, runner] of Object.entries(value)) {
+    if (!isLayer(key)) errors.push({ kind: "runner-key-not-a-layer", entry: `runners.${key}` });
+    else if (isRunner(runner)) runners[key] = runner;
+    else errors.push(wrongKind(`runners.${key}`));
+  }
+  return runners;
+}
+
+function stringsIn(value: unknown, setting: string, errors: ConfigurationError[]): string[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return errors.push(wrongKind(setting)), [];
+  return value.flatMap((entry: unknown, at) => (typeof entry === "string" ? [entry] : (errors.push(wrongKind(`${setting}[${at}]`)), [])));
 }
 
 // A workflow's file name may hold a colon, so the job and step are split off from the right.
-function notCheckOf(entry: string): NotCheck {
+function notCheckOf(entry: string): NotCheck | undefined {
   const beforeStep = entry.lastIndexOf(":");
   const beforeJob = entry.lastIndexOf(":", beforeStep - 1);
+  if (beforeJob <= 0) return undefined;
   return { workflow: entry.slice(0, beforeJob), job: entry.slice(beforeJob + 1, beforeStep), step: entry.slice(beforeStep + 1) };
 }
 
-export function targetConfigurationOf(block: unknown, _stepsRead: readonly PipelineStep[]): ConfigurationRead {
-  if (!isBlock(block)) return { configuration: { runners: {}, notChecks: [], deferralTags: [] }, errors: [] };
-  const runners = isBlock(block.runners) ? runnersIn(block.runners) : {};
-  return {
-    configuration: { runners, notChecks: stringsIn(block.notChecks).map(notCheckOf), deferralTags: stringsIn(block.deferralTags) },
-    errors: [],
+function notChecksIn(entries: readonly string[], stepsRead: readonly PipelineStep[], errors: ConfigurationError[]): NotCheck[] {
+  return entries.flatMap((entry) => {
+    const notCheck = notCheckOf(entry);
+    if (notCheck === undefined) return errors.push({ kind: "not-checks-entry-not-a-step-name", entry }), [];
+    const { workflow, job, step } = notCheck;
+    const inWorkflow = stepsRead.filter((read) => read.workflow === workflow);
+    if (inWorkflow.length > 0 && !inWorkflow.some((read) => read.job === job && read.identity === step)) {
+      return errors.push({ kind: "not-checks-entry-matches-no-step", entry }), [];
+    }
+    return [notCheck];
+  });
+}
+
+export function targetConfigurationOf(block: unknown, stepsRead: readonly PipelineStep[]): ConfigurationRead {
+  if (block === undefined) return { configuration: NOTHING_READ, errors: [] };
+  if (!isBlock(block)) return { configuration: NOTHING_READ, errors: [wrongKind("specController")] };
+  const errors: ConfigurationError[] = Object.keys(block)
+    .filter((key) => !SETTINGS.includes(key))
+    .map((entry) => ({ kind: "configuration-unknown-key", entry }));
+  const configuration = {
+    runners: runnersIn(block.runners, errors),
+    notChecks: notChecksIn(stringsIn(block.notChecks, "notChecks", errors), stepsRead, errors),
+    deferralTags: stringsIn(block.deferralTags, "deferralTags", errors),
   };
+  return { configuration, errors };
 }
