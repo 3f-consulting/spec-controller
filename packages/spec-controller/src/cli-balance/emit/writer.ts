@@ -13,8 +13,8 @@ import {
 import { namesStdout, probeDestination, refuse, stdoutIdentity, unwritableRefusal, writeOrRefuse, type Unwritable } from "../../outputLocation.js";
 import type { Refusal } from "../../refusal.js";
 
-function render(fmt: OutputFormat, _evidenceReconciliation: EvidenceReconciliation): string {
-  return "";
+function render(fmt: OutputFormat, evidenceReconciliation: EvidenceReconciliation): string {
+  return fmt === "json" ? renderJson(evidenceReconciliation) : renderMarkdown(evidenceReconciliation);
 }
 
 export function writeReports(formatSpecs: readonly string[], evidenceReconciliation: EvidenceReconciliation, inputs: readonly IdentifiedInput[]): void {
