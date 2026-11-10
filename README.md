@@ -115,15 +115,18 @@ Here is part of the report for a larger set of scenarios: the run verdict and th
 
 **OUT-OF-BALANCE** — the accounts do not agree. At least one Claim Reconciliation carries a reconciling item. This run FAILED. (exit 1)
 
+Claim codes are clean over 1 feature file carrying 1 feature code (a feature code is the tag heading a feature file, the `<FFF>` that each `@CLM-<FFF>-<NNN>` code in that file repeats): each file carries a code of its own, and every coded scenario sits in the file its code names.
+
+- 0 claim codes seen in non-tag context, excluded: each is a claim code written in a feature file's prose, a comment or step text rather than as a tag, so it marks no scenario and raises no claim
+
 ## Claim Reconciliations
 
 - 8 Claim Reconciliation(s): 3 balanced, 5 out-of-balance.
 - 1 Claim Reconciliation(s) for cited claim codes with no real scenario.
 - 1 Claim Reconciliation(s) for evidence observations no one scenario can take, aggregated into "(unnamed claim)".
-- 0 claim codes seen in non-tag context, excluded: each is a claim code written in a feature file's prose, a comment or step text rather than as a tag, so it marks no scenario and raises no claim
 
 Key: each evidence cell reads *obligation*/*observations*.
-- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means they raise none of that kind, as a pending tag raises none.
+- The letter says the scenario's tags raise an Evidence Obligation of that kind: (F)itness, (U)nit, (I)ntegration, (E)2e, (P)erformance. `-` means they raise none of that kind, as a pending tag raises none unless the scenario shares its claim code with another.
 - The number counts the scenario's Evidence Observations of that kind that ran. `-` means none.
 - For example, `U/2` is a unit obligation answered by two unit tests; `U/-` is a unit obligation that no unit test answered; `-/1` is one unit test citing a scenario that raises no unit obligation, which puts the row out of balance even where its unit evidence is pending.
 - A blank cell means no obligation and no Evidence Observation that ran; `—` marks the row of a phantom claim or of the unnamed claim.
