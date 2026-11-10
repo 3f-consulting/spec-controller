@@ -26,6 +26,7 @@ export interface ScenarioAsWritten {
 export interface FeatureAsWritten {
   readonly file: string;
   readonly scenarios: readonly ScenarioAsWritten[];
+  readonly tagFormWords: readonly string[];
 }
 
 export interface ReadingSettings {

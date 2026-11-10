@@ -1,7 +1,7 @@
-import type { ClaimCodeError } from "./claimCodes.js";
-import type { ClaimReconciliation, Outcome } from "./claimReconciliation.js";
-import type { QualityCheckKind } from "./postEvidenceObligation.js";
-import type { EvidenceObservation } from "./postEvidenceObservation.js";
+import { claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
+import type { ClaimReconciliation, Outcome, QualityCheckReconciliation } from "./claimReconciliation.js";
+import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
+import type { EvidenceObservation, PipelineStep, StepDisposition } from "./postEvidenceObservation.js";
 
 export type RunVerdict =
   | { readonly verdict: "balanced" }
@@ -86,4 +86,126 @@ export interface EvidenceReconciliation {
   readonly provenance: Provenance;
   readonly errorsInTheInputs?: ErrorsInTheInputs;
   readonly runIntegrity?: RunIntegrity;
+}
+
+const qualityCheckReconciliationsOf = (claimReconciliations: readonly ClaimReconciliation[]): QualityCheckReconciliation[] =>
+  claimReconciliations.flatMap(({ qualityCheckReconciliations }) => qualityCheckReconciliations);
+
+const isOutOfBalance = ({ verdict }: ClaimReconciliation): boolean => verdict === "out-of-balance";
+
+export function runVerdictOf(
+  claimReconciliations: readonly ClaimReconciliation[],
+  claimCodeErrors: readonly ClaimCodeError[],
+): RunVerdict {
+  if (qualityCheckReconciliationsOf(claimReconciliations).some(({ outcome }) => outcome === "never-ran")) {
+    return { verdict: "not-reconciled", why: "unsound" };
+  }
+  if (claimCodeErrors.length > 0) return { verdict: "not-reconciled", why: "claim-code-errors" };
+  if (claimReconciliations.length === 0) return { verdict: "not-reconciled", why: "nothing-to-reconcile" };
+  return claimReconciliations.some(isOutOfBalance) ? { verdict: "out-of-balance" } : { verdict: "balanced" };
+}
+
+function countsBy<T, K>(items: readonly T[], keyOf: (item: T) => K): { readonly key: K; readonly count: number }[] {
+  const counts = new Map<K, number>();
+  for (const item of items) {
+    const key = keyOf(item);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts].map(([key, count]) => ({ key, count }));
+}
+
+const kindCounts = (kinds: readonly QualityCheckKind[]): CountByKind[] =>
+  countsBy(kinds, (kind) => kind).map(({ key, count }) => ({ kind: key, count }));
+
+function observedOn(claimReconciliations: readonly ClaimReconciliation[]) {
+  return claimReconciliations.flatMap(({ claim, qualityCheckReconciliations }) =>
+    qualityCheckReconciliations.flatMap(({ observation }) => (observation === undefined ? [] : [{ claim, observation }])),
+  );
+}
+
+function outOfBalanceByFeatureOf(claimReconciliations: readonly ClaimReconciliation[]): Totals["outOfBalanceByFeature"] {
+  const files = claimReconciliations.filter(isOutOfBalance).flatMap(({ claim }) => (claim.file === undefined ? [] : [claim.file]));
+  return files.length === 0 ? undefined : countsBy(files, (file) => file).map(({ key, count }) => ({ file: key, count }));
+}
+
+export function excludedClaimCodeOccurrencesOf(features: readonly FeatureAsWritten[]): number {
+  const codesIn = (words: readonly string[]): number => words.filter((word) => claimCodeFrom(word) !== undefined).length;
+  return features.reduce(
+    (sum, { tagFormWords, scenarios }) => sum + codesIn(tagFormWords) - codesIn(scenarios.flatMap(({ tags }) => tags)),
+    0,
+  );
+}
+
+export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], excludedClaimCodeOccurrences: number): Totals {
+  const qualityChecks = qualityCheckReconciliationsOf(claimReconciliations);
+  const reconciling = qualityChecks.filter(({ outcome }) => outcome !== "satisfied");
+  const observed = observedOn(claimReconciliations);
+  const outOfBalanceByFeature = outOfBalanceByFeatureOf(claimReconciliations);
+  const balanced = claimReconciliations.filter((each) => !isOutOfBalance(each)).length;
+  return {
+    claimReconciliations: { total: claimReconciliations.length, balanced, outOfBalance: claimReconciliations.length - balanced },
+    qualityCheckReconciliations: {
+      total: qualityChecks.length,
+      outOfBalance: reconciling.length,
+      byOutcome: countsBy(reconciling, ({ outcome }) => outcome as Exclude<Outcome, "satisfied">).map(({ key, count }) => ({ outcome: key, count })),
+      missingByKind: kindCounts(qualityChecks.flatMap((each) => (each.outcome === "missing" ? [each.kind] : []))),
+    },
+    evidenceObservations: {
+      total: observed.length,
+      byKind: kindCounts(observed.map(({ observation }) => observation.kind)),
+      onExecutableClaim: observed.filter(({ claim }) => claim.file !== undefined).length,
+      onPhantomClaim: observed.filter(({ claim }) => claim.file === undefined && claim.claimCode !== undefined).length,
+      onUnnamedClaim: observed.filter(({ claim }) => claim.file === undefined && claim.claimCode === undefined).length,
+      fitnessFunctionsRan: observed.filter(({ observation }) => observation.kind === "fitness" && observation.result !== "never-ran").length,
+    },
+    ...(outOfBalanceByFeature === undefined ? {} : { outOfBalanceByFeature }),
+    excludedClaimCodeOccurrences,
+  };
+}
+
+const NO_STEPS: StepCounts = { stepsRead: 0, runners: 0, reconcilerSteps: 0, nonChecks: 0, plumbing: 0, candidates: 0 };
+
+const COUNTED_AS: Readonly<Record<StepDisposition, keyof StepCounts>> = {
+  runner: "runners",
+  reconciler: "reconcilerSteps",
+  nonCheck: "nonChecks",
+  plumbing: "plumbing",
+  candidate: "candidates",
+};
+
+const added = (counts: StepCounts, count: keyof StepCounts): StepCounts => ({ ...counts, stepsRead: counts.stepsRead + 1, [count]: counts[count] + 1 });
+
+export function stepAccountOf(steps: readonly PipelineStep[], dispositionOf: (step: PipelineStep) => StepDisposition): StepAccount {
+  const jobs = new Map<string, StepAccount["jobs"][number]>();
+  for (const step of steps) {
+    const key = `${step.workflow}\u0000${step.job}`;
+    const job = jobs.get(key) ?? { workflow: step.workflow, job: step.job, ...NO_STEPS };
+    jobs.set(key, { workflow: job.workflow, job: job.job, ...added(job, COUNTED_AS[dispositionOf(step)]) });
+  }
+  const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+  const ordered = [...jobs.values()].sort((a, b) => byCodeUnit(a.workflow, b.workflow) || byCodeUnit(a.job, b.job));
+  const counts = Object.keys(NO_STEPS) as (keyof StepCounts)[];
+  const total = Object.fromEntries(counts.map((count) => [count, ordered.reduce((sum, job) => sum + job[count], 0)])) as unknown as StepCounts;
+  const accountedFor = counts.filter((count) => count !== "stepsRead").reduce((sum, count) => sum + total[count], 0);
+  return { jobs: ordered, total: { ...total, accountedFor } };
+}
+
+export interface RunIdentity {
+  readonly target?: string;
+  readonly origin?: string;
+  readonly sourceSha?: string;
+  readonly toolSha?: string;
+  readonly toolVersion: string;
+}
+
+const UNKNOWN = "unknown";
+
+export function provenanceOf(identity: RunIdentity, inputs: Provenance["inputs"]): Provenance {
+  return {
+    target: identity.target ?? identity.origin ?? UNKNOWN,
+    sourceSha: identity.sourceSha ?? UNKNOWN,
+    ...(identity.toolSha === undefined ? {} : { toolSha: identity.toolSha }),
+    toolVersion: identity.toolVersion,
+    inputs,
+  };
 }
