@@ -50,7 +50,7 @@ export function planOutput(
   }
 
   const stdoutBound = outputs.filter((o) => o.dest.kind === "stdout" || namesStdout(o.dest.path));
-  if (stdoutBound.length > Number.POSITIVE_INFINITY) {
+  if (stdoutBound.length > 1) {
     const fmts = stdoutBound.map((o) => o.fmt).join(", ");
     return {
       ok: false,
