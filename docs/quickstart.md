@@ -6,9 +6,9 @@ This guide takes you from nothing to a first `spec-controller balance` run on yo
 
 You write each behaviour of your software as a scenario in a Gherkin `.feature` file. Its tags say what proof it needs, such as `@unit` or `@e2e`. These needs are its **evidence obligations**.
 
-Your test tools and CI already write reports of what ran. Each result in them is an **evidence observation**, which is `never-ran` if it never ran to a result.
+Your test tools and CI already write reports of what ran. Each result in them is an **evidence observation**. An observation that never ran to a result is `never-ran`.
 
-`balance` matches each observation to the obligation it answers, scenario by scenario, like a ledger. When the two sides disagree, the build goes red. `spec-controller` does not run your tests. It reads the reports your tools already produce.
+The `balance` command matches each observation to the obligation it answers, scenario by scenario, like a ledger. When the two sides disagree, the build goes red. `spec-controller` does not run your tests. It reads the reports your tools already produce.
 
 ## What you need
 
@@ -38,7 +38,7 @@ Then run it as `npx spec-controller`. See [Install](./user-guide.md#install).
 
 ## A first run, report only
 
-This example is for a project whose tests run on Vitest. Run it from the repository you want to reconcile. First, write the Vitest report:
+This example is for a project whose tests run on Vitest. Run these commands from the repository you want to reconcile. First, write the Vitest report:
 
 ```sh
 npx vitest run --reporter=json --outputFile=reports/vitest.json
@@ -58,11 +58,11 @@ npx spec-controller balance \
 
 - **Every path you pass must exist.** Each report flag points at a file your tools have already written. Leave out any input you don't have. With no `features/` folder yet, leave out `--features`, because a folder that does not exist is refused.
 - **`--target` names the project in the report.** Without it the report reads `unknown-target`.
-- **`--exit-zero` keeps the build green while you watch.** Your first run against a pipeline with no citations goes red, because every candidate step cites nothing. Every observation then posts to the **unnamed claim**, the row for evidence that names no scenario. Without the flag, `balance` exits `1`. With it, you get the same report, but the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
+- **`--exit-zero` keeps the build green while you watch.** A first run against a pipeline with no citations goes red, because every candidate step (each CI step treated as a check) cites nothing. Every observation then posts to the **unnamed claim**, the row for evidence that names no scenario. Without the flag, `balance` exits `1`. With it, you get the same report, but the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
 
 For every other runner's report command, see [Every report, and the whole command](./user-guide.md#every-report-and-the-whole-command).
 
-**Before you name anything, it lists what ran.** It reports every test and CI step, grouped by file, with what passed and what failed. That is a starting inventory. The value begins when you name the behaviours.
+**Before you name anything, `balance` lists what ran.** It reports every test and CI step, grouped by file, with what passed and what failed. That list is a starting inventory. The value begins when you name the behaviours.
 
 ### Tell it which steps are your tests, and which check nothing
 
@@ -90,11 +90,9 @@ See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--run
 
 ## Cite one scenario from one test
 
-A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `CLM-<FFF>-<NNN>`.
+A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `CLM-<FFF>-<NNN>`. A `@unit` scenario needs no step definitions: a title and its tags are the whole scenario.
 
 `CLM-<FFF>-<NNN>` is the scenario's **claim code**. `<FFF>` is a feature part of two to five uppercase letters or digits, and `<NNN>` is a number. Each feature file carries a header code, `@<FFF>`, and its scenarios' codes must match it. A misfiled code fails the run. [Claim code errors](./user-guide.md#claim-code-errors) explains the header code and the five claim code errors.
-
-A `@unit` scenario needs no step definitions. A title and its tags are the whole scenario.
 
 Ask the tool for each code instead of inventing one. A feature part is known only when a feature file in `features/` at the top of the repository is headed with it. So in a project with no feature files yet, run `allocate` with `--new` for your first code. After that, `allocate <FFF>` gives the next one:
 
@@ -119,7 +117,7 @@ For how each other runner cites a scenario, see [Citing a scenario from pytest](
 
 ## Turn one CI check into a fitness function
 
-A **fitness function** is a whole-system property: complexity, mutation score, type soundness, vocabulary, suite run time. Any check your pipeline runs, in any language, can prove one. You need two things and no third.
+A **fitness function** is a whole-system property: complexity, mutation score, type soundness, vocabulary, suite run time. Any check your pipeline runs, in any language, can prove one. You need only two things.
 
 **1. A scenario, tagged `@fitness`, carrying a code.** Write it as you write a `@unit`-only scenario: tags, a title, and no Given/When/Then. Its title is the specification.
 
@@ -151,7 +149,7 @@ If no step carries the scenario's code, the scenario reads `missing`. A step cit
 4. Dump the run's step record, with `if: always()`.
 5. Run `balance`, with `if: always()`.
 
-`if: always()` matters. Without it, the first failing step aborts the job and skips every later check. Here are the check steps and the dump:
+`if: always()` matters. Without it, the first failing step aborts the job and skips every later check. Here are the check steps and the step that dumps the record:
 
 ```yaml
 - run: eslint
@@ -168,7 +166,7 @@ If no step carries the scenario's code, the scenario reads `missing`. A step cit
 
 The dump must be `toJSON(steps)`, the only place that carries a step's `id` and its `outcome` together. Pass it to the command through an environment variable, never inline in the command itself: a step's output can contain a quote, and the shell would run whatever follows it.
 
-A single Reconcile step then reads the reports and the record. It is the first run plus the step record. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page, and the JSON is kept for anything downstream:
+A single Reconcile step then reads the reports and the record. It is the command from the first run, plus the step record. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page, and `--format json:reconciliation.json` keeps the JSON for anything downstream:
 
 ```yaml
 - name: Reconcile
@@ -199,7 +197,7 @@ The [README's sample report](../README.md) shows every kind of row in one small 
 - **The run verdict** says whether the whole run balanced, and gives its exit code.
 - **A Claim Reconciliation** is one row per claim. A claim is usually a scenario. The row sets the evidence the claim asks for against the results reported for it.
 - **Each evidence cell** reads *obligation*/*observations*. The letter marks an obligation of that kind, and the number counts the evidence posted. `U/1` is a unit obligation answered by one unit test.
-- **The verdict** is **balanced** or **out-of-balance**.
+- **The verdict** on a row is **balanced** or **out-of-balance**.
 - **A reconciling item** is a reason a row does not balance, such as `missing` (no proof arrived) or `failing` (the proof failed).
 - **A phantom claim's row** holds evidence that cites a code no scenario carries, usually a typo or the code of a deleted scenario. Each unknown code gets one such row, named by that code, like the sample's row whose item cites an unknown claim.
 - **The unnamed claim's row**, `(unnamed claim)`, holds evidence that cites nothing.

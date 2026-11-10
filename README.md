@@ -2,7 +2,7 @@
 
 **Reassurance that your software keeps doing what you said it does.**
 
-`balance` fails your build when your scenarios and your tests stop agreeing.
+`spec-controller balance` fails your build when your scenarios and your tests stop agreeing.
 
 You write each behaviour as a scenario in a `.feature` file. You give the scenario two kinds of tag: the evidence it needs, such as `@unit` or `@e2e`, and a claim code of the form `@CLM-<FFF>-<NNN>`. Each test cites the code of the scenario it proves.
 
@@ -52,9 +52,11 @@ Delete the test, and the run is out of balance and exits `1`:
 
 ## What double entry buys: a change becomes deliberate
 
-Every behaviour is recorded twice, as a scenario and as the test that proves it, and the two records must agree. So **changes to your quality checks become deliberate, not accidental.**
+Every behaviour is recorded twice: as a scenario and as the test that proves it. The two records must agree. So **changes to your quality checks become deliberate, not accidental.**
 
-Each kind of disagreement has its own outcome. Every outcome except `satisfied` turns the build red:
+Each kind of disagreement has its own outcome. *The gap it closes* defines a *fitness function*, and *Reading the full report* defines a *phantom claim* and the *unnamed claim*.
+
+Every outcome except `satisfied` turns the build red:
 
 | You change | The report shows |
 |---|---|
@@ -66,8 +68,8 @@ Each kind of disagreement has its own outcome. Every outcome except `satisfied` 
 | Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-claim`) |
 | Cite a scenario from a unit test when its tags ask only for `@e2e` | `not-asked-for`: evidence the scenario never asked for |
 | Delete a CI check step | `missing` on its fitness function's scenario |
-| Let a CI check step or its job run under `continue-on-error` | without the run's step record: `cannot-fail`, passing, but its red might not fail the CI run. With the record, the step's own outcome decides: a red it swallowed reads `failing`, and a green reads `satisfied` |
-| Copy a scenario and keep its claim code | both copies share one row, and every Quality Check Reconciliation on it reads `duplicate-claim-code`: no evidence can be credited to either |
+| Let a CI check step or its job run under `continue-on-error` | without the run's step record, `cannot-fail`: it passes, but its red might not fail the CI run. With the record, the step's own outcome decides: a red it swallowed reads `failing`, and a green reads `satisfied` |
+| Copy a scenario and keep its claim code | each copy gets a row of its own under that code, and every Quality Check Reconciliation on it (the sub-row for one kind of quality check) reads `duplicate-claim-code`: no evidence can be credited to either |
 | Write a scenario's tags but no claim code | `no-claim-code`: nothing can cite it |
 | Remove the tags naming a scenario's kinds of quality check while nothing cites it | `no-quality-check`: it asks for nothing, and nothing answers |
 | Leave a test file that fails before any of its tests runs | `never-ran`, on the unnamed claim: its proof never ran |
@@ -79,8 +81,8 @@ This matters most when an agent writes the code. An agent asked to make failing 
 **The limits:**
 
 - **Deliberate is not right.** A change made in both places balances. Review decides whether it should have been made.
-- **A change inside one check is one entry, and `balance` does not see it.** A lint step narrowed to match no files still exits 0, and its row reads satisfied. A row reads from your CI run's own record whether the step ran and what it reported, so a red that `continue-on-error` swallowed still turns its row red. It does not read what the tool examined.
-- **Delete a scenario but keep its step definitions**, and Cucumber runs nothing and says nothing. Nothing posts, so `balance` cannot see it. A check for unused step definitions catches this, and this repository runs one.
+- **A change inside one check is one entry, and `balance` does not see it.** A lint step narrowed to match no files still exits 0, and its row reads satisfied. A row reads your CI run's own record of whether the step ran and what it reported, so a red that `continue-on-error` swallowed still turns its row red. The row does not read what the tool examined.
+- **Delete a scenario but keep its step definitions**, and Cucumber runs nothing and says nothing. No result is reported, so `balance` cannot see it. A check for unused step definitions catches this, and this repository runs one.
 - **No named behaviours, no second entry, no protection.** Code that arrives with no scenario gives `balance` nothing to reconcile.
 - **Whether a test is a good test is assumed.** A balanced row means the evidence exists and holds. It does not mean the test checks what its title says.
 
@@ -180,7 +182,7 @@ Both answer their own questions well, and both live at the unit layer:
 
 Coverage and mutation testing tell you how much of the application the unit tests reach, and whether those tests would notice the application change. Neither knows which behaviours your scenarios name. So neither notices a named behaviour with no proof, or a passing test credited to a scenario that asked for a different kind of evidence. `spec-controller` keeps one ledger across all five kinds of quality check.
 
-**For a team already well tested at the unit layer, it adds hygiene, not discovery.** Above the unit layer, once behaviours are named, nothing else holds the link. Keep your coverage gate and your mutation threshold: they are inputs here, not rivals.
+**For a team already well tested at the unit layer, `spec-controller` adds hygiene, not discovery.** Above the unit layer, once behaviours are named, nothing else holds each one to its proof. Keep your coverage gate and your mutation threshold: they are inputs here, not rivals.
 
 ## Who it fits
 
@@ -209,7 +211,7 @@ Coverage and mutation testing tell you how much of the application the unit test
 npm install -g spec-controller
 ```
 
-It requires Node ≥ 22. Then run this from your repository:
+`spec-controller` requires Node ≥ 22.12. Then run this from your repository:
 
 ```
 spec-controller balance \
@@ -222,7 +224,7 @@ Pass whichever reports you have. The *What you need* section of [`docs/user-guid
 
 `balance` is a gate: an out-of-balance run exits `1`. To watch before you gate, add `--exit-zero`. You get the same report, but an out-of-balance verdict exits `0`. Remove the flag when you are ready to gate. On GitHub Actions, `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page.
 
-**Before you name anything, it lists what ran.** With no scenarios, it reports every test and CI step, grouped by file, with what passed and what failed. That tells you nothing your CI does not already show. It is a starting inventory, and the value begins when you name the behaviours. Setup steps your pipeline runs, such as publishing or version bumps, are listed as checks until you name them in `specController.notChecks`. GitHub's own checkout, setup, cache and artifact actions are left out for you.
+**Before you name anything, `balance` lists what ran.** With no scenarios, it reports every test and CI step, grouped by file, with what passed and what failed. That tells you nothing your CI does not already show. It is a starting inventory, and the value begins when you name the behaviours. Setup steps your pipeline runs, such as publishing or version bumps, are listed as checks until you name them in `specController.notChecks`. GitHub's own checkout, setup, cache and artifact actions are left out for you.
 
 [`docs/quickstart.md`](./docs/quickstart.md) takes you from nothing to a first run in CI. [`docs/user-guide.md`](./docs/user-guide.md) is the full reference: every flag, every runner, and the CI wiring in detail.
 
@@ -230,7 +232,7 @@ At `0.x`, nothing is promised between versions ([`docs/compatibility.md`](./docs
 
 ## Starting from an existing codebase
 
-`balance` keeps a reconciled codebase reconciled, but it does not get one there. That work is yours: name each behaviour as a scenario, and put its code on the tests that prove it. Before that, use the inventory and `--exit-zero` described in *Try it*, above.
+`balance` keeps a reconciled codebase reconciled, but it does not get one there. That work is yours: name each behaviour as a scenario, and put its claim code on the tests that prove it. Before that, use the inventory and `--exit-zero` described in *Try it*, above.
 
 ## Built with Claude Code, and how it's kept honest
 
@@ -246,9 +248,9 @@ The repository holds itself to the discipline it asks of you. Its own CI reconci
 - code-level security, by this repository's own Semgrep rules;
 - a ceiling on test code against production code.
 
-**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why. These gates are meant to take over the routine feedback a technical lead gives in code review, so that a reviewer's attention goes to design and intent. The rest guard the method itself.
+**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), and its Rule says what it holds and why. Some of these gates are meant to take over the routine feedback a technical lead gives in code review, so that a reviewer's attention goes to design and intent. The rest guard the method itself.
 
-The agent has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. That is the first limit above in practice: a change made in both places balances, and review is what judges it.
+The agent has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. That is the first limit in *What double entry buys*, seen in practice: a change made in both places balances, and review is what judges it.
 
 ## The library
 
