@@ -1,6 +1,7 @@
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { claimReconciliationsSection } from "./claimReconciliations.js";
 import { heading } from "./heading.js";
+import { runIntegritySection } from "./runIntegrity.js";
 
 export function renderMarkdown({ claimReconciliations, errorsInTheInputs, runIntegrity, totals, stepAccount }: EvidenceReconciliation): string {
   return [
@@ -13,7 +14,7 @@ export function renderMarkdown({ claimReconciliations, errorsInTheInputs, runInt
           ...(errorsInTheInputs.configurationErrors ? [heading(3, "configuration-errors-heading")] : []),
         ]
       : []),
-    ...(runIntegrity ? [heading(2, "run-integrity-heading")] : []),
+    ...(runIntegrity ? runIntegritySection(runIntegrity) : []),
     heading(2, "summary-heading"),
     ...(totals.outOfBalanceByFeature ? [heading(3, "out-of-balance-by-feature-heading")] : []),
     ...(stepAccount ? [heading(3, "step-account-heading")] : []),

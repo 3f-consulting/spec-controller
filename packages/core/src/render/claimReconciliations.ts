@@ -9,8 +9,13 @@ export function whereToLook({ place, name }: EvidenceObservation): string {
   return [place, ...(name === undefined ? [] : [name])].map(inCell).join(" ");
 }
 
+export function said({ message, notes }: EvidenceObservation): string {
+  const firstLine = message?.split(/\r?\n/)[0];
+  return [...(firstLine === undefined ? [] : [firstLine]), ...notes].map(inCell).join(" ");
+}
+
 function lineOf({ outcome, kind, observation }: QualityCheckReconciliation): string[] {
-  return [outcome, kind ?? "", observation ? whereToLook(observation) : "", ""];
+  return [outcome, kind ?? "", observation ? whereToLook(observation) : "", observation ? said(observation) : ""];
 }
 
 function claimSection({ qualityCheckReconciliations }: ClaimReconciliation): string[] {
