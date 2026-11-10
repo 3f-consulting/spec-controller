@@ -45,12 +45,14 @@ function readCode(text: string): ClaimCode {
   return { featureCode, number };
 }
 
-function obligationsRaisedBy(): EvidenceObligation[] {
-  return [{ kind: "performance" }];
+const QUALITY_CHECK_KINDS: readonly QualityCheckKind[] = ["fitness", "unit", "integration", "e2e", "performance"];
+
+function obligationsRaisedBy(tags: readonly string[]): EvidenceObligation[] {
+  return QUALITY_CHECK_KINDS.filter((kind) => tags.includes(`@${kind}`)).map((kind) => ({ kind }));
 }
 
 function claimOf(file: string, scenario: ScenarioAsWritten, code: string | undefined): ExecutableClaim {
-  return { file, title: scenario.title, obligations: obligationsRaisedBy(), ...(code === undefined ? {} : { claimCode: readCode(code) }) };
+  return { file, title: scenario.title, obligations: obligationsRaisedBy(scenario.tags), ...(code === undefined ? {} : { claimCode: readCode(code) }) };
 }
 
 function claimsOf(file: string, scenario: ScenarioAsWritten, settings: ReadingSettings): ExecutableClaim[] {
