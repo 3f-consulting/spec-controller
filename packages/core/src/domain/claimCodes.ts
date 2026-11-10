@@ -126,7 +126,12 @@ function codesOnOneScenario(file: string, scenario: ScenarioAsWritten): ClaimCod
 }
 
 export function claimCodeErrorsOf(features: readonly FeatureAsWritten[]): ClaimCodeError[] {
-  return [];
+  const filesByCode = filesByFeatureCode(features);
+  return [
+    ...duplicateFeatureCodes(filesByCode),
+    ...features.flatMap((feature) => misfiledCodes(feature, filesByCode)),
+    ...features.flatMap(({ file, scenarios }) => scenarios.flatMap((scenario) => codesOnOneScenario(file, scenario))),
+  ];
 }
 
 const CITATION = /\[(CLM-[A-Z0-9]{2,5}-\d+)\]/g;
