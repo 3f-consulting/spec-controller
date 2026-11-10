@@ -27,19 +27,20 @@ Feature: balance reads and validates the configuration settings in the specContr
 
   Rule: balance leaves out any configuration setting it cannot use, and runs anyway
 
+    @unit
     Scenario Outline: a configuration setting balance cannot use will be left out
-      Given the specController block had <configuration setting>
-      When balance validates it
-      Then the target's configuration will not include it
-      And it will trigger an error <error>
+      given the specController block had <configuration setting>
+      when balance validates it
+      then the target's configuration will not include it
+      and it will trigger an error <error>
 
       Examples:
         | clm         | configuration setting                                   | error                            |
         | CLM-CFG-004 | "unit": 3 under runners                                 | configuration-wrong-kind         |
         | CLM-CFG-005 | "runer": {} beside runners                              | configuration-unknown-key        |
         | CLM-CFG-003 | "unittest": "vitest" under runners                      | runner-key-not-a-layer           |
-        | CLM-RPT-078 | "ci.yml:ci:No such step" in notChecks, with ci.yml read | not-checks-entry-matches-no-step |
-        | CLM-RPT-087 | "Install dependencies" in notChecks                     | not-checks-entry-not-a-step-name |
+        | CLM-CFG-015 | "ci.yml:ci:No such step" in notChecks, with ci.yml read | not-checks-entry-matches-no-step |
+        | CLM-CFG-016 | "Install dependencies" in notChecks                     | not-checks-entry-not-a-step-name |
 
     @unit @CLM-CFG-017
     Scenario: the run will still reach its run verdict, using the configuration settings it could use
