@@ -130,7 +130,30 @@ export function excludedClaimCodeOccurrencesOf(features: readonly FeatureAsWritt
 }
 
 export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], excludedClaimCodeOccurrences: number): Totals {
-  return STUB_TOTALS;
+  const qualityChecks = qualityCheckReconciliationsOf(claimReconciliations);
+  const reconciling = qualityChecks.filter(({ outcome }) => outcome !== "satisfied");
+  const observed = observedOn(claimReconciliations);
+  const outOfBalanceByFeature = outOfBalanceByFeatureOf(claimReconciliations);
+  const balanced = claimReconciliations.filter((each) => !isOutOfBalance(each)).length;
+  return {
+    claimReconciliations: { total: claimReconciliations.length, balanced, outOfBalance: claimReconciliations.length - balanced },
+    qualityCheckReconciliations: {
+      total: qualityChecks.length,
+      outOfBalance: reconciling.length,
+      byOutcome: countsBy(reconciling, ({ outcome }) => outcome as Exclude<Outcome, "satisfied">).map(({ key, count }) => ({ outcome: key, count })),
+      missingByKind: kindCounts(qualityChecks.flatMap((each) => (each.outcome === "missing" ? [each.kind] : []))),
+    },
+    evidenceObservations: {
+      total: observed.length,
+      byKind: kindCounts(observed.map(({ observation }) => observation.kind)),
+      onExecutableClaim: observed.filter(({ claim }) => claim.file !== undefined).length,
+      onPhantomClaim: observed.filter(({ claim }) => claim.file === undefined && claim.claimCode !== undefined).length,
+      onUnnamedClaim: observed.filter(({ claim }) => claim.file === undefined && claim.claimCode === undefined).length,
+      fitnessFunctionsRan: observed.filter(({ observation }) => observation.kind === "fitness" && observation.result !== "never-ran").length,
+    },
+    ...(outOfBalanceByFeature === undefined ? {} : { outOfBalanceByFeature }),
+    excludedClaimCodeOccurrences,
+  };
 }
 
 const NO_STEPS: StepCounts = { stepsRead: 0, runners: 0, reconcilerSteps: 0, nonChecks: 0, plumbing: 0, candidates: 0 };
@@ -162,11 +185,3 @@ const UNKNOWN = "unknown";
 export function provenanceOf(identity: RunIdentity, inputs: Provenance["inputs"]): Provenance {
   return { target: "stub", sourceSha: "stub", toolSha: "stub", toolVersion: "stub", inputs: [] };
 }
-
-const STUB_TOTALS: Totals = {
-  claimReconciliations: { total: -1, balanced: -1, outOfBalance: -1 },
-  qualityCheckReconciliations: { total: -1, outOfBalance: -1, byOutcome: [], missingByKind: [] },
-  evidenceObservations: { total: -1, byKind: [], onExecutableClaim: -1, onPhantomClaim: -1, onUnnamedClaim: -1, fitnessFunctionsRan: -1 },
-  outOfBalanceByFeature: [{ file: "stub", count: -1 }],
-  excludedClaimCodeOccurrences: -1,
-};
