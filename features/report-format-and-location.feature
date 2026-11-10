@@ -30,19 +30,20 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-014 | md        | the Markdown report |
         | CLM-FMT-015 | json      | the JSON report     |
 
+    @unit
     Scenario Outline: a report will be where you asked
-      Given a run had a report to write
-      When you ask for it at <destination>
-      Then <where it will be>
+      given a run had a report to write
+      when you ask for it at <destination>
+      then <where it will be>
 
       Examples:
         | clm         | destination                                            | where it will be                                                                 |
-        | CLM-FMT-NEW | no destination                                         | it will be on standard output                                                    |
+        | CLM-FMT-016 | no destination                                         | it will be on standard output                                                    |
         | CLM-FMT-003 | a file                                                 | it will be in that file, and nothing will be on standard output                  |
-        | CLM-FMT-NEW | a file whose name contains a colon                     | it will be in that file                                                          |
+        | CLM-FMT-017 | a file whose name contains a colon                     | it will be in that file                                                          |
         | CLM-FMT-012 | a link to a file that does not exist yet               | it will be in the file the link points to, and the link will still point there   |
-        | CLM-FMT-NEW | a file that already exists                             | the file will contain the new report                                             |
-        | CLM-FMT-NEW | a file in the corpus folder that is not a feature file | the file will contain the new report, and the feature files will be as they were |
+        | CLM-FMT-018 | a file that already exists                             | the file will contain the new report                                             |
+        | CLM-FMT-019 | a file in the corpus folder that is not a feature file | the file will contain the new report, and the feature files will be as they were |
 
     @wip
     Scenario Outline: each of two reports will be where you asked
