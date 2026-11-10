@@ -156,6 +156,38 @@ export interface EvidenceGroup {
   readonly failures: readonly string[];
 }
 
-export function groupsOf(_reconciliation: ClaimReconciliation): EvidenceGroup[] {
-  return [];
+interface GroupKey {
+  readonly kind: QualityCheckKind;
+  readonly file?: string;
+  readonly claimCode?: ClaimCode;
+}
+
+function groupKeyOf({ kind, place, cites }: EvidenceObservation): GroupKey {
+  const [claimCode, ...others] = cites;
+  return {
+    kind,
+    ...(kind !== "fitness" && { file: place }),
+    ...(claimCode !== undefined && others.length === 0 && { claimCode }),
+  };
+}
+
+function sameGroup(a: GroupKey, b: GroupKey): boolean {
+  const sameClaimCode = a.claimCode === undefined || b.claimCode === undefined ? a.claimCode === b.claimCode : sameCode(a.claimCode, b.claimCode);
+  return a.kind === b.kind && a.file === b.file && sameClaimCode;
+}
+
+function withCounts(key: GroupKey, members: readonly QualityCheckReconciliation[]): EvidenceGroup {
+  return { ...key, qualityCheckReconciliations: members, ran: 0, passed: 0, failed: 0, failures: [] };
+}
+
+export function groupsOf({ qualityCheckReconciliations }: ClaimReconciliation): EvidenceGroup[] {
+  const groups: { readonly key: GroupKey; readonly members: QualityCheckReconciliation[] }[] = [];
+  for (const line of qualityCheckReconciliations) {
+    if (line.observation === undefined) continue;
+    const key = groupKeyOf(line.observation);
+    const group = groups.find((existing) => sameGroup(existing.key, key));
+    if (group) group.members.push(line);
+    else groups.push({ key, members: [line] });
+  }
+  return groups.map(({ key, members }) => withCounts(key, members));
 }
