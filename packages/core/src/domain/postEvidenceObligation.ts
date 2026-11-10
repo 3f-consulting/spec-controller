@@ -14,7 +14,6 @@ export interface ExecutableClaim {
 }
 
 export interface RowAsWritten {
-  readonly line: number;
   readonly cell?: string;
 }
 

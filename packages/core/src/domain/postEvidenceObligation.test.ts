@@ -11,7 +11,7 @@ function claimsRead(source: string, settings: ReadingSettings = NOT_STRICT): rea
 }
 
 function outline(tags: string, table: string): string {
-  return `@ONE\nFeature: one\n\n  ${tags}\n  Scenario Outline: a claim\n    Given a <x>\n\n    Examples:\n${table}`;
+  return `@ONE\nFeature: one\n\n  Rule: a rule\n\n  ${tags}\n  Scenario Outline: a claim\n    Given a <x>\n\n    Examples:\n${table}`;
 }
 
 function scenarioTagged(tags: string): string {
