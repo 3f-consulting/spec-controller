@@ -44,7 +44,7 @@ describe("each deferral tag, built in or configured, will remove the claim", () 
     ["CLM-OBL-005", "@skip", []],
     ["CLM-OBL-006", "@todo", []],
     ["CLM-OBL-007", "@pending", []],
-    ["CLM-OBL-008", "@blocked", ["@blocked"]],
+    ["CLM-OBL-008", "@blocked", ["blocked"]],
   ])("[%s] %s removes the claim", (_clm, tag, deferralTags) => {
     expect(claimsRead(scenarioTagged(`@unit ${tag}`), { deferralTags, strict: false })).toEqual([]);
   });

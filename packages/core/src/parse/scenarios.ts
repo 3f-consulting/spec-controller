@@ -1,5 +1,6 @@
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { IdGenerator, type Examples, type FeatureChild, type GherkinDocument, type RuleChild, type Scenario } from "@cucumber/messages";
+import { bareTerm } from "../lib/bareTerm.js";
 import type { RowAsWritten, ScenarioAsWritten } from "../domain/postEvidenceObligation.js";
 import { parseSources, type Parsed, type Source, type SourcesParse } from "./sourceParse.js";
 
@@ -25,7 +26,7 @@ function rowsOf(examples: Examples): RowAsWritten[] {
 }
 
 function scenarioAsWrittenOf(scenario: Scenario): ScenarioAsWritten {
-  const asWritten = { tags: scenario.tags.map((tag) => tag.name), title: scenario.name };
+  const asWritten = { tags: scenario.tags.map((tag) => bareTerm(tag.name)), title: scenario.name };
   if (!scenario.examples.some((examples) => clmColumnOf(examples) >= 0)) return asWritten;
   return { ...asWritten, rows: scenario.examples.flatMap(rowsOf) };
 }

@@ -15,7 +15,7 @@ export interface ExecutableClaim {
 
 export interface RowAsWritten {
   readonly line: number;
-  readonly cell?: string | undefined;
+  readonly cell?: string;
 }
 
 export interface ScenarioAsWritten {
@@ -34,7 +34,7 @@ export interface ReadingSettings {
   readonly strict: boolean;
 }
 
-const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["@wip", "@ignore", "@skip", "@todo", "@pending"];
+const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
 function isDeferred(tags: readonly string[], { deferralTags, strict }: ReadingSettings): boolean {
   return !strict && tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));
@@ -43,7 +43,7 @@ function isDeferred(tags: readonly string[], { deferralTags, strict }: ReadingSe
 const QUALITY_CHECK_KINDS: readonly QualityCheckKind[] = ["fitness", "unit", "integration", "e2e", "performance"];
 
 function obligationsRaisedBy(tags: readonly string[], strict: boolean): EvidenceObligation[] {
-  const raises = (kind: QualityCheckKind): boolean => tags.includes(`@${kind}`) || (strict && tags.includes(`@${kind}pending`));
+  const raises = (kind: QualityCheckKind): boolean => tags.includes(kind) || (strict && tags.includes(`${kind}pending`));
   return QUALITY_CHECK_KINDS.filter(raises).map((kind) => ({ kind }));
 }
 
@@ -52,7 +52,7 @@ function claimOf(file: string, scenario: ScenarioAsWritten, strict: boolean, cla
 }
 
 function claimCodesIn(tags: readonly string[]): ClaimCode[] {
-  return tags.flatMap((tag) => claimCodeFrom(tag.slice(1)) ?? []);
+  return tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
 }
 
 function claimsOf(file: string, scenario: ScenarioAsWritten, settings: ReadingSettings): ExecutableClaim[] {
