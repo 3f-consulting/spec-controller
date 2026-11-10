@@ -114,3 +114,23 @@ describe("neither report will have an optional section the run had nothing for",
     });
   });
 });
+
+describe("a name will read as it was given, in a table that stays a table", () => {
+  const UNESCAPED_PIPE = /(?<!\\)\|/g;
+
+  it.each([
+    ["CLM-RPT-084", "a|b", "`a\\|b`"],
+    ["CLM-RPT-106", "a\\b", "`a\\b`"],
+    ["CLM-RPT-107", "a\nb", '`"a\\nb"`'],
+    ["CLM-RPT-088", "`a`", "`` `a` ``"],
+    ["CLM-RPT-108", "*a*", "`*a*`"],
+  ])("[%s] the name %j reads as it was given, in a row that keeps its columns", (_clm, name, cell) => {
+    const lines = renderMarkdown(everySection(observation({ name }))).split("\n");
+    const [header] = lines.filter((line) => line.startsWith(`| ${coreText("outcome-column")} `));
+    const [row] = lines.filter((line) => line.startsWith("| failing "));
+    expect({ cell: row?.includes(cell), columns: row?.match(UNESCAPED_PIPE)?.length }).toEqual({
+      cell: true,
+      columns: header?.match(UNESCAPED_PIPE)?.length,
+    });
+  });
+});

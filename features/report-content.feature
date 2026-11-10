@@ -59,18 +59,19 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   Rule: odd characters in what a report quotes break nothing
 
+    @unit
     Scenario Outline: a name will read as it was given, in a table that stays a table
-      Given a run had reported a name containing <character>
-      When its Markdown report is written
-      Then the name will read as it was given, in a table that stays a table
+      given a run had reported a name containing <character>
+      when its Markdown report is written
+      then the name will read as it was given, in a table that stays a table
 
       Examples:
         | clm         | character                         |
         | CLM-RPT-084 | a pipe, as in a\|b                |
-        | CLM-RPT-NEW | a backslash, as in a\\b           |
-        | CLM-RPT-NEW | a line break                      |
+        | CLM-RPT-106 | a backslash, as in a\\b           |
+        | CLM-RPT-107 | a line break                      |
         | CLM-RPT-088 | a backtick, as in `a`             |
-        | CLM-RPT-NEW | a formatting character, as in *a* |
+        | CLM-RPT-108 | a formatting character, as in *a* |
 
   Rule: a Markdown report shortens a long message to its first line
 
