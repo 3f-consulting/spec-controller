@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { ClaimCode } from "./claimCodes.js";
 import { claimReconciliationsOf, groupsOf, type ClaimReconciliation, type EvidenceGroup } from "./claimReconciliation.js";
-import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
+import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { executableClaimsOf, type ExecutableClaim, type QualityCheckKind } from "./postEvidenceObligation.js";
 import type { EvidenceObservation } from "./postEvidenceObservation.js";
 
 function code(text: string): ClaimCode {
@@ -22,6 +23,8 @@ function observation(
 ): EvidenceObservation {
   return { cites: cites.map(code), result, kind, place, notes: [], ...said };
 }
+
+const DEFERRED_ONE_002 = "@ONE\nFeature: one\n\n  @wip @unit @CLM-ONE-002\n  Scenario: a deferred claim\n    Given a step";
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
 
@@ -104,7 +107,14 @@ describe("balance works out each Quality Check Reconciliation's outcome, and fro
     ["CLM-LDG-021", "no code", () => [claim(undefined, ["unit"])], () => [], "out-of-balance", ["no-claim-code"]],
     ["CLM-LDG-054", "ONE-001", twoClaimsSharing, () => [], "out-of-balance", ["duplicate-claim-code"]],
     ["CLM-LDG-006", "ONE-999", () => [], () => [observation("unit", "passed", ["ONE-999"])], "out-of-balance", ["cites-unknown-claim"]],
-    ["CLM-LDG-055", "ONE-002", () => [], () => [observation("unit", "passed", ["ONE-002"])], "out-of-balance", ["cites-unknown-claim"]],
+    [
+      "CLM-LDG-055",
+      "ONE-002",
+      () => executableClaimsOf(parsedFeatures([DEFERRED_ONE_002], ["one.feature"]), { deferralTags: [], strict: false }),
+      () => [observation("unit", "passed", ["ONE-002"])],
+      "out-of-balance",
+      ["cites-unknown-claim"],
+    ],
     [
       "CLM-LDG-056",
       "ONE-999",

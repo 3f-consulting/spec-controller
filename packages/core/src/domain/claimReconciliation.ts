@@ -51,6 +51,19 @@ export interface ClaimReconciliation {
 
 type Claim = ClaimReconciliation["claim"];
 
+const codeText = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
+
+function sharedCodesOf(claims: readonly ExecutableClaim[]): Set<string> {
+  const seen = new Set<string>();
+  const shared = new Set<string>();
+  for (const { claimCode } of claims) {
+    if (claimCode === undefined) continue;
+    const text = codeText(claimCode);
+    (seen.has(text) ? shared : seen).add(text);
+  }
+  return shared;
+}
+
 type UnaskedOutcome = "not-asked-for" | "cites-unknown-claim" | "cites-no-claim";
 
 const OUTCOME_OF_RESULT = { passed: "satisfied", failed: "failing", "passed-on-error": "cannot-fail" } as const;
@@ -70,12 +83,11 @@ function unanswerable(claim: ExecutableClaim, outcome: "no-claim-code" | "duplic
 function executableLines(
   claim: ExecutableClaim,
   evidence: readonly EvidenceObservation[],
-  claims: readonly ExecutableClaim[],
+  sharedCodes: ReadonlySet<string>,
 ): QualityCheckReconciliation[] {
   const { claimCode } = claim;
   if (claimCode === undefined) return unanswerable(claim, "no-claim-code");
-  const sharing = claims.filter((other) => other.claimCode !== undefined && sameCode(other.claimCode, claimCode));
-  if (sharing.length > 1) return unanswerable(claim, "duplicate-claim-code");
+  if (sharedCodes.has(codeText(claimCode))) return unanswerable(claim, "duplicate-claim-code");
   const asked = claim.obligations.flatMap(({ kind }) => kind ?? []);
   const answered = evidence.map((observation) => evidenceLine(observation, asked.includes(observation.kind), "not-asked-for"));
   const missing = asked
@@ -87,8 +99,8 @@ function executableLines(
 
 const isExecutable = (claim: Claim): claim is ExecutableClaim => "title" in claim;
 
-function linesOf(claim: Claim, evidence: readonly EvidenceObservation[], claims: readonly ExecutableClaim[]): QualityCheckReconciliation[] {
-  if (isExecutable(claim)) return executableLines(claim, evidence, claims);
+function linesOf(claim: Claim, evidence: readonly EvidenceObservation[], sharedCodes: ReadonlySet<string>): QualityCheckReconciliation[] {
+  if (isExecutable(claim)) return executableLines(claim, evidence, sharedCodes);
   const unasked = claim.claimCode === undefined ? "cites-no-claim" : "cites-unknown-claim";
   return evidence.map((observation) => evidenceLine(observation, false, unasked));
 }
@@ -104,11 +116,9 @@ function filedUnder(claim: Claim, phantoms: PhantomClaim[], unnamed: UnnamedClai
   return phantom;
 }
 
-const KIND_ORDER: readonly QualityCheckKind[] = ["unit", "integration", "e2e", "performance", "fitness"];
+const KIND_RANK: Readonly<Record<QualityCheckKind, number>> = { unit: 0, integration: 1, e2e: 2, performance: 3, fitness: 4 };
 
-const kindRank = ({ kind }: QualityCheckReconciliation): number => (kind === undefined ? -1 : KIND_ORDER.indexOf(kind));
-
-const codeText = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
+const kindRank = ({ kind }: QualityCheckReconciliation): number => (kind === undefined ? -1 : KIND_RANK[kind]);
 
 function recorded({ observation }: QualityCheckReconciliation): string[] {
   if (observation === undefined) return [];
@@ -140,9 +150,12 @@ export function claimReconciliationsOf(
   const unnamed: UnnamedClaim = {};
   for (const observation of observations) {
     const claim = filedUnder(claimPostedTo(observation, claims), phantoms, unnamed);
-    posted.set(claim, [...(posted.get(claim) ?? []), observation]);
+    const evidence = posted.get(claim);
+    if (evidence) evidence.push(observation);
+    else posted.set(claim, [observation]);
   }
-  return [...posted].map(([claim, evidence]) => reconciliationOf(claim, linesOf(claim, evidence, claims)));
+  const sharedCodes = sharedCodesOf(claims);
+  return [...posted].map(([claim, evidence]) => reconciliationOf(claim, linesOf(claim, evidence, sharedCodes)));
 }
 
 export interface EvidenceGroup {
