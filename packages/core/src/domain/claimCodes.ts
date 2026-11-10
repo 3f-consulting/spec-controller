@@ -199,5 +199,11 @@ function highestOf(featureCode: string, occurrences: readonly ClaimCodeOccurrenc
 }
 
 export function nextClaimCode(request: AllocationRequest, occurrences: readonly ClaimCodeOccurrence[]): Allocation | UnknownFeatureCode {
-  return { kind: "allocated", featureCode: request.featureCode, code: "CLM-STUBBED-000" };
+  const { featureCode, featureCodes, isNew } = request;
+  const headed = featureCodes.includes(featureCode);
+  if (!headed && !isNew) return { kind: "unknown-feature-code", featureCode, featureCodes: [...new Set(featureCodes)].sort() };
+  const highest = highestOf(featureCode, occurrences);
+  const next = (highest === undefined ? 0 : numberOf(highest.code)) + 1;
+  const code = written({ featureCode, number: String(next).padStart(NUMBER_WIDTH, "0") });
+  return { kind: "allocated", featureCode, code, ...(highest && { highest }), ...(headed && isNew && { alreadyHeaded: true as const }) };
 }
