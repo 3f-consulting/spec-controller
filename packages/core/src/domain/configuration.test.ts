@@ -5,7 +5,7 @@ import type { TargetConfiguration } from "./configuration.js";
 import { runVerdictOf } from "./evidenceReconciliation.js";
 import type { PipelineStep } from "./postEvidenceObservation.js";
 
-const NOTHING: TargetConfiguration = { runners: {}, notChecks: [], deferralTags: [] };
+const NOTHING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
 
 describe("balance turns each configuration setting into its internal setting", () => {
   it.each([
@@ -14,9 +14,9 @@ describe("balance turns each configuration setting into its internal setting", (
     [
       "CLM-CFG-010",
       { notChecks: ["ci.yml:ci:Install dependencies"] },
-      { ...NOTHING, notChecks: [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }] },
+      { ...NOTHING, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }] },
     ],
-    ["CLM-CFG-011", { notChecks: ["nightly:build.yml:ci:Install"] }, { ...NOTHING, notChecks: [{ workflow: "nightly:build.yml", job: "ci", step: "Install" }] }],
+    ["CLM-CFG-011", { notChecks: ["nightly:build.yml:ci:Install"] }, { ...NOTHING, nonChecks: [{ workflow: "nightly:build.yml", job: "ci", step: "Install" }] }],
     ["CLM-CFG-012", { deferralTags: ["deferred"] }, { ...NOTHING, deferralTags: ["deferred"] }],
     ["CLM-CFG-013", { deferralTags: ["@blocked"] }, { ...NOTHING, deferralTags: ["blocked"] }],
     ["CLM-CFG-014", { deferralTags: [" deferred "] }, { ...NOTHING, deferralTags: ["deferred"] }],

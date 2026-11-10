@@ -1,6 +1,11 @@
-import { targetConfigurationOf, type ConfigurationRead } from "../domain/configuration.js";
+import { targetConfigurationOf, type ConfigurationRead, type SettingNames } from "../domain/configuration.js";
 import type { PipelineStep } from "../domain/postEvidenceObservation.js";
 import { bareTerm } from "../lib/bareTerm.js";
+
+const SPEC_CONTROLLER_BLOCK: SettingNames = {
+  block: "specController",
+  settings: { runners: "runners", notChecks: "nonChecks", deferralTags: "deferralTags" },
+};
 
 // A deferral tag may be written with its at-sign or spaces around it; the domain takes the bare term.
 function withBareDeferralTags(block: unknown): unknown {
@@ -9,5 +14,5 @@ function withBareDeferralTags(block: unknown): unknown {
 }
 
 export function targetConfigurationFrom(packageJson: { readonly specController?: unknown }, stepsRead: readonly PipelineStep[] = []): ConfigurationRead {
-  return targetConfigurationOf(withBareDeferralTags(packageJson.specController), stepsRead);
+  return targetConfigurationOf(withBareDeferralTags(packageJson.specController), SPEC_CONTROLLER_BLOCK, stepsRead);
 }
