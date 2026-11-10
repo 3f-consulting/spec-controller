@@ -45,8 +45,12 @@ function readCode(text: string): ClaimCode {
   return { featureCode, number };
 }
 
+function obligationsRaisedBy(): EvidenceObligation[] {
+  return [{ kind: "performance" }];
+}
+
 function claimOf(file: string, scenario: ScenarioAsWritten, code: string | undefined): ExecutableClaim {
-  return { file, title: scenario.title, obligations: [], ...(code === undefined ? {} : { claimCode: readCode(code) }) };
+  return { file, title: scenario.title, obligations: obligationsRaisedBy(), ...(code === undefined ? {} : { claimCode: readCode(code) }) };
 }
 
 function claimsOf(file: string, scenario: ScenarioAsWritten, settings: ReadingSettings): ExecutableClaim[] {

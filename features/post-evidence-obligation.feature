@@ -48,21 +48,22 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
 
   Rule: an executable claim raises one Evidence Obligation for each kind-of-check tag that applies to it, and none without one
 
+    @unit
     Scenario Outline: an executable claim will raise an Evidence Obligation for each kind-of-check tag that applies to it
-      Given an executable claim with the code CLM-ONE-001 had <tags>
-      When balance reads the corpus
-      Then its claim will raise <Evidence Obligations>
+      given an executable claim with the code CLM-ONE-001 had <tags>
+      when balance reads the corpus
+      then its claim will raise <Evidence Obligations>
 
       Examples:
         | clm         | tags                                     | Evidence Obligations                          |
-        | CLM-LDG-NEW | @unit                                    | a unit Evidence Obligation                    |
-        | CLM-LDG-NEW | @unit @e2e                               | a unit and an e2e Evidence Obligation         |
-        | CLM-LDG-NEW | @unit @integration @e2e @performance     | four Evidence Obligations, one of each kind   |
-        | CLM-LDG-NEW | @fitness                                 | a fitness Evidence Obligation                 |
-        | CLM-LDG-NEW | no other tag                             | no Evidence Obligation                        |
-        | CLM-PND-017 | @unit @integrationpending                | a unit Evidence Obligation                    |
-        | CLM-PND-001 | @integrationpending                      | no Evidence Obligation                        |
-        | CLM-GRD-006 | @unit and @integration, from its Outline | a unit and an integration Evidence Obligation |
+        | CLM-OBL-009 | @unit                                    | a unit Evidence Obligation                    |
+        | CLM-OBL-010 | @unit @e2e                               | a unit and an e2e Evidence Obligation         |
+        | CLM-OBL-011 | @unit @integration @e2e @performance     | four Evidence Obligations, one of each kind   |
+        | CLM-OBL-012 | @fitness                                 | a fitness Evidence Obligation                 |
+        | CLM-OBL-013 | no other tag                             | no Evidence Obligation                        |
+        | CLM-OBL-014 | @unit @integrationpending                | a unit Evidence Obligation                    |
+        | CLM-OBL-015 | @integrationpending                      | no Evidence Obligation                        |
+        | CLM-OBL-016 | @unit and @integration, from its Outline | a unit and an integration Evidence Obligation |
 
   Rule: a strict run reads every claim as if nothing were put off
 
