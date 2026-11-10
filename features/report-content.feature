@@ -75,11 +75,11 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   Rule: a Markdown report shortens a long message to its first line
 
-    @CLM-RPT-085
+    @unit @CLM-RPT-085
     Scenario: the report quotes an Evidence Observation's first line and every note
-      Given a test that never ran had a message of three lines, and balance had added two notes
-      When its Markdown report is written
-      Then the report will quote the message's first line and both notes
+      given a test that never ran had a message of three lines, and balance had added two notes
+      when its Markdown report is written
+      then the report will quote the message's first line and both notes
 
   Rule: the Markdown adds the words a person needs to read the data
 

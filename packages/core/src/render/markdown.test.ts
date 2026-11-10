@@ -134,3 +134,16 @@ describe("a name will read as it was given, in a table that stays a table", () =
     });
   });
 });
+
+describe("the report quotes an Evidence Observation's first line and every note", () => {
+  it("[CLM-RPT-085] the report quotes an Evidence Observation's first line and every note", () => {
+    const neverRan = observation({ result: "never-ran", message: "first line\nsecond line\nthird line", notes: ["one note", "another note"] });
+    const markdown = renderMarkdown({ ...everySection(neverRan), runIntegrity: { neverRan: [neverRan] } });
+    const rowsQuoting = (text: string): number => markdown.split("\n").filter((line) => line.startsWith("|") && line.includes(text)).length;
+    expect({
+      firstLine: rowsQuoting("`first line`"),
+      notes: [rowsQuoting("`one note`"), rowsQuoting("`another note`")],
+      laterLines: rowsQuoting("second line") + rowsQuoting("third line"),
+    }).toEqual({ firstLine: 2, notes: [2, 2], laterLines: 0 });
+  });
+});
