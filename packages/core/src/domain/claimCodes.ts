@@ -33,7 +33,7 @@ export function retiredScenarioCodeFrom(text: string): ClaimCode | undefined {
 }
 
 export function featureCodeOfFile({ featureTags }: Pick<FeatureAsWritten, "featureTags">): string | undefined {
-  return "stubbed";
+  return featureTags.find(isFeatureCode);
 }
 
 interface DuplicateFeatureCodeError {
