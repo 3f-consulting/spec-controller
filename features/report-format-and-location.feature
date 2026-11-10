@@ -88,18 +88,19 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-024 | a link to it                            |
         | CLM-FMT-025 | standard output, redirected to the file |
 
+    @unit
     Scenario Outline: a place it cannot write will stop the run, and nothing will be written
-      Given a run had its report to write
-      When you ask for it at <destination>
-      Then the run will stop, give no verdict and exit 2
-      And it will complain, naming the place and why it cannot write there
-      And nothing will be written
+      given a run had its report to write
+      when you ask for it at <destination>
+      then the run will stop, give no verdict and exit 2
+      and it will complain, naming the place and why it cannot write there
+      and nothing will be written
 
       Examples:
         | clm         | destination                           |
         | CLM-FMT-008 | a file it may not write               |
-        | CLM-FMT-NEW | an existing folder                    |
-        | CLM-FMT-NEW | a file in a folder that doesn't exist |
+        | CLM-FMT-026 | an existing folder                    |
+        | CLM-FMT-027 | a file in a folder that doesn't exist |
 
     Scenario Outline: if one report cannot be written, neither will be
       Given a run had two reports to write

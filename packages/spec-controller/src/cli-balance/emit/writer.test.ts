@@ -1,4 +1,4 @@
-import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, lstatSync, statSync, mkdirSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderJson, renderMarkdown, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
@@ -123,5 +123,42 @@ describe("two reports will not both go to standard output", () => {
       complaint: written.stderr.includes(message(AppError.MoreThanOneToStdout, { formats: "md, json" })),
       standardOutput: written.stdout,
     }).toEqual({ exitCode: 2, complaint: true, standardOutput: "" });
+  });
+});
+
+describe("a place it cannot write will stop the run, and nothing will be written", () => {
+  it.each([
+    [
+      "CLM-FMT-008",
+      "a file it may not write",
+      "EACCES",
+      (dir: string) => {
+        const path = join(dir, "read-only.md");
+        writeFileSync(path, "earlier\n");
+        chmodSync(path, 0o444);
+        return path;
+      },
+      (path: string) => readFileSync(path, "utf8") === "earlier\n",
+    ],
+    [
+      "CLM-FMT-026",
+      "an existing folder",
+      "EISDIR",
+      (dir: string) => {
+        mkdirSync(join(dir, "a-folder"));
+        return join(dir, "a-folder");
+      },
+      (path: string) => statSync(path).isDirectory(),
+    ],
+    ["CLM-FMT-027", "a file in a folder that doesn't exist", "ENOENT", (dir: string) => join(dir, "missing", "report.md"), (path: string) => !existsSync(path)],
+  ])("[%s] a report asked for at %s stops the run, naming the place and %s", (_clm, _place, why, arrange, asItWas) => {
+    const path = arrange(temporaryDirectory("spec-controller-unwritable-"));
+    const written = reportsWritten([`md:${path}`]);
+    expect({
+      exitCode: written.exitCode,
+      complaint: written.stderr.includes(path) && written.stderr.includes(why),
+      standardOutput: written.stdout,
+      asItWas: asItWas(path),
+    }).toEqual({ exitCode: 2, complaint: true, standardOutput: "", asItWas: true });
   });
 });
