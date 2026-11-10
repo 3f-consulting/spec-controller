@@ -1,14 +1,16 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { readCorpus } from "../../../spec-controller/src/ingest/ingestQualityChecks.js";
 import { committedRepository } from "../../../spec-controller/src/run-management/gitRepository.test-utils.js";
+import { temporaryDirectory } from "../../../spec-controller/src/temporaryDirectory.test-utils.js";
 import { resolveSourceSha, resolveTargetOrigin, resolveToolIdentity } from "../../../spec-controller/src/run-management/resolveRunInputs.js";
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
 import { shellReading } from "../parse/commandRuns.js";
 import { provenanceFrom } from "../provenance/provenance.js";
 import type { ClaimCode, ClaimCodeError } from "./claimCodes.js";
-import type { ClaimReconciliation, QualityCheckReconciliation } from "./claimReconciliation.js";
+import { claimReconciliationsOf, type ClaimReconciliation, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import {
   excludedClaimCodeOccurrencesOf,
   provenanceOf,
@@ -18,7 +20,7 @@ import {
   type RunVerdict,
   type Totals,
 } from "./evidenceReconciliation.js";
-import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
+import { executableClaimsOf, type ExecutableClaim, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { stepDispositionOf, type EvidenceObservation, type PipelineStep } from "./postEvidenceObservation.js";
 
 const ONE: ClaimCode = { featureCode: "ONE", number: "001" };
@@ -65,6 +67,31 @@ describe("the run verdict says why balance could not reconcile a run", () => {
   ])("[$clm] the run will be not reconciled, naming why", ({ run, why }) => {
     const { claimReconciliations, claimCodeErrors } = run();
     expect(runVerdictOf(claimReconciliations, claimCodeErrors)).toEqual({ verdict: "not-reconciled", why });
+  });
+
+  it.each<{ clm: string; corpusIn: (dir: string) => string }>([
+    { clm: "CLM-EVR-006", corpusIn: (dir) => join(dir, "features") },
+    {
+      clm: "CLM-EVR-007",
+      corpusIn: (dir) => {
+        mkdirSync(join(dir, "features"));
+        return join(dir, "features");
+      },
+    },
+    {
+      clm: "CLM-EVR-008",
+      corpusIn: (dir) => {
+        mkdirSync(join(dir, "features"));
+        writeFileSync(join(dir, "features", "one.feature"), "@ONE\nFeature: one\n");
+        return join(dir, "features");
+      },
+    },
+  ])("[$clm] the run will be not reconciled, naming why", ({ corpusIn }) => {
+    const reading = readCorpus(corpusIn(temporaryDirectory("evr-corpus-")));
+    expect(reading.kind).toBe("read");
+    const corpus = reading.kind === "read" ? reading.corpus : [];
+    const claimReconciliations = claimReconciliationsOf(executableClaimsOf(corpus, { deferralTags: [], strict: false }), []);
+    expect(runVerdictOf(claimReconciliations, [])).toEqual({ verdict: "not-reconciled", why: "nothing-to-reconcile" });
   });
 
   it.each<{ clm: string; run: Run; why: string }>([

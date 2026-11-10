@@ -21,3 +21,6 @@ export type { PackageJsonScripts, ParsedWorkflow } from "./parse/checkScriptsRun
 export type { Parsed, Source, SourceFault, SourcesParse } from "./parse/sourceParse.js";
 
 export { relativizeToRoot } from "./lib/portablePath.js";
+
+export { messagesFrom } from "./render/message.js";
+export type { Message, MessageValues } from "./render/message.js";
