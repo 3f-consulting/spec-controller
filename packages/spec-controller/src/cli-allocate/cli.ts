@@ -49,7 +49,7 @@ function refuseUsage(error: RefusalLines): void {
 
 function answerRequest({ featureCode, isNew }: AllocateRequest): void {
   const cwd = readOrRefuse(AppMessage.WorkingDirectory, "", () => process.cwd());
-  const top = null;
+  const top = repositoryTop(cwd);
   const featureCodes = readFeatureCodes(join(top ?? cwd, DEFAULT_FEATURES_DIR));
   const answer = nextClaimCode({ featureCode, featureCodes, isNew }, occurrencesFrom(cwd, featureCode, top));
   if (answer.kind === "unknown-feature-code") {
@@ -68,5 +68,5 @@ function writeLineIfAny(line: string | null): void {
 
 function occurrencesFrom(cwd: string, featureCode: string, top: string | null): ClaimCodeOccurrence[] {
   const marks = claimCodeMarksFor(featureCode);
-  return [];
+  return top !== null ? [...readTree(top, marks), ...readHistory(cwd, marks)] : walkTree(cwd, marks);
 }
