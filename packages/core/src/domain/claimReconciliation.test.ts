@@ -260,3 +260,13 @@ describe("evidence of the same kind, file and shared claim code will share a gro
     ).toEqual(groups);
   });
 });
+
+describe("a group of tests will count them and name those that failed", () => {
+  it.each([
+    ["CLM-LDG-071", () => [observation("unit", "passed", []), observation("unit", "passed", [])], 2, 2, 0, []],
+    ["CLM-LDG-072", () => [observation("unit", "passed", [], "a.test.ts", { name: "a" }), observation("unit", "failed", [], "a.test.ts", { name: "b" })], 2, 1, 1, ["b"]],
+  ])("[%s] a group counts its tests and names those that failed", (_clm, observations, ran, passed, failed, failures) => {
+    const [group] = unnamedGroups([], observations());
+    expect({ ran: group?.ran, passed: group?.passed, failed: group?.failed, failures: group?.failures }).toEqual({ ran, passed, failed, failures });
+  });
+});

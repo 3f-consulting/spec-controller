@@ -94,12 +94,13 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-069 | two uncited fitness functions                                                        | one fitness group naming both              |
         | CLM-LDG-070 | an uncited fitness function, and one citing the shared claim code CLM-ONE-001        | two fitness groups, one naming CLM-ONE-001 |
 
+    @unit
     Scenario Outline: a group of tests will count them and name those that failed
-      Given a group on the unnamed claim had <tests>
-      When balance reconciles it
-      Then the group will have <ran> ran, <passed> passed and <failed> failed, naming <failures>
+      given a group on the unnamed claim had <tests>
+      when balance reconciles it
+      then the group will have <ran> ran, <passed> passed and <failed> failed, naming <failures>
 
       Examples:
         | clm         | tests                                 | ran | passed | failed | failures   |
-        | CLM-RPT-NEW | two passing tests                     | 2   | 2      | 0      | no test    |
-        | CLM-RPT-036 | a passing test and a failing test "b" | 2   | 1      | 1      | the test b |
+        | CLM-LDG-071 | two passing tests                     | 2   | 2      | 0      | no test    |
+        | CLM-LDG-072 | a passing test and a failing test "b" | 2   | 1      | 1      | the test b |
