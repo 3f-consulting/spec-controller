@@ -126,7 +126,11 @@ function outOfBalanceByFeatureOf(claimReconciliations: readonly ClaimReconciliat
 }
 
 export function excludedClaimCodeOccurrencesOf(features: readonly FeatureAsWritten[]): number {
-  return -1;
+  const codesIn = (words: readonly string[]): number => words.filter((word) => claimCodeFrom(word) !== undefined).length;
+  return features.reduce(
+    (sum, { tagFormWords, scenarios }) => sum + codesIn(tagFormWords) - codesIn(scenarios.flatMap(({ tags }) => tags)),
+    0,
+  );
 }
 
 export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], excludedClaimCodeOccurrences: number): Totals {
