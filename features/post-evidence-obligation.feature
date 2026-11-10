@@ -31,19 +31,20 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
 
   Rule: a scenario with a deferral tag is not an executable claim
 
+    @unit
     Scenario Outline: each deferral tag, built in or configured, will remove the claim
-      Given a scenario tagged @unit also had <deferral tag>
-      When balance reads the corpus
-      Then there will be no executable claim
+      given a scenario tagged @unit also had <deferral tag>
+      when balance reads the corpus
+      then there will be no executable claim
 
       Examples:
         | clm         | deferral tag                           |
-        | CLM-PND-016 | @wip                                   |
-        | CLM-PND-NEW | @ignore                                |
-        | CLM-PND-NEW | @skip                                  |
-        | CLM-PND-NEW | @todo                                  |
-        | CLM-PND-NEW | @pending                               |
-        | CLM-PND-021 | @blocked, configured as a deferral tag |
+        | CLM-OBL-003 | @wip                                   |
+        | CLM-OBL-004 | @ignore                                |
+        | CLM-OBL-005 | @skip                                  |
+        | CLM-OBL-006 | @todo                                  |
+        | CLM-OBL-007 | @pending                               |
+        | CLM-OBL-008 | @blocked, configured as a deferral tag |
 
   Rule: an executable claim raises one Evidence Obligation for each kind-of-check tag that applies to it, and none without one
 

@@ -32,3 +32,16 @@ describe("an Outline will be one executable claim for each row only when it has 
     expect(claimsRead(outline(tags, table)).map(({ claimCode }) => claimCode)).toEqual(codes);
   });
 });
+
+describe("each deferral tag, built in or configured, will remove the claim", () => {
+  it.each([
+    ["CLM-OBL-003", "@wip", []],
+    ["CLM-OBL-004", "@ignore", []],
+    ["CLM-OBL-005", "@skip", []],
+    ["CLM-OBL-006", "@todo", []],
+    ["CLM-OBL-007", "@pending", []],
+    ["CLM-OBL-008", "@blocked", ["@blocked"]],
+  ])("[%s] %s removes the claim", (_clm, tag, deferralTags) => {
+    expect(claimsRead(scenarioTagged(`@unit ${tag}`), { deferralTags, strict: false })).toEqual([]);
+  });
+});
