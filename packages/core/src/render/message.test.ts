@@ -41,3 +41,13 @@ describe("a code with no usable text will give back the code", () => {
     expect(textFor(texts, "no-features")).toBe("no-features");
   });
 });
+
+describe("a text the values cannot fill will give back the code and its values", () => {
+  it.each([
+    ["CLM-MSG-023", "no text", {}],
+    ["CLM-MSG-005", 'the text "The format {name} is not written."', { "unknown-format": "The format {name} is not written." }],
+    ["CLM-MSG-024", 'the text "The format {format is not written."', { "unknown-format": "The format {format is not written." }],
+  ])("[%s] a catalogue with %s under the code gives back the code and its values", (_clm, _entry, texts) => {
+    expect(textFor(texts, "unknown-format", { format: "html" })).toBe("unknown-format (format: html)");
+  });
+});

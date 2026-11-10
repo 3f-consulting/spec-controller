@@ -49,16 +49,17 @@ Feature: a message catalogue gives back the text for a code
         | CLM-MSG-004 | a blank text                             |
         | CLM-MSG-007 | the text "No feature {files were found." |
 
+    @unit
     Scenario Outline: a text the values cannot fill will give back the code and its values
-      Given the catalogue had <entry> under the code unknown-format
-      When the text for unknown-format is retrieved with format html
-      Then the text will be "unknown-format (format: html)"
+      given the catalogue had <entry> under the code unknown-format
+      when the text for unknown-format is retrieved with format html
+      then the text will be "unknown-format (format: html)"
 
       Examples:
         | clm         | entry                                         |
-        | CLM-MSG-NEW | no text                                       |
+        | CLM-MSG-023 | no text                                       |
         | CLM-MSG-005 | the text "The format {name} is not written."  |
-        | CLM-MSG-NEW | the text "The format {format is not written." |
+        | CLM-MSG-024 | the text "The format {format is not written." |
 
     @CLM-MSG-NEW
     Scenario: a value of null will give back the code and its values
