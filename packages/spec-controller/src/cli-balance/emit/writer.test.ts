@@ -162,3 +162,37 @@ describe("a place it cannot write will stop the run, and nothing will be written
     }).toEqual({ exitCode: 2, complaint: true, standardOutput: "", asItWas: true });
   });
 });
+
+describe("if one report cannot be written, neither will be", () => {
+  it.each([
+    ["CLM-FMT-009", "no destination", (_dir: string) => "md", (_dir: string, written: Written) => written.stdout === ""],
+    ["CLM-FMT-028", "a file that does not exist", (dir: string) => `md:${join(dir, "new.md")}`, (dir: string) => !existsSync(join(dir, "new.md"))],
+    [
+      "CLM-FMT-029",
+      "a file that already exists",
+      (dir: string) => {
+        writeFileSync(join(dir, "existing.md"), "earlier\n");
+        return `md:${join(dir, "existing.md")}`;
+      },
+      (dir: string) => readFileSync(join(dir, "existing.md"), "utf8") === "earlier\n",
+    ],
+    [
+      "CLM-FMT-030",
+      "a link to a file not yet made",
+      (dir: string) => {
+        symlinkSync(join(dir, "target.md"), join(dir, "link.md"));
+        return `md:${join(dir, "link.md")}`;
+      },
+      (dir: string) => !existsSync(join(dir, "target.md")) && lstatSync(join(dir, "link.md")).isSymbolicLink(),
+    ],
+  ])("[%s] with the other report asked for at %s, neither is written", (_clm, _other, other, stays) => {
+    const dir = temporaryDirectory("spec-controller-neither-");
+    const unwritable = join(dir, "missing", "report.json");
+    const written = reportsWritten([other(dir), `json:${unwritable}`]);
+    expect({ exitCode: written.exitCode, complaint: written.stderr.includes(unwritable), stays: stays(dir, written) }).toEqual({
+      exitCode: 2,
+      complaint: true,
+      stays: true,
+    });
+  });
+});

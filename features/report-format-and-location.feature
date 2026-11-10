@@ -102,19 +102,20 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-026 | an existing folder                    |
         | CLM-FMT-027 | a file in a folder that doesn't exist |
 
+    @unit
     Scenario Outline: if one report cannot be written, neither will be
-      Given a run had two reports to write
-      When you ask for one at a place it cannot write, and the other at <other>
-      Then the run will stop, give no verdict and exit 2
-      And it will complain, naming the place and why it cannot write there
-      And <what stays>
+      given a run had two reports to write
+      when you ask for one at a place it cannot write, and the other at <other>
+      then the run will stop, give no verdict and exit 2
+      and it will complain, naming the place and why it cannot write there
+      and <what stays>
 
       Examples:
         | clm         | other                         | what stays                                        |
         | CLM-FMT-009 | no destination                | nothing will be on standard output                |
-        | CLM-FMT-NEW | a file that does not exist    | the file will still not exist                     |
-        | CLM-FMT-NEW | a file that already exists    | the file will be as it was                        |
-        | CLM-FMT-NEW | a link to a file not yet made | the file will still not exist, and the link stays |
+        | CLM-FMT-028 | a file that does not exist    | the file will still not exist                     |
+        | CLM-FMT-029 | a file that already exists    | the file will be as it was                        |
+        | CLM-FMT-030 | a link to a file not yet made | the file will still not exist, and the link stays |
 
     @CLM-FMT-013
     Scenario: a report will not be written over a file the run reads
