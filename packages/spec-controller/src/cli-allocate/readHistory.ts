@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { lstatSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { ALLOCATION_COUNTED_PREFIXES, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
+import type { ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { proveRefsReadable } from "./refStore.js";
 import { AppMessage } from "../messages.js";
 import { gitExited, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
@@ -12,9 +12,9 @@ const MAX_OUTPUT_BYTES = 1024 * 1024 * 1024;
 
 const COMMIT_MARKER = "\u0001";
 
-export function readHistory(cwd: string, part: string): ClaimCodeOccurrence[] {
+export function readHistory(cwd: string, marks: readonly string[]): ClaimCodeOccurrence[] {
   proveRefsReadable(cwd);
-  const args = ["log", "--all", "-p", "-U0", "--no-color", "--no-ext-diff", "--format=%x01%h", "-G", `(${ALLOCATION_COUNTED_PREFIXES.join("|")})-${part}-`];
+  const args = ["log", "--all", "-p", "-U0", "--no-color", "--no-ext-diff", "--format=%x01%h", "-G", `(${marks.join("|")})`];
   const result = spawnSync("git", args, { cwd, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES });
   if (result.error !== undefined) refuse(AppMessage.History, cwd, result.error);
   if (result.status !== 0) {

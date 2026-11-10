@@ -1,6 +1,8 @@
-export type { ClaimCode, ClaimCodeError } from "./domain/claimCodes.js";
+export { claimCodeMarksFor, featureCodeOfFile, isFeatureCode, nextClaimCode } from "./domain/claimCodes.js";
+export type { Allocation, ClaimCode, ClaimCodeError, ClaimCodeOccurrence, UnknownFeatureCode } from "./domain/claimCodes.js";
 export type { ClaimReconciliation, Outcome, QualityCheckReconciliation } from "./domain/claimReconciliation.js";
 export type { EvidenceReconciliation, RunVerdict } from "./domain/evidenceReconciliation.js";
+export { BUILT_IN_DEFERRAL_TAGS } from "./domain/postEvidenceObligation.js";
 export type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./domain/postEvidenceObligation.js";
 export type { EvidenceObservation, WorkflowStep } from "./domain/postEvidenceObservation.js";
 
