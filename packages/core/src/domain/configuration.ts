@@ -26,6 +26,16 @@ const isBlock = (value: unknown): value is Readonly<Record<string, unknown>> =>
 
 const stringsIn = (value: unknown): string[] => (Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : []);
 
+const LAYERS: readonly Layer[] = ["unit", "integration", "e2e", "performance"];
+
+const isLayer = (key: string): key is Layer => (LAYERS as readonly string[]).includes(key);
+
+const isRunner = (runner: unknown): runner is string | null => typeof runner === "string" || runner === null;
+
+function runnersIn(block: Readonly<Record<string, unknown>>): TargetConfiguration["runners"] {
+  return Object.fromEntries(Object.entries(block).filter(([key, runner]) => isLayer(key) && isRunner(runner)));
+}
+
 // A workflow's file name may hold a colon, so the job and step are split off from the right.
 function notCheckOf(entry: string): NotCheck {
   const beforeStep = entry.lastIndexOf(":");
@@ -35,7 +45,7 @@ function notCheckOf(entry: string): NotCheck {
 
 export function targetConfigurationOf(block: unknown, _stepsRead: readonly PipelineStep[]): ConfigurationRead {
   if (!isBlock(block)) return { configuration: { runners: {}, notChecks: [], deferralTags: [] }, errors: [] };
-  const runners = isBlock(block.runners) ? (block.runners as TargetConfiguration["runners"]) : {};
+  const runners = isBlock(block.runners) ? runnersIn(block.runners) : {};
   return {
     configuration: { runners, notChecks: stringsIn(block.notChecks).map(notCheckOf), deferralTags: stringsIn(block.deferralTags) },
     errors: [],
