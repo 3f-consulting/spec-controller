@@ -1,50 +1,38 @@
 import { unlinkSync, writeFileSync } from "node:fs";
-import { renderMarkdown } from "@3f-consulting/spec-controller-core";
-import { renderJson } from "@3f-consulting/spec-controller-core";
-import type { FeatureNames } from "@3f-consulting/spec-controller-core";
-import { inputOverwriteRefusal, sharedFileRefusal, type FileIdentity, type IdentifiedInput, type IdentifiedOutput, type OutputFormat, type OutputPlan, type PlannedOutput } from "./format.js";
-import type { RunContext } from "@3f-consulting/spec-controller-core";
-import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
-import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
-import { probeDestination, refuse, unwritableRefusal, writeOrRefuse, type Unwritable } from "../../outputLocation.js";
+import { renderJson, renderMarkdown, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
+import {
+  inputOverwriteRefusal,
+  planOutput,
+  sharedFileRefusal,
+  type FileIdentity,
+  type IdentifiedInput,
+  type IdentifiedOutput,
+  type OutputFormat,
+  type PlannedOutput,
+} from "./format.js";
+import { namesStdout, probeDestination, refuse, stdoutIdentity, unwritableRefusal, writeOrRefuse, type Unwritable } from "../../outputLocation.js";
 import type { Refusal } from "../../refusal.js";
-import { reportedExitCodeOf } from "../exitStatus.js";
 
-export interface OutputPayloads {
-  readonly balance: EvidenceReconciliation;
-  readonly ctx: RunContext;
-  readonly evidenceObligations?: EvidenceObligations;
-  readonly featureNames?: FeatureNames;
+function render(fmt: OutputFormat, evidenceReconciliation: EvidenceReconciliation): string {
+  return fmt === "json" ? renderJson(evidenceReconciliation) : renderMarkdown(evidenceReconciliation);
 }
 
-function render(fmt: OutputFormat, p: OutputPayloads): string {
-  return fmt === "json"
-    ? renderJson(p.balance, p.ctx, p.evidenceObligations, p.featureNames)
-    : renderMarkdown(p.balance, p.ctx, reportedExitCodeOf, p.evidenceObligations, p.featureNames);
-}
-
-export function writeOutputs(
-  plan: OutputPlan,
-  payloads: OutputPayloads,
-  stdoutFile: () => FileIdentity | undefined,
-  inputs: readonly IdentifiedInput[],
-): void {
-  const emissions = plan.outputs.map((output) => ({ output, text: render(output.fmt, payloads) + "\n" }));
-  const refused = vetDestinations(plan.outputs, stdoutFile, inputs);
+export function writeReports(formatSpecs: readonly string[], evidenceReconciliation: EvidenceReconciliation, inputs: readonly IdentifiedInput[]): void {
+  const planned = planOutput(formatSpecs, namesStdout);
+  if (!planned.ok) refuse(planned.error);
+  const { outputs } = planned.plan;
+  const emissions = outputs.map((output) => ({ output, text: render(output.fmt, evidenceReconciliation) }));
+  const refused = vetDestinations(outputs, inputs);
   if (refused !== undefined) refuse(refused);
   for (const { output, text } of emissions) emit(output, text);
 }
 
-function vetDestinations(
-  outputs: readonly PlannedOutput[],
-  stdoutFile: () => FileIdentity | undefined,
-  inputs: readonly IdentifiedInput[],
-): Refusal | undefined {
+function vetDestinations(outputs: readonly PlannedOutput[], inputs: readonly IdentifiedInput[]): Refusal | undefined {
   const created: string[] = [];
   try {
     const identified: IdentifiedOutput[] = [];
     for (const output of outputs) {
-      const probe = identify(output, stdoutFile, created);
+      const probe = identify(output, created);
       if (probe.kind === "refused") return probe.refusal;
       identified.push({ output, identity: probe.identity });
     }
@@ -56,9 +44,9 @@ function vetDestinations(
 
 type Probe = { readonly kind: "identified"; readonly identity: FileIdentity | undefined } | { readonly kind: "refused"; readonly refusal: Refusal };
 
-function identify(output: PlannedOutput, stdoutFile: () => FileIdentity | undefined, created: string[]): Probe {
+function identify(output: PlannedOutput, created: string[]): Probe {
   const dest = output.dest;
-  if (dest.kind === "stdout") return { kind: "identified", identity: stdoutFile() };
+  if (dest.kind === "stdout") return { kind: "identified", identity: stdoutIdentity() };
   try {
     const probed = probeDestination(dest.path);
     if (probed.created !== undefined) created.push(probed.created);

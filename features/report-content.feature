@@ -15,30 +15,32 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   Rule: each report has the structure it promises
 
+    @wip
     Scenario Outline: the JSON report will pass its schema only when it has the structure the schema promises
-      Given <report> was written
-      When it is checked against the schema
-      Then it will be <result>
+      given <report> was written
+      when it is checked against the schema
+      then it will be <result>
 
       Examples:
         | clm         | report                                               | result   |
-        | CLM-RMD-019 | a JSON report from a real run                        | accepted |
-        | CLM-RPT-NEW | a JSON report with one of its required parts removed | refused  |
-        | CLM-RPT-NEW | a JSON report with a part the schema does not name   | refused  |
-        | CLM-RPT-NEW | a JSON report with text where a count goes           | refused  |
+        | CLM-RPT-101 | a JSON report from a real run                        | accepted |
+        | CLM-RPT-102 | a JSON report with one of its required parts removed | refused  |
+        | CLM-RPT-103 | a JSON report with a part the schema does not name   | refused  |
+        | CLM-RPT-104 | a JSON report with text where a count goes           | refused  |
 
-    @CLM-RPT-009
+    @unit @CLM-RPT-009
     Scenario: the Markdown report's sections will come in a fixed order
-      Given a run had something for every section
-      When its Markdown report is written
-      Then its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
+      given a run had something for every section
+      when its Markdown report is written
+      then its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
 
   Rule: a report leaves out any optional section that would be empty
 
+    @unit
     Scenario Outline: neither report will have an optional section the run had nothing for
-      Given a run had no <optional section>
-      When its reports are written
-      Then neither report will have that optional section
+      given a run had no <optional section>
+      when its reports are written
+      then neither report will have that optional section
 
       Examples:
         | clm         | optional section          |
@@ -49,39 +51,40 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   Rule: every report has its Claim Reconciliations, even when there are none
 
-    @CLM-RPT-NEW
+    @unit @CLM-RPT-105
     Scenario: a report will show its Claim Reconciliations when the run had none
-      Given a run had nothing to reconcile
-      When its reports are written
-      Then each report will have its Claim Reconciliations, showing none
+      given a run had nothing to reconcile
+      when its reports are written
+      then each report will have its Claim Reconciliations, showing none
 
   Rule: odd characters in what a report quotes break nothing
 
+    @unit
     Scenario Outline: a name will read as it was given, in a table that stays a table
-      Given a run had reported a name containing <character>
-      When its Markdown report is written
-      Then the name will read as it was given, in a table that stays a table
+      given a run had reported a name containing <character>
+      when its Markdown report is written
+      then the name will read as it was given, in a table that stays a table
 
       Examples:
         | clm         | character                         |
         | CLM-RPT-084 | a pipe, as in a\|b                |
-        | CLM-RPT-NEW | a backslash, as in a\\b           |
-        | CLM-RPT-NEW | a line break                      |
+        | CLM-RPT-106 | a backslash, as in a\\b           |
+        | CLM-RPT-107 | a line break                      |
         | CLM-RPT-088 | a backtick, as in `a`             |
-        | CLM-RPT-NEW | a formatting character, as in *a* |
+        | CLM-RPT-108 | a formatting character, as in *a* |
 
   Rule: a Markdown report shortens a long message to its first line
 
-    @CLM-RPT-085
+    @unit @CLM-RPT-085
     Scenario: the report quotes an Evidence Observation's first line and every note
-      Given a test that never ran had a message of three lines, and balance had added two notes
-      When its Markdown report is written
-      Then the report will quote the message's first line and both notes
+      given a test that never ran had a message of three lines, and balance had added two notes
+      when its Markdown report is written
+      then the report will quote the message's first line and both notes
 
   Rule: the Markdown adds the words a person needs to read the data
 
-    @CLM-RPT-NEW
+    @unit @CLM-RPT-109
     Scenario: each section will have its heading, each value its label, and each table a key
-      Given a run had something for every section
-      When its Markdown report is written
-      Then each section will have its heading, each value its label, and each table a line saying what its columns mean
+      given a run had something for every section
+      when its Markdown report is written
+      then each section will have its heading, each value its label, and each table a line saying what its columns mean

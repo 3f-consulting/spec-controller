@@ -23,4 +23,6 @@ export type { Parsed, Source, SourceFault, SourcesParse } from "./parse/sourcePa
 export { relativizeToRoot } from "./lib/portablePath.js";
 
 export { messagesFrom } from "./render/message.js";
+export { renderJson } from "./render/json.js";
+export { renderMarkdown } from "./render/markdown.js";
 export type { Message, MessageValues } from "./render/message.js";
