@@ -34,9 +34,6 @@ export function whatTheProgramWrote(): Written {
   return { stdout: stdout.join(""), stderr: stderr.join(""), exitCode: process.exitCode };
 }
 
-export function stderrWrites(): string[] {
-  return stderr;
-}
 
 export function forgetWhatTheProgramWrote(): void {
   stdout.length = 0;

@@ -19,7 +19,7 @@ export interface PlannedOutput {
   readonly dest: OutputDest;
 }
 
-export interface OutputPlan {
+interface OutputPlan {
   readonly outputs: readonly PlannedOutput[];
 }
 
