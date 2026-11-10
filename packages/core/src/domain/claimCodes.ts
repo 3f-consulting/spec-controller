@@ -25,7 +25,7 @@ function codeMatching(form: RegExp, text: string): ClaimCode | undefined {
 }
 
 export function claimCodeFrom(text: string): ClaimCode | undefined {
-  return { featureCode: "stubbed", number: text };
+  return codeMatching(CLAIM_CODE, text);
 }
 
 export function retiredScenarioCodeFrom(text: string): ClaimCode | undefined {
