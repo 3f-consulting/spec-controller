@@ -81,15 +81,16 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
 
   Rule: an executable claim raises its Evidence Obligations under the one claim code it has
 
+    @unit
     Scenario Outline: an executable claim with no single claim code will raise its Evidence Obligations under none
-      Given an executable claim tagged @unit <code>
-      When balance reads the corpus
-      Then <raised>
+      given an executable claim tagged @unit <code>
+      when balance reads the corpus
+      then <raised>
 
       Examples:
         | clm         | code                                                  | raised                                                            |
-        | CLM-GRD-004 | was also tagged @CLM-ONE-001 and @CLM-ONE-002         | no Evidence Obligation will be raised under either code           |
-        | CLM-GRD-007 | was a row whose clm cell was empty                    | a unit Evidence Obligation will be raised with no claim code      |
-        | CLM-GRD-NEW | was a row whose clm cell read "first"                 | a unit Evidence Obligation will be raised with no claim code      |
-        | CLM-GRD-NEW | was also tagged @CLM-A-001, which is not a claim code | a unit Evidence Obligation will be raised with no claim code      |
-        | CLM-GRD-NEW | was an Outline tagged @CLM-ONE-009 with a clm column  | no Evidence Obligation will be raised under its code or any row's |
+        | CLM-OBL-020 | was also tagged @CLM-ONE-001 and @CLM-ONE-002         | no Evidence Obligation will be raised under either code           |
+        | CLM-OBL-021 | was a row whose clm cell was empty                    | a unit Evidence Obligation will be raised with no claim code      |
+        | CLM-OBL-022 | was a row whose clm cell read "first"                 | a unit Evidence Obligation will be raised with no claim code      |
+        | CLM-OBL-023 | was also tagged @CLM-A-001, which is not a claim code | a unit Evidence Obligation will be raised with no claim code      |
+        | CLM-OBL-024 | was an Outline tagged @CLM-ONE-009 with a clm column  | no Evidence Obligation will be raised under its code or any row's |

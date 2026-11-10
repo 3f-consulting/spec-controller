@@ -78,3 +78,22 @@ describe("a strict run will raise the Evidence Obligations a deferral put off", 
     expect(claimsRead(scenarioTagged(`@CLM-ONE-001 ${tags}`), { deferralTags: [], strict: true })).toEqual(claimRaising(kinds));
   });
 });
+
+describe("an executable claim with no single claim code will raise its Evidence Obligations under none", () => {
+  const row = (cell: string): string => outline("@unit", `      | clm | x |\n      | ${cell} | y |`);
+
+  it.each([
+    ["CLM-OBL-020", "two claim code tags", () => scenarioTagged("@unit @CLM-ONE-001 @CLM-ONE-002")],
+    ["CLM-OBL-024", "a claim code tag beside a clm column", () => outline("@unit @CLM-ONE-009", "      | clm         | x |\n      | CLM-ONE-001 | y |")],
+  ])("[%s] %s raises no Evidence Obligation under any code", (_clm, _shape, source) => {
+    expect(claimsRead(source()).flatMap(({ obligations }) => obligations)).toEqual([]);
+  });
+
+  it.each([
+    ["CLM-OBL-021", "an empty clm cell", () => row("")],
+    ["CLM-OBL-022", "a clm cell reading first", () => row("first")],
+    ["CLM-OBL-023", "a tag that is not a claim code", () => scenarioTagged("@unit @CLM-A-001")],
+  ])("[%s] %s raises its Evidence Obligation with no claim code", (_clm, _shape, source) => {
+    expect(claimsRead(source())).toEqual([{ file: "one.feature", title: "a claim", obligations: [{ kind: "unit" }] }]);
+  });
+});
