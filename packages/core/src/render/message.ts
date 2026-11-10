@@ -16,9 +16,18 @@ const asText = (values: MessageValues | undefined): Record<string, string> | und
 export function messagesFrom<Code extends string, Values extends { readonly [C in Code]?: MessageValues }>(
   texts: Readonly<Record<Code, string>>,
 ): Message<Code, Values> {
-  return (code, ...values) =>
-    new IntlMessageFormat(texts[code], "en", undefined, { ignoreTag: true })
+  return (code, ...values) => {
+    const text = texts[code] as string | undefined;
+    if (text === undefined || text.trim() === "") return code;
+    let format: IntlMessageFormat;
+    try {
+      format = new IntlMessageFormat(text, "en", undefined, { ignoreTag: true });
+    } catch {
+      return code;
+    }
+    return format
       .formatToParts<never>(asText(values[0]))
       .map((part) => part.value)
       .join("");
+  };
 }
