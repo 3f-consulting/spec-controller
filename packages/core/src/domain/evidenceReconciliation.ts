@@ -206,5 +206,11 @@ export interface RunIdentity {
 const UNKNOWN = "unknown";
 
 export function provenanceOf(identity: RunIdentity, inputs: Provenance["inputs"]): Provenance {
-  return { target: "stub", sourceSha: "stub", toolSha: "stub", toolVersion: "stub", inputs: [] };
+  return {
+    target: identity.target ?? identity.origin ?? UNKNOWN,
+    sourceSha: identity.sourceSha ?? UNKNOWN,
+    ...(identity.toolSha === undefined ? {} : { toolSha: identity.toolSha }),
+    toolVersion: identity.toolVersion,
+    inputs,
+  };
 }
