@@ -124,3 +124,68 @@ describe("balance works out each Quality Check Reconciliation's outcome, and fro
     });
   });
 });
+
+describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations", () => {
+  const twoClaimsSharingOne002 = (): ExecutableClaim[] => [claim("ONE-002", ["unit"], "one.feature", "a"), claim("ONE-002", ["unit"], "two.feature", "b")];
+
+  it.each([
+    [
+      "CLM-LDG-059",
+      "ONE-001",
+      () => [claim("ONE-001", ["unit", "integration", "e2e", "performance", "fitness"])],
+      () => [
+        observation("fitness", "passed", ["ONE-001"], "ci.yml:ci:a"),
+        observation("performance", "passed", ["ONE-001"]),
+        observation("e2e", "passed", ["ONE-001"]),
+        observation("integration", "passed", ["ONE-001"]),
+        observation("unit", "passed", ["ONE-001"]),
+      ],
+      [4, 3, 2, 1, 0],
+    ],
+    [
+      "CLM-LDG-060",
+      "ONE-001",
+      () => [claim("ONE-001", ["unit"])],
+      () => [observation("unit", "passed", ["ONE-001"], "z.test.ts"), observation("unit", "failed", ["ONE-001"], "a.test.ts")],
+      [1, 0],
+    ],
+    [
+      "CLM-LDG-061",
+      "unnamed",
+      twoClaimsSharingOne002,
+      () => [observation("unit", "passed", [], "z.test.ts"), observation("unit", "passed", ["ONE-002"], "a.test.ts")],
+      [1, 0],
+    ],
+    [
+      "CLM-LDG-062",
+      "unnamed",
+      twoClaimsSharingOne002,
+      () => [observation("unit", "passed", ["ONE-002"], "a.test.ts"), observation("unit", "passed", [], "a.test.ts")],
+      [1, 0],
+    ],
+    [
+      "CLM-LDG-063",
+      "unnamed",
+      twoClaimsSharingOne002,
+      () => [
+        observation("unit", "failed", ["ONE-002"], "a.test.ts", { message: "a" }),
+        observation("unit", "failed", [], "a.test.ts", { message: "b" }),
+      ],
+      [1, 0],
+    ],
+    [
+      "CLM-LDG-064",
+      "ONE-001",
+      () => [claim("ONE-001", ["unit"])],
+      () => [
+        observation("unit", "failed", ["ONE-001"], "a.test.ts", { message: "b" }),
+        observation("unit", "failed", ["ONE-001"], "a.test.ts", { message: "a" }),
+      ],
+      [1, 0],
+    ],
+  ])("[%s] the Claim Reconciliation of %s lists its evidence in one order", (_clm, subject, claims, observations, order) => {
+    const evidence = observations();
+    const reconciliation = reconciliationOf(claimReconciliationsOf(claims(), evidence), subject);
+    expect(reconciliation?.qualityCheckReconciliations.map((line) => line.observation)).toEqual(order.map((at) => evidence[at]));
+  });
+});
