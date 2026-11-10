@@ -22,7 +22,8 @@ export function writeReports(formatSpecs: readonly string[], evidenceReconciliat
   if (!planned.ok) refuse(planned.error);
   const { outputs } = planned.plan;
   const emissions = outputs.map((output) => ({ output, text: render(output.fmt, evidenceReconciliation) }));
-  vetDestinations(outputs, inputs);
+  const refused = vetDestinations(outputs, inputs);
+  if (refused !== undefined) refuse(refused);
   for (const { output, text } of emissions) emit(output, text);
 }
 
