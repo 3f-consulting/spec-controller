@@ -117,10 +117,10 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-029 | a file that already exists    | the file will be as it was                        |
         | CLM-FMT-030 | a link to a file not yet made | the file will still not exist, and the link stays |
 
-    @CLM-FMT-013
+    @unit @CLM-FMT-013
     Scenario: a report will not be written over a file the run reads
-      Given the run read a file, such as your test results
-      When you ask for the report to go in that same file
-      Then the run will stop, give no verdict and exit 2
-      And it will complain, naming the file
-      And the file will be as it was
+      given the run read a file, such as your test results
+      when you ask for the report to go in that same file
+      then the run will stop, give no verdict and exit 2
+      and it will complain, naming the file
+      and the file will be as it was

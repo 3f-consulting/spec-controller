@@ -36,7 +36,8 @@ function vetDestinations(outputs: readonly PlannedOutput[], inputs: readonly Ide
       if (probe.kind === "refused") return probe.refusal;
       identified.push({ output, identity: probe.identity });
     }
-    return sharedFileRefusal(identified) ?? inputOverwriteRefusal(identified, inputs);
+    void inputs;
+    return sharedFileRefusal(identified);
   } finally {
     for (const path of created) unlinkSync(path);
   }

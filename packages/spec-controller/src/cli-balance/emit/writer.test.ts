@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { renderJson, renderMarkdown, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { writeReports } from "./writer.js";
 import type { IdentifiedInput } from "./format.js";
-import { settlingRefusal } from "../../outputLocation.js";
+import { regularFileIdentity, settlingRefusal } from "../../outputLocation.js";
 import { AppError } from "../../messages.js";
 import { message } from "../../appText.js";
 import { temporaryDirectory } from "../../temporaryDirectory.test-utils.js";
@@ -194,5 +194,18 @@ describe("if one report cannot be written, neither will be", () => {
       complaint: true,
       stays: true,
     });
+  });
+});
+
+describe("a report will not be written over a file the run reads", () => {
+  it("[CLM-FMT-013] a report will not be written over a file the run reads", () => {
+    const testResults = join(temporaryDirectory("spec-controller-input-"), "vitest.json");
+    writeFileSync(testResults, "{}\n");
+    const written = reportsWritten([`json:${testResults}`], [{ subject: "Vitest report", path: testResults, identity: regularFileIdentity(testResults) }]);
+    expect({
+      exitCode: written.exitCode,
+      complaint: written.stderr.includes(testResults),
+      asItWas: readFileSync(testResults, "utf8"),
+    }).toEqual({ exitCode: 2, complaint: true, asItWas: "{}\n" });
   });
 });
