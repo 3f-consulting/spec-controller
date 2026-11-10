@@ -5,6 +5,8 @@ import { renderJson, renderMarkdown, type EvidenceReconciliation } from "@3f-con
 import { writeReports } from "./writer.js";
 import type { IdentifiedInput } from "./format.js";
 import { settlingRefusal } from "../../outputLocation.js";
+import { AppError } from "../../messages.js";
+import { message } from "../../appText.js";
 import { temporaryDirectory } from "../../temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "../../programOutput.test-utils.js";
 
@@ -98,5 +100,28 @@ describe("a report will be where you asked", () => {
       "CLM-FMT-019": { inTheFile: true, featureFile: "Feature: one\n" },
     };
     expect(seen).toEqual(expected[clm]);
+  });
+});
+
+describe("two reports will not both go to standard output", () => {
+  it.each([
+    ["CLM-FMT-005", "no destination", (_dir: string) => "json"],
+    ["CLM-FMT-011", "a path that names standard output", (_dir: string) => "json:/dev/stdout"],
+    [
+      "CLM-FMT-023",
+      "a link to standard output",
+      (dir: string) => {
+        symlinkSync("/dev/stdout", join(dir, "out"));
+        return `json:${join(dir, "out")}`;
+      },
+    ],
+  ])("[%s] no destination beside %s stops the run, naming what each report asked for", (_clm, _other, other) => {
+    const dir = temporaryDirectory("spec-controller-two-stdout-");
+    const written = reportsWritten(["md", other(dir)]);
+    expect({
+      exitCode: written.exitCode,
+      complaint: written.stderr.includes(message(AppError.MoreThanOneToStdout, { formats: "md, json" })),
+      standardOutput: written.stdout,
+    }).toEqual({ exitCode: 2, complaint: true, standardOutput: "" });
   });
 });

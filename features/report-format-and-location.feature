@@ -60,18 +60,19 @@ Feature: You get each report in the format and place you asked for, and the run 
 
   Rule: it stops before it damages anything
 
+    @unit
     Scenario Outline: two reports will not both go to standard output
-      Given a run had two reports to write
-      When you ask for them at <one destination> and <the other destination>
-      Then the run will stop, give no verdict and exit 2
-      And it will complain, naming what each report asked for
-      And nothing will be on standard output
+      given a run had two reports to write
+      when you ask for them at <one destination> and <the other destination>
+      then the run will stop, give no verdict and exit 2
+      and it will complain, naming what each report asked for
+      and nothing will be on standard output
 
       Examples:
         | clm         | one destination | the other destination             |
         | CLM-FMT-005 | no destination  | no destination                    |
         | CLM-FMT-011 | no destination  | a path that names standard output |
-        | CLM-FMT-NEW | no destination  | a link to standard output         |
+        | CLM-FMT-023 | no destination  | a link to standard output         |
 
     @wip
     Scenario Outline: two reports will not go in one file
