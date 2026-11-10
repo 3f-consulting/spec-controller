@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ClaimCode } from "./claimCodes.js";
-import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
+import { claimReconciliationsOf, groupsOf, type ClaimReconciliation, type EvidenceGroup } from "./claimReconciliation.js";
 import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
 import type { EvidenceObservation } from "./postEvidenceObservation.js";
 
@@ -21,6 +21,13 @@ function observation(
   said: { readonly name?: string; readonly message?: string } = {},
 ): EvidenceObservation {
   return { cites: cites.map(code), result, kind, place, notes: [], ...said };
+}
+
+const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
+
+function unnamedGroups(claims: readonly ExecutableClaim[], observations: readonly EvidenceObservation[]): readonly EvidenceGroup[] {
+  const unnamed = reconciliationOf(claimReconciliationsOf(claims, observations), "unnamed");
+  return unnamed === undefined ? [] : groupsOf(unnamed);
 }
 
 function reconciliationOf(reconciliations: readonly ClaimReconciliation[], subject: string): ClaimReconciliation | undefined {
@@ -187,5 +194,69 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations",
     const evidence = observations();
     const reconciliation = reconciliationOf(claimReconciliationsOf(claims(), evidence), subject);
     expect(reconciliation?.qualityCheckReconciliations.map((line) => line.observation)).toEqual(order.map((at) => evidence[at]));
+  });
+});
+
+describe("evidence of the same kind, file and shared claim code will share a group", () => {
+  const twoClaimsSharingOne001 = (): ExecutableClaim[] => [claim("ONE-001", ["unit"], "one.feature", "a"), claim("ONE-001", ["unit"], "two.feature", "b")];
+
+  it.each([
+    [
+      "CLM-LDG-065",
+      () => [],
+      () => [observation("unit", "passed", [], "a.test.ts"), observation("unit", "passed", [], "a.test.ts")],
+      [{ kind: "unit", file: "a.test.ts", members: ["a.test.ts", "a.test.ts"] }],
+    ],
+    [
+      "CLM-LDG-066",
+      () => [],
+      () => [observation("unit", "passed", [], "a.test.ts"), observation("unit", "passed", [], "b.test.ts")],
+      [
+        { kind: "unit", file: "a.test.ts", members: ["a.test.ts"] },
+        { kind: "unit", file: "b.test.ts", members: ["b.test.ts"] },
+      ],
+    ],
+    [
+      "CLM-LDG-067",
+      () => [],
+      () => [observation("unit", "passed", [], "a.test.ts"), observation("integration", "passed", [], "a.test.ts")],
+      [
+        { kind: "unit", file: "a.test.ts", members: ["a.test.ts"] },
+        { kind: "integration", file: "a.test.ts", members: ["a.test.ts"] },
+      ],
+    ],
+    [
+      "CLM-LDG-068",
+      twoClaimsSharingOne001,
+      () => [observation("unit", "passed", [], "a.test.ts"), observation("unit", "passed", ["ONE-001"], "a.test.ts")],
+      [
+        { kind: "unit", file: "a.test.ts", members: ["a.test.ts"] },
+        { kind: "unit", file: "a.test.ts", claimCode: ONE_001, members: ["a.test.ts"] },
+      ],
+    ],
+    [
+      "CLM-LDG-069",
+      () => [],
+      () => [observation("fitness", "passed", [], "ci.yml:ci:a"), observation("fitness", "passed", [], "ci.yml:ci:b")],
+      [{ kind: "fitness", members: ["ci.yml:ci:a", "ci.yml:ci:b"] }],
+    ],
+    [
+      "CLM-LDG-070",
+      twoClaimsSharingOne001,
+      () => [observation("fitness", "passed", [], "ci.yml:ci:a"), observation("fitness", "passed", ["ONE-001"], "ci.yml:ci:b")],
+      [
+        { kind: "fitness", members: ["ci.yml:ci:a"] },
+        { kind: "fitness", claimCode: ONE_001, members: ["ci.yml:ci:b"] },
+      ],
+    ],
+  ])("[%s] the unnamed claim's evidence shares a group by kind, file and shared code", (_clm, claims, observations, groups) => {
+    expect(
+      unnamedGroups(claims(), observations()).map(({ kind, file, claimCode, qualityCheckReconciliations }) => ({
+        kind,
+        file,
+        claimCode,
+        members: qualityCheckReconciliations.map((line) => line.observation?.place),
+      })),
+    ).toEqual(groups);
   });
 });

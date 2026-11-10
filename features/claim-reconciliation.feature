@@ -79,19 +79,20 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
 
   Rule: balance groups the unnamed claim's evidence by kind of quality check, file and shared claim code
 
+    @unit
     Scenario Outline: evidence of the same kind, file and shared claim code will share a group
-      Given the unnamed claim had <evidence>
-      When balance reconciles it
-      Then it will have <groups>
+      given the unnamed claim had <evidence>
+      when balance reconciles it
+      then it will have <groups>
 
       Examples:
         | clm         | evidence                                                                             | groups                                     |
-        | CLM-RPT-033 | two unit tests in a.test.ts, citing no code                                          | one unit group for a.test.ts               |
-        | CLM-RPT-NEW | a unit test in a.test.ts and one in b.test.ts, citing no code                        | a unit group for each file                 |
-        | CLM-RPT-NEW | a unit test and an integration test in a.test.ts, citing no code                     | a unit group and an integration group      |
-        | CLM-RPT-075 | a test in a.test.ts citing no code, and one citing the shared claim code CLM-ONE-001 | two groups, one naming CLM-ONE-001         |
-        | CLM-RPT-038 | two uncited fitness functions                                                        | one fitness group naming both              |
-        | CLM-RPT-076 | an uncited fitness function, and one citing the shared claim code CLM-ONE-001        | two fitness groups, one naming CLM-ONE-001 |
+        | CLM-LDG-065 | two unit tests in a.test.ts, citing no code                                          | one unit group for a.test.ts               |
+        | CLM-LDG-066 | a unit test in a.test.ts and one in b.test.ts, citing no code                        | a unit group for each file                 |
+        | CLM-LDG-067 | a unit test and an integration test in a.test.ts, citing no code                     | a unit group and an integration group      |
+        | CLM-LDG-068 | a test in a.test.ts citing no code, and one citing the shared claim code CLM-ONE-001 | two groups, one naming CLM-ONE-001         |
+        | CLM-LDG-069 | two uncited fitness functions                                                        | one fitness group naming both              |
+        | CLM-LDG-070 | an uncited fitness function, and one citing the shared claim code CLM-ONE-001        | two fitness groups, one naming CLM-ONE-001 |
 
     Scenario Outline: a group of tests will count them and name those that failed
       Given a group on the unnamed claim had <tests>

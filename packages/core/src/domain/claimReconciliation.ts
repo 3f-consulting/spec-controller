@@ -144,3 +144,18 @@ export function claimReconciliationsOf(
   }
   return [...posted].map(([claim, evidence]) => reconciliationOf(claim, linesOf(claim, evidence, claims)));
 }
+
+export interface EvidenceGroup {
+  readonly kind: QualityCheckKind;
+  readonly file?: string;
+  readonly claimCode?: ClaimCode;
+  readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[];
+  readonly ran: number;
+  readonly passed: number;
+  readonly failed: number;
+  readonly failures: readonly string[];
+}
+
+export function groupsOf(_reconciliation: ClaimReconciliation): EvidenceGroup[] {
+  return [];
+}
