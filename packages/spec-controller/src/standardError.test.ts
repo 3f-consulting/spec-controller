@@ -10,10 +10,6 @@ function printedBy(command: string | undefined, print: (shown: ReturnType<typeof
   return chunks;
 }
 
-function notAPart(): ReturnType<typeof refusal> {
-  return refusal(AppError.NotAFeaturePart, { part: "one" });
-}
-
 describe("[CLM-ALC-012] a command's usage error opens with the command's usage-error prefix", () => {
   it("opens the first line with the command, and leaves the pointer lines as they are", () => {
     const given = refusal(AppError.NotAFeaturePart, { part: "one" }, ["a pointer"]);
