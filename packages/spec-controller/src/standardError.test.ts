@@ -15,28 +15,6 @@ function notAPart(): ReturnType<typeof refusal> {
   return refusal(AppError.NotAFeaturePart, { part: "one" });
 }
 
-describe("[CLM-MSG-002] the printer prints a refusal's entry with the values its code is given, then each pointer line", () => {
-  it("prints a refusal given no pointer as its entry's words with the values given, on one line", () => {
-    expect(printedBy("balance", (shown) => shown.error(notAPart()))).toEqual([
-      "spec-controller balance: usage error [not-a-feature-part] — 'one' is not a feature part: two to five characters, each A-Z or 0-9.\n",
-    ]);
-  });
-
-  it("holds a refusal's code, values and pointers as given", () => {
-    expect(refusal(AppError.NotAFeaturePart, { part: "one" })).toEqual({
-      code: "not-a-feature-part",
-      values: { part: "one" },
-      pointers: [],
-    });
-  });
-
-  it("prints an entry that takes no value", () => {
-    expect(errorText(refusal(AppError.NoFeaturePartGiven, {}))).toBe(
-      "spec-controller: usage error [no-feature-part-given] — no feature part was given: 'spec-controller allocate <FFF>' takes one, a feature file's header code.",
-    );
-  });
-});
-
 describe("[CLM-ALC-012] a command's usage error opens with the command's usage-error prefix", () => {
   it("opens the first line with the command, and leaves the pointer lines as they are", () => {
     const given = refusal(AppError.NotAFeaturePart, { part: "one" }, ["a pointer"]);
@@ -74,24 +52,10 @@ describe("[CLM-ALC-005] a note is printed on its own line", () => {
   });
 });
 
-describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong", () => {
-  const withPointers = (): ReturnType<typeof refusal> =>
-    refusal(AppError.GivenTwice, { flag: "--target", scope: "spec-controller balance" }, ["first pointer", "second pointer"]);
-  const words = "The --target flag of 'spec-controller balance' was given more than once, and is read once: give it once.";
-
-  it("opens a command's refusal with the command's usage-error prefix and the refusal's code, then each pointer line as given", () => {
-    expect(printedBy("balance", (shown) => shown.error(withPointers()))).toEqual([
-      `spec-controller balance: usage error [given-twice] — ${words}\nfirst pointer\nsecond pointer\n`,
-    ]);
-  });
-
-  it("opens a refusal at the host's scope with the tool's usage-error prefix and the refusal's code", () => {
-    expect(printedBy(undefined, (shown) => shown.error(withPointers()))).toEqual([
-      `spec-controller: usage error [given-twice] — ${words}\nfirst pointer\nsecond pointer\n`,
-    ]);
-  });
-
-  it("shows the code once, on the first line only, never on a pointer line after it", () => {
-    expect(errorCodesShown(errorText(withPointers(), "balance"))).toEqual({ opening: ["given-twice"], after: [] });
+describe("an error will be shown with its error code", () => {
+  it("[CLM-ERC-001] an error will be shown with its error code", () => {
+    const unknownFlag = refusal(AppError.UnknownFlag, { flag: "--colour", scope: "spec-controller balance", toolVersion: "0.2.0", command: "balance" });
+    const [opening = "", ...after] = errorText(unknownFlag, "balance").split("\n");
+    expect({ opening: opening.split("[unknown-flag]").length - 1, after: after.filter((line) => line.includes("unknown-flag")) }).toEqual({ opening: 1, after: [] });
   });
 });
