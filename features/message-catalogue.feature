@@ -18,21 +18,22 @@ Feature: a message catalogue gives back the text for a code
 
   Rule: a code that takes values gives back its text with each gap filled in
 
+    @unit
     Scenario Outline: each value will fill its gap in the text
-      Given the catalogue had the text "<text>" under a code
-      When the text for that code is retrieved with <values>
-      Then the text will be "<retrieved>"
+      given the catalogue had the text "<text>" under a code
+      when the text for that code is retrieved with <values>
+      then the text will be "<retrieved>"
 
       Examples:
         | clm         | text                                   | values                              | retrieved                          |
-        | CLM-MSG-NEW | The format {format} is not written.    | format html                         | The format html is not written.    |
-        | CLM-MSG-NEW | {entry} is {is} where {reads} is read. | entry unit, is 3 and reads a runner | unit is 3 where a runner is read.  |
-        | CLM-MSG-NEW | {format} is not {format}.              | format html                         | html is not html.                  |
+        | CLM-MSG-016 | The format {format} is not written.    | format html                         | The format html is not written.    |
+        | CLM-MSG-017 | {entry} is {is} where {reads} is read. | entry unit, is 3 and reads a runner | unit is 3 where a runner is read.  |
+        | CLM-MSG-018 | {format} is not {format}.              | format html                         | html is not html.                  |
         | CLM-MSG-015 | {count} steps ran.                     | count 1000                          | 1000 steps ran.                    |
-        | CLM-MSG-NEW | The format {format} is not written.    | format {other}                      | The format {other} is not written. |
-        | CLM-MSG-NEW | The format {format} is not written.    | format it's                         | The format it's is not written.    |
-        | CLM-MSG-NEW | The format {format} is not written.    | an empty format                     | The format  is not written.        |
-        | CLM-MSG-NEW | No format was written.                 | format html                         | No format was written.             |
+        | CLM-MSG-019 | The format {format} is not written.    | format {other}                      | The format {other} is not written. |
+        | CLM-MSG-020 | The format {format} is not written.    | format it's                         | The format it's is not written.    |
+        | CLM-MSG-021 | The format {format} is not written.    | an empty format                     | The format  is not written.        |
+        | CLM-MSG-022 | No format was written.                 | format html                         | No format was written.             |
 
   Rule: a mistake in a catalogue gives back the code and its values
 

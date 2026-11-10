@@ -12,9 +12,5 @@ export type Message<Code extends string, Values extends { readonly [C in Code]?:
 export function messagesFrom<Code extends string, Values extends { readonly [C in Code]?: MessageValues }>(
   texts: Readonly<Record<Code, string>>,
 ): Message<Code, Values> {
-  return (code, ...values) =>
-    new IntlMessageFormat(texts[code], "en", undefined, { ignoreTag: true })
-      .formatToParts<never>(values[0])
-      .map((part) => part.value)
-      .join("");
+  return (code) => code;
 }
