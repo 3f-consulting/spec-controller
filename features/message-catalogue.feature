@@ -10,11 +10,11 @@ Feature: a message catalogue gives back the text for a code
 
   Rule: a code that takes no values gives back its text unchanged
 
-    @CLM-MSG-008
+    @unit @CLM-MSG-008
     Scenario: the text for a code will be its text, unchanged
-      Given the catalogue had the text "No feature files were found." under the code no-features
-      When the text for no-features is retrieved
-      Then the text will be "No feature files were found."
+      given the catalogue had the text "No feature files were found." under the code no-features
+      when the text for no-features is retrieved
+      then the text will be "No feature files were found."
 
   Rule: a code that takes values gives back its text with each gap filled in
 
