@@ -36,8 +36,8 @@ export interface ReadingSettings {
 
 const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["@wip", "@ignore", "@skip", "@todo", "@pending"];
 
-function isDeferred(tags: readonly string[], { deferralTags }: ReadingSettings): boolean {
-  return tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));
+function isDeferred(tags: readonly string[], { deferralTags, strict }: ReadingSettings): boolean {
+  return !strict && tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));
 }
 
 function readCode(text: string): ClaimCode {
@@ -47,18 +47,19 @@ function readCode(text: string): ClaimCode {
 
 const QUALITY_CHECK_KINDS: readonly QualityCheckKind[] = ["fitness", "unit", "integration", "e2e", "performance"];
 
-function obligationsRaisedBy(tags: readonly string[]): EvidenceObligation[] {
-  return QUALITY_CHECK_KINDS.filter((kind) => tags.includes(`@${kind}`)).map((kind) => ({ kind }));
+function obligationsRaisedBy(tags: readonly string[], strict: boolean): EvidenceObligation[] {
+  const raises = (kind: QualityCheckKind): boolean => tags.includes(`@${kind}`) || (strict && tags.includes(`@${kind}pending`));
+  return QUALITY_CHECK_KINDS.filter(raises).map((kind) => ({ kind }));
 }
 
-function claimOf(file: string, scenario: ScenarioAsWritten, code: string | undefined): ExecutableClaim {
-  return { file, title: scenario.title, obligations: obligationsRaisedBy(scenario.tags), ...(code === undefined ? {} : { claimCode: readCode(code) }) };
+function claimOf(file: string, scenario: ScenarioAsWritten, strict: boolean, code: string | undefined): ExecutableClaim {
+  return { file, title: scenario.title, obligations: obligationsRaisedBy(scenario.tags, strict), ...(code === undefined ? {} : { claimCode: readCode(code) }) };
 }
 
 function claimsOf(file: string, scenario: ScenarioAsWritten, settings: ReadingSettings): ExecutableClaim[] {
   if (isDeferred(scenario.tags, settings)) return [];
-  if (scenario.rows) return scenario.rows.map((row) => claimOf(file, scenario, row.cell));
-  return [claimOf(file, scenario, scenario.tags.find((tag) => tag.startsWith("@CLM-"))?.slice(1))];
+  if (scenario.rows) return scenario.rows.map((row) => claimOf(file, scenario, settings.strict, row.cell));
+  return [claimOf(file, scenario, settings.strict, scenario.tags.find((tag) => tag.startsWith("@CLM-"))?.slice(1))];
 }
 
 export function executableClaimsOf(features: readonly FeatureAsWritten[], settings: ReadingSettings): ExecutableClaim[] {
