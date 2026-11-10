@@ -8,9 +8,8 @@ import {
   type EvidenceReport,
 } from "../ingest/ingestQualityChecks.js";
 import { EVIDENCE_INPUTS, inputPathsOf, runInputsOf, type InputPaths } from "./evidenceInputs.js";
-import { planOutput } from "./emit/format.js";
-import { writeOutputs } from "./emit/writer.js";
-import { namesStdout, refuse, settlingRefusal, stdoutIdentity } from "../outputLocation.js";
+import { writeReports } from "./emit/writer.js";
+import { refuse, settlingRefusal } from "../outputLocation.js";
 import { identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "./inputsRead.js";
 import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
 import { corpusDirOf } from "./corpusDir.js";
@@ -120,15 +119,8 @@ function reconcile(argv: string[]): boolean {
 
   const ctx = runContextOf(args, inputs, runStart, root);
 
-  const planResult = planOutput(collectFormatSpecs(argv), namesStdout);
-  if (!planResult.ok) refuse(planResult.error);
-  const payloads = { balance, ctx, evidenceObligations: corpusCountsOfFeatures(corpus), featureNames: featureNamesOf(corpus) };
-  writeOutputs(
-    planResult.plan,
-    payloads,
-    stdoutIdentity,
-    identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)),
-  );
+  writeReports(collectFormatSpecs(argv), balance, identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)));
+
 
   const verdict = assembleRenderInput(balance, ctx).summary.runVerdict;
   endRunOn({ kind: "verdict", code: exitCodeOf(verdict, args["exit-zero"] !== undefined) });

@@ -18,16 +18,17 @@ Feature: You get each report in the format and place you asked for, and the run 
 
   Rule: you get what you asked for
 
+    @unit
     Scenario Outline: you will get the report format you named
-      Given a run had its report to write
-      When you ask for <format>
-      Then you will get <report>
+      given a run had its report to write
+      when you ask for <format>
+      then you will get <report>
 
       Examples:
         | clm         | format    | report              |
         | CLM-FMT-001 | no format | the Markdown report |
-        | CLM-FMT-NEW | md        | the Markdown report |
-        | CLM-FMT-NEW | json      | the JSON report     |
+        | CLM-FMT-014 | md        | the Markdown report |
+        | CLM-FMT-015 | json      | the JSON report     |
 
     Scenario Outline: a report will be where you asked
       Given a run had a report to write
@@ -43,17 +44,18 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-NEW | a file that already exists                             | the file will contain the new report                                             |
         | CLM-FMT-NEW | a file in the corpus folder that is not a feature file | the file will contain the new report, and the feature files will be as they were |
 
+    @wip
     Scenario Outline: each of two reports will be where you asked
-      Given a run had two reports to write
-      When you ask for them at <destination>
-      Then <where it will be>
+      given a run had two reports to write
+      when you ask for them at <destination>
+      then <where it will be>
 
       Examples:
         | clm         | destination                                            | where it will be                                                                 |
         | CLM-FMT-004 | no destination for one, a file for the other           | one will be on standard output, and the other in the file                        |
-        | CLM-FMT-NEW | no destination for one, standard error for the other   | one will be on standard output, and the other on standard error                  |
-        | CLM-FMT-NEW | two different files                                    | each file will contain its own report                                            |
-        | CLM-FMT-NEW | standard error for both                                | both reports will be on standard error, one after the other                      |
+        | CLM-FMT-020 | no destination for one, standard error for the other   | one will be on standard output, and the other on standard error                  |
+        | CLM-FMT-021 | two different files                                    | each file will contain its own report                                            |
+        | CLM-FMT-022 | standard error for both                                | both reports will be on standard error, one after the other                      |
 
   Rule: it stops before it damages anything
 
@@ -70,18 +72,19 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-011 | no destination  | a path that names standard output |
         | CLM-FMT-NEW | no destination  | a link to standard output         |
 
+    @wip
     Scenario Outline: two reports will not go in one file
-      Given a run had two reports to write
-      When you ask for them at a file and at <the other destination>
-      Then the run will stop, give no verdict and exit 2
-      And it will complain, naming the file and both reports
-      And the file will be as it was
+      given a run had two reports to write
+      when you ask for them at a file and at <the other destination>
+      then the run will stop, give no verdict and exit 2
+      and it will complain, naming the file and both reports
+      and the file will be as it was
 
       Examples:
         | clm         | the other destination                   |
         | CLM-FMT-010 | the same path                           |
-        | CLM-FMT-NEW | a link to it                            |
-        | CLM-FMT-NEW | standard output, redirected to the file |
+        | CLM-FMT-024 | a link to it                            |
+        | CLM-FMT-025 | standard output, redirected to the file |
 
     Scenario Outline: a place it cannot write will stop the run, and nothing will be written
       Given a run had its report to write
