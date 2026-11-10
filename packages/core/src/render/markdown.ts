@@ -1,23 +1,19 @@
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { claimReconciliationsSection } from "./claimReconciliations.js";
+import { errorsInTheInputsSection } from "./errorsInTheInputs.js";
 import { heading } from "./heading.js";
+import { provenanceSection } from "./provenance.js";
 import { runIntegritySection } from "./runIntegrity.js";
+import { summarySection } from "./summary.js";
 
-export function renderMarkdown({ claimReconciliations, errorsInTheInputs, runIntegrity, totals, stepAccount }: EvidenceReconciliation): string {
-  return [
+export function renderMarkdown(evidenceReconciliation: EvidenceReconciliation): string {
+  const { provenance, errorsInTheInputs, runIntegrity, claimReconciliations } = evidenceReconciliation;
+  return `${[
     heading(1, "report-title"),
-    heading(2, "provenance-heading"),
-    ...(errorsInTheInputs
-      ? [
-          heading(2, "errors-in-the-inputs-heading"),
-          ...(errorsInTheInputs.claimCodeErrors ? [heading(3, "claim-code-errors-heading")] : []),
-          ...(errorsInTheInputs.configurationErrors ? [heading(3, "configuration-errors-heading")] : []),
-        ]
-      : []),
-    ...(runIntegrity ? runIntegritySection(runIntegrity) : []),
-    heading(2, "summary-heading"),
-    ...(totals.outOfBalanceByFeature ? [heading(3, "out-of-balance-by-feature-heading")] : []),
-    ...(stepAccount ? [heading(3, "step-account-heading")] : []),
+    ...provenanceSection(provenance),
+    ...(errorsInTheInputs === undefined ? [] : errorsInTheInputsSection(errorsInTheInputs)),
+    ...(runIntegrity === undefined ? [] : runIntegritySection(runIntegrity)),
+    ...summarySection(evidenceReconciliation),
     ...claimReconciliationsSection(claimReconciliations),
-  ].join("\n\n");
+  ].join("\n\n")}\n`;
 }

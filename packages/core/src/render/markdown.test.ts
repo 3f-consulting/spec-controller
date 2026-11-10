@@ -127,7 +127,7 @@ describe("a name will read as it was given, in a table that stays a table", () =
   ])("[%s] the name %j reads as it was given, in a row that keeps its columns", (_clm, name, cell) => {
     const lines = renderMarkdown(everySection(observation({ name }))).split("\n");
     const [header] = lines.filter((line) => line.startsWith(`| ${coreText("outcome-column")} `));
-    const [row] = lines.filter((line) => line.startsWith("| failing "));
+    const [row] = lines.filter((line) => line.startsWith("| failing | unit "));
     expect({ cell: row?.includes(cell), columns: row?.match(UNESCAPED_PIPE)?.length }).toEqual({
       cell: true,
       columns: header?.match(UNESCAPED_PIPE)?.length,

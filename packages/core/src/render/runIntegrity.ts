@@ -6,5 +6,5 @@ import { table } from "./table.js";
 
 export function runIntegritySection({ neverRan }: RunIntegrity): string[] {
   const header = [coreText("kind-column"), coreText("where-column"), coreText("said-column")];
-  return [heading(2, "run-integrity-heading"), table(header, neverRan.map((observation) => [observation.kind, whereToLook(observation), said(observation)]))];
+  return [heading(2, "run-integrity-heading"), coreText("never-ran-key"), table(header, neverRan.map((observation) => [observation.kind, whereToLook(observation), said(observation)]))];
 }
