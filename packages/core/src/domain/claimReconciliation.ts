@@ -47,3 +47,10 @@ export interface ClaimReconciliation {
   readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[];
   readonly verdict: "balanced" | "out-of-balance";
 }
+
+export function claimReconciliationsOf(
+  _claims: readonly ExecutableClaim[],
+  _observations: readonly EvidenceObservation[],
+): ClaimReconciliation[] {
+  return [];
+}

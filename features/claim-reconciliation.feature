@@ -48,11 +48,11 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-NEW | the unnamed claim                      | no Evidence Obligation                        | a test file that never ran, citing no code                            | out of balance | one never-ran                     |
         | CLM-LDG-NEW | the unnamed claim                      | no Evidence Obligation                        | two unit tests citing no code                                         | out of balance | two cites-no-claim                |
 
-    @CLM-LDG-046
+    @unit @CLM-LDG-046
     Scenario: each executable claim sharing a claim code will have its own Claim Reconciliation, naming its feature file and title
-      Given a scenario titled "a" in one.feature and one titled "b" in two.feature were both tagged @CLM-ONE-001
-      When balance reconciles them
-      Then there will be two Claim Reconciliations under @CLM-ONE-001, one naming one.feature and "a", the other two.feature and "b"
+      given a scenario titled "a" in one.feature and one titled "b" in two.feature were both tagged @CLM-ONE-001
+      when balance reconciles them
+      then there will be two Claim Reconciliations under @CLM-ONE-001, one naming one.feature and "a", the other two.feature and "b"
 
   Rule: a Claim Reconciliation sorts its Quality Check Reconciliations, so two runs over the same evidence list them in the same order
 

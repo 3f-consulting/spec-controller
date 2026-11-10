@@ -1,4 +1,4 @@
-import { claimCodeFrom, type ClaimCode } from "./claimCodes.js";
+import { claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
 import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
 
 export interface EvidenceObservation {
@@ -128,7 +128,6 @@ export function neverRanObservation(kind: QualityCheckKind, place: string, messa
   return { cites: [], result: "never-ran", kind, place, notes: [], ...(message === undefined ? {} : { message }) };
 }
 
-const sameCode = (a: ClaimCode, b: ClaimCode): boolean => a.featureCode === b.featureCode && a.number === b.number;
 
 export function nearestCitation(levels: readonly (readonly ClaimCode[])[]): ClaimCode[] {
   const nearest = levels.find((codes) => codes.length > 0) ?? [];

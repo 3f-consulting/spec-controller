@@ -5,6 +5,10 @@ export interface ClaimCode {
 
 const CLAIM_CODE = /^CLM-([A-Z0-9]{2,5})-(\d+)$/;
 
+export function sameCode(a: ClaimCode, b: ClaimCode): boolean {
+  return a.featureCode === b.featureCode && a.number === b.number;
+}
+
 export function claimCodeFrom(text: string): ClaimCode | undefined {
   const parts = CLAIM_CODE.exec(text);
   return parts ? { featureCode: parts[1]!, number: parts[2]! } : undefined;
