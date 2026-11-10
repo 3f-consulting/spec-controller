@@ -3,6 +3,13 @@ export interface ClaimCode {
   readonly number: string;
 }
 
+const CLAIM_CODE = /^CLM-([A-Z0-9]{2,5})-(\d+)$/;
+
+export function claimCodeFrom(text: string): ClaimCode | undefined {
+  const parts = CLAIM_CODE.exec(text);
+  return parts ? { featureCode: parts[1]!, number: parts[2]! } : undefined;
+}
+
 interface DuplicateFeatureCodeError {
   readonly kind: "duplicate-feature-code";
   readonly featureCode: string;
