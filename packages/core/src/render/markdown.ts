@@ -1,7 +1,6 @@
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import { coreText, type CoreTextCode } from "./coreText.js";
-
-const heading = (level: number, code: CoreTextCode): string => `${"#".repeat(level)} ${coreText(code)}`;
+import { claimReconciliationsSection } from "./claimReconciliations.js";
+import { heading } from "./heading.js";
 
 export function renderMarkdown({ claimReconciliations, errorsInTheInputs, runIntegrity, totals, stepAccount }: EvidenceReconciliation): string {
   return [
@@ -18,7 +17,6 @@ export function renderMarkdown({ claimReconciliations, errorsInTheInputs, runInt
     heading(2, "summary-heading"),
     ...(totals.outOfBalanceByFeature ? [heading(3, "out-of-balance-by-feature-heading")] : []),
     ...(stepAccount ? [heading(3, "step-account-heading")] : []),
-    heading(2, "claim-reconciliations-heading"),
-    ...(claimReconciliations.length === 0 ? [coreText("claim-reconciliations-none")] : []),
+    ...claimReconciliationsSection(claimReconciliations),
   ].join("\n\n");
 }
