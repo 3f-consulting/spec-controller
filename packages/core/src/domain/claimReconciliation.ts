@@ -1,176 +1,49 @@
-import type {
-  PendingItem,
-  QualityCheckKind,
-} from "./journal.js";
-import { QUALITY_CHECK_KINDS, isFitnessObservation } from "./journal.js";
-import type { ClaimKind } from "./claimKind.js";
-import type {
-  Outcome,
-  QualityCheckReconciliation,
-  ReconciledEvidenceObligation,
-  ReconciledEvidenceObservation,
-  ScenarioName,
-} from "./qualityCheckReconciliation.js";
-import { noQualityCheckReconciliation, carriesEvidenceObligation, isObligationLineOutcome } from "./qualityCheckReconciliation.js";
+import type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
+import type { EvidenceObservation, PhantomClaim, UnnamedClaim } from "./postEvidenceObservation.js";
 
-export type Verdict = "balanced" | "out-of-balance";
+type ObligationNamingItsKind = Required<EvidenceObligation>;
 
-export type { ClaimKind } from "./claimKind.js";
+interface BothSides {
+  readonly outcome: "satisfied" | "failing" | "cannot-fail";
+  readonly kind: QualityCheckKind;
+  readonly obligation: ObligationNamingItsKind;
+  readonly observation: EvidenceObservation;
+}
 
-export const UNNAMED_CLAIM_ID = "(unnamed claim)";
+interface MissingEvidence {
+  readonly outcome: "missing";
+  readonly kind: QualityCheckKind;
+  readonly obligation: ObligationNamingItsKind;
+  readonly observation?: never;
+}
+
+interface ObligationNoEvidenceCanAnswer {
+  readonly outcome: "no-claim-code" | "duplicate-claim-code";
+  readonly kind?: QualityCheckKind;
+  readonly obligation: EvidenceObligation;
+  readonly observation?: never;
+}
+
+interface ObservationOnly {
+  readonly outcome: "not-asked-for" | "cites-unknown-claim" | "cites-no-claim" | "never-ran";
+  readonly kind: QualityCheckKind;
+  readonly obligation?: never;
+  readonly observation: EvidenceObservation;
+}
+
+interface NeitherSide {
+  readonly outcome: "no-quality-check";
+  readonly kind?: never;
+  readonly obligation?: never;
+  readonly observation?: never;
+}
+
+export type QualityCheckReconciliation = BothSides | MissingEvidence | ObligationNoEvidenceCanAnswer | ObservationOnly | NeitherSide;
+
+export type Outcome = QualityCheckReconciliation["outcome"];
 
 export interface ClaimReconciliation {
-  readonly claim: string;
-  readonly kind: ClaimKind;
-  readonly verdict: Verdict;
+  readonly claim: ExecutableClaim | PhantomClaim | UnnamedClaim;
   readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[];
-  readonly pendingItems: readonly PendingItem[];
-}
-
-/** One Reconciliation line of a Quality Check Reconciliation: its obligation's own, or one evidence observation's. */
-export interface ReconciliationLine {
-  readonly qualityCheckKind?: QualityCheckKind;
-  readonly outcome: Outcome;
-  readonly evidenceObligation?: ReconciledEvidenceObligation;
-  readonly evidenceObservation?: ReconciledEvidenceObservation;
-  readonly scenario?: ScenarioName;
-}
-
-function observationLineOf(
-  reconciliation: QualityCheckReconciliation,
-  observation: ReconciledEvidenceObservation
-): ReconciliationLine {
-  const carriesObligation = carriesEvidenceObligation(reconciliation, observation);
-  return {
-    ...(reconciliation.qualityCheckKind === undefined ? {} : { qualityCheckKind: reconciliation.qualityCheckKind }),
-    outcome: observation.outcome,
-    ...(carriesObligation ? { evidenceObligation: reconciliation.evidenceObligation } : {}),
-    evidenceObservation: observation,
-  };
-}
-
-/** A Quality Check Reconciliation's lines: its own outcome's, when it has one, then each evidence observation's. */
-export function linesOf(reconciliation: QualityCheckReconciliation): ReconciliationLine[] {
-  const own: ReconciliationLine[] =
-    !isObligationLineOutcome(reconciliation.outcome)
-      ? []
-      : [
-          {
-            ...(reconciliation.qualityCheckKind === undefined ? {} : { qualityCheckKind: reconciliation.qualityCheckKind }),
-            outcome: reconciliation.outcome,
-            ...(reconciliation.evidenceObligation === undefined ? {} : { evidenceObligation: reconciliation.evidenceObligation }),
-            ...(reconciliation.scenario === undefined ? {} : { scenario: reconciliation.scenario }),
-          },
-        ];
-  return [
-    ...own,
-    ...(reconciliation.evidenceObservations ?? []).map((observation) => observationLineOf(reconciliation, observation)),
-  ];
-}
-
-function unsatisfiedOf(reconciliations: readonly QualityCheckReconciliation[]): ReconciliationLine[] {
-  return reconciliations.flatMap(linesOf).filter((line) => line.outcome !== "satisfied");
-}
-
-export function verdictFor(reconciliations: readonly QualityCheckReconciliation[]): Verdict {
-  return unsatisfiedOf(reconciliations).length === 0 ? "balanced" : "out-of-balance";
-}
-
-export function reconcilingItemsOf(row: ClaimReconciliation): readonly ReconciliationLine[] {
-  return unsatisfiedOf(row.qualityCheckReconciliations);
-}
-
-/** A row's evidence observations: those its Quality Check Reconciliations hold, each once, with its line's outcome. */
-export function observationsOf(row: ClaimReconciliation): readonly ReconciledEvidenceObservation[] {
-  return row.qualityCheckReconciliations.flatMap((reconciliation) => reconciliation.evidenceObservations ?? []);
-}
-
-/** A row's evidence obligations at a quality check, read from its Quality Check Reconciliations: a scenario-scope obligation names none. */
-export function obligationsOf(row: ClaimReconciliation): readonly ReconciledEvidenceObligation[] {
-  return row.qualityCheckReconciliations.flatMap(({ evidenceObligation }) =>
-    evidenceObligation?.qualityCheckKind == null ? [] : [evidenceObligation]
-  );
-}
-
-export function isScenario(row: ClaimReconciliation): boolean {
-  return row.kind === "scenario";
-}
-
-export function isPhantomClaim(row: ClaimReconciliation): boolean {
-  return row.kind === "phantom-claim";
-}
-
-export function isUnnamedClaim(row: ClaimReconciliation): boolean {
-  return row.kind === "unnamed-claim";
-}
-
-export function isOutOfBalance(row: ClaimReconciliation): boolean {
-  return row.verdict === "out-of-balance";
-}
-
-export function outOfBalanceCountOf(rows: readonly ClaimReconciliation[]): number {
-  return rows.filter(isOutOfBalance).length;
-}
-
-export function carriesNoClaimCode(row: ClaimReconciliation): boolean {
-  return reconcilingItemsOf(row).some((item) => item.outcome === "no-claim-code");
-}
-
-export function fitnessFunctionReconciliationsOf(
-  row: ClaimReconciliation
-): QualityCheckReconciliation[] {
-  return row.qualityCheckReconciliations.filter(
-    (r) => r.qualityCheckKind === "fitness" && r.evidenceObligation !== undefined
-  );
-}
-
-/** A row's evidence observations that ran: one that never reached its assertions backs nothing. */
-function ranObservationsOf(row: ClaimReconciliation): readonly ReconciledEvidenceObservation[] {
-  return observationsOf(row).filter((o) => o.neverRan !== true);
-}
-
-export function carriesQualityCheckKind(row: ClaimReconciliation, qualityCheckKind: QualityCheckKind): boolean {
-  return row.qualityCheckReconciliations.some(
-    (r) => r.qualityCheckKind === qualityCheckKind && linesOf(r).some((line) => line.outcome !== "never-ran")
-  );
-}
-
-export function namesQualityCheckKind(row: ClaimReconciliation, qualityCheckKind: QualityCheckKind): boolean {
-  return obligationsOf(row).some((o) => o.qualityCheckKind === qualityCheckKind);
-}
-
-export function observationCountOf(row: ClaimReconciliation, qualityCheckKind: QualityCheckKind): number {
-  return ranObservationsOf(row).filter((o) => o.qualityCheckKind === qualityCheckKind).length;
-}
-
-type StepsAtQualityCheckKind = { readonly qualityCheckKind: QualityCheckKind; readonly ciSteps?: readonly string[] };
-
-function stepsAt(
-  row: ClaimReconciliation,
-  qualityCheckKind: QualityCheckKind,
-  stepsByQualityCheckKind: readonly StepsAtQualityCheckKind[]
-): readonly string[] {
-  if (qualityCheckKind === "fitness") {
-    return observationsOf(row).flatMap((o) => (isFitnessObservation(o) && o.step !== undefined ? [o.step] : []));
-  }
-  const observed = observationsOf(row).some((o) => o.qualityCheckKind === qualityCheckKind);
-  if (!namesQualityCheckKind(row, qualityCheckKind) && !observed) return [];
-  return stepsByQualityCheckKind.find((entry) => entry.qualityCheckKind === qualityCheckKind)?.ciSteps ?? [];
-}
-
-/** The CI steps behind each kind of quality check a row obligates or observes, in kind order, each step once. */
-export function ciStepsOf(
-  row: ClaimReconciliation,
-  stepsByQualityCheckKind: readonly StepsAtQualityCheckKind[]
-): readonly string[] {
-  return [...new Set(QUALITY_CHECK_KINDS.flatMap((qualityCheckKind) => stepsAt(row, qualityCheckKind, stepsByQualityCheckKind)))];
-}
-
-export function qualityCheckReconciliationsOf(
-  reconciledEvidenceObligations: readonly QualityCheckReconciliation[],
-  notAskedForItems: readonly QualityCheckReconciliation[],
-  pendingItems: readonly PendingItem[]
-): QualityCheckReconciliation[] {
-  const rows = [...reconciledEvidenceObligations, ...notAskedForItems];
-  return rows.length === 0 && pendingItems.length === 0 ? [noQualityCheckReconciliation()] : rows;
+  readonly verdict: "balanced" | "out-of-balance";
 }
