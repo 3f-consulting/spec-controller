@@ -25,7 +25,7 @@ export function messagesFrom<Code extends string, Values extends { readonly [C i
   return (code, ...values) => {
     const text = texts[code] as string | undefined;
     const given = values[0];
-    if (text === undefined || text.trim() === "") return withValues(code, given);
+    if (text === undefined || text.trim() === "" || Object.values(given ?? {}).includes(null)) return withValues(code, given);
     try {
       return new IntlMessageFormat(text, "en", undefined, { ignoreTag: true })
         .formatToParts<never>(asText(given))
