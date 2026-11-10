@@ -49,8 +49,8 @@ export interface ClaimReconciliation {
 }
 
 export function claimReconciliationsOf(
-  _claims: readonly ExecutableClaim[],
+  claims: readonly ExecutableClaim[],
   _observations: readonly EvidenceObservation[],
 ): ClaimReconciliation[] {
-  return [];
+  return claims.map((claim) => ({ claim, qualityCheckReconciliations: [], verdict: "balanced" }));
 }
