@@ -4,7 +4,7 @@ import type { PipelineStep } from "./postEvidenceObservation.js";
 
 type Layer = Exclude<QualityCheckKind, "fitness">;
 
-export interface NonCheck {
+interface NonCheck {
   readonly workflow: string;
   readonly job: string;
   readonly step: string;
