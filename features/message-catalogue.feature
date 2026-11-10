@@ -37,10 +37,11 @@ Feature: a message catalogue gives back the text for a code
 
   Rule: a mistake in a catalogue gives back the code and its values
 
+    @unit
     Scenario Outline: a code with no usable text will give back the code
-      Given the catalogue had <entry> under the code no-features
-      When the text for no-features is retrieved
-      Then the text will be "no-features"
+      given the catalogue had <entry> under the code no-features
+      when the text for no-features is retrieved
+      then the text will be "no-features"
 
       Examples:
         | clm         | entry                                    |

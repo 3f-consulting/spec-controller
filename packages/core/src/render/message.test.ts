@@ -31,3 +31,13 @@ describe("each value will fill its gap in the text", () => {
     expect(textFor({ "a-code": text }, "a-code", values)).toBe(retrieved);
   });
 });
+
+describe("a code with no usable text will give back the code", () => {
+  it.each([
+    ["CLM-MSG-002", "no text", {}],
+    ["CLM-MSG-004", "a blank text", { "no-features": "  " }],
+    ["CLM-MSG-007", 'the text "No feature {files were found."', { "no-features": "No feature {files were found." }],
+  ])("[%s] a catalogue with %s under the code gives back the code", (_clm, _entry, texts) => {
+    expect(textFor(texts, "no-features")).toBe("no-features");
+  });
+});
