@@ -158,9 +158,9 @@ const dispositionOf = (step: PipelineStep) =>
 describe("balance accounts for every step it reads", () => {
   it("[CLM-EVR-032] each job's counts will add up to the steps read in it", () => {
     const { jobs } = stepAccountOf(workflowSteps([TWO_JOBS], ["ci.yml"]), dispositionOf);
-    expect(jobs.map(({ job, stepsRead, runners, reconcilerSteps, nonChecks, plumbing, candidates }) => ({ job, stepsRead, sum: runners + reconcilerSteps + nonChecks + plumbing + candidates }))).toEqual([
-      { job: "build", stepsRead: 4, sum: 4 },
-      { job: "check", stepsRead: 2, sum: 2 },
+    expect(jobs).toEqual([
+      { workflow: "ci.yml", job: "build", stepsRead: 4, runners: 1, reconcilerSteps: 0, nonChecks: 1, plumbing: 1, candidates: 1 },
+      { workflow: "ci.yml", job: "check", stepsRead: 2, runners: 0, reconcilerSteps: 1, nonChecks: 0, plumbing: 0, candidates: 1 },
     ]);
   });
 
@@ -176,6 +176,7 @@ describe("balance accounts for every step it reads", () => {
       candidates: summed("candidates"),
       accountedFor: 6,
     });
+    expect(total).toMatchObject({ runners: 1, reconcilerSteps: 1, nonChecks: 1, plumbing: 1, candidates: 2 });
     expect(total.stepsRead).toBe(6);
   });
 });

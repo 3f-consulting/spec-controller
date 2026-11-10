@@ -75,7 +75,6 @@ export { evidenceReconciliationFromSources } from "./assemble/evidenceReconcilia
 export { renderJson, renderMarkdown, projectProvenance } from "./assemble/composers.js";
 export { renderReport } from "./render/markdown.js";
 
-export { provenanceObject } from "./provenance/provenance.js";
 export { projectProvenanceObject } from "./render/provenanceFacts.js";
 export type { ProvenanceFacts, ProvenanceInput } from "./render/provenanceFacts.js";
 export type { RunContext, RunInput, RunInputName, RunInputs, ProvenanceObject } from "./domain/runProvenance.js";

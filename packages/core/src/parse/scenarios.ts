@@ -39,7 +39,7 @@ function scenariosIn(children: readonly (FeatureChild | RuleChild)[]): ScenarioA
   });
 }
 
-const TAG_FORM_WORD = /@([^\s@]+)/g;
+const TAG_FORM_WORD = /@([\w-]+)/g;
 
 const tagFormWordsIn = (source: string): string[] => [...source.matchAll(TAG_FORM_WORD)].map((match) => match[1]!);
 

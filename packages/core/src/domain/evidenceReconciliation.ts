@@ -107,7 +107,10 @@ export function runVerdictOf(
 
 function countsBy<T, K>(items: readonly T[], keyOf: (item: T) => K): { readonly key: K; readonly count: number }[] {
   const counts = new Map<K, number>();
-  for (const item of items) counts.set(keyOf(item), (counts.get(keyOf(item)) ?? 0) + 1);
+  for (const item of items) {
+    const key = keyOf(item);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
   return [...counts].map(([key, count]) => ({ key, count }));
 }
 
@@ -177,21 +180,13 @@ export function stepAccountOf(steps: readonly PipelineStep[], dispositionOf: (st
   for (const step of steps) {
     const key = `${step.workflow}\u0000${step.job}`;
     const job = jobs.get(key) ?? { workflow: step.workflow, job: step.job, ...NO_STEPS };
-    jobs.set(key, { ...job, ...added(job, COUNTED_AS[dispositionOf(step)]) });
+    jobs.set(key, { workflow: job.workflow, job: job.job, ...added(job, COUNTED_AS[dispositionOf(step)]) });
   }
-  const ordered = [...jobs.values()].sort((a, b) => a.workflow.localeCompare(b.workflow) || a.job.localeCompare(b.job));
-  const total = ordered.reduce(
-    (sum, job): StepCounts => ({
-      stepsRead: sum.stepsRead + job.stepsRead,
-      runners: sum.runners + job.runners,
-      reconcilerSteps: sum.reconcilerSteps + job.reconcilerSteps,
-      nonChecks: sum.nonChecks + job.nonChecks,
-      plumbing: sum.plumbing + job.plumbing,
-      candidates: sum.candidates + job.candidates,
-    }),
-    NO_STEPS,
-  );
-  const accountedFor = total.runners + total.reconcilerSteps + total.nonChecks + total.plumbing + total.candidates;
+  const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+  const ordered = [...jobs.values()].sort((a, b) => byCodeUnit(a.workflow, b.workflow) || byCodeUnit(a.job, b.job));
+  const counts = Object.keys(NO_STEPS) as (keyof StepCounts)[];
+  const total = Object.fromEntries(counts.map((count) => [count, ordered.reduce((sum, job) => sum + job[count], 0)])) as unknown as StepCounts;
+  const accountedFor = counts.filter((count) => count !== "stepsRead").reduce((sum, count) => sum + total[count], 0);
   return { jobs: ordered, total: { ...total, accountedFor } };
 }
 
