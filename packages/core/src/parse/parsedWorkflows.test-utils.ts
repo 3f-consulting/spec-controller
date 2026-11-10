@@ -1,5 +1,5 @@
 import { parseWorkflows, pipelineStepsOf, type ParsedWorkflow } from "./checkScriptsRunInCI.js";
-import type { PipelineStep } from "../domain/pipelineStep.js";
+import type { PipelineStep } from "../domain/postEvidenceObservation.js";
 
 export function parsedWorkflows(sources: readonly string[], files: readonly string[] = []): ParsedWorkflow[] {
   const parse = parseWorkflows(sources.map((source, i) => ({ file: files[i] ?? `workflow-${i}.yml`, source })));

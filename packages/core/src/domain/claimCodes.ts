@@ -50,3 +50,9 @@ export type ClaimCodeError =
   | NoFeatureCodeError
   | SeveralClaimCodesError
   | ClaimCodeBesideClmColumnError;
+
+const CITATION = /\[(CLM-[A-Z0-9]{2,5}-\d+)\]/g;
+
+export function claimCodeCitationsIn(text: string): ClaimCode[] {
+  return [...text.matchAll(CITATION)].flatMap((match) => claimCodeFrom(match[1]!) ?? []);
+}

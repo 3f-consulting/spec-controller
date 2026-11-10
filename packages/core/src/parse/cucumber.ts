@@ -1,10 +1,8 @@
-import type { EvidenceObservation, ObservationNote } from "../model.js";
-import { relativizeToRoot } from "../lib/portablePath.js";
+import { claimCodeFrom, type ClaimCode } from "../domain/claimCodes.js";
+import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
+import { kindsTheTagsName, nearestCitation, resultOfRun, type RunResult } from "../domain/postEvidenceObservation.js";
 import { withoutSigil } from "../lib/bareTerm.js";
-import { CLAIM_CODE_SOURCE } from "../domain/featureCode.js";
-import { attributionOf } from "../domain/attribution.js";
-import type { ClaimCodesAt } from "./scenarios.js";
-import { evidenceOfRunResult, fallbackLayerOf, layersPostedAt, type RunResult } from "../domain/journal.js";
+import { relativizeToRoot } from "../lib/portablePath.js";
 
 export type CucumberJsonReport = ReadonlyArray<{
   readonly uri?: string;
@@ -22,81 +20,51 @@ export type CucumberJsonReport = ReadonlyArray<{
   }>;
 }>;
 
-const CLAIM_CODE_TAG = new RegExp(`^(${CLAIM_CODE_SOURCE})$`);
+export type ClaimCodesAt = (file: string, line: number) => readonly string[];
 
-function ambiguousNote(step: { keyword?: string; name?: string }): ObservationNote {
-  const text = `${(step.keyword ?? "").trim()} ${step.name ?? ""}`.trim();
-  return text.length > 0 ? { kind: "ambiguous-step", step: text } : { kind: "ambiguous-step" };
+type CucumberScenario = NonNullable<CucumberJsonReport[number]["elements"]>[number];
+type CucumberStep = NonNullable<CucumberScenario["steps"]>[number];
+
+const statusOf = (step: CucumberStep): string | undefined => step.result?.status;
+
+const couldNotRun = (step: CucumberStep): boolean => statusOf(step) === "ambiguous" || statusOf(step) === "undefined";
+
+function runResultOf(steps: readonly CucumberStep[]): RunResult {
+  if (steps.some((step) => statusOf(step) === "failed")) return "failed";
+  if (steps.some(couldNotRun)) return "never-reached-its-assertions";
+  return steps.length > 0 && steps.every((step) => statusOf(step) === "passed") ? "passed" : "inconclusive";
+}
+
+const stepText = (step: CucumberStep): string => `${(step.keyword ?? "").trim()} ${step.name ?? ""}`.trim();
+
+function codesIn(texts: readonly string[]): ClaimCode[] {
+  return texts.flatMap((text) => claimCodeFrom(text) ?? []);
+}
+
+function observationsOfScenario(scenario: CucumberScenario, place: string, rowCodes: readonly string[]): EvidenceObservation[] {
+  const tags = (scenario.tags ?? []).map((tag) => withoutSigil(tag.name ?? ""));
+  const steps = scenario.steps ?? [];
+  const result = resultOfRun(runResultOf(steps));
+  if (result === undefined) return [];
+  const [firstKind, ...otherKinds] = kindsTheTagsName(tags);
+  const cites = nearestCitation([codesIn([...tags, ...rowCodes])]);
+  if (result === "never-ran") {
+    return [{ cites, result, kind: firstKind!, place, notes: steps.filter(couldNotRun).map(stepText) }];
+  }
+  const name = scenario.name;
+  return [firstKind!, ...otherKinds].map((kind) => ({ cites, result, kind, place, notes: [], ...(name === undefined ? {} : { name }) }));
 }
 
 export function parseCucumberEvidenceObservations(
   report: CucumberJsonReport,
-  root?: string,
-  claimCodesAt: ClaimCodesAt = () => [],
+  root: string | undefined,
+  claimCodesAt: ClaimCodesAt,
 ): EvidenceObservation[] {
-  const results: EvidenceObservation[] = [];
-  for (const feature of report) {
-    const named = feature.uri ?? feature.name;
-    const locator = named && relativizeToRoot(named, root);
-    for (const scenario of feature.elements ?? []) {
-      const rowCodes = locator === undefined || scenario.line === undefined ? [] : claimCodesAt(locator, scenario.line);
-      results.push(...scenarioObservations(scenario, locator, rowCodes));
-    }
-  }
-  return results;
-}
-
-type CucumberScenario = NonNullable<CucumberJsonReport[number]["elements"]>[number];
-
-function citedCodesOf(tagNames: readonly string[]): string[] {
-  return tagNames
-    .map((name) => CLAIM_CODE_TAG.exec(name))
-    .filter((m): m is RegExpExecArray => m !== null)
-    .map((m) => m[1]!);
-}
-
-function scenarioObservations(
-  scenario: CucumberScenario,
-  locator: string | undefined,
-  rowCodes: readonly string[],
-): EvidenceObservation[] {
-  const tagNames = (scenario.tags ?? []).map((t) => withoutSigil(t.name ?? ""));
-  const layers = layersPostedAt(tagNames, fallbackLayerOf("scenario-runs"));
-  const { claimCode, severalCodes } = attributionOf([...citedCodesOf(tagNames), ...rowCodes]);
-  const severalNotes: ObservationNote[] = severalCodes ? [{ kind: "several-claim-codes", codes: severalCodes }] : [];
-  const steps = scenario.steps ?? [];
-  const evidence = evidenceOfRunResult(runResultOf(steps));
-  if (evidence === undefined) return [];
-  if (evidence.neverRan) {
-    const ambiguous = steps.find(isAmbiguous)!;
-    return [{
-      qualityCheckKind: layers[0]!,
-      claimCode,
-      status: evidence.status,
-      locator,
-      neverRan: evidence.neverRan,
-      notes: [ambiguousNote(ambiguous), ...severalNotes],
-    }];
-  }
-  return layers.map((layer) => ({
-    qualityCheckKind: layer,
-    claimCode,
-    status: evidence.status,
-    locator,
-    testName: scenario.name,
-    ...(severalNotes.length > 0 ? { notes: severalNotes } : {}),
-  }));
-}
-
-type CucumberStep = NonNullable<CucumberScenario["steps"]>[number];
-
-function isAmbiguous(step: CucumberStep): boolean {
-  return step.result?.status === "ambiguous";
-}
-
-function runResultOf(steps: readonly CucumberStep[]): RunResult {
-  if (steps.some(isAmbiguous)) return "never-reached-its-assertions";
-  if (steps.some((s) => s.result?.status === "failed")) return "failed";
-  if (steps.length > 0 && steps.every((s) => s.result?.status === "passed")) return "passed";
-  return "inconclusive";
+  return report.flatMap((feature) => {
+    const place = relativizeToRoot(feature.uri ?? feature.name ?? "", root);
+    return (feature.elements ?? []).flatMap((scenario) => {
+      const rowCodes = scenario.line === undefined ? [] : claimCodesAt(place, scenario.line);
+      return observationsOfScenario(scenario, place, rowCodes);
+    });
+  });
 }

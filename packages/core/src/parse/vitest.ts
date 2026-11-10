@@ -1,8 +1,7 @@
-import type { EvidenceObservation } from "../model.js";
+import { claimCodeCitationsIn } from "../domain/claimCodes.js";
+import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
+import { nearestCitation, neverRanObservation, resultOfRun, TEST_REPORT_KIND, type RunResult } from "../domain/postEvidenceObservation.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
-import { claimCodeCitationsOf } from "../lib/claimCodeCitation.js";
-import { attributionOf } from "../domain/attribution.js";
-import { evidenceOfRunResult, fallbackLayerOf, type RunResult } from "../domain/journal.js";
 
 export interface VitestJsonReport {
   readonly testResults?: ReadonlyArray<{
@@ -17,46 +16,23 @@ export interface VitestJsonReport {
   }>;
 }
 
-export function parseVitestEvidenceObservations(report: VitestJsonReport, root?: string): EvidenceObservation[] {
-  const layer = fallbackLayerOf("test-results");
-  const results: EvidenceObservation[] = [];
-  for (const file of report.testResults ?? []) {
-    const locator = file.name && relativizeToRoot(file.name, root);
-    const assertions = file.assertionResults ?? [];
-    if (file.status === "failed" && assertions.length === 0) {
-      const evidence = evidenceOfRunResult("never-reached-its-assertions")!;
-      results.push({
-        qualityCheckKind: layer,
-        claimCode: null,
-        status: evidence.status,
-        locator,
-        neverRan: evidence.neverRan,
-        message: file.message,
-      });
-      continue;
-    }
-    for (const assertion of assertions) {
-      const evidence = evidenceOfRunResult(runResultOf(assertion.status));
-      if (evidence === undefined) continue;
-      const { claimCode, severalCodes } = attributionOf(citingCodesOf(assertion));
-      results.push({
-        qualityCheckKind: layer,
-        claimCode,
-        status: evidence.status,
-        locator,
-        testName: assertion.fullName ?? assertion.title,
-        ...(severalCodes ? { notes: [{ kind: "several-claim-codes" as const, codes: severalCodes }] } : {}),
-      });
-    }
-  }
-  return results;
-}
-
-function citingCodesOf(assertion: { readonly title?: string; readonly fullName?: string }): string[] {
-  const leafCodes = claimCodeCitationsOf(assertion.title ?? "");
-  return leafCodes.length > 0 ? leafCodes : claimCodeCitationsOf(assertion.fullName ?? "");
-}
-
 function runResultOf(status: string | undefined): RunResult {
   return status === "passed" || status === "failed" ? status : "inconclusive";
+}
+
+export function parseVitestEvidenceObservations(report: VitestJsonReport, root?: string): EvidenceObservation[] {
+  return (report.testResults ?? []).flatMap((file): EvidenceObservation[] => {
+    const place = relativizeToRoot(file.name ?? "", root);
+    const assertions = file.assertionResults ?? [];
+    if (file.status === "failed" && assertions.length === 0) {
+      return [neverRanObservation(TEST_REPORT_KIND, place, file.message)];
+    }
+    return assertions.flatMap((assertion): EvidenceObservation[] => {
+      const result = resultOfRun(runResultOf(assertion.status));
+      if (result === undefined) return [];
+      const cites = nearestCitation([claimCodeCitationsIn(assertion.title ?? ""), claimCodeCitationsIn(assertion.fullName ?? "")]);
+      const name = assertion.fullName ?? assertion.title;
+      return [{ cites, result, kind: TEST_REPORT_KIND, place, notes: [], ...(name === undefined ? {} : { name }) }];
+    });
+  });
 }

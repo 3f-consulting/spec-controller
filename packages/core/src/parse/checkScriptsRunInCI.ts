@@ -1,5 +1,5 @@
 import { parse } from "yaml";
-import type { PipelineStep, PipelineStepAction, WorkflowStep } from "../domain/pipelineStep.js";
+import type { PipelineStep, PipelineStepAction, WorkflowStep } from "../domain/postEvidenceObservation.js";
 import { parseSources, type Parsed, type Source, type SourcesParse } from "./sourceParse.js";
 
 export interface PackageJsonScripts {

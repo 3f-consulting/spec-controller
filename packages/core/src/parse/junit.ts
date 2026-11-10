@@ -1,8 +1,6 @@
-import type { Layer, EvidenceObservation } from "../model.js";
-import { CLAIM_CODE } from "../domain/featureCode.js";
-import { attributionOf } from "../domain/attribution.js";
-import { claimCodeCitationsOf } from "../lib/claimCodeCitation.js";
-import { evidenceOfRunResult, fallbackLayerOf, type RunEvidence, type RunResult } from "../domain/journal.js";
+import { claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "../domain/claimCodes.js";
+import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
+import { nearestCitation, neverRanObservation, resultOfRun, TEST_REPORT_KIND, type RunResult } from "../domain/postEvidenceObservation.js";
 
 export interface JunitXmlReport {
   readonly testsuites?: {
@@ -30,142 +28,72 @@ const CLAIM_CODE_PROPERTY = "clm";
 const GO_BUILD_FAILURE_TESTCASE = "TestMain";
 const GO_BUILD_FAILURE_MARK = "[build failed]";
 
-export function parseJunitEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
-  return observationsOf(report, "failed");
-}
+const isCollectionFailure = (testcase: JunitTestcase): boolean => testcase.error !== undefined && !testcase.classname;
 
-export function parsePytestEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
-  return observationsOf(report, "never-reached-its-assertions");
-}
-
-function observationsOf(report: JunitXmlReport, errorResult: RunResult): EvidenceObservation[] {
-  const layer = fallbackLayerOf("test-results");
-  return (report.testsuites?.testsuite ?? []).flatMap((suite) =>
-    (suite.testcase ?? []).flatMap((testcase): EvidenceObservation[] => {
-      const evidence = evidenceOfRunResult(runResultOf(testcase, errorResult));
-      return evidence === undefined ? [] : [observationOf(suite, testcase, evidence, layer)];
-    })
-  );
-}
-
-function runResultOf(testcase: JunitTestcase, errorResult: RunResult): RunResult {
-  if (testcase.skipped !== undefined) return "inconclusive";
-  if (isCollectionFailure(testcase) || isBuildFailure(testcase) || isClassSetupFailure(testcase)) {
-    return "never-reached-its-assertions";
-  }
-  if (testcase.error !== undefined) return errorResult;
-  return testcase.failure === undefined ? "passed" : "failed";
-}
-
-function observationOf(
-  suite: JunitTestsuite,
-  testcase: JunitTestcase,
-  evidence: RunEvidence,
-  layer: Layer
-): EvidenceObservation {
-  if (isCollectionFailure(testcase)) return collectionFailureOf(testcase, evidence, layer);
-  if (isBuildFailure(testcase)) return buildFailureOf(suite, testcase, evidence, layer);
-  if (isClassSetupFailure(testcase)) return classSetupFailureOf(testcase, evidence, layer);
-  const { claimCode: soleCode, severalCodes } = attributionOf(citingCodesOf(testcase));
-  const claimCode = soleCode === null ? null : citedCode(soleCode);
-  const locator = `${testcase.classname}::${testcase.name}`;
-  if (evidence.neverRan) {
-    return { qualityCheckKind: layer, claimCode, status: evidence.status, locator, neverRan: evidence.neverRan, message: errorTextOf(testcase) };
-  }
-  return {
-    qualityCheckKind: layer,
-    claimCode,
-    status: evidence.status,
-    locator,
-    ...(severalCodes ? { notes: [{ kind: "several-claim-codes" as const, codes: severalCodes }] } : {}),
-  };
-}
-
-function citingCodesOf(testcase: JunitTestcase): string[] {
-  const ownCodes = [...claimCodePropertyValues(testcase), ...nameCitationsOf(testcase.name ?? "")];
-  return ownCodes.length > 0 ? ownCodes : claimCodeCitationsOf(testcase.classname ?? "").slice(-1);
-}
-
-function nameCitationsOf(name: string): string[] {
-  const segmentsLeafFirst = name.split("/").reverse();
-  return segmentsLeafFirst.map((segment) => claimCodeCitationsOf(segment)).find((codes) => codes.length > 0) ?? [];
-}
-
-function claimCodePropertyValues(testcase: JunitTestcase): string[] {
-  return (testcase.properties?.property ?? [])
-    .filter((property) => property.name === CLAIM_CODE_PROPERTY)
-    .map((property) => property.value ?? "");
-}
-
-function citedCode(value: string): string | null {
-  return CLAIM_CODE.test(value) ? value : null;
-}
-
-function isCollectionFailure(testcase: JunitTestcase): boolean {
-  return testcase.error !== undefined && !testcase.classname;
-}
-
-function collectionFailureOf(
-  testcase: JunitTestcase,
-  evidence: RunEvidence,
-  layer: Layer
-): EvidenceObservation {
-  return {
-    qualityCheckKind: layer,
-    claimCode: null,
-    status: evidence.status,
-    locator: testcase.name ?? "",
-    neverRan: evidence.neverRan,
-    message: errorTextOf(testcase),
-  };
-}
-
-function isClassSetupFailure(testcase: JunitTestcase): boolean {
-  return testcase.error !== undefined && !testcase.name;
-}
-
-function classSetupFailureOf(
-  testcase: JunitTestcase,
-  evidence: RunEvidence,
-  layer: Layer
-): EvidenceObservation {
-  return {
-    qualityCheckKind: layer,
-    claimCode: null,
-    status: evidence.status,
-    locator: testcase.classname,
-    neverRan: evidence.neverRan,
-    message: errorTextOf(testcase),
-  };
-}
-
-function isBuildFailure(testcase: JunitTestcase): boolean {
-  return !testcase.classname
-    && testcase.name === GO_BUILD_FAILURE_TESTCASE
-    && failureTextOf(testcase)?.includes(GO_BUILD_FAILURE_MARK) === true;
-}
-
-function buildFailureOf(
-  suite: JunitTestsuite,
-  testcase: JunitTestcase,
-  evidence: RunEvidence,
-  layer: Layer
-): EvidenceObservation {
-  return {
-    qualityCheckKind: layer,
-    claimCode: null,
-    status: evidence.status,
-    locator: suite.name,
-    neverRan: evidence.neverRan,
-    message: failureTextOf(testcase),
-  };
-}
+const isClassSetupFailure = (testcase: JunitTestcase): boolean => testcase.error !== undefined && !testcase.name;
 
 function failureTextOf(testcase: JunitTestcase): string | undefined {
   const failure = testcase.failure;
   return typeof failure === "object" ? failure["#text"] : failure;
 }
 
-function errorTextOf(testcase: JunitTestcase): string | undefined {
-  return testcase.error?.["#text"] ?? testcase.error?.message;
+const errorTextOf = (testcase: JunitTestcase): string | undefined => testcase.error?.["#text"] ?? testcase.error?.message;
+
+function isBuildFailure(testcase: JunitTestcase): boolean {
+  return !testcase.classname && testcase.name === GO_BUILD_FAILURE_TESTCASE && failureTextOf(testcase)?.includes(GO_BUILD_FAILURE_MARK) === true;
+}
+
+function runResultOf(testcase: JunitTestcase, errorResult: RunResult): RunResult {
+  if (testcase.error !== undefined) return errorResult;
+  return testcase.failure === undefined ? "passed" : "failed";
+}
+
+function nameCitationsOf(name: string): ClaimCode[] {
+  const segmentsLeafFirst = name.split("/").reverse();
+  return segmentsLeafFirst.map(claimCodeCitationsIn).find((codes) => codes.length > 0) ?? [];
+}
+
+function propertyCitationsOf(testcase: JunitTestcase): ClaimCode[] {
+  return (testcase.properties?.property ?? [])
+    .filter((property) => property.name === CLAIM_CODE_PROPERTY)
+    .flatMap((property) => claimCodeFrom(property.value ?? "") ?? []);
+}
+
+function citesOf(testcase: JunitTestcase): readonly ClaimCode[] {
+  return nearestCitation([
+    [...propertyCitationsOf(testcase), ...nameCitationsOf(testcase.name ?? "")],
+    claimCodeCitationsIn(testcase.classname ?? "").slice(-1),
+  ]);
+}
+
+function observationOf(suite: JunitTestsuite, testcase: JunitTestcase, errorResult: RunResult): EvidenceObservation | undefined {
+  if (testcase.skipped !== undefined) return undefined;
+  if (isCollectionFailure(testcase)) return neverRanObservation(TEST_REPORT_KIND, testcase.name ?? "", errorTextOf(testcase));
+  if (isBuildFailure(testcase)) return neverRanObservation(TEST_REPORT_KIND, suite.name ?? "", failureTextOf(testcase));
+  if (isClassSetupFailure(testcase)) return neverRanObservation(TEST_REPORT_KIND, testcase.classname ?? "", errorTextOf(testcase));
+  const result = resultOfRun(runResultOf(testcase, errorResult))!;
+  const message = result === "never-ran" ? errorTextOf(testcase) : undefined;
+  return {
+    cites: citesOf(testcase),
+    result,
+    kind: TEST_REPORT_KIND,
+    place: testcase.classname ?? "",
+    notes: [],
+    ...(testcase.name === undefined ? {} : { name: testcase.name }),
+    ...(message === undefined ? {} : { message }),
+  };
+}
+
+function observationsOf(report: JunitXmlReport, errorResult: RunResult): EvidenceObservation[] {
+  return (report.testsuites?.testsuite ?? []).flatMap((suite) =>
+    (suite.testcase ?? []).flatMap((testcase) => observationOf(suite, testcase, errorResult) ?? []),
+  );
+}
+
+export function parseJunitEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
+  return observationsOf(report, "failed");
+}
+
+export function parsePytestEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
+  return observationsOf(report, "never-reached-its-assertions");
 }
