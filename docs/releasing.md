@@ -116,8 +116,9 @@ so the run publishes exactly what you wrote. The next merge counts on from there
 - **The CLI declares no runtime dependency.** Core, `yaml` and `fast-xml-parser` are compiled into
   `dist/cli.js`, so they are devDependencies. A consumer's `npm audit` or `overrides` therefore
   never acts on a copy that does not run.
-- **`0.x` says the surface may still move.** A minor bump on `0.x` may carry a breaking change. A
-  consumer who cannot absorb one should pin exactly rather than by caret.
+- **`0.x` says the surface may still move.** Any release on `0.x` may carry a breaking change,
+  including a patch from the counter. A consumer who cannot absorb one should pin exactly rather
+  than by caret.
 - **The `./internal` subpath is never published.** The workspace offers it and `publishConfig`
   drops it at publish time, so a consumer never has it.
 
