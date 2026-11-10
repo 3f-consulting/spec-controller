@@ -75,3 +75,42 @@ describe("a report will show its Claim Reconciliations when the run had none", (
     });
   });
 });
+
+describe("neither report will have an optional section the run had nothing for", () => {
+  it.each([
+    [
+      "CLM-RPT-077",
+      "errors-in-the-inputs-heading",
+      ({ errorsInTheInputs: _absent, ...rest }: EvidenceReconciliation): EvidenceReconciliation => rest,
+      (json: EvidenceReconciliation): boolean => "errorsInTheInputs" in json,
+    ],
+    [
+      "CLM-RPT-021",
+      "run-integrity-heading",
+      ({ runIntegrity: _absent, ...rest }: EvidenceReconciliation): EvidenceReconciliation => rest,
+      (json: EvidenceReconciliation): boolean => "runIntegrity" in json,
+    ],
+    [
+      "CLM-RPT-052",
+      "step-account-heading",
+      ({ stepAccount: _absent, ...rest }: EvidenceReconciliation): EvidenceReconciliation => rest,
+      (json: EvidenceReconciliation): boolean => "stepAccount" in json,
+    ],
+    [
+      "CLM-RPT-006",
+      "out-of-balance-by-feature-heading",
+      (evidenceReconciliation: EvidenceReconciliation): EvidenceReconciliation => {
+        const { outOfBalanceByFeature: _absent, ...totals } = evidenceReconciliation.totals;
+        return { ...evidenceReconciliation, totals };
+      },
+      (json: EvidenceReconciliation): boolean => "outOfBalanceByFeature" in json.totals,
+    ],
+  ] as const)("[%s] neither report has the section %s when the run had nothing for it", (_clm, section, without, inJson) => {
+    const run = without(everySection());
+    const headings = [...headingsAt(2, renderMarkdown(run)), ...headingsAt(3, renderMarkdown(run))];
+    expect({ markdown: headings.includes(coreText(section)), json: inJson(JSON.parse(renderJson(run)) as EvidenceReconciliation) }).toEqual({
+      markdown: false,
+      json: false,
+    });
+  });
+});

@@ -36,10 +36,11 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   Rule: a report leaves out any optional section that would be empty
 
+    @unit
     Scenario Outline: neither report will have an optional section the run had nothing for
-      Given a run had no <optional section>
-      When its reports are written
-      Then neither report will have that optional section
+      given a run had no <optional section>
+      when its reports are written
+      then neither report will have that optional section
 
       Examples:
         | clm         | optional section          |
