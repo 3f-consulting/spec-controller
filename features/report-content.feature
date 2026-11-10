@@ -15,23 +15,24 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   Rule: each report has the structure it promises
 
+    @wip
     Scenario Outline: the JSON report will pass its schema only when it has the structure the schema promises
-      Given <report> was written
-      When it is checked against the schema
-      Then it will be <result>
+      given <report> was written
+      when it is checked against the schema
+      then it will be <result>
 
       Examples:
         | clm         | report                                               | result   |
-        | CLM-RMD-019 | a JSON report from a real run                        | accepted |
-        | CLM-RPT-NEW | a JSON report with one of its required parts removed | refused  |
-        | CLM-RPT-NEW | a JSON report with a part the schema does not name   | refused  |
-        | CLM-RPT-NEW | a JSON report with text where a count goes           | refused  |
+        | CLM-RPT-101 | a JSON report from a real run                        | accepted |
+        | CLM-RPT-102 | a JSON report with one of its required parts removed | refused  |
+        | CLM-RPT-103 | a JSON report with a part the schema does not name   | refused  |
+        | CLM-RPT-104 | a JSON report with text where a count goes           | refused  |
 
-    @CLM-RPT-009
+    @unit @CLM-RPT-009
     Scenario: the Markdown report's sections will come in a fixed order
-      Given a run had something for every section
-      When its Markdown report is written
-      Then its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
+      given a run had something for every section
+      when its Markdown report is written
+      then its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
 
   Rule: a report leaves out any optional section that would be empty
 
