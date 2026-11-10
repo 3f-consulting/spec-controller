@@ -14,6 +14,12 @@ export function git(cwd: string, args: readonly string[]): string {
 }
 
 
+// What git itself says when it cannot open the repository, as the allocate refusal quotes it.
+export function gitsOwnRefusal(cwd: string): { status: number | null; said: string } {
+  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd, encoding: "utf8" });
+  return { status: result.status, said: result.stderr.split("\n")[0] ?? "" };
+}
+
 export function writeInto(root: string, path: string, content: string | Buffer): void {
   mkdirSync(dirname(join(root, path)), { recursive: true });
   writeFileSync(join(root, path), content);

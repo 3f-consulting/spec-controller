@@ -1,5 +1,3 @@
-import type { FeatureAsWritten, ScenarioAsWritten } from "./postEvidenceObligation.js";
-
 export interface ClaimCode {
   readonly featureCode: string;
   readonly number: string;
@@ -30,6 +28,19 @@ export function claimCodeFrom(text: string): ClaimCode | undefined {
 
 export function retiredScenarioCodeFrom(text: string): ClaimCode | undefined {
   return codeMatching(RETIRED_SCENARIO_CODE, text);
+}
+
+interface ScenarioAsWritten {
+  readonly tags: readonly string[];
+  readonly title: string;
+  readonly rows?: readonly { readonly cell?: string }[];
+  readonly examplesTags: readonly string[];
+}
+
+interface FeatureAsWritten {
+  readonly file: string;
+  readonly featureTags: readonly string[];
+  readonly scenarios: readonly ScenarioAsWritten[];
 }
 
 export function featureCodeOfFile({ featureTags }: Pick<FeatureAsWritten, "featureTags">): string | undefined {

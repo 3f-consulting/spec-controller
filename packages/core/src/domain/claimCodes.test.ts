@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -12,6 +11,7 @@ import {
   commitAllReturningHash,
   freshDirectory,
   git,
+  gitsOwnRefusal,
   runsAsRoot,
   taken,
   withhold,
@@ -251,11 +251,6 @@ describe("the answer is one past the highest code the repository has contained",
     expect(answered.stderr).toBe(`${seen}\n`);
   });
 });
-
-function gitsOwnRefusal(cwd: string): { status: number | null; said: string } {
-  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd, encoding: "utf8" });
-  return { status: result.status, said: result.stderr.split("\n")[0] ?? "" };
-}
 
 function withheldFile(): void {
   const repo = repositoryCarrying("CLM-ONE-001");
