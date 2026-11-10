@@ -51,3 +51,9 @@ describe("a text the values cannot fill will give back the code and its values",
     expect(textFor(texts, "unknown-format", { format: "html" })).toBe("unknown-format (format: html)");
   });
 });
+
+describe("a value of null will give back the code and its values", () => {
+  it("[CLM-MSG-025] a value of null will give back the code and its values", () => {
+    expect(textFor({ "unknown-format": "The format {format} is not written." }, "unknown-format", { format: null })).toBe("unknown-format (format: null)");
+  });
+});

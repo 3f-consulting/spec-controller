@@ -1,6 +1,6 @@
 import { IntlMessageFormat } from "intl-messageformat";
 
-export type MessageValues = Readonly<Record<string, string | number>>;
+export type MessageValues = Readonly<Record<string, string | number | null>>;
 
 export type Message<Code extends string, Values extends { readonly [C in Code]?: MessageValues }> = <C extends Code>(
   code: C,

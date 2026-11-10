@@ -61,8 +61,8 @@ Feature: a message catalogue gives back the text for a code
         | CLM-MSG-005 | the text "The format {name} is not written."  |
         | CLM-MSG-024 | the text "The format {format is not written." |
 
-    @CLM-MSG-NEW
+    @unit @CLM-MSG-025
     Scenario: a value of null will give back the code and its values
-      Given the catalogue had the text "The format {format} is not written." under the code unknown-format
-      When the text for unknown-format is retrieved with format null
-      Then the text will be "unknown-format (format: null)"
+      given the catalogue had the text "The format {format} is not written." under the code unknown-format
+      when the text for unknown-format is retrieved with format null
+      then the text will be "unknown-format (format: null)"
