@@ -173,7 +173,26 @@ const COUNTED_AS: Readonly<Record<StepDisposition, keyof StepCounts>> = {
 const added = (counts: StepCounts, count: keyof StepCounts): StepCounts => ({ ...counts, stepsRead: counts.stepsRead + 1, [count]: counts[count] + 1 });
 
 export function stepAccountOf(steps: readonly PipelineStep[], dispositionOf: (step: PipelineStep) => StepDisposition): StepAccount {
-  return { jobs: [], total: { stepsRead: -1, runners: -1, reconcilerSteps: -1, nonChecks: -1, plumbing: -1, candidates: -1, accountedFor: -1 } };
+  const jobs = new Map<string, StepAccount["jobs"][number]>();
+  for (const step of steps) {
+    const key = `${step.workflow}\u0000${step.job}`;
+    const job = jobs.get(key) ?? { workflow: step.workflow, job: step.job, ...NO_STEPS };
+    jobs.set(key, { ...job, ...added(job, COUNTED_AS[dispositionOf(step)]) });
+  }
+  const ordered = [...jobs.values()].sort((a, b) => a.workflow.localeCompare(b.workflow) || a.job.localeCompare(b.job));
+  const total = ordered.reduce(
+    (sum, job): StepCounts => ({
+      stepsRead: sum.stepsRead + job.stepsRead,
+      runners: sum.runners + job.runners,
+      reconcilerSteps: sum.reconcilerSteps + job.reconcilerSteps,
+      nonChecks: sum.nonChecks + job.nonChecks,
+      plumbing: sum.plumbing + job.plumbing,
+      candidates: sum.candidates + job.candidates,
+    }),
+    NO_STEPS,
+  );
+  const accountedFor = total.runners + total.reconcilerSteps + total.nonChecks + total.plumbing + total.candidates;
+  return { jobs: ordered, total: { ...total, accountedFor } };
 }
 
 export interface RunIdentity {
