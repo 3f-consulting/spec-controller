@@ -97,7 +97,12 @@ export function runVerdictOf(
   claimReconciliations: readonly ClaimReconciliation[],
   claimCodeErrors: readonly ClaimCodeError[],
 ): RunVerdict {
-  return { verdict: "stubbed" } as unknown as RunVerdict;
+  if (qualityCheckReconciliationsOf(claimReconciliations).some(({ outcome }) => outcome === "never-ran")) {
+    return { verdict: "not-reconciled", why: "unsound" };
+  }
+  if (claimCodeErrors.length > 0) return { verdict: "not-reconciled", why: "claim-code-errors" };
+  if (claimReconciliations.length === 0) return { verdict: "not-reconciled", why: "nothing-to-reconcile" };
+  return claimReconciliations.some(isOutOfBalance) ? { verdict: "out-of-balance" } : { verdict: "balanced" };
 }
 
 function countsBy<T, K>(items: readonly T[], keyOf: (item: T) => K): { readonly key: K; readonly count: number }[] {
