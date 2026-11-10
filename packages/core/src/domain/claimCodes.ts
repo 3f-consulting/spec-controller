@@ -12,7 +12,7 @@ const CLAIM_CODE = /^CLM-([A-Z0-9]{2,5})-(\d+)$/;
 const RETIRED_SCENARIO_CODE = /^SCN-([A-Z0-9]{2,5})-(\d+)$/;
 
 export function isFeatureCode(text: string): boolean {
-  return "stubbed" as unknown as boolean;
+  return FEATURE_CODE.test(text);
 }
 
 export function sameCode(a: ClaimCode, b: ClaimCode): boolean {
