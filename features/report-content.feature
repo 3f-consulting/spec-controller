@@ -83,8 +83,8 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   Rule: the Markdown adds the words a person needs to read the data
 
-    @CLM-RPT-NEW
+    @unit @CLM-RPT-109
     Scenario: each section will have its heading, each value its label, and each table a key
-      Given a run had something for every section
-      When its Markdown report is written
-      Then each section will have its heading, each value its label, and each table a line saying what its columns mean
+      given a run had something for every section
+      when its Markdown report is written
+      then each section will have its heading, each value its label, and each table a line saying what its columns mean

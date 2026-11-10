@@ -147,3 +147,17 @@ describe("the report quotes an Evidence Observation's first line and every note"
     }).toEqual({ firstLine: 2, notes: [2, 2], laterLines: 0 });
   });
 });
+
+describe("each section will have its heading, each value its label, and each table a key", () => {
+  it("[CLM-RPT-109] each section will have its heading, each value its label, and each table a key", () => {
+    const lines = renderMarkdown(everySection())
+      .split("\n")
+      .filter((line) => line !== "");
+    const tableStarts = lines.flatMap((line, at) => (line.startsWith("|") && !(lines[at - 1] ?? "").startsWith("|") ? [at] : []));
+    const keyless = tableStarts.filter((at) => /^(#|- |\|)/.test(lines[at - 1] ?? "#"));
+    const unlabelled = lines.filter((line) => line.startsWith("- ") && !/^- [^`:]+: \S/.test(line));
+    const labels = ["target-label", "source-sha-label", "tool-sha-label", "tool-version-label", "inputs-label", "run-verdict-label"] as const;
+    const missingLabels = labels.filter((code) => !lines.some((line) => line.startsWith(`- ${coreText(code)}: `)));
+    expect({ tables: tableStarts.length, keyless, unlabelled, missingLabels }).toEqual({ tables: 7, keyless: [], unlabelled: [], missingLabels: [] });
+  });
+});
