@@ -1,5 +1,4 @@
-// CommonMark strips one space from each edge of a span when both edges are spaces, and a span
-// cannot hold an empty value or a line break, so such a text is quoted in its JSON form.
+// A span cannot hold an empty text, a line break or a space at both edges, so such a text is quoted as JSON.
 const holdsAsWritten = (text: string): boolean => text !== "" && !(text.startsWith(" ") && text.endsWith(" ")) && !/[\n\r]/.test(text);
 
 const longestBacktickRun = (text: string): number => Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
@@ -11,5 +10,4 @@ export function quoted(written: string): string {
   return `${fence}${pad}${text}${pad}${fence}`;
 }
 
-// A table splits a cell at a pipe even inside a code span, unless the pipe is escaped.
 export const inCell = (written: string): string => quoted(written).replaceAll("|", "\\|");
