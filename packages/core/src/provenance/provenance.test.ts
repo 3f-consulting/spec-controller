@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { provenanceObject } from "./provenance.js";
-import { projectProvenance } from "../assemble/composers.js";
+import { projectProvenance, renderJson } from "../assemble/composers.js";
+import { reconcile } from "../domain/evidenceReconciliation.js";
+import { __er } from "../evidenceReconciliation.test-utils.js";
+import { reportCtx } from "../render/runContext.test-utils.js";
 import type { RunContext, RunInputs } from "../domain/runProvenance.js";
 import { handedInputs } from "../runInputs.test-utils.js";
 
@@ -41,6 +44,13 @@ describe("[CLM-RPT-001] provenance records input paths portably (relative to the
   it("the markdown provenance projection carries the relativized value too (single projection)", () => {
     const facts = projectProvenance(mk({ features: "/repo/features" }, "/repo"));
     expect(facts.inputs).toContainEqual({ flag: "--features", value: "features" });
+  });
+});
+
+describe("[CLM-RPT-002] the JSON report carries a provenance object", () => {
+  it("states the tool version as unknown when the run could not read one", () => {
+    const json = JSON.parse(renderJson(__er(reconcile([], [])), { ...reportCtx, toolVersion: undefined }));
+    expect(json.runProvenance.toolVersion).toBe("unknown");
   });
 });
 

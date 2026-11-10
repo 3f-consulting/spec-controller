@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { installCrashGuards } from "./crashGuards.js";
 import { main } from "./main.js";
 import { refuse } from "./outputLocation.js";
-import { crashLine } from "./crashGuards.test-utils.js";
+import { crashLine, noVerdictLine } from "./crashGuards.test-utils.js";
 import { forgetWhatTheProgramWrote, recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
 
 interface Answered {
@@ -173,6 +173,38 @@ describe("[CLM-CLI-104] an error raised after the verdict is set keeps the verdi
       const { stderr: said } = afterTheVerdict(live(), true);
       expect(said).toBe(`${crashLine("Error", FIRST_LINE, true)}\n`);
       expect(said).not.toContain("gives no verdict");
+    });
+  });
+});
+
+describe("[CLM-CLI-105] an error raised after the run's own call, on stdout, on stderr or as an uncaught exception, ends a run with no verdict at 6", () => {
+  describe("an allocate --help run, whose stdout then meets a closed pipe", () => {
+    const argv = (): string[] => ["allocate", "--help"];
+
+    it("exits 6, because allocate gives no verdict", () => {
+      expect(afterTheVerdict(argv(), true).exitCode).toBe(6);
+    });
+
+    it("names the error on the no-verdict line alone", () => {
+      expect(afterTheVerdict(argv(), true).stderr).toBe(noVerdictLine());
+    });
+  });
+});
+
+describe("[CLM-CLI-107] a run writes at most one crash line, and never calls a refusal's code or its own 6 a verdict", () => {
+  describe.each([
+    { run: "an unknown command", argv: (): string[] => ["nosuchcommand"] },
+    { run: "a balance run refused for an unknown flag", argv: (): string[] => balance("--no-such-flag") },
+  ])("$run, whose stdout then meets a closed pipe", ({ argv }) => {
+    it("keeps the refusal's 2", () => {
+      expect(afterTheVerdict(argv(), true).exitCode).toBe(2);
+    });
+
+    it("ends on one no-verdict line, never the after-verdict line", () => {
+      const { stderr: said } = afterTheVerdict(argv(), true);
+      expect(said.endsWith(`\n${noVerdictLine()}`)).toBe(true);
+      expect(said.split(noVerdictLine())).toHaveLength(2);
+      expect(said).not.toContain(crashLine("Error", FIRST_LINE, true));
     });
   });
 });

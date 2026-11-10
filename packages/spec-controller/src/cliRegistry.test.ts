@@ -152,7 +152,7 @@ describe("[CLM-CLI-007] renderTopLevelHelp renders the commands", () => {
       message(AppMessage.HelpTitle),
       "",
       message(AppMessage.HelpUsage),
-      lines[3],
+      `  ${message(AppMessage.HelpUsageLine)}`,
       "",
       message(AppMessage.HelpCommands),
     ]);

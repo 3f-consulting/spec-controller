@@ -55,6 +55,26 @@ describe("[CLM-RPT-002] the JSON report carries a provenance object", () => {
       ],
     });
   });
+
+  it.each([
+    { flags: [], strict: false },
+    { flags: ["--strict"], strict: true },
+  ])("states whether the run was strict among the flags used ($flags)", ({ flags, strict }) => {
+    const dir = temporaryDirectory("clm-rpt-002-strict-");
+    mkdirSync(join(dir, "features"));
+    writeFileSync(join(dir, "features", "checkout.feature"), "Feature: checkout\n\n  Scenario: pay by card\n    Given a basket\n");
+    mkdirSync(join(dir, "workflows"));
+    writeFileSync(join(dir, "workflows", "ci.yml"), "jobs: {}\n");
+    const reportPath = join(dir, "spec-reconciliation.json");
+    const savedExitCode = process.exitCode;
+    try {
+      runBalance(["--features", join(dir, "features"), "--ci", join(dir, "workflows"), ...flags, "--format", `json:${reportPath}`]);
+    } finally {
+      process.exitCode = savedExitCode;
+    }
+
+    expect(JSON.parse(readFileSync(reportPath, "utf8")).runProvenance.strict).toBe(strict);
+  });
 });
 
 describe("[CLM-RPT-031] a feature file's scenarios carrying no claim code count together on one row named by that file", () => {

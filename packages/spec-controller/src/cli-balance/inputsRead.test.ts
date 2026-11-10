@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { AppError, AppMessage } from "../messages.js";
 import { message } from "../appText.js";
@@ -127,5 +127,14 @@ describe("[CLM-CLI-085] a feature file in a subdirectory of the corpus is among 
 
   it("names the same files, in the same order, as the run judges", () => {
     expect(NODE_INPUT_READER.featureFiles(corpus)).toEqual(readFeatureSources(corpus).map(({ path }) => path));
+  });
+});
+
+describe("[CLM-CLI-017] a target with no features/ directory is reported on, never crashed over", () => {
+  it("names no feature file as read when the corpus directory is absent", () => {
+    const corpus = join(temporaryDirectory("clm-cli-017-reader-"), "features");
+    expect(existsSync(corpus)).toBe(false);
+
+    expect(NODE_INPUT_READER.featureFiles(corpus)).toEqual([]);
   });
 });

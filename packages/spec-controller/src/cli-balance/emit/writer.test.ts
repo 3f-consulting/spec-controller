@@ -97,6 +97,17 @@ describe("[CLM-FMT-008] a file destination that cannot be written is refused on 
     });
   }
 
+  it("refuses a destination that opens but then fails the write, naming it and ENOSPC, on one line with no stack trace", ({ skip }) => {
+    skip(!existsSync("/dev/full"));
+
+    expect(usageStatusOf(() => writeOutputs(toFile("/dev/full"), payloads, processStdout, []))).toBe(2);
+    const refusal = whatTheProgramWrote().stderr;
+    expect(refusal).toContain("/dev/full");
+    expect(refusal).toContain("ENOSPC");
+    expect(refusal.trimEnd().split("\n")).toHaveLength(1);
+    expect(refusal).not.toMatch(/^\s+at /m);
+  });
+
   it("still writes a destination it can write, overwriting what was there", () => {
     const path = join(scratch, "earlier.json");
     writeFileSync(path, "earlier\n");

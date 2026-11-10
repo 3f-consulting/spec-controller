@@ -1,8 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { parseHostInvocation } from "./host.js";
+import { main } from "./main.js";
 import { AppError, AppMessage } from "./messages.js";
 import { message } from "./appText.js";
+import { recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
 import { withShownRefusal } from "./shownText.test-utils.js";
+
+recordWhatTheProgramWrites();
 
 const HOST_MODIFIER = /--store|--run-id|host modifier/;
 
@@ -23,6 +27,14 @@ describe("[CLM-CLI-060] a flag given before the command is refused as a flag out
       const inv = withShownRefusal(parseHostInvocation(argv));
       expect(inv.refusal).not.toMatch(HOST_MODIFIER);
       expect(inv).toEqual({ commandArgs: [], refusal: flagBeforeCommand(flag) });
+    });
+
+    it(`refuses ${row} through the command line: ends on the usage code, writes nothing to stdout, and names the flag on stderr`, () => {
+      main(argv);
+      const written = whatTheProgramWrote();
+      expect(written.exitCode).toBe(2);
+      expect(written.stdout).toBe("");
+      expect(written.stderr).toContain(message(AppError.FlagBeforeCommand, { flag }));
     });
   }
 });

@@ -362,6 +362,14 @@ describe("[CLM-CLI-075] checkInputPaths refuses a path that is not the kind its 
     expect(error).toContain("EISDIR");
   });
 
+  it("runBalance refuses CI workflows holding a directory named as a workflow file at exit 2, naming --ci and the entry, reconciling nothing", () => {
+    const { features, ci } = targetOnDisk();
+    mkdirSync(join(ci, "x.yml"));
+    const refusal = message(AppError.CouldNotBeRead, { subject: message(AppMessage.FlaggedWorkflows, { flag: "--ci" }), path: join(ci, "x.yml"), reason: "EISDIR" });
+
+    expectRefused(captured(["--features", features, "--ci", ci]), refusal.slice(0, -")".length));
+  });
+
   it("names the entry when the directory given to --junit holds a directory named as a JUnit report, never passing it as holding no report", () => {
     const dir = temporaryDirectory("junit-directory-named-as-report-");
     mkdirSync(join(dir, "TEST-example.NestedTest.xml"));
