@@ -21,6 +21,23 @@ export interface ConfigurationRead {
   readonly errors: readonly ConfigurationError[];
 }
 
-export function targetConfigurationOf(_block: unknown, _stepsRead: readonly PipelineStep[]): ConfigurationRead {
-  return { configuration: { runners: {}, notChecks: [], deferralTags: ["unread"] }, errors: [] };
+const isBlock = (value: unknown): value is Readonly<Record<string, unknown>> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const stringsIn = (value: unknown): string[] => (Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : []);
+
+// A workflow's file name may hold a colon, so the job and step are split off from the right.
+function notCheckOf(entry: string): NotCheck {
+  const beforeStep = entry.lastIndexOf(":");
+  const beforeJob = entry.lastIndexOf(":", beforeStep - 1);
+  return { workflow: entry.slice(0, beforeJob), job: entry.slice(beforeJob + 1, beforeStep), step: entry.slice(beforeStep + 1) };
+}
+
+export function targetConfigurationOf(block: unknown, _stepsRead: readonly PipelineStep[]): ConfigurationRead {
+  if (!isBlock(block)) return { configuration: { runners: {}, notChecks: [], deferralTags: [] }, errors: [] };
+  const runners = isBlock(block.runners) ? (block.runners as TargetConfiguration["runners"]) : {};
+  return {
+    configuration: { runners, notChecks: stringsIn(block.notChecks).map(notCheckOf), deferralTags: stringsIn(block.deferralTags) },
+    errors: [],
+  };
 }
