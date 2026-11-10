@@ -29,7 +29,7 @@ export function claimCodeFrom(text: string): ClaimCode | undefined {
 }
 
 export function retiredScenarioCodeFrom(text: string): ClaimCode | undefined {
-  return { featureCode: "stubbed", number: text };
+  return codeMatching(RETIRED_SCENARIO_CODE, text);
 }
 
 export function featureCodeOfFile({ featureTags }: Pick<FeatureAsWritten, "featureTags">): string | undefined {
