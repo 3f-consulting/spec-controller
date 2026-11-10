@@ -41,9 +41,9 @@ Feature: balance reads and validates the configuration settings in the specContr
         | CLM-RPT-078 | "ci.yml:ci:No such step" in notChecks, with ci.yml read | not-checks-entry-matches-no-step |
         | CLM-RPT-087 | "Install dependencies" in notChecks                     | not-checks-entry-not-a-step-name |
 
-    @CLM-CFG-NEW
+    @unit @CLM-CFG-017
     Scenario: the run will still reach its run verdict, using the configuration settings it could use
-      Given the specController block had "unit": 3 and "integration": "cucumber-js" under runners
-      When balance reconciles the target
-      Then the run will reach its run verdict
-      And cucumber-js will be what runs the integration layer
+      given the specController block had "unit": 3 and "integration": "cucumber-js" under runners
+      when balance reconciles the target
+      then the run will reach its run verdict
+      and cucumber-js will be what runs the integration layer

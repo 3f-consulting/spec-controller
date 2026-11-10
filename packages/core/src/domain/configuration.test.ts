@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { targetConfigurationFrom } from "../parse/targetManifest.js";
+import { claimReconciliationsOf } from "./claimReconciliation.js";
 import type { TargetConfiguration } from "./configuration.js";
+import { runVerdictOf } from "./evidenceReconciliation.js";
 
 const NOTHING: TargetConfiguration = { runners: {}, notChecks: [], deferralTags: [] };
 
@@ -20,5 +22,13 @@ describe("balance turns each configuration setting into its internal setting", (
     ["CLM-CFG-006", undefined, NOTHING],
   ])("[%s] the setting %j becomes its internal setting", (_clm, specController, configuration) => {
     expect(targetConfigurationFrom({ specController }).configuration).toEqual(configuration);
+  });
+});
+
+describe("the run will still reach its run verdict, using the configuration settings it could use", () => {
+  it("[CLM-CFG-017] the run will still reach its run verdict, using the configuration settings it could use", () => {
+    const { configuration } = targetConfigurationFrom({ specController: { runners: { unit: 3, integration: "cucumber-js" } } });
+    const runVerdict = runVerdictOf(claimReconciliationsOf([], []), []);
+    expect({ reached: runVerdict.verdict !== undefined, runners: configuration.runners }).toEqual({ reached: true, runners: { integration: "cucumber-js" } });
   });
 });
