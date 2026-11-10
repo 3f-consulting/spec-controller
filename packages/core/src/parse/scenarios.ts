@@ -6,6 +6,7 @@ import { parseSources, type Parsed, type Source, type SourcesParse } from "./sou
 
 interface FeatureFileContent {
   readonly scenarios: readonly ScenarioAsWritten[];
+  readonly tagFormWords: readonly string[];
 }
 
 export type ParsedFeatureFile = Parsed<FeatureFileContent>;
@@ -38,8 +39,12 @@ function scenariosIn(children: readonly (FeatureChild | RuleChild)[]): ScenarioA
   });
 }
 
-function contentOf({ feature }: GherkinDocument): FeatureFileContent {
-  return { scenarios: scenariosIn(feature?.children ?? []) };
+const TAG_FORM_WORD = /@([^\s@]+)/g;
+
+const tagFormWordsIn = (source: string): string[] => [...source.matchAll(TAG_FORM_WORD)].map((match) => match[1]!);
+
+function contentOf({ feature }: GherkinDocument, source: string): FeatureFileContent {
+  return { scenarios: scenariosIn(feature?.children ?? []), tagFormWords: tagFormWordsIn(source) };
 }
 
 export function parseFeatureCorpus(sources: readonly Source[]): SourcesParse<FeatureFileContent> {
