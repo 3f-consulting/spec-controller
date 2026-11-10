@@ -1,4 +1,4 @@
-import { sameCode } from "./claimCodes.js";
+import { sameCode, type ClaimCode } from "./claimCodes.js";
 import type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
 import { claimPostedTo, type EvidenceObservation, type PhantomClaim, type UnnamedClaim } from "./postEvidenceObservation.js";
 
@@ -104,9 +104,31 @@ function filedUnder(claim: Claim, phantoms: PhantomClaim[], unnamed: UnnamedClai
   return phantom;
 }
 
+const KIND_ORDER: readonly QualityCheckKind[] = ["unit", "integration", "e2e", "performance", "fitness"];
+
+const kindRank = ({ kind }: QualityCheckReconciliation): number => (kind === undefined ? -1 : KIND_ORDER.indexOf(kind));
+
+const codeText = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
+
+function recorded({ observation }: QualityCheckReconciliation): string[] {
+  if (observation === undefined) return [];
+  const { place, cites, name = "", message = "", result, notes } = observation;
+  return [place, cites.map(codeText).join(" "), name, message, result, ...notes];
+}
+
+function compareRecords(a: readonly string[], b: readonly string[]): number {
+  const at = a.findIndex((text, index) => text !== b[index]);
+  if (at === -1 || at >= b.length) return a.length - b.length;
+  return a[at]! < b[at]! ? -1 : 1;
+}
+
+function inOrder(a: QualityCheckReconciliation, b: QualityCheckReconciliation): number {
+  return kindRank(a) - kindRank(b) || compareRecords(recorded(a), recorded(b));
+}
+
 function reconciliationOf(claim: Claim, lines: readonly QualityCheckReconciliation[]): ClaimReconciliation {
   const verdict = lines.every(({ outcome }) => outcome === "satisfied") ? "balanced" : "out-of-balance";
-  return { claim, qualityCheckReconciliations: lines, verdict };
+  return { claim, qualityCheckReconciliations: [...lines].sort(inOrder), verdict };
 }
 
 export function claimReconciliationsOf(
