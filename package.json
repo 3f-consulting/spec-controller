@@ -51,7 +51,6 @@
     "@cucumber/cucumber": "^12.9.0",
     "@cucumber/gherkin": "^41.0.0",
     "@eslint/json": "2.1.1",
-    "@formatjs/icu-messageformat-parser": "3.5.22",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",

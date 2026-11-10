@@ -1,54 +1,18 @@
-import { bareTerms } from "../lib/bareTerm.js";
-import { deferralTagsExtendedBy } from "../domain/pendingItems.js";
-import {
-  targetConfigurationOf,
-  type ConfigurationTranslation,
-  type RunnerLayers,
-  type TargetConfiguration,
-} from "../domain/targetConfiguration.js";
-import type { WrongKindEntry } from "../domain/evidenceReconciliation.js";
+import { targetConfigurationOf, type ConfigurationRead, type SettingNames } from "../domain/configuration.js";
+import type { PipelineStep } from "../domain/postEvidenceObservation.js";
+import { bareTerm } from "../lib/bareTerm.js";
 
-const SPEC_CONTROLLER_BLOCK: ConfigurationTranslation = {
-  place: "specController",
-  entries: {
-    runners: "runners",
-    notChecks: "nonChecks",
-    deferralTags: "deferralTags",
-  },
+const SPEC_CONTROLLER_BLOCK: SettingNames = {
+  block: "specController",
+  settings: { runners: "runners", notChecks: "nonChecks", deferralTags: "deferralTags" },
 };
 
-const configured = (packageJson: { specController?: unknown }): TargetConfiguration =>
-  targetConfigurationOf(packageJson.specController, SPEC_CONTROLLER_BLOCK);
-
-export function resolveNotChecks(packageJson: {
-  specController?: { notChecks?: unknown };
-}): readonly string[] {
-  return configured(packageJson).nonChecks;
+// A deferral tag may be written with its at-sign or spaces around it; the domain takes the bare term.
+function withBareDeferralTags(block: unknown): unknown {
+  if (typeof block !== "object" || block === null || !("deferralTags" in block) || !Array.isArray(block.deferralTags)) return block;
+  return { ...block, deferralTags: block.deferralTags.map((tag: unknown) => (typeof tag === "string" ? bareTerm(tag) : tag)) };
 }
 
-export function resolveDeferralTags(
-  packageJson: {
-    specController?: { deferralTags?: unknown };
-  },
-  starterTags: readonly string[]
-): readonly string[] {
-  return deferralTagsExtendedBy(starterTags, bareTerms(configured(packageJson).deferralTerms));
-}
-
-export type ResolvedRunners = RunnerLayers;
-
-export function resolveRunners(packageJson: {
-  specController?: { runners?: unknown };
-}): ResolvedRunners {
-  return configured(packageJson).runners;
-}
-
-export interface ConfigurationNotRead {
-  readonly wrongKinds: readonly WrongKindEntry[];
-  readonly unknownKeys: readonly string[];
-}
-
-export function configurationNotRead(packageJson: { specController?: unknown }): ConfigurationNotRead {
-  const { wrongKinds, unknownKeys } = configured(packageJson);
-  return { wrongKinds, unknownKeys };
+export function targetConfigurationFrom(packageJson: { readonly specController?: unknown }, stepsRead: readonly PipelineStep[] = []): ConfigurationRead {
+  return targetConfigurationOf(withBareDeferralTags(packageJson.specController), SPEC_CONTROLLER_BLOCK, stepsRead);
 }

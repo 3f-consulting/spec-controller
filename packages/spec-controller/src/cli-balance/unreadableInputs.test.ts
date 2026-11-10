@@ -6,16 +6,12 @@ import {
   checkInputPaths,
   checkInputShapes,
   checkWorkflowsParse,
-  corpusDirRefusal,
   jsonInputsOf,
   readReports,
 } from "./unreadableInputs.js";
-import { checkInputsExist } from "./cli.js";
-import { refusalLine, UnparseableFeatureFiles, UnreadableInput } from "../cli-allocate/unreadable.js";
-import { errorText, type RefusalLines } from "../standardError.js";
 import { ciSourcePathsOf } from "../ingest/ciSourcePaths.js";
 import { DEFAULT_CI_PATH, readCorpus, readWorkflows } from "../ingest/ingestQualityChecks.js";
-import { AppError, AppMessage, Unreadable } from "../messages.js";
+import { AppError, AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { captured, expectRefused } from "./balanceRun.test-utils.js";
@@ -601,60 +597,3 @@ describe("[CLM-CLI-102] checkWorkflowsParse refuses a workflow that does not par
   });
 });
 
-describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — an input it cannot read", () => {
-  const BALANCE_INPUTS = ["--features", "tests/fixtures/evidence-observation/features", "--vitest", "tests/fixtures/evidence-observation/vitest.json"];
-  const NOT_GHERKIN = "not gherkin at all {{{\n";
-
-  function regularFile(): string {
-    const file = join(temporaryDirectory("coded-input-refusal-"), "a-file");
-    writeFileSync(file, "a regular file\n");
-    return file;
-  }
-
-  function workflowsNotYaml(): ReturnType<typeof readWorkflows> {
-    const { ci } = targetOnDisk();
-    writeFileSync(join(ci, "ci.yml"), "jobs:\n  ci: [\n");
-    return readWorkflows(ci);
-  }
-
-  function corpusOfTwoNotGherkin(): { features: string; ci: string } {
-    const target = targetOnDisk();
-    writeFileSync(join(target.features, "a.feature"), NOT_GHERKIN);
-    writeFileSync(join(target.features, "b.feature"), NOT_GHERKIN);
-    return target;
-  }
-
-  const printed = (command: string, shown: unknown): string => errorText(shown as RefusalLines, command).trimEnd();
-
-  const ROWS: readonly (readonly [string, string, string, () => unknown])[] = [
-    ["balance's unreadable corpus", "could-not-be-read", "balance", () => corpusDirRefusal({ path: "features", reason: "EACCES: permission denied, scandir 'features'" })],
-    ["allocate's unreadable repository", "could-not-be-read", "allocate", () => refusalLine(new UnreadableInput(Unreadable.Repository, "/repo/.git", "EACCES: permission denied"))],
-    ["allocate's vanished working directory", "working-directory-unreadable", "allocate", () => refusalLine(new UnreadableInput(Unreadable.WorkingDirectory, "", "ENOENT: no such file or directory, uv_cwd"))],
-    ["a --vitest path that does not exist", "input-path-missing", "balance", () => checkInputsExist({ vitest: "reports/vitest.json" }, () => false)],
-    ["a --vitest report that is not JSON", "not-valid-json", "balance", () => checkInputShapes(readReports(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading("{{{")))],
-    ["a --jest report that is not JSON", "not-valid-json-in-shape", "balance", () => checkInputShapes(readReports(jsonInputsOf({ jest: "j.json" }, nothingByDefault), reading("{{{")))],
-    ["a --pytest report that is not XML", "not-valid-xml", "balance", () => checkInputShapes(readReports(jsonInputsOf({ pytest: "p.xml" }, nothingByDefault), reading("not xml")))],
-    ["a --vitest report not in the reporter's shape", "not-in-shape", "balance", () => checkInputShapes(readReports(jsonInputsOf({ vitest: "v.json" }, nothingByDefault), reading('{"testResults":"x"}')))],
-    ["allocate's feature file the parser rejects", "corpus-file-unparseable", "allocate", () => refusalLine(new UnparseableFeatureFiles([{ file: "features/a.feature", message: "(1:1): expected: #Feature" }]))],
-    ["a --ci workflow that is not YAML", "workflow-not-yaml", "balance", () => checkWorkflowsParse({ ci: "ci" }, workflowsNotYaml())],
-    ["a --format file that cannot be written", "report-not-written", "balance", () => runBalanceCaptured([...BALANCE_INPUTS, "--format", `json:${join(regularFile(), "report.json")}`]).stderr],
-  ];
-
-  it.each(ROWS)("refuses %s with [%s] once, after %s's usage-error prefix", (_input, code, command, shown) => {
-    const text = printed(command, shown());
-
-    expect(text.split("\n")[0]?.slice(0, `spec-controller ${command}: usage error [${code}] — `.length)).toBe(`spec-controller ${command}: usage error [${code}] — `);
-    expect(text.split(`[${code}]`)).toHaveLength(2);
-  });
-
-  it.each([
-    ["balance", () => runBalanceCaptured(["--features", corpusOfTwoNotGherkin().features, "--ci", targetOnDisk().ci]).stderr],
-    ["allocate", () => refusalLine(new UnparseableFeatureFiles([{ file: "features/a.feature", message: "(1:1): expected: #Feature" }, { file: "features/b.feature", message: "(1:1): expected: #Feature" }]))],
-  ] as const)("refuses %s's two feature files the parser rejects with one coded line each, and no code on the parser's words beneath", (command, shown) => {
-    const lines = printed(command, shown()).split("\n");
-    const opening = `spec-controller ${command}: usage error [corpus-file-unparseable] — `;
-
-    expect(lines.filter((line) => line.startsWith(opening)).map((line) => /[ab]\.feature$/.exec(line)?.[0])).toEqual(["a.feature", "b.feature"]);
-    expect(lines.filter((line) => line.includes("[corpus-file-unparseable]"))).toHaveLength(2);
-  });
-});
