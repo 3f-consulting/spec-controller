@@ -13,7 +13,6 @@ export function git(cwd: string, args: readonly string[]): string {
   return result.stdout;
 }
 
-
 // What git itself says when it cannot open the repository, as the allocate refusal quotes it.
 export function gitsOwnRefusal(cwd: string): { status: number | null; said: string } {
   const result = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd, encoding: "utf8" });
@@ -47,12 +46,9 @@ export function repositoryHeadedOneCarrying003(prefix: string, files: Readonly<R
   return repo;
 }
 
-
-
 export function freshDirectory(prefix: string): string {
   return realpathSync(temporaryDirectory(prefix));
 }
-
 
 // The test file that withholds modes here restores them in its own hook.
 export const taken: Array<() => void> = [];
@@ -62,6 +58,5 @@ export function withhold(path: string, mode: number): void {
   chmodSync(path, mode);
   taken.push(() => chmodSync(path, before));
 }
-
 
 export const runsAsRoot = (): boolean => process.getuid?.() === 0;

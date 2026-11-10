@@ -3,11 +3,17 @@ export interface ClaimCode {
   readonly number: string;
 }
 
-const FEATURE_CODE = /^[A-Z0-9]{2,5}$/;
+const CLAIM_CODE_PREFIX = "CLM";
 
-const CLAIM_CODE = /^CLM-([A-Z0-9]{2,5})-(\d+)$/;
+const RETIRED_SCENARIO_CODE_PREFIX = "SCN";
 
-const RETIRED_SCENARIO_CODE = /^SCN-([A-Z0-9]{2,5})-(\d+)$/;
+const FEATURE_CODE_FORM = "[A-Z0-9]{2,5}";
+
+const FEATURE_CODE = new RegExp(`^${FEATURE_CODE_FORM}$`);
+
+const CLAIM_CODE = new RegExp(`^${CLAIM_CODE_PREFIX}-(${FEATURE_CODE_FORM})-(\\d+)$`);
+
+const RETIRED_SCENARIO_CODE = new RegExp(`^${RETIRED_SCENARIO_CODE_PREFIX}-(${FEATURE_CODE_FORM})-(\\d+)$`);
 
 export function isFeatureCode(text: string): boolean {
   return FEATURE_CODE.test(text);
@@ -88,7 +94,7 @@ export type ClaimCodeError =
   | SeveralClaimCodesError
   | ClaimCodeBesideClmColumnError;
 
-const written = ({ featureCode, number }: ClaimCode): string => `CLM-${featureCode}-${number}`;
+const written = ({ featureCode, number }: ClaimCode): string => `${CLAIM_CODE_PREFIX}-${featureCode}-${number}`;
 
 const claimCodesIn = (words: readonly string[]): ClaimCode[] => words.flatMap((word) => claimCodeFrom(word) ?? []);
 
@@ -145,7 +151,7 @@ export function claimCodeErrorsOf(features: readonly FeatureAsWritten[]): ClaimC
   ];
 }
 
-const CITATION = /\[(CLM-[A-Z0-9]{2,5}-\d+)\]/g;
+const CITATION = new RegExp(`\\[(${CLAIM_CODE_PREFIX}-${FEATURE_CODE_FORM}-\\d+)\\]`, "g");
 
 export function claimCodeCitationsIn(text: string): ClaimCode[] {
   return [...text.matchAll(CITATION)].flatMap((match) => claimCodeFrom(match[1]!) ?? []);
@@ -183,13 +189,13 @@ export interface UnknownFeatureCode {
   readonly featureCodes: readonly string[];
 }
 
-// A number a retired scenario code had is never handed out again.
-const COUNTED_CODE = /(?:CLM|SCN)-([A-Z0-9]{2,5})-\d+/g;
+// Each word in a code's shape; the claim code and retired scenario code forms decide which count.
+const CODE_SHAPED = /[A-Z]+-[A-Z0-9]+-\d+/g;
 
 const NUMBER_WIDTH = 3;
 
 export function claimCodeMarksFor(featureCode: string): readonly string[] {
-  return [`CLM-${featureCode}-`, `SCN-${featureCode}-`];
+  return [`${CLAIM_CODE_PREFIX}-${featureCode}-`, `${RETIRED_SCENARIO_CODE_PREFIX}-${featureCode}-`];
 }
 
 const numberOf = (code: string): number => Number(code.slice(code.lastIndexOf("-") + 1));
@@ -202,8 +208,10 @@ function outranks(code: string, occurrence: ClaimCodeOccurrence, highest: Highes
 function highestOf(featureCode: string, occurrences: readonly ClaimCodeOccurrence[]): HighestSeen | undefined {
   let highest: HighestSeen | undefined;
   for (const occurrence of occurrences) {
-    for (const [code, counted] of occurrence.text.matchAll(COUNTED_CODE)) {
-      if (counted === featureCode && (highest === undefined || outranks(code, occurrence, highest))) highest = { code, occurrence };
+    for (const [code] of occurrence.text.matchAll(CODE_SHAPED)) {
+      // A number a retired scenario code had is never handed out again.
+      const counted = claimCodeFrom(code) ?? retiredScenarioCodeFrom(code);
+      if (counted?.featureCode === featureCode && (highest === undefined || outranks(code, occurrence, highest))) highest = { code, occurrence };
     }
   }
   return highest;
