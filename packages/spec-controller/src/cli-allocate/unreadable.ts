@@ -4,7 +4,7 @@ import { message } from "../appText.js";
 import { refusal, refusals, type Refusal } from "../refusal.js";
 import type { RefusalLines } from "../standardError.js";
 
-export const UNREADABLE_SUBJECTS: Readonly<Record<Unreadable, string>> = Object.fromEntries(
+const UNREADABLE_SUBJECTS: Readonly<Record<Unreadable, string>> = Object.fromEntries(
   Object.values(Unreadable).map((code) => [code, message(code)]),
 ) as Record<Unreadable, string>;
 

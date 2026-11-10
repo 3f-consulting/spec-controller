@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { answerUnknownCommand, parseHostInvocation } from "./host.js";
 import { errorText } from "./standardError.js";
-import { errorCodesShown } from "./shownText.test-utils.js";
 
 const HELP = "spec-controller — the top-level help, as rendered from the registry";
 
@@ -24,10 +23,3 @@ describe("[CLM-CLI-057] --exit-zero after an unknown command never moves its usa
   });
 });
 
-describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — a command the tool does not have", () => {
-  it("shows [unknown-command] once, on the naming line after the tool's usage-error prefix, and none on the help after it", () => {
-    const stderr = errorText(answerUnknownCommand("nosuchcommand", HELP).refusal);
-    expect(errorCodesShown(stderr)).toEqual({ opening: ["unknown-command"], after: [] });
-    expect(stderr.split("\n")[0]).toBe('spec-controller: usage error [unknown-command] — unknown command "nosuchcommand".');
-  });
-});

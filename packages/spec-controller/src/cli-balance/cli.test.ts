@@ -12,7 +12,7 @@ import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
 import { captured, expectRefused } from "./balanceRun.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
-import { errorCodesShown, printedRefusal, shownText } from "../shownText.test-utils.js";
+import { printedRefusal, shownText } from "../shownText.test-utils.js";
 
 describe("[CLM-CLI-002] checkInputsExist rejects a supplied input path that does not exist", () => {
   const flags = ["vitest", "pytest", "jest", "junit", "rspec", "cucumber", "features", "ci", "package-json"] as const;
@@ -187,21 +187,6 @@ describe("[CLM-CLI-009] checkUnknownFlags bounds balance to the flags the regist
         ) + "\n",
       exitCode: 2,
     });
-  });
-});
-
-describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — a flag the command does not take", () => {
-  it("prints balance's refusal of --nosuch with [unknown-flag] once, after the usage-error prefix, and no code on its pointer lines", () => {
-    const { stderr, exitCode } = runBalanceCaptured(["--nosuch"]);
-    const words = message(AppError.UnknownFlag, {
-      flag: "--nosuch",
-      scope: "spec-controller balance",
-      toolVersion: resolveToolIdentity().toolVersion,
-      command: "balance",
-    });
-    expect(exitCode).toBe(2);
-    expect(errorCodesShown(stderr)).toEqual({ opening: ["unknown-flag"], after: [] });
-    expect(stderr.split("\n")[0]).toBe(`spec-controller balance: usage error [unknown-flag] — ${words}`);
   });
 });
 

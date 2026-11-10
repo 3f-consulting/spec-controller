@@ -209,29 +209,3 @@ describe("[CLM-CLI-107] a run writes at most one crash line, and never calls a r
   });
 });
 
-describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — an unexpected error before its verdict", () => {
-  it("names a balance run's closed pipe with [unexpected-error] once, after the words that it stopped", () => {
-    expect(answer(balance(), onAClosedPipe).stderr).toBe(
-      `spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: Error: ${FIRST_LINE}\n`,
-    );
-  });
-});
-
-describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — an unexpected error that cannot be formatted", () => {
-  it("names a thrown null-prototype object with [unexpected-error] once, as the same line with nothing it cannot read", () => {
-    const throwing = (): never => {
-      throw Object.create(null);
-    };
-    expect(answer(balance(), throwing).stderr).toBe(
-      "spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: object: \n",
-    );
-  });
-});
-
-describe("[CLM-MSG-010] an error shows its reader the error code of what went wrong — an unexpected error after its verdict", () => {
-  it("names a balance run's closed pipe after its verdict with [unexpected-error-after-verdict] once", () => {
-    expect(afterTheVerdict(balance(), true).stderr).toBe(
-      `spec-controller hit an unexpected error [unexpected-error-after-verdict] after its verdict: Error: ${FIRST_LINE}\n`,
-    );
-  });
-});

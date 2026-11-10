@@ -7,10 +7,6 @@ export type Message<Code extends string, Values extends { readonly [C in Code]?:
   ...values: C extends keyof Values ? [values: Values[C]] : []
 ) => string;
 
-// A value goes in as text, so a number is written as it was given and never grouped.
-const asText = (values: MessageValues | undefined): Record<string, string> | undefined =>
-  values === undefined ? undefined : Object.fromEntries(Object.entries(values).map(([name, value]) => [name, String(value)]));
-
 // A catalogue mistake is a development mistake, so the reader gets the code and its values rather than a stopped run.
 function withValues(code: string, values: MessageValues | undefined): string {
   const named = Object.entries(values ?? {}).map(([name, value]) => `${name}: ${String(value)}`);
@@ -28,7 +24,7 @@ export function messagesFrom<Code extends string, Values extends { readonly [C i
     if (text === undefined || text.trim() === "" || Object.values(given ?? {}).includes(null)) return withValues(code, given);
     try {
       return new IntlMessageFormat(text, "en", undefined, { ignoreTag: true })
-        .formatToParts<never>(asText(given))
+        .formatToParts<never>(given)
         .map((part) => part.value)
         .join("");
     } catch {
