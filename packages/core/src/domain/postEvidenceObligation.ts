@@ -1,4 +1,4 @@
-import type { ClaimCode } from "./claimCodes.js";
+import { claimCodeFrom, type ClaimCode } from "./claimCodes.js";
 
 export type QualityCheckKind = "fitness" | "unit" | "integration" | "e2e" | "performance";
 
@@ -40,11 +40,6 @@ function isDeferred(tags: readonly string[], { deferralTags, strict }: ReadingSe
   return !strict && tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));
 }
 
-function readCode(text: string): ClaimCode {
-  const [, featureCode = "", number = ""] = text.split("-");
-  return { featureCode, number };
-}
-
 const QUALITY_CHECK_KINDS: readonly QualityCheckKind[] = ["fitness", "unit", "integration", "e2e", "performance"];
 
 function obligationsRaisedBy(tags: readonly string[], strict: boolean): EvidenceObligation[] {
@@ -52,14 +47,20 @@ function obligationsRaisedBy(tags: readonly string[], strict: boolean): Evidence
   return QUALITY_CHECK_KINDS.filter(raises).map((kind) => ({ kind }));
 }
 
-function claimOf(file: string, scenario: ScenarioAsWritten, strict: boolean, code: string | undefined): ExecutableClaim {
-  return { file, title: scenario.title, obligations: obligationsRaisedBy(scenario.tags, strict), ...(code === undefined ? {} : { claimCode: readCode(code) }) };
+function claimOf(file: string, scenario: ScenarioAsWritten, strict: boolean, claimCode: ClaimCode | undefined): ExecutableClaim {
+  return { file, title: scenario.title, obligations: obligationsRaisedBy(scenario.tags, strict), ...(claimCode && { claimCode }) };
+}
+
+function claimCodesIn(tags: readonly string[]): ClaimCode[] {
+  return tags.flatMap((tag) => claimCodeFrom(tag.slice(1)) ?? []);
 }
 
 function claimsOf(file: string, scenario: ScenarioAsWritten, settings: ReadingSettings): ExecutableClaim[] {
   if (isDeferred(scenario.tags, settings)) return [];
-  if (scenario.rows) return scenario.rows.map((row) => claimOf(file, scenario, settings.strict, row.cell));
-  return [claimOf(file, scenario, settings.strict, scenario.tags.find((tag) => tag.startsWith("@CLM-"))?.slice(1))];
+  const codes = claimCodesIn(scenario.tags);
+  const claim = (claimCode: ClaimCode | undefined): ExecutableClaim => claimOf(file, scenario, settings.strict, claimCode);
+  if (scenario.rows) return codes.length > 0 ? [] : scenario.rows.map((row) => claim(claimCodeFrom(row.cell ?? "")));
+  return codes.length > 1 ? [] : [claim(codes[0])];
 }
 
 export function executableClaimsOf(features: readonly FeatureAsWritten[], settings: ReadingSettings): ExecutableClaim[] {
