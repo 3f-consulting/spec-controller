@@ -34,6 +34,12 @@ export interface ReadingSettings {
   readonly strict: boolean;
 }
 
+const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["@wip", "@ignore", "@skip", "@todo", "@pending"];
+
+function isDeferred(tags: readonly string[], { deferralTags }: ReadingSettings): boolean {
+  return tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));
+}
+
 function readCode(text: string): ClaimCode {
   const [, featureCode = "", number = ""] = text.split("-");
   return { featureCode, number };
@@ -43,11 +49,12 @@ function claimOf(file: string, scenario: ScenarioAsWritten, code: string | undef
   return { file, title: scenario.title, obligations: [], ...(code === undefined ? {} : { claimCode: readCode(code) }) };
 }
 
-function claimsOf(file: string, scenario: ScenarioAsWritten): ExecutableClaim[] {
+function claimsOf(file: string, scenario: ScenarioAsWritten, settings: ReadingSettings): ExecutableClaim[] {
+  if (isDeferred(scenario.tags, settings)) return [];
   if (scenario.rows) return scenario.rows.map((row) => claimOf(file, scenario, row.cell));
   return [claimOf(file, scenario, scenario.tags.find((tag) => tag.startsWith("@CLM-"))?.slice(1))];
 }
 
 export function executableClaimsOf(features: readonly FeatureAsWritten[], settings: ReadingSettings): ExecutableClaim[] {
-  return features.flatMap(({ file, scenarios }) => scenarios.flatMap((scenario) => claimsOf(file, scenario)));
+  return features.flatMap(({ file, scenarios }) => scenarios.flatMap((scenario) => claimsOf(file, scenario, settings)));
 }
