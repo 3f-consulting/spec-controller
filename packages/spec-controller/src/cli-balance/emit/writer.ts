@@ -60,9 +60,7 @@ function reportOf(output: PlannedOutput): Unwritable {
   return { kind: "report", format: output.fmt };
 }
 
-function emit(_output: PlannedOutput, _text: string): void {}
-
-function emitted(output: PlannedOutput, text: string): void {
+function emit(output: PlannedOutput, text: string): void {
   const dest = output.dest;
   if (dest.kind === "stdout") {
     process.stdout.write(text);
