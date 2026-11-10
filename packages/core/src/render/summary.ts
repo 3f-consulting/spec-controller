@@ -32,14 +32,14 @@ function totalsTable({ claimReconciliations, qualityCheckReconciliations, eviden
 }
 
 function stepAccountLines({ jobs, total }: StepAccount): string[] {
-  const counts = ({ stepsRead, runners, reconcilerSteps, nonChecks, plumbing, candidates }: StepAccount["total"]): string[] =>
+  const counts = ({ stepsRead, runners, reconcilerSteps, nonChecks, plumbing, candidates }: Omit<StepAccount["total"], "accountedFor">): string[] =>
     [stepsRead, runners, reconcilerSteps, nonChecks, plumbing, candidates].map(String);
   const header = ["workflow-column", "job-column", "steps-read-column", "runners-column", "reconciler-steps-column", "non-checks-column", "plumbing-column", "candidates-column"] as const;
   return [
     heading(3, "step-account-heading"),
     coreText("step-account-key"),
     table(header.map(coreText), [
-      ...jobs.map((job) => [inCell(job.workflow), inCell(job.job), ...counts({ ...job, accountedFor: 0 })]),
+      ...jobs.map((job) => [inCell(job.workflow), inCell(job.job), ...counts(job)]),
       [coreText("step-account-total"), "", ...counts(total)],
     ]),
     labelled("accounted-for-label", String(total.accountedFor)),

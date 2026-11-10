@@ -60,5 +60,12 @@
   "verdict-label": "Verdict",
   "unnamed-claim": "The unnamed claim",
   "phantom-claim-label": "Claim",
-  "phantom-claim": "a code no executable claim has"
+  "phantom-claim": "a code no executable claim has",
+  "files-label": "Files",
+  "feature-code-label": "Feature code",
+  "claim-code-label": "Claim code",
+  "named-feature-code-label": "Feature code it names",
+  "named-feature-files-label": "Files with that feature code",
+  "scenario-label": "Scenario",
+  "codes-label": "Codes"
 }

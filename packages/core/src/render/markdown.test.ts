@@ -158,6 +158,13 @@ describe("each section will have its heading, each value its label, and each tab
     const unlabelled = lines.filter((line) => line.startsWith("- ") && !/^- [^`:]+: \S/.test(line));
     const labels = ["target-label", "source-sha-label", "tool-sha-label", "tool-version-label", "inputs-label", "run-verdict-label"] as const;
     const missingLabels = labels.filter((code) => !lines.some((line) => line.startsWith(`- ${coreText(code)}: `)));
-    expect({ tables: tableStarts.length, keyless, unlabelled, missingLabels }).toEqual({ tables: 7, keyless: [], unlabelled: [], missingLabels: [] });
+    const unlabelledFacts = lines.filter((line) => line.startsWith("| no-feature-code ") && !line.includes(`${coreText("files-label")}: `));
+    expect({ tables: tableStarts.length, keyless, unlabelled, missingLabels, unlabelledFacts }).toEqual({
+      tables: 7,
+      keyless: [],
+      unlabelled: [],
+      missingLabels: [],
+      unlabelledFacts: [],
+    });
   });
 });

@@ -1,15 +1,28 @@
 import type { ErrorsInTheInputs } from "../domain/evidenceReconciliation.js";
-import { coreText } from "./coreText.js";
+import type { ClaimCodeError } from "../domain/claimCodes.js";
+import { coreText, type CoreTextCode } from "./coreText.js";
 import { heading } from "./heading.js";
 import { inCell } from "./quoted.js";
 import { table } from "./table.js";
 
-const about = (facts: object): string =>
-  Object.entries(facts)
-    .filter(([key]) => key !== "kind")
-    .flatMap(([, value]: [string, unknown]) => (Array.isArray(value) ? value.map(String) : [String(value)]))
-    .map(inCell)
-    .join(" ");
+type Fact = ClaimCodeError extends infer Error ? (Error extends unknown ? Exclude<keyof Error, "kind"> : never) : never;
+
+const FACT_LABEL: Readonly<Record<Fact, CoreTextCode>> = {
+  files: "files-label",
+  featureCode: "feature-code-label",
+  claimCode: "claim-code-label",
+  namedFeatureCode: "named-feature-code-label",
+  namedFeatureFiles: "named-feature-files-label",
+  scenario: "scenario-label",
+  codes: "codes-label",
+};
+
+function about(error: ClaimCodeError): string {
+  return Object.entries(error)
+    .filter((entry): entry is [Fact, string | readonly string[]] => entry[0] !== "kind")
+    .map(([fact, value]) => `${coreText(FACT_LABEL[fact])}: ${(typeof value === "string" ? [value] : value).map(inCell).join(" ")}`)
+    .join("; ");
+}
 
 export function errorsInTheInputsSection({ claimCodeErrors, configurationErrors }: ErrorsInTheInputs): string[] {
   return [
