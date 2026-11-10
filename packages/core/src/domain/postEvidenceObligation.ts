@@ -21,10 +21,12 @@ export interface ScenarioAsWritten {
   readonly tags: readonly string[];
   readonly title: string;
   readonly rows?: readonly RowAsWritten[];
+  readonly examplesTags: readonly string[];
 }
 
 export interface FeatureAsWritten {
   readonly file: string;
+  readonly featureTags: readonly string[];
   readonly scenarios: readonly ScenarioAsWritten[];
   readonly tagFormWords: readonly string[];
 }
@@ -34,7 +36,7 @@ export interface ReadingSettings {
   readonly strict: boolean;
 }
 
-const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
+export const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
 function isDeferred(tags: readonly string[], { deferralTags, strict }: ReadingSettings): boolean {
   return !strict && tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));

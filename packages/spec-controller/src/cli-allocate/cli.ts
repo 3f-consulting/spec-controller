@@ -1,15 +1,15 @@
 import { join } from "node:path";
-import { nextClaimCode, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
+import { claimCodeMarksFor, nextClaimCode, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { allocateCommand, cliRegistry, renderCommandHelp } from "../cliRegistry.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
-import { readHeaderCodes } from "./readParts.js";
+import { readFeatureCodes } from "./readParts.js";
 import { readRequest, type AllocateRequest } from "./request.js";
 import { AppMessage } from "../messages.js";
 import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
 import { readOrRefuse, refusalLine, UnparseableFeatureFiles, UnreadableInput } from "./unreadable.js";
 import { historyBoundaryOf, readHistory, repositoryTop } from "./readHistory.js";
 import { readTree, walkTree } from "./readTree.js";
-import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownPartRefusal } from "./stderr.js";
+import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownFeatureCodeRefusal } from "./stderr.js";
 import { endRunOn, USAGE_REFUSAL } from "../exitCode.js";
 import { standardError, type RefusalLines, type StandardError } from "../standardError.js";
 
@@ -47,13 +47,13 @@ function refuseUsage(error: RefusalLines): void {
   endRunOn(USAGE_REFUSAL);
 }
 
-function answerRequest({ part, isNew }: AllocateRequest): void {
+function answerRequest({ featureCode, isNew }: AllocateRequest): void {
   const cwd = readOrRefuse(AppMessage.WorkingDirectory, "", () => process.cwd());
   const top = repositoryTop(cwd);
-  const headerCodes = readHeaderCodes(join(top ?? cwd, DEFAULT_FEATURES_DIR));
-  const answer = nextClaimCode({ part, headerCodes, isNew }, occurrencesFrom(cwd, part, top));
-  if (answer.kind === "unknown-part") {
-    refuseUsage(unknownPartRefusal(answer));
+  const featureCodes = readFeatureCodes(join(top ?? cwd, DEFAULT_FEATURES_DIR));
+  const answer = nextClaimCode({ featureCode, featureCodes, isNew }, occurrencesFrom(cwd, featureCode, top));
+  if (answer.kind === "unknown-feature-code") {
+    refuseUsage(unknownFeatureCodeRefusal(answer));
     return;
   }
   writeLineIfAny(historyBoundaryLine(historyBoundaryOf(cwd), answer));
@@ -66,6 +66,7 @@ function writeLineIfAny(line: string | null): void {
   if (line !== null) shown().note(line);
 }
 
-function occurrencesFrom(cwd: string, part: string, top: string | null): ClaimCodeOccurrence[] {
-  return top !== null ? [...readTree(top, part), ...readHistory(cwd, part)] : walkTree(cwd, part);
+function occurrencesFrom(cwd: string, featureCode: string, top: string | null): ClaimCodeOccurrence[] {
+  const marks = claimCodeMarksFor(featureCode);
+  return top !== null ? [...readTree(top, marks), ...readHistory(cwd, marks)] : walkTree(cwd, marks);
 }

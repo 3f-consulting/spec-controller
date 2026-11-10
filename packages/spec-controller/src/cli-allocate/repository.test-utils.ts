@@ -13,13 +13,10 @@ export function git(cwd: string, args: readonly string[]): string {
   return result.stdout;
 }
 
-export function runGit(repo: string, args: readonly string[]): void {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd: repo,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
+// What git itself says when it cannot open the repository, as the allocate refusal quotes it.
+export function gitsOwnRefusal(cwd: string): { status: number | null; said: string } {
+  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd, encoding: "utf8" });
+  return { status: result.status, said: result.stderr.split("\n")[0] ?? "" };
 }
 
 export function writeInto(root: string, path: string, content: string | Buffer): void {
@@ -38,7 +35,7 @@ export function commitAllReturningHash(repo: string, message: string): string {
   return git(repo, ["log", "-1", "--format=%h"]).trim();
 }
 
-export const HEADED_ONE_CARRYING_003 = "@ONE\nFeature: part ONE\n\n  @CLM-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n";
+const HEADED_ONE_CARRYING_003 = "@ONE\nFeature: part ONE\n\n  @CLM-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n";
 
 export function repositoryHeadedOneCarrying003(prefix: string, files: Readonly<Record<string, string>> = {}): string {
   const repo = freshDirectory(prefix);
@@ -49,20 +46,8 @@ export function repositoryHeadedOneCarrying003(prefix: string, files: Readonly<R
   return repo;
 }
 
-export function lines(...texts: string[]): string {
-  return texts.map((text) => `${text}\n`).join("");
-}
-
-export function scenarioBlock(code: string, n: number): string {
-  return `  @${code} @unit\n  Scenario: scenario ${n}\n    Given a step\n`;
-}
-
 export function freshDirectory(prefix: string): string {
   return realpathSync(temporaryDirectory(prefix));
-}
-
-export function freshUnresolvedDirectory(prefix: string): string {
-  return temporaryDirectory(prefix);
 }
 
 // The test file that withholds modes here restores them in its own hook.
@@ -72,11 +57,6 @@ export function withhold(path: string, mode: number): void {
   const before = statSync(path).mode & 0o7777;
   chmodSync(path, mode);
   taken.push(() => chmodSync(path, before));
-}
-
-export function withholdDirectory(path: string, mode: number): void {
-  chmodSync(path, mode);
-  taken.push(() => chmodSync(path, 0o755));
 }
 
 export const runsAsRoot = (): boolean => process.getuid?.() === 0;

@@ -5,6 +5,7 @@ import type { RowAsWritten, ScenarioAsWritten } from "../domain/postEvidenceObli
 import { parseSources, type Parsed, type Source, type SourcesParse } from "./sourceParse.js";
 
 interface FeatureFileContent {
+  readonly featureTags: readonly string[];
   readonly scenarios: readonly ScenarioAsWritten[];
   readonly tagFormWords: readonly string[];
 }
@@ -27,7 +28,11 @@ function rowsOf(examples: Examples): RowAsWritten[] {
 }
 
 function scenarioAsWrittenOf(scenario: Scenario): ScenarioAsWritten {
-  const asWritten = { tags: scenario.tags.map((tag) => bareTerm(tag.name)), title: scenario.name };
+  const asWritten = {
+    tags: scenario.tags.map((tag) => bareTerm(tag.name)),
+    title: scenario.name,
+    examplesTags: scenario.examples.flatMap((examples) => examples.tags.map((tag) => bareTerm(tag.name))),
+  };
   if (!scenario.examples.some((examples) => clmColumnOf(examples) >= 0)) return asWritten;
   return { ...asWritten, rows: scenario.examples.flatMap(rowsOf) };
 }
@@ -44,7 +49,11 @@ const TAG_FORM_WORD = /@([\w-]+)/g;
 const tagFormWordsIn = (source: string): string[] => [...source.matchAll(TAG_FORM_WORD)].map((match) => match[1]!);
 
 function contentOf({ feature }: GherkinDocument, source: string): FeatureFileContent {
-  return { scenarios: scenariosIn(feature?.children ?? []), tagFormWords: tagFormWordsIn(source) };
+  return {
+    featureTags: feature?.tags.map((tag) => bareTerm(tag.name)) ?? [],
+    scenarios: scenariosIn(feature?.children ?? []),
+    tagFormWords: tagFormWordsIn(source),
+  };
 }
 
 export function parseFeatureCorpus(sources: readonly Source[]): SourcesParse<FeatureFileContent> {
