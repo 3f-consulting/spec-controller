@@ -18,15 +18,16 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
 
   Rule: an executable claim is a scenario, or a row of an Outline with a clm column
 
+    @unit
     Scenario Outline: an Outline will be one executable claim for each row only when it has a clm column
-      Given a Scenario Outline had <shape>
-      When balance reads the corpus
-      Then there will be <executable claims>
+      given a Scenario Outline had <shape>
+      when balance reads the corpus
+      then there will be <executable claims>
 
       Examples:
         | clm         | shape                                                     | executable claims                                  |
-        | CLM-GRD-005 | two rows with the claim codes CLM-ONE-001 and CLM-ONE-002 | two executable claims, CLM-ONE-001 and CLM-ONE-002 |
-        | CLM-GRD-008 | the tag @CLM-ONE-001 and no clm column                    | one executable claim, CLM-ONE-001                  |
+        | CLM-OBL-001 | two rows with the claim codes CLM-ONE-001 and CLM-ONE-002 | two executable claims, CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-OBL-002 | the tag @CLM-ONE-001 and no clm column                    | one executable claim, CLM-ONE-001                  |
 
   Rule: a scenario with a deferral tag is not an executable claim
 
