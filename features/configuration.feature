@@ -8,20 +8,21 @@ Feature: balance reads and validates the configuration settings in the specContr
 
   Rule: balance takes each configuration setting it can use
 
+    @unit
     Scenario Outline: balance turns each configuration setting into its internal setting
-      Given the specController block had <configuration setting>
-      When balance reads it
-      Then the target's configuration will include <internal setting>
+      given the specController block had <configuration setting>
+      when balance reads it
+      then the target's configuration will include <internal setting>
 
       Examples:
         | clm         | configuration setting                         | internal setting                                    |
-        | CLM-CFG-NEW | "unit": "vitest" under runners                | vitest as what runs the unit layer                  |
-        | CLM-CFG-NEW | "performance": null under runners             | that the target has no performance runner           |
-        | CLM-CFG-NEW | "ci.yml:ci:Install dependencies" in notChecks | the step Install dependencies, in job ci, in ci.yml |
-        | CLM-RPT-090 | "nightly:build.yml:ci:Install" in notChecks   | the step Install, in job ci, in nightly:build.yml   |
-        | CLM-CFG-NEW | "deferred" in deferralTags                    | the tag @deferred                                   |
-        | CLM-CFG-NEW | "@blocked" in deferralTags                    | the tag @blocked                                    |
-        | CLM-CFG-NEW | " deferred " in deferralTags                  | the tag @deferred                                   |
+        | CLM-CFG-008 | "unit": "vitest" under runners                | vitest as what runs the unit layer                  |
+        | CLM-CFG-009 | "performance": null under runners             | that the target has no performance runner           |
+        | CLM-CFG-010 | "ci.yml:ci:Install dependencies" in notChecks | the step Install dependencies, in job ci, in ci.yml |
+        | CLM-CFG-011 | "nightly:build.yml:ci:Install" in notChecks   | the step Install, in job ci, in nightly:build.yml   |
+        | CLM-CFG-012 | "deferred" in deferralTags                    | the tag @deferred                                   |
+        | CLM-CFG-013 | "@blocked" in deferralTags                    | the tag @blocked                                    |
+        | CLM-CFG-014 | " deferred " in deferralTags                  | the tag @deferred                                   |
         | CLM-CFG-006 | nothing                                       | no configuration setting                            |
 
   Rule: balance leaves out any configuration setting it cannot use, and runs anyway
