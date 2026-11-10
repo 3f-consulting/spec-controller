@@ -50,11 +50,11 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   Rule: every report has its Claim Reconciliations, even when there are none
 
-    @CLM-RPT-NEW
+    @unit @CLM-RPT-105
     Scenario: a report will show its Claim Reconciliations when the run had none
-      Given a run had nothing to reconcile
-      When its reports are written
-      Then each report will have its Claim Reconciliations, showing none
+      given a run had nothing to reconcile
+      when its reports are written
+      then each report will have its Claim Reconciliations, showing none
 
   Rule: odd characters in what a report quotes break nothing
 

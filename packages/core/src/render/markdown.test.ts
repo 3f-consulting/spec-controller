@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
 import { coreText } from "./coreText.js";
+import { renderJson } from "./json.js";
 import { renderMarkdown } from "./markdown.js";
 
 const ONE_001 = { featureCode: "ONE", number: "001" };
@@ -60,5 +61,17 @@ describe("the Markdown report's sections will come in a fixed order", () => {
       coreText("summary-heading"),
       coreText("claim-reconciliations-heading"),
     ]);
+  });
+});
+
+describe("a report will show its Claim Reconciliations when the run had none", () => {
+  it("[CLM-RPT-105] a report will show its Claim Reconciliations when the run had none", () => {
+    const nothing = { ...everySection(), claimReconciliations: [] };
+    const lines = renderMarkdown(nothing).split("\n").filter((line) => line !== "");
+    const section = lines.slice(lines.indexOf(`## ${coreText("claim-reconciliations-heading")}`));
+    expect({ markdown: section.slice(0, 2), json: (JSON.parse(renderJson(nothing)) as EvidenceReconciliation).claimReconciliations }).toEqual({
+      markdown: [`## ${coreText("claim-reconciliations-heading")}`, coreText("claim-reconciliations-none")],
+      json: [],
+    });
   });
 });
