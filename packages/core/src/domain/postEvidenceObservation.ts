@@ -34,7 +34,7 @@ export function claimCodesAtOf(features: readonly FeatureAsWritten[]): ClaimCode
       else byLine.set(line, [{ file: `/${file}`, codes }]);
     }
   }
-  return (path, line) => byLine.get(line)?.[0]?.codes ?? [];
+  return (path, line) => byLine.get(line)?.find((at) => `/${path}`.endsWith(at.file))?.codes ?? [];
 }
 
 interface UsedAction {
