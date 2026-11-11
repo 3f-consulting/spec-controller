@@ -24,21 +24,8 @@ export interface ExitCodeHolder {
   exitCode?: number | string | null | undefined;
 }
 
-// What this run last set, so the crash guard reads the record rather than whatever the process now holds.
-let codeSet: number | undefined;
-
-export function forgetRunEnding(): void {
-  codeSet = undefined;
-}
-
 export function endRunOn(ending: RunEnding, proc: ExitCodeHolder = process): void {
-  codeSet = codeOf(ending);
-  proc.exitCode = codeSet;
-}
-
-// An unknown command is answered on the usage code, so it counts as a refusal here as well.
-export function usageRefusalSet(): boolean {
-  return codeSet === USAGE_EXIT_CODE;
+  proc.exitCode = codeOf(ending);
 }
 
 function codeOf(ending: RunEnding): number {

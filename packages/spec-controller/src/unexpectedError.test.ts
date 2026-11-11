@@ -174,6 +174,8 @@ describe("the run will give no verdict, and will exit 4", () => {
 
   it.each([
     ["allocate answered", ["allocate", "ONE"]],
+    ["a command the tool does not have was refused", ["nosuchcommand"]],
+    ["balance refused a flag it does not take", ["balance", "--bogus"]],
   ])("[CLM-CLI-176] the run met an error nothing else handles, after %s", async (_ended, argv) => {
     vi.spyOn(process, "cwd").mockReturnValue(repositoryHeadedOneCarrying003("unexpected-error-after-"));
 

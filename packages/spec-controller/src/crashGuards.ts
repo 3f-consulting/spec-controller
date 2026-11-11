@@ -1,4 +1,4 @@
-import { endRunOn, forgetRunEnding, UNEXPECTED_ERROR, usageRefusalSet, type ExitCodeHolder } from "./exitCode.js";
+import { endRunOn, UNEXPECTED_ERROR, type ExitCodeHolder } from "./exitCode.js";
 import APP_TEXTS from "./messages.en.json" with { type: "json" };
 import { AppError, type AppErrorValues, type CrashError } from "./messages.js";
 import { standardError, type CodedLine, type LineWriter } from "./standardError.js";
@@ -23,7 +23,6 @@ let run: RunState = {};
 
 export function beginRun(): void {
   run = {};
-  forgetRunEnding();
 }
 
 export function markRunFinished(): void {
@@ -81,7 +80,7 @@ export function settleUnexpectedError(err: unknown, proc: ExitCodeHolder, stderr
 }
 
 function settleExitCode(proc: ExitCodeHolder): void {
-  if (run.finished || usageRefusalSet()) return;
+  if (run.finished) return;
   endRunOn(UNEXPECTED_ERROR, proc);
 }
 
