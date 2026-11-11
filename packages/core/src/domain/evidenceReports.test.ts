@@ -16,6 +16,18 @@ describe("balance posts only the steps that prove something, as each report and 
     const readings = { runsTheReconciler: () => false, nonChecks: [], runners: {}, scripts: {}, shell: shellReading };
     expect(stepDispositionOf(step!, readings)).toBe("candidate");
   });
+
+  it("[CLM-OBS-004] a step running pnpm audit-the-tree whose environment holds a number and a flag is a fitness function", () => {
+    const [step] = workflowSteps(["jobs:\n  build:\n    steps:\n      - run: pnpm audit-the-tree\n        env:\n          RETRIES: 3\n          VERBOSE: true\n"]);
+    const readings = { runsTheReconciler: () => false, nonChecks: [], runners: {}, scripts: {}, shell: shellReading };
+    expect(stepDispositionOf(step!, readings)).toBe("candidate");
+  });
+
+  it("[CLM-OBS-013] a step whose own command writes out the step record is the reconciler", () => {
+    const [step] = workflowSteps(["jobs:\n  build:\n    steps:\n      - name: Record\n        run: echo '${{ toJSON( steps ) }}' > steps.json\n"]);
+    const readings = { runsTheReconciler: () => false, nonChecks: [], runners: {}, scripts: {}, shell: shellReading };
+    expect(stepDispositionOf(step!, readings)).toBe("reconciler");
+  });
 });
 
 describe("balance posts each result with how it went, as each report gives it", () => {
@@ -30,6 +42,7 @@ describe("balance posts each result with how it went, as each report gives it", 
     const property = [
       { name: "clm", value: "CLM-ONE-001" },
       { name: "owner", value: "team-a" },
+      { name: "requirement", value: "CLM-ONE-002" },
     ];
     const posted = parsePytestEvidenceObservations({ testsuites: { testsuite: [{ name: "pytest", testcase: [{ classname: "tests.a", name: "test_a", properties: { property } }] }] } });
     expect(posted).toEqual([{ cites: [ONE], result: "passed", kind: "unit", place: "tests.a", notes: [], name: "test_a" }]);
@@ -37,7 +50,9 @@ describe("balance posts each result with how it went, as each report gives it", 
 
   it("[CLM-OBS-026] a JUnit 5 test that ended in an error is posted as failed", () => {
     const testcase = { classname: "example.ATest", name: "[CLM-ONE-001] a test", error: { message: "boom", "#text": "IllegalStateException" } };
-    expect(parseJunitEvidenceObservations({ testsuites: { testsuite: [{ name: "a.suite", testcase: [testcase] }] } })).toMatchObject([{ result: "failed", cites: [ONE] }]);
+    expect(parseJunitEvidenceObservations({ testsuites: { testsuite: [{ name: "a.suite", testcase: [testcase] }] } })).toEqual([
+      { cites: [ONE], result: "failed", kind: "unit", place: "example.ATest", notes: [], name: "[CLM-ONE-001] a test" },
+    ]);
   });
 
   it("[CLM-OBS-029] an RSpec example that passed is posted as passed, citing its claim code, at its file", () => {
@@ -49,7 +64,9 @@ describe("balance posts each result with how it went, as each report gives it", 
 
   it("[CLM-OBS-031] a Cucumber scenario tagged with its kind and @CLM-ONE-001 is posted citing CLM-ONE-001 alone", () => {
     const report = [{ uri: "one.feature", elements: [{ name: "one adds one", tags: [{ name: "@integration" }, { name: "@CLM-ONE-001" }], steps: [{ keyword: "Given ", name: "one", result: { status: "passed" } }] }] }];
-    expect(parseCucumberEvidenceObservations(report, undefined, () => [])).toMatchObject([{ result: "passed", cites: [ONE] }]);
+    expect(parseCucumberEvidenceObservations(report, undefined, () => [])).toEqual([
+      { cites: [ONE], result: "passed", kind: "integration", place: "one.feature", notes: [], name: "one adds one" },
+    ]);
   });
 
   it("[CLM-OBS-051] a scenario whose middle step matched two definitions is posted as never-ran, naming only that step", () => {
@@ -69,11 +86,63 @@ describe("balance posts what could not run as never ran, as each report gives it
     const report = { examples: [], summary: { errors_outside_of_examples_count: 1 }, messages: ["Run options: exclude {:slow=>true}", loadError] };
     expect(parseRspecEvidenceObservations(report)).toMatchObject([{ result: "never-ran", cites: [], place: "spec/a_spec.rb", message: loadError }]);
   });
+
+  it("[CLM-OBS-049] a spec file RSpec quit on while loading is posted as never-ran, naming the file and its error", () => {
+    const loadError = "\nWhile loading ./spec/a_spec.rb a `raise SyntaxError` occurred, RSpec will now quit.\nFailure/Error: __send__(method, file)\n";
+    const report = { examples: [], summary: { errors_outside_of_examples_count: 1 }, messages: [loadError] };
+    expect(parseRspecEvidenceObservations(report)).toEqual([{ cites: [], result: "never-ran", kind: "unit", place: "spec/a_spec.rb", notes: [], message: loadError }]);
+  });
+
+  it("[CLM-OBS-099] errors RSpec met outside any spec file are posted once, as never-ran, naming those errors and no file", () => {
+    const loadError = "\nAn error occurred while loading ./spec/a_spec.rb.\nFailure/Error: require 'nope'\n";
+    const beforeSuite = "\nAn error occurred in a `before(:suite)` hook.\nFailure/Error: raise \"no database\"\n";
+    const afterSuite = "\nAn error occurred in an `after(:suite)` hook.\nFailure/Error: raise \"no cleanup\"\n";
+    const report = { examples: [], summary: { errors_outside_of_examples_count: 3 }, messages: [loadError, beforeSuite, afterSuite] };
+    expect(parseRspecEvidenceObservations(report)).toEqual([
+      { cites: [], result: "never-ran", kind: "unit", place: "spec/a_spec.rb", notes: [], message: loadError },
+      { cites: [], result: "never-ran", kind: "unit", place: "", notes: [], message: `${beforeSuite}\n${afterSuite}` },
+    ]);
+  });
+
+  it("[CLM-OBS-047] a Go package that failed to build is posted as never-ran, naming the package and its error, as Go writes the report", () => {
+    const goVersion = { property: [{ name: "go.version", value: "go1.27.2 linux/amd64" }] };
+    const buildFailed = "FAIL\texample.com/a/broken [build failed]\n";
+    const report = {
+      testsuites: {
+        testsuite: [
+          { name: "", properties: goVersion },
+          { name: "example.com/a/broken", properties: goVersion, testcase: [{ classname: "", name: "TestMain", failure: { message: "Failed", type: "", "#text": buildFailed } }] },
+        ],
+      },
+    };
+    expect(parseJunitEvidenceObservations(report)).toEqual([{ cites: [], result: "never-ran", kind: "unit", place: "example.com/a/broken", notes: [], message: buildFailed }]);
+  });
+
+  it("[CLM-OBS-050] a pytest test whose setup errored is posted as never-ran, citing its claim code, naming the test and its error", () => {
+    const testcase = { classname: "tests.a", name: "test_a", properties: { property: [{ name: "clm", value: "CLM-ONE-001" }] }, error: { message: "failed on setup", "#text": "fixture 'db' not found" } };
+    expect(parsePytestEvidenceObservations({ testsuites: { testsuite: [{ name: "pytest", testcase: [testcase] }] } })).toEqual([
+      { cites: [ONE], result: "never-ran", kind: "unit", place: "tests.a", notes: [], name: "test_a", message: "fixture 'db' not found" },
+    ]);
+  });
+});
+
+describe("balance posts each result citing the nearest code it has, as each report gives it", () => {
+  it("[CLM-OBS-073] a JUnit 5 test in a nested class is posted citing the code of its own class, not its outer class's", () => {
+    const testcase = { classname: "[CLM-ONE-003] an outer class [CLM-ONE-002] an inner class", name: "a test" };
+    const posted = parseJunitEvidenceObservations({ testsuites: { testsuite: [{ name: "example.OuterTest$InnerTest", testcase: [testcase] }] } });
+    expect(posted.map(({ cites }) => cites)).toEqual([[{ featureCode: "ONE", number: "002" }]]);
+  });
 });
 
 describe("an Evidence Observation says where to look, as each report gives it", () => {
   it("[CLM-OBS-078] a test Vitest reports by its title alone is posted with that title as where to look", () => {
     const posted = parseVitestEvidenceObservations({ testResults: [{ name: "a.test.ts", status: "passed", assertionResults: [{ title: "adds two numbers", status: "passed" }] }] });
     expect(posted).toMatchObject([{ place: "a.test.ts", name: "adds two numbers" }]);
+  });
+
+  it("[CLM-OBS-098] a test file Jest recorded at an absolute path is placed at that path when no target's folder is given", () => {
+    const file = "/home/runner/work/app/src/a.test.ts";
+    const report = { testResults: [{ name: file, assertionResults: [{ title: "adds two numbers", fullName: "adds two numbers", status: "passed" }] }] };
+    expect(parseVitestEvidenceObservations(report).map(({ place }) => place)).toEqual([file]);
   });
 });
