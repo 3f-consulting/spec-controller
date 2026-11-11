@@ -30,8 +30,6 @@ export type OriginAsWritten =
       readonly host: string;
       readonly separator: string;
       readonly path: string;
-      readonly query: string | undefined;
-      readonly fragment: string | undefined;
     }
   | { readonly form: "unread" };
 
