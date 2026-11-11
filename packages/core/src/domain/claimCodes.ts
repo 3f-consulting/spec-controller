@@ -123,7 +123,7 @@ function duplicateFeatureCodes(filesByCode: ReadonlyMap<string, readonly string[
 function misfiledCodes(feature: FeatureAsWritten, filesByCode: ReadonlyMap<string, readonly string[]>): ClaimCodeError[] {
   const carried = feature.scenarios.flatMap(codesCarriedBy);
   const featureCode = featureCodeOfFile(feature);
-  if (featureCode === undefined) return [{ kind: "no-feature-code", files: [feature.file] }];
+  if (featureCode === undefined) return carried.length === 0 ? [] : [{ kind: "no-feature-code", files: [feature.file] }];
   return carried
     .filter((code) => code.featureCode !== featureCode)
     .map((code) => ({
