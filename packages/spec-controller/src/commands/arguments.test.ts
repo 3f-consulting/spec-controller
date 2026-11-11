@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { message } from "../messages/appText.js";
-import { main } from "../commands/main.js";
+import { main } from "./main.js";
 import { AppError } from "../messages/messages.js";
 import { forgetWhatTheProgramWrote, recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "../programOutput.test-utils.js";
 import { toolVersionOf } from "@3f-consulting/spec-controller-core";

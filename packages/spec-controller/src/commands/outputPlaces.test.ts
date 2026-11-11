@@ -1,13 +1,13 @@
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { allocateIn } from "../commands/answered.test-utils.js";
+import { allocateIn } from "./answered.test-utils.js";
 import { repositoryHeadedOneCarrying003 } from "../repository/repository.test-utils.js";
 import { message } from "../messages/appText.js";
 import { AppError, AppMessage } from "../messages/messages.js";
 import { printedRefusal } from "../messages/shownText.test-utils.js";
 import { closedPipe, crashLine, FIRST_LINE } from "../runEnding/crashGuards.test-utils.js";
-import { main } from "../commands/main.js";
+import { main } from "./main.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
