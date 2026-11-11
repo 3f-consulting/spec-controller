@@ -273,6 +273,7 @@ function featureFileAlone(code: string): Asked {
 describe("the answer is one past the highest code the repository has contained", () => {
   it.each<[string, string, () => Asked, string]>([
     ["CLM-STG-061", "a file git tracks, such as a workflow or a test, contained CLM-ONE-005", () => trackedFileContaining("CLM-ONE-005", "CLM-ONE-005"), "CLM-ONE-006"],
+    ["CLM-STG-061", "a file git tracks contained CLM-ONE-005 on a line beside a higher code of another feature", () => trackedFileContaining("CLM-ONE-005 or CLM-TWO-009", "CLM-ONE-005"), "CLM-ONE-006"],
     ["CLM-STG-062", "a line in git history, since deleted, had CLM-ONE-005", () => deletedLineHad("CLM-ONE-005"), "CLM-ONE-006"],
     ["CLM-STG-062", "a line in git history, since deleted from lib/, had CLM-ONE-005, where git diffs name no a/ and b/", deletedLineInUnprefixedDiffs, "CLM-ONE-006"],
     ["CLM-STG-063", "a file git tracks contained SCN-ONE-005", () => trackedFileContaining("SCN-ONE-005", "SCN-ONE-005"), "CLM-ONE-006"],
