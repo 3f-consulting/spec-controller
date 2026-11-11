@@ -1,4 +1,4 @@
-import { closeSync, constants, fstatSync, lstatSync, openSync, readlinkSync, realpathSync, statSync } from "node:fs";
+import { closeSync, constants, existsSync, fstatSync, lstatSync, openSync, readlinkSync, realpathSync, statSync } from "node:fs";
 import { dirname, resolve, sep } from "node:path";
 
 import { endRunOn, USAGE_EXIT_CODE, USAGE_REFUSAL } from "./exitCode.js";
@@ -7,25 +7,19 @@ import { refusal, type Refusal } from "./refusal.js";
 import { AppError } from "./messages.js";
 
 class UsageRefusal extends Error {
-  override readonly name = "UsageRefusal";
   readonly exitCode = USAGE_EXIT_CODE;
 }
 
-export interface Unwritable {
-  readonly kind: "report";
-  readonly format: string;
-}
-
-export function unwritableRefusal(what: Unwritable, path: string, err: unknown): Refusal {
+export function unwritableRefusal(format: string, path: string, err: unknown): Refusal {
   const reason = err instanceof Error ? err.message : String(err);
-  return refusal(AppError.ReportNotWritten, { format: what.format, path, reason });
+  return refusal(AppError.ReportNotWritten, { format, path, reason });
 }
 
-export function writeOrRefuse(what: Unwritable, path: string, write: () => void): void {
+export function writeOrRefuse(format: string, path: string, write: () => void): void {
   try {
     write();
   } catch (err) {
-    refuse(unwritableRefusal(what, path, err));
+    refuse(unwritableRefusal(format, path, err));
   }
 }
 
@@ -62,14 +56,11 @@ export interface ProbedDestination {
   readonly created: string | undefined;
 }
 
+// A destination that does not exist yet is made to probe it, and named as made so it can be removed again.
 export function probeDestination(path: string): ProbedDestination {
-  try {
-    return { identity: identityOf(openSync(path, constants.O_WRONLY)), created: undefined };
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
-  }
+  const existed = existsSync(path);
   const identity = identityOf(openSync(path, constants.O_WRONLY | constants.O_CREAT));
-  return { identity, created: realpathSync(path) };
+  return { identity, created: existed ? undefined : realpathSync(path) };
 }
 
 export function regularFileIdentity(path: string): RegularFileIdentity | undefined {
@@ -138,9 +129,10 @@ export function namesStderr(path: string): boolean {
 }
 
 function withFirstLinkFollowed(path: string): string | undefined {
-  const parts = path.split(sep).filter((part) => part !== "");
-  for (let length = 1; length <= parts.length; length++) {
-    const prefix = sep + parts.slice(0, length).join(sep);
+  // The path is absolute, so its first part is the empty one before the root, and its shortest prefix is its second.
+  const parts = path.split(sep);
+  for (let length = 2; length <= parts.length; length++) {
+    const prefix = parts.slice(0, length).join(sep);
     const target = linkTarget(prefix);
     if (target !== undefined) return resolve(dirname(prefix), target, ...parts.slice(length));
   }

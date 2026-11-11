@@ -19,7 +19,6 @@ import {
   stdoutIdentity,
   unwritableRefusal,
   writeOrRefuse,
-  type Unwritable,
 } from "../../outputLocation.js";
 import { standardError } from "../../standardError.js";
 import type { Refusal } from "../../refusal.js";
@@ -45,7 +44,7 @@ function vetDestinations(outputs: readonly PlannedOutput[], inputs: readonly Ide
     let stderrIdentified = false;
     for (const output of outputs) {
       const probe = identify(output, created);
-      if (probe.kind === "refused") return probe.refusal;
+      if ("refusal" in probe) return probe.refusal;
       const toStderr = output.dest.kind === "file" && namesStderr(output.dest.path);
       // Two reports on standard error follow one another in its stream, so only the first is checked against the files.
       identified.push({ output, identity: toStderr && stderrIdentified ? undefined : probe.identity });
@@ -57,23 +56,19 @@ function vetDestinations(outputs: readonly PlannedOutput[], inputs: readonly Ide
   }
 }
 
-type Probe = { readonly kind: "identified"; readonly identity: FileIdentity | undefined } | { readonly kind: "refused"; readonly refusal: Refusal };
+type Probe = { readonly identity: FileIdentity | undefined } | { readonly refusal: Refusal };
 
 function identify(output: PlannedOutput, created: string[]): Probe {
   const dest = output.dest;
-  if (dest.kind === "stdout") return { kind: "identified", identity: stdoutIdentity() };
-  if (namesStderr(dest.path)) return { kind: "identified", identity: stderrIdentity() };
+  if (dest.kind === "stdout") return { identity: stdoutIdentity() };
+  if (namesStderr(dest.path)) return { identity: stderrIdentity() };
   try {
     const probed = probeDestination(dest.path);
     if (probed.created !== undefined) created.push(probed.created);
-    return { kind: "identified", identity: probed.identity };
+    return { identity: probed.identity };
   } catch (err) {
-    return { kind: "refused", refusal: unwritableRefusal(reportOf(output), dest.path, err) };
+    return { refusal: unwritableRefusal(output.fmt, dest.path, err) };
   }
-}
-
-function reportOf(output: PlannedOutput): Unwritable {
-  return { kind: "report", format: output.fmt };
 }
 
 function emit(output: PlannedOutput, text: string): void {
@@ -86,5 +81,5 @@ function emit(output: PlannedOutput, text: string): void {
     standardError(process.stderr).report(text);
     return;
   }
-  writeOrRefuse(reportOf(output), dest.path, () => writeFileSync(dest.path, text));
+  writeOrRefuse(output.fmt, dest.path, () => writeFileSync(dest.path, text));
 }
