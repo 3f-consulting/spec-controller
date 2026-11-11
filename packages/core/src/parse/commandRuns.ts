@@ -258,15 +258,9 @@ function walk(node: SyntaxNode, outputs: Outputs): readonly SimpleCommand[] {
   return childrenOf(node).flatMap((child) => walk(child, outputs));
 }
 
-const READ = new Map<string, readonly SimpleCommand[]>();
-
-// The simple commands the shell runs from the text, each as its words, and whether a pipe reads its output. Each distinct text is parsed once.
+// The simple commands the shell runs from the text, each as its words, and whether a pipe reads its output.
 function simpleCommands(text: string): readonly SimpleCommand[] {
-  const known = READ.get(text);
-  if (known !== undefined) return known;
-  const commands = walk(parse(text), UNPIPED);
-  READ.set(text, commands);
-  return commands;
+  return walk(parse(text), UNPIPED);
 }
 
 function handedOn(words: readonly string[]): readonly string[] | undefined {
