@@ -1,12 +1,9 @@
 import { existsSync } from "node:fs";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
-import { DEFAULT_CI_PATH } from "./ingestQualityChecks.js";
 import { corpusFeatureFiles } from "./ingestScenarios.js";
-import { DEFAULT_FEATURES_DIR } from "../runRequest/defaults.js";
 import { AppMessage } from "../messages/messages.js";
 import { message } from "../messages/appText.js";
-import { regularFileIdentity, type ReadInput } from "../output/outputLocation.js";
-import type { IdentifiedInput } from "../output/format.js";
+import type { GivenInput } from "./inputKinds.js";
 import { jsonInputsOf } from "./unreadableInputs.js";
 
 export interface InputReader {
@@ -33,22 +30,36 @@ export const NODE_INPUT_READER: InputReader = {
   },
 };
 
-export function inputsReadBy(args: Record<string, string>, reader: InputReader): ReadInput[] {
-  const reports = jsonInputsOf(args, reader.exists).map(({ subject, path }) => ({ subject: lowerFirst(subject), path }));
-  return [...reports, ...featureInputs(args["features"], reader), ...workflowInputs(args["ci"], reader)];
+// The paths the run reads when an input is not named, as the run request fills them in.
+interface InputDefaults {
+  readonly features: string;
+  readonly ci: string;
+  readonly packageJson: string;
 }
 
-export function identifiedInputs(inputs: readonly ReadInput[]): IdentifiedInput[] {
-  return inputs.map((input) => ({ ...input, identity: regularFileIdentity(input.path) }));
+// A file the run reads, named by how the run came to read it.
+interface InputRead {
+  readonly subject: string;
+  readonly path: string;
 }
 
-function featureInputs(dir: string | undefined, reader: InputReader): ReadInput[] {
+export function inputsReadFrom(
+  args: Record<string, string>,
+  given: readonly GivenInput[],
+  reader: InputReader,
+  defaults: InputDefaults,
+): InputRead[] {
+  const reports = jsonInputsOf(given, reader.exists, defaults.packageJson).map(({ subject, path }) => ({ subject: lowerFirst(subject), path }));
+  return [...reports, ...featureInputs(args["features"], reader, defaults.features), ...workflowInputs(args["ci"], reader, defaults.ci)];
+}
+
+function featureInputs(dir: string | undefined, reader: InputReader, defaultCorpus: string): InputRead[] {
   const subject = message(dir === undefined ? AppMessage.DefaultCorpusFeatureFile : AppMessage.FlaggedCorpusFeatureFile);
-  return reader.featureFiles(dir ?? DEFAULT_FEATURES_DIR).map((path) => ({ subject, path }));
+  return reader.featureFiles(dir ?? defaultCorpus).map((path) => ({ subject, path }));
 }
 
-function workflowInputs(ci: string | undefined, reader: InputReader): ReadInput[] {
-  const files = reader.workflowFiles(ci ?? DEFAULT_CI_PATH);
+function workflowInputs(ci: string | undefined, reader: InputReader, defaultWorkflows: string): InputRead[] {
+  const files = reader.workflowFiles(ci ?? defaultWorkflows);
   return files.map((path) => ({ subject: workflowSubject(ci, path), path }));
 }
 

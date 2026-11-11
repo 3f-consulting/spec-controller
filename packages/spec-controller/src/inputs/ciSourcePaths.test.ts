@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ciSourcePathsOf, type CiPathReader } from "./ciSourcePaths.js";
-import { DEFAULT_CI_PATH } from "./ingestQualityChecks.js";
+import { DEFAULT_CI_PATH } from "../runRequest/defaults.js";
 
 describe("a workflows folder read by default that does not exist will count as no workflows, not as a missing input", () => {
   it("[CLM-CLI-183] a workflows folder read by default that does not exist will count as no workflows, not as a missing input", () => {

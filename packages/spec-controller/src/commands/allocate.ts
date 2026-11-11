@@ -6,7 +6,9 @@ import { resolveToolIdentity } from "../runIdentity/resolveRunInputs.js";
 import { readFeatureCodes } from "../repository/readParts.js";
 import { readRequest, type AllocateRequest } from "../runRequest/request.js";
 import { DEFAULT_FEATURES_DIR } from "../runRequest/defaults.js";
-import { UnparseableFeatureFiles, UnreadableInput } from "../repository/unreadable.js";
+import { refuse, UnparseableFeatureFiles, UnreadableInput } from "../repository/unreadable.js";
+import { corpusFeatureFiles, MissingFeatureCorpusError, type CorpusFeatureFile } from "../inputs/ingestScenarios.js";
+import { AppMessage } from "../messages/messages.js";
 import { historyBoundaryOf, readHistory, repositoryTop } from "../repository/readHistory.js";
 import { readTree, walkTree } from "../repository/readTree.js";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownFeatureCodeRefusal } from "../output/allocateNotes.js";
@@ -46,7 +48,7 @@ function refuseUsage(error: RefusalLines): void {
 function answerRequest({ featureCode, isNew }: AllocateRequest): void {
   const cwd = process.cwd();
   const top = repositoryTop(cwd);
-  const featureCodes = readFeatureCodes(join(top ?? cwd, DEFAULT_FEATURES_DIR));
+  const featureCodes = readFeatureCodes(featureFilesIn(join(top ?? cwd, DEFAULT_FEATURES_DIR)));
   const answer = nextClaimCode({ featureCode, featureCodes, isNew }, occurrencesFrom(cwd, featureCode, top));
   if (answer.kind === "unknown-feature-code") {
     refuseUsage(unknownFeatureCodeRefusal(answer));
@@ -56,6 +58,15 @@ function answerRequest({ featureCode, isNew }: AllocateRequest): void {
   shown().note(highestSeenLine(answer));
   writeLineIfAny(alreadyHeadedNote(answer));
   process.stdout.write(answer.code + "\n");
+}
+
+function featureFilesIn(dir: string): CorpusFeatureFile[] {
+  try {
+    return corpusFeatureFiles(dir);
+  } catch (err) {
+    if (err instanceof MissingFeatureCorpusError) return [];
+    return refuse(AppMessage.FeatureCorpus, dir, err);
+  }
 }
 
 function writeLineIfAny(line: string | null): void {

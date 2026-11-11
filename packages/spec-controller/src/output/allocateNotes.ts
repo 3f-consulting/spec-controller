@@ -1,8 +1,7 @@
-import type { Allocation, UnknownFeatureCode } from "@3f-consulting/spec-controller-core";
+import type { Allocation, HistoryBoundary, UnknownFeatureCode } from "@3f-consulting/spec-controller-core";
 import { AppError, AppMessage } from "../messages/messages.js";
 import { message } from "../messages/appText.js";
 import { refusal, type Refusal } from "../runEnding/refusal.js";
-import type { HistoryBoundary } from "../repository/readHistory.js";
 
 export function historyBoundaryLine(boundary: HistoryBoundary, allocation: Allocation): string | null {
   switch (boundary.kind) {

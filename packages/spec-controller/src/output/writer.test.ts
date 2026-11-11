@@ -2,9 +2,10 @@ import { chmodSync, existsSync, lstatSync, statSync, mkdirSync, readFileSync, re
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderJson, renderMarkdown, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
-import { writeReports } from "./writer.js";
+import { writeReports } from "../commands/balance.js";
 import type { IdentifiedInput } from "./format.js";
-import { regularFileIdentity, settlingRefusal } from "./outputLocation.js";
+import { regularFileIdentity } from "./outputLocation.js";
+import { settlingRefusal } from "../runEnding/usageRefusal.js";
 import { AppError } from "../messages/messages.js";
 import { message } from "../messages/appText.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";

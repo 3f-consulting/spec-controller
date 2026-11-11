@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { targetFolderOf } from "@3f-consulting/spec-controller-core";
 
 export function resolveSourceSha(opts: { sourceSha?: string; targetDir?: string }): string | undefined {
   return opts.sourceSha ?? readGit(opts.targetDir, ["rev-parse", "HEAD"]);
@@ -102,11 +103,12 @@ function resolveToolVersion(fromDir: string): string {
 }
 
 export function resolveTargetRoot(opts: { features?: string }): string {
+  const workingFolder = (): string => process.cwd();
   if (opts.features === undefined) {
-    return process.cwd();
+    return targetFolderOf(workingFolder);
   }
   const targetDir = dirname(opts.features);
-  return readGit(targetDir, ["rev-parse", "--show-toplevel"]) ?? targetDir;
+  return targetFolderOf(workingFolder, targetDir, readGit(targetDir, ["rev-parse", "--show-toplevel"]));
 }
 
 // An undefined dir means the working directory. It is read inside the try because

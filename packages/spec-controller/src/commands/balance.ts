@@ -1,12 +1,39 @@
 import { existsSync } from "node:fs";
 import { dirname } from "node:path";
-import { runReconcile, readCorpus, readWorkflows, type EvidenceReport } from "../inputs/ingestQualityChecks.js";
-import { EVIDENCE_INPUTS, inputPathsOf, runInputsOf, type InputPaths } from "../runRequest/evidenceInputs.js";
-import { writeReports } from "../output/writer.js";
-import { refuse, settlingRefusal } from "../output/outputLocation.js";
-import { identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "../inputs/inputsRead.js";
+import {
+  claimCodesAtOf,
+  commandRuns,
+  evidenceReconciliationOf,
+  pipelineStepsOf,
+  provenanceFrom,
+  recordedCheckStepsOf,
+  shellReading,
+  targetConfigurationFrom,
+  type EvidenceReconciliation,
+  type ParsedFeatureFile,
+  type ParsedWorkflow,
+  type Provenance,
+  type StepRecord,
+} from "@3f-consulting/spec-controller-core";
+import {
+  documentReadBy,
+  observationsOf,
+  readCorpus,
+  readWorkflows,
+  type EvidenceReport,
+  type TargetManifest,
+} from "../inputs/ingestQualityChecks.js";
+import { inputPathsOf, requestedInputsOf, runInputsOf, type InputPaths } from "../runRequest/evidenceInputs.js";
+import { INPUT_DEFAULTS } from "../runRequest/defaults.js";
+import { collectFormatSpecs, requestedOutputsOf } from "../runRequest/formats.js";
+import { writeRequestedReports } from "../output/writer.js";
+import { identifiedInputs } from "../output/outputLocation.js";
+import type { IdentifiedInput } from "../output/format.js";
+import { refuse, settlingRefusal } from "../runEnding/usageRefusal.js";
+import { inputsReadFrom, NODE_INPUT_READER, type InputReader } from "../inputs/inputsRead.js";
 import { corpusDirOf } from "../inputs/corpusDir.js";
 import {
+  checkInputsExist,
   corpusReadRefusal,
   reportRefusal,
   corpusDirRefusal,
@@ -18,7 +45,6 @@ import {
 } from "../inputs/unreadableInputs.js";
 import { exitCodeOf } from "../runEnding/exitStatus.js";
 import { endRunOn } from "../runEnding/exitCode.js";
-import { provenanceFrom, type ParsedFeatureFile, type ParsedWorkflow, type Provenance } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "../runIdentity/resolveRunInputs.js";
 import { balanceCommand, cliRegistry, renderCommandHelp } from "../runRequest/cliRegistry.js";
 import {
@@ -28,26 +54,8 @@ import {
   checkUnknownFlags,
   checkMissingValues,
 } from "../runRequest/cliArgs.js";
-import { AppError } from "../messages/messages.js";
-import { refusal, type Refusal } from "../runEnding/refusal.js";
 
-function collectFormatSpecs(argv: readonly string[]): string[] {
-  // checkMissingValues has already refused a --format given no value.
-  return argv.flatMap((token, i) => (token === "--format" ? [argv[i + 1]!] : []));
-}
-
-function checkInputsExist(
-  args: Record<string, string>,
-  exists: (path: string) => boolean,
-): Refusal | null {
-  for (const { flag } of EVIDENCE_INPUTS) {
-    const path = args[flag];
-    if (path !== undefined && !exists(path)) {
-      return refusal(AppError.InputPathMissing, { flag: `--${flag}`, path });
-    }
-  }
-  return null;
-}
+const RECONCILER_INVOCATION = "spec-controller balance";
 
 export function runBalance(argv: string[]): boolean {
   return settlingRefusal(() => balance(argv), false);
@@ -88,6 +96,16 @@ function reconcile(argv: string[]): boolean {
   return true;
 }
 
+// The files the run reads, named by how the run came to read them: the inputs it was given, or the defaults.
+export function inputsReadBy(args: Record<string, string>, reader: InputReader): ReturnType<typeof inputsReadFrom> {
+  return inputsReadFrom(args, requestedInputsOf(args), reader, INPUT_DEFAULTS);
+}
+
+// The reports the --format specs ask for, written once each destination is vetted.
+export function writeReports(formatSpecs: readonly string[], evidenceReconciliation: EvidenceReconciliation, inputs: readonly IdentifiedInput[]): void {
+  writeRequestedReports(requestedOutputsOf(formatSpecs), evidenceReconciliation, inputs);
+}
+
 interface ReadInputs {
   readonly corpus: readonly ParsedFeatureFile[];
   readonly workflows: readonly ParsedWorkflow[];
@@ -95,16 +113,17 @@ interface ReadInputs {
 }
 
 function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
-  const missingInputError = checkInputsExist(args, existsSync);
+  const given = requestedInputsOf(args);
+  const missingInputError = checkInputsExist(given, existsSync);
   if (missingInputError) refuse(missingInputError);
 
-  const reportsReading = readReports(jsonInputsOf(args, existsSync));
+  const reportsReading = readReports(jsonInputsOf(given, existsSync, INPUT_DEFAULTS.packageJson));
 
-  const corpusDir = corpusDirOf(args);
+  const corpusDir = corpusDirOf(args, INPUT_DEFAULTS.features);
   if (typeof corpusDir !== "string") refuse(corpusDirRefusal(corpusDir));
 
   const corpusReading = readCorpus(corpusDir);
-  const workflowReading = readWorkflows(args["ci"]);
+  const workflowReading = readWorkflows(args["ci"] ?? INPUT_DEFAULTS.ci);
   if (corpusReading.kind === "read-fault") refuse(corpusReadRefusal(args, corpusReading.fault));
   if (workflowReading.kind === "read-fault") refuse(workflowsReadRefusal(args, workflowReading.fault));
   if (workflowReading.kind === "unparseable") refuse(workflowsUnparseableRefusal(args, workflowReading.faults));
@@ -124,4 +143,26 @@ function provenanceOf(args: Record<string, string>, inputs: InputPaths, root: st
     ...resolveToolIdentity(),
   };
   return provenanceFrom(identity, runInputsOf(inputs), root);
+}
+
+function runReconcile(
+  reports: readonly EvidenceReport[],
+  root: string,
+  corpus: readonly ParsedFeatureFile[],
+  workflows: readonly ParsedWorkflow[],
+  run: { readonly strict: boolean; readonly provenance: Provenance },
+): EvidenceReconciliation {
+  const packageJson = (documentReadBy(reports, "package-manifest") as TargetManifest | undefined) ?? {};
+  const scripts = packageJson.scripts ?? {};
+  const steps = pipelineStepsOf(workflows);
+  const recordedSteps = recordedCheckStepsOf(documentReadBy(reports, "ci-step-record") as StepRecord | undefined);
+  return evidenceReconciliationOf({
+    features: corpus,
+    testObservations: observationsOf(reports, root, claimCodesAtOf(corpus)),
+    steps,
+    readings: { runsTheReconciler: (command) => commandRuns(command, RECONCILER_INVOCATION, scripts), scripts, shell: shellReading },
+    ...(recordedSteps === undefined ? {} : { recordedSteps }),
+    configuration: targetConfigurationFrom(packageJson, steps),
+    ...run,
+  });
 }

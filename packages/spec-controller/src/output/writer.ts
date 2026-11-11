@@ -9,25 +9,30 @@ import {
   type IdentifiedOutput,
   type OutputFormat,
   type PlannedOutput,
+  type RequestedOutput,
 } from "./format.js";
 import {
   namesStderr,
   namesStdout,
   probeDestination,
-  refuse,
   stderrIdentity,
   stdoutIdentity,
   unwritableRefusal,
 } from "./outputLocation.js";
 import { standardError } from "../runEnding/standardError.js";
+import { refuse } from "../runEnding/usageRefusal.js";
 import type { Refusal } from "../runEnding/refusal.js";
 
 function render(fmt: OutputFormat, evidenceReconciliation: EvidenceReconciliation): string {
   return fmt === "json" ? renderJson(evidenceReconciliation) : renderMarkdown(evidenceReconciliation);
 }
 
-export function writeReports(formatSpecs: readonly string[], evidenceReconciliation: EvidenceReconciliation, inputs: readonly IdentifiedInput[]): void {
-  const planned = planOutput(formatSpecs, namesStdout);
+export function writeRequestedReports(
+  requested: readonly RequestedOutput[],
+  evidenceReconciliation: EvidenceReconciliation,
+  inputs: readonly IdentifiedInput[],
+): void {
+  const planned = planOutput(requested, namesStdout);
   if (!planned.ok) refuse(planned.error);
   const { outputs } = planned.plan;
   const emissions = outputs.map((output) => ({ output, text: render(output.fmt, evidenceReconciliation) }));

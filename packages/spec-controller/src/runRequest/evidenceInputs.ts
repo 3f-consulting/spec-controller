@@ -1,25 +1,5 @@
 import { AppMessage, type PlainWordedAppMessage } from "../messages/messages.js";
-import {
-  CI_STEP_RECORD,
-  CUCUMBER_REPORT,
-  JUNIT_REPORT,
-  PACKAGE_MANIFEST,
-  RSPEC_REPORT,
-  VITEST_REPORT,
-  type Shape,
-} from "../inputs/inputShapes.js";
-import type { EvidenceReader } from "../inputs/ingestQualityChecks.js";
-import type { ReportFormat } from "../inputs/reportReading.js";
 import type { RunInput } from "@3f-consulting/spec-controller-core";
-
-export interface ReportInput {
-  readonly reader: EvidenceReader;
-  readonly format: ReportFormat;
-  readonly shape: Shape;
-  readonly subject: AppMessage.FlaggedReport | AppMessage.FlaggedRecord | AppMessage.FlaggedManifest;
-  readonly writer: PlainWordedAppMessage;
-  readonly takesADirectory?: true;
-}
 
 export interface EvidenceInput {
   readonly flag: string;
@@ -27,119 +7,21 @@ export interface EvidenceInput {
   readonly key: string;
   readonly arg: string;
   readonly description: PlainWordedAppMessage;
-  readonly report?: ReportInput;
 }
 
 // The order is the canonical order: the help lists the flags in it, the pre-checks take the inputs in it,
 // and the run provenance names them in it.
 const DECLARED = [
   { flag: "features", key: "features", arg: "<dir>", description: AppMessage.FeaturesFlag },
-  {
-    flag: "vitest",
-    key: "vitest",
-    arg: "<report.json>",
-    description: AppMessage.VitestFlag,
-    report: {
-      reader: "vitest",
-      format: "json",
-      shape: VITEST_REPORT,
-      subject: AppMessage.FlaggedReport,
-      writer: AppMessage.VitestReportShape,
-    },
-  },
-  {
-    flag: "pytest",
-    key: "pytest",
-    arg: "<report.xml>",
-    description: AppMessage.PytestFlag,
-    report: {
-      reader: "pytest",
-      format: "junit-xml",
-      shape: JUNIT_REPORT,
-      subject: AppMessage.FlaggedReport,
-      writer: AppMessage.JunitReportShape,
-    },
-  },
-  {
-    flag: "jest",
-    key: "jest",
-    arg: "<report.json>",
-    description: AppMessage.JestFlag,
-    report: {
-      reader: "jest",
-      format: "json-naming-its-shape",
-      shape: VITEST_REPORT,
-      subject: AppMessage.FlaggedReport,
-      writer: AppMessage.JestReportShape,
-    },
-  },
-  {
-    flag: "junit",
-    key: "junit",
-    arg: "<report.xml>",
-    description: AppMessage.JunitFlag,
-    report: {
-      reader: "junit",
-      format: "junit-xml-or-one-suite",
-      shape: JUNIT_REPORT,
-      subject: AppMessage.FlaggedReport,
-      writer: AppMessage.JunitXmlReportShape,
-      takesADirectory: true,
-    },
-  },
-  {
-    flag: "rspec",
-    key: "rspec",
-    arg: "<report.json>",
-    description: AppMessage.RspecFlag,
-    report: {
-      reader: "rspec",
-      format: "json-naming-its-shape",
-      shape: RSPEC_REPORT,
-      subject: AppMessage.FlaggedReport,
-      writer: AppMessage.RspecReportShape,
-    },
-  },
-  {
-    flag: "cucumber",
-    key: "cucumber",
-    arg: "<report.json>",
-    description: AppMessage.CucumberFlag,
-    report: {
-      reader: "cucumber",
-      format: "json",
-      shape: CUCUMBER_REPORT,
-      subject: AppMessage.FlaggedReport,
-      writer: AppMessage.CucumberReportShape,
-    },
-  },
+  { flag: "vitest", key: "vitest", arg: "<report.json>", description: AppMessage.VitestFlag },
+  { flag: "pytest", key: "pytest", arg: "<report.xml>", description: AppMessage.PytestFlag },
+  { flag: "jest", key: "jest", arg: "<report.json>", description: AppMessage.JestFlag },
+  { flag: "junit", key: "junit", arg: "<report.xml>", description: AppMessage.JunitFlag },
+  { flag: "rspec", key: "rspec", arg: "<report.json>", description: AppMessage.RspecFlag },
+  { flag: "cucumber", key: "cucumber", arg: "<report.json>", description: AppMessage.CucumberFlag },
   { flag: "ci", key: "ci", arg: "<ci.yml>", description: AppMessage.CiFlag },
-  {
-    flag: "package-json",
-    key: "packageJson",
-    arg: "<path>",
-    description: AppMessage.PackageJsonFlag,
-    report: {
-      reader: "package-manifest",
-      format: "json",
-      shape: PACKAGE_MANIFEST,
-      subject: AppMessage.FlaggedManifest,
-      writer: AppMessage.PackageManifestShape,
-    },
-  },
-  {
-    flag: "ci-steps",
-    key: "ciSteps",
-    arg: "<record.json>",
-    description: AppMessage.CiStepsFlag,
-    report: {
-      reader: "ci-step-record",
-      format: "json",
-      shape: CI_STEP_RECORD,
-      subject: AppMessage.FlaggedRecord,
-      writer: AppMessage.CiStepRecordShape,
-    },
-  },
+  { flag: "package-json", key: "packageJson", arg: "<path>", description: AppMessage.PackageJsonFlag },
+  { flag: "ci-steps", key: "ciSteps", arg: "<record.json>", description: AppMessage.CiStepsFlag },
 ] as const satisfies readonly EvidenceInput[];
 
 export const EVIDENCE_INPUTS: readonly EvidenceInput[] = DECLARED;
@@ -154,4 +36,15 @@ export function inputPathsOf(args: Readonly<Record<string, string>>): InputPaths
 
 export function runInputsOf(paths: InputPaths): RunInput[] {
   return EVIDENCE_INPUTS.map(({ key }) => ({ name: key, path: paths[key as InputKey] }));
+}
+
+// What the request hands the inputs port: each input's kind, the flag that names it, and its path if one was given.
+interface RequestedInput {
+  readonly kind: string;
+  readonly flag: string;
+  readonly path: string | undefined;
+}
+
+export function requestedInputsOf(args: Readonly<Record<string, string>>): RequestedInput[] {
+  return EVIDENCE_INPUTS.map(({ flag, key }) => ({ kind: key, flag, path: args[flag] }));
 }

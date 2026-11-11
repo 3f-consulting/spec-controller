@@ -3,19 +3,11 @@ import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { readingOf, readUtf8, type ReadFault } from "./inputReading.js";
 import { corpusPathOf, MissingFeatureCorpusError, readFeatureSources, type FeatureFileSource } from "./ingestScenarios.js";
 import {
-  claimCodesAtOf,
-  commandRuns,
-  evidenceReconciliationOf,
   parseFeatureCorpus,
   parseWorkflows,
-  pipelineStepsOf,
-  recordedCheckStepsOf,
-  shellReading,
-  targetConfigurationFrom,
   type ParsedFeatureFile,
   type ClaimCodesAt,
   type ParsedWorkflow,
-  type Provenance,
   type Source,
   type SourceFault,
 } from "@3f-consulting/spec-controller-core";
@@ -36,17 +28,8 @@ import {
   parseCucumberEvidenceObservations,
   type CucumberJsonReport,
 } from "@3f-consulting/spec-controller-core";
-import type { PackageJsonScripts, StepRecord } from "@3f-consulting/spec-controller-core";
-import type {
-  EvidenceObservation,
-  EvidenceReconciliation,
-} from "@3f-consulting/spec-controller-core";
-
-const RECONCILER_INVOCATION = "spec-controller balance";
-
-export const DEFAULT_CI_PATH = ".github/workflows";
-
-export const DEFAULT_PACKAGE_JSON = "package.json";
+import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
+import type { EvidenceObservation } from "@3f-consulting/spec-controller-core";
 
 function sourcesOf(featuresDir: string): FeatureFileSource[] {
   try {
@@ -103,8 +86,7 @@ function parsedWorkflowsOf({ paths, sources }: WorkflowSources): ParsedWorkflows
   return { kind: "unparseable", faults: parse.faults.map(({ file, message }) => ({ file: pathOf.get(file) ?? file, message })) };
 }
 
-export function readWorkflows(ciPath: string | undefined, read: (path: string) => string = readUtf8): WorkflowReading {
-  const path = ciPath ?? DEFAULT_CI_PATH;
+export function readWorkflows(path: string, read: (path: string) => string = readUtf8): WorkflowReading {
   return readingOf(path, () => workflowSourcesOf(path, read), parsedWorkflowsOf);
 }
 
@@ -130,34 +112,12 @@ function isObservationReader(reader: EvidenceReader): reader is ObservationReade
   return Object.hasOwn(OBSERVATION_READERS, reader);
 }
 
-function observationsOf(reports: readonly EvidenceReport[], root: string, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
+export function observationsOf(reports: readonly EvidenceReport[], root: string, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
   return reports.flatMap(({ reader, document }) => (isObservationReader(reader) ? OBSERVATION_READERS[reader](document, root, claimCodesAt) : []));
 }
 
-function documentReadBy(reports: readonly EvidenceReport[], reader: EvidenceReader): unknown {
+export function documentReadBy(reports: readonly EvidenceReport[], reader: EvidenceReader): unknown {
   return reports.find((report) => report.reader === reader)?.document;
 }
 
-type TargetManifest = PackageJsonScripts & { readonly specController?: unknown };
-
-export function runReconcile(
-  reports: readonly EvidenceReport[],
-  root: string,
-  corpus: readonly ParsedFeatureFile[],
-  workflows: readonly ParsedWorkflow[],
-  run: { readonly strict: boolean; readonly provenance: Provenance },
-): EvidenceReconciliation {
-  const packageJson = (documentReadBy(reports, "package-manifest") as TargetManifest | undefined) ?? {};
-  const scripts = packageJson.scripts ?? {};
-  const steps = pipelineStepsOf(workflows);
-  const recordedSteps = recordedCheckStepsOf(documentReadBy(reports, "ci-step-record") as StepRecord | undefined);
-  return evidenceReconciliationOf({
-    features: corpus,
-    testObservations: observationsOf(reports, root, claimCodesAtOf(corpus)),
-    steps,
-    readings: { runsTheReconciler: (command) => commandRuns(command, RECONCILER_INVOCATION, scripts), scripts, shell: shellReading },
-    ...(recordedSteps === undefined ? {} : { recordedSteps }),
-    configuration: targetConfigurationFrom(packageJson, steps),
-    ...run,
-  });
-}
+export type TargetManifest = PackageJsonScripts & { readonly specController?: unknown };

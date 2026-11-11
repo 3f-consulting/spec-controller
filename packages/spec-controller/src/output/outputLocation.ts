@@ -1,36 +1,13 @@
 import { closeSync, constants, existsSync, fstatSync, lstatSync, openSync, readlinkSync, realpathSync, statSync } from "node:fs";
 import { dirname, resolve, sep } from "node:path";
 
-import { endRunOn, USAGE_EXIT_CODE, USAGE_REFUSAL } from "../runEnding/exitCode.js";
-import { errorText, standardError, type RefusalLines } from "../runEnding/standardError.js";
 import { refusal, type Refusal } from "../runEnding/refusal.js";
 import { AppError } from "../messages/messages.js";
-
-class UsageRefusal extends Error {
-  readonly exitCode = USAGE_EXIT_CODE;
-}
+import type { IdentifiedInput } from "./format.js";
 
 export function unwritableRefusal(format: string, path: string, err: unknown): Refusal {
   const reason = err instanceof Error ? err.message : String(err);
   return refusal(AppError.ReportNotWritten, { format, path, reason });
-}
-
-// Only balance refuses through here; allocate and the host print their own refusals.
-const REFUSING_COMMAND = "balance";
-
-export function refuse(error: RefusalLines): never {
-  standardError(process.stderr, REFUSING_COMMAND).error(error);
-  throw new UsageRefusal(errorText(error, REFUSING_COMMAND));
-}
-
-export function settlingRefusal<T>(run: () => T, refused: T): T {
-  try {
-    return run();
-  } catch (err) {
-    if (!(err instanceof UsageRefusal)) throw err;
-    endRunOn(USAGE_REFUSAL);
-    return refused;
-  }
 }
 
 export interface RegularFileIdentity {
@@ -126,4 +103,8 @@ function linkTarget(path: string): string | undefined {
     // A prefix that cannot be read is followed no further: the path names stdout only as spelled.
   }
   return undefined;
+}
+
+export function identifiedInputs(inputs: readonly ReadInput[]): IdentifiedInput[] {
+  return inputs.map((input) => ({ ...input, identity: regularFileIdentity(input.path) }));
 }

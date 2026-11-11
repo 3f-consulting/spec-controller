@@ -27,18 +27,17 @@ export type PlanResult =
   | { readonly ok: true; readonly plan: OutputPlan }
   | { readonly ok: false; readonly error: Refusal };
 
+// An output as the run asked for it: its format not yet known to be one the tool writes.
+export interface RequestedOutput {
+  readonly fmt: string;
+  readonly dest: OutputDest;
+}
+
 export function planOutput(
-  formatSpecs: readonly string[],
+  requested: readonly RequestedOutput[],
   namesStdout: (path: string) => boolean,
 ): PlanResult {
-  const specs = formatSpecs.length === 0 ? ["md"] : formatSpecs;
-  const outputs: PlannedOutput[] = specs.map((spec) => {
-    const colon = spec.indexOf(":");
-    const fmt = (colon === -1 ? spec : spec.slice(0, colon)) as OutputFormat;
-    const dest: OutputDest =
-      colon === -1 ? { kind: "stdout" } : { kind: "file", path: spec.slice(colon + 1) };
-    return { fmt, dest };
-  });
+  const outputs: PlannedOutput[] = requested.map(({ fmt, dest }) => ({ fmt: fmt as OutputFormat, dest }));
 
   const unknown = outputs.filter((o) => !isSupportedFormat(o.fmt));
   if (unknown.length > 0) {

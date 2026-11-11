@@ -1,5 +1,6 @@
 import { statSync } from "node:fs";
-import { DEFAULT_PACKAGE_JSON, type EvidenceReport } from "./ingestQualityChecks.js";
+import type { EvidenceReport } from "./ingestQualityChecks.js";
+import { reportInputOf, type GivenInput, type ReportInput } from "./inputKinds.js";
 import { readUtf8, type InputReadFault } from "./inputReading.js";
 import { junitReportPathsOf } from "./junitReportPaths.js";
 import { readReport, type ReportFormat, type ReportReading } from "./reportReading.js";
@@ -7,7 +8,6 @@ import { AppError, AppMessage } from "../messages/messages.js";
 import { message } from "../messages/appText.js";
 import { refusal, refusals, type Refusal } from "../runEnding/refusal.js";
 import type { RefusalLines } from "../runEnding/standardError.js";
-import { EVIDENCE_INPUTS, type ReportInput } from "../runRequest/evidenceInputs.js";
 
 type NotValid = (subject: string, shape: string, path: string, reason: string) => Refusal;
 
@@ -24,23 +24,33 @@ export interface JsonInput {
   readonly report: ReportInput;
 }
 
-export function jsonInputsOf(args: Record<string, string>, exists: (path: string) => boolean): JsonInput[] {
-  const given = EVIDENCE_INPUTS.flatMap(({ flag, report }) => {
-    const path = args[flag];
+export function checkInputsExist(inputs: readonly GivenInput[], exists: (path: string) => boolean): Refusal | null {
+  for (const { flag, path } of inputs) {
+    if (path !== undefined && !exists(path)) {
+      return refusal(AppError.InputPathMissing, { flag: `--${flag}`, path });
+    }
+  }
+  return null;
+}
+
+export function jsonInputsOf(inputs: readonly GivenInput[], exists: (path: string) => boolean, defaultManifest: string): JsonInput[] {
+  const given = inputs.flatMap(({ kind, flag, path }) => {
+    const report = reportInputOf(kind);
     if (report === undefined || path === undefined) return [];
     const paths = report.takesADirectory === true && statSync(path).isDirectory() ? reportFilesIn(path) : [path];
     const subject = message(report.subject, { flag: `--${flag}` });
     return paths.map((file) => ({ subject, path: file, report }));
   });
-  return [...given, ...manifestReadByDefault(args, exists)];
+  return [...given, ...manifestReadByDefault(inputs, exists, defaultManifest)];
 }
 
-function manifestReadByDefault(args: Record<string, string>, exists: (path: string) => boolean): JsonInput[] {
-  return EVIDENCE_INPUTS.flatMap(({ flag, report }) =>
-    report?.reader === "package-manifest" && args[flag] === undefined && exists(DEFAULT_PACKAGE_JSON)
-      ? [{ subject: message(AppMessage.DefaultPackageJson), path: DEFAULT_PACKAGE_JSON, report }]
-      : [],
-  );
+function manifestReadByDefault(inputs: readonly GivenInput[], exists: (path: string) => boolean, defaultManifest: string): JsonInput[] {
+  return inputs.flatMap(({ kind, path }) => {
+    const report = reportInputOf(kind);
+    return report?.reader === "package-manifest" && path === undefined && exists(defaultManifest)
+      ? [{ subject: message(AppMessage.DefaultPackageJson), path: defaultManifest, report }]
+      : [];
+  });
 }
 
 function reportFilesIn(directory: string): string[] {

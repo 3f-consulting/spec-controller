@@ -4,7 +4,8 @@ import { join } from "node:path";
 import { AppError, AppMessage } from "../messages/messages.js";
 import { message } from "../messages/appText.js";
 import { runBalanceCaptured } from "../commands/runBalance.test-utils.js";
-import { inputsReadBy, type InputReader } from "./inputsRead.js";
+import { inputsReadBy } from "../commands/balance.js";
+import type { InputReader } from "./inputsRead.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { printedRefusal } from "../messages/shownText.test-utils.js";
 

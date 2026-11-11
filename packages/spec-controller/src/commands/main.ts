@@ -2,7 +2,7 @@ import { runBalance } from "./balance.js";
 import { runAllocate } from "./allocate.js";
 import { parseHostInvocation, answerUnknownCommand, type HostInvocation } from "../runRequest/host.js";
 import { cliRegistry, renderTopLevelHelp } from "../runRequest/cliRegistry.js";
-import { settlingRefusal } from "../output/outputLocation.js";
+import { settlingRefusal } from "../runEnding/usageRefusal.js";
 import { beginRun, markRunFinished, settleUnexpectedError } from "../runEnding/crashGuards.js";
 import { endRunOn, USAGE_REFUSAL } from "../runEnding/exitCode.js";
 import { standardError } from "../runEnding/standardError.js";

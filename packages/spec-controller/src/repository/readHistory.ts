@@ -1,11 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { lstatSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import type { ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
+import type { ClaimCodeOccurrence, HistoryBoundary } from "@3f-consulting/spec-controller-core";
 import { AppMessage } from "../messages/messages.js";
 import { gitExited, readOrRefuse, UnreadableInput } from "./unreadable.js";
-
-export type HistoryBoundary = { kind: "complete" } | { kind: "not-a-repository" } | { kind: "shallow"; before: string };
 
 const MAX_OUTPUT_BYTES = 1024 * 1024 * 1024;
 
