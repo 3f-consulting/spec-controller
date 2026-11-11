@@ -101,31 +101,24 @@ function regularIdentity(stats: { isFile(): boolean; dev: bigint; ino: bigint })
   return stats.isFile() ? { dev: stats.dev, ino: stats.ino } : undefined;
 }
 
-const spellingsOf = (fd: number, name: string): ReadonlySet<string> =>
-  new Set([`/dev/${name}`, `/dev/fd/${fd}`, `/proc/self/fd/${fd}`, `/proc/thread-self/fd/${fd}`, `/proc/${process.pid}/fd/${fd}`]);
-
-const STDOUT_SPELLINGS = spellingsOf(1, "stdout");
-
-const STDERR_SPELLINGS = spellingsOf(2, "stderr");
-
 const MAX_LINKS_FOLLOWED = 40;
 
-function namesStream(path: string, spellings: ReadonlySet<string>): boolean {
+function namesStream(path: string, stream: string): boolean {
   let current: string | undefined = resolve(path);
   for (let followed = 0; current !== undefined && followed <= MAX_LINKS_FOLLOWED; followed++) {
-    if (spellings.has(current)) return true;
+    if (current === stream) return true;
     current = withFirstLinkFollowed(current);
   }
   return false;
 }
 
 export function namesStdout(path: string): boolean {
-  return namesStream(path, STDOUT_SPELLINGS);
+  return namesStream(path, "/dev/stdout");
 }
 
 // Standard error may be a socket a parent process handed over, which cannot be opened by its path, so a report bound for it is written to the stream.
 export function namesStderr(path: string): boolean {
-  return namesStream(path, STDERR_SPELLINGS);
+  return namesStream(path, "/dev/stderr");
 }
 
 function withFirstLinkFollowed(path: string): string | undefined {
