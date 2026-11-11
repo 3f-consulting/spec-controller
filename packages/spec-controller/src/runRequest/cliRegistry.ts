@@ -89,48 +89,32 @@ function flagLabel(flag: FlagSpec): string {
   return flag.arg !== undefined ? `${names} ${flag.arg}` : names;
 }
 
-export function renderCommandHelp(command: CommandSpec): string {
-  const flags = command.flags;
-  const gutter = 2;
-  const labelWidth = Math.max(0, ...flags.map((f) => flagLabel(f).length));
-  const lines = flags.map(
-    (flag) => `  ${flagLabel(flag).padEnd(labelWidth + gutter)}${flag.description}`,
-  );
-  return [
-    message(AppMessage.HelpCommandTitle, { command: command.name, summary: command.summary }),
-    ...positionalHelp(command.name, command.positionals ?? []),
-    "",
-    message(AppMessage.HelpOptions),
-    ...lines,
-  ].join("\n");
+// Each entry's name is padded to the longest, plus the gutter, so the descriptions line up.
+function entries(listed: readonly { name: string; description: string }[], gutter: number): string {
+  const width = Math.max(0, ...listed.map(({ name }) => name.length)) + gutter;
+  return listed.map(({ name, description }) => message(AppMessage.HelpEntry, { name: name.padEnd(width), description })).join("\n");
 }
 
-function positionalHelp(command: string, positionals: readonly PositionalSpec[]): string[] {
-  if (positionals.length === 0) return [];
-  return [
-    "",
-    `${message(AppMessage.HelpUsage)} ${message(AppMessage.HelpCommandUsageLine, { command, arguments: positionals.map((positional) => positional.name).join(" ") })}`,
-    "",
-    message(AppMessage.HelpArguments),
-    ...positionals.map((positional) => `  ${positional.name}  ${positional.description}`),
-  ];
+export function renderCommandHelp(command: CommandSpec): string {
+  return message(AppMessage.CommandHelp, {
+    command: command.name,
+    summary: command.summary,
+    arguments: argumentHelp(command.name, command.positionals ?? []),
+    options: entries(command.flags.map((flag) => ({ name: flagLabel(flag), description: flag.description })), 2),
+  });
+}
+
+function argumentHelp(command: string, positionals: readonly PositionalSpec[]): string {
+  if (positionals.length === 0) return "";
+  return message(AppMessage.CommandHelpArguments, {
+    command,
+    arguments: positionals.map((positional) => positional.name).join(" "),
+    entries: entries(positionals, 2),
+  });
 }
 
 export function renderTopLevelHelp(registry: CliRegistry): string {
-  const commandGutter = 4;
-  const commandWidth = Math.max(0, ...registry.commands.map((c) => c.name.length));
-  const commandLines = registry.commands.map(
-    (command) => `  ${command.name.padEnd(commandWidth + commandGutter)}${command.summary}`,
-  );
-  return [
-    message(AppMessage.HelpTitle),
-    "",
-    message(AppMessage.HelpUsage),
-    `  ${message(AppMessage.HelpUsageLine)}`,
-    "",
-    message(AppMessage.HelpCommands),
-    ...commandLines,
-    "",
-    message(AppMessage.HelpPointer),
-  ].join("\n");
+  return message(AppMessage.Help, {
+    commands: entries(registry.commands.map((command) => ({ name: command.name, description: command.summary })), 4),
+  });
 }

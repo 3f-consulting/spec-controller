@@ -19,7 +19,9 @@ type RefusalFields = Omit<Refusal, keyof RefusalLines>;
 const PRINTED_REFUSAL: RefusalLines = {
   // A refusal opens with the usage-error prefix of its command, or of the tool at the host's scope, and its code; its pointer lines carry none.
   lines(this: RefusalFields, command?: string): string {
-    return [openingLine(this.code, words(this.code, this.values), command), ...this.pointers].join("\n");
+    const opening = openingLine(this.code, words(this.code, this.values), command);
+    if (this.pointers.length === 0) return opening;
+    return message(AppMessage.PointedRefusal, { refusal: opening, pointers: this.pointers.join("\n") });
   },
 };
 
