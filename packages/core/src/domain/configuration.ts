@@ -1,5 +1,5 @@
 import type { QualityCheckKind } from "./postEvidenceObligation.js";
-import type { PipelineStep } from "./postEvidenceObservation.js";
+import { stepIdentityOf, type PipelineStep } from "./postEvidenceObservation.js";
 
 export interface ConfigurationError {
   readonly kind:
@@ -82,7 +82,7 @@ function nonChecksIn(entries: readonly string[], stepsRead: readonly PipelineSte
     if (nonCheck === undefined) return errors.push({ kind: "not-checks-entry-not-a-step-name", entry }), [];
     const { workflow, job, step } = nonCheck;
     const inWorkflow = stepsRead.filter((read) => read.workflow === workflow);
-    if (inWorkflow.length > 0 && !inWorkflow.some((read) => read.job === job && read.identity === step)) {
+    if (inWorkflow.length > 0 && !inWorkflow.some((read) => read.job === job && stepIdentityOf(read) === step)) {
       return errors.push({ kind: "not-checks-entry-matches-no-step", entry }), [];
     }
     return [nonCheck];

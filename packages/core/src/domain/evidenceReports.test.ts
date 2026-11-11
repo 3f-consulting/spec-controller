@@ -13,19 +13,19 @@ const ONE: ClaimCode = { featureCode: "ONE", number: "001" };
 describe("balance posts only the steps that prove something, as each report and workflow gives them", () => {
   it("[CLM-OBS-004] a step running pnpm audit-the-tree with its own environment is a fitness function", () => {
     const [step] = workflowSteps(["jobs:\n  build:\n    steps:\n      - run: pnpm audit-the-tree\n        env:\n          CI: \"true\"\n"]);
-    const readings = { runsTheReconciler: () => false, nonChecks: [], runners: {}, scripts: {}, shell: shellReading };
+    const readings = { nonChecks: [], runners: {}, scripts: {}, shell: shellReading };
     expect(stepDispositionOf(step!, readings)).toBe("candidate");
   });
 
   it("[CLM-OBS-004] a step running pnpm audit-the-tree whose environment holds a number and a flag is a fitness function", () => {
     const [step] = workflowSteps(["jobs:\n  build:\n    steps:\n      - run: pnpm audit-the-tree\n        env:\n          RETRIES: 3\n          VERBOSE: true\n"]);
-    const readings = { runsTheReconciler: () => false, nonChecks: [], runners: {}, scripts: {}, shell: shellReading };
+    const readings = { nonChecks: [], runners: {}, scripts: {}, shell: shellReading };
     expect(stepDispositionOf(step!, readings)).toBe("candidate");
   });
 
   it("[CLM-OBS-013] a step whose own command writes out the step record is the reconciler", () => {
     const [step] = workflowSteps(["jobs:\n  build:\n    steps:\n      - name: Record\n        run: echo '${{ toJSON( steps ) }}' > steps.json\n"]);
-    const readings = { runsTheReconciler: () => false, nonChecks: [], runners: {}, scripts: {}, shell: shellReading };
+    const readings = { nonChecks: [], runners: {}, scripts: {}, shell: shellReading };
     expect(stepDispositionOf(step!, readings)).toBe("reconciler");
   });
 });

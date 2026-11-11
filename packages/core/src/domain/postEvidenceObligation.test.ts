@@ -52,6 +52,26 @@ describe("an Outline will be one executable claim for each row only when it has 
   });
 });
 
+describe("an Outline will be one executable claim for each row only when it has a clm column, as its Examples blocks were written", () => {
+  it.each([
+    ["CLM-OBL-001", "a clm column, then a second column", [{ columns: ["clm", "x"], cells: [["CLM-ONE-001", "y"], ["CLM-ONE-002", "z"]] }], [ONE_001, ONE_002]],
+    ["CLM-OBL-001", "a clm column that is not the first", [{ columns: ["x", "clm"], cells: [["y", "CLM-ONE-001"], ["z", "CLM-ONE-002"]] }], [ONE_001, ONE_002]],
+    ["CLM-OBL-001", "a block with a clm column and a block without", [{ columns: ["clm", "x"], cells: [["CLM-ONE-001", "y"]] }, { columns: ["x"], cells: [["z"]] }], [ONE_001, undefined]],
+    ["CLM-OBL-021", "a clm column whose cell is empty", [{ columns: ["clm", "x"], cells: [["", "y"]] }], [undefined]],
+    ["CLM-OBL-022", "a clm column whose cell reads first", [{ columns: ["clm", "x"], cells: [["first", "y"]] }], [undefined]],
+  ])("[%s] an Outline whose Examples have %s", (_clm, _shape, blocks, codes) => {
+    const examples = blocks.map(({ columns, cells }, at) => ({ tags: [], columns, rows: cells.map((row, line) => ({ line: 10 * at + line, cells: row })) }));
+    const feature = { file: "one.feature", featureTags: ["ONE"], tagFormWords: [], scenarios: [{ tags: ["unit"], title: "a claim", line: 5, examples }] };
+    expect(executableClaimsOf([feature], NOT_STRICT).map(({ claimCode }) => claimCode)).toEqual(codes);
+  });
+
+  it("[CLM-OBL-002] an Outline tagged @CLM-ONE-001 whose Examples block has no clm column is one executable claim", () => {
+    const examples = [{ tags: [], columns: ["x"], rows: [{ line: 9, cells: ["y"] }, { line: 10, cells: ["z"] }] }];
+    const feature = { file: "one.feature", featureTags: ["ONE"], tagFormWords: [], scenarios: [{ tags: ["unit", "CLM-ONE-001"], title: "a claim", line: 5, examples }] };
+    expect(executableClaimsOf([feature], NOT_STRICT).map(({ claimCode }) => claimCode)).toEqual([ONE_001]);
+  });
+});
+
 describe("each deferral tag, built in or configured, will remove the claim", () => {
   it.each([
     ["CLM-OBL-003", "@wip", []],

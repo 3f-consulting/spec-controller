@@ -2,7 +2,6 @@ import { existsSync } from "node:fs";
 import { dirname } from "node:path";
 import {
   claimCodesAtOf,
-  commandRuns,
   evidenceReconciliationOf,
   outputClashOf,
   outputPlanOf,
@@ -60,8 +59,6 @@ import {
   checkUnknownFlags,
   checkMissingValues,
 } from "../runRequest/cliArgs.js";
-
-const RECONCILER_INVOCATION = "spec-controller balance";
 
 export function runBalance(argv: string[]): boolean {
   return settlingRefusal(() => balance(argv), false);
@@ -180,7 +177,7 @@ function runReconcile(
     features: corpus,
     testObservations: observationsOf(reports, root, claimCodesAtOf(corpus)),
     steps,
-    readings: { runsTheReconciler: (command) => commandRuns(command, RECONCILER_INVOCATION, scripts), scripts, shell: shellReading },
+    readings: { scripts, shell: shellReading },
     ...(recordedSteps === undefined ? {} : { recordedSteps }),
     configuration: targetConfigurationFrom(packageJson, steps),
     ...run,
