@@ -457,6 +457,13 @@ describe("balance posts each result with how it went", () => {
   ])("[%s] balance posts a fitness function known only from its workflow as passed, or as passed-on-error when its failure is allowed", (_clm, { step, result }) => {
     expect(fitness([step])).toEqual([{ cites: [ONE], result, kind: "fitness", place: "ci.yml:build:Lint", notes: [] }]);
   });
+
+  it("[CLM-OBS-057] a fitness function whose step in the workflow allows its failure is posted as passed-on-error", () => {
+    const steps = stepsOf("      - id: CLM-ONE-001\n        name: Lint\n        continue-on-error: true\n        run: pnpm lint\n");
+    expect(fitnessObservationsOf(steps, () => "candidate", undefined)).toEqual([
+      { cites: [ONE], result: "passed-on-error", kind: "fitness", place: "ci.yml:build:Lint", notes: [] },
+    ]);
+  });
 });
 
 describe("balance posts each result at the kind of quality check its source and tags give", () => {
