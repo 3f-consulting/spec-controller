@@ -9,6 +9,6 @@ export function readFeatureCodes(featureFiles: readonly { readonly path: string 
     source: readOrRefuse(AppMessage.FeatureFile, path, () => readFileSync(path, "utf8")),
   }));
   const parse = parseFeatureCorpus(sources);
-  if (parse.kind === "unparseable") return [];
+  if (parse.kind === "unparseable") throw new UnparseableFeatureFiles(parse.faults);
   return parse.parsed.flatMap((feature) => featureCodeOfFile(feature) ?? []);
 }
