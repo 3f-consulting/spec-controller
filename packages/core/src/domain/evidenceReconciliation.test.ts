@@ -247,6 +247,12 @@ describe("the provenance says what the run used", () => {
     for (const part of ["ci", "s3cret", "x=1", "#y"]) expect(target).not.toContain(part);
   });
 
+  it("[CLM-EVR-045] the provenance describes the run", () => {
+    const { repo } = committedRepository("evr-scp-origin-", "git@github.com:acme/web.git");
+    const origin = resolveTargetOrigin(repo) ?? undefined;
+    expect(provenanceOf({ ...(origin === undefined ? {} : { origin }), ...VERSION }, []).target).toBe("acme/web");
+  });
+
   it("[CLM-EVR-040] the provenance describes the run", () => {
     const { repo, head } = committedRepository("evr-tool-");
     writeFileSync(join(repo, "package.json"), JSON.stringify({ version: "0.1.256" }));
