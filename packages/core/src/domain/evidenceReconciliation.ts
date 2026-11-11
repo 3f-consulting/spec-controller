@@ -1,12 +1,14 @@
-import { claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
-import type { ClaimReconciliation, Outcome, QualityCheckReconciliation } from "./claimReconciliation.js";
-import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
-import type {
-  EvidenceObservation,
-  PipelineStep,
-  RecordedCheckStep,
-  StepDisposition,
-  StepReadings,
+import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
+import { claimReconciliationsOf, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
+import { executableClaimsOf, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
+import {
+  fitnessObservationsOf,
+  stepDispositionOf,
+  type EvidenceObservation,
+  type PipelineStep,
+  type RecordedCheckStep,
+  type StepDisposition,
+  type StepReadings,
 } from "./postEvidenceObservation.js";
 
 export type RunVerdict =
@@ -243,11 +245,36 @@ export interface RunToReconcile {
   readonly provenance: Provenance;
 }
 
-export function evidenceReconciliationOf(run: RunToReconcile): EvidenceReconciliation {
+function dispositionsOf({ readings, configuration: { configuration } }: RunToReconcile): (step: PipelineStep) => StepDisposition {
+  const runners = Object.fromEntries(Object.entries(configuration.runners).filter((entry): entry is [string, string | null] => entry[1] !== undefined));
+  const nonChecks = configuration.nonChecks.map(({ workflow, job, step }) => `${workflow}:${job}:${step}`);
+  return (step) => stepDispositionOf(step, { ...readings, runners, nonChecks });
+}
+
+function errorsInTheInputsOf(claimCodeErrors: readonly ClaimCodeError[], configurationErrors: readonly ConfigurationError[]): ErrorsInTheInputs | undefined {
+  if (claimCodeErrors.length === 0 && configurationErrors.length === 0) return undefined;
   return {
-    claimReconciliations: [],
-    runVerdict: { verdict: "not-reconciled", why: "nothing-to-reconcile" },
-    totals: totalsOf([], 0),
+    ...(claimCodeErrors.length === 0 ? {} : { claimCodeErrors }),
+    ...(configurationErrors.length === 0 ? {} : { configurationErrors }),
+  };
+}
+
+export function evidenceReconciliationOf(run: RunToReconcile): EvidenceReconciliation {
+  const { features, configuration, strict, steps } = run;
+  const claims = executableClaimsOf(features, { deferralTags: configuration.configuration.deferralTags, strict });
+  const dispositionOf = dispositionsOf(run);
+  const observations = [...run.testObservations, ...fitnessObservationsOf(steps, dispositionOf, run.recordedSteps)];
+  const claimReconciliations = claimReconciliationsOf(claims, observations);
+  const claimCodeErrors = claimCodeErrorsOf(features);
+  const errorsInTheInputs = errorsInTheInputsOf(claimCodeErrors, configuration.errors);
+  const neverRan = observations.filter(({ result }) => result === "never-ran");
+  return {
+    claimReconciliations,
+    runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors),
+    totals: totalsOf(claimReconciliations, excludedClaimCodeOccurrencesOf(features)),
+    ...(steps.length === 0 ? {} : { stepAccount: stepAccountOf(steps, dispositionOf) }),
     provenance: run.provenance,
+    ...(errorsInTheInputs === undefined ? {} : { errorsInTheInputs }),
+    ...(neverRan.length === 0 ? {} : { runIntegrity: { neverRan } }),
   };
 }
