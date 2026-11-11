@@ -3,12 +3,13 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   The tool writes what it found: JSON for programs, Markdown for people.
 
-  This file makes sure of five things:
+  This file makes sure of six things:
 
   - each report has the right structure
   - an optional section with nothing in it is left out
   - the Claim Reconciliations are always there, because they are the heart of the report
   - odd characters in what it quotes don't break anything
+  - the unnamed claim's evidence is shown in groups, so a reader can tell which file to fix
   - the Markdown adds words so a person can read it
 
   Whether an answer or a count is right is proved where it's worked out, not here.
@@ -80,6 +81,14 @@ Feature: Each report has the right structure, and the Markdown explains it
       given a test that never ran had a message of three lines, and balance had added two notes
       when its Markdown report is written
       then the report will quote the message's first line and both notes
+
+  Rule: the Markdown report groups the unnamed claim's evidence by where it came from
+
+    @unit @CLM-RPT-110
+    Scenario: the unnamed claim's evidence will be shown one group per file, each counting the tests that ran, passed and failed
+      given a run had unit tests citing no claim in two files, and one test in one of them failed
+      when its Markdown report is written
+      then the unnamed claim will show one group for each file, with how many of its tests ran, passed and failed, and the name of the test that failed
 
   Rule: the Markdown adds the words a person needs to read the data
 

@@ -312,3 +312,33 @@ describe("each section will have its heading, each value its label, and each tab
     ]);
   });
 });
+
+describe("the unnamed claim's evidence will be shown one group per file, each counting the tests that ran, passed and failed", () => {
+  it("[CLM-RPT-110] the unnamed claim's evidence will be shown one group per file, each counting the tests that ran, passed and failed", () => {
+    const citingNoClaim = (place: string, name: string, result: EvidenceObservation["result"]) =>
+      ({ outcome: "cites-no-claim", kind: "unit", observation: { cites: [], result, kind: "unit", place, name, notes: [] } }) as const;
+    const run: EvidenceReconciliation = {
+      ...everySection(),
+      claimReconciliations: [
+        {
+          claim: {},
+          qualityCheckReconciliations: [
+            citingNoClaim("a.test.ts", "first a", "passed"),
+            citingNoClaim("a.test.ts", "second a", "passed"),
+            citingNoClaim("b.test.ts", "first b", "passed"),
+            citingNoClaim("b.test.ts", "second b", "failed"),
+          ],
+          verdict: "out-of-balance",
+        },
+      ],
+    };
+    const lines = renderMarkdown(run).split("\n");
+    const header = lines.indexOf("| Kind | File | Claim code | Ran | Passed | Failed | Failures |");
+    expect(lines.slice(header, header + 4)).toEqual([
+      "| Kind | File | Claim code | Ran | Passed | Failed | Failures |",
+      "| --- | --- | --- | --- | --- | --- | --- |",
+      "| unit | `a.test.ts` |  | 2 | 2 | 0 |  |",
+      "| unit | `b.test.ts` |  | 2 | 1 | 1 | `second b` |",
+    ]);
+  });
+});
