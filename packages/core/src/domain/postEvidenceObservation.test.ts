@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { shellReading } from "../inputs/shell.js";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../inputs/cucumber.js";
-import { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "../inputs/junit.js";
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
 import { targetConfigurationFrom } from "../inputs/manifest.js";
 import type { ClaimCode } from "./claimCodes.js";
@@ -13,6 +12,7 @@ import {
   exampleObservationsOf,
   fitnessObservationsOf,
   stepDispositionOf,
+  testCaseObservationsOf,
   testFileObservationsOf,
   type EvidenceObservation,
   type PipelineStep,
@@ -20,6 +20,7 @@ import {
   type RecordedCheckStep,
   type StepDisposition,
   type StepReadings,
+  type TestCaseAsWritten,
 } from "./postEvidenceObservation.js";
 
 const ONE: ClaimCode = { featureCode: "ONE", number: "001" };
@@ -34,19 +35,12 @@ const vitest = (status: string, title = "[CLM-ONE-001] a test", fullTitle = titl
 const vitestFile = (message: string): EvidenceObservation[] =>
   testFileObservationsOf([{ path: "a.test.ts", status: "failed", message, tests: [] }]);
 
-type Testcase = Parameters<typeof parseJunitEvidenceObservations>[0] extends infer R
-  ? R extends { testsuites?: { testsuite?: ReadonlyArray<{ testcase?: ReadonlyArray<infer T> }> } }
-    ? T
-    : never
-  : never;
+// A JUnit report reads an error as a failure, and a pytest report as an error before the test's assertions.
+const junit = (testcase: TestCaseAsWritten, suite = "a.suite"): EvidenceObservation[] => testCaseObservationsOf([{ suite, ...testcase }], "failed");
 
-const junit = (testcase: Testcase, suite = "a.suite"): EvidenceObservation[] =>
-  parseJunitEvidenceObservations({ testsuites: { testsuite: [{ name: suite, testcase: [testcase] }] } });
+const pytest = (testcase: TestCaseAsWritten): EvidenceObservation[] => testCaseObservationsOf([{ suite: "pytest", ...testcase }], "never-ran");
 
-const pytest = (testcase: Testcase): EvidenceObservation[] =>
-  parsePytestEvidenceObservations({ testsuites: { testsuite: [{ name: "pytest", testcase: [testcase] }] } });
-
-const clmProperty = (...codes: readonly string[]) => ({ property: codes.map((value) => ({ name: "clm", value })) });
+const clmProperty = (...codes: readonly string[]) => codes.map((value) => ({ name: "clm", value }));
 
 const rspec = (status: string, title = "[CLM-ONE-001] a spec", fullTitle = title): EvidenceObservation[] =>
   exampleObservationsOf({ examples: [{ title, fullTitle, status, path: "./spec/a_spec.rb" }], messages: [] });
@@ -386,9 +380,9 @@ describe("balance posts each result with how it went", () => {
     ["CLM-OBS-019", { result: "passed", posted: () => vitest("passed") }],
     ["CLM-OBS-020", { result: "failed", posted: () => vitest("failed") }],
     ["CLM-OBS-021", { result: "passed", posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-ONE-001") }) }],
-    ["CLM-OBS-022", { result: "failed", posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-ONE-001"), failure: "boom" }) }],
+    ["CLM-OBS-022", { result: "failed", posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-ONE-001"), failure: { text: "boom" } }) }],
     ["CLM-OBS-023", { result: "passed", posted: () => junit({ classname: "example.com/a", name: "TestA/[CLM-ONE-001]_a" }) }],
-    ["CLM-OBS-024", { result: "failed", posted: () => junit({ classname: "example.com/a", name: "TestA/[CLM-ONE-001]_a", failure: "boom" }) }],
+    ["CLM-OBS-024", { result: "failed", posted: () => junit({ classname: "example.com/a", name: "TestA/[CLM-ONE-001]_a", failure: { text: "boom" } }) }],
     ["CLM-OBS-025", { result: "passed", posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test" }) }],
     ["CLM-OBS-026", { result: "failed", posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test", failure: { message: "boom" } }) }],
     ["CLM-OBS-027", { result: "passed", posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test" }) }],
@@ -407,10 +401,10 @@ describe("balance posts each result with how it went", () => {
   it.each<[string, { posted: Posted }]>([
     ["CLM-OBS-036", { posted: () => [...vitest("skipped"), ...vitest("todo")] }],
     ["CLM-OBS-037", { posted: () => [...vitest("skipped"), ...vitest("pending")] }],
-    ["CLM-OBS-038", { posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-ONE-001"), skipped: "" }) }],
-    ["CLM-OBS-039", { posted: () => junit({ classname: "example.com/a", name: "TestA/[CLM-ONE-001]_a", skipped: { message: "skip" } }) }],
-    ["CLM-OBS-040", { posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test", skipped: "" }) }],
-    ["CLM-OBS-041", { posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test", skipped: "" }) }],
+    ["CLM-OBS-038", { posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-ONE-001"), skipped: true }) }],
+    ["CLM-OBS-039", { posted: () => junit({ classname: "example.com/a", name: "TestA/[CLM-ONE-001]_a", skipped: true }) }],
+    ["CLM-OBS-040", { posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test", skipped: true }) }],
+    ["CLM-OBS-041", { posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test", skipped: true }) }],
     ["CLM-OBS-042", { posted: () => [...rspec("pending"), ...rspec("skipped")] }],
     ["CLM-OBS-043", { posted: () => cucumber(["@CLM-ONE-001"], ["passed", "skipped"]) }],
   ])("[%s] balance posts nothing for a test that was skipped", (_clm, { posted }) => {
@@ -420,13 +414,13 @@ describe("balance posts each result with how it went", () => {
   it.each<[string, { posted: Posted; cites: readonly ClaimCode[]; named: Partial<EvidenceObservation> }]>([
     ["CLM-OBS-044", { posted: () => vitestFile("no such module"), cites: [], named: { place: "a.test.ts", message: "no such module" } }],
     ["CLM-OBS-045", { posted: () => vitestFile("cannot be parsed"), cites: [], named: { place: "a.test.ts", message: "cannot be parsed" } }],
-    ["CLM-OBS-046", { posted: () => pytest({ classname: "", name: "tests.test_broken", error: { message: "collection failure", "#text": "ImportError" } }), cites: [], named: { place: "tests.test_broken", message: "ImportError" } }],
-    ["CLM-OBS-047", { posted: () => junit({ classname: "", name: "TestMain", failure: "FAIL\texample.com/a [build failed]\n" }, "example.com/a"), cites: [], named: { place: "example.com/a", message: "FAIL\texample.com/a [build failed]\n" } }],
-    ["CLM-OBS-100", { posted: () => junit({ classname: "", name: "TestMain", failure: { "#text": "setup failed: no database\nFAIL\texample.com/a\t0.004s\n" } }, "example.com/a"), cites: [], named: { place: "example.com/a", message: "setup failed: no database\nFAIL\texample.com/a\t0.004s\n" } }],
-    ["CLM-OBS-048", { posted: () => junit({ classname: "example.BeforeAllFailsTest", name: "", error: { message: "could not set up", "#text": "IllegalStateException" } }), cites: [], named: { place: "example.BeforeAllFailsTest", message: "IllegalStateException" } }],
+    ["CLM-OBS-046", { posted: () => pytest({ classname: "", name: "tests.test_broken", error: { message: "collection failure", text: "ImportError" } }), cites: [], named: { place: "tests.test_broken", message: "ImportError" } }],
+    ["CLM-OBS-047", { posted: () => junit({ classname: "", name: "TestMain", failure: { text: "FAIL\texample.com/a [build failed]\n" } }, "example.com/a"), cites: [], named: { place: "example.com/a", message: "FAIL\texample.com/a [build failed]\n" } }],
+    ["CLM-OBS-100", { posted: () => junit({ classname: "", name: "TestMain", failure: { text: "setup failed: no database\nFAIL\texample.com/a\t0.004s\n" } }, "example.com/a"), cites: [], named: { place: "example.com/a", message: "setup failed: no database\nFAIL\texample.com/a\t0.004s\n" } }],
+    ["CLM-OBS-048", { posted: () => junit({ classname: "example.BeforeAllFailsTest", name: "", error: { message: "could not set up", text: "IllegalStateException" } }), cites: [], named: { place: "example.BeforeAllFailsTest", message: "IllegalStateException" } }],
     ["CLM-OBS-049", { posted: () => rspecLoadError("An error occurred while loading ./spec/a_spec.rb.\n"), cites: [], named: { place: "spec/a_spec.rb", message: "An error occurred while loading ./spec/a_spec.rb.\n" } }],
     ["CLM-OBS-099", { posted: () => rspecLoadError("NameError: uninitialized constant Widget\n"), cites: [], named: { message: "NameError: uninitialized constant Widget\n" } }],
-    ["CLM-OBS-050", { posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-ONE-001"), error: { "#text": "fixture failed" } }), cites: [ONE], named: { place: "tests.a", name: "test_a" } }],
+    ["CLM-OBS-050", { posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-ONE-001"), error: { text: "fixture failed" } }), cites: [ONE], named: { place: "tests.a", name: "test_a" } }],
     ["CLM-OBS-051", { posted: () => cucumber(["@CLM-ONE-001"], ["ambiguous"]), cites: [ONE], named: { notes: ["Given one adds one"] } }],
     ["CLM-OBS-052", { posted: () => cucumber(["@CLM-ONE-001"], ["undefined"]), cites: [ONE], named: { notes: ["Given one adds one"] } }],
     ["CLM-OBS-053", { posted: () => fitness([CITING_STEP], [{ key: "CLM-ONE-001", outcome: "skipped" }]), cites: [ONE], named: { place: "ci.yml:build:Lint" } }],

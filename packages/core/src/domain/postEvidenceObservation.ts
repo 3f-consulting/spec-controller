@@ -164,7 +164,7 @@ export function resultOfRun(run: RunResult): EvidenceObservation["result"] | und
   return run === "never-reached-its-assertions" ? "never-ran" : run;
 }
 
-export function neverRanObservation(kind: QualityCheckKind, place: string, message: string | undefined): EvidenceObservation {
+function neverRanObservation(kind: QualityCheckKind, place: string, message: string | undefined): EvidenceObservation {
   return { cites: [], result: "never-ran", kind, place, notes: [], ...(message === undefined ? {} : { message }) };
 }
 
@@ -174,7 +174,7 @@ export function nearestCitation(levels: readonly (readonly ClaimCode[])[]): read
   return nearest.filter((code, at) => nearest.findIndex((other) => sameCode(code, other)) === at);
 }
 
-export const TEST_REPORT_KIND: QualityCheckKind = "unit";
+const TEST_REPORT_KIND: QualityCheckKind = "unit";
 
 // A test in a report of test results, as the report wrote it: its own title, its title within its groups, its status.
 interface TestAsWritten {
@@ -217,6 +217,84 @@ export function testFileObservationsOf(files: readonly TestFileAsWritten[], root
     if (file.status === FAILED_FILE && file.tests.length === 0) return [neverRanObservation(TEST_REPORT_KIND, place, file.message)];
     return file.tests.flatMap((test) => testObservationOf(test, place));
   });
+}
+
+interface EndingAsWritten {
+  readonly message?: string;
+  readonly text?: string;
+}
+
+// A test case in a report of test cases, as the report wrote it: the suite it is in, its class and name, its
+// properties, and the failure, error or skip it ended in, each with the message and text written there.
+export interface TestCaseAsWritten {
+  readonly suite?: string;
+  readonly classname?: string;
+  readonly name?: string;
+  readonly properties?: readonly { readonly name?: string; readonly value?: string }[];
+  readonly failure?: EndingAsWritten;
+  readonly error?: EndingAsWritten;
+  readonly skipped?: boolean;
+}
+
+const CLAIM_CODE_PROPERTY = "clm";
+// Go writes a package whose tests never ran, because it failed to build or its TestMain failed, as a failing TestMain with no classname.
+const GO_PACKAGE_TESTCASE = "TestMain";
+
+const isCollectionFailure = (testCase: TestCaseAsWritten): boolean => testCase.error !== undefined && !testCase.classname;
+
+const isClassSetupFailure = (testCase: TestCaseAsWritten): boolean => testCase.error !== undefined && !testCase.name;
+
+const isPackageFailure = (testCase: TestCaseAsWritten): boolean =>
+  !testCase.classname && testCase.name === GO_PACKAGE_TESTCASE && testCase.failure !== undefined;
+
+const errorTextOf = (testCase: TestCaseAsWritten): string | undefined => testCase.error?.text ?? testCase.error?.message;
+
+function nameCitationsOf(name: string): ClaimCode[] {
+  const segmentsLeafFirst = name.split("/").reverse();
+  return segmentsLeafFirst.map(claimCodeCitationsIn).find((codes) => codes.length > 0) ?? [];
+}
+
+function propertyCitationsOf(testCase: TestCaseAsWritten): ClaimCode[] {
+  return (testCase.properties ?? [])
+    .filter((property) => property.name === CLAIM_CODE_PROPERTY)
+    .flatMap((property) => claimCodeFrom(property.value ?? "") ?? []);
+}
+
+// A test case cites its clm properties and its name's innermost cited segment, else the last code its class cites.
+function testCaseCitesOf(testCase: TestCaseAsWritten): readonly ClaimCode[] {
+  return nearestCitation([
+    [...propertyCitationsOf(testCase), ...nameCitationsOf(testCase.name ?? "")],
+    claimCodeCitationsIn(testCase.classname ?? "").slice(-1),
+  ]);
+}
+
+function testCaseResultOf(testCase: TestCaseAsWritten, anError: EvidenceObservation["result"]): EvidenceObservation["result"] {
+  if (testCase.error !== undefined) return anError;
+  return testCase.failure === undefined ? "passed" : "failed";
+}
+
+function testCaseObservationOf(testCase: TestCaseAsWritten, anError: EvidenceObservation["result"]): EvidenceObservation[] {
+  if (testCase.skipped === true) return [];
+  if (isCollectionFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.name ?? "", errorTextOf(testCase))];
+  if (isPackageFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.suite ?? "", testCase.failure?.text)];
+  if (isClassSetupFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.classname ?? "", errorTextOf(testCase))];
+  const result = testCaseResultOf(testCase, anError);
+  const message = result === "never-ran" ? errorTextOf(testCase) : undefined;
+  return [{
+    cites: testCaseCitesOf(testCase),
+    result,
+    kind: TEST_REPORT_KIND,
+    place: testCase.classname ?? "",
+    notes: [],
+    ...(testCase.name === undefined ? {} : { name: testCase.name }),
+    ...(message === undefined ? {} : { message }),
+  }];
+}
+
+// A skipped test case posts nothing. One that never reached its tests (a collection failure, a class whose setup failed,
+// a package that did not build) posts as never ran. Any other posts as passed, failed, or what its report's error means.
+export function testCaseObservationsOf(cases: readonly TestCaseAsWritten[], anError: "failed" | "never-ran"): EvidenceObservation[] {
+  return cases.flatMap((testCase) => testCaseObservationOf(testCase, anError));
 }
 
 // An example in a report of examples, as the report wrote it: its own title, its title within its groups, its status

@@ -1,6 +1,5 @@
-import { claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "../domain/claimCodes.js";
-import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
-import { nearestCitation, neverRanObservation, resultOfRun, TEST_REPORT_KIND, type RunResult } from "../domain/postEvidenceObservation.js";
+import type { EvidenceObservation, TestCaseAsWritten } from "../domain/postEvidenceObservation.js";
+import { testCaseObservationsOf } from "../domain/postEvidenceObservation.js";
 
 export interface JunitXmlReport {
   readonly testsuites?: {
@@ -24,75 +23,34 @@ interface JunitTestcase {
   readonly skipped?: unknown;
 }
 
-const CLAIM_CODE_PROPERTY = "clm";
-// Go writes a package whose tests never ran, because it failed to build or its TestMain failed, as a failing TestMain with no classname.
-const GO_PACKAGE_TESTCASE = "TestMain";
-
-const isCollectionFailure = (testcase: JunitTestcase): boolean => testcase.error !== undefined && !testcase.classname;
-
-const isClassSetupFailure = (testcase: JunitTestcase): boolean => testcase.error !== undefined && !testcase.name;
-
-function failureTextOf(testcase: JunitTestcase): string | undefined {
-  const failure = testcase.failure;
-  return typeof failure === "object" ? failure["#text"] : failure;
+function failureOf(failure: NonNullable<JunitTestcase["failure"]>): TestCaseAsWritten["failure"] {
+  return typeof failure === "object" ? { message: failure.message, text: failure["#text"] } : { text: failure };
 }
 
-const errorTextOf = (testcase: JunitTestcase): string | undefined => testcase.error?.["#text"] ?? testcase.error?.message;
-
-const isPackageFailure = (testcase: JunitTestcase): boolean =>
-  !testcase.classname && testcase.name === GO_PACKAGE_TESTCASE && testcase.failure !== undefined;
-
-function runResultOf(testcase: JunitTestcase, errorResult: RunResult): RunResult {
-  if (testcase.error !== undefined) return errorResult;
-  return testcase.failure === undefined ? "passed" : "failed";
-}
-
-function nameCitationsOf(name: string): ClaimCode[] {
-  const segmentsLeafFirst = name.split("/").reverse();
-  return segmentsLeafFirst.map(claimCodeCitationsIn).find((codes) => codes.length > 0) ?? [];
-}
-
-function propertyCitationsOf(testcase: JunitTestcase): ClaimCode[] {
-  return (testcase.properties?.property ?? [])
-    .filter((property) => property.name === CLAIM_CODE_PROPERTY)
-    .flatMap((property) => claimCodeFrom(property.value ?? "") ?? []);
-}
-
-function citesOf(testcase: JunitTestcase): readonly ClaimCode[] {
-  return nearestCitation([
-    [...propertyCitationsOf(testcase), ...nameCitationsOf(testcase.name ?? "")],
-    claimCodeCitationsIn(testcase.classname ?? "").slice(-1),
-  ]);
-}
-
-function observationOf(suite: JunitTestsuite, testcase: JunitTestcase, errorResult: RunResult): EvidenceObservation | undefined {
-  if (testcase.skipped !== undefined) return undefined;
-  if (isCollectionFailure(testcase)) return neverRanObservation(TEST_REPORT_KIND, testcase.name ?? "", errorTextOf(testcase));
-  if (isPackageFailure(testcase)) return neverRanObservation(TEST_REPORT_KIND, suite.name ?? "", failureTextOf(testcase));
-  if (isClassSetupFailure(testcase)) return neverRanObservation(TEST_REPORT_KIND, testcase.classname ?? "", errorTextOf(testcase));
-  const result = resultOfRun(runResultOf(testcase, errorResult))!;
-  const message = result === "never-ran" ? errorTextOf(testcase) : undefined;
+// Each test case as the report wrote it: its suite, class, name and properties, and its failure, error or skip.
+function testCaseOf(suite: JunitTestsuite, testcase: JunitTestcase): TestCaseAsWritten {
+  const { failure, error } = testcase;
   return {
-    cites: citesOf(testcase),
-    result,
-    kind: TEST_REPORT_KIND,
-    place: testcase.classname ?? "",
-    notes: [],
-    ...(testcase.name === undefined ? {} : { name: testcase.name }),
-    ...(message === undefined ? {} : { message }),
+    suite: suite.name,
+    classname: testcase.classname,
+    name: testcase.name,
+    properties: testcase.properties?.property ?? [],
+    ...(failure === undefined ? {} : { failure: failureOf(failure) }),
+    ...(error === undefined ? {} : { error: { message: error.message, text: error["#text"] } }),
+    skipped: testcase.skipped !== undefined,
   };
 }
 
-function observationsOf(report: JunitXmlReport, errorResult: RunResult): EvidenceObservation[] {
-  return (report.testsuites?.testsuite ?? []).flatMap((suite) =>
-    (suite.testcase ?? []).flatMap((testcase) => observationOf(suite, testcase, errorResult) ?? []),
-  );
+function testCasesOf(report: JunitXmlReport): TestCaseAsWritten[] {
+  return (report.testsuites?.testsuite ?? []).flatMap((suite) => (suite.testcase ?? []).map((testcase) => testCaseOf(suite, testcase)));
 }
 
+// JUnit writes an <error> for an exception the test threw: it failed.
 export function parseJunitEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
-  return observationsOf(report, "failed");
+  return testCaseObservationsOf(testCasesOf(report), "failed");
 }
 
+// pytest writes an <error> for an error in a test's setup or teardown: it never reached its assertions.
 export function parsePytestEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
-  return observationsOf(report, "never-reached-its-assertions");
+  return testCaseObservationsOf(testCasesOf(report), "never-ran");
 }
