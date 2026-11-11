@@ -333,7 +333,6 @@ const LOADED_FILE = /(?:While loading (.+?) a |An error occurred while loading (
 // Each error outside the examples never ran: one naming the file it was loading posts at that file, and the rest,
 // when the messages name fewer files than the report counted errors, post once together at no file.
 function loadErrorsOf({ errorsOutsideExamples = 0, messages }: ExamplesAsWritten, root?: string): EvidenceObservation[] {
-  if (errorsOutsideExamples === 0) return [];
   const read = messages.map((message) => ({ message, loaded: LOADED_FILE.exec(message) }));
   const named = read.flatMap(({ message, loaded }) => {
     const path = loaded?.[1] ?? loaded?.[2];
@@ -341,7 +340,7 @@ function loadErrorsOf({ errorsOutsideExamples = 0, messages }: ExamplesAsWritten
   });
   if (errorsOutsideExamples <= named.length) return named;
   const unnamed = read.filter(({ loaded }) => loaded === null).map(({ message }) => message);
-  return [...named, neverRanObservation(TEST_REPORT_KIND, "", unnamed.length > 0 ? unnamed.join("\n") : undefined)];
+  return [...named, neverRanObservation(TEST_REPORT_KIND, "", unnamed.join("\n"))];
 }
 
 function exampleObservationOf(example: ExampleAsWritten, root?: string): EvidenceObservation[] {
