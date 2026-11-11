@@ -276,8 +276,9 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-045", "git@github.com:acme/web.git"],
     ["CLM-EVR-045", "ci:s3cret@github.com:acme/web.git"],
     ["CLM-EVR-045", "g@github.com:acme/web.git"],
+    ["CLM-EVR-049", "ssh://git@github.com/acme/web.git"],
   ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote) => {
-    const { repo } = committedRepository("evr-scp-origin-", remote);
+    const { repo } = committedRepository("evr-owner-repo-origin-", remote);
     expect(provenanceOf(runIdentityOf({ origin: readTargetOrigin(repo), toolFolder: TOOL_FOLDER, ...VERSION }), []).target).toBe("acme/web");
   });
 
