@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { boot, installCrashGuards } from "./crashGuards.js";
 import { ARRIVALS, closedPipe, crashLine, FIRST_LINE, noVerdictLine, standInStream, type StandInStream } from "./crashGuards.test-utils.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
+import { repositoryHeadedOneCarrying003 } from "./cli-allocate/repository.test-utils.js";
 
 const PLANTED = "planted: the reading of this file throws";
 
@@ -70,8 +71,6 @@ function guarded(): Guarded {
   installCrashGuards(g.proc, g.stdout, g.stderr);
   return g;
 }
-
-const uncaught = ARRIVALS[1]!.raise;
 
 interface Ran {
   stdout: string;
@@ -160,13 +159,28 @@ function plantedTarget(): string {
 }
 
 describe("the run will give no verdict, and will exit 4", () => {
-  it("[CLM-CLI-176] the run met an error nothing else handles", () => {
+  it.each([
+    ["an 'error' event on stdout", 0, []],
+    ["an uncaught exception", 1, [{ exit: 4 }]],
+    ["an unhandled rejection", 2, []],
+  ])("[CLM-CLI-176] the run met an error nothing else handles, arriving as %s", (_arrival, arrival, afterTheLine) => {
     const g = guarded();
 
-    uncaught(g);
+    ARRIVALS[arrival]!.raise(g);
 
     expect(g.proc.exitCode).toBe(4);
-    expect(g.happened).toEqual([{ stderr: noVerdictLine() }, { exit: 4 }]);
+    expect(g.happened).toEqual([{ stderr: noVerdictLine() }, ...afterTheLine]);
+  });
+
+  it.each([
+    ["allocate answered", ["allocate", "ONE"]],
+  ])("[CLM-CLI-176] the run met an error nothing else handles, after %s", async (_ended, argv) => {
+    vi.spyOn(process, "cwd").mockReturnValue(repositoryHeadedOneCarrying003("unexpected-error-after-"));
+
+    const afterwards = await stdoutFailsAfterTheRun(argv, true);
+
+    expect(afterwards.exitCode).toBe(4);
+    expect(afterwards.stderr.endsWith(noVerdictLine())).toBe(true);
   });
 
   it("[CLM-CLI-177] the run met an error that cannot be formatted", () => {

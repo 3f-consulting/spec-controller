@@ -1,8 +1,10 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { allocateCommand, balanceCommand, cliRegistry, renderCommandHelp, renderTopLevelHelp, type CommandSpec } from "./cliRegistry.js";
+import { message } from "./appText.js";
+import { allocateCommand, balanceCommand, cliRegistry, renderCommandHelp, renderTopLevelHelp } from "./cliRegistry.js";
 import { main } from "./main.js";
+import { AppMessage } from "./messages.js";
 import { forgetWhatTheProgramWrote, recordWhatTheProgramWrites, whatTheProgramWrote } from "./programOutput.test-utils.js";
 import { temporaryDirectory } from "./temporaryDirectory.test-utils.js";
 
@@ -30,6 +32,12 @@ describe("help will answer, and nothing will run", () => {
         "--help",
       ],
       balanceHelp,
+    ],
+    [
+      "CLM-CLI-112",
+      "a request for help beside a flag before the command",
+      (report: string): string[] => ["--format", `json:${report}`, "--help"],
+      topLevelHelp,
     ],
     [
       "CLM-CLI-113",
@@ -61,30 +69,58 @@ describe("help after a command the tool does not have will not answer", () => {
   });
 });
 
-describe("help will list what you can ask for", () => {
-  const flagsOf = (command: CommandSpec): string[] => command.flags.map((flag) => flag.name);
-  const balanceListed = (): string[] => flagsOf(balanceCommand);
-  const allocateListed = (): string[] => [
-    ...(allocateCommand.positionals ?? []).map((positional) => positional.name),
-    ...flagsOf(allocateCommand),
-  ];
-  const commandsListed = (): string[] => cliRegistry.commands.map((command) => command.name);
+const BALANCE_LISTED = [
+  ["--features <dir>", AppMessage.FeaturesFlag],
+  ["--vitest <report.json>", AppMessage.VitestFlag],
+  ["--pytest <report.xml>", AppMessage.PytestFlag],
+  ["--jest <report.json>", AppMessage.JestFlag],
+  ["--junit <report.xml>", AppMessage.JunitFlag],
+  ["--rspec <report.json>", AppMessage.RspecFlag],
+  ["--cucumber <report.json>", AppMessage.CucumberFlag],
+  ["--ci <ci.yml>", AppMessage.CiFlag],
+  ["--package-json <path>", AppMessage.PackageJsonFlag],
+  ["--ci-steps <record.json>", AppMessage.CiStepsFlag],
+  ["--target <name>", AppMessage.TargetFlag],
+  ["--source-sha <sha>", AppMessage.SourceShaFlag],
+  ["--format <fmt>[:<path>]", AppMessage.FormatFlag],
+  ["--strict", AppMessage.StrictFlag],
+  ["--exit-zero", AppMessage.ExitZeroFlag],
+  ["--help, -h", AppMessage.HelpFlag],
+] as const;
 
+const ALLOCATE_LISTED = [
+  ["<FFF>", AppMessage.FeaturePartArgument],
+  ["--new", AppMessage.NewFlag],
+  ["--help, -h", AppMessage.HelpFlag],
+] as const;
+
+const COMMANDS_LISTED = [
+  ["balance", AppMessage.BalanceSummary],
+  ["allocate", AppMessage.AllocateSummary],
+] as const;
+
+// An entry is listed on a line of its own: its name, a gap of spaces, and what it does.
+function listsEntry(lines: readonly string[], name: string, text: string): boolean {
+  return lines.some((line) => {
+    const gap = line.slice(`  ${name}`.length, line.length - text.length);
+    return line.startsWith(`  ${name}  `) && line.endsWith(text) && gap.trim() === "";
+  });
+}
+
+describe("help will list what you can ask for", () => {
   it.each([
-    ["CLM-CLI-115", ["balance", "--help"], balanceHelp, balanceListed],
-    ["CLM-CLI-116", ["balance", "-h"], balanceHelp, balanceListed],
-    ["CLM-CLI-117", ["allocate", "--help"], allocateHelp, allocateListed],
-    ["CLM-CLI-118", ["--help"], topLevelHelp, commandsListed],
-    ["CLM-CLI-119", ["help"], topLevelHelp, commandsListed],
-    ["CLM-CLI-120", [], topLevelHelp, commandsListed],
+    ["CLM-CLI-115", ["balance", "--help"], balanceHelp, BALANCE_LISTED],
+    ["CLM-CLI-116", ["balance", "-h"], balanceHelp, BALANCE_LISTED],
+    ["CLM-CLI-117", ["allocate", "--help"], allocateHelp, ALLOCATE_LISTED],
+    ["CLM-CLI-118", ["--help"], topLevelHelp, COMMANDS_LISTED],
+    ["CLM-CLI-119", ["help"], topLevelHelp, COMMANDS_LISTED],
+    ["CLM-CLI-120", [], topLevelHelp, COMMANDS_LISTED],
   ])("[%s] the command line %j", (_clm, argv, help, listed) => {
     main(argv);
 
     const written = whatTheProgramWrote();
     expect(written).toEqual({ stdout: help(), stderr: "", exitCode: undefined });
-    const names = listed();
-    expect(names.length).toBeGreaterThan(0);
     const lines = written.stdout.split("\n");
-    for (const name of names) expect(lines.some((line) => line.startsWith(`  ${name} `) || line.startsWith(`  ${name},`)), name).toBe(true);
+    for (const [name, text] of listed) expect(listsEntry(lines, name, message(text)), name).toBe(true);
   });
 });

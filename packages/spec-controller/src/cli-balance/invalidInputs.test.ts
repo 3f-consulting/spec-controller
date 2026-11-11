@@ -195,6 +195,16 @@ describe("an input that is not valid will stop the run", () => {
         return { argv: ["--features", t.features, "--ci", t.ci, "--vitest", path], complaint: message(AppError.CouldNotBeRead, { subject: report("--vitest"), path, reason }) };
       },
     ],
+    [
+      "CLM-CLI-161",
+      "a named workflow that the tool is not permitted to read",
+      (t: Target): Met => {
+        chmodSync(t.ci, 0o000);
+        const reason = thrownBy(() => readFileSync(t.ci, "utf8"));
+        const subject = message(AppMessage.FlaggedWorkflows, { flag: "--ci" });
+        return { argv: ["--features", t.features, "--ci", t.ci], complaint: message(AppError.CouldNotBeRead, { subject, path: t.ci, reason }) };
+      },
+    ],
   ] as const)("[%s] the run met %s", ([clm, , met], { skip }) => {
     skip(clm === "CLM-CLI-161" && process.getuid?.() === 0);
     const { argv, complaint } = met(target());

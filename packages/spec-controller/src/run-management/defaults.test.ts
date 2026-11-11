@@ -14,7 +14,7 @@ afterEach(() => {
 interface Report {
   readonly claimReconciliations: readonly { readonly claim: { readonly file?: string; readonly title?: string } }[];
   readonly stepAccount: unknown;
-  readonly provenance: { readonly target: string; readonly sourceSha: string };
+  readonly provenance: { readonly target: string; readonly sourceSha: string; readonly inputs: readonly { readonly name: string; readonly path?: string }[] };
 }
 
 function reportOf(argv: readonly string[]): Report {
@@ -112,6 +112,17 @@ describe("balance works out the target's folder", () => {
     const features = corpusIn(repo);
 
     expect(resolveTargetRoot({ features })).toBe(repo);
+  });
+
+  it("[CLM-CLI-143] the corpus in a git repository at the folder, as balance names its inputs", () => {
+    const { repo } = committedRepository("target-in-git-inputs-");
+    const features = corpusIn(repo);
+    const vitest = join(repo, "vitest.json");
+    writeFileSync(vitest, '{"testResults":[]}\n');
+
+    const { inputs } = reportOf(["--features", features, "--ci", workflowsIn(repo), "--vitest", vitest]).provenance;
+
+    expect(inputs.find(({ name }) => name === "vitest")).toEqual({ name: "vitest", path: "vitest.json" });
   });
 
   it("[CLM-CLI-144] the corpus in no git repository", () => {

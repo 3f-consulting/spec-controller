@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { message } from "./appText.js";
@@ -27,10 +27,33 @@ function ran(argv: string[]): Written {
 
 describe("a flag the command takes will take effect", () => {
   it("[CLM-CLI-121] a flag and its value as two arguments", () => {
-    const written = ran(["balance", ...balanced(), "--target", "a-named-target", "--format", "json"]);
+    const written = ran(["balance", ...balanced(), "--target", "a-named-target", "--source-sha", "abc1234", "--format", "json"]);
 
     expect(written.stderr).toBe("");
-    expect((JSON.parse(written.stdout) as { provenance: { target: string } }).provenance.target).toBe("a-named-target");
+    expect((JSON.parse(written.stdout) as { provenance: { target: string; sourceSha: string } }).provenance).toMatchObject({
+      target: "a-named-target",
+      sourceSha: "abc1234",
+    });
+  });
+
+  it("[CLM-CLI-121] an input's flag and its path as two arguments", () => {
+    const written = ran(["balance", ...balanced(), "--format", "json"]);
+
+    expect(written.stderr).toBe("");
+    const { inputs } = (JSON.parse(written.stdout) as { provenance: { inputs: { name: string; path?: string }[] } }).provenance;
+    expect(inputs.find(({ name }) => name === "vitest")).toEqual({ name: "vitest", path: "tests/fixtures/balanced/vitest.json" });
+  });
+
+  it("[CLM-CLI-122] a flag that takes no value, --strict", () => {
+    const dir = temporaryDirectory("spec-controller-strict-");
+    mkdirSync(join(dir, "features"));
+    writeFileSync(join(dir, "features", "one.feature"), "Feature: one\n\n  Rule: r\n    @wip @unit @CLM-ONE-001\n    Scenario: s\n      Given a step\n");
+    writeFileSync(join(dir, "ci.yml"), "jobs: {}\n");
+    const argv = ["balance", "--features", join(dir, "features"), "--ci", join(dir, "ci.yml"), "--format", "json"];
+    const claimsRead = (written: Written): unknown[] => (JSON.parse(written.stdout) as { claimReconciliations: unknown[] }).claimReconciliations;
+
+    expect(claimsRead(ran(argv))).toHaveLength(0);
+    expect(claimsRead(ran([...argv, "--strict"]))).toHaveLength(1);
   });
 
   it("[CLM-CLI-122] a flag that takes no value", () => {
@@ -106,6 +129,12 @@ describe("an argument the tool does not accept will stop the run", () => {
       "CLM-CLI-127",
       "a flag that takes a value, given none",
       (): string[] => ["balance", ...balanced(), "--target"],
+      (): string => printedRefusal(AppError.MissingValue, message(AppError.MissingValue, { flag: "--target", scope: BALANCE, arg: "<name>" }), "balance"),
+    ],
+    [
+      "CLM-CLI-127",
+      "a flag that takes a value, given another flag where its value goes",
+      (): string[] => ["balance", ...balanced(), "--target", "--strict"],
       (): string => printedRefusal(AppError.MissingValue, message(AppError.MissingValue, { flag: "--target", scope: BALANCE, arg: "<name>" }), "balance"),
     ],
     [
