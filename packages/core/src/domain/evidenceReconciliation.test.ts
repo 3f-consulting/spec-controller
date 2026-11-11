@@ -193,7 +193,6 @@ const TWO_JOBS = `jobs:
 
 const dispositionOf = (step: PipelineStep) =>
   stepDispositionOf(step, {
-    runsTheReconciler: (command) => command.startsWith("spec-controller balance"),
     nonChecks: ["ci.yml:build:Install"],
     runners: { unit: "vitest" },
     scripts: {},
@@ -330,7 +329,7 @@ function reconciledRun(run: Partial<RunToReconcile>): EvidenceReconciliation {
     features: parsedFeatures([A_PASSING_CLAIM], ["one.feature"]),
     testObservations: [observation("passed")],
     steps: [],
-    readings: { runsTheReconciler: () => false, scripts: {}, shell: shellReading },
+    readings: { scripts: {}, shell: shellReading },
     configuration: targetConfigurationFrom({}),
     strict: false,
     provenance: provenanceOf({ toolVersion: "0.1.256" }, []),

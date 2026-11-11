@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { commandRuns, shellReading } from "../inputs/shell.js";
+import { shellReading } from "../inputs/shell.js";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../inputs/cucumber.js";
 import { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "../inputs/junit.js";
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
@@ -70,7 +70,6 @@ const workflow = (step: string, jobExtra = ""): string =>
 const stepsOf = (step: string, jobExtra = ""): PipelineStep[] => workflowSteps([workflow(step, jobExtra)], ["ci.yml"]);
 
 const readingsOf = (overrides: Partial<StepReadings>): StepReadings => ({
-  runsTheReconciler: (command) => commandRuns(command, "spec-controller balance", overrides.scripts ?? {}),
   nonChecks: [],
   runners: {},
   scripts: {},
@@ -159,7 +158,7 @@ describe("balance posts only the steps that prove something", () => {
       features: [],
       testObservations: [],
       steps,
-      readings: { runsTheReconciler: () => false, scripts: {}, shell: shellReading },
+      readings: { scripts: {}, shell: shellReading },
       configuration: targetConfigurationFrom({ specController: { notChecks: ["ci.yml:build:Install"] } }, steps),
       strict: false,
       provenance: provenanceOf({ toolVersion: "0.1.256" }, []),
@@ -364,6 +363,19 @@ describe("balance posts only the steps that prove something", () => {
     const dispositionOf = (each: PipelineStep): StepDisposition => stepDispositionOf(each, readingsOf({}));
     expect(steps.map(dispositionOf)).toEqual(["reconciler"]);
     expect(fitnessObservationsOf(steps, dispositionOf, undefined)).toHaveLength(0);
+  });
+
+  it.each<[string, { anywhere: string; asCommand: string; countedAs: StepDisposition }]>([
+    ["CLM-OBS-012", { anywhere: "spec-controller balance", asCommand: "", countedAs: "reconciler" }],
+    ["CLM-OBS-009", { anywhere: "vitest", asCommand: "", countedAs: "candidate" }],
+    ["CLM-OBS-010", { anywhere: "", asCommand: "vitest", countedAs: "runner" }],
+  ])("[%s] balance asks whether a step invokes spec-controller balance anywhere, and whether it invokes a runner as its command", (_clm, { anywhere, asCommand, countedAs }) => {
+    const shell = {
+      runsAnywhere: (_command: string, invocation: string) => invocation === anywhere,
+      runsAsCommand: (_command: string, invocation: string) => invocation === asCommand,
+    };
+    const readings = { nonChecks: [], runners: { unit: "vitest" }, scripts: {}, shell };
+    expect(stepDispositionOf({ workflow: "ci.yml", job: "build", writesStepRecord: false, plumbing: false, command: "make check" }, readings)).toBe(countedAs);
   });
 });
 

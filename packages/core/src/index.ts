@@ -24,7 +24,7 @@ export type { CucumberJsonReport } from "./inputs/cucumber.js";
 export { recordedCheckStepsOf } from "./inputs/stepRecord.js";
 export type { StepRecord } from "./inputs/stepRecord.js";
 export { parseWorkflows, pipelineStepsOf } from "./inputs/workflows.js";
-export { commandRuns, shellReading } from "./inputs/shell.js";
+export { shellReading } from "./inputs/shell.js";
 export { targetConfigurationFrom } from "./inputs/manifest.js";
 export type { PackageJsonScripts, ParsedWorkflow } from "./inputs/workflows.js";
 export type { Parsed, Source, SourceFault, SourcesParse } from "./inputs/sourceParse.js";

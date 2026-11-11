@@ -47,12 +47,14 @@ export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" 
 
 type Scripts = Readonly<Record<string, string>>;
 
+// The shell's two answers about a step's command: whether it invokes something on any of its lines, and whether it
+// invokes it as the command the step runs; each follows the scripts the command runs.
 export interface ShellReading {
+  readonly runsAnywhere: (commandText: string, invocation: string, scripts: Scripts) => boolean;
   readonly runsAsCommand: (commandText: string, invocation: string, scripts: Scripts) => boolean;
 }
 
 export interface StepReadings {
-  readonly runsTheReconciler: (command: string) => boolean;
   readonly nonChecks: readonly string[];
   readonly runners: Readonly<Record<string, string | null>>;
   readonly scripts: Scripts;
@@ -78,6 +80,13 @@ function vouchesForTheStep(continueOnError: unknown): boolean {
 
 const abortsJob = (step: WorkflowStep): boolean => vouchesForTheStep(step.continueOnError) && vouchesForTheStep(step.jobContinueOnError);
 
+const RECONCILER_INVOCATION = "spec-controller balance";
+
+// The reconciler is found wherever a step's command invokes it; a runner only where it is the command the step runs.
+function runsTheReconciler(step: PipelineStep, { scripts, shell }: StepReadings): boolean {
+  return "command" in step && shell.runsAnywhere(step.command, RECONCILER_INVOCATION, scripts);
+}
+
 function runsARunner(step: PipelineStep, { runners, scripts, shell }: StepReadings): boolean {
   if (!("command" in step)) return false;
   const command = step.command;
@@ -85,7 +94,7 @@ function runsARunner(step: PipelineStep, { runners, scripts, shell }: StepReadin
 }
 
 export function stepDispositionOf(step: PipelineStep, readings: StepReadings): StepDisposition {
-  if (step.writesStepRecord || ("command" in step && readings.runsTheReconciler(step.command))) return "reconciler";
+  if (step.writesStepRecord || runsTheReconciler(step, readings)) return "reconciler";
   if (readings.nonChecks.includes(qualifiedStepName(step))) return "nonCheck";
   if (step.plumbing) return "plumbing";
   return runsARunner(step, readings) ? "runner" : "candidate";
