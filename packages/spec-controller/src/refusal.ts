@@ -13,9 +13,6 @@ export type Refusal = {
 }[RefusalError] &
   RefusalLines;
 
-// An error given as its words carries no code, and is printed as it is.
-export type ShownError = Refusal | string;
-
 type RefusalFields = Omit<Refusal, keyof RefusalLines>;
 
 // A refusal's lines are its prototype's, so the refusal itself holds only its code, values and pointers.

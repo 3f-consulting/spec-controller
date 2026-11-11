@@ -54,7 +54,7 @@ export interface StepReadings {
   readonly shell: ShellReading;
 }
 
-export function qualifiedStepName(step: PipelineStep): string {
+function qualifiedStepName(step: PipelineStep): string {
   return `${step.workflow}:${step.job}:${step.identity}`;
 }
 

@@ -40,12 +40,12 @@ function abortsJobOf(ownValue: unknown, jobValue: unknown): boolean {
   return vouchesForTheStep(ownValue) && vouchesForTheStep(jobValue);
 }
 
-export interface UsesReading {
+interface UsesReading {
   readonly owner: string;
   readonly repository: string;
 }
 
-export function readUses(uses: string): UsesReading {
+function readUses(uses: string): UsesReading {
   const [owner, repository] = uses.split(/[/@]/);
   return { owner: String(owner), repository: String(repository) };
 }
