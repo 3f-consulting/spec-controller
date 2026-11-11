@@ -32,7 +32,7 @@ function clmColumnOf(examples: Examples): number {
 
 function rowsOf(examples: Examples): RowAsWritten[] {
   const column = clmColumnOf(examples);
-  return examples.tableBody.map((row) => ({ cell: row.cells[column]!.value }));
+  return examples.tableBody.map((row) => ({ cell: column < 0 ? "" : row.cells[column]!.value }));
 }
 
 function scenarioAsWrittenOf(scenario: Scenario): ScenarioAsWritten {
