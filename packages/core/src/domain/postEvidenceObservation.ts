@@ -73,13 +73,18 @@ export function stepDispositionOf(step: PipelineStep, readings: StepReadings): S
   return runsARunner(step, readings) ? "runner" : "candidate";
 }
 
-export type StepReport = "succeeded" | "failed" | "other";
-
+// An entry of the step record, as the record wrote it.
 export interface RecordedCheckStep {
-  readonly citedClaimCode: string;
-  readonly report: StepReport;
-  readonly said?: string;
+  readonly key: string;
+  readonly outcome?: string;
+  readonly conclusion?: string;
 }
+
+// A step's outcome says how its own run went; its conclusion is that outcome after continue-on-error, so it is not read.
+const RESULT_OF_OUTCOME: ReadonlyMap<string, EvidenceObservation["result"]> = new Map([
+  ["success", "passed"],
+  ["failure", "failed"],
+]);
 
 function citesOfId(id: string | undefined): ClaimCode[] {
   const code = id === undefined ? undefined : claimCodeFrom(id);
@@ -97,14 +102,19 @@ function workflowObservationOf(step: PipelineStep): EvidenceObservation {
 }
 
 function recordedObservationOf(recorded: RecordedCheckStep, steps: readonly PipelineStep[]): EvidenceObservation {
-  const [only, ...others] = steps.filter((step) => step.id === recorded.citedClaimCode);
-  const place = only !== undefined && others.length === 0 ? qualifiedStepName(only) : recorded.citedClaimCode;
-  const cites = citesOfId(recorded.citedClaimCode);
-  if (recorded.report === "other") {
-    return { cites, result: "never-ran", kind: "fitness", place, notes: recorded.said === undefined ? [] : [recorded.said] };
+  const [only, ...others] = steps.filter((step) => step.id === recorded.key);
+  const place = only !== undefined && others.length === 0 ? qualifiedStepName(only) : recorded.key;
+  const cites = citesOfId(recorded.key);
+  const { outcome } = recorded;
+  const result = outcome === undefined ? undefined : RESULT_OF_OUTCOME.get(outcome);
+  if (result === undefined) {
+    return { cites, result: "never-ran", kind: "fitness", place, notes: outcome === undefined ? [] : [outcome] };
   }
-  return { cites, result: recorded.report === "succeeded" ? "passed" : "failed", kind: "fitness", place, notes: [] };
+  return { cites, result, kind: "fitness", place, notes: [] };
 }
+
+// Only an entry keyed by a claim code stands for a fitness function; one keyed otherwise is known from its workflow alone.
+const isKeyedByAClaimCode = ({ key }: RecordedCheckStep): boolean => claimCodeFrom(key) !== undefined;
 
 export function fitnessObservationsOf(
   steps: readonly PipelineStep[],
@@ -115,7 +125,7 @@ export function fitnessObservationsOf(
   if (recorded === undefined) return workflow;
   return [
     ...workflow.filter(({ cites }) => cites.length === 0),
-    ...recorded.map((entry) => recordedObservationOf(entry, steps)),
+    ...recorded.filter(isKeyedByAClaimCode).map((entry) => recordedObservationOf(entry, steps)),
   ];
 }
 
