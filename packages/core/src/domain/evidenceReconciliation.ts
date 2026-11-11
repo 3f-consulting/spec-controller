@@ -148,8 +148,10 @@ export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], e
   const qualityChecks = qualityCheckReconciliationsOf(claimReconciliations);
   const reconciling = qualityChecks.filter(({ outcome }) => outcome !== "satisfied");
   const observed = observedOn(claimReconciliations);
-  const outOfBalanceByFeature = outOfBalanceByFeatureOf(claimReconciliations);
   const balanced = claimReconciliations.filter((each) => !isOutOfBalance(each)).length;
+  const onExecutableClaim = observed.filter(({ claim }) => claim.file !== undefined).length;
+  // An executable claim with no code has no evidence, so what cites no code is on the unnamed claim; the rest is on phantom claims.
+  const onUnnamedClaim = observed.filter(({ claim }) => claim.claimCode === undefined).length;
   return {
     claimReconciliations: { total: claimReconciliations.length, balanced, outOfBalance: claimReconciliations.length - balanced },
     qualityCheckReconciliations: {
@@ -161,12 +163,12 @@ export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], e
     evidenceObservations: {
       total: observed.length,
       byKind: kindCounts(observed.map(({ observation }) => observation.kind)),
-      onExecutableClaim: observed.filter(({ claim }) => claim.file !== undefined).length,
-      onPhantomClaim: observed.filter(({ claim }) => claim.file === undefined && claim.claimCode !== undefined).length,
-      onUnnamedClaim: observed.filter(({ claim }) => claim.file === undefined && claim.claimCode === undefined).length,
+      onExecutableClaim,
+      onPhantomClaim: observed.length - onExecutableClaim - onUnnamedClaim,
+      onUnnamedClaim,
       fitnessFunctionsRan: observed.filter(({ observation }) => observation.kind === "fitness" && observation.result !== "never-ran").length,
     },
-    ...(outOfBalanceByFeature === undefined ? {} : { outOfBalanceByFeature }),
+    outOfBalanceByFeature: outOfBalanceByFeatureOf(claimReconciliations),
     excludedClaimCodeOccurrences,
   };
 }
@@ -190,12 +192,11 @@ export function stepAccountOf(steps: readonly PipelineStep[], dispositionOf: (st
     const job = jobs.get(key) ?? { workflow: step.workflow, job: step.job, ...NO_STEPS };
     jobs.set(key, { workflow: job.workflow, job: job.job, ...added(job, COUNTED_AS[dispositionOf(step)]) });
   }
-  const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
-  const ordered = [...jobs.values()].sort((a, b) => byCodeUnit(a.workflow, b.workflow) || byCodeUnit(a.job, b.job));
+  const jobsRead = [...jobs.values()];
   const counts = Object.keys(NO_STEPS) as (keyof StepCounts)[];
-  const total = Object.fromEntries(counts.map((count) => [count, ordered.reduce((sum, job) => sum + job[count], 0)])) as unknown as StepCounts;
+  const total = Object.fromEntries(counts.map((count) => [count, jobsRead.reduce((sum, job) => sum + job[count], 0)])) as unknown as StepCounts;
   const accountedFor = counts.filter((count) => count !== "stepsRead").reduce((sum, count) => sum + total[count], 0);
-  return { jobs: ordered, total: { ...total, accountedFor } };
+  return { jobs: jobsRead, total: { ...total, accountedFor } };
 }
 
 export interface RunIdentity {
@@ -248,7 +249,7 @@ export interface RunToReconcile {
 }
 
 function dispositionsOf({ readings, configuration: { configuration } }: RunToReconcile): (step: PipelineStep) => StepDisposition {
-  const runners = Object.fromEntries(Object.entries(configuration.runners).filter((entry): entry is [string, string | null] => entry[1] !== undefined));
+  const runners = configuration.runners as Readonly<Record<string, string | null>>;
   const nonChecks = configuration.nonChecks.map(({ workflow, job, step }) => `${workflow}:${job}:${step}`);
   return (step) => stepDispositionOf(step, { ...readings, runners, nonChecks });
 }
@@ -268,7 +269,6 @@ export function evidenceReconciliationOf(run: RunToReconcile): EvidenceReconcili
   const observations = [...run.testObservations, ...fitnessObservationsOf(steps, dispositionOf, run.recordedSteps)];
   const claimReconciliations = claimReconciliationsOf(claims, observations);
   const claimCodeErrors = claimCodeErrorsOf(features);
-  const errorsInTheInputs = errorsInTheInputsOf(claimCodeErrors, configuration.errors);
   const neverRan = observations.filter(({ result }) => result === "never-ran");
   return {
     claimReconciliations,
@@ -276,7 +276,7 @@ export function evidenceReconciliationOf(run: RunToReconcile): EvidenceReconcili
     totals: totalsOf(claimReconciliations, excludedClaimCodeOccurrencesOf(features)),
     ...(steps.length === 0 ? {} : { stepAccount: stepAccountOf(steps, dispositionOf) }),
     provenance: run.provenance,
-    ...(errorsInTheInputs === undefined ? {} : { errorsInTheInputs }),
+    errorsInTheInputs: errorsInTheInputsOf(claimCodeErrors, configuration.errors),
     ...(neverRan.length === 0 ? {} : { runIntegrity: { neverRan } }),
   };
 }

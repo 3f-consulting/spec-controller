@@ -128,9 +128,8 @@ export function neverRanObservation(kind: QualityCheckKind, place: string, messa
   return { cites: [], result: "never-ran", kind, place, notes: [], ...(message === undefined ? {} : { message }) };
 }
 
-export function nearestCitation(levels: readonly (readonly ClaimCode[])[]): ClaimCode[] {
-  const nearest = levels.find((codes) => codes.length > 0) ?? [];
-  return nearest.filter((code, at) => nearest.findIndex((other) => sameCode(code, other)) === at);
+export function nearestCitation(levels: readonly (readonly ClaimCode[])[]): readonly ClaimCode[] {
+  return levels.find((codes) => codes.length > 0) ?? [];
 }
 
 export const TEST_REPORT_KIND: QualityCheckKind = "unit";

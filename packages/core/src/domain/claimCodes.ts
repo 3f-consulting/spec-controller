@@ -98,12 +98,6 @@ const written = ({ featureCode, number }: ClaimCode): string => `${CLAIM_CODE_PR
 
 const claimCodesIn = (words: readonly string[]): ClaimCode[] => words.flatMap((word) => claimCodeFrom(word) ?? []);
 
-function codesCarriedBy(scenario: ScenarioAsWritten): ClaimCode[] {
-  if (scenario.rows) return scenario.rows.flatMap((row) => claimCodeFrom(row.cell ?? "") ?? []);
-  const codes = claimCodesIn(scenario.tags);
-  return codes.length === 1 ? codes : [];
-}
-
 function filesByFeatureCode(features: readonly FeatureAsWritten[]): ReadonlyMap<string, readonly string[]> {
   const files = new Map<string, string[]>();
   for (const feature of features) {
@@ -120,7 +114,7 @@ function duplicateFeatureCodes(filesByCode: ReadonlyMap<string, readonly string[
 }
 
 function misfiledCodes(feature: FeatureAsWritten, filesByCode: ReadonlyMap<string, readonly string[]>): ClaimCodeError[] {
-  const carried = feature.scenarios.flatMap(codesCarriedBy);
+  const carried = feature.scenarios.flatMap(({ tags }) => claimCodesIn(tags));
   const featureCode = featureCodeOfFile(feature);
   if (featureCode === undefined) return carried.length === 0 ? [] : [{ kind: "no-feature-code", files: [feature.file] }];
   return carried
@@ -151,10 +145,10 @@ export function claimCodeErrorsOf(features: readonly FeatureAsWritten[]): ClaimC
   ];
 }
 
-const CITATION = new RegExp(`\\[(${CLAIM_CODE_PREFIX}-${FEATURE_CODE_FORM}-\\d+)\\]`, "g");
+const CITATION = new RegExp(`\\[${CLAIM_CODE_PREFIX}-(${FEATURE_CODE_FORM})-(\\d+)\\]`, "g");
 
 export function claimCodeCitationsIn(text: string): ClaimCode[] {
-  return [...text.matchAll(CITATION)].flatMap((match) => claimCodeFrom(match[1]!) ?? []);
+  return [...text.matchAll(CITATION)].map(([, featureCode, number]) => ({ featureCode: featureCode!, number: number! }));
 }
 
 export interface ClaimCodeOccurrence {
@@ -215,7 +209,7 @@ function highestOf(featureCode: string, occurrences: readonly ClaimCodeOccurrenc
 export function nextClaimCode(request: AllocationRequest, occurrences: readonly ClaimCodeOccurrence[]): Allocation | UnknownFeatureCode {
   const { featureCode, featureCodes, isNew } = request;
   const headed = featureCodes.includes(featureCode);
-  if (!headed && !isNew) return { kind: "unknown-feature-code", featureCode, featureCodes: [...new Set(featureCodes)].sort() };
+  if (!headed && !isNew) return { kind: "unknown-feature-code", featureCode, featureCodes: [...new Set(featureCodes)] };
   const highest = highestOf(featureCode, occurrences);
   const next = (highest === undefined ? 0 : numberOf(highest.code)) + 1;
   const code = written({ featureCode, number: String(next).padStart(NUMBER_WIDTH, "0") });
