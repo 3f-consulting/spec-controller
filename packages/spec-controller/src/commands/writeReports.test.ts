@@ -181,6 +181,8 @@ describe("two reports will not both go to standard output", () => {
   it.each([
     ["CLM-FMT-005", "no destination", (_dir: string) => "json"],
     ["CLM-FMT-011", "a path that names standard output", (_dir: string) => "json:/dev/stdout"],
+    ["CLM-FMT-011", "a path that names standard output by its descriptor", (_dir: string) => "json:/dev/fd/1"],
+    ["CLM-FMT-011", "a path that names standard output by the process's own descriptor", (_dir: string) => "json:/proc/self/fd/1"],
     [
       "CLM-FMT-023",
       "a link to standard output",

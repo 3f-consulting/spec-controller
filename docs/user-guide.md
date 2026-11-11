@@ -893,7 +893,7 @@ When Cucumber runs an Outline with a `clm` column, each row is credited by Cucum
 | `3` | not reconciled: `unsound`, `claim-code-errors` or `nothing-to-reconcile` |
 | `4` | unexpected error: the run stops before a verdict, and one line on stderr names the error |
 
-When several reasons apply, this order decides: unsound, then claim code errors, then nothing to reconcile, all before out of balance. An unexpected error (`4`) is not in the order. A run exits `4` only when it does not finish. A run already refused as a usage error keeps `2` if an error follows. `--exit-zero` moves only `1`, to `0`.
+When several reasons apply, this order decides: unsound, then claim code errors, then nothing to reconcile, all before out of balance. An unexpected error (`4`) is not in the order. A run exits `4` only when it does not finish, a run already refused as a usage error included. `--exit-zero` moves only `1`, to `0`.
 
 An error after the run reaches its verdict does not change the exit code. One line goes to stderr, `spec-controller hit an unexpected error [unexpected-error-after-verdict] after its verdict: <name>: <message>`, and the run exits with the verdict's code: the report stands as written. A run writes at most one such line, whichever kind it is.
 
@@ -933,7 +933,7 @@ An error in the inputs is not a refusal. Its row in the report's `## Errors in t
 | `corpus-file-unparseable` | a feature file in the corpus could not be parsed as Gherkin; each such file has its own coded line, with the parser's words beneath it |
 | `workflow-not-yaml` | a CI workflow is not valid YAML |
 | `report-not-written` | a report could not be written to the path its `--format` names |
-| `unexpected-error` | the run stopped on an unexpected error before its verdict, and exits `4`, or keeps `2` if it was already refused as a usage error |
+| `unexpected-error` | the run stopped on an unexpected error before its verdict, and exits `4`, even if it was already refused as a usage error |
 | `unexpected-error-after-verdict` | an unexpected error came after the run's verdict; the run exits with the verdict's code |
 
 ---
@@ -979,7 +979,7 @@ Run `spec-controller --help` for the top-level summary of the commands. Run `spe
 
 The rules below are all checked before anything is emitted. A run that breaks one is refused at exit `2`, prints no report, and writes no file.
 
-**At most one output may go to stdout.** A path that names stdout itself (`/dev/stdout`, `/dev/fd/1`, or a link to either) counts as stdout. So `--format md --format json:/dev/stdout` is refused, like `--format md --format json`.
+**At most one output may go to stdout.** A path that names stdout itself (`/dev/stdout`, `/dev/fd/1`, `/proc/self/fd/1`, or a link to any of them) counts as stdout. So `--format md --format json:/dev/stdout` is refused, like `--format md --format json`.
 
 **No two outputs may share one regular file, however the file is named.** That covers the same path twice, the same format twice, `./` or an absolute spelling beside a relative one, a path through `..`, a symbolic link, a path through a linked directory, a hard link, and the file stdout is redirected into. The file is recognised by the operating system's identity for it, so on a case-insensitive volume `report.md` and `REPORT.MD` are one file. The refusal names both outputs. A destination that is not a regular file, such as `/dev/stderr` or `/dev/null`, may be given more than once, because writing it twice loses nothing.
 

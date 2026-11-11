@@ -12,7 +12,7 @@ interface ErroringStream {
   on(event: "error", listener: (err: unknown) => void): unknown;
 }
 
-// A verdict is read from the run finishing, never from an exit code being set: a refusal's 2 and the guard's own 6 are codes, not verdicts.
+// A verdict is read from the run finishing, never from an exit code being set: a refusal's 2 and the guard's own 4 are codes, not verdicts.
 // A run that has not finished, or has written no line, holds no mark for it.
 interface RunState {
   finished?: true;
@@ -47,7 +47,7 @@ interface LoadedProgram {
   main(argv: string[]): unknown;
 }
 
-// The guards are installed before the program's modules are evaluated, so a module that cannot load (a broken install, say) ends the run at 6, not at Node's 1.
+// The guards are installed before the program's modules are evaluated, so a module that cannot load (a broken install, say) ends the run at 4, not at Node's 1.
 export async function boot(
   proc: CrashingProcess,
   stdout: ErroringStream,
