@@ -156,6 +156,13 @@ describe("each of two reports will be where you asked", () => {
     };
     expect({ exitCode: written.exitCode, seen: observe(dir, written) }).toEqual({ exitCode: undefined, seen: expected[clm] });
   });
+
+  it("[CLM-FMT-022] two reports asked for at /dev/stderr, which is a file, are both on standard error, one after the other", () => {
+    const file = join(temporaryDirectory("spec-controller-two-stderr-"), "stderr.log");
+    writeFileSync(file, "");
+    const written = withStandardStreamsOn({ stdout: "/dev/null", stderr: file }, () => reportsWritten(["md:/dev/stderr", "json:/dev/stderr"]));
+    expect({ exitCode: written.exitCode, onStandardError: written.stderr === renderMarkdown(RUN) + renderJson(RUN) }).toEqual({ exitCode: undefined, onStandardError: true });
+  });
 });
 
 describe("two reports will not both go to standard output", () => {

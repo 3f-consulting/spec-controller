@@ -70,7 +70,7 @@ export function outputClashOf<Format extends string>(
 ): OutputRefusal<Format> | undefined {
   let toStandardErrorSeen = false;
   const compared = outputs.map(({ output, identity, toStandardError }) => {
-    const shown = { output, identity: toStandardError && toStandardErrorSeen ? undefined : identity };
+    const shown = { output, identity };
     toStandardErrorSeen ||= toStandardError;
     return shown;
   });
