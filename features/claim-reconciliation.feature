@@ -91,6 +91,7 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-066 | a unit test in a.test.ts and one in b.test.ts, citing no code                        | a unit group for each file                 |
         | CLM-LDG-067 | a unit test and an integration test in a.test.ts, citing no code                     | a unit group and an integration group      |
         | CLM-LDG-068 | a test in a.test.ts citing no code, and one citing the shared claim code CLM-ONE-001 | two groups, one naming CLM-ONE-001         |
+        | CLM-LDG-073 | a test in a.test.ts citing no code, and one citing both CLM-ONE-001 and CLM-ONE-002  | one unit group for a.test.ts               |
         | CLM-LDG-069 | two uncited fitness functions                                                        | one fitness group naming both              |
         | CLM-LDG-070 | an uncited fitness function, and one citing the shared claim code CLM-ONE-001        | two fitness groups, one naming CLM-ONE-001 |
 

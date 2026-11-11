@@ -268,6 +268,12 @@ describe("evidence of the same kind, file and shared claim code will share a gro
       ],
     ],
     [
+      "CLM-LDG-073",
+      () => [claim("ONE-001", ["unit"], "one.feature", "a"), claim("ONE-002", ["unit"], "one.feature", "b")],
+      () => [observation("unit", "passed", [], "a.test.ts"), observation("unit", "passed", ["ONE-001", "ONE-002"], "a.test.ts")],
+      [{ kind: "unit", file: "a.test.ts", members: ["a.test.ts", "a.test.ts"] }],
+    ],
+    [
       "CLM-LDG-069",
       () => [],
       () => [observation("fitness", "passed", [], "ci.yml:ci:a"), observation("fitness", "passed", [], "ci.yml:ci:b")],
