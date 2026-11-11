@@ -3,8 +3,9 @@ Feature: balance reads and validates the configuration settings in the specContr
 
   A target's package.json can have a specController block with three configuration settings:
   runners, notChecks and deferral tags. balance reads each one, and validates it. An invalid configuration
-  setting never stops the run, and the others still apply. What each one then changes belongs
-  to the files about those things.
+  setting never stops the run, and the others still apply. A specController section that is broken as a
+  whole, such as null, is not a setting, and stops the run as an unexpected error. What each one then
+  changes belongs to the files about those things.
 
   Rule: balance takes each configuration setting it can use
 
@@ -41,6 +42,9 @@ Feature: balance reads and validates the configuration settings in the specContr
         | CLM-CFG-003 | "unittest": "vitest" under runners                      | runner-key-not-a-layer           |
         | CLM-CFG-015 | "ci.yml:ci:No such step" in notChecks, with ci.yml read | not-checks-entry-matches-no-step |
         | CLM-CFG-016 | "Install dependencies" in notChecks                     | not-checks-entry-not-a-step-name |
+        | CLM-CFG-018 | "runners": null                                         | configuration-wrong-kind         |
+        | CLM-CFG-019 | "notChecks": "Install"                                  | configuration-wrong-kind         |
+        | CLM-CFG-020 | 3 in deferralTags                                       | configuration-wrong-kind         |
 
     @unit @CLM-CFG-017
     Scenario: the run will still reach its run verdict, using the configuration settings it could use
