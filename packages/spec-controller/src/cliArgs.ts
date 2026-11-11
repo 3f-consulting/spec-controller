@@ -124,7 +124,8 @@ function registeredFlagRefusal(
 ): Refusal | undefined {
   if (walk.seen.has(flag) && flag.repeatable !== true) return givenTwiceRefusal(token, `spec-controller ${command}`);
   walk.seen.add(flag);
-  if (flag.arg === undefined && next !== undefined && !isFlagShaped(next)) {
+  // While the command still has an argument to read, the next word is that argument, not a value for this flag.
+  if (flag.arg === undefined && next !== undefined && !isFlagShaped(next) && walk.slotsLeft === 0) {
     return takesNoValueRefusal(token, next, command);
   }
   return undefined;
