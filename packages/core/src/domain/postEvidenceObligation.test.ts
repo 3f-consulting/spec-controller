@@ -38,6 +38,13 @@ describe("an Outline will be one executable claim for each row only when it has 
       "      | x | clm         |\n      | y | CLM-ONE-001 |\n      | z | CLM-ONE-002 |",
       [ONE_001, ONE_002],
     ],
+    [
+      "CLM-OBL-001",
+      "an Examples block with a clm column holding CLM-ONE-001, and an Examples block without one",
+      "@unit",
+      "      | clm         | x |\n      | CLM-ONE-001 | y |\n\n    Examples:\n      | x |\n      | z |",
+      [ONE_001, undefined],
+    ],
     ["CLM-OBL-002", "the tag @CLM-ONE-001 and no clm column", "@unit @CLM-ONE-001", "      | x |\n      | y |\n      | z |", [ONE_001]],
     ["CLM-OBL-002", "the tag @CLM-ONE-001 and an Examples block with no table yet", "@unit @CLM-ONE-001", "", [ONE_001]],
   ])("[%s] an Outline with %s", (_clm, _shape, tags, table, codes) => {
