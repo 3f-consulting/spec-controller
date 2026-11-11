@@ -112,6 +112,14 @@ describe("a flag the command takes will take effect", () => {
     expect(forward.stderr).toBe("");
     expect(reversed).toEqual(forward);
   });
+
+  it("[CLM-CLI-124] allocate's flag before and after its feature code", () => {
+    const after = ran(["allocate", "QZQ", "--new"]);
+    const before = ran(["allocate", "--new", "QZQ"]);
+
+    expect(after.stdout).toMatch(/^CLM-QZQ-\d{3}\n$/);
+    expect(before).toEqual(after);
+  });
 });
 
 const BALANCE = "spec-controller balance";
