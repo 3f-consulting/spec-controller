@@ -4,6 +4,8 @@ import {
   claimCodesAtOf,
   commandRuns,
   evidenceReconciliationOf,
+  outputClashOf,
+  outputPlanOf,
   pipelineStepsOf,
   provenanceFrom,
   runIdentityOf,
@@ -13,6 +15,7 @@ import {
   targetConfigurationFrom,
   toolVersionOf,
   type EvidenceReconciliation,
+  type IdentifiedInput,
   type ParsedFeatureFile,
   type ParsedWorkflow,
   type Provenance,
@@ -29,9 +32,9 @@ import {
 import { inputPathsOf, requestedInputsOf, runInputsOf, type InputPaths } from "../runRequest/evidenceInputs.js";
 import { INPUT_DEFAULTS } from "../runRequest/defaults.js";
 import { collectFormatSpecs, requestedOutputsOf } from "../runRequest/formats.js";
-import { writeRequestedReports } from "../output/writer.js";
+import { locatedOutputs, probedOutputs, renderedReports, writeRenderedReports } from "../output/writer.js";
 import { identifiedInputs } from "../output/outputLocation.js";
-import type { IdentifiedInput } from "../output/format.js";
+import { outputRefusal, WRITTEN_FORMATS } from "../output/format.js";
 import { refuse, settlingRefusal } from "../runEnding/usageRefusal.js";
 import { inputsReadFrom, NODE_INPUT_READER, type InputReader } from "../inputs/inputsRead.js";
 import { corpusDirOf } from "../inputs/corpusDir.js";
@@ -104,9 +107,16 @@ export function inputsReadBy(args: Record<string, string>, reader: InputReader):
   return inputsReadFrom(args, requestedInputsOf(args), reader, INPUT_DEFAULTS);
 }
 
-// The reports the --format specs ask for, written once each destination is vetted.
+// The reports the --format specs ask for: planned, probed, checked against one another and the inputs, then written.
 export function writeReports(formatSpecs: readonly string[], evidenceReconciliation: EvidenceReconciliation, inputs: readonly IdentifiedInput[]): void {
-  writeRequestedReports(requestedOutputsOf(formatSpecs), evidenceReconciliation, inputs);
+  const plan = outputPlanOf(locatedOutputs(requestedOutputsOf(formatSpecs)), WRITTEN_FORMATS);
+  if (!plan.ok) refuse(outputRefusal(plan.refusal));
+  const reports = renderedReports(plan.outputs, evidenceReconciliation);
+  const probed = probedOutputs(plan.outputs);
+  if ("refusal" in probed) refuse(probed.refusal);
+  const clash = outputClashOf(probed.identified, inputs);
+  if (clash !== undefined) refuse(outputRefusal(clash));
+  writeRenderedReports(reports);
 }
 
 interface ReadInputs {
