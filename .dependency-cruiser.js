@@ -43,29 +43,51 @@ export default {
     },
 
     {
-      name: "adapter-imports-adapter",
+      name: "core-folder-imports-beyond-the-domain",
       severity: "error",
       comment:
-        "a core adapter meets another adapter only through the domain, never by importing it or the composition layer's internals",
-      from: { path: "^packages/core/src/(parse|render|provenance)/", pathNot: "\\.(test|test-utils)\\.ts$" },
+        "core's inputs/, reports/ and messages/ import their own folder, the domain and core's messages/, and meet one another only through the domain",
+      from: { path: "^packages/core/src/(inputs|reports|messages)/", pathNot: "\\.(test|test-utils)\\.ts$" },
       to: {
-        path: "^packages/core/src/(parse|render|provenance|assemble)/",
-        pathNot: "^packages/core/src/$1/",
+        path: "^packages/core/src/",
+        pathNot: ["^packages/core/src/$1/", "^packages/core/src/(domain|messages)/"],
       },
     },
 
     {
-      name: "driven-imports-driven",
+      name: "app-adapter-imports-another-adapter",
       severity: "error",
       comment:
-        "a driven app module is handed what it needs by the command that drives it, never reaching into another driven module",
+        "an app adapter imports its own folder, the catalogue in messages/ and the run's ending in runEnding/; it is handed everything else by commands/, the one folder that imports any other",
       from: {
-        path: "^packages/spec-controller/src/(ingest|run-management|cli-balance/emit)/",
+        path: "^packages/spec-controller/src/(runRequest|inputs|runIdentity|repository|output)/",
         pathNot: "\\.(test|test-utils)\\.ts$",
       },
       to: {
-        path: "^packages/spec-controller/src/(ingest|run-management|cli-balance/emit)/",
-        pathNot: "^packages/spec-controller/src/$1/",
+        path: "^packages/spec-controller/src/",
+        pathNot: ["^packages/spec-controller/src/$1/", "^packages/spec-controller/src/(messages|runEnding)/"],
+      },
+    },
+
+    {
+      name: "run-ending-imports-an-adapter",
+      severity: "error",
+      comment: "the run's ending, which every app adapter shares, imports only itself and the catalogue in messages/",
+      from: { path: "^packages/spec-controller/src/runEnding/", pathNot: "\\.(test|test-utils)\\.ts$" },
+      to: {
+        path: "^packages/spec-controller/src/",
+        pathNot: "^packages/spec-controller/src/(runEnding|messages)/",
+      },
+    },
+
+    {
+      name: "catalogue-imports-the-app",
+      severity: "error",
+      comment: "the app's catalogue, which every app folder speaks through, imports only itself",
+      from: { path: "^packages/spec-controller/src/messages/", pathNot: "\\.(test|test-utils)\\.ts$" },
+      to: {
+        path: "^packages/spec-controller/src/",
+        pathNot: "^packages/spec-controller/src/messages/",
       },
     },
 
@@ -74,7 +96,7 @@ export default {
       severity: "error",
       comment:
         "the crash guards load nothing from the engine or its message formatter, so they are in place before either is evaluated and a module that cannot load still ends the run on the guards' code",
-      from: { path: "^packages/spec-controller/src/crashGuards\\.ts$" },
+      from: { path: "^packages/spec-controller/src/runEnding/crashGuards\\.ts$" },
       to: {
         reachable: true,
         path: [
@@ -97,8 +119,8 @@ export default {
     {
       name: "child-process-outside-its-homes",
       severity: "error",
-      comment: "only run-management and cli-allocate may import child_process",
-      from: { path: "^packages/", pathNot: "^packages/spec-controller/src/(run-management|cli-allocate)/" },
+      comment: "only the run identity and repository adapters may import child_process",
+      from: { path: "^packages/", pathNot: "^packages/spec-controller/src/(runIdentity|repository)/" },
       to: { dependencyTypes: ["core"], path: "^(node:)?child_process$" },
     },
 
@@ -125,7 +147,7 @@ export default {
         "only core's Gherkin module imports the Gherkin parser; every other module reads a feature file through what it returns",
       from: {
         path: "^packages/[^/]+/src/",
-        pathNot: ["^packages/core/src/parse/scenarios\\.ts$", "\\.(test|test-utils)\\.ts$"],
+        pathNot: ["^packages/core/src/inputs/gherkin\\.ts$", "\\.(test|test-utils)\\.ts$"],
       },
       to: { path: "(^|/)@cucumber/gherkin(/|$)" },
     },
@@ -138,7 +160,7 @@ export default {
       from: {
         path: "^packages/[^/]+/src/",
         pathNot: [
-          "^packages/core/src/parse/checkScriptsRunInCI\\.ts$",
+          "^packages/core/src/inputs/workflows\\.ts$",
           "\\.(test|test-utils)\\.ts$",
         ],
       },
