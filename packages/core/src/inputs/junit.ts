@@ -2,7 +2,7 @@ import type { EvidenceObservation, TestCaseAsWritten } from "../domain/postEvide
 import { testCaseObservationsOf } from "../domain/postEvidenceObservation.js";
 
 export interface JunitXmlReport {
-  readonly testsuites?: {
+  readonly testsuites: {
     readonly testsuite?: ReadonlyArray<JunitTestsuite>;
   };
 }
@@ -40,7 +40,7 @@ function testCaseOf(suite: JunitTestsuite, testcase: JunitTestcase, errorsWritte
 }
 
 function testCasesOf(report: JunitXmlReport, errorsWritten: ErrorsWritten): TestCaseAsWritten[] {
-  return (report.testsuites?.testsuite ?? []).flatMap((suite) =>
+  return (report.testsuites.testsuite ?? []).flatMap((suite) =>
     (suite.testcase ?? []).map((testcase) => testCaseOf(suite, testcase, errorsWritten)),
   );
 }
