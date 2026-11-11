@@ -200,6 +200,13 @@ Feature: Evidence Observations are posted, each to its claim
       When balance posts the evidence
       Then an Evidence Observation will be posted for each row, citing the claim code of its row
 
+    @unit @CLM-OBS-107
+    Scenario: balance posts an Outline row's result citing the claim code of the row in its own feature file
+      given one.feature and two.feature each had an Outline row at line 10, with the claim codes CLM-ONE-001 and CLM-TWO-001
+      and Cucumber's evidence report had a result for the row in two.feature
+      when balance posts the evidence
+      then an Evidence Observation will be posted, citing CLM-TWO-001
+
   Rule: an Evidence Observation says where to look
 
     @unit
