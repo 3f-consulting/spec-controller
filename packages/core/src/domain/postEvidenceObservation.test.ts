@@ -207,6 +207,8 @@ describe("balance posts each result with how it went", () => {
 
   it.each<[string, { jobExtra: string; step: string; result: EvidenceObservation["result"] }]>([
     ["CLM-OBS-056", { jobExtra: "", step: CITING_STEP, result: "passed" }],
+    ["CLM-OBS-056", { jobExtra: "", step: `${CITING_STEP}        continue-on-error: false\n`, result: "passed" }],
+    ["CLM-OBS-056", { jobExtra: "    continue-on-error: 'false'\n", step: CITING_STEP, result: "passed" }],
     ["CLM-OBS-057", { jobExtra: "", step: `${CITING_STEP}        continue-on-error: true\n`, result: "passed-on-error" }],
     ["CLM-OBS-058", { jobExtra: "    continue-on-error: true\n", step: CITING_STEP, result: "passed-on-error" }],
   ])("[%s] balance posts a fitness function known only from its workflow as passed, or as passed-on-error when its failure is allowed", (_clm, { jobExtra, step, result }) => {
