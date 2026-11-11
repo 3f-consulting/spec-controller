@@ -81,6 +81,13 @@ describe("a configuration setting balance cannot use will be left out", () => {
       { ...NOTHING },
       [{ kind: "not-checks-entry-not-a-step-name", entry: "Install dependencies" }],
     ],
+    [
+      "CLM-CFG-016",
+      { notChecks: [":ci:Install dependencies"] },
+      ["Install dependencies"],
+      { ...NOTHING },
+      [{ kind: "not-checks-entry-not-a-step-name", entry: ":ci:Install dependencies" }],
+    ],
     ["CLM-CFG-018", { runners: null }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "runners" }]],
     ["CLM-CFG-018", { runners: "vitest" }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "runners" }]],
     ["CLM-CFG-019", { notChecks: "Install" }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "notChecks" }]],
