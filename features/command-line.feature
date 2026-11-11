@@ -55,6 +55,12 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-119 | spec-controller help   | the commands                            |
         | CLM-CLI-120 | nothing at all         | the commands                            |
 
+    @unit @CLM-CLI-189
+    Scenario: a command's help gives each flag it takes beside what the flag does
+      given balance took the flags --strict and --exit-zero
+      when its help is shown
+      then each flag will be on a line of its own, followed by its description
+
   Rule: a command accepts only the arguments it takes
 
     @unit
