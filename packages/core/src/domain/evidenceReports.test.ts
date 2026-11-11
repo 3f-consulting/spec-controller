@@ -69,6 +69,11 @@ describe("balance posts each result with how it went, as each report gives it", 
     ]);
   });
 
+  it("[CLM-OBS-031] a Cucumber scenario tagged @CLM-ONE-001, which the corpus also finds at its line, is posted citing CLM-ONE-001 once", () => {
+    const report = [{ uri: "one.feature", elements: [{ name: "one adds one", line: 4, tags: [{ name: "@CLM-ONE-001" }], steps: [{ keyword: "Given ", name: "one", result: { status: "passed" } }] }] }];
+    expect(parseCucumberEvidenceObservations(report, undefined, () => ["CLM-ONE-001"]).map(({ cites }) => cites)).toEqual([[ONE]]);
+  });
+
   it("[CLM-OBS-051] a scenario whose middle step matched two definitions is posted as never-ran, naming only that step", () => {
     const steps = [
       { keyword: "Given ", name: "one", result: { status: "passed" } },
