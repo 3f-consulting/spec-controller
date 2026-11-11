@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
-import { coreText } from "./coreText.js";
+import { coreText } from "../messages/coreText.js";
 import { renderJson } from "./json.js";
 import { renderMarkdown } from "./markdown.js";
 

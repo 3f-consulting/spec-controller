@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { shellReading } from "../parse/commandRuns.js";
-import { parseCucumberEvidenceObservations } from "../parse/cucumber.js";
-import { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "../parse/junit.js";
-import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
-import { parseRspecEvidenceObservations } from "../parse/rspec.js";
-import { parseVitestEvidenceObservations } from "../parse/vitest.js";
+import { shellReading } from "../inputs/shell.js";
+import { parseCucumberEvidenceObservations } from "../inputs/cucumber.js";
+import { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "../inputs/junit.js";
+import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
+import { parseRspecEvidenceObservations } from "../inputs/rspec.js";
+import { parseVitestEvidenceObservations } from "../inputs/vitest.js";
 import type { ClaimCode } from "./claimCodes.js";
 import { stepDispositionOf } from "./postEvidenceObservation.js";
 

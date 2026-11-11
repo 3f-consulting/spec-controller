@@ -1,6 +1,6 @@
 import { targetConfigurationOf, type ConfigurationRead, type SettingNames } from "../domain/configuration.js";
 import type { PipelineStep } from "../domain/postEvidenceObservation.js";
-import { bareTerm } from "../lib/bareTerm.js";
+import { bareTerm } from "./tags.js";
 
 const SPEC_CONTROLLER_BLOCK: SettingNames = {
   settings: { runners: "runners", notChecks: "nonChecks", deferralTags: "deferralTags" },

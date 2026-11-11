@@ -1,6 +1,6 @@
 import type { RunIntegrity } from "../domain/evidenceReconciliation.js";
 import { said, whereToLook } from "./claimReconciliations.js";
-import { coreText } from "./coreText.js";
+import { coreText } from "../messages/coreText.js";
 import { heading } from "./heading.js";
 import { table } from "./table.js";
 

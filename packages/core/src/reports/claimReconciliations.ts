@@ -1,6 +1,6 @@
 import { groupsOf, type ClaimReconciliation, type EvidenceGroup, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
 import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
-import { coreText } from "./coreText.js";
+import { coreText } from "../messages/coreText.js";
 import { heading } from "./heading.js";
 import type { ClaimCode } from "../domain/claimCodes.js";
 import { labelled } from "./labelled.js";

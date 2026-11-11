@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseWorkflows } from "./checkScriptsRunInCI.js";
+import { parseWorkflows } from "./workflows.js";
 import { parseVitestEvidenceObservations } from "./vitest.js";
 
 describe("a command validates every input before it does its work", () => {

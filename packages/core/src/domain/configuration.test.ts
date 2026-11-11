@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { targetConfigurationFrom } from "../parse/targetManifest.js";
+import { targetConfigurationFrom } from "../inputs/manifest.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { runVerdictOf } from "./evidenceReconciliation.js";

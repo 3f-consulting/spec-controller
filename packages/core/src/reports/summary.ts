@@ -1,5 +1,5 @@
 import type { EvidenceReconciliation, RunVerdict, StepAccount, Totals } from "../domain/evidenceReconciliation.js";
-import { coreText, type CoreTextCode } from "./coreText.js";
+import { coreText, type CoreTextCode } from "../messages/coreText.js";
 import { heading } from "./heading.js";
 import { labelled } from "./labelled.js";
 import { inCell } from "./quoted.js";

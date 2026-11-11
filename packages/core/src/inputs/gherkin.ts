@@ -1,6 +1,6 @@
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { IdGenerator, type Examples, type FeatureChild, type GherkinDocument, type RuleChild, type Scenario } from "@cucumber/messages";
-import { bareTerm } from "../lib/bareTerm.js";
+import { bareTerm } from "./tags.js";
 import { claimCodeFrom } from "../domain/claimCodes.js";
 import type { RowAsWritten, ScenarioAsWritten } from "../domain/postEvidenceObligation.js";
 import type { ClaimCodesAt } from "./cucumber.js";

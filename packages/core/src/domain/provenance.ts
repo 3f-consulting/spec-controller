@@ -1,5 +1,5 @@
-import { provenanceOf, type Provenance, type RunIdentity } from "../domain/evidenceReconciliation.js";
-import { relativizeToRoot } from "../lib/portablePath.js";
+import { provenanceOf, type Provenance, type RunIdentity } from "./evidenceReconciliation.js";
+import { relativizeToRoot } from "./targetPath.js";
 
 export interface RunInput {
   readonly name: string;

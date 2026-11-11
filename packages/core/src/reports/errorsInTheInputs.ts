@@ -1,6 +1,6 @@
 import type { ErrorsInTheInputs } from "../domain/evidenceReconciliation.js";
 import type { ClaimCodeError } from "../domain/claimCodes.js";
-import { coreText, type CoreTextCode } from "./coreText.js";
+import { coreText, type CoreTextCode } from "../messages/coreText.js";
 import { heading } from "./heading.js";
 import { inCell } from "./quoted.js";
 import { table } from "./table.js";

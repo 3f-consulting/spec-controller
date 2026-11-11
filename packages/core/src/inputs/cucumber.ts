@@ -1,8 +1,8 @@
 import { claimCodeFrom, type ClaimCode } from "../domain/claimCodes.js";
 import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
 import { kindsTheTagsName, nearestCitation, resultOfRun, type RunResult } from "../domain/postEvidenceObservation.js";
-import { withoutSigil } from "../lib/bareTerm.js";
-import { relativizeToRoot } from "../lib/portablePath.js";
+import { withoutSigil } from "./tags.js";
+import { relativizeToRoot } from "../domain/targetPath.js";
 
 export type CucumberJsonReport = ReadonlyArray<{
   readonly uri?: string;

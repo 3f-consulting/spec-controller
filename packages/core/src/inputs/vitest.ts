@@ -1,7 +1,7 @@
 import { claimCodeCitationsIn } from "../domain/claimCodes.js";
 import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
 import { nearestCitation, neverRanObservation, resultOfRun, TEST_REPORT_KIND, type RunResult } from "../domain/postEvidenceObservation.js";
-import { relativizeToRoot } from "../lib/portablePath.js";
+import { relativizeToRoot } from "../domain/targetPath.js";
 
 export interface VitestJsonReport {
   readonly testResults: ReadonlyArray<{

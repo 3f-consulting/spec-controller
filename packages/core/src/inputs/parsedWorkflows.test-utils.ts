@@ -1,4 +1,4 @@
-import { parseWorkflows, pipelineStepsOf, type ParsedWorkflow } from "./checkScriptsRunInCI.js";
+import { parseWorkflows, pipelineStepsOf, type ParsedWorkflow } from "./workflows.js";
 import type { PipelineStep } from "../domain/postEvidenceObservation.js";
 
 function parsedWorkflows(sources: readonly string[], files: readonly string[] = []): ParsedWorkflow[] {

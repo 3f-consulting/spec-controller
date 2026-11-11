@@ -20,7 +20,7 @@ import {
 import { message } from "../../../spec-controller/src/appText.js";
 import { AppError, AppMessage } from "../../../spec-controller/src/messages.js";
 import { printedRefusal } from "../../../spec-controller/src/shownText.test-utils.js";
-import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { claimCodeErrorsOf, claimCodeFrom, featureCodeOfFile, isFeatureCode, retiredScenarioCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 
 afterEach(() => {

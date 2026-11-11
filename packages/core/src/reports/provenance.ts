@@ -1,5 +1,5 @@
 import type { Provenance } from "../domain/evidenceReconciliation.js";
-import { coreText } from "./coreText.js";
+import { coreText } from "../messages/coreText.js";
 import { heading } from "./heading.js";
 import { labelled } from "./labelled.js";
 import { quoted } from "./quoted.js";

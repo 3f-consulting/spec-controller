@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { executableClaimsOf, type ExecutableClaim, type ReadingSettings } from "./postEvidenceObligation.js";
 
 const NOT_STRICT: ReadingSettings = { deferralTags: [], strict: false };
