@@ -275,3 +275,10 @@ describe("balance files each Evidence Observation under the claim it cites, or e
     expect(observation!.cites).toEqual(named);
   });
 });
+
+describe("a fitness function whose id is not a claim code will be posted once, citing no claim code", () => {
+  it("[CLM-OBS-097] a fitness function whose id is not a claim code will be posted once, citing no claim code", () => {
+    const posted = fitness("      - id: audit\n        name: Audit\n        run: pnpm audit-the-tree\n", { audit: { outcome: "success" } });
+    expect(posted.map(({ kind, cites }) => ({ kind, cites }))).toEqual([{ kind: "fitness", cites: [] }]);
+  });
+});

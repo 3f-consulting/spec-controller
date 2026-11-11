@@ -131,6 +131,13 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-057 | true on its step  | passed-on-error              |
         | CLM-OBS-058 | true on its job   | passed-on-error              |
 
+    @unit @CLM-OBS-097
+    Scenario: a fitness function whose id is not a claim code will be posted once, citing no claim code
+      given a workflow had a step running pnpm audit-the-tree with the id audit
+      and the step record had an entry for audit
+      when balance posts the evidence
+      then one fitness Evidence Observation will be posted, citing no claim code
+
   Rule: balance posts each result at the kind of quality check its source and tags give
 
     @unit
