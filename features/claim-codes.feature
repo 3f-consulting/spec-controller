@@ -128,6 +128,7 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-073 | history git failed to read          |
         | CLM-STG-074 | a damaged repository                |
         | CLM-STG-085 | a folder in the tree it cannot read |
+        | CLM-STG-089 | a feature file that does not parse  |
 
   Rule: allocate says what history it did not read
 

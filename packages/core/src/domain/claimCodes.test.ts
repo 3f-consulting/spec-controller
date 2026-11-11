@@ -366,6 +366,19 @@ function damagedRepository(): void {
   expect(answered.stderr).toContain(message(AppError.CouldNotBeRead, { subject: message(AppMessage.Repository), path: gitEntry, reason }));
 }
 
+function unparseableFeatureFile(): void {
+  const repo = repositoryCarrying("CLM-ONE-001");
+  writeInto(repo, "features/two.feature", "@TWO\nFeature: part TWO\n\n  Scenario: s\n    Given a step\n  this line is no Gherkin\n");
+  const file = join(repo, "features", "two.feature");
+  const complaint = message(AppError.CorpusFileUnparseable, { corpus: message(AppMessage.FeatureCorpus), file, message: "" });
+
+  const answered = allocateIn(repo, ["ONE"]);
+
+  expect(answered.stdout).toBe("");
+  expect(answered.exitCode).toBe(2);
+  expect(answered.stderr).toContain(complaint);
+}
+
 describe("allocate names what it could not read, and gives no code", () => {
   it.for([
     ["CLM-STG-072", "a file git cannot read", withheldFile],
@@ -375,6 +388,7 @@ describe("allocate names what it could not read, and gives no code", () => {
     ["CLM-STG-085", "a folder two down in the tree it cannot read", withheldFolderTwoDown],
     ["CLM-STG-085", "a folder in the tree it cannot read, beside an ignored backup file named for it", withheldFolderBesideItsIgnoredBackup],
     ["CLM-STG-085", "a folder in the features folder it cannot read", withheldFeaturesSubfolder],
+    ["CLM-STG-089", "a feature file that does not parse", unparseableFeatureFile],
   ] as const)("[%s] %s", ([, , stopsUnread], { skip }) => {
     skip(runsAsRoot());
     stopsUnread();
