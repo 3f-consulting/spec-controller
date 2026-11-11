@@ -267,7 +267,7 @@ function nameCitationsOf(name: string | undefined): ClaimCode[] {
 function propertyCitationsOf(testCase: TestCaseAsWritten): ClaimCode[] {
   return testCase.properties
     .filter((property) => property.name === CLAIM_CODE_PROPERTY)
-    .flatMap((property) => claimCodeFrom(property.value) ?? [{ featureCode: "", number: String(property.value) }]);
+    .flatMap((property) => claimCodeFrom(property.value) ?? []);
 }
 
 // A test case cites its clm properties and its name's innermost cited segment, else the last code its class cites.
