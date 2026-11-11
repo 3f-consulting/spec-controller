@@ -397,7 +397,7 @@ function scenarioResultOf(steps: readonly StepRunAsWritten[]): EvidenceObservati
   const endings = steps.map(endingOf);
   if (endings.includes("failed")) return "failed";
   if (endings.includes("could-not-run")) return "never-ran";
-  return endings.length > 0 && endings.every((ending) => ending === "passed") ? "passed" : undefined;
+  return endings.every((ending) => ending === "passed") ? "passed" : undefined;
 }
 
 const stepText = (step: StepRunAsWritten): string => `${String(step.keyword).trim()} ${step.text}`;

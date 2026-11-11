@@ -415,6 +415,10 @@ describe("balance posts each result with how it went", () => {
     expect(posted()).toEqual([]);
   });
 
+  it("[CLM-OBS-106] balance posts nothing for a Cucumber scenario that had no steps", () => {
+    expect(cucumber(["CLM-ONE-001"], [])).toEqual([]);
+  });
+
   it.each<[string, { posted: Posted; cites: readonly ClaimCode[]; named: Partial<EvidenceObservation> }]>([
     ["CLM-OBS-044", { posted: () => vitestFile("no such module"), cites: [], named: { place: "a.test.ts", message: "no such module" } }],
     ["CLM-OBS-045", { posted: () => vitestFile("cannot be parsed"), cites: [], named: { place: "a.test.ts", message: "cannot be parsed" } }],

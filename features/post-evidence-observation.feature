@@ -92,6 +92,12 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-042 | RSpec's evidence report             | it was skipped or pending                |
         | CLM-OBS-043 | Cucumber's evidence report          | a step was skipped and none failed       |
 
+    @unit @CLM-OBS-106
+    Scenario: balance posts nothing for a Cucumber scenario that had no steps
+      given Cucumber's evidence report had a scenario tagged @CLM-ONE-001 with no steps
+      when balance posts the evidence
+      then nothing will be posted
+
     @unit
     Scenario Outline: balance posts what could not run as never ran
       given <source> said <what could not run>
