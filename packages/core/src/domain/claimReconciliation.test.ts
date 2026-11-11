@@ -140,6 +140,12 @@ describe("balance works out each Quality Check Reconciliation's outcome, and fro
       outcomes,
     });
   });
+
+  it("[CLM-LDG-001] the satisfied Quality Check Reconciliation answers the unit Evidence Obligation with the passing unit test", () => {
+    const passing = observation("unit", "passed", ["ONE-001"]);
+    const reconciliation = reconciliationOf(claimReconciliationsOf([claim("ONE-001", ["unit"])], [passing]), "ONE-001");
+    expect(reconciliation?.qualityCheckReconciliations).toEqual([{ outcome: "satisfied", kind: "unit", obligation: { kind: "unit" }, observation: passing }]);
+  });
 });
 
 describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations", () => {
