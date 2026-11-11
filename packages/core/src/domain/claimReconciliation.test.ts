@@ -240,6 +240,16 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations",
       ],
       [1, 0],
     ],
+    [
+      "CLM-LDG-064",
+      "unnamed",
+      () => [],
+      () => [
+        observation("integration", "never-ran", [], "features/one.feature", { notes: ["Given the number one", "When it is done"] }),
+        observation("integration", "never-ran", [], "features/one.feature", { notes: ["Given the number one"] }),
+      ],
+      [1, 0],
+    ],
   ])("[%s] the Claim Reconciliation of %s lists its evidence in one order", (_clm, subject, claims, observations, order) => {
     const evidence = observations();
     const reconciliation = reconciliationOf(claimReconciliationsOf(claims(), evidence), subject);
