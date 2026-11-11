@@ -98,6 +98,13 @@ const written = ({ featureCode, number }: ClaimCode): string => `${CLAIM_CODE_PR
 
 const claimCodesIn = (words: readonly string[]): ClaimCode[] => words.flatMap((word) => claimCodeFrom(word) ?? []);
 
+// The codes a scenario carries: an Outline's clm cells, or else its one tagged code; several tagged codes are an error of their own.
+function codesCarriedBy(scenario: ScenarioAsWritten): ClaimCode[] {
+  if (scenario.rows) return scenario.rows.flatMap((row) => claimCodeFrom(row.cell ?? "") ?? []);
+  const codes = claimCodesIn(scenario.tags);
+  return codes.length === 1 ? codes : [];
+}
+
 function filesByFeatureCode(features: readonly FeatureAsWritten[]): ReadonlyMap<string, readonly string[]> {
   const files = new Map<string, string[]>();
   for (const feature of features) {
@@ -114,7 +121,7 @@ function duplicateFeatureCodes(filesByCode: ReadonlyMap<string, readonly string[
 }
 
 function misfiledCodes(feature: FeatureAsWritten, filesByCode: ReadonlyMap<string, readonly string[]>): ClaimCodeError[] {
-  const carried = feature.scenarios.flatMap(({ tags }) => claimCodesIn(tags));
+  const carried = feature.scenarios.flatMap(codesCarriedBy);
   const featureCode = featureCodeOfFile(feature);
   if (featureCode === undefined) return carried.length === 0 ? [] : [{ kind: "no-feature-code", files: [feature.file] }];
   return carried
