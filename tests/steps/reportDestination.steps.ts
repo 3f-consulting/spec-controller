@@ -32,8 +32,11 @@ Given("a run had two reports to write", function (this: SpecControllerWorld) {
   this.destinationScratch = temporaryDirectory(this, "spec-controller-destination-");
 });
 
-// Each destination row asks for the run's two reports, and keeps the files it named for the Then to read.
-const BOTH_WRITTEN: Readonly<Record<string, (scratch: string) => { formats: readonly string[]; files: readonly string[] }>> = {
+// Each destination row asks for the run's two reports, and keeps the files it named for the Then to read. A row may
+// send the run's standard error to a file, so the run meets it as a file and not as a pipe.
+const BOTH_WRITTEN: Readonly<
+  Record<string, (scratch: string) => { formats: readonly string[]; files: readonly string[]; stderrInto?: string }>
+> = {
   "no destination for one, a file for the other": (scratch) => {
     const file = join(scratch, "other.json");
     return { formats: [ONE, `${OTHER}:${file}`], files: [file] };
@@ -43,16 +46,30 @@ const BOTH_WRITTEN: Readonly<Record<string, (scratch: string) => { formats: read
     const files = [join(scratch, "one.md"), join(scratch, "other.json")];
     return { formats: [`${ONE}:${files[0]}`, `${OTHER}:${files[1]}`], files };
   },
-  "standard error for both": () => ({ formats: [`${ONE}:${STANDARD_ERROR}`, `${OTHER}:${STANDARD_ERROR}`], files: [] }),
+  "standard error for both": (scratch) => ({
+    formats: [`${ONE}:${STANDARD_ERROR}`, `${OTHER}:${STANDARD_ERROR}`],
+    files: [],
+    stderrInto: join(scratch, "stderr.out"),
+  }),
 };
 
 for (const [destination, arrange] of Object.entries(BOTH_WRITTEN)) {
   When(`you ask for them at ${destination}`, function (this: SpecControllerWorld) {
-    const { formats, files } = arrange(this.destinationScratch);
+    const { formats, files, stderrInto } = arrange(this.destinationScratch);
     this.destinationFiles = files;
-    this.run = balance(formats);
+    this.run = stderrInto === undefined ? balance(formats) : balanceWithStderrInto(stderrInto, formats);
     assert.equal(this.run.status, BALANCED, `expected the run to write both reports and exit ${BALANCED}; got ${this.run.status}\n${this.run.stderr}`);
   });
+}
+
+function balanceWithStderrInto(file: string, formats: readonly string[]): CommandRun {
+  const fd = openSync(file, "w");
+  try {
+    const run = balance(formats, ["ignore", "pipe", fd]);
+    return { ...run, stderr: readFileSync(file, "utf8") };
+  } finally {
+    closeSync(fd);
+  }
 }
 
 function fileText(path: string | undefined): string {
