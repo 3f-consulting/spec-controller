@@ -262,6 +262,12 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations",
     const reconciliation = reconciliationOf(claimReconciliationsOf(claims(), evidence), subject);
     expect(reconciliation?.qualityCheckReconciliations.map((line) => line.observation)).toEqual(order.map((at) => evidence[at]));
   });
+
+  it("[CLM-LDG-060] the missing line, having no test, sorts before a Cucumber example that never ran, wherever that example is", () => {
+    const neverRan = observation("integration", "never-ran", ["ONE-001"], "../features/one.feature", { notes: ["Given the number one"] });
+    const reconciliation = reconciliationOf(claimReconciliationsOf([claim("ONE-001", ["integration"])], [neverRan]), "ONE-001");
+    expect(reconciliation?.qualityCheckReconciliations.map(({ outcome }) => outcome)).toEqual(["missing", "never-ran"]);
+  });
 });
 
 describe("evidence of the same kind, file and shared claim code will share a group", () => {
