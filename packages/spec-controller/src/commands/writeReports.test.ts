@@ -150,6 +150,14 @@ describe("two reports will not both go to standard output", () => {
 describe("two reports will not go in one file", () => {
   it.each([
     ["CLM-FMT-010", "the same path", (file: string, _dir: string) => ({ spec: `json:${file}`, shown: `json:${file}`, stdout: "/dev/null" })],
+    [
+      "CLM-FMT-024",
+      "a link to it",
+      (file: string, dir: string) => {
+        symlinkSync(file, join(dir, "link.json"));
+        return { spec: `json:${join(dir, "link.json")}`, shown: `json:${join(dir, "link.json")}`, stdout: "/dev/null" };
+      },
+    ],
   ])("[%s] a report on a file beside one at %s stops the run, naming the file and both reports, and leaves the file as it was", (_clm, _other, arrange) => {
     const dir = temporaryDirectory("spec-controller-one-file-");
     const file = join(dir, "shared.out");
