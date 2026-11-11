@@ -34,10 +34,10 @@ const YARN_FOREACH = launcher(["yarn", "workspaces", "foreach"], "--from", "--in
 // A row matches a command opening with its words; the first row to match is read, so a longer phrase comes before its first word.
 const COMMAND_PREFIXES: readonly CommandPrefix[] = [
   { ...launcher(["timeout"], "-k", "--kill-after", "-s", "--signal"), operands: 1 },
-  launcher(["npm", "exec"], "--package", "-w", "--workspace", "-c", "--call"),
+  launcher(["npm", "exec"], "--package", "-w", "--workspace"),
   launcher(["pnpm", "exec"], "--resume-from"),
   launcher(["pnpm", "dlx"], "--package", "--allow-build"),
-  launcher(["npx"], "--package", "-p", "-w", "--workspace", "-c", "--call"),
+  launcher(["npx"], "--package", "-p", "-w", "--workspace"),
   launcher(["pnpm"]),
   launcher(["yarn", "exec"]),
   launcher(["yarn", "dlx"], "-p", "--package"),
