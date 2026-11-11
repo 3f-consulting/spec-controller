@@ -515,6 +515,7 @@ describe("an Evidence Observation says where to look", () => {
     ["CLM-OBS-080", { posted: () => cucumber(["CLM-ONE-001"], ["passed"]), where: { place: "one.feature", name: "one adds one" } }],
     ["CLM-OBS-081", { posted: () => fitness([{ id: "CLM-ONE-002", name: "Build", command: "pnpm build" }, CITING_STEP], [{ key: "CLM-ONE-001", outcome: "success" }]), where: { place: "ci.yml:build:Lint" } }],
     ["CLM-OBS-101", { posted: () => fitnessObservationsOf(stepsOf("      - id: CLM-ONE-001\n        name: 3\n        run: pnpm lint\n"), () => "candidate", [{ key: "CLM-ONE-001", outcome: "success" }]), where: { place: "ci.yml:build:pnpm lint" } }],
+    ["CLM-OBS-102", { posted: () => fitness([{ id: "CLM-ONE-001", command: "" }], [{ key: "CLM-ONE-001", outcome: "success" }]), where: { place: "ci.yml:build:" } }],
   ])("[%s] balance posts an Evidence Observation saying where to look", (_clm, { posted, where }) => {
     expect(posted()).toMatchObject([where]);
   });
