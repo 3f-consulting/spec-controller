@@ -1,4 +1,3 @@
-import { BUILT_IN_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
 import { AppMessage } from "./messages.js";
 import { message } from "./appText.js";
 import { EVIDENCE_INPUTS } from "./cli-balance/evidenceInputs.js";
@@ -21,7 +20,6 @@ export interface CommandSpec {
   summary: string;
   flags: FlagSpec[];
   positionals?: PositionalSpec[];
-  configHelp?: string[];
 }
 
 export interface CliRegistry {
@@ -61,22 +59,10 @@ const balanceFlags: FlagSpec[] = [
   },
 ];
 
-function explainingLines(entry: string): string[] {
-  return entry.split("\n").map((line) => `      ${line}`);
-}
-
-const balanceConfigHelp: string[] = [
-  message(AppMessage.ConfigurationHeading),
-  `  ${message(AppMessage.DeferralTagsKey)}`,
-  ...explainingLines(message(AppMessage.DeferralTagsExplanation)),
-  ...explainingLines(message(AppMessage.BuiltInDeferralTags, { tags: BUILT_IN_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", ") })),
-];
-
 export const balanceCommand: CommandSpec = {
   name: "balance",
   summary: message(AppMessage.BalanceSummary),
   flags: balanceFlags,
-  configHelp: balanceConfigHelp,
 };
 
 export const allocateCommand: CommandSpec = {
@@ -110,26 +96,23 @@ export function renderCommandHelp(command: CommandSpec): string {
   const lines = flags.map(
     (flag) => `  ${flagLabel(flag).padEnd(labelWidth + gutter)}${flag.description}`,
   );
-  const configHelp = command.configHelp ?? [];
   return [
     message(AppMessage.HelpCommandTitle, { command: command.name, summary: command.summary }),
     ...positionalHelp(command.name, command.positionals ?? []),
     "",
     message(AppMessage.HelpOptions),
     ...lines,
-    ...(configHelp.length > 0 ? ["", ...configHelp] : []),
   ].join("\n");
 }
 
 function positionalHelp(command: string, positionals: readonly PositionalSpec[]): string[] {
   if (positionals.length === 0) return [];
-  const width = Math.max(...positionals.map((positional) => positional.name.length));
   return [
     "",
     `${message(AppMessage.HelpUsage)} ${message(AppMessage.HelpCommandUsageLine, { command, arguments: positionals.map((positional) => positional.name).join(" ") })}`,
     "",
     message(AppMessage.HelpArguments),
-    ...positionals.map((positional) => `  ${positional.name.padEnd(width + 2)}${positional.description}`),
+    ...positionals.map((positional) => `  ${positional.name}  ${positional.description}`),
   ];
 }
 

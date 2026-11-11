@@ -42,7 +42,7 @@ export function planOutput(
 
   const unknown = outputs.filter((o) => !isSupportedFormat(o.fmt));
   if (unknown.length > 0) {
-    const bad = [...new Set(unknown.map((o) => o.fmt))].join(", ");
+    const bad = unknown.map((o) => o.fmt).join(", ");
     return {
       ok: false,
       error: refusal(AppError.UnknownFormat, { formats: bad, supported: SUPPORTED_FORMATS.join(", ") }),
