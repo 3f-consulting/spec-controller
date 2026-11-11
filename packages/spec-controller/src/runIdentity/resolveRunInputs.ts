@@ -2,7 +2,6 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { targetFolderOf } from "@3f-consulting/spec-controller-core";
 
 // The commit the target's folder has checked out, if it is in a git repository.
 export function readTargetHead(targetDir: string | undefined): string | undefined {
@@ -104,13 +103,13 @@ export function readToolVersion(fromDir: string = toolFolder()): unknown {
   }
 }
 
-export function resolveTargetRoot(opts: { features?: string }): string {
-  const workingFolder = (): string => process.cwd();
-  if (opts.features === undefined) {
-    return targetFolderOf(workingFolder);
-  }
-  const targetDir = dirname(opts.features);
-  return targetFolderOf(workingFolder, targetDir, readGit(targetDir, ["rev-parse", "--show-toplevel"]));
+export function readWorkingFolder(): string {
+  return process.cwd();
+}
+
+// The top of the git repository a folder is in, if it is in one.
+export function readRepositoryTop(folder: string): string | undefined {
+  return readGit(folder, ["rev-parse", "--show-toplevel"]);
 }
 
 // An undefined dir means the working directory. It is read inside the try because

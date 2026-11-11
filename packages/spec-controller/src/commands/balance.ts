@@ -9,6 +9,7 @@ import {
   runIdentityOf,
   recordedCheckStepsOf,
   shellReading,
+  targetFolderOf,
   targetConfigurationFrom,
   toolVersionOf,
   type EvidenceReconciliation,
@@ -47,7 +48,7 @@ import {
 } from "../inputs/unreadableInputs.js";
 import { exitCodeOf } from "../runEnding/exitStatus.js";
 import { endRunOn } from "../runEnding/exitCode.js";
-import { readTargetHead, readToolInstall, readToolVersion, resolveTargetOrigin, resolveTargetRoot } from "../runIdentity/resolveRunInputs.js";
+import { readTargetHead, readToolInstall, readRepositoryTop, readToolVersion, readWorkingFolder, resolveTargetOrigin } from "../runIdentity/resolveRunInputs.js";
 import { balanceCommand, cliRegistry, renderCommandHelp } from "../runRequest/cliRegistry.js";
 import {
   asksForHelp,
@@ -85,7 +86,7 @@ function reconcile(argv: string[]): boolean {
 
   const inputs = inputPathsOf(args);
 
-  const root = resolveTargetRoot({ features: inputs.features });
+  const root = targetRootOf(inputs.features);
 
   const evidenceReconciliation = runReconcile(reports, root, corpus, workflows, {
     strict: args["strict"] !== undefined,
@@ -134,6 +135,12 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
 
   if (corpusReading.kind === "unparseable") refuse(corpusUnparseableRefusal(corpusReading.faults));
   return { corpus: corpusReading.corpus, workflows: workflowReading.workflows, reports: reportsReading.reports };
+}
+
+// The target's folder, from the folder the corpus is in and the top of any git repository that folder is in.
+function targetRootOf(features: string | undefined): string {
+  const corpusFolder = features === undefined ? undefined : dirname(features);
+  return targetFolderOf(readWorkingFolder, corpusFolder, corpusFolder === undefined ? undefined : readRepositoryTop(corpusFolder));
 }
 
 function provenanceOf(args: Record<string, string>, inputs: InputPaths, root: string): Provenance {
