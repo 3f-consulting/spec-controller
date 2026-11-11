@@ -287,15 +287,15 @@ function testCaseResultOf(testCase: TestCaseAsWritten): EvidenceObservation["res
 
 function testCaseObservationOf(testCase: TestCaseAsWritten): EvidenceObservation[] {
   if (testCase.skipped === true) return [];
-  if (isCollectionFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.name ?? "", errorTextOf(testCase))];
-  if (isPackageFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.suite ?? "", testCase.failure.text)];
+  if (isCollectionFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, String(testCase.name), errorTextOf(testCase))];
+  if (isPackageFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, String(testCase.suite), testCase.failure.text)];
   // A class setup failure has a class: a failure with neither class nor name was taken as a collection failure.
   if (isClassSetupFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.classname!, errorTextOf(testCase))];
   return [{
     cites: testCaseCitesOf(testCase),
     result: testCaseResultOf(testCase),
     kind: TEST_REPORT_KIND,
-    place: testCase.classname ?? "",
+    place: String(testCase.classname),
     notes: [],
     name: testCase.name,
     message: isSetupError(testCase) ? errorTextOf(testCase) : undefined,
