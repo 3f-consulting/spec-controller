@@ -85,6 +85,12 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-059 | one.feature contains an Outline tagged @CLM-ONE-009 with a clm column                             | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
         | CLM-STG-060 | one.feature contains an Outline with a clm column and an Examples block tagged @CLM-ONE-009       | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
 
+    @unit @CLM-STG-091
+    Scenario: a feature file with no feature code and no claim code will have no claim code error
+      given three.feature had no feature code, and contained a scenario with no claim code
+      when balance reads it
+      then it will find no claim code error
+
   Rule: allocate's next code is one past the highest code that has ever been in the repository
 
     allocate asks git which files the repository has and reads each for codes, and asks git for
@@ -128,6 +134,14 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-073 | history git failed to read          |
         | CLM-STG-074 | a damaged repository                |
         | CLM-STG-085 | a folder in the tree it cannot read |
+        | CLM-STG-089 | a feature file that does not parse  |
+
+    @unit @CLM-STG-090
+    Scenario: allocate still answers when a nested checkout holds a folder it cannot read
+      given the repository's features folder contained a feature file tagged @ONE, with a scenario tagged @CLM-ONE-001
+      and the repository contained a nested checkout, such as a submodule, holding a folder allocate could not read
+      when the developer asks for the next code for ONE
+      then the answer will be CLM-ONE-002, and nothing else
 
   Rule: allocate says what history it did not read
 

@@ -19,7 +19,7 @@ function observation(
   result: EvidenceObservation["result"],
   cites: readonly string[],
   place = "a.test.ts",
-  said: { readonly name?: string; readonly message?: string } = {},
+  said: Partial<Pick<EvidenceObservation, "name" | "message" | "notes">> = {},
 ): EvidenceObservation {
   return { cites: cites.map(code), result, kind, place, notes: [], ...said };
 }
@@ -204,6 +204,13 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations",
       [1, 0],
     ],
     [
+      "CLM-LDG-062",
+      "unnamed",
+      () => [claim("ONE-0010", ["unit"], "one.feature", "a"), claim("ONE-0010", ["unit"], "two.feature", "b")],
+      () => [observation("unit", "passed", ["ONE-0010"], "a.test.ts"), observation("unit", "passed", ["ONE-001", "TWO-002"], "a.test.ts")],
+      [1, 0],
+    ],
+    [
       "CLM-LDG-063",
       "unnamed",
       twoClaimsSharingOne002,
@@ -223,10 +230,43 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations",
       ],
       [1, 0],
     ],
+    [
+      "CLM-LDG-064",
+      "ONE-001",
+      () => [claim("ONE-001", ["unit"])],
+      () => [observation("unit", "passed", ["ONE-001"], "a.test.ts", { name: "Adds one" }), observation("unit", "passed", ["ONE-001"], "a.test.ts")],
+      [1, 0],
+    ],
+    [
+      "CLM-LDG-064",
+      "ONE-001",
+      () => [claim("ONE-001", ["unit"])],
+      () => [
+        observation("unit", "failed", ["ONE-001"], "a.test.ts", { message: "AssertionError: expected 1 to be 2" }),
+        observation("unit", "failed", ["ONE-001"], "a.test.ts"),
+      ],
+      [1, 0],
+    ],
+    [
+      "CLM-LDG-064",
+      "unnamed",
+      () => [],
+      () => [
+        observation("integration", "never-ran", [], "features/one.feature", { notes: ["Given the number one", "When it is done"] }),
+        observation("integration", "never-ran", [], "features/one.feature", { notes: ["Given the number one"] }),
+      ],
+      [1, 0],
+    ],
   ])("[%s] the Claim Reconciliation of %s lists its evidence in one order", (_clm, subject, claims, observations, order) => {
     const evidence = observations();
     const reconciliation = reconciliationOf(claimReconciliationsOf(claims(), evidence), subject);
     expect(reconciliation?.qualityCheckReconciliations.map((line) => line.observation)).toEqual(order.map((at) => evidence[at]));
+  });
+
+  it("[CLM-LDG-060] the missing line, having no test, sorts before a Cucumber example that never ran, wherever that example is", () => {
+    const neverRan = observation("integration", "never-ran", ["ONE-001"], "../features/one.feature", { notes: ["Given the number one"] });
+    const reconciliation = reconciliationOf(claimReconciliationsOf([claim("ONE-001", ["integration"])], [neverRan]), "ONE-001");
+    expect(reconciliation?.qualityCheckReconciliations.map(({ outcome }) => outcome)).toEqual(["missing", "never-ran"]);
   });
 });
 
@@ -268,6 +308,27 @@ describe("evidence of the same kind, file and shared claim code will share a gro
       ],
     ],
     [
+      "CLM-LDG-068",
+      twoClaimsSharingOne001,
+      () => [observation("unit", "passed", ["ONE-001"], "a.test.ts"), observation("unit", "passed", ["ONE-001"], "a.test.ts")],
+      [{ kind: "unit", file: "a.test.ts", claimCode: ONE_001, members: ["a.test.ts", "a.test.ts"] }],
+    ],
+    [
+      "CLM-LDG-068",
+      twoClaimsSharingOne001,
+      () => [observation("unit", "passed", ["ONE-001"], "a.test.ts"), observation("unit", "passed", [], "b.test.ts")],
+      [
+        { kind: "unit", file: "a.test.ts", claimCode: ONE_001, members: ["a.test.ts"] },
+        { kind: "unit", file: "b.test.ts", members: ["b.test.ts"] },
+      ],
+    ],
+    [
+      "CLM-LDG-073",
+      () => [claim("ONE-001", ["unit"], "one.feature", "a"), claim("ONE-002", ["unit"], "one.feature", "b")],
+      () => [observation("unit", "passed", [], "a.test.ts"), observation("unit", "passed", ["ONE-001", "ONE-002"], "a.test.ts")],
+      [{ kind: "unit", file: "a.test.ts", members: ["a.test.ts", "a.test.ts"] }],
+    ],
+    [
       "CLM-LDG-069",
       () => [],
       () => [observation("fitness", "passed", [], "ci.yml:ci:a"), observation("fitness", "passed", [], "ci.yml:ci:b")],
@@ -298,6 +359,7 @@ describe("a group of tests will count them and name those that failed", () => {
   it.each([
     ["CLM-LDG-071", () => [observation("unit", "passed", []), observation("unit", "passed", [])], 2, 2, 0, []],
     ["CLM-LDG-072", () => [observation("unit", "passed", [], "a.test.ts", { name: "a" }), observation("unit", "failed", [], "a.test.ts", { name: "b" })], 2, 1, 1, ["b"]],
+    ["CLM-LDG-074", () => [observation("fitness", "passed-on-error", [], "ci.yml:ci:Lint")], 1, 1, 0, []],
   ])("[%s] a group counts its tests and names those that failed", (_clm, observations, ran, passed, failed, failures) => {
     const [group] = unnamedGroups([], observations());
     expect({ ran: group?.ran, passed: group?.passed, failed: group?.failed, failures: group?.failures }).toEqual({ ran, passed, failed, failures });
