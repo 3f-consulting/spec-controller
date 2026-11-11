@@ -24,24 +24,24 @@ const RUN: EvidenceReconciliation = {
 
 recordWhatTheProgramWrites();
 
-// Standard error, as the tool finds its file, can be redirected onto a file a test opened, leaving the process's own alone.
-const standardErrorRedirect: { readonly fd: number; to: number | undefined } = { fd: 2, to: undefined };
+// Standard output and standard error, as the tool finds their files, can be redirected onto files a test opened, leaving
+// the process's own alone.
+const redirectedStreams = new Map<number, number>();
 
 vi.mock("node:fs", async (importOriginal) => {
   const fs = await importOriginal<typeof import("node:fs")>();
-  const fstatSync = ((fd: number, options?: Parameters<typeof fs.fstatSync>[1]) =>
-    fs.fstatSync(fd === standardErrorRedirect.fd ? (standardErrorRedirect.to ?? fd) : fd, options)) as typeof fs.fstatSync;
+  const fstatSync = ((fd: number, options?: Parameters<typeof fs.fstatSync>[1]) => fs.fstatSync(redirectedStreams.get(fd) ?? fd, options)) as typeof fs.fstatSync;
   return { ...fs, fstatSync };
 });
 
-function withStandardErrorRedirectedTo<T>(path: string, run: () => T): T {
-  const fd = openSync(path, "r");
-  standardErrorRedirect.to = fd;
+function withStandardStreamsOn<T>(paths: { readonly stdout: string; readonly stderr: string }, run: () => T): T {
+  const opened = [openSync(paths.stdout, "r"), openSync(paths.stderr, "r")];
+  opened.forEach((fd, index) => redirectedStreams.set(index + 1, fd));
   try {
     return run();
   } finally {
-    standardErrorRedirect.to = undefined;
-    closeSync(fd);
+    redirectedStreams.clear();
+    opened.forEach((fd) => closeSync(fd));
   }
 }
 
@@ -144,6 +144,23 @@ describe("two reports will not both go to standard output", () => {
       complaint: written.stderr.includes(message(AppError.MoreThanOneToStdout, { formats: "md, json" })),
       standardOutput: written.stdout,
     }).toEqual({ exitCode: 2, complaint: true, standardOutput: "" });
+  });
+});
+
+describe("two reports will not go in one file", () => {
+  it.each([
+    ["CLM-FMT-010", "the same path", (file: string, _dir: string) => ({ spec: `json:${file}`, shown: `json:${file}`, stdout: "/dev/null" })],
+  ])("[%s] a report on a file beside one at %s stops the run, naming the file and both reports, and leaves the file as it was", (_clm, _other, arrange) => {
+    const dir = temporaryDirectory("spec-controller-one-file-");
+    const file = join(dir, "shared.out");
+    writeFileSync(file, "earlier\n");
+    const { spec, shown, stdout } = arrange(file, dir);
+    const written = withStandardStreamsOn({ stdout, stderr: "/dev/null" }, () => reportsWritten([`md:${file}`, spec]));
+    expect({
+      exitCode: written.exitCode,
+      complaint: written.stderr.includes(message(AppError.OutputsShareFile, { first: `md:${file}`, second: shown })),
+      asItWas: readFileSync(file, "utf8"),
+    }).toEqual({ exitCode: 2, complaint: true, asItWas: "earlier\n" });
   });
 });
 
@@ -271,7 +288,7 @@ describe("a report on standard error will not go in a file another report names 
     const file = join(temporaryDirectory("spec-controller-stderr-"), "vitest.json");
     writeFileSync(file, "{}\n");
     const { formatSpecs, inputs } = run(file);
-    const written = withStandardErrorRedirectedTo(file, () => reportsWritten(formatSpecs, inputs));
+    const written = withStandardStreamsOn({ stdout: "/dev/null", stderr: file }, () => reportsWritten(formatSpecs, inputs));
     expect({
       exitCode: written.exitCode,
       complaint: written.stderr.includes(file),
