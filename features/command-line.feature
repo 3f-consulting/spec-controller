@@ -91,6 +91,17 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-134 | no feature code given to allocate             | that it needs a feature code            |
         | CLM-CLI-135 | two feature codes given to allocate           | the argument past what it takes         |
 
+    @unit
+    Scenario Outline: a refusal points to the help that lists what was allowed
+      given a command line had <given>
+      when it is read
+      then the complaint will end by pointing to <help>
+
+      Examples:
+        | clm         | given                        | help                           |
+        | CLM-CLI-187 | a flag balance does not take | spec-controller balance --help |
+        | CLM-CLI-188 | a flag before the command    | spec-controller --help         |
+
   Rule: an input left out takes its default
 
     @unit
