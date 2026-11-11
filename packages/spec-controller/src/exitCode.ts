@@ -1,4 +1,4 @@
-// Held here, not in core's domain, because the crash guards set an exit code before core loads.
+// Held in the app, not in core's domain, because this module loads with the crash guards, before core does.
 export const VERDICT_EXIT_CODE: Readonly<Record<"balanced" | "out-of-balance" | "not-reconciled", number>> = {
   balanced: 0,
   "out-of-balance": 1,

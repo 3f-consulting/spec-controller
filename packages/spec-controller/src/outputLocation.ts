@@ -81,13 +81,21 @@ export function regularFileIdentity(path: string): RegularFileIdentity | undefin
   return undefined;
 }
 
-export function stdoutIdentity(): RegularFileIdentity | undefined {
+function streamIdentity(fd: number): RegularFileIdentity | undefined {
   try {
-    return regularIdentity(fstatSync(1, { bigint: true }));
+    return regularIdentity(fstatSync(fd, { bigint: true }));
   } catch {
-    // A closed stdout has no file for a destination to share.
+    // A closed stream has no file for a destination to share.
   }
   return undefined;
+}
+
+export function stdoutIdentity(): RegularFileIdentity | undefined {
+  return streamIdentity(1);
+}
+
+export function stderrIdentity(): RegularFileIdentity | undefined {
+  return streamIdentity(2);
 }
 
 function identityOf(fd: number): RegularFileIdentity | undefined {

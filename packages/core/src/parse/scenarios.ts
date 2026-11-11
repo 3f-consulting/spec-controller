@@ -56,8 +56,7 @@ const codesIn = (words: readonly string[]): string[] => words.filter((word) => c
 
 // Cucumber reports a scenario at its own line, and each row of an Outline at the row's line.
 function codesAtLinesOf(scenario: Scenario): CodesAtLine[] {
-  const asWritten = scenarioAsWrittenOf(scenario);
-  const atScenario = { line: scenario.location.line, codes: codesIn(asWritten.tags) };
+  const atScenario = { line: scenario.location.line, codes: codesIn(scenario.tags.map((tag) => bareTerm(tag.name))) };
   const rows = scenario.examples.flatMap((examples) => {
     const column = clmColumnOf(examples);
     return column < 0 ? [] : examples.tableBody.map((row) => ({ line: row.location.line, codes: codesIn([row.cells[column]?.value ?? ""]) }));
@@ -87,10 +86,13 @@ const portable = (path: string): string => path.replaceAll("\\", "/");
 
 // A report names a feature file by a path that ends in the file's path within the corpus; the longest such file is the one meant.
 export function claimCodesAtOf(features: readonly ParsedFeatureFile[]): ClaimCodesAt {
-  const lines = features.flatMap(({ file, codesAtLines }) => codesAtLines.map((at) => ({ file: `/${portable(file)}`, ...at })));
+  const byLine = new Map<number, { readonly file: string; readonly codes: readonly string[] }[]>();
+  for (const { file, codesAtLines } of features) {
+    for (const { line, codes } of codesAtLines) byLine.set(line, [...(byLine.get(line) ?? []), { file: `/${portable(file)}`, codes }]);
+  }
   return (path, line) => {
     const reported = `/${portable(path)}`;
-    const matching = lines.filter((at) => at.line === line && reported.endsWith(at.file));
+    const matching = (byLine.get(line) ?? []).filter((at) => reported.endsWith(at.file));
     return matching.sort((a, b) => b.file.length - a.file.length)[0]?.codes ?? [];
   };
 }
