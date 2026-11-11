@@ -230,6 +230,9 @@ interface EndingAsWritten {
   readonly text?: string;
 }
 
+// An error, as its report says where it happened: in the test's setup or teardown, or in the test itself.
+type ErrorAsWritten = EndingAsWritten & { readonly inSetupOrTeardown?: boolean };
+
 // A test case in a report of test cases, as the report wrote it: the suite it is in, its class and name, its
 // properties, and the failure, error or skip it ended in, each with the message and text written there.
 export interface TestCaseAsWritten {
@@ -238,7 +241,7 @@ export interface TestCaseAsWritten {
   readonly name?: string;
   readonly properties?: readonly { readonly name?: string; readonly value?: string }[];
   readonly failure?: EndingAsWritten;
-  readonly error?: EndingAsWritten;
+  readonly error?: ErrorAsWritten;
   readonly skipped?: boolean;
 }
 
@@ -274,17 +277,18 @@ function testCaseCitesOf(testCase: TestCaseAsWritten): readonly ClaimCode[] {
   ]);
 }
 
-function testCaseResultOf(testCase: TestCaseAsWritten, anError: EvidenceObservation["result"]): EvidenceObservation["result"] {
-  if (testCase.error !== undefined) return anError;
+// An error in a test's setup or teardown means it never reached its assertions; an error in the test itself, that it failed.
+function testCaseResultOf(testCase: TestCaseAsWritten): EvidenceObservation["result"] {
+  if (testCase.error !== undefined) return testCase.error.inSetupOrTeardown === true ? "never-ran" : "failed";
   return testCase.failure === undefined ? "passed" : "failed";
 }
 
-function testCaseObservationOf(testCase: TestCaseAsWritten, anError: EvidenceObservation["result"]): EvidenceObservation[] {
+function testCaseObservationOf(testCase: TestCaseAsWritten): EvidenceObservation[] {
   if (testCase.skipped === true) return [];
   if (isCollectionFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.name ?? "", errorTextOf(testCase))];
   if (isPackageFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.suite ?? "", testCase.failure?.text)];
   if (isClassSetupFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.classname ?? "", errorTextOf(testCase))];
-  const result = testCaseResultOf(testCase, anError);
+  const result = testCaseResultOf(testCase);
   const message = result === "never-ran" ? errorTextOf(testCase) : undefined;
   return [{
     cites: testCaseCitesOf(testCase),
@@ -298,9 +302,9 @@ function testCaseObservationOf(testCase: TestCaseAsWritten, anError: EvidenceObs
 }
 
 // A skipped test case posts nothing. One that never reached its tests (a collection failure, a class whose setup failed,
-// a package that did not build) posts as never ran. Any other posts as passed, failed, or what its report's error means.
-export function testCaseObservationsOf(cases: readonly TestCaseAsWritten[], anError: "failed" | "never-ran"): EvidenceObservation[] {
-  return cases.flatMap((testCase) => testCaseObservationOf(testCase, anError));
+// a package that did not build) posts as never ran. Any other posts as passed, failed, or as its error says.
+export function testCaseObservationsOf(cases: readonly TestCaseAsWritten[]): EvidenceObservation[] {
+  return cases.flatMap(testCaseObservationOf);
 }
 
 // An example in a report of examples, as the report wrote it: its own title, its title within its groups, its status

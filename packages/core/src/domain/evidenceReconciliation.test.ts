@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { readCorpus } from "../../../spec-controller/src/inputs/ingestQualityChecks.js";
 import { committedRepository } from "../../../spec-controller/src/runIdentity/gitRepository.test-utils.js";
 import { temporaryDirectory } from "../../../spec-controller/src/temporaryDirectory.test-utils.js";
-import { readTargetHead, readToolInstall, resolveTargetOrigin } from "../../../spec-controller/src/runIdentity/resolveRunInputs.js";
+import { readTargetHead, readToolInstall, readTargetOrigin } from "../../../spec-controller/src/runIdentity/resolveRunInputs.js";
 import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
 import { shellReading } from "../inputs/shell.js";
@@ -246,6 +246,7 @@ describe("only a fitness function that ran counts as run", () => {
 
 describe("the provenance says what the run used", () => {
   const VERSION = { toolVersion: "0.1.256" };
+  const TOOL_FOLDER = "/install/spec-controller/dist";
 
   it("[CLM-EVR-037] the provenance describes the run", () => {
     expect(provenanceOf({ target: "acme/web", ...VERSION }, []).target).toBe("acme/web");
@@ -266,8 +267,7 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-039", "https://ci:s3/cret@example.com/web?x=1#y", { hidden: ["ci", "s3", "cret", "x=1", "#y"] }],
   ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote, { target, hidden }) => {
     const { repo } = committedRepository("evr-origin-", remote);
-    const origin = resolveTargetOrigin(repo) ?? undefined;
-    const provenance = provenanceOf({ ...(origin === undefined ? {} : { origin }), ...VERSION }, []);
+    const provenance = provenanceOf(runIdentityOf({ origin: readTargetOrigin(repo), toolFolder: TOOL_FOLDER, ...VERSION }), []);
     if (target !== undefined) expect(provenance.target).toBe(target);
     for (const part of hidden) expect(provenance.target).not.toContain(part);
   });
@@ -278,8 +278,7 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-045", "g@github.com:acme/web.git"],
   ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote) => {
     const { repo } = committedRepository("evr-scp-origin-", remote);
-    const origin = resolveTargetOrigin(repo) ?? undefined;
-    expect(provenanceOf({ ...(origin === undefined ? {} : { origin }), ...VERSION }, []).target).toBe("acme/web");
+    expect(provenanceOf(runIdentityOf({ origin: readTargetOrigin(repo), toolFolder: TOOL_FOLDER, ...VERSION }), []).target).toBe("acme/web");
   });
 
   it("[CLM-EVR-040] the provenance describes the run", () => {
