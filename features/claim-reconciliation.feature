@@ -102,6 +102,7 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
       then the group will have <ran> ran, <passed> passed and <failed> failed, naming <failures>
 
       Examples:
-        | clm         | tests                                 | ran | passed | failed | failures   |
-        | CLM-LDG-071 | two passing tests                     | 2   | 2      | 0      | no test    |
-        | CLM-LDG-072 | a passing test and a failing test "b" | 2   | 1      | 1      | the test b |
+        | clm         | tests                                                     | ran | passed | failed | failures   |
+        | CLM-LDG-071 | two passing tests                                         | 2   | 2      | 0      | no test    |
+        | CLM-LDG-072 | a passing test and a failing test "b"                     | 2   | 1      | 1      | the test b |
+        | CLM-LDG-074 | a passing fitness function whose step cannot fail its job | 1   | 1      | 0      | no test    |

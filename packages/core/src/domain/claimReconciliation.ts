@@ -184,7 +184,7 @@ function sameGroup(a: GroupKey, b: GroupKey): boolean {
 
 function withCounts(key: GroupKey, members: readonly QualityCheckReconciliation[]): EvidenceGroup {
   const results = members.map(({ observation }) => observation!);
-  const passed = results.filter(({ result }) => result === "passed" || result === "passed-on-error").length;
+  const passed = results.filter(({ result }) => result === "passed").length;
   const failures = results.filter(({ result }) => result === "failed").map(({ name, place }) => name ?? place);
   return { ...key, qualityCheckReconciliations: members, ran: passed + failures.length, passed, failed: failures.length, failures };
 }
