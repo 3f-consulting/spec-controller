@@ -181,6 +181,13 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations",
       [1, 0],
     ],
     [
+      "CLM-LDG-062",
+      "unnamed",
+      twoClaimsSharingOne002,
+      () => [observation("unit", "passed", ["ONE-002"], "a.test.ts", { name: "x" }), observation("unit", "passed", [], "a.test.ts", { name: "y" })],
+      [1, 0],
+    ],
+    [
       "CLM-LDG-063",
       "unnamed",
       twoClaimsSharingOne002,
