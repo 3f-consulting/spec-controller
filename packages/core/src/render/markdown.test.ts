@@ -309,6 +309,10 @@ describe("each section will have its heading, each value its label, and each tab
       `- ${text("verdict-label")}: out-of-balance`,
       ...claimTable,
       "| cites-no-claim | unit | `c.test.ts` `c test` | `said` |",
+      text("evidence-groups-key"),
+      `| ${text("kind-column")} | ${text("file-column")} | ${text("claim-code-column")} | ${text("ran-column")} | ${text("passed-column")} | ${text("failed-column")} | ${text("failures-column")} |`,
+      "| --- | --- | --- | --- | --- | --- | --- |",
+      "| unit | `c.test.ts` |  | 1 | 1 | 0 |  |",
     ]);
   });
 });

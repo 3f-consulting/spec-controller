@@ -1,4 +1,4 @@
-import type { ClaimReconciliation, QualityCheckReconciliation } from "../domain/claimReconciliation.js";
+import { groupsOf, type ClaimReconciliation, type EvidenceGroup, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
 import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
 import { coreText } from "./coreText.js";
 import { heading } from "./heading.js";
@@ -31,6 +31,19 @@ function claimHeading({ claim }: ClaimReconciliation): string[] {
   return [`### ${coreText("unnamed-claim")}`];
 }
 
+function groupLineOf({ kind, file, claimCode, ran, passed, failed, failures }: EvidenceGroup): string[] {
+  const counts = [ran, passed, failed].map(String);
+  return [kind, file === undefined ? "" : inCell(file), claimCode === undefined ? "" : codeText(claimCode), ...counts, failures.map(inCell).join(" ")];
+}
+
+// The unnamed claim's evidence, grouped by where it came from, so a reader can tell which file to fix.
+function evidenceGroups(claimReconciliation: ClaimReconciliation): string[] {
+  if (Object.keys(claimReconciliation.claim).length > 0) return [];
+  const columns = ["kind-column", "file-column", "claim-code-column", "ran-column", "passed-column", "failed-column", "failures-column"] as const;
+  const header = columns.map((column) => coreText(column));
+  return [coreText("evidence-groups-key"), table(header, groupsOf(claimReconciliation).map(groupLineOf))];
+}
+
 function claimSection(claimReconciliation: ClaimReconciliation): string[] {
   const header = [coreText("outcome-column"), coreText("kind-column"), coreText("where-column"), coreText("said-column")];
   return [
@@ -38,6 +51,7 @@ function claimSection(claimReconciliation: ClaimReconciliation): string[] {
     labelled("verdict-label", claimReconciliation.verdict),
     coreText("claim-reconciliations-key"),
     table(header, claimReconciliation.qualityCheckReconciliations.map(lineOf)),
+    ...evidenceGroups(claimReconciliation),
   ];
 }
 

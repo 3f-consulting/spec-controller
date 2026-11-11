@@ -264,6 +264,12 @@ Each row is one Quality Check Reconciliation: its outcome, its kind of quality c
 | Outcome | Kind | Where to look | Said |
 | --- | --- | --- | --- |
 | cites-no-claim | unit | `src/checkout.test.ts` `rounds the total` |  |
+
+Each row is one group of the unnamed claim's evidence: its kind of quality check, its file, the claim code it shares, how many of its tests ran, passed and failed, and the names of those that failed.
+
+| Kind | File | Claim code | Ran | Passed | Failed | Failures |
+| --- | --- | --- | --- | --- | --- | --- |
+| unit | `src/checkout.test.ts` |  | 1 | 1 | 0 |  |
 ```
 
 </div>
