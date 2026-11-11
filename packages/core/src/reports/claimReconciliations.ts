@@ -14,7 +14,7 @@ export function whereToLook({ place, name }: EvidenceObservation): string {
 }
 
 export function said({ message, notes }: EvidenceObservation): string {
-  const firstLine = message?.split(/\r?\n/)[0];
+  const firstLine = message?.split(/\r?\n/).find((line) => line.trim() !== "");
   return [...(firstLine === undefined ? [] : [firstLine]), ...notes].map(inCell).join(" ");
 }
 
