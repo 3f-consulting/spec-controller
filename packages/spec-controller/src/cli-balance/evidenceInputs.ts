@@ -153,8 +153,5 @@ export function inputPathsOf(args: Readonly<Record<string, string>>): InputPaths
 }
 
 export function runInputsOf(paths: InputPaths): RunInput[] {
-  return EVIDENCE_INPUTS.map(({ key }) => {
-    const path = paths[key as InputKey];
-    return path === undefined ? { name: key } : { name: key, path };
-  });
+  return EVIDENCE_INPUTS.map(({ key }) => ({ name: key, path: paths[key as InputKey] }));
 }

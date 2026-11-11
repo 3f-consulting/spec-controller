@@ -3,16 +3,16 @@ import { readFileSync } from "node:fs";
 import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export function resolveSourceSha(opts: { sourceSha?: string; targetDir?: string }): string | null {
+export function resolveSourceSha(opts: { sourceSha?: string; targetDir?: string }): string | undefined {
   if (opts.sourceSha !== undefined && opts.sourceSha.trim() !== "") {
     return opts.sourceSha.trim();
   }
-  return readGit(targetDirOf(opts.targetDir), ["rev-parse", "HEAD"]);
+  return readGit(opts.targetDir, ["rev-parse", "HEAD"]);
 }
 
-export function resolveTargetOrigin(targetDir: string | undefined): string | null {
-  const remote = readGit(targetDirOf(targetDir), ["remote", "get-url", "origin"]);
-  return remote === null ? null : targetOriginName(remote);
+export function resolveTargetOrigin(targetDir: string | undefined): string | undefined {
+  const remote = readGit(targetDir, ["remote", "get-url", "origin"]);
+  return remote === undefined ? undefined : (targetOriginName(remote) ?? undefined);
 }
 
 const TRANSPORT = /^[A-Za-z0-9+.-]+::/;
@@ -75,57 +75,36 @@ function ownerRepoOf(path: string): string | null {
   return segments.length >= 2 ? segments.slice(-2).join("/") : null;
 }
 
-function targetDirOf(targetDir: string | undefined): string | undefined {
-  return targetDir !== undefined && targetDir.trim() !== "" ? targetDir : undefined;
-}
-
 export interface ToolIdentity {
-  toolSha: string | null;
+  toolSha: string | undefined;
   toolVersion: string;
 }
 
-export function resolveToolIdentity(opts: { toolDir?: string; packageJsonPath?: string } = {}): ToolIdentity {
-  const toolDir = opts.toolDir !== undefined && opts.toolDir.trim() !== ""
-    ? opts.toolDir
-    : dirname(fileURLToPath(import.meta.url));
-  return {
-    toolSha: resolveToolSha(toolDir),
-    toolVersion: resolveToolVersion(opts.packageJsonPath ?? findPackageJson(toolDir)),
-  };
+export function resolveToolIdentity(opts: { toolDir?: string } = {}): ToolIdentity {
+  const toolDir = opts.toolDir ?? dirname(fileURLToPath(import.meta.url));
+  return { toolSha: resolveToolSha(toolDir), toolVersion: resolveToolVersion(toolDir) };
 }
 
-function resolveToolSha(toolDir: string): string | null {
-  if (toolDir.split(sep).includes("node_modules")) return null;
-  return readGit(toolDir, ["rev-parse", "HEAD"]);
+function resolveToolSha(toolDir: string): string | undefined {
+  return toolDir.split(sep).includes("node_modules") ? undefined : readGit(toolDir, ["rev-parse", "HEAD"]);
 }
 
-function resolveToolVersion(packageJsonPath: string | null): string {
-  if (packageJsonPath === null) return "unknown";
-  try {
-    const pkg = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version?: unknown };
-    return typeof pkg.version === "string" && pkg.version !== "" ? pkg.version : "unknown";
-  } catch {
-    return "unknown";
-  }
-}
-
-function findPackageJson(fromDir: string): string | null {
+// The version is the one in the nearest package.json at or above the tool's folder.
+function resolveToolVersion(fromDir: string): string {
   let dir = fromDir;
   for (;;) {
-    const candidate = join(dir, "package.json");
     try {
-      readFileSync(candidate, "utf8");
-      return candidate;
+      return (JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as { version: string }).version;
     } catch {
       const parent = dirname(dir);
-      if (parent === dir) return null;
+      if (parent === dir) return "unknown";
       dir = parent;
     }
   }
 }
 
 export function resolveTargetRoot(opts: { features?: string }): string {
-  if (opts.features === undefined || opts.features.trim() === "") {
+  if (opts.features === undefined) {
     return process.cwd();
   }
   const targetDir = dirname(opts.features);
@@ -134,14 +113,15 @@ export function resolveTargetRoot(opts: { features?: string }): string {
 
 // An undefined dir means the working directory. It is read inside the try because
 // process.cwd() throws once that directory is removed, which must read as no output.
-function readGit(dir: string | undefined, args: readonly string[]): string | null {
+function readGit(dir: string | undefined, args: readonly string[]): string | undefined {
   try {
     const out = execFileSync("git", ["-C", dir ?? process.cwd(), ...args], {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     });
-    return out.trim() || null;
+    return out.trim() || undefined;
   } catch {
-    return null;
+    // No git, or no repository there: nothing is read.
   }
+  return undefined;
 }

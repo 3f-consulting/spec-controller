@@ -1,11 +1,6 @@
 import { statSync } from "node:fs";
-import {
-  DEFAULT_PACKAGE_JSON,
-  type CorpusReading,
-  type EvidenceReport,
-  type WorkflowReading,
-} from "../ingest/ingestQualityChecks.js";
-import { readUtf8, type InputReadFault, type ReadFault } from "../ingest/inputReading.js";
+import { DEFAULT_PACKAGE_JSON, type EvidenceReport } from "../ingest/ingestQualityChecks.js";
+import { readUtf8, type InputReadFault } from "../ingest/inputReading.js";
 import { junitReportPathsOf } from "../ingest/junitReportPaths.js";
 import { readReport, type ReportFormat, type ReportReading } from "../ingest/reportReading.js";
 import { AppError, AppMessage } from "../messages.js";
@@ -34,7 +29,7 @@ export function jsonInputsOf(args: Record<string, string>, exists: (path: string
   const given = EVIDENCE_INPUTS.flatMap(({ flag, report }) => {
     const path = args[flag];
     if (report === undefined || path === undefined) return [];
-    const paths = report.takesADirectory === true && isDirectory(path) ? reportFilesIn(path) : [path];
+    const paths = report.takesADirectory === true && statSync(path).isDirectory() ? reportFilesIn(path) : [path];
     const subject = message(report.subject, { flag: `--${flag}` });
     return paths.map((file) => ({ subject, path: file, report, flagged: true }));
   });
@@ -47,15 +42,6 @@ function manifestReadByDefault(args: Record<string, string>, exists: (path: stri
       ? [{ subject: message(AppMessage.DefaultPackageJson), path: DEFAULT_PACKAGE_JSON, report, flagged: false }]
       : [],
   );
-}
-
-function isDirectory(path: string): boolean {
-  try {
-    return statSync(path).isDirectory();
-  } catch {
-    // A path that cannot be stat'd is left to the read, which names why it failed.
-    return false;
-  }
 }
 
 function reportFilesIn(directory: string): string[] {
@@ -116,39 +102,21 @@ export function corpusDirRefusal(fault: InputReadFault): Refusal {
   return pathRefusal(message(AppMessage.DefaultFeatureCorpus), fault);
 }
 
-export function checkInputPaths(args: Record<string, string>, corpusReading: ReadFault, workflowReading: WorkflowReading): Refusal;
-export function checkInputPaths(args: Record<string, string>, corpusReading: CorpusReading, workflowReading: ReadFault): Refusal;
-export function checkInputPaths(args: Record<string, string>, corpusReading: CorpusReading, workflowReading: WorkflowReading): Refusal | null;
-export function checkInputPaths(
-  args: Record<string, string>,
-  corpusReading: CorpusReading,
-  workflowReading: WorkflowReading,
-): Refusal | null {
-  if (corpusReading.kind === "read-fault") {
-    return pathRefusal(
-      args["features"] === undefined
-        ? message(AppMessage.DefaultFeatureCorpus)
-        : message(AppMessage.FlaggedCorpus, { flag: "--features" }),
-      corpusReading.fault,
-    );
-  }
-  if (workflowReading.kind === "read-fault") {
-    return pathRefusal(workflowsSubjectOf(args), workflowReading.fault);
-  }
-  return null;
+export function corpusReadRefusal(args: Record<string, string>, fault: InputReadFault): Refusal {
+  const subject = args["features"] === undefined ? message(AppMessage.DefaultFeatureCorpus) : message(AppMessage.FlaggedCorpus, { flag: "--features" });
+  return pathRefusal(subject, fault);
+}
+
+export function workflowsReadRefusal(args: Record<string, string>, fault: InputReadFault): Refusal {
+  return pathRefusal(workflowsSubjectOf(args), fault);
 }
 
 function workflowsSubjectOf(args: Record<string, string>): string {
   return args["ci"] === undefined ? message(AppMessage.DefaultCiWorkflows) : message(AppMessage.FlaggedWorkflows, { flag: "--ci" });
 }
 
-type UnparseableWorkflows = Extract<WorkflowReading, { kind: "unparseable" }>;
-
-export function checkWorkflowsParse(args: Record<string, string>, workflowReading: UnparseableWorkflows): Refusal;
-export function checkWorkflowsParse(args: Record<string, string>, workflowReading: WorkflowReading): Refusal | null;
-export function checkWorkflowsParse(args: Record<string, string>, workflowReading: WorkflowReading): Refusal | null {
-  if (workflowReading.kind !== "unparseable") return null;
-  const { file, message: text } = workflowReading.faults[0]!;
+export function workflowsUnparseableRefusal(args: Record<string, string>, faults: readonly { readonly file: string; readonly message: string }[]): Refusal {
+  const { file, message: text } = faults[0]!;
   return refusal(AppError.WorkflowNotYaml, { workflows: workflowsSubjectOf(args), file, message: text });
 }
 

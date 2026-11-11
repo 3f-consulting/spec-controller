@@ -7,13 +7,14 @@ import { refuse, settlingRefusal } from "../outputLocation.js";
 import { identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "./inputsRead.js";
 import { corpusDirOf } from "./corpusDir.js";
 import {
-  checkInputPaths,
-  checkWorkflowsParse,
+  corpusReadRefusal,
   checkInputShapes,
   corpusDirRefusal,
   corpusUnparseableRefusal,
   jsonInputsOf,
   readReports,
+  workflowsReadRefusal,
+  workflowsUnparseableRefusal,
   reportRefusal,
   type ReportsReading,
 } from "./unreadableInputs.js";
@@ -117,9 +118,9 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
 
   const corpusReading = readCorpus(corpusDir);
   const workflowReading = readWorkflows(args["ci"]);
-  if (corpusReading.kind === "read-fault") refuse(checkInputPaths(args, corpusReading, workflowReading));
-  if (workflowReading.kind === "read-fault") refuse(checkInputPaths(args, corpusReading, workflowReading));
-  if (workflowReading.kind === "unparseable") refuse(checkWorkflowsParse(args, workflowReading));
+  if (corpusReading.kind === "read-fault") refuse(corpusReadRefusal(args, corpusReading.fault));
+  if (workflowReading.kind === "read-fault") refuse(workflowsReadRefusal(args, workflowReading.fault));
+  if (workflowReading.kind === "unparseable") refuse(workflowsUnparseableRefusal(args, workflowReading.faults));
 
   if (reportsReading.kind === "faulty") refuse(checkInputShapes(reportsReading));
 
@@ -129,15 +130,11 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
 
 function provenanceOf(args: Record<string, string>, inputs: InputPaths, root: string): Provenance {
   const targetDir = args["features"] !== undefined ? dirname(args["features"]) : undefined;
-  const origin = args["target"] === undefined ? resolveTargetOrigin(targetDir) : null;
-  const sourceSha = resolveSourceSha({ sourceSha: args["source-sha"], targetDir });
-  const { toolSha, toolVersion } = resolveToolIdentity();
   const identity = {
-    ...(args["target"] === undefined ? {} : { target: args["target"] }),
-    ...(origin === null ? {} : { origin }),
-    ...(sourceSha === null ? {} : { sourceSha }),
-    ...(toolSha === null ? {} : { toolSha }),
-    toolVersion,
+    target: args["target"],
+    origin: resolveTargetOrigin(targetDir),
+    sourceSha: resolveSourceSha({ sourceSha: args["source-sha"], targetDir }),
+    ...resolveToolIdentity(),
   };
   return provenanceFrom(identity, runInputsOf(inputs), root);
 }
