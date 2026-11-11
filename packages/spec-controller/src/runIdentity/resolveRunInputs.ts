@@ -18,11 +18,8 @@ const URL_SCHEME = /^(https|ssh):\/\//;
 const OTHER_SCHEME_OR_TRANSPORT = /^[A-Za-z0-9+.-]+:(:|\/\/)/;
 const UNREAD: OriginAsWritten = { form: "unread" };
 
-/**
- * Reads a remote in these of the forms git reads: a local path, a file: URL, an https or ssh URL, or the scp form. A
- * URL of any other scheme, a remote behind a transport prefix, and a remote whose user part's end can only be guessed
- * are not read.
- */
+// Reads a local path, a file: URL, an https or ssh URL, or the scp form. Any other scheme, a transport prefix, and a
+// remote whose user part's end can only be guessed are not read.
 function originPartsOf(remote: string): OriginAsWritten {
   if (isLocalPath(remote)) return { form: "path", path: remote, carriesUser: false };
   if (remote.startsWith("file:")) return { form: "path", path: remote, carriesUser: remote.includes("@") };
