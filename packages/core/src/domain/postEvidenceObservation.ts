@@ -219,6 +219,55 @@ export function testFileObservationsOf(files: readonly TestFileAsWritten[], root
   });
 }
 
+// An example in a report of examples, as the report wrote it: its own title, its title within its groups, its status
+// and the path of its file.
+interface ExampleAsWritten {
+  readonly title?: string;
+  readonly fullTitle?: string;
+  readonly status?: string;
+  readonly path?: string;
+}
+
+// A report of examples as written: its examples, how many errors it met outside any example, and its messages.
+export interface ExamplesAsWritten {
+  readonly examples: readonly ExampleAsWritten[];
+  readonly errorsOutsideExamples?: number;
+  readonly messages: readonly string[];
+}
+
+function placeOfExample(path: string, root?: string): string {
+  return relativizeToRoot(path.replace(/^\.\//, ""), root);
+}
+
+const LOADED_FILE = /^\s*(?:While loading (.+?) a |An error occurred while loading (.+?)\.(?:\n|$))/;
+
+// Each error outside the examples never ran: one naming the file it was loading posts at that file, and the rest,
+// when the messages name fewer files than the report counted errors, post once together at no file.
+function loadErrorsOf({ errorsOutsideExamples = 0, messages }: ExamplesAsWritten, root?: string): EvidenceObservation[] {
+  if (errorsOutsideExamples === 0) return [];
+  const read = messages.map((message) => ({ message, loaded: LOADED_FILE.exec(message) }));
+  const named = read.flatMap(({ message, loaded }) => {
+    const path = loaded?.[1] ?? loaded?.[2];
+    return path === undefined ? [] : [neverRanObservation(TEST_REPORT_KIND, placeOfExample(path, root), message)];
+  });
+  if (errorsOutsideExamples <= named.length) return named;
+  const unnamed = read.filter(({ loaded }) => loaded === null).map(({ message }) => message);
+  return [...named, neverRanObservation(TEST_REPORT_KIND, "", unnamed.length > 0 ? unnamed.join("\n") : undefined)];
+}
+
+function exampleObservationOf(example: ExampleAsWritten, root?: string): EvidenceObservation[] {
+  const result = resultOfTestStatus(example.status);
+  if (result === undefined) return [];
+  const cites = nearestCitation([claimCodeCitationsIn(example.title ?? ""), claimCodeCitationsIn(example.fullTitle ?? "")]);
+  const name = example.fullTitle;
+  return [{ cites, result, kind: TEST_REPORT_KIND, place: placeOfExample(example.path ?? "", root), notes: [], ...(name === undefined ? {} : { name }) }];
+}
+
+// Each example posts at its file under its full title, then each error outside the examples posts as never ran.
+export function exampleObservationsOf(report: ExamplesAsWritten, root?: string): EvidenceObservation[] {
+  return [...report.examples.flatMap((example) => exampleObservationOf(example, root)), ...loadErrorsOf(report, root)];
+}
+
 const KINDS_A_SCENARIO_TAG_NAMES: readonly QualityCheckKind[] = ["integration", "e2e", "performance"];
 
 export function kindsTheTagsName(tags: readonly string[]): QualityCheckKind[] {

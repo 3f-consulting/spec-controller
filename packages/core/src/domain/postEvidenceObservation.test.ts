@@ -3,7 +3,6 @@ import { shellReading } from "../inputs/shell.js";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../inputs/cucumber.js";
 import { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "../inputs/junit.js";
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
-import { parseRspecEvidenceObservations } from "../inputs/rspec.js";
 import { targetConfigurationFrom } from "../inputs/manifest.js";
 import type { ClaimCode } from "./claimCodes.js";
 import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
@@ -11,6 +10,7 @@ import { provenanceOf } from "./provenance.js";
 import type { ExecutableClaim } from "./postEvidenceObligation.js";
 import {
   claimPostedTo,
+  exampleObservationsOf,
   fitnessObservationsOf,
   stepDispositionOf,
   testFileObservationsOf,
@@ -48,11 +48,11 @@ const pytest = (testcase: Testcase): EvidenceObservation[] =>
 
 const clmProperty = (...codes: readonly string[]) => ({ property: codes.map((value) => ({ name: "clm", value })) });
 
-const rspec = (status: string, description = "[CLM-ONE-001] a spec", fullDescription = description): EvidenceObservation[] =>
-  parseRspecEvidenceObservations({ examples: [{ description, full_description: fullDescription, status, file_path: "./spec/a_spec.rb" }] });
+const rspec = (status: string, title = "[CLM-ONE-001] a spec", fullTitle = title): EvidenceObservation[] =>
+  exampleObservationsOf({ examples: [{ title, fullTitle, status, path: "./spec/a_spec.rb" }], messages: [] });
 
 const rspecLoadError = (message: string): EvidenceObservation[] =>
-  parseRspecEvidenceObservations({ examples: [], summary: { errors_outside_of_examples_count: 1 }, messages: [message] });
+  exampleObservationsOf({ examples: [], errorsOutsideExamples: 1, messages: [message] });
 
 const scenario = (tags: readonly string[], statuses: readonly string[], name = "one adds one"): CucumberJsonReport => [
   {
