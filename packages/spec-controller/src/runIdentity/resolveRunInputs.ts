@@ -2,37 +2,37 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { OriginAsWritten } from "@3f-consulting/spec-controller-core";
 
 // The commit the target's folder has checked out, if it is in a git repository.
 export function readTargetHead(targetDir: string | undefined): string | undefined {
   return readGit(targetDir, ["rev-parse", "HEAD"]);
 }
 
-export function resolveTargetOrigin(targetDir: string | undefined): string | undefined {
+export function readTargetOrigin(targetDir: string | undefined): OriginAsWritten | undefined {
   const remote = readGit(targetDir, ["remote", "get-url", "origin"]);
-  return remote === undefined ? undefined : (targetOriginName(remote) ?? undefined);
+  return remote === undefined ? undefined : originPartsOf(remote);
 }
 
 const TRANSPORT = /^[A-Za-z0-9+.-]+::/;
 const URL_SCHEME = /^([A-Za-z][A-Za-z0-9+.-]*):\/\//;
-const OWNER_REPO_SCHEMES = new Set(["https", "ssh"]);
+const UNREAD: OriginAsWritten = { form: "unread" };
 
 /**
- * Names a remote only in a form it reads, from its host, port and path: a URL, a transport prefix and a URL, the scp
- * form, or a local path. An https or ssh URL, and an scp-form remote with a user, name owner/repo, its last two path
- * segments. A remote whose user part's end can only be guessed names nothing, since any guess leaks for some remote, nor
- * does a form not read. A local path, and a file: URL with no user, are named as given: git sends them to no server.
+ * Reads a remote in the forms git reads: a local path, a file: URL, a URL after any transport prefix, or the scp form.
+ * A file URL behind a transport, a transport to anything but a URL, and a remote whose user part's end can only be
+ * guessed are not read.
  */
-function targetOriginName(remote: string): string | null {
-  if (isLocalPath(remote)) return remote;
-  if (remote.startsWith("file:")) return remote.includes("@") ? null : remote;
+function originPartsOf(remote: string): OriginAsWritten {
+  if (isLocalPath(remote)) return { form: "path", path: remote, carriesUser: false };
+  if (remote.startsWith("file:")) return { form: "path", path: remote, carriesUser: remote.includes("@") };
   const transport = TRANSPORT.exec(remote)?.[0] ?? "";
   const address = remote.slice(transport.length);
   const scheme = URL_SCHEME.exec(address);
   if (scheme !== null) {
-    return scheme[1] === "file" ? null : urlOriginName(transport, scheme[1]!, address.slice(scheme[0].length));
+    return scheme[1] === "file" ? UNREAD : urlParts(transport, scheme, address.slice(scheme[0].length));
   }
-  return transport === "" ? scpOriginName(address) : null;
+  return transport === "" ? scpParts(address) : UNREAD;
 }
 
 // Git's own test: a remote with a / before its first :, or with no : at all, is a local path.
@@ -42,34 +42,32 @@ function isLocalPath(remote: string): boolean {
 
 // The authority runs to the first /, ? or #, and its host follows its last @. An @ after it means a password or a
 // query holds one, so where the user part ends can only be guessed.
-function urlOriginName(transport: string, scheme: string, rest: string): string | null {
+function urlParts(transport: string, scheme: RegExpExecArray, rest: string): OriginAsWritten {
   const authority = rest.split(/[/?#]/, 1)[0]!;
   const afterAuthority = rest.slice(authority.length);
-  const host = authority.slice(authority.lastIndexOf("@") + 1);
-  if (afterAuthority.includes("@") || host === "") return null;
-  const path = pathOf(afterAuthority);
-  const ownerRepo = transport === "" && OWNER_REPO_SCHEMES.has(scheme) ? ownerRepoOf(path) : null;
-  return ownerRepo ?? `${transport}${scheme}://${host}${path}`;
+  const at = authority.lastIndexOf("@");
+  const host = authority.slice(at + 1);
+  if (afterAuthority.includes("@") || host === "") return UNREAD;
+  const lead = `${transport}${scheme[0]}`;
+  return { form: "address", transport, scheme: scheme[1], lead, carriesUser: at !== -1, host, separator: "", ...pathParts(afterAuthority) };
 }
 
 // The scp form's host and path follow its last @, split at their first :.
-function scpOriginName(address: string): string | null {
+function scpParts(address: string): OriginAsWritten {
   const at = address.lastIndexOf("@");
   const hostPath = address.slice(at + 1);
   const colon = hostPath.indexOf(":");
-  if (colon <= 0) return null;
-  const path = pathOf(hostPath.slice(colon + 1));
-  return (at !== -1 ? ownerRepoOf(path) : null) ?? `${hostPath.slice(0, colon)}:${path}`;
+  if (colon <= 0) return UNREAD;
+  const host = hostPath.slice(0, colon);
+  return { form: "address", transport: "", scheme: undefined, lead: "", carriesUser: at !== -1, host, separator: ":", ...pathParts(hostPath.slice(colon + 1)) };
 }
 
-function pathOf(rest: string): string {
-  return rest.split(/[?#]/, 1)[0]!;
-}
-
-function ownerRepoOf(path: string): string | null {
-  const bare = path.replace(/^\//, "");
-  const segments = (bare.endsWith(".git") ? bare.slice(0, -".git".length) : bare).split("/");
-  return segments.length >= 2 ? segments.slice(-2).join("/") : null;
+function pathParts(rest: string): { path: string; query: string | undefined; fragment: string | undefined } {
+  const path = rest.split(/[?#]/, 1)[0]!;
+  const after = rest.slice(path.length);
+  const hash = after.indexOf("#");
+  const query = after.startsWith("?") ? after.slice(1, hash === -1 ? undefined : hash) : undefined;
+  return { path, query, fragment: hash === -1 ? undefined : after.slice(hash + 1) };
 }
 
 // The tool's install as written: its folder joined by "/", the commit of its checkout, and its package.json's version.

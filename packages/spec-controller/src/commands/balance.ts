@@ -50,7 +50,7 @@ import {
 } from "../inputs/unreadableInputs.js";
 import { exitCodeOf } from "../runEnding/exitStatus.js";
 import { endRunOn } from "../runEnding/exitCode.js";
-import { readTargetHead, readToolInstall, readRepositoryTop, readToolVersion, readWorkingFolder, resolveTargetOrigin } from "../runIdentity/resolveRunInputs.js";
+import { readTargetHead, readToolInstall, readRepositoryTop, readToolVersion, readWorkingFolder, readTargetOrigin } from "../runIdentity/resolveRunInputs.js";
 import { balanceCommand, cliRegistry, renderCommandHelp } from "../runRequest/cliRegistry.js";
 import {
   asksForHelp,
@@ -154,7 +154,7 @@ function provenanceOf(args: Record<string, string>, inputs: InputPaths, root: st
   const targetDir = args["features"] !== undefined ? dirname(args["features"]) : undefined;
   const identity = runIdentityOf({
     target: args["target"],
-    origin: resolveTargetOrigin(targetDir),
+    origin: readTargetOrigin(targetDir),
     givenSourceSha: args["source-sha"],
     head: readTargetHead(targetDir),
     ...readToolInstall(),
