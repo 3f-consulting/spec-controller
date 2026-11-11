@@ -227,6 +227,22 @@ function ignoredFileContaining(): Asked {
   return askedIn(repo, inTree("CLM-ONE-001", FEATURE_PATH, 4));
 }
 
+function ignoredFolderWithheld(): Asked {
+  const repo = repositoryCarrying("CLM-ONE-001");
+  writeInto(repo, ".gitignore", "build/\n");
+  commitAll(repo, "an ignore list");
+  writeInto(repo, "build/out.md", "CLM-ONE-900 is built\n");
+  withhold(join(repo, "build"), 0o000);
+  return askedIn(repo, inTree("CLM-ONE-001", FEATURE_PATH, 4));
+}
+
+function deletedLineInUnprefixedDiffs(): Asked {
+  const repo = repositoryCarrying("CLM-ONE-001");
+  git(repo, ["config", "diff.noprefix", "true"]);
+  const retiring = committedThenDeleted(repo, "lib/old.md", "CLM-ONE-005 is retired\n");
+  return askedIn(repo, inCommit("CLM-ONE-005", "lib/old.md", 1, retiring));
+}
+
 function featureFileAlone(code: string): Asked {
   return askedIn(repositoryCarrying(code), inTree(code, FEATURE_PATH, 4));
 }
@@ -235,6 +251,7 @@ describe("the answer is one past the highest code the repository has contained",
   it.each<[string, string, () => Asked, string]>([
     ["CLM-STG-061", "a file git tracks, such as a workflow or a test, contained CLM-ONE-005", () => trackedFileContaining("CLM-ONE-005", "CLM-ONE-005"), "CLM-ONE-006"],
     ["CLM-STG-062", "a line in git history, since deleted, had CLM-ONE-005", () => deletedLineHad("CLM-ONE-005"), "CLM-ONE-006"],
+    ["CLM-STG-062", "a line in git history, since deleted from lib/, had CLM-ONE-005, where git diffs name no a/ and b/", deletedLineInUnprefixedDiffs, "CLM-ONE-006"],
     ["CLM-STG-063", "a file git tracks contained SCN-ONE-005", () => trackedFileContaining("SCN-ONE-005", "SCN-ONE-005"), "CLM-ONE-006"],
     ["CLM-STG-064", "a line in git history, since deleted, had SCN-ONE-005", () => deletedLineHad("SCN-ONE-005"), "CLM-ONE-006"],
     ["CLM-STG-065", "a file git tracks contained SCN-ONE-", trackedFileContainingNoNumber, "CLM-ONE-002"],
@@ -242,6 +259,7 @@ describe("the answer is one past the highest code the repository has contained",
     ["CLM-STG-067", "a file at the repository's top contained CLM-ONE-005, from a subdirectory containing no code", topFileFromASubdirectory, "CLM-ONE-006"],
     ["CLM-STG-068", "only a commit's message contained CLM-ONE-900", commitMessageContaining, "CLM-ONE-002"],
     ["CLM-STG-069", "only a file git ignores contained CLM-ONE-900", ignoredFileContaining, "CLM-ONE-002"],
+    ["CLM-STG-069", "only a file in a folder git ignores, and it cannot read, contained CLM-ONE-900", ignoredFolderWithheld, "CLM-ONE-002"],
     ["CLM-STG-070", "CLM-ONE-7 in the file", () => featureFileAlone("CLM-ONE-7"), "CLM-ONE-008"],
     ["CLM-STG-071", "CLM-ONE-999 in the file", () => featureFileAlone("CLM-ONE-999"), "CLM-ONE-1000"],
   ])("[%s] %s", (_clm, _elsewhere, ask, answer) => {
@@ -269,6 +287,36 @@ function withheldFolder(): void {
   withhold(docs, 0o000);
 
   expect(refusalReason(allocateIn(repo, ["ONE"]), message(AppMessage.TreeDirectory), docs)).toMatch(/^(EACCES|EPERM): /);
+}
+
+function withheldFolderTwoDown(): void {
+  const repo = repositoryCarrying("CLM-ONE-001");
+  writeInto(repo, "docs/deep/notes.md", "CLM-ONE-009\n");
+  const deep = join(repo, "docs", "deep");
+  withhold(deep, 0o000);
+
+  expect(refusalReason(allocateIn(repo, ["ONE"]), message(AppMessage.TreeDirectory), deep)).toMatch(/^(EACCES|EPERM): /);
+}
+
+function withheldFolderBesideItsIgnoredBackup(): void {
+  const repo = repositoryCarrying("CLM-ONE-001");
+  writeInto(repo, ".gitignore", "*~\n");
+  commitAll(repo, "an ignore list");
+  writeInto(repo, "docs~", "a backup\n");
+  writeInto(repo, "docs/notes.md", "CLM-ONE-009\n");
+  const docs = join(repo, "docs");
+  withhold(docs, 0o000);
+
+  expect(refusalReason(allocateIn(repo, ["ONE"]), message(AppMessage.TreeDirectory), docs)).toMatch(/^(EACCES|EPERM): /);
+}
+
+function withheldFeaturesSubfolder(): void {
+  const repo = repositoryCarrying("CLM-ONE-001");
+  writeInto(repo, "features/more/two.feature", "@TWO\nFeature: part TWO\n");
+  const more = join(repo, "features", "more");
+  withhold(more, 0o000);
+
+  expect(refusalReason(allocateIn(repo, ["ONE"]), message(AppMessage.FeatureCorpus), more)).toMatch(/^(EACCES|EPERM): /);
 }
 
 function withheldHistory(): void {
@@ -300,6 +348,9 @@ describe("allocate names what it could not read, and gives no code", () => {
     ["CLM-STG-073", "history git failed to read", withheldHistory],
     ["CLM-STG-074", "a damaged repository", damagedRepository],
     ["CLM-STG-085", "a folder in the tree it cannot read", withheldFolder],
+    ["CLM-STG-085", "a folder two down in the tree it cannot read", withheldFolderTwoDown],
+    ["CLM-STG-085", "a folder in the tree it cannot read, beside an ignored backup file named for it", withheldFolderBesideItsIgnoredBackup],
+    ["CLM-STG-085", "a folder in the features folder it cannot read", withheldFeaturesSubfolder],
   ] as const)("[%s] %s", ([, , stopsUnread], { skip }) => {
     skip(runsAsRoot());
     stopsUnread();
@@ -346,6 +397,11 @@ function fixtureHeadedZzz(repo: string): void {
   commitAll(repo, "a test fixture");
 }
 
+function featureFileWithNoFeatureCode(repo: string): void {
+  writeInto(repo, "features/untagged.feature", "Feature: a feature file with no feature code\n");
+  commitAll(repo, "an untagged feature file");
+}
+
 function deletedFeatureHeadedZzz(repo: string): void {
   committedThenDeleted(repo, "features/zzz.feature", "@ZZZ\nFeature: part ZZZ\n");
 }
@@ -353,6 +409,7 @@ function deletedFeatureHeadedZzz(repo: string): void {
 describe("a feature code no feature file has stops it, listing those that do", () => {
   it.each([
     ["CLM-STG-077", "no file mentions ZZZ", (): void => {}],
+    ["CLM-STG-077", "no file mentions ZZZ, and a feature file has no feature code", featureFileWithNoFeatureCode],
     ["CLM-STG-078", "a test fixture's feature file is tagged @ZZZ", fixtureHeadedZzz],
     ["CLM-STG-079", "a feature file tagged @ZZZ was deleted by a later commit", deletedFeatureHeadedZzz],
   ])("[%s] %s", (_clm, _where, arrange) => {

@@ -47,6 +47,17 @@ describe("the answer is one past the highest code the repository has contained",
     expectAnswer(allocateIn(repo, ["ONE"]), "CLM-ONE-006", inTree("CLM-ONE-005", "docs/a-note-of-the-repository-200.md", 1));
   });
 
+  it("[CLM-STG-061] a file git tracks, one of fifteen hundred whose paths fill more than a mebibyte, contained CLM-ONE-005", () => {
+    const repo = repositoryHeadedOneCarrying003("allocate-long-listing-");
+    const folder = "notes-of-the-repository-".repeat(10);
+    const longName = (n: number): string => `docs/${folder}/${folder}/${folder}${n}.md`;
+    for (let n = 1000; n < 2500; n++) writeInto(repo, longName(n), "nothing here\n");
+    writeInto(repo, longName(2500), "CLM-ONE-005 is noted\n");
+    commitAll(repo, "the notes");
+
+    expectAnswer(allocateIn(repo, ["ONE"]), "CLM-ONE-006", inTree("CLM-ONE-005", longName(2500), 1));
+  });
+
   it("[CLM-STG-062] a line in git history, since deleted with others around it, had CLM-ONE-005", () => {
     const repo = repositoryHeadedOneCarrying003("allocate-deleted-lines-");
     const carried = { 2: "CLM-ONE-002 is noted", 11: "CLM-ONE-004 is noted", 12: "CLM-ONE-005 is noted" };
