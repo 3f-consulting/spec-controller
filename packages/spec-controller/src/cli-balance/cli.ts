@@ -32,12 +32,12 @@ import {
 import { AppError } from "../messages.js";
 import { refusal, type Refusal } from "../refusal.js";
 
-export function collectFormatSpecs(argv: readonly string[]): string[] {
+function collectFormatSpecs(argv: readonly string[]): string[] {
   // checkMissingValues has already refused a --format given no value.
   return argv.flatMap((token, i) => (token === "--format" ? [argv[i + 1]!] : []));
 }
 
-export function checkInputsExist(
+function checkInputsExist(
   args: Record<string, string>,
   exists: (path: string) => boolean,
 ): Refusal | null {
@@ -50,7 +50,7 @@ export function checkInputsExist(
   return null;
 }
 
-export function checkInputsParse(reports: ReportsReading): Refusal | null {
+function checkInputsParse(reports: ReportsReading): Refusal | null {
   for (const file of reports.files) {
     const { reading } = file;
     if (!file.flagged || file.report.format !== "json") continue;

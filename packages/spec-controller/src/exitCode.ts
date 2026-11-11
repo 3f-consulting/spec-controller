@@ -8,7 +8,7 @@ export const VERDICT_EXIT_CODE: Readonly<Record<"balanced" | "out-of-balance" | 
 export const USAGE_EXIT_CODE = 2;
 
 // A process outcome, not a verdict: the run never reached one, so no verdict code may stand for it.
-export const UNEXPECTED_ERROR_EXIT_CODE = 4;
+const UNEXPECTED_ERROR_EXIT_CODE = 4;
 
 export type RunEnding =
   | { readonly kind: "verdict"; readonly code: number }

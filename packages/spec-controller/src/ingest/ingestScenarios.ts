@@ -47,10 +47,6 @@ export function corpusPathOf(dir: string, relativePath: string): string {
   return join(dir, relativePath);
 }
 
-export function slugOf(relativePath: string): string {
-  return relativePath.slice(0, -".feature".length);
-}
-
 export function corpusFeatureFiles(dir: string): CorpusFeatureFile[] {
   return featureFilesUnder(dir, "", corpusEntries(dir))
     .sort()
