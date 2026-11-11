@@ -542,6 +542,7 @@ describe("balance files each Evidence Observation under the claim it cites, or e
     ["CLM-OBS-085", { posted: () => vitest("passed", "[CLM-ABCDEF-001] a test"), claims: () => [claim(ONE)], named: [] }],
     ["CLM-OBS-086", { posted: () => vitest("passed", "CLM-ONE-999 a test"), claims: () => [claim(ONE)], named: [] }],
     ["CLM-OBS-087", { posted: () => fitness([{ name: "Lint", command: "pnpm lint" }], []), claims: () => [claim(ONE)], named: [] }],
+    ["CLM-OBS-105", { posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-A-001") }), claims: () => [claim(ONE)], named: [] }],
     ["CLM-OBS-088", { posted: () => vitest("passed"), claims: () => [claim(ONE), claim(ONE)], named: [ONE] }],
     ["CLM-OBS-089", { posted: () => vitest("passed", "[CLM-ONE-001] [CLM-ONE-002] a test"), claims: () => [claim(ONE), claim(TWO)], named: [ONE, TWO] }],
     ["CLM-OBS-090", { posted: () => vitest("passed", "[CLM-ONE-001] [CLM-ONE-002] a test"), claims: () => [claim(ONE), claim(TWO)], named: [ONE, TWO] }],

@@ -249,6 +249,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-085 | Vitest's evidence report          | [CLM-ABCDEF-001] in its title                         | no claim code               |
         | CLM-OBS-086 | Vitest's evidence report          | CLM-ONE-999 in its title, with no brackets            | no claim code               |
         | CLM-OBS-087 | the step record                   | no id                                                 | no claim code               |
+        | CLM-OBS-105 | pytest's evidence report          | the clm property CLM-A-001, which is not a claim code | no claim code               |
         | CLM-OBS-088 | Vitest's evidence report          | [CLM-ONE-001] in its title, a code two claims share   | CLM-ONE-001                 |
         | CLM-OBS-089 | Vitest's evidence report          | [CLM-ONE-001] and [CLM-ONE-002] in its title          | CLM-ONE-001 and CLM-ONE-002 |
         | CLM-OBS-090 | Jest's evidence report            | [CLM-ONE-001] and [CLM-ONE-002] in its title          | CLM-ONE-001 and CLM-ONE-002 |
