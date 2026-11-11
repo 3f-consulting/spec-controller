@@ -90,7 +90,7 @@ function flagLabel(flag: FlagSpec): string {
 // Each entry's name is padded to the longest, plus the gutter, so the descriptions line up.
 function entries(listed: readonly { name: string; description: string }[], gutter: number): string {
   const width = Math.max(0, ...listed.map(({ name }) => name.length)) + gutter;
-  return listed.map(({ name, description }) => message(AppMessage.HelpEntry, { name: name.padEnd(width), description: "" })).join("\n");
+  return listed.map(({ name, description }) => message(AppMessage.HelpEntry, { name: name.padEnd(width), description })).join("\n");
 }
 
 export function renderCommandHelp(command: CommandSpec): string {
