@@ -7,8 +7,6 @@ import { gitExited, readOrRefuse, UnreadableInput } from "./unreadable.js";
 
 const MAX_OUTPUT_BYTES = 1024 * 1024 * 1024;
 
-const BINARY_PROBE_BYTES = 8000;
-
 export function readTree(top: string, marks: readonly string[]): ClaimCodeOccurrence[] {
   const listed = gitListing(top, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"]);
   const ignored = gitListing(top, ["ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"]);
@@ -51,7 +49,6 @@ function occurrencesInListed(top: string, path: string, marks: readonly string[]
 }
 
 function linesCarrying(path: string, content: Buffer, marks: readonly string[]): ClaimCodeOccurrence[] {
-  if (content.subarray(0, BINARY_PROBE_BYTES).includes(0)) return [];
   return content
     .toString("utf8")
     .split("\n")
