@@ -85,6 +85,17 @@ describe("a flag the command takes will take effect", () => {
     expect(readFileSync(md, "utf8")).not.toBe("");
   });
 
+  it("[CLM-CLI-123] --format twice, one on standard output and one in a file", () => {
+    const json = join(temporaryDirectory("spec-controller-format-twice-"), "report.json");
+    const markdownAlone = ran(["balance", ...balanced(), "--format", "md"]).stdout;
+    const jsonAlone = ran(["balance", ...balanced(), "--format", "json"]).stdout;
+
+    const written = ran(["balance", ...balanced(), "--format", "md", "--format", `json:${json}`]);
+
+    expect(written).toEqual({ stdout: markdownAlone, stderr: "", exitCode: 0 });
+    expect(readFileSync(json, "utf8")).toBe(jsonAlone);
+  });
+
   it("[CLM-CLI-124] a command's flags in two different orders", () => {
     const groups = [
       ["--features", "tests/fixtures/balanced/features"],
@@ -113,6 +124,12 @@ describe("an argument the tool does not accept will stop the run", () => {
       "a command the tool does not have",
       (): string[] => ["blance"],
       (): string => printedRefusal(AppError.UnknownCommand, message(AppError.UnknownCommand, { command: "blance" })),
+    ],
+    [
+      "CLM-CLI-125",
+      "a command the tool does not have, a lone dash",
+      (): string[] => ["-"],
+      (): string => printedRefusal(AppError.UnknownCommand, message(AppError.UnknownCommand, { command: "-" })),
     ],
     [
       "CLM-CLI-126",
@@ -175,9 +192,21 @@ describe("an argument the tool does not accept will stop the run", () => {
       (): string => printedRefusal(AppError.UnknownFormat, message(AppError.UnknownFormat, { formats: "xml", supported: "md, json" }), "balance"),
     ],
     [
+      "CLM-CLI-133",
+      "two report formats the tool does not have",
+      (): string[] => ["balance", ...balanced(), "--format", "xml", "--format", "yaml"],
+      (): string => printedRefusal(AppError.UnknownFormat, message(AppError.UnknownFormat, { formats: "xml, yaml", supported: "md, json" }), "balance"),
+    ],
+    [
       "CLM-CLI-134",
       "no feature code given to allocate",
       (): string[] => ["allocate"],
+      (): string => printedRefusal(AppError.NoFeaturePartGiven, message(AppError.NoFeaturePartGiven), "allocate"),
+    ],
+    [
+      "CLM-CLI-134",
+      "no feature code given to allocate, only its flag",
+      (): string[] => ["allocate", "--new"],
       (): string => printedRefusal(AppError.NoFeaturePartGiven, message(AppError.NoFeaturePartGiven), "allocate"),
     ],
     [

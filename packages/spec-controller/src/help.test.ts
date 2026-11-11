@@ -40,6 +40,12 @@ describe("help will answer, and nothing will run", () => {
       topLevelHelp,
     ],
     [
+      "CLM-CLI-112",
+      "a request for help, -h, beside a flag before the command",
+      (report: string): string[] => ["--format", `json:${report}`, "-h"],
+      topLevelHelp,
+    ],
+    [
       "CLM-CLI-113",
       "allocate's help beside a flag allocate does not take",
       (report: string): string[] => ["allocate", "AB", "--format", `json:${report}`, "--help"],
