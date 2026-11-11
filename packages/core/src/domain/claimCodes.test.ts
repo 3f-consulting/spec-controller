@@ -169,6 +169,14 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
   });
 });
 
+describe("balance finds no claim code error in a feature file with no feature code and no claim code", () => {
+  it("[CLM-STG-091] three.feature, with no feature code and a scenario tagged only @unit", () => {
+    const features = parsedFeatures([featureFile("", scenarioTagged("@unit"))], ["three.feature"]);
+
+    expect(claimCodeErrorsOf(features.map(featureReadOf))).toEqual([]);
+  });
+});
+
 const FEATURE_PATH = "features/one.feature";
 
 const featureCarrying = (code: string): string => `@ONE\nFeature: part ONE\n\n  @${code} @unit\n  Scenario: scenario 1\n    Given a step\n`;
@@ -274,6 +282,7 @@ describe("the answer is one past the highest code the repository has contained",
   it.each<[string, string, () => Asked, string]>([
     ["CLM-STG-061", "a file git tracks, such as a workflow or a test, contained CLM-ONE-005", () => trackedFileContaining("CLM-ONE-005", "CLM-ONE-005"), "CLM-ONE-006"],
     ["CLM-STG-061", "a file git tracks contained CLM-ONE-005 on a line beside a higher code of another feature", () => trackedFileContaining("CLM-ONE-005 or CLM-TWO-009", "CLM-ONE-005"), "CLM-ONE-006"],
+    ["CLM-STG-061", "a file git tracks contained CLM-ONE-005 on a line beside a CVE id", () => trackedFileContaining("CLM-ONE-005 fixes CVE-2024-3094", "CLM-ONE-005"), "CLM-ONE-006"],
     ["CLM-STG-062", "a line in git history, since deleted, had CLM-ONE-005", () => deletedLineHad("CLM-ONE-005"), "CLM-ONE-006"],
     ["CLM-STG-062", "a line in git history, since deleted from lib/, had CLM-ONE-005, where git diffs name no a/ and b/", deletedLineInUnprefixedDiffs, "CLM-ONE-006"],
     ["CLM-STG-063", "a file git tracks contained SCN-ONE-005", () => trackedFileContaining("SCN-ONE-005", "SCN-ONE-005"), "CLM-ONE-006"],
@@ -366,6 +375,19 @@ function damagedRepository(): void {
   expect(answered.stderr).toContain(message(AppError.CouldNotBeRead, { subject: message(AppMessage.Repository), path: gitEntry, reason }));
 }
 
+function unparseableFeatureFile(): void {
+  const repo = repositoryCarrying("CLM-ONE-001");
+  writeInto(repo, "features/two.feature", "@TWO\nFeature: part TWO\n\n  Scenario: s\n    Given a step\n  this line is no Gherkin\n");
+  const file = join(repo, "features", "two.feature");
+  const complaint = message(AppError.CorpusFileUnparseable, { corpus: message(AppMessage.FeatureCorpus), file, message: "" });
+
+  const answered = allocateIn(repo, ["ONE"]);
+
+  expect(answered.stdout).toBe("");
+  expect(answered.exitCode).toBe(2);
+  expect(answered.stderr).toContain(complaint);
+}
+
 describe("allocate names what it could not read, and gives no code", () => {
   it.for([
     ["CLM-STG-072", "a file git cannot read", withheldFile],
@@ -375,9 +397,28 @@ describe("allocate names what it could not read, and gives no code", () => {
     ["CLM-STG-085", "a folder two down in the tree it cannot read", withheldFolderTwoDown],
     ["CLM-STG-085", "a folder in the tree it cannot read, beside an ignored backup file named for it", withheldFolderBesideItsIgnoredBackup],
     ["CLM-STG-085", "a folder in the features folder it cannot read", withheldFeaturesSubfolder],
+    ["CLM-STG-089", "a feature file that does not parse", unparseableFeatureFile],
   ] as const)("[%s] %s", ([, , stopsUnread], { skip }) => {
     skip(runsAsRoot());
     stopsUnread();
+  });
+});
+
+describe("allocate still answers when a nested checkout holds a folder it cannot read", () => {
+  it("[CLM-STG-090] a checkout in vendor/lib, as a submodule is, holding a folder allocate cannot read", ({ skip }) => {
+    skip(runsAsRoot());
+    const repo = repositoryCarrying("CLM-ONE-001");
+    const nested = join(repo, "vendor", "lib");
+    writeInto(nested, "README", "a vendored library\n");
+    git(nested, ["init", "-q", "-b", "main"]);
+    commitAll(nested, "the library");
+    writeInto(nested, "data/notes.md", "CLM-ONE-009\n");
+    withhold(join(nested, "data"), 0o000);
+
+    const answered = allocateIn(repo, ["ONE"]);
+
+    expect(answered.stdout).toBe("CLM-ONE-002\n");
+    expect(answered.stderr).toBe(`${inTree("CLM-ONE-001", FEATURE_PATH, 4)}\n`);
   });
 });
 

@@ -60,3 +60,17 @@ describe("a report will not be written over a file the run reads", () => {
     expect(outputClashOf([sameDevice, otherDevice], [READ, { subject: "the corpus", path: "a.feature", identity: undefined }])).toBeUndefined();
   });
 });
+
+describe("a report on standard error will not go in a file another report names or the run reads", () => {
+  const FILE = { dev: 1n, ino: 2n };
+  const toStandardError: IdentifiedOutput<Format> = { output: { fmt: "md", dest: { kind: "file", path: "/dev/stderr" } }, identity: FILE, toStandardError: true };
+  const toTheFile: IdentifiedOutput<Format> = { output: { fmt: "json", dest: { kind: "file", path: "report.json" } }, identity: FILE, toStandardError: false };
+  const READ: IdentifiedInput = { subject: "the --vitest report", path: "vitest.json", identity: FILE };
+
+  it.each<[string, readonly IdentifiedOutput<Format>[], readonly IdentifiedInput[], ReturnType<typeof outputClashOf<Format>>]>([
+    ["CLM-FMT-031", [toStandardError, toTheFile], [], { kind: "outputs-share-a-file", first: toStandardError.output, second: toTheFile.output }],
+    ["CLM-FMT-032", [toStandardError], [READ], { kind: "output-overwrites-an-input", output: toStandardError.output, input: READ }],
+  ])("[%s] a report on standard error, redirected onto that file, is refused", (_clm, outputs, inputs, refusal) => {
+    expect(outputClashOf(outputs, inputs)).toEqual(refusal);
+  });
+});

@@ -57,8 +57,8 @@ function missingValueRefusal(given: string, flag: ValueFlagSpec, scope: string):
 export function checkArgvShape(argv: readonly string[], registry: CliRegistry, command: string): Refusal | null {
   const scope = flagScopeOf(registry, command);
   const seen = new Set<FlagSpec>();
-  const positionals = positionalsOf(registry, command);
-  const walk: Walk = { scope, seen, takes: argumentsOf(positionals), slotsLeft: positionals.length };
+  const takes = argumentsOf(commandEntry(registry, command).positional);
+  const walk: Walk = { scope, seen, takes, slotsLeft: takes.kind === "one" ? 1 : 0 };
   for (let i = 0; i < argv.length; i++) {
     const read = readToken(argv, i, walk, command);
     if (typeof read !== "number") return read;
@@ -76,19 +76,12 @@ interface Walk {
 
 type Arguments =
   | { readonly kind: "flags-only" }
-  | { readonly kind: "some"; readonly positionals: readonly [PositionalSpec, ...(readonly PositionalSpec[])] };
+  | { readonly kind: "one"; readonly positional: PositionalSpec };
 
-const argumentsOf = (positionals: readonly PositionalSpec[]): Arguments => {
-  const [first, ...rest] = positionals;
-  if (first === undefined) return { kind: "flags-only" };
-  return { kind: "some", positionals: [first, ...rest] };
-};
+const argumentsOf = (positional: PositionalSpec | undefined): Arguments =>
+  positional === undefined ? { kind: "flags-only" } : { kind: "one", positional };
 
-function positionalsOf(registry: CliRegistry, command: string): readonly PositionalSpec[] {
-  return commandEntry(registry, command).positionals ?? [];
-}
-
-type CommandEntry = Pick<CommandSpec, "flags" | "positionals">;
+type CommandEntry = Pick<CommandSpec, "flags" | "positional">;
 
 function commandEntry(registry: CliRegistry, command: string): CommandEntry {
   return registry.commands.find((c) => c.name === command)!;
@@ -173,15 +166,14 @@ function strayArgumentRefusal(token: string, takes: Arguments, command: string):
   switch (takes.kind) {
     case "flags-only":
       return notAFlagRefusal(token, command);
-    case "some":
-      return extraPositionalRefusal(token, takes.positionals, command);
+    case "one":
+      return extraPositionalRefusal(token, takes.positional, command);
   }
 }
 
-function extraPositionalRefusal(token: string, positionals: readonly PositionalSpec[], command: string): Refusal {
-  const takes = positionals.map((positional) => positional.name).join(" ");
+function extraPositionalRefusal(token: string, positional: PositionalSpec, command: string): Refusal {
   const scope = `spec-controller ${command}`;
-  return refusal(AppError.ExtraArgument, { token, scope, takes }, [message(AppMessage.SeeArguments, { scope })]);
+  return refusal(AppError.ExtraArgument, { token, scope, takes: positional.name }, [message(AppMessage.SeeArguments, { scope })]);
 }
 
 function notAFlagRefusal(token: string, command: string): Refusal {

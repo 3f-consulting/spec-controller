@@ -55,29 +55,22 @@ function writesStepRecordOf(env: unknown, action: PipelineStepAction): boolean {
   return written.some((text) => text.replace(/\s/g, "").toLowerCase().includes(STEP_RECORD_EXPRESSION));
 }
 
-function actionOf(step: Record<string, unknown>): PipelineStepAction | undefined {
+function actionOf(step: Record<string, unknown>): PipelineStepAction {
   const command = step["run"];
-  if (typeof command === "string") return { command };
-  const uses = step["uses"];
-  if (typeof uses === "string") return { action: { name: uses } };
-  return undefined;
+  return typeof command === "string" ? { command } : { action: { name: step["uses"] as string } };
 }
 
 function nameOf(value: unknown): { readonly name?: string } {
   return typeof value === "string" ? { name: value } : {};
 }
 
-function stepsOfJob(job: string, jobBody: unknown): WorkflowStep[] {
-  if (!isRecord(jobBody)) return [];
+function stepsOfJob(job: string, jobBody: Record<string, unknown>): WorkflowStep[] {
   const steps = jobBody["steps"];
   if (!Array.isArray(steps)) return [];
   const jobContinueOnError = jobBody[CONTINUE_ON_ERROR];
-  const read: WorkflowStep[] = [];
-  for (const step of steps) {
-    if (!isRecord(step)) continue;
+  return (steps as Record<string, unknown>[]).map((step) => {
     const action = actionOf(step);
-    if (action === undefined) continue;
-    read.push({
+    return {
       job,
       ...nameOf(step["name"]),
       id: idOf(step["id"]),
@@ -86,15 +79,14 @@ function stepsOfJob(job: string, jobBody: unknown): WorkflowStep[] {
       writesStepRecord: writesStepRecordOf(step["env"], action),
       plumbing: isPlumbing(action),
       ...action,
-    });
-  }
-  return read;
+    };
+  });
 }
 
 function stepsOfDocument(doc: unknown): WorkflowStep[] {
   const jobs = isRecord(doc) ? doc["jobs"] : undefined;
   if (!isRecord(jobs)) return [];
-  return Object.entries(jobs).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody));
+  return Object.entries(jobs as Record<string, Record<string, unknown>>).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody));
 }
 
 function workflowOf(document: unknown): WorkflowContent {

@@ -24,7 +24,8 @@ export interface UnnamedClaim {
 
 export type ClaimCodesAt = (file: string, line: number) => readonly string[];
 
-// A report names a feature file by a path that ends in the file's path within the corpus.
+// A report names a feature file by a path that ends, segment by segment, in the file's path within the corpus; of
+// several files whose paths it ends in, it names the one with the longest path.
 export function claimCodesAtOf(features: readonly FeatureAsWritten[]): ClaimCodesAt {
   const byLine = new Map<number, { readonly file: string; readonly codes: readonly string[] }[]>();
   for (const { file, scenarios } of features) {
@@ -34,7 +35,10 @@ export function claimCodesAtOf(features: readonly FeatureAsWritten[]): ClaimCode
       else byLine.set(line, [{ file: `/${file}`, codes }]);
     }
   }
-  return (path, line) => byLine.get(line)?.find((at) => `/${path}`.endsWith(at.file))?.codes ?? [];
+  return (path, line) => {
+    const named = (byLine.get(line) ?? []).filter((at) => `/${path}`.endsWith(at.file));
+    return named.sort((one, other) => other.file.length - one.file.length)[0]?.codes ?? [];
+  };
 }
 
 interface UsedAction {
@@ -118,10 +122,9 @@ export function stepDispositionOf(step: PipelineStep, readings: StepReadings): S
 export interface RecordedCheckStep {
   readonly key: string;
   readonly outcome?: string;
-  readonly conclusion?: string;
 }
 
-// A step's outcome says how its own run went; its conclusion is that outcome after continue-on-error, so it is not read.
+// A step's outcome says how its own run went, before continue-on-error.
 const RESULT_OF_OUTCOME: ReadonlyMap<string | undefined, EvidenceObservation["result"]> = new Map([
   ["success", "passed"],
   ["failure", "failed"],

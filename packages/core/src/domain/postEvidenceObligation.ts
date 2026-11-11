@@ -74,11 +74,10 @@ export function featureReadOf({ file, featureTags, scenarios }: FeatureAsWritten
 
 const codesIn = (words: readonly string[]): string[] => words.filter((word) => claimCodeFrom(word) !== undefined);
 
-// The claim codes a scenario carries at each line a report may name it by: its tags at its own line, and the clm cell
-// at the line of each row of a block with a clm column.
+// The claim codes a scenario carries at each line a report may name it by: its tags at its own line, and the clm cell,
+// if its block has one, at the line of each row.
 export function claimCodesAtLinesOf(scenario: ScenarioAsWritten): { readonly line: number; readonly codes: readonly string[] }[] {
   const rows = scenario.examples
-    .filter((block) => clmColumnOf(block) >= 0)
     .flatMap((block) => block.rows.map(({ line, cells }) => ({ line, codes: codesIn([cells[clmColumnOf(block)]!]) })));
   return [{ line: scenario.line, codes: codesIn(scenario.tags) }, ...rows];
 }
@@ -88,7 +87,7 @@ export interface ReadingSettings {
   readonly strict: boolean;
 }
 
-export const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
+const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
 function isDeferred(tags: readonly string[], { deferralTags, strict }: ReadingSettings): boolean {
   return !strict && tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));

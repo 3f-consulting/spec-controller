@@ -130,3 +130,15 @@ describe("help will list what you can ask for", () => {
     for (const [name, text] of listed) expect(listsEntry(lines, name, message(text)), name).toBe(true);
   });
 });
+
+describe("a command's help gives each flag it takes beside what the flag does", () => {
+  it.each([
+    ["CLM-CLI-189", "--strict", AppMessage.StrictFlag],
+    ["CLM-CLI-189", "--exit-zero", AppMessage.ExitZeroFlag],
+  ] as const)("[%s] balance's help gives %s", (_clm, flag, description) => {
+    main(["balance", "--help"]);
+
+    const line = whatTheProgramWrote().stdout.split("\n").find((each) => each.trimStart().startsWith(`${flag} `));
+    expect(line?.trimStart().slice(flag.length).trimStart()).toBe(message(description));
+  });
+});

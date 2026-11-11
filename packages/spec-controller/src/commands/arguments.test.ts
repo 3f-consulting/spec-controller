@@ -232,3 +232,15 @@ describe("an argument the tool does not accept will stop the run", () => {
     expect(written.stderr.split("\n")[0]).toBe(complaint());
   });
 });
+
+describe("a refusal points to the help that lists what was allowed", () => {
+  it.each([
+    ["CLM-CLI-187", "a flag balance does not take", (): string[] => ["balance", ...balanced(), "--bogus"], "'spec-controller balance --help'"],
+    ["CLM-CLI-188", "a flag before the command", (): string[] => ["--exit-zero", "balance", ...balanced()], "'spec-controller --help'"],
+  ])("[%s] %s", (_clm, _given, argv, help) => {
+    const lines = ran(argv()).stderr.trimEnd().split("\n");
+
+    expect(lines.length).toBeGreaterThan(1);
+    expect(lines.at(-1)).toContain(help);
+  });
+});

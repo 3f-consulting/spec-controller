@@ -92,6 +92,12 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-042 | RSpec's evidence report             | it was skipped or pending                |
         | CLM-OBS-043 | Cucumber's evidence report          | a step was skipped and none failed       |
 
+    @unit @CLM-OBS-106
+    Scenario: balance posts nothing for a Cucumber scenario that had no steps
+      given Cucumber's evidence report had a scenario tagged @CLM-ONE-001 with no steps
+      when balance posts the evidence
+      then nothing will be posted
+
     @unit
     Scenario Outline: balance posts what could not run as never ran
       given <source> said <what could not run>
@@ -187,12 +193,19 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-075 | RSpec's evidence report             | [CLM-ONE-001] in its description           | a group with [CLM-ONE-002] in its description  | CLM-ONE-001   |
         | CLM-OBS-076 | RSpec's evidence report             | no claim code                              | a group with [CLM-ONE-002] in its description  | CLM-ONE-002   |
 
-    @integration @CLM-OBS-077
+    @unit @integration @CLM-OBS-077
     Scenario: balance posts each row of an Outline citing its own claim code
       Given two executable claims were rows of one Scenario Outline, with the claim codes CLM-ONE-001 and CLM-ONE-002
       And Cucumber's evidence report had a result for each row
       When balance posts the evidence
       Then an Evidence Observation will be posted for each row, citing the claim code of its row
+
+    @unit @CLM-OBS-107
+    Scenario: balance posts an Outline row's result citing the claim code of the row in its own feature file
+      given one.feature and two.feature each had an Outline row at line 10, with the claim codes CLM-ONE-001 and CLM-TWO-001
+      and Cucumber's evidence report had a result for the row in two.feature
+      when balance posts the evidence
+      then an Evidence Observation will be posted, citing CLM-TWO-001
 
   Rule: an Evidence Observation says where to look
 
@@ -203,11 +216,15 @@ Feature: Evidence Observations are posted, each to its claim
       then an Evidence Observation will be posted, saying where to look: <where to look>
 
       Examples:
-        | clm         | source                     | kind of quality check | result                                                                          | where to look                   |
-        | CLM-OBS-078 | Vitest's evidence report   | unit                  | the test "adds two numbers" in a.test.ts                                        | "adds two numbers" in a.test.ts |
-        | CLM-OBS-079 | Vitest's evidence report   | unit                  | the test "adds two numbers" in /work/acme/a.test.ts, for a target at /work/acme | "adds two numbers" in a.test.ts |
-        | CLM-OBS-080 | Cucumber's evidence report | integration           | the scenario "one adds one" in one.feature                                      | "one adds one" in one.feature   |
-        | CLM-OBS-081 | the step record            | fitness               | the step Lint in job build of ci.yml                                            | ci.yml:build:Lint               |
+        | clm         | source                     | kind of quality check | result                                                                             | where to look                   |
+        | CLM-OBS-078 | Vitest's evidence report   | unit                  | the test "adds two numbers" in a.test.ts                                           | "adds two numbers" in a.test.ts |
+        | CLM-OBS-079 | Vitest's evidence report   | unit                  | the test "adds two numbers" in /work/acme/a.test.ts, for a target at /work/acme    | "adds two numbers" in a.test.ts |
+        | CLM-OBS-080 | Cucumber's evidence report | integration           | the scenario "one adds one" in one.feature                                         | "one adds one" in one.feature   |
+        | CLM-OBS-081 | the step record            | fitness               | the step Lint in job build of ci.yml                                               | ci.yml:build:Lint               |
+        | CLM-OBS-101 | the step record            | fitness               | the step with 3 as its name, running pnpm lint, in job build of ci.yml             | ci.yml:build:pnpm lint          |
+        | CLM-OBS-102 | the step record            | fitness               | the step with no name and an empty command, in job build of ci.yml                 | ci.yml:build:                   |
+        | CLM-OBS-103 | the step record            | fitness               | the step with no name, running a blank line then pnpm lint, in job build of ci.yml | ci.yml:build:pnpm lint          |
+        | CLM-OBS-104 | the step record            | fitness               | the step Lint in jobs build and test of ci.yml                                     | CLM-ONE-001                     |
 
     @unit @CLM-OBS-098
     Scenario: a test file outside the target's folder will be placed at the absolute path its evidence report recorded
@@ -245,6 +262,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-085 | Vitest's evidence report          | [CLM-ABCDEF-001] in its title                         | no claim code               |
         | CLM-OBS-086 | Vitest's evidence report          | CLM-ONE-999 in its title, with no brackets            | no claim code               |
         | CLM-OBS-087 | the step record                   | no id                                                 | no claim code               |
+        | CLM-OBS-105 | pytest's evidence report          | the clm property CLM-A-001, which is not a claim code | no claim code               |
         | CLM-OBS-088 | Vitest's evidence report          | [CLM-ONE-001] in its title, a code two claims share   | CLM-ONE-001                 |
         | CLM-OBS-089 | Vitest's evidence report          | [CLM-ONE-001] and [CLM-ONE-002] in its title          | CLM-ONE-001 and CLM-ONE-002 |
         | CLM-OBS-090 | Jest's evidence report            | [CLM-ONE-001] and [CLM-ONE-002] in its title          | CLM-ONE-001 and CLM-ONE-002 |
