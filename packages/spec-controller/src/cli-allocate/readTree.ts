@@ -55,10 +55,6 @@ function linesCarrying(path: string, content: Buffer, marks: readonly string[]):
     .flatMap((line, i) => (marks.some((mark) => line.includes(mark)) ? [{ path, line: i + 1, text: line }] : []));
 }
 
-function isWalkedDirectory(name: string): boolean {
-  return name !== "node_modules" && !name.startsWith(".");
-}
-
 export function walkTree(root: string, marks: readonly string[]): ClaimCodeOccurrence[] {
   return filesUnder(root).flatMap((file) => {
     const content = readOrRefuse(AppMessage.TreeFile, file, () => readFileSync(file));
@@ -70,7 +66,6 @@ function filesUnder(dir: string): string[] {
   const entries = readOrRefuse(AppMessage.TreeDirectory, dir, () => readdirSync(dir, { withFileTypes: true }));
   return entries.flatMap((entry) => {
     const path = join(dir, entry.name);
-    if (entry.isDirectory()) return isWalkedDirectory(entry.name) ? filesUnder(path) : [];
-    return entry.isFile() ? [path] : [];
+    return entry.isDirectory() ? filesUnder(path) : [path];
   });
 }
