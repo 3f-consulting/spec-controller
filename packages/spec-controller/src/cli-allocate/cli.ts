@@ -6,8 +6,7 @@ import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { readFeatureCodes } from "./readParts.js";
 import { readRequest, type AllocateRequest } from "./request.js";
 import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
-import { AppMessage } from "../messages.js";
-import { readOrRefuse, UnparseableFeatureFiles, UnreadableInput } from "./unreadable.js";
+import { UnparseableFeatureFiles, UnreadableInput } from "./unreadable.js";
 import { historyBoundaryOf, readHistory, repositoryTop } from "./readHistory.js";
 import { readTree, walkTree } from "./readTree.js";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownFeatureCodeRefusal } from "./stderr.js";
@@ -45,7 +44,7 @@ function refuseUsage(error: RefusalLines): void {
 }
 
 function answerRequest({ featureCode, isNew }: AllocateRequest): void {
-  const cwd = readOrRefuse(AppMessage.WorkingDirectory, "", () => process.cwd());
+  const cwd = process.cwd();
   const top = repositoryTop(cwd);
   const featureCodes = readFeatureCodes(join(top ?? cwd, DEFAULT_FEATURES_DIR));
   const answer = nextClaimCode({ featureCode, featureCodes, isNew }, occurrencesFrom(cwd, featureCode, top));

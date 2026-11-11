@@ -58,7 +58,6 @@ export enum AppMessage {
   TreeFile = "tree-file",
   FeatureFile = "feature-file",
   FeatureCorpus = "feature-corpus",
-  WorkingDirectory = "working-directory",
   GitExited = "git-exited",
   FlaggedReport = "flagged-report",
   FlaggedRecord = "flagged-record",
@@ -103,7 +102,6 @@ export enum AppError {
   UnknownPartRefused = "unknown-part-refused",
   NoFeaturePartGiven = "no-feature-part-given",
   NotAFeaturePart = "not-a-feature-part",
-  WorkingDirectoryUnreadable = "working-directory-unreadable",
   CouldNotBeRead = "could-not-be-read",
   InputPathMissing = "input-path-missing",
   NotValidJson = "not-valid-json",
@@ -172,7 +170,6 @@ export interface AppErrorValues {
   [AppError.OutputOverwritesInput]: { output: string; subject: string; path: string };
   [AppError.UnknownPartRefused]: { part: string; parts: string };
   [AppError.NotAFeaturePart]: { part: string };
-  [AppError.WorkingDirectoryUnreadable]: { subject: string; reason: string };
   [AppError.CouldNotBeRead]: { subject: string; path: string; reason: string };
   [AppError.InputPathMissing]: { flag: string; path: string };
   [AppError.NotValidJson]: { subject: string; path: string; reason: string };
@@ -194,7 +191,6 @@ export const Unreadable = {
   TreeFile: AppMessage.TreeFile,
   FeatureFile: AppMessage.FeatureFile,
   FeatureCorpus: AppMessage.FeatureCorpus,
-  WorkingDirectory: AppMessage.WorkingDirectory,
 } as const;
 
 export type Unreadable = (typeof Unreadable)[keyof typeof Unreadable];

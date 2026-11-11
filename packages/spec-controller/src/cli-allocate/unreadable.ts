@@ -9,11 +9,7 @@ export class UnreadableInput extends Error {
 
   constructor(what: Unreadable, path: string, reason: string) {
     super();
-    const subject = message(what);
-    this.refusal =
-      what === Unreadable.WorkingDirectory
-        ? refusal(AppError.WorkingDirectoryUnreadable, { subject, reason })
-        : refusal(AppError.CouldNotBeRead, { subject, path, reason });
+    this.refusal = refusal(AppError.CouldNotBeRead, { subject: message(what), path, reason });
   }
 }
 

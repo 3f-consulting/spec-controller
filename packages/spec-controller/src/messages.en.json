@@ -37,8 +37,6 @@
   "tree-file": "a file in the tree",
   "feature-file": "a feature file",
   "feature-corpus": "the feature corpus",
-  "working-directory": "the working directory",
-  "working-directory-unreadable": "{subject} could not be read ({reason})",
   "could-not-be-read": "{subject} could not be read: {path} ({reason})",
   "git-exited": "git {command} exited {status}: {said}",
   "input-path-missing": "The {flag} path does not exist: {path}",
