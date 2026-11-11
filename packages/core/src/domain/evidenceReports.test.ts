@@ -158,6 +158,14 @@ describe("balance posts each result citing the nearest code it has, as each repo
     const report = [{ uri: "features/two.feature", elements: [{ name: "adds 1", line: 10, tags: [{ name: "@integration" }], steps: [{ keyword: "Given ", name: "1", result: { status: "passed" } }] }] }];
     expect(parseCucumberEvidenceObservations(report, undefined, claimCodesAt).map(({ cites }) => cites)).toEqual([[{ featureCode: "TWO", number: "001" }]]);
   });
+
+  it("[CLM-OBS-107] a Cucumber result from a row of admin/login.feature cites that row's code, not the code login.feature has at the same line", () => {
+    const outline = (code: string): string =>
+      `@${code}\nFeature: ${code}\n\n  @integration\n  Scenario Outline: signs in as <n>\n    Given <n>\n\n    Examples:\n      | clm | n |\n      | CLM-${code}-001 | a |\n`;
+    const claimCodesAt = claimCodesAtOf(parsedFeatures([outline("LOG"), outline("ADM")], ["login.feature", "admin/login.feature"]));
+    const report = [{ uri: "features/admin/login.feature", elements: [{ name: "signs in as a", line: 10, tags: [{ name: "@integration" }], steps: [{ keyword: "Given ", name: "a", result: { status: "passed" } }] }] }];
+    expect(parseCucumberEvidenceObservations(report, undefined, claimCodesAt).map(({ cites }) => cites)).toEqual([[{ featureCode: "ADM", number: "001" }]]);
+  });
 });
 
 describe("an Evidence Observation says where to look, as each report gives it", () => {
