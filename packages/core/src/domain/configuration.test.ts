@@ -81,6 +81,7 @@ describe("a configuration setting balance cannot use will be left out", () => {
       [{ kind: "not-checks-entry-not-a-step-name", entry: "Install dependencies" }],
     ],
     ["CLM-CFG-018", { runners: null }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "runners" }]],
+    ["CLM-CFG-018", { runners: "vitest" }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "runners" }]],
     ["CLM-CFG-019", { notChecks: "Install" }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "notChecks" }]],
     ["CLM-CFG-020", { deferralTags: [3] }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "deferralTags[0]" }]],
   ])("[%s] the setting %j is left out with its error", (_clm, specController, stepsInCi, configuration, errors) => {
