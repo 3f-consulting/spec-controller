@@ -19,9 +19,12 @@ export function readRequest(
   registry: CliRegistry,
   toolVersion: string,
 ): AllocateRequest | { readonly usageError: Refusal } {
-  const why = argvRefusal(argv, registry, toolVersion) ?? partRefusal(positionalArguments(argv, registry, "allocate")[0]);
+  const why = argvRefusal(argv, registry, toolVersion);
   if (why !== null) return { usageError: why };
-  return { featureCode: positionalArguments(argv, registry, "allocate")[0] ?? "", isNew: argv.includes("--new") };
+  const [part] = positionalArguments(argv, registry, "allocate");
+  if (part === undefined) return { usageError: refusal(AppError.NoFeaturePartGiven, {}) };
+  if (!isFeatureCode(part)) return { usageError: refusal(AppError.NotAFeaturePart, { part }) };
+  return { featureCode: part, isNew: argv.includes("--new") };
 }
 
 function argvRefusal(argv: readonly string[], registry: CliRegistry, toolVersion: string): Refusal | null {
@@ -30,10 +33,4 @@ function argvRefusal(argv: readonly string[], registry: CliRegistry, toolVersion
     checkArgvShape(argv, registry, "allocate") ??
     checkUnknownFlags(args, registry, "allocate", toolVersion)
   );
-}
-
-function partRefusal(part: string | undefined): Refusal | null {
-  if (part === undefined) return refusal(AppError.NoFeaturePartGiven, {});
-  if (isFeatureCode(part)) return null;
-  return refusal(AppError.NotAFeaturePart, { part });
 }

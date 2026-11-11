@@ -1,12 +1,13 @@
 import { join } from "node:path";
 import { claimCodeMarksFor, nextClaimCode, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
+import { asksForHelp } from "../cliArgs.js";
 import { allocateCommand, cliRegistry, renderCommandHelp } from "../cliRegistry.js";
 import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { readFeatureCodes } from "./readParts.js";
 import { readRequest, type AllocateRequest } from "./request.js";
-import { AppMessage } from "../messages.js";
 import { DEFAULT_FEATURES_DIR } from "../defaultCorpus.js";
-import { readOrRefuse, refusalLine, UnparseableFeatureFiles, UnreadableInput } from "./unreadable.js";
+import { AppMessage } from "../messages.js";
+import { readOrRefuse, UnparseableFeatureFiles, UnreadableInput } from "./unreadable.js";
 import { historyBoundaryOf, readHistory, repositoryTop } from "./readHistory.js";
 import { readTree, walkTree } from "./readTree.js";
 import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownFeatureCodeRefusal } from "./stderr.js";
@@ -25,10 +26,6 @@ export function runAllocate(argv: string[]): void {
   answerOrRefuse(readRequest(argv, cliRegistry, resolveToolIdentity().toolVersion));
 }
 
-function asksForHelp(argv: string[]): boolean {
-  return argv.includes("--help") || argv.includes("-h");
-}
-
 function answerOrRefuse(request: ReturnType<typeof readRequest>): void {
   if ("usageError" in request) {
     refuseUsage(request.usageError);
@@ -38,7 +35,7 @@ function answerOrRefuse(request: ReturnType<typeof readRequest>): void {
     answerRequest(request);
   } catch (err) {
     if (!(err instanceof UnreadableInput || err instanceof UnparseableFeatureFiles)) throw err;
-    refuseUsage(refusalLine(err));
+    refuseUsage(err.refusal);
   }
 }
 

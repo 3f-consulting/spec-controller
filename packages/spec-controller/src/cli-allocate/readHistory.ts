@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { lstatSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { proveRefsReadable } from "./refStore.js";
 import { AppMessage } from "../messages.js";
@@ -58,13 +58,12 @@ export function historyBoundaryOf(cwd: string): HistoryBoundary {
 function shallowBoundaryOf(cwd: string): HistoryBoundary {
   const shallowPath = shallowRecordPath(cwd);
   const record = readOrRefuse(AppMessage.History, shallowPath, () => readFileSync(shallowPath, "utf8"));
-  const edge = record.split("\n")[0] ?? "";
+  const edge = record.slice(0, record.indexOf("\n"));
   return { kind: "shallow", before: gitAnswer(cwd, ["rev-parse", "--short", edge]) ?? edge };
 }
 
 function shallowRecordPath(cwd: string): string {
-  const shallowFile = gitAnswer(cwd, ["rev-parse", "--git-path", "shallow"]) ?? "";
-  return shallowFile.startsWith("/") ? shallowFile : `${cwd}/${shallowFile}`;
+  return resolve(cwd, spawnSync("git", ["rev-parse", "--git-path", "shallow"], { cwd, encoding: "utf8" }).stdout.trim());
 }
 
 interface PatchPosition {
@@ -77,7 +76,8 @@ interface PatchPosition {
 }
 
 function diffLineOccurrences(logOutput: string): ClaimCodeOccurrence[] {
-  const at: PatchPosition = { inFileHeader: false, oldPath: "", newPath: "", oldLine: 0, newLine: 0 };
+  // Every field is set by the headers of a patch before any of its lines is read.
+  const at = {} as PatchPosition;
   const occurrences: ClaimCodeOccurrence[] = [];
   for (const line of logOutput.split("\n")) {
     const occurrence = readLine(line, at);
