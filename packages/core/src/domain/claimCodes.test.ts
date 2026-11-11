@@ -169,6 +169,14 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
   });
 });
 
+describe("a feature file with no feature code and no claim code will have no claim code error", () => {
+  it("[CLM-STG-091] three.feature, with no feature code and a scenario tagged only @unit", () => {
+    const features = parsedFeatures([featureFile("", scenarioTagged("@unit"))], ["three.feature"]);
+
+    expect(claimCodeErrorsOf(features.map(featureReadOf))).toEqual([]);
+  });
+});
+
 const FEATURE_PATH = "features/one.feature";
 
 const featureCarrying = (code: string): string => `@ONE\nFeature: part ONE\n\n  @${code} @unit\n  Scenario: scenario 1\n    Given a step\n`;
