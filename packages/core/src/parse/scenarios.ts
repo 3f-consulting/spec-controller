@@ -59,7 +59,7 @@ function codesAtLinesOf(scenario: Scenario): CodesAtLine[] {
   const atScenario = { line: scenario.location.line, codes: codesIn(scenario.tags.map((tag) => bareTerm(tag.name))) };
   const rows = scenario.examples.flatMap((examples) => {
     const column = clmColumnOf(examples);
-    return column < 0 ? [] : examples.tableBody.map((row) => ({ line: row.location.line, codes: codesIn([row.cells[column]?.value ?? ""]) }));
+    return column < 0 ? [] : examples.tableBody.map((row) => ({ line: row.location.line, codes: codesIn([row.cells[column]!.value]) }));
   });
   return [atScenario, ...rows];
 }
