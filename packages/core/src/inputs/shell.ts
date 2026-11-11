@@ -344,8 +344,7 @@ function runsBy(
   reading: Reading
 ): (command: string, invocation: string, scripts: Readonly<Record<string, string>>) => boolean {
   return (command, invocation, scripts) => {
-    const words = wordsOf(invocation);
-    return String(words) !== "" && runs(command, words, scripts, SCRIPT_CHAIN_DEPTH, reading);
+    return runs(command, wordsOf(invocation), scripts, SCRIPT_CHAIN_DEPTH, reading);
   };
 }
 
