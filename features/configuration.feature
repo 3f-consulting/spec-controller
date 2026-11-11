@@ -2,7 +2,7 @@
 Feature: balance reads and validates the configuration settings in the specController block
 
   A target's package.json can have a specController block with three configuration settings:
-  runners, notChecks and deferralTags. balance reads each one, and validates it. An invalid configuration
+  runners, notChecks and deferral tags. balance reads each one, and validates it. An invalid configuration
   setting never stops the run, and the others still apply. What each one then changes belongs
   to the files about those things.
 
