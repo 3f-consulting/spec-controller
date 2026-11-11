@@ -203,13 +203,14 @@ Feature: Evidence Observations are posted, each to its claim
       then an Evidence Observation will be posted, saying where to look: <where to look>
 
       Examples:
-        | clm         | source                     | kind of quality check | result                                                                          | where to look                   |
-        | CLM-OBS-078 | Vitest's evidence report   | unit                  | the test "adds two numbers" in a.test.ts                                        | "adds two numbers" in a.test.ts |
-        | CLM-OBS-079 | Vitest's evidence report   | unit                  | the test "adds two numbers" in /work/acme/a.test.ts, for a target at /work/acme | "adds two numbers" in a.test.ts |
-        | CLM-OBS-080 | Cucumber's evidence report | integration           | the scenario "one adds one" in one.feature                                      | "one adds one" in one.feature   |
-        | CLM-OBS-081 | the step record            | fitness               | the step Lint in job build of ci.yml                                            | ci.yml:build:Lint               |
-        | CLM-OBS-101 | the step record            | fitness               | the step with 3 as its name, running pnpm lint, in job build of ci.yml          | ci.yml:build:pnpm lint          |
-        | CLM-OBS-102 | the step record            | fitness               | the step with no name and an empty command, in job build of ci.yml              | ci.yml:build:                   |
+        | clm         | source                     | kind of quality check | result                                                                             | where to look                   |
+        | CLM-OBS-078 | Vitest's evidence report   | unit                  | the test "adds two numbers" in a.test.ts                                           | "adds two numbers" in a.test.ts |
+        | CLM-OBS-079 | Vitest's evidence report   | unit                  | the test "adds two numbers" in /work/acme/a.test.ts, for a target at /work/acme    | "adds two numbers" in a.test.ts |
+        | CLM-OBS-080 | Cucumber's evidence report | integration           | the scenario "one adds one" in one.feature                                         | "one adds one" in one.feature   |
+        | CLM-OBS-081 | the step record            | fitness               | the step Lint in job build of ci.yml                                               | ci.yml:build:Lint               |
+        | CLM-OBS-101 | the step record            | fitness               | the step with 3 as its name, running pnpm lint, in job build of ci.yml             | ci.yml:build:pnpm lint          |
+        | CLM-OBS-102 | the step record            | fitness               | the step with no name and an empty command, in job build of ci.yml                 | ci.yml:build:                   |
+        | CLM-OBS-103 | the step record            | fitness               | the step with no name, running a blank line then pnpm lint, in job build of ci.yml | ci.yml:build:pnpm lint          |
 
     @unit @CLM-OBS-098
     Scenario: a test file outside the target's folder will be placed at the absolute path its evidence report recorded
