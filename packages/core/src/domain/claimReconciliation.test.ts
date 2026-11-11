@@ -146,6 +146,11 @@ describe("balance works out each Quality Check Reconciliation's outcome, and fro
     const reconciliation = reconciliationOf(claimReconciliationsOf([claim("ONE-001", ["unit"])], [passing]), "ONE-001");
     expect(reconciliation?.qualityCheckReconciliations).toEqual([{ outcome: "satisfied", kind: "unit", obligation: { kind: "unit" }, observation: passing }]);
   });
+
+  it("[CLM-LDG-003] the missing Quality Check Reconciliation names the unit Evidence Obligation no test answered", () => {
+    const reconciliation = reconciliationOf(claimReconciliationsOf([claim("ONE-001", ["unit"])], []), "ONE-001");
+    expect(reconciliation?.qualityCheckReconciliations).toEqual([{ outcome: "missing", kind: "unit", obligation: { kind: "unit" } }]);
+  });
 });
 
 describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations", () => {
