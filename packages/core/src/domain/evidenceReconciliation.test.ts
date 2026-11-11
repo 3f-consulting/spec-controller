@@ -50,43 +50,39 @@ const severalCodes: ClaimCodeError = { kind: "several-claim-codes", files: ["one
 type Run = () => { readonly claimReconciliations: readonly ClaimReconciliation[]; readonly claimCodeErrors: readonly ClaimCodeError[] };
 
 describe("a run is balanced only when all its Claim Reconciliations are", () => {
-  it.each<{ clm: string; run: Run; verdict: RunVerdict }>([
-    { clm: "CLM-EVR-001", run: () => ({ claimReconciliations: [balanced(), balanced()], claimCodeErrors: [] }), verdict: { verdict: "balanced" } },
-    { clm: "CLM-EVR-002", run: () => ({ claimReconciliations: [balanced(), outOfBalance([failing()])], claimCodeErrors: [] }), verdict: { verdict: "out-of-balance" } },
-    { clm: "CLM-EVR-003", run: () => ({ claimReconciliations: [unnamed()], claimCodeErrors: [] }), verdict: { verdict: "out-of-balance" } },
-  ])("[$clm] the run will be balanced or out of balance, as its Claim Reconciliations call for", ({ run, verdict }) => {
+  it.each<[string, { run: Run; verdict: RunVerdict }]>([
+    ["CLM-EVR-001", { run: () => ({ claimReconciliations: [balanced(), balanced()], claimCodeErrors: [] }), verdict: { verdict: "balanced" } }],
+    ["CLM-EVR-002", { run: () => ({ claimReconciliations: [balanced(), outOfBalance([failing()])], claimCodeErrors: [] }), verdict: { verdict: "out-of-balance" } }],
+    ["CLM-EVR-003", { run: () => ({ claimReconciliations: [unnamed()], claimCodeErrors: [] }), verdict: { verdict: "out-of-balance" } }],
+  ])("[%s] the run will be balanced or out of balance, as its Claim Reconciliations call for", (_clm, { run, verdict }) => {
     const { claimReconciliations, claimCodeErrors } = run();
     expect(runVerdictOf(claimReconciliations, claimCodeErrors)).toEqual(verdict);
   });
 });
 
 describe("the run verdict says why balance could not reconcile a run", () => {
-  it.each<{ clm: string; run: Run; why: string }>([
-    { clm: "CLM-EVR-004", run: () => ({ claimReconciliations: [unnamed([neverRan()])], claimCodeErrors: [] }), why: "unsound" },
-    { clm: "CLM-EVR-005", run: () => ({ claimReconciliations: [balanced()], claimCodeErrors: [severalCodes] }), why: "claim-code-errors" },
-  ])("[$clm] the run will be not reconciled, naming why", ({ run, why }) => {
+  it.each<[string, { run: Run; why: string }]>([
+    ["CLM-EVR-004", { run: () => ({ claimReconciliations: [unnamed([neverRan()])], claimCodeErrors: [] }), why: "unsound" }],
+    ["CLM-EVR-005", { run: () => ({ claimReconciliations: [balanced()], claimCodeErrors: [severalCodes] }), why: "claim-code-errors" }],
+  ])("[%s] the run will be not reconciled, naming why", (_clm, { run, why }) => {
     const { claimReconciliations, claimCodeErrors } = run();
     expect(runVerdictOf(claimReconciliations, claimCodeErrors)).toEqual({ verdict: "not-reconciled", why });
   });
 
-  it.each<{ clm: string; corpusIn: (dir: string) => string }>([
-    { clm: "CLM-EVR-006", corpusIn: (dir) => join(dir, "features") },
-    {
-      clm: "CLM-EVR-007",
-      corpusIn: (dir) => {
+  it.each<[string, { corpusIn: (dir: string) => string }]>([
+    ["CLM-EVR-006", { corpusIn: (dir) => join(dir, "features") }],
+    ["CLM-EVR-007", { corpusIn: (dir) => {
         mkdirSync(join(dir, "features"));
         return join(dir, "features");
       },
-    },
-    {
-      clm: "CLM-EVR-008",
-      corpusIn: (dir) => {
+    }],
+    ["CLM-EVR-008", { corpusIn: (dir) => {
         mkdirSync(join(dir, "features"));
         writeFileSync(join(dir, "features", "one.feature"), "@ONE\nFeature: one\n");
         return join(dir, "features");
       },
-    },
-  ])("[$clm] the run will be not reconciled, naming why", ({ corpusIn }) => {
+    }],
+  ])("[%s] the run will be not reconciled, naming why", (_clm, { corpusIn }) => {
     const reading = readCorpus(corpusIn(temporaryDirectory("evr-corpus-")));
     expect(reading.kind).toBe("read");
     const corpus = reading.kind === "read" ? reading.corpus : [];
@@ -94,12 +90,12 @@ describe("the run verdict says why balance could not reconcile a run", () => {
     expect(runVerdictOf(claimReconciliations, [])).toEqual({ verdict: "not-reconciled", why: "nothing-to-reconcile" });
   });
 
-  it.each<{ clm: string; run: Run; why: string }>([
-    { clm: "CLM-EVR-009", run: () => ({ claimReconciliations: [unnamed([neverRan()]), outOfBalance([failing()])], claimCodeErrors: [] }), why: "unsound" },
-    { clm: "CLM-EVR-010", run: () => ({ claimReconciliations: [unnamed([neverRan()])], claimCodeErrors: [severalCodes] }), why: "unsound" },
-    { clm: "CLM-EVR-011", run: () => ({ claimReconciliations: [outOfBalance([failing()])], claimCodeErrors: [severalCodes] }), why: "claim-code-errors" },
-    { clm: "CLM-EVR-012", run: () => ({ claimReconciliations: [], claimCodeErrors: [severalCodes] }), why: "claim-code-errors" },
-  ])("[$clm] when several reasons apply, unsound comes first, then claim code errors, then nothing to reconcile, all before out of balance", ({ run, why }) => {
+  it.each<[string, { run: Run; why: string }]>([
+    ["CLM-EVR-009", { run: () => ({ claimReconciliations: [unnamed([neverRan()]), outOfBalance([failing()])], claimCodeErrors: [] }), why: "unsound" }],
+    ["CLM-EVR-010", { run: () => ({ claimReconciliations: [unnamed([neverRan()])], claimCodeErrors: [severalCodes] }), why: "unsound" }],
+    ["CLM-EVR-011", { run: () => ({ claimReconciliations: [outOfBalance([failing()])], claimCodeErrors: [severalCodes] }), why: "claim-code-errors" }],
+    ["CLM-EVR-012", { run: () => ({ claimReconciliations: [], claimCodeErrors: [severalCodes] }), why: "claim-code-errors" }],
+  ])("[%s] when several reasons apply, unsound comes first, then claim code errors, then nothing to reconcile, all before out of balance", (_clm, { run, why }) => {
     const { claimReconciliations, claimCodeErrors } = run();
     expect(runVerdictOf(claimReconciliations, claimCodeErrors)).toEqual({ verdict: "not-reconciled", why });
   });
@@ -108,53 +104,51 @@ describe("the run verdict says why balance could not reconcile a run", () => {
 type Reconciled = () => readonly ClaimReconciliation[];
 
 describe("the summary counts what was reconciled", () => {
-  it.each<{ clm: string; reconciled: Reconciled; counts: Totals["claimReconciliations"] }>([
-    { clm: "CLM-EVR-013", reconciled: () => [balanced()], counts: { total: 1, balanced: 1, outOfBalance: 0 } },
-    { clm: "CLM-EVR-014", reconciled: () => [outOfBalance([failing()])], counts: { total: 1, balanced: 0, outOfBalance: 1 } },
-    { clm: "CLM-EVR-015", reconciled: () => [balanced(), outOfBalance([failing()])], counts: { total: 2, balanced: 1, outOfBalance: 1 } },
-    { clm: "CLM-EVR-016", reconciled: () => [unnamed()], counts: { total: 1, balanced: 0, outOfBalance: 1 } },
-  ])("[$clm] Total of the Claim Reconciliations", ({ reconciled, counts }) => {
+  it.each<[string, { reconciled: Reconciled; counts: Totals["claimReconciliations"] }]>([
+    ["CLM-EVR-013", { reconciled: () => [balanced()], counts: { total: 1, balanced: 1, outOfBalance: 0 } }],
+    ["CLM-EVR-014", { reconciled: () => [outOfBalance([failing()])], counts: { total: 1, balanced: 0, outOfBalance: 1 } }],
+    ["CLM-EVR-015", { reconciled: () => [balanced(), outOfBalance([failing()])], counts: { total: 2, balanced: 1, outOfBalance: 1 } }],
+    ["CLM-EVR-016", { reconciled: () => [unnamed()], counts: { total: 1, balanced: 0, outOfBalance: 1 } }],
+  ])("[%s] Total of the Claim Reconciliations", (_clm, { reconciled, counts }) => {
     expect(totalsOf(reconciled(), 0).claimReconciliations).toEqual(counts);
   });
 
-  it.each<{ clm: string; reconciled: Reconciled; counts: Totals["qualityCheckReconciliations"] }>([
-    { clm: "CLM-EVR-017", reconciled: () => [balanced()], counts: { total: 1, outOfBalance: 0, byOutcome: [], missingByKind: [] } },
-    { clm: "CLM-EVR-018", reconciled: () => [outOfBalance([failing(), missing("integration")])], counts: { total: 2, outOfBalance: 2, byOutcome: [{ outcome: "failing", count: 1 }, { outcome: "missing", count: 1 }], missingByKind: [{ kind: "integration", count: 1 }] } },
-    { clm: "CLM-EVR-019", reconciled: () => [outOfBalance([{ outcome: "no-claim-code", kind: "unit", obligation: { kind: "unit" } }], claim("one.feature", undefined))], counts: { total: 1, outOfBalance: 1, byOutcome: [{ outcome: "no-claim-code", count: 1 }], missingByKind: [] } },
-    { clm: "CLM-EVR-020", reconciled: () => [0, 1].map(() => outOfBalance([{ outcome: "duplicate-claim-code", kind: "unit", obligation: { kind: "unit" } }])), counts: { total: 2, outOfBalance: 2, byOutcome: [{ outcome: "duplicate-claim-code", count: 2 }], missingByKind: [] } },
-  ])("[$clm] Total of the Quality Check Reconciliations, by outcome", ({ reconciled, counts }) => {
+  it.each<[string, { reconciled: Reconciled; counts: Totals["qualityCheckReconciliations"] }]>([
+    ["CLM-EVR-017", { reconciled: () => [balanced()], counts: { total: 1, outOfBalance: 0, byOutcome: [], missingByKind: [] } }],
+    ["CLM-EVR-018", { reconciled: () => [outOfBalance([failing(), missing("integration")])], counts: { total: 2, outOfBalance: 2, byOutcome: [{ outcome: "failing", count: 1 }, { outcome: "missing", count: 1 }], missingByKind: [{ kind: "integration", count: 1 }] } }],
+    ["CLM-EVR-019", { reconciled: () => [outOfBalance([{ outcome: "no-claim-code", kind: "unit", obligation: { kind: "unit" } }], claim("one.feature", undefined))], counts: { total: 1, outOfBalance: 1, byOutcome: [{ outcome: "no-claim-code", count: 1 }], missingByKind: [] } }],
+    ["CLM-EVR-020", { reconciled: () => [0, 1].map(() => outOfBalance([{ outcome: "duplicate-claim-code", kind: "unit", obligation: { kind: "unit" } }])), counts: { total: 2, outOfBalance: 2, byOutcome: [{ outcome: "duplicate-claim-code", count: 2 }], missingByKind: [] } }],
+  ])("[%s] Total of the Quality Check Reconciliations, by outcome", (_clm, { reconciled, counts }) => {
     expect(totalsOf(reconciled(), 0).qualityCheckReconciliations).toEqual(counts);
   });
 
-  it.each<{ clm: string; reconciled: Reconciled; counts: Partial<Totals["evidenceObservations"]> }>([
-    { clm: "CLM-EVR-021", reconciled: () => [balanced()], counts: { total: 1, byKind: [{ kind: "unit", count: 1 }], onExecutableClaim: 1, onPhantomClaim: 0, onUnnamedClaim: 0 } },
-    {
-      clm: "CLM-EVR-022",
-      reconciled: () => [unnamed(), outOfBalance([{ outcome: "cites-unknown-claim", kind: "fitness", observation: observation("passed", "fitness", [PHANTOM]) }], { claimCode: PHANTOM })],
+  it.each<[string, { reconciled: Reconciled; counts: Partial<Totals["evidenceObservations"]> }]>([
+    ["CLM-EVR-021", { reconciled: () => [balanced()], counts: { total: 1, byKind: [{ kind: "unit", count: 1 }], onExecutableClaim: 1, onPhantomClaim: 0, onUnnamedClaim: 0 } }],
+    ["CLM-EVR-022", { reconciled: () => [unnamed(), outOfBalance([{ outcome: "cites-unknown-claim", kind: "fitness", observation: observation("passed", "fitness", [PHANTOM]) }], { claimCode: PHANTOM })],
       counts: { total: 2, byKind: [{ kind: "unit", count: 1 }, { kind: "fitness", count: 1 }], onExecutableClaim: 0, onPhantomClaim: 1, onUnnamedClaim: 1 },
-    },
-  ])("[$clm] Total of the Evidence Observations, by kind of quality check and by kind of claim", ({ reconciled, counts }) => {
+    }],
+  ])("[%s] Total of the Evidence Observations, by kind of quality check and by kind of claim", (_clm, { reconciled, counts }) => {
     expect(totalsOf(reconciled(), 0).evidenceObservations).toMatchObject(counts);
   });
 
-  it.each<{ clm: string; reconciled: Reconciled; byFeature: Totals["outOfBalanceByFeature"] }>([
-    { clm: "CLM-EVR-023", reconciled: () => [outOfBalance([failing()], claim("one.feature"))], byFeature: [{ file: "one.feature", count: 1 }] },
-    { clm: "CLM-EVR-024", reconciled: () => [outOfBalance([{ outcome: "no-claim-code", kind: "unit", obligation: { kind: "unit" } }], claim("one.feature", undefined))], byFeature: [{ file: "one.feature", count: 1 }] },
-    { clm: "CLM-EVR-025", reconciled: () => [outOfBalance([{ outcome: "no-claim-code", kind: "unit", obligation: { kind: "unit" } }], claim("three.feature", undefined))], byFeature: [{ file: "three.feature", count: 1 }] },
-    { clm: "CLM-EVR-026", reconciled: () => [unnamed()], byFeature: undefined },
-  ])("[$clm] Total of the out-of-balance Claim Reconciliations, by feature", ({ reconciled, byFeature }) => {
+  it.each<[string, { reconciled: Reconciled; byFeature: Totals["outOfBalanceByFeature"] }]>([
+    ["CLM-EVR-023", { reconciled: () => [outOfBalance([failing()], claim("one.feature"))], byFeature: [{ file: "one.feature", count: 1 }] }],
+    ["CLM-EVR-024", { reconciled: () => [outOfBalance([{ outcome: "no-claim-code", kind: "unit", obligation: { kind: "unit" } }], claim("one.feature", undefined))], byFeature: [{ file: "one.feature", count: 1 }] }],
+    ["CLM-EVR-025", { reconciled: () => [outOfBalance([{ outcome: "no-claim-code", kind: "unit", obligation: { kind: "unit" } }], claim("three.feature", undefined))], byFeature: [{ file: "three.feature", count: 1 }] }],
+    ["CLM-EVR-026", { reconciled: () => [unnamed()], byFeature: undefined }],
+  ])("[%s] Total of the out-of-balance Claim Reconciliations, by feature", (_clm, { reconciled, byFeature }) => {
     const totals = totalsOf(reconciled(), 0);
     expect(totals.outOfBalanceByFeature).toEqual(byFeature);
     expect(totals.claimReconciliations.outOfBalance).toBe(1);
   });
 
-  it.each<{ clm: string; source: string; excluded: number }>([
-    { clm: "CLM-EVR-027", source: "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: a claim\n", excluded: 0 },
-    { clm: "CLM-EVR-028", source: "@ONE\nFeature: one\n\n  @unit\n  Scenario: a claim about @CLM-ONE-001\n", excluded: 1 },
-    { clm: "CLM-EVR-029", source: "@ONE\nFeature: one\n\n  # see @CLM-ONE-001\n  @unit\n  Scenario: a claim\n", excluded: 1 },
-    { clm: "CLM-EVR-030", source: "@ONE\nFeature: one\n\n  # see @CLM-ONE-001\n  @unit @CLM-ONE-001\n  Scenario: a claim\n", excluded: 1 },
-    { clm: "CLM-EVR-031", source: "@ONE\nFeature: one\n\n  @unit\n  Scenario Outline: claims\n    Examples:\n      | clm         |\n      | CLM-ONE-001 |\n", excluded: 0 },
-  ])("[$clm] Total of the claim codes written where no claim reads them", ({ source, excluded }) => {
+  it.each<[string, { source: string; excluded: number }]>([
+    ["CLM-EVR-027", { source: "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: a claim\n", excluded: 0 }],
+    ["CLM-EVR-028", { source: "@ONE\nFeature: one\n\n  @unit\n  Scenario: a claim about @CLM-ONE-001\n", excluded: 1 }],
+    ["CLM-EVR-029", { source: "@ONE\nFeature: one\n\n  # see @CLM-ONE-001\n  @unit\n  Scenario: a claim\n", excluded: 1 }],
+    ["CLM-EVR-030", { source: "@ONE\nFeature: one\n\n  # see @CLM-ONE-001\n  @unit @CLM-ONE-001\n  Scenario: a claim\n", excluded: 1 }],
+    ["CLM-EVR-031", { source: "@ONE\nFeature: one\n\n  @unit\n  Scenario Outline: claims\n    Examples:\n      | clm         |\n      | CLM-ONE-001 |\n", excluded: 0 }],
+  ])("[%s] Total of the claim codes written where no claim reads them", (_clm, { source, excluded }) => {
     expect(excludedClaimCodeOccurrencesOf(parsedFeatures([source], ["one.feature"]))).toBe(excluded);
   });
 });
@@ -209,11 +203,11 @@ describe("balance accounts for every step it reads", () => {
 });
 
 describe("only a fitness function that ran counts as run", () => {
-  it.each<{ clm: string; reconciled: Reconciled; ran: number }>([
-    { clm: "CLM-EVR-034", reconciled: () => [outOfBalance([{ outcome: "cannot-fail", kind: "fitness", obligation: { kind: "fitness" }, observation: observation("passed-on-error", "fitness") }])], ran: 1 },
-    { clm: "CLM-EVR-035", reconciled: () => [unnamed([{ outcome: "never-ran", kind: "fitness", observation: observation("never-ran", "fitness", []) }])], ran: 0 },
-    { clm: "CLM-EVR-036", reconciled: () => [outOfBalance([missing("fitness")])], ran: 0 },
-  ])("[$clm] balance counts a fitness function as run only when its Evidence Observation ran", ({ reconciled, ran }) => {
+  it.each<[string, { reconciled: Reconciled; ran: number }]>([
+    ["CLM-EVR-034", { reconciled: () => [outOfBalance([{ outcome: "cannot-fail", kind: "fitness", obligation: { kind: "fitness" }, observation: observation("passed-on-error", "fitness") }])], ran: 1 }],
+    ["CLM-EVR-035", { reconciled: () => [unnamed([{ outcome: "never-ran", kind: "fitness", observation: observation("never-ran", "fitness", []) }])], ran: 0 }],
+    ["CLM-EVR-036", { reconciled: () => [outOfBalance([missing("fitness")])], ran: 0 }],
+  ])("[%s] balance counts a fitness function as run only when its Evidence Observation ran", (_clm, { reconciled, ran }) => {
     expect(totalsOf(reconciled(), 0).evidenceObservations.fitnessFunctionsRan).toBe(ran);
   });
 });
@@ -258,11 +252,11 @@ describe("the provenance says what the run used", () => {
     expect(provenance.toolVersion).toBe("0.1.256");
   });
 
-  it.each<{ clm: string; given?: string; input: { readonly name: string; readonly path?: string } }>([
-    { clm: "CLM-EVR-042", given: "/work/acme/cucumber.json", input: { name: "cucumber", path: "cucumber.json" } },
-    { clm: "CLM-EVR-043", input: { name: "cucumber" } },
-    { clm: "CLM-EVR-044", given: "/work/acme/a.json", input: { name: "cucumber", path: "a.json" } },
-  ])("[$clm] the provenance describes the run", ({ given, input }) => {
+  it.each<[string, { given?: string; input: { readonly name: string; readonly path?: string } }]>([
+    ["CLM-EVR-042", { given: "/work/acme/cucumber.json", input: { name: "cucumber", path: "cucumber.json" } }],
+    ["CLM-EVR-043", { input: { name: "cucumber" } }],
+    ["CLM-EVR-044", { given: "/work/acme/a.json", input: { name: "cucumber", path: "a.json" } }],
+  ])("[%s] the provenance describes the run", (_clm, { given, input }) => {
     const { inputs } = provenanceFrom(VERSION, [{ name: "cucumber", ...(given === undefined ? {} : { path: given }) }], "/work/acme");
     expect(inputs).toEqual([input]);
   });
