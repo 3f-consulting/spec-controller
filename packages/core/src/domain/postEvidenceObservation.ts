@@ -325,10 +325,10 @@ export interface ExamplesAsWritten {
 }
 
 function placeOfExample(path: string, root?: string): string {
-  return relativizeToRoot(path.replace(/^\.\//, ""), root);
+  return relativizeToRoot(path.replace(/\.\//, ""), root);
 }
 
-const LOADED_FILE = /^\s*(?:While loading (.+?) a |An error occurred while loading (.+?)\.(?:\n|$))/;
+const LOADED_FILE = /(?:While loading (.+?) a |An error occurred while loading (.+?)\.(?:\n|$))/;
 
 // Each error outside the examples never ran: one naming the file it was loading posts at that file, and the rest,
 // when the messages name fewer files than the report counted errors, post once together at no file.
