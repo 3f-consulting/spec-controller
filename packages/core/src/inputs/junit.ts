@@ -18,13 +18,9 @@ interface JunitTestcase {
   readonly properties?: {
     readonly property?: ReadonlyArray<{ readonly name?: string; readonly value?: string }>;
   };
-  readonly failure?: string | { readonly message?: string; readonly "#text"?: string };
+  readonly failure?: { readonly message?: string; readonly "#text"?: string };
   readonly error?: { readonly message?: string; readonly "#text"?: string };
   readonly skipped?: unknown;
-}
-
-function failureOf(failure: NonNullable<JunitTestcase["failure"]>): TestCaseAsWritten["failure"] {
-  return typeof failure === "object" ? { message: failure.message, text: failure["#text"] } : { text: failure };
 }
 
 type ErrorsWritten = Pick<NonNullable<TestCaseAsWritten["error"]>, "inSetupOrTeardown">;
@@ -37,7 +33,7 @@ function testCaseOf(suite: JunitTestsuite, testcase: JunitTestcase, errorsWritte
     classname: testcase.classname,
     name: testcase.name,
     properties: testcase.properties?.property ?? [],
-    ...(failure === undefined ? {} : { failure: failureOf(failure) }),
+    ...(failure === undefined ? {} : { failure: { message: failure.message, text: failure["#text"] } }),
     ...(error === undefined ? {} : { error: { message: error.message, text: error["#text"], ...errorsWritten } }),
     skipped: testcase.skipped !== undefined,
   };
