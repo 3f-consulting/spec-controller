@@ -41,7 +41,7 @@ function urlParts(scheme: RegExpExecArray, rest: string): OriginAsWritten {
   const at = authority.lastIndexOf("@");
   const host = authority.slice(at + 1);
   if (afterAuthority.includes("@") || host === "") return UNREAD;
-  return { form: "address", scheme: scheme[1]!, lead: scheme[0], host, separator: "", path: pathOf(afterAuthority) };
+  return { form: "address", lead: scheme[0], host, separator: "", path: pathOf(afterAuthority) };
 }
 
 // The scp form's host and path follow its last @, split at their first :.
@@ -51,7 +51,7 @@ function scpParts(address: string): OriginAsWritten {
   const colon = hostPath.indexOf(":");
   if (colon <= 0) return UNREAD;
   const host = hostPath.slice(0, colon);
-  return { form: "address", scheme: undefined, lead: "", carriesUser: at !== -1, host, separator: ":", path: pathOf(hostPath.slice(colon + 1)) };
+  return { form: "address", lead: "", host, separator: ":", path: pathOf(hostPath.slice(colon + 1)) };
 }
 
 function pathOf(rest: string): string {

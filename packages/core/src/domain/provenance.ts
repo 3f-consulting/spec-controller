@@ -29,8 +29,7 @@ interface OriginAddress {
 // run identity port does not read, or cannot tell where its user part ends.
 export type OriginAsWritten =
   | { readonly form: "path"; readonly path: string; readonly carriesUser: boolean }
-  | (OriginAddress & { readonly scheme: string })
-  | (OriginAddress & { readonly scheme: undefined; readonly carriesUser: boolean })
+  | OriginAddress
   | { readonly form: "unread" };
 
 // What the run identity port read, as written, beside what the run was given.
@@ -64,12 +63,10 @@ export function runIdentityOf(read: RunIdentityAsRead): RunIdentity {
 const REPOSITORY_SUFFIX = ".git";
 
 // The target is named from the origin's host and path alone, so no user, password, query or fragment reaches it. An
-// address with a scheme, and one with no scheme that carries a user, are named owner/repo, the path's
-// last two parts, where it has two. A path with no user is named by its repository folder, never in full; an origin that
-// was not read names nothing.
+// address is named owner/repo, the path's last two parts, where it has two. A path with no user is named by its
+// repository folder, never in full; an origin that was not read names nothing.
 function addressNameOf(origin: Extract<OriginAsWritten, { form: "address" }>): string | undefined {
-  const namedByOwnerRepo = origin.scheme !== undefined || origin.carriesUser;
-  return (namedByOwnerRepo ? ownerRepoOf(origin.path) : undefined) ?? `${origin.lead}${origin.host}${origin.separator}${origin.path}`;
+  return ownerRepoOf(origin.path) ?? `${origin.lead}${origin.host}${origin.separator}${origin.path}`;
 }
 
 const NAME_OF_FORM: { readonly [F in OriginAsWritten["form"]]: (origin: Extract<OriginAsWritten, { form: F }>) => string | undefined } = {
