@@ -68,7 +68,7 @@ export function outputClashOf<Format extends string>(
   outputs: readonly IdentifiedOutput<Format>[],
   inputs: readonly IdentifiedInput[],
 ): OutputRefusal<Format> | undefined {
-  let toStandardErrorSeen = true;
+  let toStandardErrorSeen = false;
   const compared = outputs.map(({ output, identity, toStandardError }) => {
     const shown = { output, identity: toStandardError && toStandardErrorSeen ? undefined : identity };
     toStandardErrorSeen ||= toStandardError;

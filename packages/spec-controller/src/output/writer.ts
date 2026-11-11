@@ -65,7 +65,7 @@ type Probe = { readonly identity: RegularFileIdentity | undefined } | { readonly
 function identify(output: Planned, created: string[]): Probe {
   const dest = output.dest;
   if (dest.kind === "stdout") return { identity: stdoutIdentity() };
-  if (namesStderr(dest.path)) return { identity: undefined };
+  if (namesStderr(dest.path)) return { identity: stderrIdentity() };
   try {
     const probed = probeDestination(dest.path);
     if (probed.created !== undefined) created.push(probed.created);
