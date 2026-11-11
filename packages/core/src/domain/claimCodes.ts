@@ -98,11 +98,9 @@ const written = ({ featureCode, number }: ClaimCode): string => `${CLAIM_CODE_PR
 
 const claimCodesIn = (words: readonly (string | undefined)[]): ClaimCode[] => words.flatMap((word) => claimCodeFrom(word) ?? []);
 
-// The codes a scenario carries: an Outline's clm cells, or else its one tagged code; several tagged codes are an error of their own.
+// The codes a scenario carries: an Outline's clm cells, or else its tagged codes.
 function codesCarriedBy(scenario: ScenarioAsWritten): ClaimCode[] {
-  if (scenario.rows) return claimCodesIn(scenario.rows.map((row) => row.cell));
-  const codes = claimCodesIn(scenario.tags);
-  return codes.length === 1 ? codes : [];
+  return claimCodesIn(scenario.rows ? scenario.rows.map((row) => row.cell) : scenario.tags);
 }
 
 function filesByFeatureCode(features: readonly FeatureAsWritten[]): ReadonlyMap<string, readonly string[]> {
