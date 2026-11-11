@@ -89,6 +89,18 @@ describe("the run verdict says why balance could not reconcile a run", () => {
         return join(dir, "features");
       },
     }],
+    ["CLM-EVR-008", { corpusIn: (dir) => {
+        mkdirSync(join(dir, "features"));
+        writeFileSync(join(dir, "features", "one.feature"), "@ONE\nFeature: one\n\n  Background:\n    Given a step\n");
+        return join(dir, "features");
+      },
+    }],
+    ["CLM-EVR-008", { corpusIn: (dir) => {
+        mkdirSync(join(dir, "features"));
+        writeFileSync(join(dir, "features", "one.feature"), "# one: the feature is still to be written\n");
+        return join(dir, "features");
+      },
+    }],
   ])("[%s] the run will be not reconciled, naming why", (_clm, { corpusIn }) => {
     const reading = readCorpus(corpusIn(temporaryDirectory("evr-corpus-")));
     expect(reading.kind).toBe("read");
@@ -198,6 +210,15 @@ describe("balance accounts for every step it reads", () => {
     ]);
   });
 
+  it("[CLM-EVR-032] a job that calls a reusable workflow has no steps read in it, so it has no counts", () => {
+    const calling = `${TWO_JOBS}  deploy:\n    uses: ./.github/workflows/deploy.yml\n`;
+    const { jobs } = stepAccountOf(workflowSteps([calling], ["ci.yml"]), dispositionOf);
+    expect(jobs.map(({ job, stepsRead }) => ({ job, stepsRead }))).toEqual([
+      { job: "build", stepsRead: 4 },
+      { job: "check", stepsRead: 2 },
+    ]);
+  });
+
   it("[CLM-EVR-033] the total will be the sum of the jobs", () => {
     const { jobs, total } = stepAccountOf(workflowSteps([TWO_JOBS], ["ci.yml"]), dispositionOf);
     const summed = (count: "stepsRead" | "runners" | "reconcilerSteps" | "nonChecks" | "plumbing" | "candidates") => jobs.reduce((sum, job) => sum + job[count], 0);
@@ -285,8 +306,9 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-042", { given: "/work/acme/cucumber.json", input: { name: "cucumber", path: "cucumber.json" } }],
     ["CLM-EVR-043", { input: { name: "cucumber" } }],
     ["CLM-EVR-044", { given: "/work/acme/a.json", input: { name: "cucumber", path: "a.json" } }],
+    ["CLM-EVR-044", { given: "/work/acme", input: { name: "junit", path: "." } }],
   ])("[%s] the provenance describes the run", (_clm, { given, input }) => {
-    const { inputs } = provenanceFrom(VERSION, [{ name: "cucumber", ...(given === undefined ? {} : { path: given }) }], "/work/acme");
+    const { inputs } = provenanceFrom(VERSION, [{ name: input.name, ...(given === undefined ? {} : { path: given }) }], "/work/acme");
     expect(inputs).toEqual([input]);
   });
 });
