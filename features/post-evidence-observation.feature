@@ -211,6 +211,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-101 | the step record            | fitness               | the step with 3 as its name, running pnpm lint, in job build of ci.yml             | ci.yml:build:pnpm lint          |
         | CLM-OBS-102 | the step record            | fitness               | the step with no name and an empty command, in job build of ci.yml                 | ci.yml:build:                   |
         | CLM-OBS-103 | the step record            | fitness               | the step with no name, running a blank line then pnpm lint, in job build of ci.yml | ci.yml:build:pnpm lint          |
+        | CLM-OBS-104 | the step record            | fitness               | the step Lint in jobs build and test of ci.yml                                     | CLM-ONE-001                     |
 
     @unit @CLM-OBS-098
     Scenario: a test file outside the target's folder will be placed at the absolute path its evidence report recorded
