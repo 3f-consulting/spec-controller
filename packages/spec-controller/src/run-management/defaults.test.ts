@@ -125,6 +125,15 @@ describe("balance works out the target's folder", () => {
     expect(inputs.find(({ name }) => name === "vitest")).toEqual({ name: "vitest", path: "vitest.json" });
   });
 
+  it("[CLM-CLI-184] the corpus in a folder below the top of a git repository", () => {
+    const { repo } = committedRepository("target-below-git-top-");
+    const docs = join(repo, "docs");
+    mkdirSync(docs);
+    const features = corpusIn(docs);
+
+    expect(resolveTargetRoot({ features })).toBe(repo);
+  });
+
   it("[CLM-CLI-144] the corpus in no git repository", () => {
     const x = join(realpathSync(temporaryDirectory("target-no-git-")), "x");
     mkdirSync(x);

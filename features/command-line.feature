@@ -115,10 +115,11 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then the target's folder will be <folder>
 
       Examples:
-        | clm         | corpus              | where                             | folder     |
-        | CLM-CLI-142 | no feature corpus   | run from /work/acme               | /work/acme |
-        | CLM-CLI-143 | /work/acme/features | in a git repository at /work/acme | /work/acme |
-        | CLM-CLI-144 | /tmp/x/features     | in no git repository              | /tmp/x     |
+        | clm         | corpus                   | where                             | folder     |
+        | CLM-CLI-142 | no feature corpus        | run from /work/acme               | /work/acme |
+        | CLM-CLI-143 | /work/acme/features      | in a git repository at /work/acme | /work/acme |
+        | CLM-CLI-184 | /work/acme/docs/features | in a git repository at /work/acme | /work/acme |
+        | CLM-CLI-144 | /tmp/x/features          | in no git repository              | /tmp/x     |
 
     @e2e
     Scenario Outline: a default that cannot be read will stop the run
