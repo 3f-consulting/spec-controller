@@ -101,7 +101,6 @@ export enum AppError {
   ExtraArgument = "extra-argument",
   NotAFlag = "not-a-flag",
   FlagBeforeCommand = "flag-before-command",
-  LegacyJsonRemoved = "legacy-json-removed",
   UnknownFormat = "unknown-format",
   MoreThanOneToStdout = "more-than-one-to-stdout",
   OutputsShareFile = "outputs-share-file",

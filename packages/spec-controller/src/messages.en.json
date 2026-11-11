@@ -14,7 +14,6 @@
   "unknown-flag": "Unknown flag {flag} for ''{scope}'' — this is spec-controller {toolVersion}, and that flag is not in its {command} scope.",
   "pin-drifted": "If this version is pinned, the pin and the tree it is reading have drifted apart: bump the pin to a version whose ''{command}'' accepts {flag}.",
   "otherwise-see-flags": "Otherwise run ''{scope} --help' to see the flags this version accepts.",
-  "legacy-json-removed": "The --json <path> flag has been removed. Use --format json:<path> to write the JSON report to a file (e.g. --format json:spec-reconciliation.json).",
   "unknown-format": "Unknown --format {formats}. Supported formats are {supported} (e.g. --format md, --format json:report.json).",
   "more-than-one-to-stdout": "More than one output routes to stdout ({formats}); at most one may. Give one of them a :<path> to write it to a file instead (e.g. --format json:report.json).",
   "outputs-share-file": "Two outputs name the same file: {first} and {second}. Give each output a file of its own.",
