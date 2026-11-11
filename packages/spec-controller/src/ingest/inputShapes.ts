@@ -98,29 +98,23 @@ function wordedKind(kind: string): string {
   return message(AppMessage.ShapeKindOfType, { type: kind });
 }
 
-type At = { readonly kind: "at"; readonly path: string };
-type Position = { readonly kind: "top" } | At;
-
-const TOP: Position = { kind: "top" };
-
-function at(path: string): At {
-  return { kind: "at", path };
-}
+// A position is the path to a value inside the input; the top level has none.
+type Position = string | undefined;
 
 function nameOf(position: Position): string {
-  return position.kind === "top" ? message(AppMessage.ShapeTopLevel) : position.path;
+  return position ?? message(AppMessage.ShapeTopLevel);
 }
 
-function fieldOf(position: Position, key: string): At {
-  return at(position.kind === "top" ? key : `${position.path}.${key}`);
+function fieldOf(position: Position, key: string): string {
+  return position === undefined ? key : `${position}.${key}`;
 }
 
-function itemOf(position: Position, index: number): At {
-  return at(`${position.kind === "top" ? "" : position.path}[${index}]`);
+function itemOf(position: Position, index: number): string {
+  return `${position ?? ""}[${index}]`;
 }
 
 export function shapeFaultIn(value: unknown, shape: Shape): string | null {
-  return faultAt(value, shape, TOP);
+  return faultAt(value, shape, undefined);
 }
 
 function faultAt(value: unknown, shape: Shape, where: Position): string | null {
@@ -146,7 +140,7 @@ function fieldsFault(record: Record<string, unknown>, shape: Fields, where: Posi
   for (const [key, field] of Object.entries(shape.fields)) {
     const position = fieldOf(where, key);
     if (record[key] === undefined) {
-      if (shape.required?.includes(key) === true) return message(AppMessage.ShapeFieldMissing, { path: position.path });
+      if (shape.required?.includes(key) === true) return message(AppMessage.ShapeFieldMissing, { path: position });
       continue;
     }
     const fault = faultAt(record[key], field, position);
