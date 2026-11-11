@@ -1,7 +1,13 @@
 import { claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 import type { ClaimReconciliation, Outcome, QualityCheckReconciliation } from "./claimReconciliation.js";
 import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
-import type { EvidenceObservation, PipelineStep, StepDisposition } from "./postEvidenceObservation.js";
+import type {
+  EvidenceObservation,
+  PipelineStep,
+  RecordedCheckStep,
+  StepDisposition,
+  StepReadings,
+} from "./postEvidenceObservation.js";
 
 export type RunVerdict =
   | { readonly verdict: "balanced" }
@@ -207,5 +213,41 @@ export function provenanceOf(identity: RunIdentity, inputs: Provenance["inputs"]
     ...(identity.toolSha === undefined ? {} : { toolSha: identity.toolSha }),
     toolVersion: identity.toolVersion,
     inputs,
+  };
+}
+
+interface NonCheckNamed {
+  readonly workflow: string;
+  readonly job: string;
+  readonly step: string;
+}
+
+// The configuration as read, by shape, so this module and the one that reads it import nothing of each other.
+interface ConfigurationUsed {
+  readonly configuration: {
+    readonly runners: Readonly<Partial<Record<string, string | null>>>;
+    readonly nonChecks: readonly NonCheckNamed[];
+    readonly deferralTags: readonly string[];
+  };
+  readonly errors: readonly ConfigurationError[];
+}
+
+export interface RunToReconcile {
+  readonly features: readonly FeatureAsWritten[];
+  readonly testObservations: readonly EvidenceObservation[];
+  readonly steps: readonly PipelineStep[];
+  readonly readings: Omit<StepReadings, "nonChecks" | "runners">;
+  readonly recordedSteps?: readonly RecordedCheckStep[];
+  readonly configuration: ConfigurationUsed;
+  readonly strict: boolean;
+  readonly provenance: Provenance;
+}
+
+export function evidenceReconciliationOf(run: RunToReconcile): EvidenceReconciliation {
+  return {
+    claimReconciliations: [],
+    runVerdict: { verdict: "not-reconciled", why: "nothing-to-reconcile" },
+    totals: totalsOf([], 0),
+    provenance: run.provenance,
   };
 }

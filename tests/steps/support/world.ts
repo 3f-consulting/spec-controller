@@ -1,38 +1,6 @@
 import { setWorldConstructor, World } from "@cucumber/cucumber";
 import type { IWorldOptions } from "@cucumber/cucumber";
-import type { SpawnSyncReturns } from "node:child_process";
-import type { ClaimReconciliationsSection } from "./reportClaimReconciliations.js";
-import type { WithErrorsInTheInputs } from "./reportErrorsInTheInputs.js";
-
-export interface ClaimReconciliation {
-  claim: string;
-  kind: string;
-  verdict: string;
-}
-
-export interface ReconciledTarget {
-  readonly cwd: string;
-  readonly inputs: readonly string[];
-}
-
-export interface ReconciledRun {
-  status: number | null;
-  report: unknown;
-}
-
-export interface PointedAt {
-  readonly features?: string;
-  readonly manifest?: string;
-  readonly workflows?: string;
-  readonly vitest?: string;
-}
-
-export interface InputRow {
-  readonly file: string;
-  readonly pointedAt: PointedAt;
-  readonly subject: string;
-  readonly arrange?: (target: string) => void;
-}
+import type { ErrorObject } from "ajv";
 
 export interface CommandRun {
   readonly status: number | null;
@@ -40,92 +8,31 @@ export interface CommandRun {
   readonly stderr: string;
 }
 
-export interface ReportedRun {
-  readonly features: string;
-  readonly packageJson: string;
-  readonly ci: string;
-  readonly reports: string;
-  readonly cited: string;
-  readonly citingClass: string;
-  readonly citingTest: string;
+export interface ReconciledTarget {
+  readonly cwd: string;
+  readonly inputs: readonly string[];
 }
 
-export interface CorpusRun {
-  status: number | null;
-  report: Record<string, unknown>;
-}
-
-export interface GrammarRow {
-  claim: string;
-  kind: string;
-  qualityCheckReconciliations: { outcome?: string; evidenceObservations?: { outcome: string }[] }[];
+export interface RowObservation {
+  readonly cites: readonly { readonly featureCode: string; readonly number: string }[];
 }
 
 export interface RowReconciliation {
-  claim: string;
-  verdict: string;
-  qualityCheckReconciliations: { qualityCheckKind: string; evidenceObservations?: { outcome: string }[] }[];
+  readonly claim: { readonly claimCode?: { readonly featureCode: string; readonly number: string } };
+  readonly qualityCheckReconciliations: readonly { readonly observation?: RowObservation }[];
 }
 
-export interface GrammarRun {
-  status: number;
-  report: ClaimReconciliationsSection<GrammarRow> & WithErrorsInTheInputs;
+// The reports a run writes when each is asked for alone on standard output.
+export interface ReportsAlone {
+  readonly markdown: string;
+  readonly json: string;
 }
 
-export interface RoomCommand {
-  readonly command: string;
-  readonly args: readonly string[];
-  readonly cwd: string;
-}
-
-export interface Room {
-  readonly where: string;
-  readonly start: RoomCommand;
-  readonly ownHead: string | null;
-}
-
-export interface Provenance {
-  readonly toolSha: string;
-  readonly toolVersion: string;
-}
-
-export interface Arrangement {
-  readonly insideARepository: Room;
-  readonly outsideEveryRepository: Room;
-  readonly throughASymlink: Room;
-  readonly toolCheckoutHead: string;
-  readonly packedVersion: string;
-}
-
-export interface FitnessTarget {
-  features: string;
-  ci: string;
-  packageJson: string;
-}
-
-// The data file's entry a refusal is expected to show, by its code, with the values the step knows.
-export type ExpectedEntry = readonly [code: string, values: Readonly<Record<string, string>>];
-
-export interface ArrangedTarget {
-  readonly dir: string;
-  readonly args: readonly string[];
-  readonly named: string;
-  readonly where: string;
-  readonly refusal?: ExpectedEntry;
-  readonly more?: readonly ArrangedTarget[];
-}
-
-export interface ExitZeroPair {
-  readonly without: SpawnSyncReturns<string>;
-  readonly with: SpawnSyncReturns<string>;
-}
-
-export type SavedLedger = ClaimReconciliationsSection<{ qualityCheckReconciliations: { evidenceObservations?: Record<string, unknown>[] }[] }>;
-
-export interface ToolProvenance {
-  insideARepository: Provenance;
-  outsideEveryRepository: Provenance;
-  throughASymlink: Provenance;
+// The schema's refusal a checked report is expected to draw, by the keyword and the place it names.
+export interface ExpectedRefusal {
+  readonly keyword: string;
+  readonly instancePath: string;
+  readonly params: Readonly<Record<string, unknown>>;
 }
 
 // Every declared field is an own property holding undefined until a step sets it, so the proxy the
@@ -133,95 +40,25 @@ export interface ToolProvenance {
 // holds null.
 export class SpecControllerWorld extends World {
   readonly temporaryDirectories: string[] = [];
-  readonly permissionsTaken: Array<() => void> = [];
 
-  invocationArgs!: string[];
-  invocationCwd: string | null = null;
-  targetArgs!: string[];
-  reportArgs!: string[];
-  balanceResult!: SpawnSyncReturns<string>;
-  moreBalanceResults: readonly (readonly [ArrangedTarget, SpawnSyncReturns<string>])[] = [];
-  hostResult!: SpawnSyncReturns<string>;
-  exitZeroPair!: ExitZeroPair | null;
   run!: CommandRun;
 
-  repository!: string;
-  copy!: string;
-  answer!: SpawnSyncReturns<string>;
-  answerAlone!: SpawnSyncReturns<string>;
-
-  refusalCwd!: string;
-
-  missingPath!: string;
-  unknownCommand!: string;
-  unparseableReport!: string;
-  unparseableFeature!: string;
-  uncitedJsonPath!: string;
-  noCorpusTargets!: { shape: string; root: string }[];
-  noCorpusRuns!: { shape: string; stdout: string }[];
-  flagOutOfPlace!: string;
-  workingDirectory!: string;
-  argumentNamed!: string;
-
-  reportedRun!: ReportedRun;
-  citedScenario!: string;
-  citingLocator!: string;
-  notAReport!: string;
-  target!: ArrangedTarget;
-
-  ancestor!: string;
-  reconciledTarget!: ReconciledTarget;
-  reconciledRun!: ReconciledRun | null;
-  nestedCorpus!: string;
-  flatCorpus!: string;
-  nestedRun!: CorpusRun | null;
-  flatRun!: CorpusRun | null;
-  sameNameJson!: Record<string, unknown> | null;
-  sameNameMarkdown!: string;
-  grammarTarget!: { features: Record<string, string>; vitest?: unknown; cucumber?: unknown; ciSteps?: unknown };
-  grammarRun!: GrammarRun;
   rowsTarget!: string;
+  reconciledTarget!: ReconciledTarget;
+  reconciledReport!: unknown;
 
-  report!: string;
-  savedJson!: SavedLedger;
-  verdictExit = 1;
-  fitnessTarget!: FitnessTarget;
-  siblingStatus!: number | null;
+  checkedReport!: Record<string, unknown>;
+  expectedRefusal!: ExpectedRefusal | null;
+  schemaErrors!: readonly ErrorObject[];
 
-  corpusCwd!: string;
-  markdownDestination!: string;
-  jsonDestination!: string;
-  targetRepo!: string;
-  foreignCwd!: string;
-  outDir!: string;
-  markdown!: string;
-  jsonText!: string;
-
-  destinationTargetDir!: string;
+  reportsAlone!: ReportsAlone;
   destinationScratch!: string;
-  inputRow!: InputRow;
-  aimedAt!: string;
-  throughStdout!: boolean;
-  destinationInputsBefore!: ReadonlyMap<string, string>;
-  namedOutput!: string;
-  namedInput!: string;
-
-  destination!: string;
-  markdownSpec!: string;
-  markdownPath!: string | null;
-  markdownBefore!: string | null;
+  destinationFiles!: readonly string[];
   sharedFile!: string;
-  firstPath!: string;
-  secondPath!: string;
-  thirdPath!: string;
-  sharedBefore!: string | null;
+  sharedBefore!: string;
   namedOutputs!: readonly [string, string];
-  stdoutFile!: string | null;
-  linkPath!: string;
-  linkTargetPath!: string;
 
-  arranged!: Arrangement;
-  reported!: ToolProvenance;
+  removedWorkingDirectory!: string;
 
   constructor(options: IWorldOptions) {
     super(options);

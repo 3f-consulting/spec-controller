@@ -73,12 +73,12 @@ const bundleTheCommand = async () => {
 const writeTheReportSchema = () => {
   const core = resolve(here, "../core");
   const schema = createGenerator({
-    path: join(core, "src", "domain", "renderInput.ts"),
+    path: join(core, "src", "domain", "evidenceReconciliation.ts"),
     tsconfig: join(core, "tsconfig.build.json"),
-    type: "RenderInput",
+    type: "EvidenceReconciliation",
     additionalProperties: false,
     skipTypeCheck: true,
-  }).createSchema("RenderInput");
+  }).createSchema("EvidenceReconciliation");
   writeFileSync(join(dist, "spec-reconciliation.schema.json"), `${JSON.stringify(schema, null, 2)}\n`);
 };
 

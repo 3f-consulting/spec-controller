@@ -10,7 +10,7 @@ import {
 } from "../ingest/inputShapes.js";
 import type { EvidenceReader } from "../ingest/ingestQualityChecks.js";
 import type { ReportFormat } from "../ingest/reportReading.js";
-import type { RunInput, RunInputName } from "@3f-consulting/spec-controller-core";
+import type { RunInput } from "@3f-consulting/spec-controller-core";
 
 export interface ReportInput {
   readonly reader: EvidenceReader;
@@ -152,11 +152,9 @@ export function inputPathsOf(args: Readonly<Record<string, string>>): InputPaths
   return Object.fromEntries(EVIDENCE_INPUTS.map(({ flag, key }) => [key, args[flag]]));
 }
 
-const INPUT_NAMES: readonly RunInputName[] = EVIDENCE_INPUTS.map(({ flag, key }) => ({ name: key, flag: `--${flag}` }));
-
 export function runInputsOf(paths: InputPaths): RunInput[] {
-  return INPUT_NAMES.map((input) => {
-    const path = paths[input.name as InputKey];
-    return path === undefined ? input : { ...input, path };
+  return EVIDENCE_INPUTS.map(({ key }) => {
+    const path = paths[key as InputKey];
+    return path === undefined ? { name: key } : { name: key, path };
   });
 }

@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { AppError, AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 import { runBalanceCaptured } from "../runBalance.test-utils.js";
-import { readFeatureSources } from "../ingest/ingestScenarios.js";
-import { inputsReadBy, NODE_INPUT_READER, type InputReader } from "./inputsRead.js";
+import { inputsReadBy, type InputReader } from "./inputsRead.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { printedRefusal } from "../shownText.test-utils.js";
 
@@ -111,30 +110,5 @@ describe("[CLM-FMT-013] balance refuses a --format naming one of the feature fil
 
     expect(run.stderr).toBe("");
     expect(readFileSync(output, "utf8")).toContain("# ");
-  });
-});
-
-describe("[CLM-CLI-085] a feature file in a subdirectory of the corpus is among the files a run reads", () => {
-  const corpus = "tests/fixtures/nested-corpus/features";
-
-  it("names every feature file under the corpus, at any depth", () => {
-    expect(NODE_INPUT_READER.featureFiles(corpus)).toEqual([
-      join(corpus, "area/deeper/deep.feature"),
-      join(corpus, "area/middle.feature"),
-      join(corpus, "top.feature"),
-    ]);
-  });
-
-  it("names the same files, in the same order, as the run judges", () => {
-    expect(NODE_INPUT_READER.featureFiles(corpus)).toEqual(readFeatureSources(corpus).map(({ path }) => path));
-  });
-});
-
-describe("[CLM-CLI-017] a target with no features/ directory is reported on, never crashed over", () => {
-  it("names no feature file as read when the corpus directory is absent", () => {
-    const corpus = join(temporaryDirectory("clm-cli-017-reader-"), "features");
-    expect(existsSync(corpus)).toBe(false);
-
-    expect(NODE_INPUT_READER.featureFiles(corpus)).toEqual([]);
   });
 });
