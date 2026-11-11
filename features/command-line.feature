@@ -146,6 +146,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then nothing will be posted from it
       and the run will not stop
 
+    @unit @CLM-CLI-183
+    Scenario: a workflows folder read by default that does not exist will count as no workflows, not as a missing input
+      given the run named no CI workflows, and the folder .github/workflows did not exist
+      when balance reads its inputs
+      then it will read no workflows
+      and the run will not stop
+
     @unit
     Scenario Outline: an input that is not valid will stop the run
       given the run met <error>
