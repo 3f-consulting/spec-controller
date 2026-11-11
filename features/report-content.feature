@@ -15,11 +15,11 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   Rule: each report has the structure it promises
 
-    @wip
+    @e2e
     Scenario Outline: the JSON report will pass its schema only when it has the structure the schema promises
-      given <report> was written
-      when it is checked against the schema
-      then it will be <result>
+      Given <report> was written
+      When it is checked against the schema
+      Then it will be <result>
 
       Examples:
         | clm         | report                                               | result   |

@@ -20,7 +20,7 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       When CI runs the fitness function over every file those rules cover
       Then no file will break a design rule
 
-    @fitness @CLM-FIT-NEW
+    @fitness @CLM-FIT-081
     Scenario: no file the push touches breaks a readability limit
       Given a push changed some files
       When CI runs the fitness function over those files

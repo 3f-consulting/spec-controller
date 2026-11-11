@@ -171,12 +171,12 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-075 | RSpec's evidence report             | [CLM-ONE-001] in its description           | a group with [CLM-ONE-002] in its description  | CLM-ONE-001   |
         | CLM-OBS-076 | RSpec's evidence report             | no claim code                              | a group with [CLM-ONE-002] in its description  | CLM-ONE-002   |
 
-    @wip @CLM-OBS-077
+    @integration @CLM-OBS-077
     Scenario: balance posts each row of an Outline citing its own claim code
-      given two executable claims were rows of one Scenario Outline, with the claim codes CLM-ONE-001 and CLM-ONE-002
-      and Cucumber's evidence report had a result for each row
-      when balance posts the evidence
-      then an Evidence Observation will be posted for each row, citing the claim code of its row
+      Given two executable claims were rows of one Scenario Outline, with the claim codes CLM-ONE-001 and CLM-ONE-002
+      And Cucumber's evidence report had a result for each row
+      When balance posts the evidence
+      Then an Evidence Observation will be posted for each row, citing the claim code of its row
 
   Rule: an Evidence Observation says where to look
 
