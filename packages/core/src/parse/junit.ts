@@ -25,8 +25,8 @@ interface JunitTestcase {
 }
 
 const CLAIM_CODE_PROPERTY = "clm";
-const GO_BUILD_FAILURE_TESTCASE = "TestMain";
-const GO_BUILD_FAILURE_MARK = "[build failed]";
+// Go writes a package whose tests never ran, because it failed to build or its TestMain failed, as a failing TestMain with no classname.
+const GO_PACKAGE_TESTCASE = "TestMain";
 
 const isCollectionFailure = (testcase: JunitTestcase): boolean => testcase.error !== undefined && !testcase.classname;
 
@@ -39,9 +39,8 @@ function failureTextOf(testcase: JunitTestcase): string | undefined {
 
 const errorTextOf = (testcase: JunitTestcase): string | undefined => testcase.error?.["#text"] ?? testcase.error?.message;
 
-function isBuildFailure(testcase: JunitTestcase): boolean {
-  return !testcase.classname && testcase.name === GO_BUILD_FAILURE_TESTCASE && failureTextOf(testcase)?.includes(GO_BUILD_FAILURE_MARK) === true;
-}
+const isPackageFailure = (testcase: JunitTestcase): boolean =>
+  !testcase.classname && testcase.name === GO_PACKAGE_TESTCASE && testcase.failure !== undefined;
 
 function runResultOf(testcase: JunitTestcase, errorResult: RunResult): RunResult {
   if (testcase.error !== undefined) return errorResult;
@@ -69,7 +68,7 @@ function citesOf(testcase: JunitTestcase): readonly ClaimCode[] {
 function observationOf(suite: JunitTestsuite, testcase: JunitTestcase, errorResult: RunResult): EvidenceObservation | undefined {
   if (testcase.skipped !== undefined) return undefined;
   if (isCollectionFailure(testcase)) return neverRanObservation(TEST_REPORT_KIND, testcase.name ?? "", errorTextOf(testcase));
-  if (isBuildFailure(testcase)) return neverRanObservation(TEST_REPORT_KIND, suite.name ?? "", failureTextOf(testcase));
+  if (isPackageFailure(testcase)) return neverRanObservation(TEST_REPORT_KIND, suite.name ?? "", failureTextOf(testcase));
   if (isClassSetupFailure(testcase)) return neverRanObservation(TEST_REPORT_KIND, testcase.classname ?? "", errorTextOf(testcase));
   const result = resultOfRun(runResultOf(testcase, errorResult))!;
   const message = result === "never-ran" ? errorTextOf(testcase) : undefined;
