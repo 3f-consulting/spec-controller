@@ -104,5 +104,5 @@ function inputOverwrittenOf<Format extends string>(
 }
 
 function sameFile(a: FileIdentity, b: FileIdentity): boolean {
-  return a.dev === b.dev && a.ino === b.ino;
+  return a.dev === b.dev;
 }
