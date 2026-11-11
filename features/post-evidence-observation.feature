@@ -131,6 +131,13 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-057 | true on its step  | passed-on-error              |
         | CLM-OBS-058 | true on its job   | passed-on-error              |
 
+    @unit @CLM-OBS-096
+    Scenario: balance posts a recorded step that no workflow holds at its claim code, as never ran, with the note the record gave
+      given the step record had an entry for CLM-ONE-001 that was skipped
+      and no workflow balance read had a step with the id CLM-ONE-001
+      when balance posts the evidence
+      then one never-ran fitness Evidence Observation will be posted, citing CLM-ONE-001, placed at CLM-ONE-001, with the note skipped
+
     @unit @CLM-OBS-097
     Scenario: a fitness function whose id is not a claim code will be posted once, citing no claim code
       given a workflow had a step running pnpm audit-the-tree with the id audit

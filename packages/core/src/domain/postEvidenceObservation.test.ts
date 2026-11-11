@@ -282,3 +282,12 @@ describe("a fitness function whose id is not a claim code will be posted once, c
     expect(posted.map(({ kind, cites }) => ({ kind, cites }))).toEqual([{ kind: "fitness", cites: [] }]);
   });
 });
+
+describe("balance posts a recorded step that no workflow holds at its claim code, as never ran, with the note the record gave", () => {
+  it("[CLM-OBS-096] balance posts a recorded step that no workflow holds at its claim code, as never ran, with the note the record gave", () => {
+    const posted = fitness("      - id: CLM-ONE-002\n        name: Build\n        run: pnpm build\n", { "CLM-ONE-001": { outcome: "skipped" } });
+    expect(posted.filter(({ cites }) => cites.length > 0)).toEqual([
+      { cites: [{ featureCode: "ONE", number: "001" }], result: "never-ran", kind: "fitness", place: "CLM-ONE-001", notes: ["skipped"] },
+    ]);
+  });
+});
