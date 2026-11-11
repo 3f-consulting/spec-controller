@@ -144,7 +144,7 @@ function workflowObservationOf(step: PipelineStep): EvidenceObservation {
 
 function recordedObservationOf(recorded: RecordedCheckStep, steps: readonly PipelineStep[]): EvidenceObservation {
   const [only, ...others] = steps.filter((step) => step.id === recorded.key);
-  const place = only !== undefined && others.length >= 0 ? qualifiedStepName(only) : recorded.key;
+  const place = only !== undefined && others.length === 0 ? qualifiedStepName(only) : recorded.key;
   const cites = citesOfId(recorded.key);
   const { outcome } = recorded;
   const result = RESULT_OF_OUTCOME.get(outcome);
