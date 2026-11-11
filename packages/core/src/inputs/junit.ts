@@ -27,8 +27,10 @@ function failureOf(failure: NonNullable<JunitTestcase["failure"]>): TestCaseAsWr
   return typeof failure === "object" ? { message: failure.message, text: failure["#text"] } : { text: failure };
 }
 
+type ErrorsWritten = Pick<NonNullable<TestCaseAsWritten["error"]>, "inSetupOrTeardown">;
+
 // Each test case as the report wrote it: its suite, class, name and properties, and its failure, error or skip.
-function testCaseOf(suite: JunitTestsuite, testcase: JunitTestcase): TestCaseAsWritten {
+function testCaseOf(suite: JunitTestsuite, testcase: JunitTestcase, errorsWritten: ErrorsWritten): TestCaseAsWritten {
   const { failure, error } = testcase;
   return {
     suite: suite.name,
@@ -36,21 +38,23 @@ function testCaseOf(suite: JunitTestsuite, testcase: JunitTestcase): TestCaseAsW
     name: testcase.name,
     properties: testcase.properties?.property ?? [],
     ...(failure === undefined ? {} : { failure: failureOf(failure) }),
-    ...(error === undefined ? {} : { error: { message: error.message, text: error["#text"] } }),
+    ...(error === undefined ? {} : { error: { message: error.message, text: error["#text"], ...errorsWritten } }),
     skipped: testcase.skipped !== undefined,
   };
 }
 
-function testCasesOf(report: JunitXmlReport): TestCaseAsWritten[] {
-  return (report.testsuites?.testsuite ?? []).flatMap((suite) => (suite.testcase ?? []).map((testcase) => testCaseOf(suite, testcase)));
+function testCasesOf(report: JunitXmlReport, errorsWritten: ErrorsWritten): TestCaseAsWritten[] {
+  return (report.testsuites?.testsuite ?? []).flatMap((suite) =>
+    (suite.testcase ?? []).map((testcase) => testCaseOf(suite, testcase, errorsWritten)),
+  );
 }
 
-// JUnit writes an <error> for an exception the test threw: it failed.
+// JUnit writes an <error> for an exception the test itself threw.
 export function parseJunitEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
-  return testCaseObservationsOf(testCasesOf(report), "failed");
+  return testCaseObservationsOf(testCasesOf(report, {}));
 }
 
-// pytest writes an <error> for an error in a test's setup or teardown: it never reached its assertions.
+// pytest writes an <error> for an error in a test's setup or teardown.
 export function parsePytestEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
-  return testCaseObservationsOf(testCasesOf(report), "never-ran");
+  return testCaseObservationsOf(testCasesOf(report, { inSetupOrTeardown: true }));
 }
