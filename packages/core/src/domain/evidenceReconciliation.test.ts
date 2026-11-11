@@ -276,9 +276,21 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-045", "git@github.com:acme/web.git"],
     ["CLM-EVR-045", "ci:s3cret@github.com:acme/web.git"],
     ["CLM-EVR-045", "g@github.com:acme/web.git"],
+    ["CLM-EVR-049", "ssh://git@github.com/acme/web.git"],
   ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote) => {
-    const { repo } = committedRepository("evr-scp-origin-", remote);
+    const { repo } = committedRepository("evr-owner-repo-origin-", remote);
     expect(provenanceOf(runIdentityOf({ origin: readTargetOrigin(repo), toolFolder: TOOL_FOLDER, ...VERSION }), []).target).toBe("acme/web");
+  });
+
+  it.each([
+    ["CLM-EVR-047", "/srv/git/web.git"],
+    ["CLM-EVR-047", "../web"],
+    ["CLM-EVR-047", "../web/"],
+    ["CLM-EVR-047", "web.git"],
+    ["CLM-EVR-048", "file:///srv/git/web.git"],
+  ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote) => {
+    const { repo } = committedRepository("evr-path-origin-", remote);
+    expect(provenanceOf(runIdentityOf({ origin: readTargetOrigin(repo), toolFolder: TOOL_FOLDER, ...VERSION }), []).target).toBe("web");
   });
 
   it("[CLM-EVR-040] the provenance describes the run", () => {
@@ -307,13 +319,16 @@ describe("the provenance says what the run used", () => {
     expect(provenance.toolVersion).toBe("unknown");
   });
 
-  it.each<[string, { given?: string; input: { readonly name: string; readonly path?: string } }]>([
+  it.each<[string, { given?: string; root?: string; input: { readonly name: string; readonly path?: string } }]>([
     ["CLM-EVR-042", { given: "/work/acme/cucumber.json", input: { name: "cucumber", path: "cucumber.json" } }],
     ["CLM-EVR-043", { input: { name: "cucumber" } }],
     ["CLM-EVR-044", { given: "/work/acme/a.json", input: { name: "cucumber", path: "a.json" } }],
+    ["CLM-EVR-044", { given: "/work/acme/a.json", root: "/work/acme/.", input: { name: "cucumber", path: "a.json" } }],
+    ["CLM-EVR-044", { given: "/work/acme/a.json", root: "//work//acme/", input: { name: "cucumber", path: "a.json" } }],
+    ["CLM-EVR-044", { given: "/work/acme/a.json", root: "/work/x/../acme", input: { name: "cucumber", path: "a.json" } }],
     ["CLM-EVR-044", { given: "/work/acme", input: { name: "junit", path: "." } }],
-  ])("[%s] the provenance describes the run", (_clm, { given, input }) => {
-    const { inputs } = provenanceFrom(VERSION, [{ name: input.name, ...(given === undefined ? {} : { path: given }) }], "/work/acme");
+  ])("[%s] the provenance describes the run", (_clm, { given, root = "/work/acme", input }) => {
+    const { inputs } = provenanceFrom(VERSION, [{ name: input.name, ...(given === undefined ? {} : { path: given }) }], root);
     expect(inputs).toEqual([input]);
   });
 });

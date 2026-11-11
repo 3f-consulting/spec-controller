@@ -29,7 +29,7 @@ interface OriginAddress {
 // run identity port does not read, or cannot tell where its user part ends.
 export type OriginAsWritten =
   | { readonly form: "path"; readonly path: string; readonly carriesUser: boolean }
-  | (OriginAddress & { readonly scheme: string; readonly transport: string })
+  | (OriginAddress & { readonly scheme: string })
   | (OriginAddress & { readonly scheme: undefined; readonly carriesUser: boolean })
   | { readonly form: "unread" };
 
@@ -61,33 +61,39 @@ export function runIdentityOf(read: RunIdentityAsRead): RunIdentity {
   };
 }
 
-const OWNER_REPO_SCHEMES: readonly string[] = ["https", "ssh"];
-
 const REPOSITORY_SUFFIX = ".git";
 
 // The target is named from the origin's host and path alone, so no user, password, query or fragment reaches it. An
-// https or ssh address with no transport, and one with no scheme that carries a user, are named owner/repo, the path's
-// last two parts, where it has two. A path with no user is named as written; an origin that was not read names nothing.
+// address with a scheme, and one with no scheme that carries a user, are named owner/repo, the path's
+// last two parts, where it has two. A path with no user is named by its repository folder, never in full; an origin that
+// was not read names nothing.
 function addressNameOf(origin: Extract<OriginAsWritten, { form: "address" }>): string | undefined {
-  const namedByOwnerRepo =
-    origin.scheme === undefined ? origin.carriesUser : origin.transport === "" && OWNER_REPO_SCHEMES.includes(origin.scheme);
+  const namedByOwnerRepo = origin.scheme !== undefined || origin.carriesUser;
   return (namedByOwnerRepo ? ownerRepoOf(origin.path) : undefined) ?? `${origin.lead}${origin.host}${origin.separator}${origin.path}`;
 }
 
 const NAME_OF_FORM: { readonly [F in OriginAsWritten["form"]]: (origin: Extract<OriginAsWritten, { form: F }>) => string | undefined } = {
   unread: () => undefined,
-  path: (origin) => (origin.carriesUser ? undefined : origin.path),
+  path: (origin) => (origin.carriesUser ? undefined : repositoryFolderOf(origin.path)),
   address: addressNameOf,
 };
 
 const originNameOf = (origin: OriginAsWritten): string | undefined =>
   (NAME_OF_FORM[origin.form] as (origin: OriginAsWritten) => string | undefined)(origin);
 
+const withoutSuffix = (path: string): string => (path.endsWith(REPOSITORY_SUFFIX) ? path.slice(0, -REPOSITORY_SUFFIX.length) : path);
+
 function ownerRepoOf(path: string): string | undefined {
-  const bare = path.replace(/^\//, "");
-  const segments = (bare.endsWith(REPOSITORY_SUFFIX) ? bare.slice(0, -REPOSITORY_SUFFIX.length) : bare).split("/");
+  const segments = withoutSuffix(path.replace(/^\//, "")).split("/");
   return segments.length >= 2 ? segments.slice(-2).join("/") : undefined;
 }
+
+// A repository folder is the path's last part, less any .git.
+const repositoryFolderOf = (path: string): string | undefined =>
+  withoutSuffix(path)
+    .split("/")
+    .filter((part) => part !== "")
+    .at(-1);
 
 // A version that is no string, or an empty one, is unknown.
 export function toolVersionOf(version: unknown): string {

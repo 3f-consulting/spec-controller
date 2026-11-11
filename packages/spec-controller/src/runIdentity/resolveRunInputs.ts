@@ -14,25 +14,18 @@ export function readTargetOrigin(targetDir: string | undefined): OriginAsWritten
   return remote === undefined ? undefined : originPartsOf(remote);
 }
 
-const TRANSPORT = /^[A-Za-z0-9+.-]+::/;
-const URL_SCHEME = /^([A-Za-z][A-Za-z0-9+.-]*):\/\//;
+const URL_SCHEME = /^(https|ssh):\/\//;
+const OTHER_SCHEME_OR_TRANSPORT = /^[A-Za-z0-9+.-]+:(:|\/\/)/;
 const UNREAD: OriginAsWritten = { form: "unread" };
 
-/**
- * Reads a remote in the forms git reads: a local path, a file: URL, a URL after any transport prefix, or the scp form.
- * A file URL behind a transport, a transport to anything but a URL, and a remote whose user part's end can only be
- * guessed are not read.
- */
+// Reads a local path, a file: URL, an https or ssh URL, or the scp form. Any other scheme, a transport prefix, and a
+// remote whose user part's end can only be guessed are not read.
 function originPartsOf(remote: string): OriginAsWritten {
   if (isLocalPath(remote)) return { form: "path", path: remote, carriesUser: false };
   if (remote.startsWith("file:")) return { form: "path", path: remote, carriesUser: remote.includes("@") };
-  const transport = TRANSPORT.exec(remote)?.[0] ?? "";
-  const address = remote.slice(transport.length);
-  const scheme = URL_SCHEME.exec(address);
-  if (scheme !== null) {
-    return scheme[1] === "file" ? UNREAD : urlParts(transport, scheme, address.slice(scheme[0].length));
-  }
-  return transport === "" ? scpParts(address) : UNREAD;
+  const scheme = URL_SCHEME.exec(remote);
+  if (scheme !== null) return urlParts(scheme, remote.slice(scheme[0].length));
+  return OTHER_SCHEME_OR_TRANSPORT.test(remote) ? UNREAD : scpParts(remote);
 }
 
 // Git's own test: a remote with a / before its first :, or with no : at all, is a local path.
@@ -42,14 +35,13 @@ function isLocalPath(remote: string): boolean {
 
 // The authority runs to the first /, ? or #, and its host follows its last @. An @ after it means a password or a
 // query holds one, so where the user part ends can only be guessed.
-function urlParts(transport: string, scheme: RegExpExecArray, rest: string): OriginAsWritten {
+function urlParts(scheme: RegExpExecArray, rest: string): OriginAsWritten {
   const authority = rest.split(/[/?#]/, 1)[0]!;
   const afterAuthority = rest.slice(authority.length);
   const at = authority.lastIndexOf("@");
   const host = authority.slice(at + 1);
   if (afterAuthority.includes("@") || host === "") return UNREAD;
-  const lead = `${transport}${scheme[0]}`;
-  return { form: "address", transport, scheme: scheme[1]!, lead, host, separator: "", path: pathOf(afterAuthority) };
+  return { form: "address", scheme: scheme[1]!, lead: scheme[0], host, separator: "", path: pathOf(afterAuthority) };
 }
 
 // The scp form's host and path follow its last @, split at their first :.

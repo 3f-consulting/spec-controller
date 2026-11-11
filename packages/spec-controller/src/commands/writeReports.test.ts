@@ -1,6 +1,6 @@
-import { chmodSync, existsSync, lstatSync, statSync, mkdirSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, closeSync, existsSync, lstatSync, statSync, mkdirSync, openSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { renderJson, renderMarkdown, type EvidenceReconciliation, type IdentifiedInput } from "@3f-consulting/spec-controller-core";
 import { writeReports } from "./balance.js";
 import { regularFileIdentity } from "../output/outputLocation.js";
@@ -23,6 +23,27 @@ const RUN: EvidenceReconciliation = {
 };
 
 recordWhatTheProgramWrites();
+
+// Standard error, as the tool finds its file, can be redirected onto a file a test opened, leaving the process's own alone.
+const standardErrorRedirect: { readonly fd: number; to: number | undefined } = { fd: 2, to: undefined };
+
+vi.mock("node:fs", async (importOriginal) => {
+  const fs = await importOriginal<typeof import("node:fs")>();
+  const fstatSync = ((fd: number, options?: Parameters<typeof fs.fstatSync>[1]) =>
+    fs.fstatSync(fd === standardErrorRedirect.fd ? (standardErrorRedirect.to ?? fd) : fd, options)) as typeof fs.fstatSync;
+  return { ...fs, fstatSync };
+});
+
+function withStandardErrorRedirectedTo<T>(path: string, run: () => T): T {
+  const fd = openSync(path, "r");
+  standardErrorRedirect.to = fd;
+  try {
+    return run();
+  } finally {
+    standardErrorRedirect.to = undefined;
+    closeSync(fd);
+  }
+}
 
 function reportsWritten(formatSpecs: readonly string[], inputs: readonly IdentifiedInput[] = []): Written {
   settlingRefusal(() => {
@@ -235,5 +256,26 @@ describe("a report will not be written over a file the run reads", () => {
       asItWas: readFileSync(testResults, "utf8"),
       report: existsSync(join(dir, "report.md")),
     }).toEqual({ exitCode: 2, complaint: true, asItWas: "{}\n", report: false });
+  });
+});
+
+describe("a report on standard error will not go in a file another report names or the run reads", () => {
+  it.each([
+    ["CLM-FMT-031", "a file another report names", (file: string) => ({ formatSpecs: ["md:/dev/stderr", `json:${file}`], inputs: [] })],
+    [
+      "CLM-FMT-032",
+      "a file the run reads",
+      (file: string) => ({ formatSpecs: ["md:/dev/stderr"], inputs: [{ subject: "Vitest report", path: file, identity: regularFileIdentity(file) }] }),
+    ],
+  ])("[%s] a report on standard error, redirected onto %s, stops the run and leaves the file as it was", (_clm, _file, run) => {
+    const file = join(temporaryDirectory("spec-controller-stderr-"), "vitest.json");
+    writeFileSync(file, "{}\n");
+    const { formatSpecs, inputs } = run(file);
+    const written = withStandardErrorRedirectedTo(file, () => reportsWritten(formatSpecs, inputs));
+    expect({
+      exitCode: written.exitCode,
+      complaint: written.stderr.includes(file),
+      asItWas: readFileSync(file, "utf8"),
+    }).toEqual({ exitCode: 2, complaint: true, asItWas: "{}\n" });
   });
 });

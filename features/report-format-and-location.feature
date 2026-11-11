@@ -124,3 +124,16 @@ Feature: You get each report in the format and place you asked for, and the run 
       then the run will stop, give no verdict and exit 2
       and it will complain, naming the file
       and the file will be as it was
+
+    @unit
+    Scenario Outline: a report on standard error will not go in a file another report names or the run reads
+      given standard error was redirected to <the file>
+      when you ask for a report on standard error
+      then the run will stop, give no verdict and exit 2
+      and it will complain, naming the file
+      and the file will be as it was
+
+      Examples:
+        | clm         | the file                    |
+        | CLM-FMT-031 | a file another report names |
+        | CLM-FMT-032 | a file the run reads        |
