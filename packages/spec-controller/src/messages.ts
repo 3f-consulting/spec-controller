@@ -22,10 +22,6 @@ export enum AppMessage {
   FormatFlag = "format-flag",
   StrictFlag = "strict-flag",
   ExitZeroFlag = "exit-zero-flag",
-  ConfigurationHeading = "configuration-heading",
-  DeferralTagsKey = "deferral-tags-key",
-  DeferralTagsExplanation = "deferral-tags-explanation",
-  BuiltInDeferralTags = "built-in-deferral-tags",
   AllocateSummary = "allocate-summary",
   FeaturePartArgument = "feature-part-argument",
   NewFlag = "new-flag",
@@ -132,7 +128,6 @@ export type WordedAppMessage = AppMessage;
 export type PlainWordedAppMessage = Exclude<WordedAppMessage, keyof AppMessageValues>;
 
 export interface AppMessageValues {
-  [AppMessage.BuiltInDeferralTags]: { tags: string };
   [AppMessage.ShallowHistoryRisksPartCode]: { before: string; part: string };
   [AppMessage.ShallowHistoryRisksCodeAbove]: { before: string; code: string };
   [AppMessage.NoRepositoryRisksPartCode]: { part: string };
