@@ -91,7 +91,8 @@ function resolveToolVersion(fromDir: string): string {
   let dir = fromDir;
   for (;;) {
     try {
-      return (JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as { version: string }).version;
+      const { version } = JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as { version?: unknown };
+      return typeof version === "string" && version !== "" ? version : "unknown";
     } catch {
       const parent = dirname(dir);
       if (parent === dir) return "unknown";
