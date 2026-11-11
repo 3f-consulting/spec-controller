@@ -4,6 +4,7 @@ import { afterEach, describe, it, vi } from "vitest";
 import { parse } from "yaml";
 import { message } from "../appText.js";
 import { AppError, AppMessage } from "../messages.js";
+import { parseJunitXml } from "../ingest/junitXml.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { captured, expectRefused } from "./balanceRun.test-utils.js";
 
@@ -83,6 +84,17 @@ describe("an input that is not valid will stop the run", () => {
         const path = written(t.dir, "vitest.json", "{not json");
         const reason = thrownBy(() => JSON.parse("{not json"));
         return { argv: ["--features", t.features, "--ci", t.ci, "--vitest", path], complaint: message(AppError.NotValidJson, { subject: report("--vitest"), path, reason }) };
+      },
+    ],
+    [
+      "CLM-CLI-186",
+      "a JUnit evidence report that does not parse",
+      (t: Target): Met => {
+        const content = '<testsuites><testsuite name="s"><testcase classname="a" name="t"/></testsuite></testsuite>';
+        const path = written(t.dir, "report.xml", content);
+        const reason = thrownBy(() => parseJunitXml(content));
+        const complaint = message(AppError.NotValidXml, { subject: report("--junit"), shape: message(AppMessage.JunitXmlReportShape), path, reason });
+        return { argv: ["--features", t.features, "--ci", t.ci, "--junit", path], complaint };
       },
     ],
     [

@@ -166,6 +166,7 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | clm         | error                                                               | facts                                          |
         | CLM-CLI-147 | a named input that does not exist                                   | a named input, and what is wrong               |
         | CLM-CLI-148 | a JSON evidence report that does not parse                          | a JSON evidence report, and what is wrong      |
+        | CLM-CLI-186 | a JUnit evidence report that does not parse                         | a JUnit evidence report, and what is wrong     |
         | CLM-CLI-149 | a feature file that does not parse                                  | a feature file, and what is wrong              |
         | CLM-CLI-150 | a workflow that does not parse                                      | a workflow, and what is wrong                  |
         | CLM-CLI-151 | a Vitest evidence report that is not in the shape Vitest writes     | a Vitest evidence report, and what is wrong    |
