@@ -80,12 +80,28 @@ const featureFile = (header: string, body: string): string => `${header}\nFeatur
 const OUTLINE_WITH_CLM_COLUMN = (outlineTags: string, examplesTags: string): string =>
   `  ${outlineTags}\n  Scenario Outline: an outline\n    Given a <x>\n\n    ${examplesTags}\n    Examples:\n      | clm         | x |\n      | CLM-ONE-001 | y |\n`;
 
+const outlineWhoseClmCellIs = (code: string): string =>
+  `  @unit\n  Scenario Outline: an outline\n    Given a <x>\n\n    Examples:\n      | clm | x |\n      | ${code} | y |\n`;
+
 describe("a misplaced or clashing claim code will be a claim code error", () => {
   it.each<[string, string, () => Readonly<Record<string, string>>, ClaimCodeError]>([
     [
       "CLM-STG-054",
       "a code under another file's feature code",
       () => ({ "one.feature": featureFile("@ONE", scenarioTagged("@CLM-TWO-001")), "two.feature": featureFile("@TWO", "") }),
+      {
+        kind: "foreign-claim-code",
+        files: ["one.feature"],
+        featureCode: "ONE",
+        claimCode: "CLM-TWO-001",
+        namedFeatureCode: "TWO",
+        namedFeatureFiles: ["two.feature"],
+      },
+    ],
+    [
+      "CLM-STG-054",
+      "a code in a clm column under another file's feature code",
+      () => ({ "one.feature": featureFile("@ONE", outlineWhoseClmCellIs("CLM-TWO-001")), "two.feature": featureFile("@TWO", "") }),
       {
         kind: "foreign-claim-code",
         files: ["one.feature"],
@@ -112,6 +128,12 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
       "CLM-STG-056",
       "a code in a file with no feature code",
       () => ({ "three.feature": featureFile("", scenarioTagged("@CLM-ONE-002")) }),
+      { kind: "no-feature-code", files: ["three.feature"] },
+    ],
+    [
+      "CLM-STG-056",
+      "a code in a clm column in a file with no feature code",
+      () => ({ "three.feature": featureFile("", outlineWhoseClmCellIs("CLM-ONE-002")) }),
       { kind: "no-feature-code", files: ["three.feature"] },
     ],
     [
