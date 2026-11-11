@@ -212,3 +212,17 @@ describe("an input that is not valid will stop the run", () => {
     expectRefused(captured([...argv]), complaint);
   });
 });
+
+describe("a corpus with several feature files that do not parse will be refused, naming each of them", () => {
+  it("[CLM-CLI-185] a corpus with several feature files that do not parse will be refused, naming each of them", () => {
+    const t = target();
+    const corpus = message(AppMessage.FlaggedCorpus, { flag: "--features" });
+    const broken = (name: string, line: string): string => {
+      const file = written(t.features, name, `Feature: x\n\n  Scenario: s\n    Given a step\n  ${line}\n`);
+      return message(AppError.CorpusFileUnparseable, { corpus, file, message: `\n${line}` });
+    };
+    const refusals = [broken("b.feature", NOT_GHERKIN), broken("c.feature", "nor is this one")];
+
+    expectRefused(captured(["--features", t.features, "--ci", t.ci]), ...refusals);
+  });
+});

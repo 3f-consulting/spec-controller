@@ -180,6 +180,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-160 | a named path that is not the kind of path its flag reads            | a named path, and what is wrong                |
         | CLM-CLI-161 | a named input that the tool is not permitted to read                | a named input, and what is wrong               |
 
+    @unit @CLM-CLI-185
+    Scenario: a corpus with several feature files that do not parse will be refused, naming each of them
+      given the corpus had two feature files that did not parse
+      when balance reads it
+      then it will give no verdict, and will exit 2
+      and it will complain about each file, with what is wrong in each
+
   Rule: each kind of output has its place
 
     @unit
