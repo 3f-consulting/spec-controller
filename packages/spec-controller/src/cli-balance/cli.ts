@@ -8,15 +8,13 @@ import { identifiedInputs, inputsReadBy, NODE_INPUT_READER } from "./inputsRead.
 import { corpusDirOf } from "./corpusDir.js";
 import {
   corpusReadRefusal,
-  checkInputShapes,
+  reportRefusal,
   corpusDirRefusal,
   corpusUnparseableRefusal,
   jsonInputsOf,
   readReports,
   workflowsReadRefusal,
   workflowsUnparseableRefusal,
-  reportRefusal,
-  type ReportsReading,
 } from "./unreadableInputs.js";
 import { exitCodeOf } from "./exitStatus.js";
 import { endRunOn } from "../exitCode.js";
@@ -47,15 +45,6 @@ function checkInputsExist(
     if (path !== undefined && !exists(path)) {
       return refusal(AppError.InputPathMissing, { flag: `--${flag}`, path });
     }
-  }
-  return null;
-}
-
-function checkInputsParse(reports: ReportsReading): Refusal | null {
-  for (const file of reports.files) {
-    const { reading } = file;
-    if (!file.flagged || file.report.format !== "json") continue;
-    if (reading.kind === "read-fault" || reading.kind === "unparseable") return reportRefusal({ ...file, reading });
   }
   return null;
 }
@@ -110,8 +99,6 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
   if (missingInputError) refuse(missingInputError);
 
   const reportsReading = readReports(jsonInputsOf(args, existsSync));
-  const unparseableInputError = checkInputsParse(reportsReading);
-  if (unparseableInputError) refuse(unparseableInputError);
 
   const corpusDir = corpusDirOf(args);
   if (typeof corpusDir !== "string") refuse(corpusDirRefusal(corpusDir));
@@ -122,7 +109,7 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
   if (workflowReading.kind === "read-fault") refuse(workflowsReadRefusal(args, workflowReading.fault));
   if (workflowReading.kind === "unparseable") refuse(workflowsUnparseableRefusal(args, workflowReading.faults));
 
-  if (reportsReading.kind === "faulty") refuse(checkInputShapes(reportsReading));
+  if (reportsReading.faulty !== undefined) refuse(reportRefusal(reportsReading.faulty));
 
   if (corpusReading.kind === "unparseable") refuse(corpusUnparseableRefusal(corpusReading.faults));
   return { corpus: corpusReading.corpus, workflows: workflowReading.workflows, reports: reportsReading.reports };

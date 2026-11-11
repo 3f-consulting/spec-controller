@@ -22,7 +22,6 @@ export interface JsonInput {
   readonly subject: string;
   readonly path: string;
   readonly report: ReportInput;
-  readonly flagged: boolean;
 }
 
 export function jsonInputsOf(args: Record<string, string>, exists: (path: string) => boolean): JsonInput[] {
@@ -31,7 +30,7 @@ export function jsonInputsOf(args: Record<string, string>, exists: (path: string
     if (report === undefined || path === undefined) return [];
     const paths = report.takesADirectory === true && statSync(path).isDirectory() ? reportFilesIn(path) : [path];
     const subject = message(report.subject, { flag: `--${flag}` });
-    return paths.map((file) => ({ subject, path: file, report, flagged: true }));
+    return paths.map((file) => ({ subject, path: file, report }));
   });
   return [...given, ...manifestReadByDefault(args, exists)];
 }
@@ -39,7 +38,7 @@ export function jsonInputsOf(args: Record<string, string>, exists: (path: string
 function manifestReadByDefault(args: Record<string, string>, exists: (path: string) => boolean): JsonInput[] {
   return EVIDENCE_INPUTS.flatMap(({ flag, report }) =>
     report?.reader === "package-manifest" && args[flag] === undefined && exists(DEFAULT_PACKAGE_JSON)
-      ? [{ subject: message(AppMessage.DefaultPackageJson), path: DEFAULT_PACKAGE_JSON, report, flagged: false }]
+      ? [{ subject: message(AppMessage.DefaultPackageJson), path: DEFAULT_PACKAGE_JSON, report }]
       : [],
   );
 }
@@ -57,23 +56,22 @@ interface ReadReport extends JsonInput {
   readonly reading: ReportReading;
 }
 
-export type FaultyReport = ReadReport & { readonly reading: Exclude<ReportReading, { kind: "parsed" }> };
+type Parsed = Extract<ReportReading, { kind: "parsed" }>;
 
-export type ReportsReading =
-  | { readonly kind: "read"; readonly files: readonly ReadReport[]; readonly reports: readonly EvidenceReport[] }
-  | { readonly kind: "faulty"; readonly files: readonly ReadReport[]; readonly first: FaultyReport };
+export type FaultyReport = ReadReport & { readonly reading: Exclude<ReportReading, Parsed> };
 
-type FaultyReports = Extract<ReportsReading, { kind: "faulty" }>;
+// The reports are read only when no file is faulty, so each reading is then parsed.
+export interface ReportsReading {
+  readonly faulty: FaultyReport | undefined;
+  readonly reports: readonly EvidenceReport[];
+}
 
 export function readReports(inputs: readonly JsonInput[], read: (path: string) => string = readUtf8): ReportsReading {
   const files = inputs.map((input) => ({ ...input, reading: readReport(input.path, input.report.format, input.report.shape, read) }));
-  const reports: EvidenceReport[] = [];
-  for (const file of files) {
-    const { reading } = file;
-    if (reading.kind !== "parsed") return { kind: "faulty", files, first: { ...file, reading } };
-    reports.push({ reader: file.report.reader, document: reading.document });
-  }
-  return { kind: "read", files, reports };
+  return {
+    faulty: files.find((file): file is FaultyReport => file.reading.kind !== "parsed"),
+    reports: files.map(({ report, reading }) => ({ reader: report.reader, document: (reading as Parsed).document })),
+  };
 }
 
 export function reportRefusal({ subject, path, report, reading }: FaultyReport): Refusal {
@@ -86,12 +84,6 @@ export function reportRefusal({ subject, path, report, reading }: FaultyReport):
     case "misshapen":
       return refusal(AppError.NotInShape, { subject, shape, path, fault: reading.fault });
   }
-}
-
-export function checkInputShapes(reports: FaultyReports): Refusal;
-export function checkInputShapes(reports: ReportsReading): Refusal | null;
-export function checkInputShapes(reports: ReportsReading): Refusal | null {
-  return reports.kind === "faulty" ? reportRefusal(reports.first) : null;
 }
 
 function pathRefusal(subject: string, fault: InputReadFault): Refusal {
