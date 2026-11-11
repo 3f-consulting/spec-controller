@@ -7,6 +7,16 @@ import type { PipelineStep } from "./postEvidenceObservation.js";
 
 const NOTHING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
 
+const stepIn = (workflow: string, job: string, identity: string): PipelineStep => ({
+  workflow,
+  job,
+  identity,
+  writesStepRecord: false,
+  abortsJob: false,
+  plumbing: false,
+  command: "true",
+});
+
 describe("balance turns each configuration setting into its internal setting", () => {
   it.each([
     ["CLM-CFG-008", { runners: { unit: "vitest" } }, { ...NOTHING, runners: { unit: "vitest" } }],
@@ -24,6 +34,23 @@ describe("balance turns each configuration setting into its internal setting", (
   ])("[%s] the setting %j becomes its internal setting", (_clm, specController, configuration) => {
     expect(targetConfigurationFrom({ specController }).configuration).toEqual(configuration);
   });
+
+  it.each([
+    [
+      "CLM-CFG-010",
+      ["ci.yml:ci:Install dependencies"],
+      [
+        ["ci.yml", "build", "Lint"],
+        ["ci.yml", "ci", "Lint"],
+        ["ci.yml", "ci", "Install dependencies"],
+      ],
+      [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }],
+    ],
+    ["CLM-CFG-011", ["nightly:build.yml:ci:Install"], [["ci.yml", "ci", "Lint"]], [{ workflow: "nightly:build.yml", job: "ci", step: "Install" }]],
+  ] as const)("[%s] the notChecks entry %j becomes its internal setting, with the workflows read", (_clm, notChecks, read, nonChecks) => {
+    const stepsRead = read.map(([workflow, job, identity]) => stepIn(workflow, job, identity));
+    expect(targetConfigurationFrom({ specController: { notChecks } }, stepsRead)).toEqual({ configuration: { ...NOTHING, nonChecks }, errors: [] });
+  });
 });
 
 describe("the run will still reach its run verdict, using the configuration settings it could use", () => {
@@ -35,15 +62,7 @@ describe("the run will still reach its run verdict, using the configuration sett
 });
 
 describe("a configuration setting balance cannot use will be left out", () => {
-  const ci = (identity: string): PipelineStep => ({
-    workflow: "ci.yml",
-    job: "ci",
-    identity,
-    writesStepRecord: false,
-    abortsJob: false,
-    plumbing: false,
-    command: "true",
-  });
+  const ci = (identity: string): PipelineStep => stepIn("ci.yml", "ci", identity);
 
   it.each([
     ["CLM-CFG-004", { runners: { unit: 3 } }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "runners.unit" }]],

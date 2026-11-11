@@ -5,8 +5,10 @@ import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../p
 import { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "../parse/junit.js";
 import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
 import { parseRspecEvidenceObservations } from "../parse/rspec.js";
+import { targetConfigurationFrom } from "../parse/targetManifest.js";
 import { parseVitestEvidenceObservations } from "../parse/vitest.js";
 import type { ClaimCode } from "./claimCodes.js";
+import { evidenceReconciliationOf, provenanceOf } from "./evidenceReconciliation.js";
 import type { ExecutableClaim } from "./postEvidenceObligation.js";
 import {
   claimPostedTo,
@@ -108,6 +110,20 @@ describe("balance posts only the steps that prove something", () => {
     expect(observations).toHaveLength(posted);
     expect(observations.every(({ kind }) => kind === "fitness")).toBe(true);
   });
+
+  it("[CLM-OBS-014] a step named Install, with that step in notChecks as balance reads it, is a non-check and posts nothing", () => {
+    const steps = stepsOf("      - name: Install\n        run: pnpm install\n");
+    const { stepAccount, totals } = evidenceReconciliationOf({
+      features: [],
+      testObservations: [],
+      steps,
+      readings: { runsTheReconciler: () => false, scripts: {}, shell: shellReading },
+      configuration: targetConfigurationFrom({ specController: { notChecks: ["ci.yml:build:Install"] } }, steps),
+      strict: false,
+      provenance: provenanceOf({ toolVersion: "0.1.256" }, []),
+    });
+    expect({ nonChecks: stepAccount?.total.nonChecks, posted: totals.evidenceObservations.total }).toEqual({ nonChecks: 1, posted: 0 });
+  });
 });
 
 describe("balance posts each result with how it went", () => {
@@ -164,6 +180,10 @@ describe("balance posts each result with how it went", () => {
     expect(posted()).toMatchObject([{ result: "never-ran", cites, ...named }]);
   });
 
+  it("[CLM-OBS-044] balance posts what could not run as never ran, naming the file and its error and nothing else", () => {
+    expect(vitestFile("no such module")).toEqual([{ cites: [], result: "never-ran", kind: "unit", place: "a.test.ts", message: "no such module", notes: [] }]);
+  });
+
   it("[CLM-OBS-055] a Kotlin class whose setup failed will be posted as one failing result citing no claim code", () => {
     const posted = junit({ classname: "example.BeforeAllFailsTest", name: "initializationError", failure: { message: "could not set up" } });
     expect(posted).toMatchObject([{ result: "failed", cites: [] }]);
@@ -174,7 +194,7 @@ describe("balance posts each result with how it went", () => {
     ["CLM-OBS-057", { jobExtra: "", step: `${CITING_STEP}        continue-on-error: true\n`, result: "passed-on-error" }],
     ["CLM-OBS-058", { jobExtra: "    continue-on-error: true\n", step: CITING_STEP, result: "passed-on-error" }],
   ])("[%s] balance posts a fitness function known only from its workflow as passed, or as passed-on-error when its failure is allowed", (_clm, { jobExtra, step, result }) => {
-    expect(fitness(step, undefined, jobExtra)).toMatchObject([{ result, cites: [ONE] }]);
+    expect(fitness(step, undefined, jobExtra)).toEqual([{ cites: [ONE], result, kind: "fitness", place: "ci.yml:build:Lint", notes: [] }]);
   });
 });
 
@@ -216,7 +236,7 @@ describe("an Evidence Observation says where to look", () => {
     ["CLM-OBS-078", { posted: () => parseVitestEvidenceObservations({ testResults: [{ name: "a.test.ts", assertionResults: [{ title: "adds two numbers", fullName: "adds two numbers", status: "passed" }] }] }), where: { place: "a.test.ts", name: "adds two numbers" } }],
     ["CLM-OBS-079", { posted: () => parseVitestEvidenceObservations({ testResults: [{ name: "/work/acme/a.test.ts", assertionResults: [{ title: "adds two numbers", fullName: "adds two numbers", status: "passed" }] }] }, "/work/acme"), where: { place: "a.test.ts", name: "adds two numbers" } }],
     ["CLM-OBS-080", { posted: () => parseCucumberEvidenceObservations(scenario(["@CLM-ONE-001"], ["passed"]), undefined, () => []), where: { place: "one.feature", name: "one adds one" } }],
-    ["CLM-OBS-081", { posted: () => fitness(CITING_STEP, { "CLM-ONE-001": { outcome: "success" } }), where: { place: "ci.yml:build:Lint" } }],
+    ["CLM-OBS-081", { posted: () => fitness(`      - id: CLM-ONE-002\n        name: Build\n        run: pnpm build\n${CITING_STEP}`, { "CLM-ONE-001": { outcome: "success" } }), where: { place: "ci.yml:build:Lint" } }],
   ])("[%s] balance posts an Evidence Observation saying where to look", (_clm, { posted, where }) => {
     expect(posted()).toMatchObject([where]);
   });
@@ -232,7 +252,8 @@ describe("balance files each Evidence Observation under the claim it cites, or e
 
   it("[CLM-OBS-083] balance posts an Evidence Observation citing a code no executable claim has to its phantom claim", () => {
     const [observation] = vitest("passed", "[CLM-ONE-999] a test");
-    expect(claimPostedTo(observation!, [claim(ONE)])).toEqual({ claimCode: PHANTOM });
+    const claims = [claim(ONE), claim({ featureCode: "TWO", number: "999" }), claim()];
+    expect(claimPostedTo(observation!, claims)).toEqual({ claimCode: PHANTOM });
   });
 
   it.each<[string, { posted: Posted; claims: () => readonly ExecutableClaim[]; named: readonly ClaimCode[] }]>([

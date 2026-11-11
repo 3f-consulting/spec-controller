@@ -8,15 +8,22 @@ import { resolveSourceSha, resolveTargetOrigin, resolveToolIdentity } from "../.
 import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
 import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
 import { shellReading } from "../parse/commandRuns.js";
+import { targetConfigurationFrom } from "../parse/targetManifest.js";
 import { provenanceFrom } from "../provenance/provenance.js";
+import { coreText } from "../render/coreText.js";
+import { renderJson } from "../render/json.js";
+import { renderMarkdown } from "../render/markdown.js";
 import type { ClaimCode, ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, type ClaimReconciliation, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import {
+  evidenceReconciliationOf,
   excludedClaimCodeOccurrencesOf,
   provenanceOf,
   runVerdictOf,
   stepAccountOf,
   totalsOf,
+  type EvidenceReconciliation,
+  type RunToReconcile,
   type RunVerdict,
   type Totals,
 } from "./evidenceReconciliation.js";
@@ -122,6 +129,12 @@ describe("the summary counts what was reconciled", () => {
     expect(totalsOf(reconciled(), 0).qualityCheckReconciliations).toEqual(counts);
   });
 
+  it("[CLM-EVR-019] Total of the Quality Check Reconciliations, by outcome, for a scenario written with no code and no tag", () => {
+    const corpus = parsedFeatures(["@ONE\nFeature: one\n\n  Scenario: a claim\n    Given a step\n"], ["one.feature"]);
+    const reconciled = claimReconciliationsOf(executableClaimsOf(corpus, { deferralTags: [], strict: false }), []);
+    expect(totalsOf(reconciled, 0).qualityCheckReconciliations).toEqual({ total: 1, outOfBalance: 1, byOutcome: [{ outcome: "no-claim-code", count: 1 }], missingByKind: [] });
+  });
+
   it.each<[string, { reconciled: Reconciled; counts: Partial<Totals["evidenceObservations"]> }]>([
     ["CLM-EVR-021", { reconciled: () => [balanced()], counts: { total: 1, byKind: [{ kind: "unit", count: 1 }], onExecutableClaim: 1, onPhantomClaim: 0, onUnnamedClaim: 0 } }],
     ["CLM-EVR-022", { reconciled: () => [unnamed(), outOfBalance([{ outcome: "cites-unknown-claim", kind: "fitness", observation: observation("passed", "fitness", [PHANTOM]) }], { claimCode: PHANTOM })],
@@ -132,7 +145,7 @@ describe("the summary counts what was reconciled", () => {
   });
 
   it.each<[string, { reconciled: Reconciled; byFeature: Totals["outOfBalanceByFeature"] }]>([
-    ["CLM-EVR-023", { reconciled: () => [outOfBalance([failing()], claim("one.feature"))], byFeature: [{ file: "one.feature", count: 1 }] }],
+    ["CLM-EVR-023", { reconciled: () => [outOfBalance([failing()], claim("one.feature")), { ...balanced(), claim: claim("two.feature") }], byFeature: [{ file: "one.feature", count: 1 }] }],
     ["CLM-EVR-024", { reconciled: () => [outOfBalance([{ outcome: "no-claim-code", kind: "unit", obligation: { kind: "unit" } }], claim("one.feature", undefined))], byFeature: [{ file: "one.feature", count: 1 }] }],
     ["CLM-EVR-025", { reconciled: () => [outOfBalance([{ outcome: "no-claim-code", kind: "unit", obligation: { kind: "unit" } }], claim("three.feature", undefined))], byFeature: [{ file: "three.feature", count: 1 }] }],
     ["CLM-EVR-026", { reconciled: () => [unnamed()], byFeature: undefined }],
@@ -206,7 +219,7 @@ describe("only a fitness function that ran counts as run", () => {
   it.each<[string, { reconciled: Reconciled; ran: number }]>([
     ["CLM-EVR-034", { reconciled: () => [outOfBalance([{ outcome: "cannot-fail", kind: "fitness", obligation: { kind: "fitness" }, observation: observation("passed-on-error", "fitness") }])], ran: 1 }],
     ["CLM-EVR-035", { reconciled: () => [unnamed([{ outcome: "never-ran", kind: "fitness", observation: observation("never-ran", "fitness", []) }])], ran: 0 }],
-    ["CLM-EVR-036", { reconciled: () => [outOfBalance([missing("fitness")])], ran: 0 }],
+    ["CLM-EVR-036", { reconciled: () => [outOfBalance([satisfied(), missing("fitness")])], ran: 0 }],
   ])("[%s] balance counts a fitness function as run only when its Evidence Observation ran", (_clm, { reconciled, ran }) => {
     expect(totalsOf(reconciled(), 0).evidenceObservations.fitnessFunctionsRan).toBe(ran);
   });
@@ -259,5 +272,71 @@ describe("the provenance says what the run used", () => {
   ])("[%s] the provenance describes the run", (_clm, { given, input }) => {
     const { inputs } = provenanceFrom(VERSION, [{ name: "cucumber", ...(given === undefined ? {} : { path: given }) }], "/work/acme");
     expect(inputs).toEqual([input]);
+  });
+});
+
+const A_PASSING_CLAIM = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: a claim\n    Given a step\n";
+
+function reconciledRun(run: Partial<RunToReconcile>): EvidenceReconciliation {
+  return evidenceReconciliationOf({
+    features: parsedFeatures([A_PASSING_CLAIM], ["one.feature"]),
+    testObservations: [observation("passed")],
+    steps: [],
+    readings: { runsTheReconciler: () => false, scripts: {}, shell: shellReading },
+    configuration: targetConfigurationFrom({}),
+    strict: false,
+    provenance: provenanceOf({ toolVersion: "0.1.256" }, []),
+    ...run,
+  });
+}
+
+function headingsOf(markdown: string): string[] {
+  return markdown.split("\n").flatMap((line) => (line.startsWith("## ") ? [line.slice(3)] : []));
+}
+
+describe("the Markdown report's sections will come in a fixed order", () => {
+  it("[CLM-RPT-009] the Markdown report's sections will come in a fixed order, for a run reconciled with something for every section", () => {
+    const evidenceReconciliation = reconciledRun({
+      features: parsedFeatures([A_PASSING_CLAIM, "Feature: three\n\n  @unit @CLM-ONE-002\n  Scenario: another claim\n    Given a step\n"], ["one.feature", "three.feature"]),
+      testObservations: [observation("failed"), observation("never-ran", "unit", [])],
+      steps: workflowSteps([TWO_JOBS], ["ci.yml"]),
+      configuration: targetConfigurationFrom({ specController: { runners: { unit: 3 } } }),
+    });
+    expect(headingsOf(renderMarkdown(evidenceReconciliation))).toEqual([
+      coreText("provenance-heading"),
+      coreText("errors-in-the-inputs-heading"),
+      coreText("run-integrity-heading"),
+      coreText("summary-heading"),
+      coreText("claim-reconciliations-heading"),
+    ]);
+  });
+});
+
+describe("neither report will have an optional section the run had nothing for", () => {
+  it.each([
+    ["CLM-RPT-077", "errors-in-the-inputs-heading", "errorsInTheInputs"],
+    ["CLM-RPT-021", "run-integrity-heading", "runIntegrity"],
+    ["CLM-RPT-052", "step-account-heading", "stepAccount"],
+  ] as const)("[%s] neither report has the section %s when the reconciled run had nothing for it", (_clm, section, key) => {
+    const evidenceReconciliation = reconciledRun({});
+    const markdown = renderMarkdown(evidenceReconciliation);
+    expect({ markdown: markdown.includes(`# ${coreText(section)}\n`), json: key in (JSON.parse(renderJson(evidenceReconciliation)) as object) }).toEqual({
+      markdown: false,
+      json: false,
+    });
+  });
+});
+
+describe("a configuration setting balance cannot use will be left out", () => {
+  it("[CLM-CFG-004] the setting \"unit\": 3 under runners is left out, and the reconciled run carries its error", () => {
+    const { errorsInTheInputs } = reconciledRun({ configuration: targetConfigurationFrom({ specController: { runners: { unit: 3 } } }) });
+    expect(errorsInTheInputs).toEqual({ configurationErrors: [{ kind: "configuration-wrong-kind", entry: "runners.unit" }] });
+  });
+});
+
+describe("a misplaced or clashing claim code will be a claim code error", () => {
+  it("[CLM-STG-056] a code in a file with no feature code, and the reconciled run carries the error", () => {
+    const features = parsedFeatures(["Feature: three\n\n  @unit @CLM-ONE-002\n  Scenario: a claim\n    Given a step\n"], ["three.feature"]);
+    expect(reconciledRun({ features }).errorsInTheInputs).toEqual({ claimCodeErrors: [{ kind: "no-feature-code", files: ["three.feature"] }] });
   });
 });
