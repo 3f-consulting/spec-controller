@@ -1,5 +1,5 @@
-// A span cannot hold an empty text, a line break or a space at both edges, so such a text is quoted as JSON.
-const holdsAsWritten = (text: string): boolean => text !== "" && !(text.startsWith(" ") && text.endsWith(" ")) && !/[\n\r]/.test(text);
+// A span cannot hold a line break, so a text with one is quoted as JSON.
+const holdsAsWritten = (text: string): boolean => !/[\n\r]/.test(text);
 
 const longestBacktickRun = (text: string): number => Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
 
