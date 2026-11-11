@@ -121,4 +121,17 @@ describe("balance works out the target's folder", () => {
 
     expect(inputs.find(({ name }) => name === "vitest")).toEqual({ name: "vitest", path: "vitest.json" });
   });
+
+  it("[CLM-CLI-184] the corpus in a folder below the top of a git repository, as balance names its inputs", () => {
+    const { repo } = committedRepository("target-below-git-top-inputs-");
+    const docs = join(repo, "docs");
+    mkdirSync(docs);
+    const features = corpusIn(docs);
+    const vitest = join(repo, "vitest.json");
+    writeFileSync(vitest, '{"testResults":[]}\n');
+
+    const { inputs } = reportOf(["--features", features, "--ci", workflowsIn(repo), "--vitest", vitest]).provenance;
+
+    expect(inputs.find(({ name }) => name === "vitest")).toEqual({ name: "vitest", path: "vitest.json" });
+  });
 });
