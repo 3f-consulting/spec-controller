@@ -86,7 +86,7 @@ function emit(output: Planned, text: string): void {
     return;
   }
   if (namesStderr(dest.path)) {
-    standardError(process.stderr).report(text);
+    standardError(process.stdout).report(text);
     return;
   }
   writeFileSync(dest.path, text);

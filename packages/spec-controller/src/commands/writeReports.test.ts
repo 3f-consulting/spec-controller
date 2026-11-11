@@ -134,11 +134,18 @@ describe("each of two reports will be where you asked", () => {
       (dir: string) => ["md", `json:${join(dir, "report.json")}`],
       (dir: string, written: Written) => ({ onStandardOutput: written.stdout === renderMarkdown(RUN), inTheFile: holds(join(dir, "report.json"), renderJson(RUN)) }),
     ],
+    [
+      "CLM-FMT-020",
+      "no destination for one, standard error for the other",
+      (_dir: string) => ["md", "json:/dev/stderr"],
+      (_dir: string, written: Written) => ({ onStandardOutput: written.stdout === renderMarkdown(RUN), onStandardError: written.stderr === renderJson(RUN) }),
+    ],
   ])("[%s] two reports asked for at %s are each where asked", (clm, _destination, arrange, observe) => {
     const dir = temporaryDirectory("spec-controller-two-places-");
     const written = withStandardStreamsOn({ stdout: "/dev/null", stderr: "/dev/null" }, () => reportsWritten(arrange(dir)));
     const expected: Record<string, unknown> = {
       "CLM-FMT-004": { onStandardOutput: true, inTheFile: true },
+      "CLM-FMT-020": { onStandardOutput: true, onStandardError: true },
     };
     expect({ exitCode: written.exitCode, seen: observe(dir, written) }).toEqual({ exitCode: undefined, seen: expected[clm] });
   });
