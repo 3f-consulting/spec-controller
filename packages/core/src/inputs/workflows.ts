@@ -18,12 +18,6 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 const CONTINUE_ON_ERROR = "continue-on-error";
 
-const STEP_RECORD_EXPRESSION = "tojson(steps)";
-
-function vouchesForTheStep(value: unknown): boolean {
-  return value === undefined || value === false || value === "false";
-}
-
 function envValuesOf(value: unknown): readonly string[] {
   return Object.values(isRecord(value) ? value : {}).filter(
     (entry): entry is string => typeof entry === "string"
@@ -36,9 +30,7 @@ function idOf(value: unknown): string | undefined {
   return id === "" ? undefined : id;
 }
 
-function abortsJobOf(ownValue: unknown, jobValue: unknown): boolean {
-  return vouchesForTheStep(ownValue) && vouchesForTheStep(jobValue);
-}
+const STEP_RECORD_EXPRESSION = "tojson(steps)";
 
 interface UsesReading {
   readonly owner: string;
@@ -60,6 +52,11 @@ function isPlumbing(action: PipelineStepAction): boolean {
   return owner === PLUMBING_OWNER && (PLUMBING_REPOSITORIES.has(repository) || repository.startsWith(PLUMBING_REPOSITORY_PREFIX));
 }
 
+function writesStepRecordOf(env: unknown, action: PipelineStepAction): boolean {
+  const written = "command" in action ? [...envValuesOf(env), action.command] : envValuesOf(env);
+  return written.some((text) => text.replace(/\s/g, "").toLowerCase().includes(STEP_RECORD_EXPRESSION));
+}
+
 function actionOf(step: Record<string, unknown>): PipelineStepAction | undefined {
   const command = step["run"];
   if (typeof command === "string") return { command };
@@ -68,22 +65,15 @@ function actionOf(step: Record<string, unknown>): PipelineStepAction | undefined
   return undefined;
 }
 
-function identityOf(name: unknown, action: PipelineStepAction): string {
-  if (typeof name === "string" && name.trim() !== "") return name.trim();
-  if ("action" in action) return action.action.name;
-  return action.command.split(/\r?\n/).find((line) => line.trim() !== "")?.trim() ?? "";
-}
-
-function writesStepRecordOf(env: unknown, action: PipelineStepAction): boolean {
-  const written = "command" in action ? [...envValuesOf(env), action.command] : envValuesOf(env);
-  return written.some((text) => text.replace(/\s/g, "").toLowerCase().includes(STEP_RECORD_EXPRESSION));
+function nameOf(value: unknown): { readonly name?: string } {
+  return typeof value === "string" ? { name: value } : {};
 }
 
 function stepsOfJob(job: string, jobBody: unknown): WorkflowStep[] {
   if (!isRecord(jobBody)) return [];
   const steps = jobBody["steps"];
   if (!Array.isArray(steps)) return [];
-  const jobValue = jobBody[CONTINUE_ON_ERROR];
+  const jobContinueOnError = jobBody[CONTINUE_ON_ERROR];
   const read: WorkflowStep[] = [];
   for (const step of steps) {
     if (!isRecord(step)) continue;
@@ -91,12 +81,13 @@ function stepsOfJob(job: string, jobBody: unknown): WorkflowStep[] {
     if (action === undefined) continue;
     read.push({
       job,
-      identity: identityOf(step["name"], action),
-      writesStepRecord: writesStepRecordOf(step["env"], action),
+      ...nameOf(step["name"]),
       id: idOf(step["id"]),
-      ...action,
-      abortsJob: abortsJobOf(step[CONTINUE_ON_ERROR], jobValue),
+      continueOnError: step[CONTINUE_ON_ERROR],
+      jobContinueOnError,
+      writesStepRecord: writesStepRecordOf(step["env"], action),
       plumbing: isPlumbing(action),
+      ...action,
     });
   }
   return read;

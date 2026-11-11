@@ -1,8 +1,6 @@
-import { claimCodeFrom, type ClaimCode } from "../domain/claimCodes.js";
-import type { ClaimCodesAt, EvidenceObservation } from "../domain/postEvidenceObservation.js";
-import { kindsTheTagsName, nearestCitation, resultOfRun, type RunResult } from "../domain/postEvidenceObservation.js";
+import type { ClaimCodesAt, EvidenceObservation, ScenarioRunAsWritten } from "../domain/postEvidenceObservation.js";
+import { scenarioRunObservationsOf } from "../domain/postEvidenceObservation.js";
 import { withoutSigil } from "./tags.js";
-import { relativizeToRoot } from "../domain/targetPath.js";
 
 export type CucumberJsonReport = ReadonlyArray<{
   readonly uri?: string;
@@ -20,37 +18,19 @@ export type CucumberJsonReport = ReadonlyArray<{
   }>;
 }>;
 
-type CucumberScenario = NonNullable<CucumberJsonReport[number]["elements"]>[number];
-type CucumberStep = NonNullable<CucumberScenario["steps"]>[number];
-
-const statusOf = (step: CucumberStep): string | undefined => step.result?.status;
-
-const couldNotRun = (step: CucumberStep): boolean => statusOf(step) === "ambiguous" || statusOf(step) === "undefined";
-
-function runResultOf(steps: readonly CucumberStep[]): RunResult {
-  if (steps.some((step) => statusOf(step) === "failed")) return "failed";
-  if (steps.some(couldNotRun)) return "never-reached-its-assertions";
-  return steps.length > 0 && steps.every((step) => statusOf(step) === "passed") ? "passed" : "inconclusive";
-}
-
-const stepText = (step: CucumberStep): string => `${(step.keyword ?? "").trim()} ${step.name ?? ""}`;
-
-function codesIn(texts: readonly string[]): ClaimCode[] {
-  return texts.flatMap((text) => claimCodeFrom(text) ?? []);
-}
-
-function observationsOfScenario(scenario: CucumberScenario, place: string, rowCodes: readonly string[]): EvidenceObservation[] {
-  const tags = (scenario.tags ?? []).map((tag) => withoutSigil(tag.name ?? ""));
-  const steps = scenario.steps ?? [];
-  const result = resultOfRun(runResultOf(steps));
-  if (result === undefined) return [];
-  const [firstKind, ...otherKinds] = kindsTheTagsName(tags);
-  const cites = nearestCitation([codesIn([...tags, ...rowCodes])]);
-  if (result === "never-ran") {
-    return [{ cites, result, kind: firstKind!, place, notes: steps.filter(couldNotRun).map(stepText) }];
-  }
-  const name = scenario.name;
-  return [firstKind!, ...otherKinds].map((kind) => ({ cites, result, kind, place, notes: [], ...(name === undefined ? {} : { name }) }));
+// Each scenario run as the report wrote it: its feature's uri and name, its line, name and tags, and each step's
+// keyword, text and status.
+function scenarioRunsOf(report: CucumberJsonReport): ScenarioRunAsWritten[] {
+  return report.flatMap((feature) =>
+    (feature.elements ?? []).map((scenario) => ({
+      featurePath: feature.uri,
+      featureName: feature.name,
+      line: scenario.line,
+      name: scenario.name,
+      tags: (scenario.tags ?? []).map((tag) => withoutSigil(tag.name ?? "")),
+      steps: (scenario.steps ?? []).map((step) => ({ keyword: step.keyword, text: step.name, status: step.result?.status })),
+    })),
+  );
 }
 
 export function parseCucumberEvidenceObservations(
@@ -58,11 +38,5 @@ export function parseCucumberEvidenceObservations(
   root: string | undefined,
   claimCodesAt: ClaimCodesAt,
 ): EvidenceObservation[] {
-  return report.flatMap((feature) => {
-    const place = relativizeToRoot(feature.uri ?? feature.name ?? "", root);
-    return (feature.elements ?? []).flatMap((scenario) => {
-      const rowCodes = scenario.line === undefined ? [] : claimCodesAt(place, scenario.line);
-      return observationsOfScenario(scenario, place, rowCodes);
-    });
-  });
+  return scenarioRunObservationsOf(scenarioRunsOf(report), root, claimCodesAt);
 }

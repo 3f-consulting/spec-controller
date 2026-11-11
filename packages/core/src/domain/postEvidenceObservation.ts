@@ -1,5 +1,6 @@
-import { claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
-import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
+import { claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
+import { claimCodesAtLinesOf, type ExecutableClaim, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
+import { relativizeToRoot } from "./targetPath.js";
 
 export interface EvidenceObservation {
   readonly cites: readonly ClaimCode[];
@@ -23,18 +24,34 @@ export interface UnnamedClaim {
 
 export type ClaimCodesAt = (file: string, line: number) => readonly string[];
 
+// A report names a feature file by a path that ends in the file's path within the corpus.
+export function claimCodesAtOf(features: readonly FeatureAsWritten[]): ClaimCodesAt {
+  const byLine = new Map<number, { readonly file: string; readonly codes: readonly string[] }[]>();
+  for (const { file, scenarios } of features) {
+    for (const { line, codes } of scenarios.flatMap(claimCodesAtLinesOf)) byLine.set(line, [...(byLine.get(line) ?? []), { file: `/${file}`, codes }]);
+  }
+  return (path, line) => {
+    const reported = `/${path}`;
+    const matching = (byLine.get(line) ?? []).filter((at) => reported.endsWith(at.file));
+    return matching[0]?.codes ?? [];
+  };
+}
+
 interface UsedAction {
   readonly name: string;
 }
 
 export type PipelineStepAction = { readonly command: string } | { readonly action: UsedAction };
 
+// A workflow's step as the workflow wrote it: its name, its id, the continue-on-error of the step and of its job,
+// whatever was written there, whether it writes out the record of the job's steps, and whether it only sets the job up.
 export type WorkflowStep = {
   readonly job: string;
-  readonly identity: string;
+  readonly name?: string;
   readonly id?: string;
+  readonly continueOnError?: unknown;
+  readonly jobContinueOnError?: unknown;
   readonly writesStepRecord: boolean;
-  readonly abortsJob: boolean;
   readonly plumbing: boolean;
 } & PipelineStepAction;
 
@@ -44,20 +61,44 @@ export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" 
 
 type Scripts = Readonly<Record<string, string>>;
 
+// The shell's two answers about a step's command: whether it invokes something on any of its lines, and whether it
+// invokes it as the command the step runs; each follows the scripts the command runs.
 export interface ShellReading {
+  readonly runsAnywhere: (commandText: string, invocation: string, scripts: Scripts) => boolean;
   readonly runsAsCommand: (commandText: string, invocation: string, scripts: Scripts) => boolean;
 }
 
 export interface StepReadings {
-  readonly runsTheReconciler: (command: string) => boolean;
   readonly nonChecks: readonly string[];
   readonly runners: Readonly<Record<string, string | null>>;
   readonly scripts: Scripts;
   readonly shell: ShellReading;
 }
 
+// A step is known by its name, else the action it uses, else the first line of its command.
+export function stepIdentityOf(step: WorkflowStep): string {
+  const name = step.name?.trim() ?? "";
+  if (name !== "") return name;
+  if ("action" in step) return step.action.name;
+  return step.command.split(/\r?\n/).find((line) => line.trim() !== "")?.trim() ?? "";
+}
+
 function qualifiedStepName(step: PipelineStep): string {
-  return `${step.workflow}:${step.job}:${step.identity}`;
+  return `${step.workflow}:${step.job}:${stepIdentityOf(step)}`;
+}
+
+// Only a continue-on-error left unset or written false lets a step's failure fail its job.
+function vouchesForTheStep(continueOnError: unknown): boolean {
+  return continueOnError === undefined || continueOnError === false || continueOnError === "false";
+}
+
+const abortsJob = (step: WorkflowStep): boolean => vouchesForTheStep(step.continueOnError) && vouchesForTheStep(step.jobContinueOnError);
+
+const RECONCILER_INVOCATION = "spec-controller balance";
+
+// The reconciler is found wherever a step's command invokes it; a runner only where it is the command the step runs.
+function runsTheReconciler(step: PipelineStep, { scripts, shell }: StepReadings): boolean {
+  return "command" in step && shell.runsAnywhere(step.command, RECONCILER_INVOCATION, scripts);
 }
 
 function runsARunner(step: PipelineStep, { runners, scripts, shell }: StepReadings): boolean {
@@ -67,19 +108,24 @@ function runsARunner(step: PipelineStep, { runners, scripts, shell }: StepReadin
 }
 
 export function stepDispositionOf(step: PipelineStep, readings: StepReadings): StepDisposition {
-  if (step.writesStepRecord || ("command" in step && readings.runsTheReconciler(step.command))) return "reconciler";
+  if (step.writesStepRecord || runsTheReconciler(step, readings)) return "reconciler";
   if (readings.nonChecks.includes(qualifiedStepName(step))) return "nonCheck";
   if (step.plumbing) return "plumbing";
   return runsARunner(step, readings) ? "runner" : "candidate";
 }
 
-export type StepReport = "succeeded" | "failed" | "other";
-
+// An entry of the step record, as the record wrote it.
 export interface RecordedCheckStep {
-  readonly citedClaimCode: string;
-  readonly report: StepReport;
-  readonly said?: string;
+  readonly key: string;
+  readonly outcome?: string;
+  readonly conclusion?: string;
 }
+
+// A step's outcome says how its own run went; its conclusion is that outcome after continue-on-error, so it is not read.
+const RESULT_OF_OUTCOME: ReadonlyMap<string, EvidenceObservation["result"]> = new Map([
+  ["success", "passed"],
+  ["failure", "failed"],
+]);
 
 function citesOfId(id: string | undefined): ClaimCode[] {
   const code = id === undefined ? undefined : claimCodeFrom(id);
@@ -89,7 +135,7 @@ function citesOfId(id: string | undefined): ClaimCode[] {
 function workflowObservationOf(step: PipelineStep): EvidenceObservation {
   return {
     cites: citesOfId(step.id),
-    result: step.abortsJob ? "passed" : "passed-on-error",
+    result: abortsJob(step) ? "passed" : "passed-on-error",
     kind: "fitness",
     place: qualifiedStepName(step),
     notes: [],
@@ -97,14 +143,19 @@ function workflowObservationOf(step: PipelineStep): EvidenceObservation {
 }
 
 function recordedObservationOf(recorded: RecordedCheckStep, steps: readonly PipelineStep[]): EvidenceObservation {
-  const [only, ...others] = steps.filter((step) => step.id === recorded.citedClaimCode);
-  const place = only !== undefined && others.length === 0 ? qualifiedStepName(only) : recorded.citedClaimCode;
-  const cites = citesOfId(recorded.citedClaimCode);
-  if (recorded.report === "other") {
-    return { cites, result: "never-ran", kind: "fitness", place, notes: recorded.said === undefined ? [] : [recorded.said] };
+  const [only, ...others] = steps.filter((step) => step.id === recorded.key);
+  const place = only !== undefined && others.length === 0 ? qualifiedStepName(only) : recorded.key;
+  const cites = citesOfId(recorded.key);
+  const { outcome } = recorded;
+  const result = outcome === undefined ? undefined : RESULT_OF_OUTCOME.get(outcome);
+  if (result === undefined) {
+    return { cites, result: "never-ran", kind: "fitness", place, notes: outcome === undefined ? [] : [outcome] };
   }
-  return { cites, result: recorded.report === "succeeded" ? "passed" : "failed", kind: "fitness", place, notes: [] };
+  return { cites, result, kind: "fitness", place, notes: [] };
 }
+
+// Only an entry keyed by a claim code stands for a fitness function; one keyed otherwise is known from its workflow alone.
+const isKeyedByAClaimCode = ({ key }: RecordedCheckStep): boolean => claimCodeFrom(key) !== undefined;
 
 export function fitnessObservationsOf(
   steps: readonly PipelineStep[],
@@ -115,34 +166,259 @@ export function fitnessObservationsOf(
   if (recorded === undefined) return workflow;
   return [
     ...workflow.filter(({ cites }) => cites.length === 0),
-    ...recorded.map((entry) => recordedObservationOf(entry, steps)),
+    ...recorded.filter(isKeyedByAClaimCode).map((entry) => recordedObservationOf(entry, steps)),
   ];
 }
 
-export type RunResult = "passed" | "failed" | "never-reached-its-assertions" | "inconclusive";
-
-export function resultOfRun(run: RunResult): EvidenceObservation["result"] | undefined {
-  if (run === "inconclusive") return undefined;
-  return run === "never-reached-its-assertions" ? "never-ran" : run;
-}
-
-export function neverRanObservation(kind: QualityCheckKind, place: string, message: string | undefined): EvidenceObservation {
+function neverRanObservation(kind: QualityCheckKind, place: string, message: string | undefined): EvidenceObservation {
   return { cites: [], result: "never-ran", kind, place, notes: [], ...(message === undefined ? {} : { message }) };
 }
 
 // One code written in two places, such as a scenario's tag and the corpus at its line, is one citation.
-export function nearestCitation(levels: readonly (readonly ClaimCode[])[]): readonly ClaimCode[] {
+function nearestCitation(levels: readonly (readonly ClaimCode[])[]): readonly ClaimCode[] {
   const nearest = levels.find((codes) => codes.length > 0) ?? [];
   return nearest.filter((code, at) => nearest.findIndex((other) => sameCode(code, other)) === at);
 }
 
-export const TEST_REPORT_KIND: QualityCheckKind = "unit";
+const TEST_REPORT_KIND: QualityCheckKind = "unit";
+
+// A test in a report of test results, as the report wrote it: its own title, its title within its groups, its status.
+interface TestAsWritten {
+  readonly title?: string;
+  readonly fullTitle?: string;
+  readonly status?: string;
+}
+
+// A test file in a report of test results, as the report wrote it.
+export interface TestFileAsWritten {
+  readonly path?: string;
+  readonly status?: string;
+  readonly message?: string;
+  readonly tests: readonly TestAsWritten[];
+}
+
+// A test that passed or failed posts that result; one skipped, pending or marked todo posts nothing.
+const RESULT_OF_TEST_STATUS: ReadonlyMap<string, EvidenceObservation["result"]> = new Map([
+  ["passed", "passed"],
+  ["failed", "failed"],
+]);
+
+const resultOfTestStatus = (status: string | undefined): EvidenceObservation["result"] | undefined =>
+  status === undefined ? undefined : RESULT_OF_TEST_STATUS.get(status);
+
+const FAILED_FILE = "failed";
+
+function testObservationOf(test: TestAsWritten, place: string): EvidenceObservation[] {
+  const result = resultOfTestStatus(test.status);
+  if (result === undefined) return [];
+  const cites = nearestCitation([claimCodeCitationsIn(test.title ?? ""), claimCodeCitationsIn(test.fullTitle ?? "")]);
+  const name = test.fullTitle ?? test.title;
+  return [{ cites, result, kind: TEST_REPORT_KIND, place, notes: [], ...(name === undefined ? {} : { name }) }];
+}
+
+// Each test posts at its file; a file that failed with no test in it never reached its tests, and posts as never ran.
+export function testFileObservationsOf(files: readonly TestFileAsWritten[], root?: string): EvidenceObservation[] {
+  return files.flatMap((file) => {
+    const place = relativizeToRoot(file.path ?? "", root);
+    if (file.status === FAILED_FILE && file.tests.length === 0) return [neverRanObservation(TEST_REPORT_KIND, place, file.message)];
+    return file.tests.flatMap((test) => testObservationOf(test, place));
+  });
+}
+
+interface EndingAsWritten {
+  readonly message?: string;
+  readonly text?: string;
+}
+
+// A test case in a report of test cases, as the report wrote it: the suite it is in, its class and name, its
+// properties, and the failure, error or skip it ended in, each with the message and text written there.
+export interface TestCaseAsWritten {
+  readonly suite?: string;
+  readonly classname?: string;
+  readonly name?: string;
+  readonly properties?: readonly { readonly name?: string; readonly value?: string }[];
+  readonly failure?: EndingAsWritten;
+  readonly error?: EndingAsWritten;
+  readonly skipped?: boolean;
+}
+
+const CLAIM_CODE_PROPERTY = "clm";
+// Go writes a package whose tests never ran, because it failed to build or its TestMain failed, as a failing TestMain with no classname.
+const GO_PACKAGE_TESTCASE = "TestMain";
+
+const isCollectionFailure = (testCase: TestCaseAsWritten): boolean => testCase.error !== undefined && !testCase.classname;
+
+const isClassSetupFailure = (testCase: TestCaseAsWritten): boolean => testCase.error !== undefined && !testCase.name;
+
+const isPackageFailure = (testCase: TestCaseAsWritten): boolean =>
+  !testCase.classname && testCase.name === GO_PACKAGE_TESTCASE && testCase.failure !== undefined;
+
+const errorTextOf = (testCase: TestCaseAsWritten): string | undefined => testCase.error?.text ?? testCase.error?.message;
+
+function nameCitationsOf(name: string): ClaimCode[] {
+  const segmentsLeafFirst = name.split("/").reverse();
+  return segmentsLeafFirst.map(claimCodeCitationsIn).find((codes) => codes.length > 0) ?? [];
+}
+
+function propertyCitationsOf(testCase: TestCaseAsWritten): ClaimCode[] {
+  return (testCase.properties ?? [])
+    .filter((property) => property.name === CLAIM_CODE_PROPERTY)
+    .flatMap((property) => claimCodeFrom(property.value ?? "") ?? []);
+}
+
+// A test case cites its clm properties and its name's innermost cited segment, else the last code its class cites.
+function testCaseCitesOf(testCase: TestCaseAsWritten): readonly ClaimCode[] {
+  return nearestCitation([
+    [...propertyCitationsOf(testCase), ...nameCitationsOf(testCase.name ?? "")],
+    claimCodeCitationsIn(testCase.classname ?? "").slice(-1),
+  ]);
+}
+
+function testCaseResultOf(testCase: TestCaseAsWritten, anError: EvidenceObservation["result"]): EvidenceObservation["result"] {
+  if (testCase.error !== undefined) return anError;
+  return testCase.failure === undefined ? "passed" : "failed";
+}
+
+function testCaseObservationOf(testCase: TestCaseAsWritten, anError: EvidenceObservation["result"]): EvidenceObservation[] {
+  if (testCase.skipped === true) return [];
+  if (isCollectionFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.name ?? "", errorTextOf(testCase))];
+  if (isPackageFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.suite ?? "", testCase.failure?.text)];
+  if (isClassSetupFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.classname ?? "", errorTextOf(testCase))];
+  const result = testCaseResultOf(testCase, anError);
+  const message = result === "never-ran" ? errorTextOf(testCase) : undefined;
+  return [{
+    cites: testCaseCitesOf(testCase),
+    result,
+    kind: TEST_REPORT_KIND,
+    place: testCase.classname ?? "",
+    notes: [],
+    ...(testCase.name === undefined ? {} : { name: testCase.name }),
+    ...(message === undefined ? {} : { message }),
+  }];
+}
+
+// A skipped test case posts nothing. One that never reached its tests (a collection failure, a class whose setup failed,
+// a package that did not build) posts as never ran. Any other posts as passed, failed, or what its report's error means.
+export function testCaseObservationsOf(cases: readonly TestCaseAsWritten[], anError: "failed" | "never-ran"): EvidenceObservation[] {
+  return cases.flatMap((testCase) => testCaseObservationOf(testCase, anError));
+}
+
+// An example in a report of examples, as the report wrote it: its own title, its title within its groups, its status
+// and the path of its file.
+interface ExampleAsWritten {
+  readonly title?: string;
+  readonly fullTitle?: string;
+  readonly status?: string;
+  readonly path?: string;
+}
+
+// A report of examples as written: its examples, how many errors it met outside any example, and its messages.
+export interface ExamplesAsWritten {
+  readonly examples: readonly ExampleAsWritten[];
+  readonly errorsOutsideExamples?: number;
+  readonly messages: readonly string[];
+}
+
+function placeOfExample(path: string, root?: string): string {
+  return relativizeToRoot(path.replace(/^\.\//, ""), root);
+}
+
+const LOADED_FILE = /^\s*(?:While loading (.+?) a |An error occurred while loading (.+?)\.(?:\n|$))/;
+
+// Each error outside the examples never ran: one naming the file it was loading posts at that file, and the rest,
+// when the messages name fewer files than the report counted errors, post once together at no file.
+function loadErrorsOf({ errorsOutsideExamples = 0, messages }: ExamplesAsWritten, root?: string): EvidenceObservation[] {
+  if (errorsOutsideExamples === 0) return [];
+  const read = messages.map((message) => ({ message, loaded: LOADED_FILE.exec(message) }));
+  const named = read.flatMap(({ message, loaded }) => {
+    const path = loaded?.[1] ?? loaded?.[2];
+    return path === undefined ? [] : [neverRanObservation(TEST_REPORT_KIND, placeOfExample(path, root), message)];
+  });
+  if (errorsOutsideExamples <= named.length) return named;
+  const unnamed = read.filter(({ loaded }) => loaded === null).map(({ message }) => message);
+  return [...named, neverRanObservation(TEST_REPORT_KIND, "", unnamed.length > 0 ? unnamed.join("\n") : undefined)];
+}
+
+function exampleObservationOf(example: ExampleAsWritten, root?: string): EvidenceObservation[] {
+  const result = resultOfTestStatus(example.status);
+  if (result === undefined) return [];
+  const cites = nearestCitation([claimCodeCitationsIn(example.title ?? ""), claimCodeCitationsIn(example.fullTitle ?? "")]);
+  const name = example.fullTitle;
+  return [{ cites, result, kind: TEST_REPORT_KIND, place: placeOfExample(example.path ?? "", root), notes: [], ...(name === undefined ? {} : { name }) }];
+}
+
+// Each example posts at its file under its full title, then each error outside the examples posts as never ran.
+export function exampleObservationsOf(report: ExamplesAsWritten, root?: string): EvidenceObservation[] {
+  return [...report.examples.flatMap((example) => exampleObservationOf(example, root)), ...loadErrorsOf(report, root)];
+}
 
 const KINDS_A_SCENARIO_TAG_NAMES: readonly QualityCheckKind[] = ["integration", "e2e", "performance"];
 
-export function kindsTheTagsName(tags: readonly string[]): QualityCheckKind[] {
+function kindsTheTagsName(tags: readonly string[]): QualityCheckKind[] {
   const named = KINDS_A_SCENARIO_TAG_NAMES.filter((kind) => tags.includes(kind));
   return named.length > 0 ? named : ["integration"];
+}
+
+// A step of a scenario run, as the report wrote it: its keyword, its text and its status.
+interface StepRunAsWritten {
+  readonly keyword?: string;
+  readonly text?: string;
+  readonly status?: string;
+}
+
+// A scenario run in a report of scenario runs, as the report wrote it: its feature's path and name, the line it ran
+// from, its name, its tags without their at-sign, and its steps.
+export interface ScenarioRunAsWritten {
+  readonly featurePath?: string;
+  readonly featureName?: string;
+  readonly line?: number;
+  readonly name?: string;
+  readonly tags: readonly string[];
+  readonly steps: readonly StepRunAsWritten[];
+}
+
+type StepEnding = "passed" | "failed" | "could-not-run";
+
+// A step that matched no definition, or two, could not run; a step skipped, pending or of any other status ends nothing.
+const ENDING_OF_STEP_STATUS: ReadonlyMap<string, StepEnding> = new Map([
+  ["passed", "passed"],
+  ["failed", "failed"],
+  ["ambiguous", "could-not-run"],
+  ["undefined", "could-not-run"],
+]);
+
+const endingOf = (step: StepRunAsWritten): StepEnding | undefined => (step.status === undefined ? undefined : ENDING_OF_STEP_STATUS.get(step.status));
+
+// A failed step fails the scenario; else one that could not run means it never ran; else it passed only when every step passed.
+function scenarioResultOf(steps: readonly StepRunAsWritten[]): EvidenceObservation["result"] | undefined {
+  const endings = steps.map(endingOf);
+  if (endings.includes("failed")) return "failed";
+  if (endings.includes("could-not-run")) return "never-ran";
+  return endings.length > 0 && endings.every((ending) => ending === "passed") ? "passed" : undefined;
+}
+
+const stepText = (step: StepRunAsWritten): string => `${(step.keyword ?? "").trim()} ${step.text ?? ""}`;
+
+const codesIn = (texts: readonly string[]): ClaimCode[] => texts.flatMap((text) => claimCodeFrom(text) ?? []);
+
+function scenarioRunObservationOf(run: ScenarioRunAsWritten, root: string | undefined, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
+  const result = scenarioResultOf(run.steps);
+  if (result === undefined) return [];
+  const place = relativizeToRoot(run.featurePath ?? run.featureName ?? "", root);
+  const rowCodes = run.line === undefined ? [] : claimCodesAt(place, run.line);
+  const [firstKind, ...otherKinds] = kindsTheTagsName(run.tags);
+  const cites = nearestCitation([codesIn([...run.tags, ...rowCodes])]);
+  if (result === "never-ran") {
+    return [{ cites, result, kind: firstKind!, place, notes: run.steps.filter((step) => endingOf(step) === "could-not-run").map(stepText) }];
+  }
+  const { name } = run;
+  return [firstKind!, ...otherKinds].map((kind) => ({ cites, result, kind, place, notes: [], ...(name === undefined ? {} : { name }) }));
+}
+
+// A scenario run posts at its feature file, citing its tags' codes and the code the corpus has at its line, once at each
+// kind its tags name; one that never ran posts once, naming the steps that could not run.
+export function scenarioRunObservationsOf(runs: readonly ScenarioRunAsWritten[], root: string | undefined, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
+  return runs.flatMap((run) => scenarioRunObservationOf(run, root, claimCodesAt));
 }
 
 export function claimPostedTo(

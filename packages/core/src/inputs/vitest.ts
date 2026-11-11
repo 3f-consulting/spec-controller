@@ -1,7 +1,5 @@
-import { claimCodeCitationsIn } from "../domain/claimCodes.js";
-import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
-import { nearestCitation, neverRanObservation, resultOfRun, TEST_REPORT_KIND, type RunResult } from "../domain/postEvidenceObservation.js";
-import { relativizeToRoot } from "../domain/targetPath.js";
+import type { EvidenceObservation, TestFileAsWritten } from "../domain/postEvidenceObservation.js";
+import { testFileObservationsOf } from "../domain/postEvidenceObservation.js";
 
 export interface VitestJsonReport {
   readonly testResults: ReadonlyArray<{
@@ -16,23 +14,16 @@ export interface VitestJsonReport {
   }>;
 }
 
-function runResultOf(status: string | undefined): RunResult {
-  return status === "passed" || status === "failed" ? status : "inconclusive";
+// Each test file as the report wrote it: its path, its status and message, and each test's titles and status.
+function testFilesOf(report: VitestJsonReport): TestFileAsWritten[] {
+  return report.testResults.map((file) => ({
+    path: file.name,
+    status: file.status,
+    message: file.message,
+    tests: (file.assertionResults ?? []).map((test) => ({ title: test.title, fullTitle: test.fullName, status: test.status })),
+  }));
 }
 
 export function parseVitestEvidenceObservations(report: VitestJsonReport, root?: string): EvidenceObservation[] {
-  return report.testResults.flatMap((file): EvidenceObservation[] => {
-    const place = relativizeToRoot(file.name ?? "", root);
-    const assertions = file.assertionResults ?? [];
-    if (file.status === "failed" && assertions.length === 0) {
-      return [neverRanObservation(TEST_REPORT_KIND, place, file.message)];
-    }
-    return assertions.flatMap((assertion): EvidenceObservation[] => {
-      const result = resultOfRun(runResultOf(assertion.status));
-      if (result === undefined) return [];
-      const cites = nearestCitation([claimCodeCitationsIn(assertion.title ?? ""), claimCodeCitationsIn(assertion.fullName ?? "")]);
-      const name = assertion.fullName ?? assertion.title;
-      return [{ cites, result, kind: TEST_REPORT_KIND, place, notes: [], ...(name === undefined ? {} : { name }) }];
-    });
-  });
+  return testFileObservationsOf(testFilesOf(report), root);
 }

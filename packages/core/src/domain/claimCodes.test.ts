@@ -22,6 +22,7 @@ import { AppError, AppMessage } from "../../../spec-controller/src/messages/mess
 import { printedRefusal } from "../../../spec-controller/src/messages/shownText.test-utils.js";
 import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { claimCodeErrorsOf, claimCodeFrom, featureCodeOfFile, isFeatureCode, retiredScenarioCodeFrom, type ClaimCodeError } from "./claimCodes.js";
+import { featureReadOf } from "./postEvidenceObligation.js";
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
@@ -164,7 +165,7 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
     const sources = sourcesOf();
     const features = parsedFeatures(Object.values(sources), Object.keys(sources));
 
-    expect(claimCodeErrorsOf(features)).toEqual([error]);
+    expect(claimCodeErrorsOf(features.map(featureReadOf))).toEqual([error]);
   });
 });
 

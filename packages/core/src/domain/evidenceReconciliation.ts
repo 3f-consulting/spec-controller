@@ -1,7 +1,7 @@
 import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import type { ConfigurationError } from "./configuration.js";
-import { executableClaimsOf, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
+import { executableClaimsOf, featureReadOf, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import {
   fitnessObservationsOf,
   stepDispositionOf,
@@ -230,7 +230,7 @@ export function evidenceReconciliationOf(run: RunToReconcile): EvidenceReconcili
   const dispositionOf = dispositionsOf(run);
   const observations = [...run.testObservations, ...fitnessObservationsOf(steps, dispositionOf, run.recordedSteps)];
   const claimReconciliations = claimReconciliationsOf(claims, observations);
-  const claimCodeErrors = claimCodeErrorsOf(features);
+  const claimCodeErrors = claimCodeErrorsOf(features.map(featureReadOf));
   const neverRan = observations.filter(({ result }) => result === "never-ran");
   return {
     claimReconciliations,

@@ -35,7 +35,7 @@ const evidenceReconciliation = evidenceReconciliationOf({
   features: corpus.parsed,
   testObservations: parseVitestEvidenceObservations(vitestReport),
   steps: [],
-  readings: { runsTheReconciler: () => false, scripts: {}, shell: shellReading },
+  readings: { scripts: {}, shell: shellReading },
   configuration: targetConfigurationFrom({}),
   strict: false,
   provenance: provenanceFrom({ target: "acme/shop", toolVersion: "0.1.0" }, [], "."),
@@ -58,7 +58,7 @@ The package publishes exactly one entrypoint, a barrel that exports the followin
 - **Parse**:
   - scenarios: `parseFeatureCorpus`, which parses the feature files once, and `claimCodesAtOf`, which maps a Cucumber report's lines back to the claim codes the corpus carries there;
   - evidence: `parseVitestEvidenceObservations`; `parseJunitEvidenceObservations` and `parsePytestEvidenceObservations`, both over a JUnit XML report you have already parsed into objects, from pytest, gotestsum or another runner; `parseRspecEvidenceObservations`, over RSpec's JSON report; and `parseCucumberEvidenceObservations`;
-  - workflows and steps: `parseWorkflows`, which parses the CI workflows once, `pipelineStepsOf` over them, `recordedCheckStepsOf` over a run's step record, and `commandRuns` and `shellReading`, which say whether a step's command runs a given command;
+  - workflows and steps: `parseWorkflows`, which parses the CI workflows once, `pipelineStepsOf` over them, `recordedCheckStepsOf` over a run's step record, and `shellReading`, which says whether a step's command runs a given command;
   - configuration: `targetConfigurationFrom`, over a `package.json`'s `specController` block.
 
   The two JUnit readers differ in how they read an `<error>` on an ordinary test: `parseJunitEvidenceObservations` reads it as a failing Evidence Observation, and `parsePytestEvidenceObservations` reads it as never-ran, as pytest's setup error.

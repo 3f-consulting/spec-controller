@@ -7,15 +7,7 @@ import type { PipelineStep } from "./postEvidenceObservation.js";
 
 const NOTHING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
 
-const stepIn = (workflow: string, job: string, identity: string): PipelineStep => ({
-  workflow,
-  job,
-  identity,
-  writesStepRecord: false,
-  abortsJob: false,
-  plumbing: false,
-  command: "true",
-});
+const stepIn = (workflow: string, job: string, name: string): PipelineStep => ({ workflow, job, name, writesStepRecord: false, plumbing: false, command: "true" });
 
 describe("balance turns each configuration setting into its internal setting", () => {
   it.each([

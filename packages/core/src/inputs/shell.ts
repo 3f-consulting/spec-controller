@@ -357,8 +357,7 @@ function runsBy(
   };
 }
 
-export const commandRuns = runsBy(anywhere);
-
 export const shellReading: ShellReading = {
+  runsAnywhere: runsBy(anywhere),
   runsAsCommand: runsBy(asCommand),
 };

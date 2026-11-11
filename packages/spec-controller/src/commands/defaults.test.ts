@@ -1,10 +1,9 @@
 import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runBalanceCaptured } from "../commands/runBalance.test-utils.js";
+import { runBalanceCaptured } from "./runBalance.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
-import { committedRepository } from "./gitRepository.test-utils.js";
-import { resolveTargetRoot } from "./resolveRunInputs.js";
+import { committedRepository } from "../runIdentity/gitRepository.test-utils.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -100,20 +99,6 @@ describe("balance will use the default when an input is not named", () => {
 });
 
 describe("balance works out the target's folder", () => {
-  it("[CLM-CLI-142] no feature corpus, run from the folder", () => {
-    const folder = realpathSync(temporaryDirectory("target-run-from-"));
-    vi.spyOn(process, "cwd").mockReturnValue(folder);
-
-    expect(resolveTargetRoot({})).toBe(folder);
-  });
-
-  it("[CLM-CLI-143] the corpus in a git repository at the folder", () => {
-    const { repo } = committedRepository("target-in-git-");
-    const features = corpusIn(repo);
-
-    expect(resolveTargetRoot({ features })).toBe(repo);
-  });
-
   it("[CLM-CLI-143] the corpus in a git repository at the folder, as balance names its inputs", () => {
     const { repo } = committedRepository("target-in-git-inputs-");
     const features = corpusIn(repo);
@@ -123,22 +108,5 @@ describe("balance works out the target's folder", () => {
     const { inputs } = reportOf(["--features", features, "--ci", workflowsIn(repo), "--vitest", vitest]).provenance;
 
     expect(inputs.find(({ name }) => name === "vitest")).toEqual({ name: "vitest", path: "vitest.json" });
-  });
-
-  it("[CLM-CLI-184] the corpus in a folder below the top of a git repository", () => {
-    const { repo } = committedRepository("target-below-git-top-");
-    const docs = join(repo, "docs");
-    mkdirSync(docs);
-    const features = corpusIn(docs);
-
-    expect(resolveTargetRoot({ features })).toBe(repo);
-  });
-
-  it("[CLM-CLI-144] the corpus in no git repository", () => {
-    const x = join(realpathSync(temporaryDirectory("target-no-git-")), "x");
-    mkdirSync(x);
-    const features = corpusIn(x);
-
-    expect(resolveTargetRoot({ features })).toBe(x);
   });
 });

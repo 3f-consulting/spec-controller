@@ -1,10 +1,9 @@
 import { chmodSync, existsSync, lstatSync, statSync, mkdirSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { renderJson, renderMarkdown, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
-import { writeReports } from "../commands/balance.js";
-import type { IdentifiedInput } from "./format.js";
-import { regularFileIdentity } from "./outputLocation.js";
+import { renderJson, renderMarkdown, type EvidenceReconciliation, type IdentifiedInput } from "@3f-consulting/spec-controller-core";
+import { writeReports } from "./balance.js";
+import { regularFileIdentity } from "../output/outputLocation.js";
 import { settlingRefusal } from "../runEnding/usageRefusal.js";
 import { AppError } from "../messages/messages.js";
 import { message } from "../messages/appText.js";

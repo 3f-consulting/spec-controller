@@ -5,12 +5,15 @@ export { evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
 export type { EvidenceReconciliation, RunToReconcile, RunVerdict } from "./domain/evidenceReconciliation.js";
 export { BUILT_IN_DEFERRAL_TAGS } from "./domain/postEvidenceObligation.js";
 export type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./domain/postEvidenceObligation.js";
+export { claimCodesAtOf } from "./domain/postEvidenceObservation.js";
 export type { ClaimCodesAt, EvidenceObservation, WorkflowStep } from "./domain/postEvidenceObservation.js";
-export { provenanceFrom } from "./domain/provenance.js";
+export { outputClashOf, outputPlanOf } from "./domain/outputPlan.js";
+export type { IdentifiedInput, IdentifiedOutput, LocatedOutput, OutputRefusal, PlannedOutput, RequestedOutput } from "./domain/outputPlan.js";
+export { provenanceFrom, runIdentityOf, toolVersionOf } from "./domain/provenance.js";
 export type { Provenance, RunInput } from "./domain/provenance.js";
 export { relativizeToRoot, targetFolderOf } from "./domain/targetPath.js";
 
-export { claimCodesAtOf, parseFeatureCorpus } from "./inputs/gherkin.js";
+export { parseFeatureCorpus } from "./inputs/gherkin.js";
 export type { ParsedFeatureFile } from "./inputs/gherkin.js";
 
 export { parseVitestEvidenceObservations } from "./inputs/vitest.js";
@@ -24,7 +27,7 @@ export type { CucumberJsonReport } from "./inputs/cucumber.js";
 export { recordedCheckStepsOf } from "./inputs/stepRecord.js";
 export type { StepRecord } from "./inputs/stepRecord.js";
 export { parseWorkflows, pipelineStepsOf } from "./inputs/workflows.js";
-export { commandRuns, shellReading } from "./inputs/shell.js";
+export { shellReading } from "./inputs/shell.js";
 export { targetConfigurationFrom } from "./inputs/manifest.js";
 export type { PackageJsonScripts, ParsedWorkflow } from "./inputs/workflows.js";
 export type { Parsed, Source, SourceFault, SourcesParse } from "./inputs/sourceParse.js";
