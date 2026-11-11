@@ -4,10 +4,7 @@ import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export function resolveSourceSha(opts: { sourceSha?: string; targetDir?: string }): string | undefined {
-  if (opts.sourceSha !== undefined && opts.sourceSha.trim() !== "") {
-    return opts.sourceSha.trim();
-  }
-  return readGit(opts.targetDir, ["rev-parse", "HEAD"]);
+  return opts.sourceSha ?? readGit(opts.targetDir, ["rev-parse", "HEAD"]);
 }
 
 export function resolveTargetOrigin(targetDir: string | undefined): string | undefined {
