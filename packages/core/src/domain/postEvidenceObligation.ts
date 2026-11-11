@@ -13,15 +13,19 @@ export interface ExecutableClaim {
   readonly obligations: readonly EvidenceObligation[];
 }
 
-export interface RowAsWritten {
-  readonly cell?: string;
+// An Examples block as written: its tags, its columns, and each row's line and cells.
+interface ExamplesBlockAsWritten {
+  readonly tags: readonly string[];
+  readonly columns: readonly string[];
+  readonly rows: readonly { readonly line: number; readonly cells: readonly string[] }[];
 }
 
+// A scenario or Outline as written: its tags without their at-sign, its title, its line and its Examples blocks.
 export interface ScenarioAsWritten {
   readonly tags: readonly string[];
   readonly title: string;
-  readonly rows?: readonly RowAsWritten[];
-  readonly examplesTags: readonly string[];
+  readonly line: number;
+  readonly examples: readonly ExamplesBlockAsWritten[];
 }
 
 export interface FeatureAsWritten {
@@ -29,6 +33,56 @@ export interface FeatureAsWritten {
   readonly featureTags: readonly string[];
   readonly scenarios: readonly ScenarioAsWritten[];
   readonly tagFormWords: readonly string[];
+}
+
+interface ClaimRow {
+  readonly line: number;
+  readonly cell: string;
+}
+
+// A scenario as the claims are read off it: an Outline with a clm column has a row for each claim.
+interface ScenarioRead {
+  readonly tags: readonly string[];
+  readonly title: string;
+  readonly examplesTags: readonly string[];
+  readonly rows?: readonly ClaimRow[];
+}
+
+const CLM_COLUMN = "clm";
+
+const clmColumnOf = (block: ExamplesBlockAsWritten): number => block.columns.indexOf(CLM_COLUMN);
+
+// An Outline with a clm column in any Examples block is one claim for each row of every block; a row of a block with
+// no clm column is a claim with no code.
+function claimRowsOf({ examples }: ScenarioAsWritten): ClaimRow[] | undefined {
+  if (!examples.some((block) => clmColumnOf(block) >= 0)) return undefined;
+  return examples.flatMap((block) => {
+    const column = clmColumnOf(block);
+    return block.rows.map(({ line, cells }) => ({ line, cell: column < 0 ? "" : cells[column]! }));
+  });
+}
+
+function scenarioReadOf(scenario: ScenarioAsWritten): ScenarioRead {
+  const rows = claimRowsOf(scenario);
+  const read = { tags: scenario.tags, title: scenario.title, examplesTags: scenario.examples.flatMap(({ tags }) => tags) };
+  return rows === undefined ? read : { ...read, rows };
+}
+
+// Each feature file with its scenarios as the claims are read off them.
+export function featureReadOf({ file, featureTags, scenarios }: FeatureAsWritten): { readonly file: string; readonly featureTags: readonly string[]; readonly scenarios: readonly ScenarioRead[] } {
+  return { file, featureTags, scenarios: scenarios.map(scenarioReadOf) };
+}
+
+const codesIn = (words: readonly string[]): string[] => words.filter((word) => claimCodeFrom(word) !== undefined);
+
+// The claim codes a scenario carries at each line a report may name it by: its tags at its own line, and the clm cell
+// at the line of each row of a block with a clm column.
+export function claimCodesAtLinesOf(scenario: ScenarioAsWritten): { readonly line: number; readonly codes: readonly string[] }[] {
+  const rows = scenario.examples.flatMap((block) => {
+    const column = clmColumnOf(block);
+    return column < 0 ? [] : block.rows.map(({ line, cells }) => ({ line, codes: codesIn([cells[column]!]) }));
+  });
+  return [{ line: scenario.line, codes: codesIn(scenario.tags) }, ...rows];
 }
 
 export interface ReadingSettings {
@@ -49,7 +103,7 @@ function obligationsRaisedBy(tags: readonly string[], strict: boolean): Evidence
   return QUALITY_CHECK_KINDS.filter(raises).map((kind) => ({ kind }));
 }
 
-function claimOf(file: string, scenario: ScenarioAsWritten, strict: boolean, claimCode: ClaimCode | undefined): ExecutableClaim {
+function claimOf(file: string, scenario: ScenarioRead, strict: boolean, claimCode: ClaimCode | undefined): ExecutableClaim {
   return { file, title: scenario.title, obligations: obligationsRaisedBy(scenario.tags, strict), ...(claimCode && { claimCode }) };
 }
 
@@ -57,14 +111,14 @@ function claimCodesIn(tags: readonly string[]): ClaimCode[] {
   return tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
 }
 
-function claimsOf(file: string, scenario: ScenarioAsWritten, settings: ReadingSettings): ExecutableClaim[] {
+function claimsOf(file: string, scenario: ScenarioRead, settings: ReadingSettings): ExecutableClaim[] {
   if (isDeferred(scenario.tags, settings)) return [];
   const codes = claimCodesIn(scenario.tags);
   const claim = (claimCode: ClaimCode | undefined): ExecutableClaim => claimOf(file, scenario, settings.strict, claimCode);
-  if (scenario.rows) return codes.length > 0 ? [] : scenario.rows.map((row) => claim(claimCodeFrom(row.cell ?? "")));
+  if (scenario.rows) return codes.length > 0 ? [] : scenario.rows.map((row) => claim(claimCodeFrom(row.cell)));
   return codes.length > 1 ? [] : [claim(codes[0])];
 }
 
 export function executableClaimsOf(features: readonly FeatureAsWritten[], settings: ReadingSettings): ExecutableClaim[] {
-  return features.flatMap(({ file, scenarios }) => scenarios.flatMap((scenario) => claimsOf(file, scenario, settings)));
+  return features.flatMap(({ file, scenarios }) => scenarios.flatMap((scenario) => claimsOf(file, scenarioReadOf(scenario), settings)));
 }

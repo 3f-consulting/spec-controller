@@ -5,12 +5,13 @@ export { evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
 export type { EvidenceReconciliation, RunToReconcile, RunVerdict } from "./domain/evidenceReconciliation.js";
 export { BUILT_IN_DEFERRAL_TAGS } from "./domain/postEvidenceObligation.js";
 export type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./domain/postEvidenceObligation.js";
+export { claimCodesAtOf } from "./domain/postEvidenceObservation.js";
 export type { ClaimCodesAt, EvidenceObservation, WorkflowStep } from "./domain/postEvidenceObservation.js";
 export { provenanceFrom } from "./domain/provenance.js";
 export type { Provenance, RunInput } from "./domain/provenance.js";
 export { relativizeToRoot, targetFolderOf } from "./domain/targetPath.js";
 
-export { claimCodesAtOf, parseFeatureCorpus } from "./inputs/gherkin.js";
+export { parseFeatureCorpus } from "./inputs/gherkin.js";
 export type { ParsedFeatureFile } from "./inputs/gherkin.js";
 
 export { parseVitestEvidenceObservations } from "./inputs/vitest.js";

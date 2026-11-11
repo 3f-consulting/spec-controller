@@ -1,5 +1,5 @@
 import { claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
-import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
+import { claimCodesAtLinesOf, type ExecutableClaim, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { relativizeToRoot } from "./targetPath.js";
 
 export interface EvidenceObservation {
@@ -23,6 +23,19 @@ export interface UnnamedClaim {
 }
 
 export type ClaimCodesAt = (file: string, line: number) => readonly string[];
+
+// A report names a feature file by a path that ends in the file's path within the corpus.
+export function claimCodesAtOf(features: readonly FeatureAsWritten[]): ClaimCodesAt {
+  const byLine = new Map<number, { readonly file: string; readonly codes: readonly string[] }[]>();
+  for (const { file, scenarios } of features) {
+    for (const { line, codes } of scenarios.flatMap(claimCodesAtLinesOf)) byLine.set(line, [...(byLine.get(line) ?? []), { file: `/${file}`, codes }]);
+  }
+  return (path, line) => {
+    const reported = `/${path}`;
+    const matching = (byLine.get(line) ?? []).filter((at) => reported.endsWith(at.file));
+    return matching[0]?.codes ?? [];
+  };
+}
 
 interface UsedAction {
   readonly name: string;
