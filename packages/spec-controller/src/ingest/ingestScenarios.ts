@@ -1,18 +1,7 @@
 import { readFileSync, readdirSync, type Dirent } from "node:fs";
 import { join } from "node:path";
 
-import { AppMessage } from "../messages.js";
-import { message } from "../appText.js";
-
-export class MissingFeatureCorpusError extends Error {
-  readonly directory: string;
-
-  constructor(directory: string) {
-    super(message(AppMessage.FeatureCorpusDirectoryMissing, { directory }));
-    this.name = "MissingFeatureCorpusError";
-    this.directory = directory;
-  }
-}
+export class MissingFeatureCorpusError extends Error {}
 
 export interface CorpusFeatureFile {
   path: string;
@@ -27,7 +16,7 @@ function corpusEntries(dir: string): Dirent[] {
   try {
     return entriesOf(dir);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") throw new MissingFeatureCorpusError(dir);
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") throw new MissingFeatureCorpusError();
     throw err;
   }
 }
@@ -53,20 +42,10 @@ export function corpusFeatureFiles(dir: string): CorpusFeatureFile[] {
     .map((relativePath) => ({ path: corpusPathOf(dir, relativePath), relativePath }));
 }
 
-function readFeatureSource(path: string): string {
-  try {
-    return readFileSync(path, "utf8");
-  } catch (err) {
-    const errno = err as NodeJS.ErrnoException;
-    errno.path ??= path;
-    throw err;
-  }
-}
-
 export interface FeatureFileSource extends CorpusFeatureFile {
   readonly source: string;
 }
 
 export function readFeatureSources(dir: string): FeatureFileSource[] {
-  return corpusFeatureFiles(dir).map(({ path, relativePath }) => ({ path, relativePath, source: readFeatureSource(path) }));
+  return corpusFeatureFiles(dir).map(({ path, relativePath }) => ({ path, relativePath, source: readFileSync(path, "utf8") }));
 }

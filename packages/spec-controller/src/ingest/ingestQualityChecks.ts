@@ -88,13 +88,7 @@ interface WorkflowSources {
 }
 
 function readWorkflowSource(path: string, read: (path: string) => string): Source {
-  try {
-    return { file: basename(path), source: read(path) };
-  } catch (err) {
-    const errno = err as NodeJS.ErrnoException;
-    errno.path ??= path;
-    throw err;
-  }
+  return { file: basename(path), source: read(path) };
 }
 
 function workflowSourcesOf(path: string, read: (path: string) => string): WorkflowSources {
