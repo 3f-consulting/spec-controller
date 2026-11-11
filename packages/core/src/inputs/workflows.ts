@@ -67,8 +67,7 @@ function nameOf(value: unknown): { readonly name?: string } {
   return typeof value === "string" ? { name: value } : {};
 }
 
-function stepsOfJob(job: string, jobBody: unknown): WorkflowStep[] {
-  if (!isRecord(jobBody)) return [];
+function stepsOfJob(job: string, jobBody: Record<string, unknown>): WorkflowStep[] {
   const steps = jobBody["steps"];
   if (!Array.isArray(steps)) return [];
   const jobContinueOnError = jobBody[CONTINUE_ON_ERROR];
@@ -94,7 +93,7 @@ function stepsOfJob(job: string, jobBody: unknown): WorkflowStep[] {
 function stepsOfDocument(doc: unknown): WorkflowStep[] {
   const jobs = isRecord(doc) ? doc["jobs"] : undefined;
   if (!isRecord(jobs)) return [];
-  return Object.entries(jobs).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody));
+  return Object.entries(jobs as Record<string, Record<string, unknown>>).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody));
 }
 
 function workflowOf(document: unknown): WorkflowContent {
