@@ -40,8 +40,6 @@ jobs:
             mutate: "packages/core/src/domain/**/*.ts,!packages/core/src/domain/**/*.test.ts,!packages/core/src/domain/**/*.test-utils.ts"
           - scope: core-provenance
             mutate: "packages/core/src/provenance/**/*.ts,!packages/core/src/provenance/**/*.test.ts,!packages/core/src/provenance/**/*.test-utils.ts"
-          - scope: core-assemble
-            mutate: "packages/core/src/assemble/**/*.ts,!packages/core/src/assemble/**/*.test.ts,!packages/core/src/assemble/**/*.test-utils.ts"
           - scope: spec-controller-cli-allocate
             mutate: "packages/spec-controller/src/cli-allocate/**/*.ts,!packages/spec-controller/src/cli-allocate/**/*.test.ts,!packages/spec-controller/src/cli-allocate/**/*.test-utils.ts"
           - scope: core-render
