@@ -10,7 +10,18 @@ import {
   type OutputFormat,
   type PlannedOutput,
 } from "./format.js";
-import { namesStdout, probeDestination, refuse, stdoutIdentity, unwritableRefusal, writeOrRefuse, type Unwritable } from "../../outputLocation.js";
+import {
+  namesStderr,
+  namesStdout,
+  probeDestination,
+  refuse,
+  stderrIdentity,
+  stdoutIdentity,
+  unwritableRefusal,
+  writeOrRefuse,
+  type Unwritable,
+} from "../../outputLocation.js";
+import { standardError } from "../../standardError.js";
 import type { Refusal } from "../../refusal.js";
 
 function render(fmt: OutputFormat, evidenceReconciliation: EvidenceReconciliation): string {
@@ -31,10 +42,14 @@ function vetDestinations(outputs: readonly PlannedOutput[], inputs: readonly Ide
   const created: string[] = [];
   try {
     const identified: IdentifiedOutput[] = [];
+    let stderrIdentified = false;
     for (const output of outputs) {
       const probe = identify(output, created);
       if (probe.kind === "refused") return probe.refusal;
-      identified.push({ output, identity: probe.identity });
+      const toStderr = output.dest.kind === "file" && namesStderr(output.dest.path);
+      // Two reports on standard error follow one another in its stream, so only the first is checked against the files.
+      identified.push({ output, identity: toStderr && stderrIdentified ? undefined : probe.identity });
+      stderrIdentified ||= toStderr;
     }
     return sharedFileRefusal(identified) ?? inputOverwriteRefusal(identified, inputs);
   } finally {
@@ -47,6 +62,7 @@ type Probe = { readonly kind: "identified"; readonly identity: FileIdentity | un
 function identify(output: PlannedOutput, created: string[]): Probe {
   const dest = output.dest;
   if (dest.kind === "stdout") return { kind: "identified", identity: stdoutIdentity() };
+  if (namesStderr(dest.path)) return { kind: "identified", identity: stderrIdentity() };
   try {
     const probed = probeDestination(dest.path);
     if (probed.created !== undefined) created.push(probed.created);
@@ -64,6 +80,10 @@ function emit(output: PlannedOutput, text: string): void {
   const dest = output.dest;
   if (dest.kind === "stdout") {
     process.stdout.write(text);
+    return;
+  }
+  if (namesStderr(dest.path)) {
+    standardError(process.stderr).report(text);
     return;
   }
   writeOrRefuse(reportOf(output), dest.path, () => writeFileSync(dest.path, text));

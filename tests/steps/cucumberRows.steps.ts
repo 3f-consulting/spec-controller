@@ -1,21 +1,25 @@
-import { Given, Then } from "@cucumber/cucumber";
+import { Given, Then, When } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { NODE } from "./support/builtCli.js";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 import { claimReconciliationsOf } from "./support/reportClaimReconciliations.js";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 import type { RowReconciliation, SpecControllerWorld } from "./support/world.js";
 
 const CUCUMBER_PACKAGE = join(process.cwd(), "node_modules", "@cucumber", "cucumber");
 
-const PASSING_ROW = "CLM-ONE-001";
+const FEATURE_CODE = "ONE";
 
-const FAILING_ROW = "CLM-ONE-002";
+// Each row's own result, so an observation filed under the wrong row's claim would show.
+const ROWS = [
+  { number: "001", result: "passes" },
+  { number: "002", result: "fails" },
+] as const;
 
 const OUTLINE = [
-  "@ONE",
+  `@${FEATURE_CODE}`,
   "Feature: one",
   "",
   "  @integration",
@@ -23,9 +27,8 @@ const OUTLINE = [
   "    Given the row <result>",
   "",
   "    Examples:",
-  "      | clm            | result |",
-  `      | ${PASSING_ROW}    | passes |`,
-  `      | ${FAILING_ROW}    | fails  |`,
+  "      | clm         | result |",
+  ...ROWS.map(({ number, result }) => `      | CLM-${FEATURE_CODE}-${number} | ${result} |`),
   "",
 ].join("\n");
 
@@ -39,7 +42,7 @@ const STEP_DEFINITIONS = [
 const CUCUMBER_REPORT = "cucumber.json";
 
 Given(
-  "a target whose one Outline is tagged @integration and has a clm column holding CLM-ONE-001 and CLM-ONE-002",
+  "two executable claims were rows of one Scenario Outline, with the claim codes CLM-ONE-001 and CLM-ONE-002",
   function (this: SpecControllerWorld) {
     const dir = temporaryDirectory(this, "cucumber-rows-");
     mkdirSync(join(dir, "features"));
@@ -57,37 +60,41 @@ Given(
         "--ci", join(dir, "ci.yml"),
       ],
     };
-    this.reconciledRun = null;
   },
 );
 
-Given("Cucumber's evidence report says CLM-ONE-001's row passed and CLM-ONE-002's row failed", function (this: SpecControllerWorld) {
+Given("Cucumber's evidence report had a result for each row", function (this: SpecControllerWorld) {
   const result = spawnSync(
     NODE,
     [join(CUCUMBER_PACKAGE, "bin", "cucumber.js"), "--require", "steps.cjs", "--format", `json:${CUCUMBER_REPORT}`],
     { cwd: this.rowsTarget, encoding: "utf8" },
   );
   assert.equal(result.error, undefined, `cucumber-js failed to spawn: ${result.error?.message}`);
-  assert.equal(result.status, 1, `expected the planted run to fail on its failing row; exit ${result.status}\n${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /2 scenarios \(1 failed, 1 passed\)/, `expected one row to pass and one to fail; got:\n${result.stdout}`);
+  assert.match(result.stdout, /2 scenarios \(1 failed, 1 passed\)/, `expected a result for each of the two rows; got:\n${result.stdout}\n${result.stderr}`);
 });
 
-Then(
-  "CLM-ONE-001's Claim Reconciliation is balanced, and CLM-ONE-002's is out of balance with a failing reconciling item",
-  function (this: SpecControllerWorld) {
-    assert.ok(this.reconciledRun, "the target was not reconciled");
-    const rows = claimReconciliationsOf<RowReconciliation>(this.reconciledRun.report);
-    const rowOf = (claim: string) => rows.find((row) => row.claim === claim);
-    assert.equal(rowOf(PASSING_ROW)?.verdict, "balanced", `expected ${PASSING_ROW} balanced; got ${JSON.stringify(rowOf(PASSING_ROW))}`);
-    const failing = rowOf(FAILING_ROW);
-    assert.equal(failing?.verdict, "out-of-balance", `expected ${FAILING_ROW} out of balance; got ${JSON.stringify(failing)}`);
+When("balance posts the evidence", function (this: SpecControllerWorld) {
+  const { cwd, inputs } = this.reconciledTarget;
+  const result = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", ...inputs, "--format", "json"], { cwd, encoding: "utf8" });
+  assert.equal(result.error, undefined, `the CLI failed to spawn: ${result.error?.message}`);
+  try {
+    this.reconciledReport = JSON.parse(result.stdout) as unknown;
+  } catch {
+    assert.fail(`expected a JSON report on stdout; exit ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+  }
+});
+
+Then("an Evidence Observation will be posted for each row, citing the claim code of its row", function (this: SpecControllerWorld) {
+  const reconciliations = claimReconciliationsOf<RowReconciliation>(this.reconciledReport);
+  for (const { number } of ROWS) {
+    const code = { featureCode: FEATURE_CODE, number };
+    const ofRow = reconciliations.filter(({ claim }) => claim.claimCode?.featureCode === FEATURE_CODE && claim.claimCode.number === number);
+    assert.equal(ofRow.length, 1, `expected one Claim Reconciliation for CLM-${FEATURE_CODE}-${number}; got ${JSON.stringify(reconciliations)}`);
+    const observations = ofRow.flatMap(({ qualityCheckReconciliations }) => qualityCheckReconciliations.flatMap(({ observation }) => observation ?? []));
     assert.deepEqual(
-      failing.qualityCheckReconciliations.map(({ qualityCheckKind, evidenceObservations }) => ({
-        qualityCheckKind,
-        outcomes: (evidenceObservations ?? []).map(({ outcome }) => outcome),
-      })),
-      [{ qualityCheckKind: "integration", outcomes: ["failing"] }],
-      `expected ${FAILING_ROW}'s one reconciling item failing at integration; got ${JSON.stringify(failing)}`,
+      observations.map(({ cites }) => cites),
+      [[code]],
+      `expected one Evidence Observation posted to CLM-${FEATURE_CODE}-${number}, citing it alone; got ${JSON.stringify(ofRow)}`,
     );
-  },
-);
+  }
+});

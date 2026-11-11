@@ -1,7 +1,14 @@
+// Held in the app, not in core's domain, because this module loads with the crash guards, before core does.
+export const VERDICT_EXIT_CODE: Readonly<Record<"balanced" | "out-of-balance" | "not-reconciled", number>> = {
+  balanced: 0,
+  "out-of-balance": 1,
+  "not-reconciled": 3,
+};
+
 export const USAGE_EXIT_CODE = 2;
 
-// A process outcome, not a verdict: the ledger was never finished, so no verdict code may stand for it.
-export const UNEXPECTED_ERROR_EXIT_CODE = 6;
+// A process outcome, not a verdict: the run never reached one, so no verdict code may stand for it.
+const UNEXPECTED_ERROR_EXIT_CODE = 4;
 
 export type RunEnding =
   | { readonly kind: "verdict"; readonly code: number }

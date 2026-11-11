@@ -21,6 +21,7 @@ export function errorText(error: RefusalLines | CodedLine, command?: string): st
 export interface StandardError {
   error(error: RefusalLines | CodedLine): void;
   note(line: string): void;
+  report(text: string): void;
 }
 
 export function standardError(stream: LineWriter, command?: string): StandardError {
@@ -30,6 +31,9 @@ export function standardError(stream: LineWriter, command?: string): StandardErr
     },
     note: (line) => {
       stream.write(line + "\n");
+    },
+    report: (text) => {
+      stream.write(text);
     },
   };
 }

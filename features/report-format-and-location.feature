@@ -45,11 +45,11 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-018 | a file that already exists                             | the file will contain the new report                                             |
         | CLM-FMT-019 | a file in the corpus folder that is not a feature file | the file will contain the new report, and the feature files will be as they were |
 
-    @wip
+    @e2e
     Scenario Outline: each of two reports will be where you asked
-      given a run had two reports to write
-      when you ask for them at <destination>
-      then <where it will be>
+      Given a run had two reports to write
+      When you ask for them at <destination>
+      Then <where it will be>
 
       Examples:
         | clm         | destination                                            | where it will be                                                                 |
@@ -74,13 +74,13 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-011 | no destination  | a path that names standard output |
         | CLM-FMT-023 | no destination  | a link to standard output         |
 
-    @wip
+    @e2e
     Scenario Outline: two reports will not go in one file
-      given a run had two reports to write
-      when you ask for them at a file and at <the other destination>
-      then the run will stop, give no verdict and exit 2
-      and it will complain, naming the file and both reports
-      and the file will be as it was
+      Given a run had two reports to write
+      When you ask for them at a file and at <the other destination>
+      Then the run will stop, give no verdict and exit 2
+      And it will complain, naming the file and both reports
+      And the file will be as it was
 
       Examples:
         | clm         | the other destination                   |

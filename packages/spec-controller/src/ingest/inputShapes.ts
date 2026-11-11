@@ -1,4 +1,4 @@
-import { featureCodeOf } from "@3f-consulting/spec-controller-core";
+import { claimCodeFrom } from "@3f-consulting/spec-controller-core";
 
 import { AppMessage } from "../messages.js";
 import { message } from "../appText.js";
@@ -74,7 +74,7 @@ export const CUCUMBER_REPORT: Shape = {
 
 export const CI_STEP_RECORD: Shape = {
   entries: { fields: { outcome: "string" } },
-  keys: (key) => featureCodeOf(key) !== null,
+  keys: (key) => claimCodeFrom(key) !== undefined,
 };
 
 export const PACKAGE_MANIFEST: Shape = { fields: { scripts: { entries: "string" } } };

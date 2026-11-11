@@ -98,7 +98,7 @@
   "source-sha-flag": "Override the git commit SHA recorded in provenance (defaults to the resolved HEAD).",
   "format-flag": "Where to send output (md or json, optionally :<path> to write to a file). Repeatable.",
   "strict-flag": "Fail the run (exit 3) when it carries Pending Items — the opt-in that escalates otherwise-run-neutral deferred obligations.",
-  "exit-zero-flag": "Print the same report but exit 0 on an out-of-balance or claim-code-error (1) or --strict pending (3) verdict — the on-ramp before gating. Usage (2), unsound (4) and nothing-to-reconcile (5) still fail.",
+  "exit-zero-flag": "Print the same report but exit 0 on an out-of-balance (1) verdict — the on-ramp before gating. Usage (2), not reconciled (3) and an unexpected error (4) still fail.",
   "configuration-heading": "Configuration (in the target repo's package.json):",
   "deferral-tags-key": "specController.deferralTags: string[]",
   "deferral-tags-explanation": "Extra recognised deferral tags. A scenario carrying one defers every obligation it\nnames to a Pending Item, extending (never replacing) the built-in set.",

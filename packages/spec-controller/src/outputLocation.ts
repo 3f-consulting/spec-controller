@@ -81,13 +81,21 @@ export function regularFileIdentity(path: string): RegularFileIdentity | undefin
   return undefined;
 }
 
-export function stdoutIdentity(): RegularFileIdentity | undefined {
+function streamIdentity(fd: number): RegularFileIdentity | undefined {
   try {
-    return regularIdentity(fstatSync(1, { bigint: true }));
+    return regularIdentity(fstatSync(fd, { bigint: true }));
   } catch {
-    // A closed stdout has no file for a destination to share.
+    // A closed stream has no file for a destination to share.
   }
   return undefined;
+}
+
+export function stdoutIdentity(): RegularFileIdentity | undefined {
+  return streamIdentity(1);
+}
+
+export function stderrIdentity(): RegularFileIdentity | undefined {
+  return streamIdentity(2);
 }
 
 function identityOf(fd: number): RegularFileIdentity | undefined {
@@ -102,17 +110,31 @@ function regularIdentity(stats: { isFile(): boolean; dev: bigint; ino: bigint })
   return stats.isFile() ? { dev: stats.dev, ino: stats.ino } : undefined;
 }
 
-const STDOUT_SPELLINGS = new Set(["/dev/stdout", "/dev/fd/1", "/proc/self/fd/1", "/proc/thread-self/fd/1", `/proc/${process.pid}/fd/1`]);
+const spellingsOf = (fd: number, name: string): ReadonlySet<string> =>
+  new Set([`/dev/${name}`, `/dev/fd/${fd}`, `/proc/self/fd/${fd}`, `/proc/thread-self/fd/${fd}`, `/proc/${process.pid}/fd/${fd}`]);
+
+const STDOUT_SPELLINGS = spellingsOf(1, "stdout");
+
+const STDERR_SPELLINGS = spellingsOf(2, "stderr");
 
 const MAX_LINKS_FOLLOWED = 40;
 
-export function namesStdout(path: string): boolean {
+function namesStream(path: string, spellings: ReadonlySet<string>): boolean {
   let current: string | undefined = resolve(path);
   for (let followed = 0; current !== undefined && followed <= MAX_LINKS_FOLLOWED; followed++) {
-    if (STDOUT_SPELLINGS.has(current)) return true;
+    if (spellings.has(current)) return true;
     current = withFirstLinkFollowed(current);
   }
   return false;
+}
+
+export function namesStdout(path: string): boolean {
+  return namesStream(path, STDOUT_SPELLINGS);
+}
+
+// Standard error may be a socket a parent process handed over, which cannot be opened by its path, so a report bound for it is written to the stream.
+export function namesStderr(path: string): boolean {
+  return namesStream(path, STDERR_SPELLINGS);
 }
 
 function withFirstLinkFollowed(path: string): string | undefined {

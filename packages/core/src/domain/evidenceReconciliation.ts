@@ -1,7 +1,15 @@
-import { claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
-import type { ClaimReconciliation, Outcome, QualityCheckReconciliation } from "./claimReconciliation.js";
-import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
-import type { EvidenceObservation, PipelineStep, StepDisposition } from "./postEvidenceObservation.js";
+import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
+import { claimReconciliationsOf, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
+import { executableClaimsOf, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
+import {
+  fitnessObservationsOf,
+  stepDispositionOf,
+  type EvidenceObservation,
+  type PipelineStep,
+  type RecordedCheckStep,
+  type StepDisposition,
+  type StepReadings,
+} from "./postEvidenceObservation.js";
 
 export type RunVerdict =
   | { readonly verdict: "balanced" }
@@ -200,12 +208,75 @@ export interface RunIdentity {
 
 const UNKNOWN = "unknown";
 
+const UNKNOWN_TARGET = "unknown-target";
+
 export function provenanceOf(identity: RunIdentity, inputs: Provenance["inputs"]): Provenance {
   return {
-    target: identity.target ?? identity.origin ?? UNKNOWN,
+    target: identity.target ?? identity.origin ?? UNKNOWN_TARGET,
     sourceSha: identity.sourceSha ?? UNKNOWN,
     ...(identity.toolSha === undefined ? {} : { toolSha: identity.toolSha }),
     toolVersion: identity.toolVersion,
     inputs,
+  };
+}
+
+interface NonCheckNamed {
+  readonly workflow: string;
+  readonly job: string;
+  readonly step: string;
+}
+
+// The configuration as read, by shape, so this module and the one that reads it import nothing of each other.
+interface ConfigurationUsed {
+  readonly configuration: {
+    readonly runners: Readonly<Partial<Record<string, string | null>>>;
+    readonly nonChecks: readonly NonCheckNamed[];
+    readonly deferralTags: readonly string[];
+  };
+  readonly errors: readonly ConfigurationError[];
+}
+
+export interface RunToReconcile {
+  readonly features: readonly FeatureAsWritten[];
+  readonly testObservations: readonly EvidenceObservation[];
+  readonly steps: readonly PipelineStep[];
+  readonly readings: Omit<StepReadings, "nonChecks" | "runners">;
+  readonly recordedSteps?: readonly RecordedCheckStep[];
+  readonly configuration: ConfigurationUsed;
+  readonly strict: boolean;
+  readonly provenance: Provenance;
+}
+
+function dispositionsOf({ readings, configuration: { configuration } }: RunToReconcile): (step: PipelineStep) => StepDisposition {
+  const runners = Object.fromEntries(Object.entries(configuration.runners).filter((entry): entry is [string, string | null] => entry[1] !== undefined));
+  const nonChecks = configuration.nonChecks.map(({ workflow, job, step }) => `${workflow}:${job}:${step}`);
+  return (step) => stepDispositionOf(step, { ...readings, runners, nonChecks });
+}
+
+function errorsInTheInputsOf(claimCodeErrors: readonly ClaimCodeError[], configurationErrors: readonly ConfigurationError[]): ErrorsInTheInputs | undefined {
+  if (claimCodeErrors.length === 0 && configurationErrors.length === 0) return undefined;
+  return {
+    ...(claimCodeErrors.length === 0 ? {} : { claimCodeErrors }),
+    ...(configurationErrors.length === 0 ? {} : { configurationErrors }),
+  };
+}
+
+export function evidenceReconciliationOf(run: RunToReconcile): EvidenceReconciliation {
+  const { features, configuration, strict, steps } = run;
+  const claims = executableClaimsOf(features, { deferralTags: configuration.configuration.deferralTags, strict });
+  const dispositionOf = dispositionsOf(run);
+  const observations = [...run.testObservations, ...fitnessObservationsOf(steps, dispositionOf, run.recordedSteps)];
+  const claimReconciliations = claimReconciliationsOf(claims, observations);
+  const claimCodeErrors = claimCodeErrorsOf(features);
+  const errorsInTheInputs = errorsInTheInputsOf(claimCodeErrors, configuration.errors);
+  const neverRan = observations.filter(({ result }) => result === "never-ran");
+  return {
+    claimReconciliations,
+    runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors),
+    totals: totalsOf(claimReconciliations, excludedClaimCodeOccurrencesOf(features)),
+    ...(steps.length === 0 ? {} : { stepAccount: stepAccountOf(steps, dispositionOf) }),
+    provenance: run.provenance,
+    ...(errorsInTheInputs === undefined ? {} : { errorsInTheInputs }),
+    ...(neverRan.length === 0 ? {} : { runIntegrity: { neverRan } }),
   };
 }

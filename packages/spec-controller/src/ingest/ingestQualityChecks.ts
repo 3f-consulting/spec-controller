@@ -1,18 +1,24 @@
 import { basename } from "node:path";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { readingOf, readUtf8, type ReadFault } from "./inputReading.js";
-import { corpusPathOf, MissingFeatureCorpusError, readFeatureSources, slugOf, type FeatureFileSource } from "./ingestScenarios.js";
+import { corpusPathOf, MissingFeatureCorpusError, readFeatureSources, type FeatureFileSource } from "./ingestScenarios.js";
 import {
   claimCodesAtOf,
+  commandRuns,
+  evidenceReconciliationOf,
   parseFeatureCorpus,
   parseWorkflows,
+  pipelineStepsOf,
+  recordedCheckStepsOf,
+  shellReading,
+  targetConfigurationFrom,
   type ParsedFeatureFile,
   type ClaimCodesAt,
   type ParsedWorkflow,
+  type Provenance,
   type Source,
   type SourceFault,
 } from "@3f-consulting/spec-controller-core";
-import { BUILT_IN_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
 import {
   parseVitestEvidenceObservations,
   type VitestJsonReport,
@@ -30,7 +36,6 @@ import {
   parseCucumberEvidenceObservations,
   type CucumberJsonReport,
 } from "@3f-consulting/spec-controller-core";
-import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
 import type { PackageJsonScripts, StepRecord } from "@3f-consulting/spec-controller-core";
 import type {
   EvidenceObservation,
@@ -109,14 +114,6 @@ export function readWorkflows(ciPath: string | undefined, read: (path: string) =
   return readingOf(path, () => workflowSourcesOf(path, read), parsedWorkflowsOf);
 }
 
-export function featureNamesOf(corpus: readonly ParsedFeatureFile[]): Map<string, string> {
-  const map = new Map<string, string>();
-  for (const { featureCode, file } of corpus) {
-    if (featureCode !== null) map.set(featureCode, slugOf(file));
-  }
-  return map;
-}
-
 const OBSERVATION_READERS = {
   vitest: (report, root) => parseVitestEvidenceObservations(report as VitestJsonReport, root),
   pytest: (report) => parsePytestEvidenceObservations(report as JunitXmlReport),
@@ -147,29 +144,26 @@ function documentReadBy(reports: readonly EvidenceReport[], reader: EvidenceRead
   return reports.find((report) => report.reader === reader)?.document;
 }
 
-type TargetManifest = PackageJsonScripts & {
-  specController?: {
-    deferralTags?: unknown;
-    runners?: unknown;
-    notChecks?: unknown;
-  };
-};
+type TargetManifest = PackageJsonScripts & { readonly specController?: unknown };
 
 export function runReconcile(
   reports: readonly EvidenceReport[],
   root: string,
   corpus: readonly ParsedFeatureFile[],
   workflows: readonly ParsedWorkflow[],
+  run: { readonly strict: boolean; readonly provenance: Provenance },
 ): EvidenceReconciliation {
   const packageJson = (documentReadBy(reports, "package-manifest") as TargetManifest | undefined) ?? {};
-
-  return evidenceReconciliationFromSources({
+  const scripts = packageJson.scripts ?? {};
+  const steps = pipelineStepsOf(workflows);
+  const recordedSteps = recordedCheckStepsOf(documentReadBy(reports, "ci-step-record") as StepRecord | undefined);
+  return evidenceReconciliationOf({
     features: corpus,
-    packageJson,
-    ciWorkflows: workflows,
-    ciStepRecord: documentReadBy(reports, "ci-step-record") as StepRecord | undefined,
-    behaviouralObservations: observationsOf(reports, root, claimCodesAtOf(corpus)),
-    deferralTags: BUILT_IN_DEFERRAL_TAGS,
-    reconcilerInvocation: RECONCILER_INVOCATION,
+    testObservations: observationsOf(reports, root, claimCodesAtOf(corpus)),
+    steps,
+    readings: { runsTheReconciler: (command) => commandRuns(command, RECONCILER_INVOCATION, scripts), scripts, shell: shellReading },
+    ...(recordedSteps === undefined ? {} : { recordedSteps }),
+    configuration: targetConfigurationFrom(packageJson, steps),
+    ...run,
   });
 }
