@@ -29,16 +29,28 @@ recordWhatTheProgramWrites();
 const redirectedStreams = new Map<number, number>();
 
 vi.mock("node:fs", async (importOriginal) => {
-  const fs = await importOriginal<typeof import("node:fs")>();
-  const fstatSync = ((fd: number, options?: Parameters<typeof fs.fstatSync>[1]) => fs.fstatSync(redirectedStreams.get(fd) ?? fd, options)) as typeof fs.fstatSync;
-  return { ...fs, fstatSync };
+  const fs: { readonly fstatSync: (fd: number, options?: object) => unknown } = await importOriginal();
+  return { ...fs, fstatSync: (fd: number, options?: object) => fs.fstatSync(redirectedStreams.get(fd) ?? fd, options) };
 });
 
-function withStandardStreamsOn<T>(paths: { readonly stdout: string; readonly stderr: string }, run: () => T): T {
+// The tool's modules are read afresh, so it finds its standard streams through the mock whichever test file the worker
+// loaded them for first.
+async function reportsWrittenWithStandardStreamsOn(
+  paths: { readonly stdout: string; readonly stderr: string },
+  formatSpecs: readonly string[],
+  inputs: readonly IdentifiedInput[] = [],
+): Promise<Written> {
   const opened = [openSync(paths.stdout, "r"), openSync(paths.stderr, "r")];
   opened.forEach((fd, index) => redirectedStreams.set(index + 1, fd));
   try {
-    return run();
+    vi.resetModules();
+    const { writeReports: freshWriteReports } = await import("./balance.js");
+    const { settlingRefusal: freshSettlingRefusal } = await import("../runEnding/usageRefusal.js");
+    freshSettlingRefusal(() => {
+      freshWriteReports(formatSpecs, RUN, inputs);
+      return true;
+    }, false);
+    return whatTheProgramWrote();
   } finally {
     redirectedStreams.clear();
     opened.forEach((fd) => closeSync(fd));
@@ -146,9 +158,9 @@ describe("each of two reports will be where you asked", () => {
       (dir: string) => [`md:${join(dir, "report.md")}`, `json:${join(dir, "report.json")}`],
       (dir: string) => ({ inTheFirstFile: holds(join(dir, "report.md"), renderMarkdown(RUN)), inTheSecondFile: holds(join(dir, "report.json"), renderJson(RUN)) }),
     ],
-  ])("[%s] two reports asked for at %s are each where asked", (clm, _destination, arrange, observe) => {
+  ])("[%s] two reports asked for at %s are each where asked", async (clm, _destination, arrange, observe) => {
     const dir = temporaryDirectory("spec-controller-two-places-");
-    const written = withStandardStreamsOn({ stdout: "/dev/null", stderr: "/dev/null" }, () => reportsWritten(arrange(dir)));
+    const written = await reportsWrittenWithStandardStreamsOn({ stdout: "/dev/null", stderr: "/dev/null" }, arrange(dir));
     const expected: Record<string, unknown> = {
       "CLM-FMT-004": { onStandardOutput: true, inTheFile: true },
       "CLM-FMT-020": { onStandardOutput: true, onStandardError: true },
@@ -157,10 +169,10 @@ describe("each of two reports will be where you asked", () => {
     expect({ exitCode: written.exitCode, seen: observe(dir, written) }).toEqual({ exitCode: undefined, seen: expected[clm] });
   });
 
-  it("[CLM-FMT-022] two reports asked for at /dev/stderr, which is a file, are both on standard error, one after the other", () => {
+  it("[CLM-FMT-022] two reports asked for at /dev/stderr, which is a file, are both on standard error, one after the other", async () => {
     const file = join(temporaryDirectory("spec-controller-two-stderr-"), "stderr.log");
     writeFileSync(file, "");
-    const written = withStandardStreamsOn({ stdout: "/dev/null", stderr: file }, () => reportsWritten(["md:/dev/stderr", "json:/dev/stderr"]));
+    const written = await reportsWrittenWithStandardStreamsOn({ stdout: "/dev/null", stderr: file }, ["md:/dev/stderr", "json:/dev/stderr"]);
     expect({ exitCode: written.exitCode, onStandardError: written.stderr === renderMarkdown(RUN) + renderJson(RUN) }).toEqual({ exitCode: undefined, onStandardError: true });
   });
 });
@@ -200,12 +212,12 @@ describe("two reports will not go in one file", () => {
       },
     ],
     ["CLM-FMT-025", "standard output, redirected to the file", (file: string, _dir: string) => ({ spec: "json", shown: message(AppMessage.FormatOnStandardOutput, { fmt: "json" }), stdout: file })],
-  ])("[%s] a report on a file beside one at %s stops the run, naming the file and both reports, and leaves the file as it was", (_clm, _other, arrange) => {
+  ])("[%s] a report on a file beside one at %s stops the run, naming the file and both reports, and leaves the file as it was", async (_clm, _other, arrange) => {
     const dir = temporaryDirectory("spec-controller-one-file-");
     const file = join(dir, "shared.out");
     writeFileSync(file, "earlier\n");
     const { spec, shown, stdout } = arrange(file, dir);
-    const written = withStandardStreamsOn({ stdout, stderr: "/dev/null" }, () => reportsWritten([`md:${file}`, spec]));
+    const written = await reportsWrittenWithStandardStreamsOn({ stdout, stderr: "/dev/null" }, [`md:${file}`, spec]);
     expect({
       exitCode: written.exitCode,
       complaint: written.stderr.includes(message(AppError.OutputsShareFile, { first: `md:${file}`, second: shown })),
@@ -334,11 +346,11 @@ describe("a report on standard error will not go in a file another report names 
       "a file the run reads",
       (file: string) => ({ formatSpecs: ["md:/dev/stderr"], inputs: [{ subject: "Vitest report", path: file, identity: regularFileIdentity(file) }] }),
     ],
-  ])("[%s] a report on standard error, redirected onto %s, stops the run and leaves the file as it was", (_clm, _file, run) => {
+  ])("[%s] a report on standard error, redirected onto %s, stops the run and leaves the file as it was", async (_clm, _file, run) => {
     const file = join(temporaryDirectory("spec-controller-stderr-"), "vitest.json");
     writeFileSync(file, "{}\n");
     const { formatSpecs, inputs } = run(file);
-    const written = withStandardStreamsOn({ stdout: "/dev/null", stderr: file }, () => reportsWritten(formatSpecs, inputs));
+    const written = await reportsWrittenWithStandardStreamsOn({ stdout: "/dev/null", stderr: file }, formatSpecs, inputs);
     expect({
       exitCode: written.exitCode,
       complaint: written.stderr.includes(file),
