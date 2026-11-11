@@ -103,8 +103,9 @@ npx spec-controller balance \
 - **Leave out any input you don't have.**
 - **`--target` names the project in the report.** Without it, when the project is a git checkout with an `origin` remote, the report names the target by that origin, as in `owner/repo`; otherwise it reads `unknown-target`.
   - The origin is named without any user, password, token, query or fragment its remote carries.
-  - Only a URL, a transport to a URL, an scp remote or a local path is named. Any other form names no origin, and neither does a remote whose user part can only be guessed at.
-  - A local path, and a `file:` URL holding no user, are named as given.
+  - An `https` or `ssh` URL, and an scp remote such as `git@github.com:owner/repo.git`, are named `owner/repo`.
+  - A local path, and a `file:` URL holding no user, are named by the repository's folder, as in `web` for `/srv/git/web.git`.
+  - Any other form names no origin, `git://`, `http://` and a transport such as `ext::` among them, and neither does a remote whose user part can only be guessed at.
 
 For the smallest form of the command and every flag, see [Command reference](#command-reference--balance).
 
