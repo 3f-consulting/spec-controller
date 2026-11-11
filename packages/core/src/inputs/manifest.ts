@@ -12,6 +12,6 @@ function withBareDeferralTags(block: unknown): unknown {
   return { ...block, deferralTags: block.deferralTags.map((tag: unknown) => (typeof tag === "string" ? bareTerm(tag) : tag)) };
 }
 
-export function targetConfigurationFrom(packageJson: { readonly specController?: unknown }, stepsRead: readonly PipelineStep[] = []): ConfigurationRead {
+export function targetConfigurationFrom(packageJson: { readonly specController?: unknown }, stepsRead: readonly PipelineStep[]): ConfigurationRead {
   return targetConfigurationOf(withBareDeferralTags(packageJson.specController), SPEC_CONTROLLER_BLOCK, stepsRead);
 }

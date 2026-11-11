@@ -25,7 +25,7 @@ describe("balance turns each configuration setting into its internal setting", (
     ["CLM-CFG-014", { deferralTags: [" deferred "] }, { ...NOTHING, deferralTags: ["deferred"] }],
     ["CLM-CFG-006", undefined, NOTHING],
   ])("[%s] the setting %j becomes its internal setting", (_clm, specController, configuration) => {
-    expect(targetConfigurationFrom({ specController }).configuration).toEqual(configuration);
+    expect(targetConfigurationFrom({ specController }, []).configuration).toEqual(configuration);
   });
 
   it.each([
@@ -48,7 +48,7 @@ describe("balance turns each configuration setting into its internal setting", (
 
 describe("the run will still reach its run verdict, using the configuration settings it could use", () => {
   it("[CLM-CFG-017] the run will still reach its run verdict, using the configuration settings it could use", () => {
-    const { configuration } = targetConfigurationFrom({ specController: { runners: { unit: 3, integration: "cucumber-js" } } });
+    const { configuration } = targetConfigurationFrom({ specController: { runners: { unit: 3, integration: "cucumber-js" } } }, []);
     const runVerdict = runVerdictOf(claimReconciliationsOf([], []), []);
     expect({ reached: runVerdict.verdict !== undefined, runners: configuration.runners }).toEqual({ reached: true, runners: { integration: "cucumber-js" } });
   });

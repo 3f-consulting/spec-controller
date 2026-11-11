@@ -122,10 +122,9 @@ export function stepDispositionOf(step: PipelineStep, readings: StepReadings): S
 export interface RecordedCheckStep {
   readonly key: string;
   readonly outcome?: string;
-  readonly conclusion?: string;
 }
 
-// A step's outcome says how its own run went; its conclusion is that outcome after continue-on-error, so it is not read.
+// A step's outcome says how its own run went, before continue-on-error.
 const RESULT_OF_OUTCOME: ReadonlyMap<string | undefined, EvidenceObservation["result"]> = new Map([
   ["success", "passed"],
   ["failure", "failed"],

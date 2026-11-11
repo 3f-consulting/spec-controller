@@ -396,7 +396,7 @@ describe("balance posts each result with how it went", () => {
     ["CLM-OBS-032", { result: "failed", posted: () => cucumber(["CLM-ONE-001"], ["failed", "skipped"]) }],
     ["CLM-OBS-033", { result: "passed", posted: () => fitness([CITING_STEP], [{ key: "CLM-ONE-001", outcome: "success" }]) }],
     ["CLM-OBS-034", { result: "failed", posted: () => fitness([CITING_STEP], [{ key: "CLM-ONE-001", outcome: "failure" }]) }],
-    ["CLM-OBS-035", { result: "failed", posted: () => fitness([{ ...CITING_STEP, continueOnError: true }], [{ key: "CLM-ONE-001", outcome: "failure", conclusion: "success" }]) }],
+    ["CLM-OBS-035", { result: "failed", posted: () => fitness([{ ...CITING_STEP, continueOnError: true }], [{ key: "CLM-ONE-001", outcome: "failure" }]) }],
   ])("[%s] balance posts a result as passed or failed, citing its claim code", (_clm, { result, posted }) => {
     expect(posted()).toMatchObject([{ result, cites: [ONE] }]);
   });
