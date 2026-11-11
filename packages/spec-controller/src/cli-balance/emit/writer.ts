@@ -10,7 +10,8 @@ import {
   type OutputFormat,
   type PlannedOutput,
 } from "./format.js";
-import { namesStdout, probeDestination, refuse, stdoutIdentity, unwritableRefusal, writeOrRefuse, type Unwritable } from "../../outputLocation.js";
+import { namesStderr, namesStdout, probeDestination, refuse, stdoutIdentity, unwritableRefusal, writeOrRefuse, type Unwritable } from "../../outputLocation.js";
+import { standardError } from "../../standardError.js";
 import type { Refusal } from "../../refusal.js";
 
 function render(fmt: OutputFormat, evidenceReconciliation: EvidenceReconciliation): string {
@@ -47,6 +48,7 @@ type Probe = { readonly kind: "identified"; readonly identity: FileIdentity | un
 function identify(output: PlannedOutput, created: string[]): Probe {
   const dest = output.dest;
   if (dest.kind === "stdout") return { kind: "identified", identity: stdoutIdentity() };
+  if (namesStderr(dest.path)) return { kind: "identified", identity: undefined };
   try {
     const probed = probeDestination(dest.path);
     if (probed.created !== undefined) created.push(probed.created);
@@ -64,6 +66,10 @@ function emit(output: PlannedOutput, text: string): void {
   const dest = output.dest;
   if (dest.kind === "stdout") {
     process.stdout.write(text);
+    return;
+  }
+  if (namesStderr(dest.path)) {
+    standardError(process.stderr).report(text);
     return;
   }
   writeOrRefuse(reportOf(output), dest.path, () => writeFileSync(dest.path, text));
