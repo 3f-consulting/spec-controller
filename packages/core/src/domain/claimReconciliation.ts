@@ -120,15 +120,21 @@ const KIND_RANK: Readonly<Record<QualityCheckKind, number>> = { unit: 0, integra
 
 const kindRank = ({ kind }: QualityCheckReconciliation): number => (kind === undefined ? -1 : KIND_RANK[kind]);
 
-// Everything an observation records, field by field; NUL sorts below every other character, so a field sorts before any it begins.
-function recorded({ observation }: QualityCheckReconciliation): string {
-  if (observation === undefined) return "";
-  const { place, cites, name, message, result, notes } = observation;
-  return [place, ...cites.map(codeText), name, message, result, ...notes].join("\u0000");
+// Everything an observation records, field by field, its cited codes one field between them, so a line citing nothing sorts before one citing a code.
+function recorded({ observation }: QualityCheckReconciliation): string[] {
+  if (observation === undefined) return [];
+  const { place, cites, name = "", message = "", result, notes } = observation;
+  return [place, cites.map(codeText).join(" "), name, message, result, ...notes];
+}
+
+function compareRecords(a: readonly string[], b: readonly string[]): number {
+  const at = a.findIndex((text, index) => text !== b[index]);
+  if (at === -1 || at >= b.length) return a.length - b.length;
+  return a[at]! < b[at]! ? -1 : 1;
 }
 
 function inOrder(a: QualityCheckReconciliation, b: QualityCheckReconciliation): number {
-  return kindRank(a) - kindRank(b) || (recorded(a) < recorded(b) ? -1 : 1);
+  return kindRank(a) - kindRank(b) || compareRecords(recorded(a), recorded(b));
 }
 
 function reconciliationOf(claim: Claim, lines: readonly QualityCheckReconciliation[]): ClaimReconciliation {
