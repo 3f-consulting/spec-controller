@@ -19,7 +19,7 @@ function observation(
   result: EvidenceObservation["result"],
   cites: readonly string[],
   place = "a.test.ts",
-  said: { readonly name?: string; readonly message?: string } = {},
+  said: Partial<Pick<EvidenceObservation, "name" | "message" | "notes">> = {},
 ): EvidenceObservation {
   return { cites: cites.map(code), result, kind, place, notes: [], ...said };
 }
@@ -221,6 +221,13 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations",
         observation("unit", "failed", ["ONE-001"], "a.test.ts", { message: "b" }),
         observation("unit", "failed", ["ONE-001"], "a.test.ts", { message: "a" }),
       ],
+      [1, 0],
+    ],
+    [
+      "CLM-LDG-064",
+      "ONE-001",
+      () => [claim("ONE-001", ["unit"])],
+      () => [observation("unit", "passed", ["ONE-001"], "a.test.ts", { name: "Adds one" }), observation("unit", "passed", ["ONE-001"], "a.test.ts")],
       [1, 0],
     ],
   ])("[%s] the Claim Reconciliation of %s lists its evidence in one order", (_clm, subject, claims, observations, order) => {
