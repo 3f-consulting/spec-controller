@@ -28,8 +28,8 @@ function codeMatching(form: RegExp, text: string): ClaimCode | undefined {
   return parts ? { featureCode: parts[1]!, number: parts[2]! } : undefined;
 }
 
-export function claimCodeFrom(text: string): ClaimCode | undefined {
-  return codeMatching(CLAIM_CODE, text);
+export function claimCodeFrom(text: string | undefined): ClaimCode | undefined {
+  return codeMatching(CLAIM_CODE, String(text));
 }
 
 export function retiredScenarioCodeFrom(text: string): ClaimCode | undefined {
@@ -39,7 +39,7 @@ export function retiredScenarioCodeFrom(text: string): ClaimCode | undefined {
 interface ScenarioAsWritten {
   readonly tags: readonly string[];
   readonly title: string;
-  readonly rows?: readonly { readonly cell?: string }[];
+  readonly rows?: readonly { readonly cell: string | undefined }[] | undefined;
   readonly examplesTags: readonly string[];
 }
 
@@ -96,11 +96,11 @@ export type ClaimCodeError =
 
 const written = ({ featureCode, number }: ClaimCode): string => `${CLAIM_CODE_PREFIX}-${featureCode}-${number}`;
 
-const claimCodesIn = (words: readonly string[]): ClaimCode[] => words.flatMap((word) => claimCodeFrom(word) ?? []);
+const claimCodesIn = (words: readonly (string | undefined)[]): ClaimCode[] => words.flatMap((word) => claimCodeFrom(word) ?? []);
 
 // The codes a scenario carries: an Outline's clm cells, or else its one tagged code; several tagged codes are an error of their own.
 function codesCarriedBy(scenario: ScenarioAsWritten): ClaimCode[] {
-  if (scenario.rows) return scenario.rows.flatMap((row) => claimCodeFrom(row.cell ?? "") ?? []);
+  if (scenario.rows) return claimCodesIn(scenario.rows.map((row) => row.cell));
   const codes = claimCodesIn(scenario.tags);
   return codes.length === 1 ? codes : [];
 }
@@ -137,7 +137,7 @@ function misfiledCodes(feature: FeatureAsWritten, filesByCode: ReadonlyMap<strin
 }
 
 function codesOnOneScenario(file: string, scenario: ScenarioAsWritten): ClaimCodeError[] {
-  const tagged = claimCodesIn([...scenario.tags, ...(scenario.rows ? scenario.examplesTags : [])]).map(written);
+  const tagged = claimCodesIn(scenario.rows ? [...scenario.tags, ...scenario.examplesTags] : scenario.tags).map(written);
   const codes = [...new Set(tagged)];
   if (scenario.rows) return codes.length === 0 ? [] : [{ kind: "claim-code-beside-clm-column", files: [file], scenario: scenario.title, codes }];
   return codes.length < 2 ? [] : [{ kind: "several-claim-codes", files: [file], scenario: scenario.title, codes }];
@@ -154,8 +154,8 @@ export function claimCodeErrorsOf(features: readonly FeatureAsWritten[]): ClaimC
 
 const CITATION = new RegExp(`\\[${CLAIM_CODE_PREFIX}-(${FEATURE_CODE_FORM})-(\\d+)\\]`, "g");
 
-export function claimCodeCitationsIn(text: string): ClaimCode[] {
-  return [...text.matchAll(CITATION)].map(([, featureCode, number]) => ({ featureCode: featureCode!, number: number! }));
+export function claimCodeCitationsIn(text: string | undefined): ClaimCode[] {
+  return [...String(text).matchAll(CITATION)].map(([, featureCode, number]) => ({ featureCode: featureCode!, number: number! }));
 }
 
 export interface ClaimCodeOccurrence {

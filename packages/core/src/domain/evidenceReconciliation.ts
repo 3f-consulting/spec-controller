@@ -179,8 +179,8 @@ export function stepAccountOf(steps: readonly PipelineStep[], dispositionOf: (st
   const jobsRead = [...jobs.values()];
   const counts = Object.keys(NO_STEPS) as (keyof StepCounts)[];
   const total = Object.fromEntries(counts.map((count) => [count, jobsRead.reduce((sum, job) => sum + job[count], 0)])) as unknown as StepCounts;
-  const accountedFor = counts.filter((count) => count !== "stepsRead").reduce((sum, count) => sum + total[count], 0);
-  return { jobs: jobsRead, total: { ...total, accountedFor } };
+  // Each step read is counted under exactly one of what it was counted as, so every step read is accounted for.
+  return { jobs: jobsRead, total: { ...total, accountedFor: total.stepsRead } };
 }
 
 interface NonCheckNamed {

@@ -7,8 +7,8 @@ export interface EvidenceObservation {
   readonly result: "passed" | "passed-on-error" | "failed" | "never-ran";
   readonly kind: QualityCheckKind;
   readonly place: string;
-  readonly name?: string;
-  readonly message?: string;
+  readonly name?: string | undefined;
+  readonly message?: string | undefined;
   readonly notes: readonly string[];
 }
 
@@ -28,13 +28,13 @@ export type ClaimCodesAt = (file: string, line: number) => readonly string[];
 export function claimCodesAtOf(features: readonly FeatureAsWritten[]): ClaimCodesAt {
   const byLine = new Map<number, { readonly file: string; readonly codes: readonly string[] }[]>();
   for (const { file, scenarios } of features) {
-    for (const { line, codes } of scenarios.flatMap(claimCodesAtLinesOf)) byLine.set(line, [...(byLine.get(line) ?? []), { file: `/${file}`, codes }]);
+    for (const { line, codes } of scenarios.flatMap(claimCodesAtLinesOf)) {
+      const atLine = byLine.get(line);
+      if (atLine) atLine.push({ file: `/${file}`, codes });
+      else byLine.set(line, [{ file: `/${file}`, codes }]);
+    }
   }
-  return (path, line) => {
-    const reported = `/${path}`;
-    const matching = (byLine.get(line) ?? []).filter((at) => reported.endsWith(at.file));
-    return matching[0]?.codes ?? [];
-  };
+  return (path, line) => byLine.get(line)?.find((at) => `/${path}`.endsWith(at.file))?.codes ?? [];
 }
 
 interface UsedAction {
@@ -122,13 +122,13 @@ export interface RecordedCheckStep {
 }
 
 // A step's outcome says how its own run went; its conclusion is that outcome after continue-on-error, so it is not read.
-const RESULT_OF_OUTCOME: ReadonlyMap<string, EvidenceObservation["result"]> = new Map([
+const RESULT_OF_OUTCOME: ReadonlyMap<string | undefined, EvidenceObservation["result"]> = new Map([
   ["success", "passed"],
   ["failure", "failed"],
 ]);
 
 function citesOfId(id: string | undefined): ClaimCode[] {
-  const code = id === undefined ? undefined : claimCodeFrom(id);
+  const code = claimCodeFrom(id);
   return code === undefined ? [] : [code];
 }
 
@@ -147,7 +147,7 @@ function recordedObservationOf(recorded: RecordedCheckStep, steps: readonly Pipe
   const place = only !== undefined && others.length === 0 ? qualifiedStepName(only) : recorded.key;
   const cites = citesOfId(recorded.key);
   const { outcome } = recorded;
-  const result = outcome === undefined ? undefined : RESULT_OF_OUTCOME.get(outcome);
+  const result = RESULT_OF_OUTCOME.get(outcome);
   if (result === undefined) {
     return { cites, result: "never-ran", kind: "fitness", place, notes: outcome === undefined ? [] : [outcome] };
   }
@@ -171,7 +171,7 @@ export function fitnessObservationsOf(
 }
 
 function neverRanObservation(kind: QualityCheckKind, place: string, message: string | undefined): EvidenceObservation {
-  return { cites: [], result: "never-ran", kind, place, notes: [], ...(message === undefined ? {} : { message }) };
+  return { cites: [], result: "never-ran", kind, place, notes: [], message };
 }
 
 // One code written in two places, such as a scenario's tag and the corpus at its line, is one citation.
@@ -198,22 +198,20 @@ export interface TestFileAsWritten {
 }
 
 // A test that passed or failed posts that result; one skipped, pending or marked todo posts nothing.
-const RESULT_OF_TEST_STATUS: ReadonlyMap<string, EvidenceObservation["result"]> = new Map([
+const RESULT_OF_TEST_STATUS: ReadonlyMap<string | undefined, EvidenceObservation["result"]> = new Map([
   ["passed", "passed"],
   ["failed", "failed"],
 ]);
 
-const resultOfTestStatus = (status: string | undefined): EvidenceObservation["result"] | undefined =>
-  status === undefined ? undefined : RESULT_OF_TEST_STATUS.get(status);
+const resultOfTestStatus = (status: string | undefined): EvidenceObservation["result"] | undefined => RESULT_OF_TEST_STATUS.get(status);
 
 const FAILED_FILE = "failed";
 
 function testObservationOf(test: TestAsWritten, place: string): EvidenceObservation[] {
   const result = resultOfTestStatus(test.status);
   if (result === undefined) return [];
-  const cites = nearestCitation([claimCodeCitationsIn(test.title ?? ""), claimCodeCitationsIn(test.fullTitle ?? "")]);
-  const name = test.fullTitle ?? test.title;
-  return [{ cites, result, kind: TEST_REPORT_KIND, place, notes: [], ...(name === undefined ? {} : { name }) }];
+  const cites = nearestCitation([claimCodeCitationsIn(test.title), claimCodeCitationsIn(test.fullTitle)]);
+  return [{ cites, result, kind: TEST_REPORT_KIND, place, notes: [], name: test.fullTitle ?? test.title }];
 }
 
 // Each test posts at its file; a file that failed with no test in it never reached its tests, and posts as never ran.
@@ -239,7 +237,7 @@ export interface TestCaseAsWritten {
   readonly suite?: string;
   readonly classname?: string;
   readonly name?: string;
-  readonly properties?: readonly { readonly name?: string; readonly value?: string }[];
+  readonly properties: readonly { readonly name?: string; readonly value?: string }[];
   readonly failure?: EndingAsWritten;
   readonly error?: ErrorAsWritten;
   readonly skipped?: boolean;
@@ -249,55 +247,59 @@ const CLAIM_CODE_PROPERTY = "clm";
 // Go writes a package whose tests never ran, because it failed to build or its TestMain failed, as a failing TestMain with no classname.
 const GO_PACKAGE_TESTCASE = "TestMain";
 
-const isCollectionFailure = (testCase: TestCaseAsWritten): boolean => testCase.error !== undefined && !testCase.classname;
+type Errored = TestCaseAsWritten & { readonly error: ErrorAsWritten };
 
-const isClassSetupFailure = (testCase: TestCaseAsWritten): boolean => testCase.error !== undefined && !testCase.name;
+const isCollectionFailure = (testCase: TestCaseAsWritten): testCase is Errored => testCase.error !== undefined && !testCase.classname;
 
-const isPackageFailure = (testCase: TestCaseAsWritten): boolean =>
+const isClassSetupFailure = (testCase: TestCaseAsWritten): testCase is Errored => testCase.error !== undefined && !testCase.name;
+
+const isSetupError = (testCase: TestCaseAsWritten): testCase is Errored => testCase.error?.inSetupOrTeardown === true;
+
+const isPackageFailure = (testCase: TestCaseAsWritten): testCase is TestCaseAsWritten & { readonly failure: EndingAsWritten } =>
   !testCase.classname && testCase.name === GO_PACKAGE_TESTCASE && testCase.failure !== undefined;
 
-const errorTextOf = (testCase: TestCaseAsWritten): string | undefined => testCase.error?.text ?? testCase.error?.message;
+const errorTextOf = ({ error }: Errored): string | undefined => error.text ?? error.message;
 
-function nameCitationsOf(name: string): ClaimCode[] {
-  const segmentsLeafFirst = name.split("/").reverse();
+function nameCitationsOf(name: string | undefined): ClaimCode[] {
+  const segmentsLeafFirst = String(name).split("/").reverse();
   return segmentsLeafFirst.map(claimCodeCitationsIn).find((codes) => codes.length > 0) ?? [];
 }
 
 function propertyCitationsOf(testCase: TestCaseAsWritten): ClaimCode[] {
-  return (testCase.properties ?? [])
+  return testCase.properties
     .filter((property) => property.name === CLAIM_CODE_PROPERTY)
-    .flatMap((property) => claimCodeFrom(property.value ?? "") ?? []);
+    .flatMap((property) => claimCodeFrom(property.value) ?? []);
 }
 
 // A test case cites its clm properties and its name's innermost cited segment, else the last code its class cites.
 function testCaseCitesOf(testCase: TestCaseAsWritten): readonly ClaimCode[] {
   return nearestCitation([
-    [...propertyCitationsOf(testCase), ...nameCitationsOf(testCase.name ?? "")],
-    claimCodeCitationsIn(testCase.classname ?? "").slice(-1),
+    [...propertyCitationsOf(testCase), ...nameCitationsOf(testCase.name)],
+    claimCodeCitationsIn(testCase.classname).slice(-1),
   ]);
 }
 
 // An error in a test's setup or teardown means it never reached its assertions; an error in the test itself, that it failed.
 function testCaseResultOf(testCase: TestCaseAsWritten): EvidenceObservation["result"] {
-  if (testCase.error !== undefined) return testCase.error.inSetupOrTeardown === true ? "never-ran" : "failed";
+  if (isSetupError(testCase)) return "never-ran";
+  if (testCase.error !== undefined) return "failed";
   return testCase.failure === undefined ? "passed" : "failed";
 }
 
 function testCaseObservationOf(testCase: TestCaseAsWritten): EvidenceObservation[] {
   if (testCase.skipped === true) return [];
   if (isCollectionFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.name ?? "", errorTextOf(testCase))];
-  if (isPackageFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.suite ?? "", testCase.failure?.text)];
-  if (isClassSetupFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.classname ?? "", errorTextOf(testCase))];
-  const result = testCaseResultOf(testCase);
-  const message = result === "never-ran" ? errorTextOf(testCase) : undefined;
+  if (isPackageFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.suite ?? "", testCase.failure.text)];
+  // A class setup failure has a class: a failure with neither class nor name was taken as a collection failure.
+  if (isClassSetupFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.classname!, errorTextOf(testCase))];
   return [{
     cites: testCaseCitesOf(testCase),
-    result,
+    result: testCaseResultOf(testCase),
     kind: TEST_REPORT_KIND,
     place: testCase.classname ?? "",
     notes: [],
-    ...(testCase.name === undefined ? {} : { name: testCase.name }),
-    ...(message === undefined ? {} : { message }),
+    name: testCase.name,
+    message: isSetupError(testCase) ? errorTextOf(testCase) : undefined,
   }];
 }
 
@@ -346,9 +348,8 @@ function loadErrorsOf({ errorsOutsideExamples = 0, messages }: ExamplesAsWritten
 function exampleObservationOf(example: ExampleAsWritten, root?: string): EvidenceObservation[] {
   const result = resultOfTestStatus(example.status);
   if (result === undefined) return [];
-  const cites = nearestCitation([claimCodeCitationsIn(example.title ?? ""), claimCodeCitationsIn(example.fullTitle ?? "")]);
-  const name = example.fullTitle;
-  return [{ cites, result, kind: TEST_REPORT_KIND, place: placeOfExample(example.path ?? "", root), notes: [], ...(name === undefined ? {} : { name }) }];
+  const cites = nearestCitation([claimCodeCitationsIn(example.title), claimCodeCitationsIn(example.fullTitle)]);
+  return [{ cites, result, kind: TEST_REPORT_KIND, place: placeOfExample(example.path ?? "", root), notes: [], name: example.fullTitle }];
 }
 
 // Each example posts at its file under its full title, then each error outside the examples posts as never ran.
@@ -384,14 +385,14 @@ export interface ScenarioRunAsWritten {
 type StepEnding = "passed" | "failed" | "could-not-run";
 
 // A step that matched no definition, or two, could not run; a step skipped, pending or of any other status ends nothing.
-const ENDING_OF_STEP_STATUS: ReadonlyMap<string, StepEnding> = new Map([
+const ENDING_OF_STEP_STATUS: ReadonlyMap<string | undefined, StepEnding> = new Map([
   ["passed", "passed"],
   ["failed", "failed"],
   ["ambiguous", "could-not-run"],
   ["undefined", "could-not-run"],
 ]);
 
-const endingOf = (step: StepRunAsWritten): StepEnding | undefined => (step.status === undefined ? undefined : ENDING_OF_STEP_STATUS.get(step.status));
+const endingOf = (step: StepRunAsWritten): StepEnding | undefined => ENDING_OF_STEP_STATUS.get(step.status);
 
 // A failed step fails the scenario; else one that could not run means it never ran; else it passed only when every step passed.
 function scenarioResultOf(steps: readonly StepRunAsWritten[]): EvidenceObservation["result"] | undefined {
@@ -415,8 +416,7 @@ function scenarioRunObservationOf(run: ScenarioRunAsWritten, root: string | unde
   if (result === "never-ran") {
     return [{ cites, result, kind: firstKind!, place, notes: run.steps.filter((step) => endingOf(step) === "could-not-run").map(stepText) }];
   }
-  const { name } = run;
-  return [firstKind!, ...otherKinds].map((kind) => ({ cites, result, kind, place, notes: [], ...(name === undefined ? {} : { name }) }));
+  return [firstKind!, ...otherKinds].map((kind) => ({ cites, result, kind, place, notes: [], name: run.name }));
 }
 
 // A scenario run posts at its feature file, citing its tags' codes and the code the corpus has at its line, once at each

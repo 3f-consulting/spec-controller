@@ -88,7 +88,8 @@ function executableLines(
   const { claimCode } = claim;
   if (claimCode === undefined) return unanswerable(claim, "no-claim-code");
   if (sharedCodes.has(codeText(claimCode))) return unanswerable(claim, "duplicate-claim-code");
-  const asked = claim.obligations.flatMap(({ kind }) => kind ?? []);
+  // Every obligation a claim raises names its kind; only the line of a claim raising none has an obligation without one.
+  const asked = claim.obligations.map(({ kind }) => kind!);
   const answered = evidence.map((observation) => evidenceLine(observation, asked.includes(observation.kind), "not-asked-for"));
   const missing = asked
     .filter((kind) => !evidence.some((observation) => observation.kind === kind && observation.result !== "never-ran"))
@@ -107,7 +108,8 @@ function linesOf(claim: Claim, evidence: readonly EvidenceObservation[], sharedC
 
 const KIND_RANK: Readonly<Record<QualityCheckKind, number>> = { unit: 0, integration: 1, e2e: 2, performance: 3, fitness: 4 };
 
-const kindRank = ({ kind }: QualityCheckReconciliation): number => (kind === undefined ? -1 : KIND_RANK[kind]);
+// A line with no kind is the only line of its claim, so it is never ranked against another.
+const kindRank = ({ kind }: QualityCheckReconciliation): number => KIND_RANK[kind!];
 
 // Everything an observation records, field by field, its cited codes one field between them, so a line citing nothing sorts before one citing a code.
 function recorded({ observation }: QualityCheckReconciliation): string[] {
@@ -116,10 +118,11 @@ function recorded({ observation }: QualityCheckReconciliation): string[] {
   return [place, cites.map(codeText).join(" "), name, message, result, ...notes];
 }
 
+const order = (a: string, b: string): number => Number(a > b) - Number(a < b);
+
+// Field by field, and a record that is the start of another sorts before it.
 function compareRecords(a: readonly string[], b: readonly string[]): number {
-  const at = a.findIndex((text, index) => text !== b[index]);
-  if (at === -1 || at >= b.length) return a.length - b.length;
-  return a[at]! < b[at]! ? -1 : 1;
+  return a.map((text, at) => order(text, b[at] ?? "")).find((byField) => byField !== 0) ?? a.length - b.length;
 }
 
 function inOrder(a: QualityCheckReconciliation, b: QualityCheckReconciliation): number {
@@ -180,17 +183,17 @@ function sameGroup(a: GroupKey, b: GroupKey): boolean {
 }
 
 function withCounts(key: GroupKey, members: readonly QualityCheckReconciliation[]): EvidenceGroup {
-  const results = members.flatMap(({ observation }) => observation ?? []);
+  const results = members.map(({ observation }) => observation!);
   const passed = results.filter(({ result }) => result === "passed" || result === "passed-on-error").length;
   const failures = results.filter(({ result }) => result === "failed").map(({ name, place }) => name ?? place);
   return { ...key, qualityCheckReconciliations: members, ran: passed + failures.length, passed, failed: failures.length, failures };
 }
 
+// Only the unnamed claim is grouped, and each of its lines holds an observation.
 export function groupsOf({ qualityCheckReconciliations }: ClaimReconciliation): EvidenceGroup[] {
   const groups: { readonly key: GroupKey; readonly members: QualityCheckReconciliation[] }[] = [];
   for (const line of qualityCheckReconciliations) {
-    if (line.observation === undefined) continue;
-    const key = groupKeyOf(line.observation);
+    const key = groupKeyOf(line.observation!);
     const group = groups.find((existing) => sameGroup(existing.key, key));
     if (group) group.members.push(line);
     else groups.push({ key, members: [line] });

@@ -37,9 +37,12 @@ const vitestFile = (message: string): EvidenceObservation[] =>
   testFileObservationsOf([{ path: "a.test.ts", status: "failed", message, tests: [] }]);
 
 // A JUnit report reads an error as a failure, and a pytest report as an error before the test's assertions.
-const junit = (testcase: TestCaseAsWritten, suite = "a.suite"): EvidenceObservation[] => testCaseObservationsOf([{ suite, ...testcase }]);
+// A test case as a test writes it, with no properties unless it names them.
+type TestCaseInATest = Omit<TestCaseAsWritten, "properties"> & Partial<Pick<TestCaseAsWritten, "properties">>;
 
-const pytest = (testcase: TestCaseAsWritten): EvidenceObservation[] => testCaseObservationsOf([{ suite: "pytest", ...testcase }]);
+const junit = (testcase: TestCaseInATest, suite = "a.suite"): EvidenceObservation[] => testCaseObservationsOf([{ suite, properties: [], ...testcase }]);
+
+const pytest = (testcase: TestCaseInATest): EvidenceObservation[] => testCaseObservationsOf([{ suite: "pytest", properties: [], ...testcase }]);
 
 const clmProperty = (...codes: readonly string[]) => codes.map((value) => ({ name: "clm", value }));
 
@@ -445,7 +448,7 @@ describe("balance posts each result with how it went", () => {
     ["CLM-OBS-050", true, "never-ran"],
   ])("[%s] a test case that ended in an error posts as failed, or as never ran when the error was in its setup or teardown", (_clm, inSetupOrTeardown, result) => {
     const error = { message: "boom", text: "IllegalStateException", ...(inSetupOrTeardown ? { inSetupOrTeardown } : {}) };
-    expect(testCaseObservationsOf([{ classname: "example.ATest", name: "[CLM-ONE-001] a test", error }])).toMatchObject([{ result, cites: [ONE] }]);
+    expect(testCaseObservationsOf([{ classname: "example.ATest", name: "[CLM-ONE-001] a test", properties: [], error }])).toMatchObject([{ result, cites: [ONE] }]);
   });
 
   it("[CLM-OBS-055] a Kotlin class whose setup failed will be posted as one failing result citing no claim code", () => {
@@ -567,8 +570,10 @@ describe("balance posts a recorded step that no workflow holds at its claim code
 });
 
 describe("a test file outside the target's folder will be placed at the absolute path its evidence report recorded", () => {
-  it("[CLM-OBS-098] a test file outside the target's folder will be placed at the absolute path its evidence report recorded", () => {
-    const file = "/home/runner/work/app/src/a.test.ts";
+  it.each([
+    ["CLM-OBS-098", "/home/runner/work/app/src/a.test.ts"],
+    ["CLM-OBS-098", "/work/other/src/a.test.ts"],
+  ])("[%s] a test file outside the target's folder, at %s, will be placed at the absolute path its evidence report recorded", (_clm, file) => {
     const files = [{ path: file, tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }];
     expect(testFileObservationsOf(files, "/work/app").map(({ place }) => place)).toEqual([file]);
   });

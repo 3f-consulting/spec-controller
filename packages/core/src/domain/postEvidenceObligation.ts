@@ -37,7 +37,7 @@ export interface FeatureAsWritten {
 
 interface ClaimRow {
   readonly line: number;
-  readonly cell: string;
+  readonly cell: string | undefined;
 }
 
 // A scenario as the claims are read off it: an Outline with a clm column has a row for each claim.
@@ -45,7 +45,7 @@ interface ScenarioRead {
   readonly tags: readonly string[];
   readonly title: string;
   readonly examplesTags: readonly string[];
-  readonly rows?: readonly ClaimRow[];
+  readonly rows: readonly ClaimRow[] | undefined;
 }
 
 const CLM_COLUMN = "clm";
@@ -53,19 +53,18 @@ const CLM_COLUMN = "clm";
 const clmColumnOf = (block: ExamplesBlockAsWritten): number => block.columns.indexOf(CLM_COLUMN);
 
 // An Outline with a clm column in any Examples block is one claim for each row of every block; a row of a block with
-// no clm column is a claim with no code.
+// no clm column has no clm cell, so it is a claim with no code.
 function claimRowsOf({ examples }: ScenarioAsWritten): ClaimRow[] | undefined {
   if (!examples.some((block) => clmColumnOf(block) >= 0)) return undefined;
   return examples.flatMap((block) => {
     const column = clmColumnOf(block);
-    return block.rows.map(({ line, cells }) => ({ line, cell: column < 0 ? "" : cells[column]! }));
+    return block.rows.map(({ line, cells }) => ({ line, cell: cells[column] }));
   });
 }
 
 function scenarioReadOf(scenario: ScenarioAsWritten): ScenarioRead {
   const rows = claimRowsOf(scenario);
-  const read = { tags: scenario.tags, title: scenario.title, examplesTags: scenario.examples.flatMap(({ tags }) => tags) };
-  return rows === undefined ? read : { ...read, rows };
+  return { tags: scenario.tags, title: scenario.title, examplesTags: scenario.examples.flatMap(({ tags }) => tags), rows };
 }
 
 // Each feature file with its scenarios as the claims are read off them.
@@ -78,10 +77,9 @@ const codesIn = (words: readonly string[]): string[] => words.filter((word) => c
 // The claim codes a scenario carries at each line a report may name it by: its tags at its own line, and the clm cell
 // at the line of each row of a block with a clm column.
 export function claimCodesAtLinesOf(scenario: ScenarioAsWritten): { readonly line: number; readonly codes: readonly string[] }[] {
-  const rows = scenario.examples.flatMap((block) => {
-    const column = clmColumnOf(block);
-    return column < 0 ? [] : block.rows.map(({ line, cells }) => ({ line, codes: codesIn([cells[column]!]) }));
-  });
+  const rows = scenario.examples
+    .filter((block) => clmColumnOf(block) >= 0)
+    .flatMap((block) => block.rows.map(({ line, cells }) => ({ line, codes: codesIn([cells[clmColumnOf(block)]!]) })));
   return [{ line: scenario.line, codes: codesIn(scenario.tags) }, ...rows];
 }
 

@@ -76,11 +76,12 @@ describe("balance posts each result with how it went, as each report gives it", 
   });
 
   it.each([
-    ["CLM-OBS-031", "a feature file the corpus holds", ["@ONE\nFeature: one\n\n  @CLM-ONE-001\n  Scenario: one adds one\n    Given one\n"]],
-    ["CLM-OBS-031", "a feature file the corpus does not hold", []],
-  ])("[%s] a Cucumber scenario tagged @CLM-ONE-001 from %s is posted as passed, citing CLM-ONE-001", (_clm, _held, sources) => {
+    ["CLM-OBS-031", "a feature file the corpus holds", ["@ONE\nFeature: one\n\n  @CLM-ONE-001\n  Scenario: one adds one\n    Given one\n"], "one.feature"],
+    ["CLM-OBS-031", "a feature file the corpus does not hold, beside one it holds", ["@TWO\nFeature: two\n\n  @CLM-TWO-001\n  Scenario: two adds two\n    Given two\n"], "two.feature"],
+    ["CLM-OBS-031", "a feature file the corpus does not hold", [], "one.feature"],
+  ])("[%s] a Cucumber scenario tagged @CLM-ONE-001 from %s is posted as passed, citing CLM-ONE-001", (_clm, _held, sources, held) => {
     const report = [{ uri: "one.feature", elements: [{ name: "one adds one", line: 5, tags: [{ name: "@CLM-ONE-001" }], steps: [{ keyword: "Given ", name: "one", result: { status: "passed" } }] }] }];
-    const claimCodesAt = claimCodesAtOf(parsedFeatures(sources, ["one.feature"]));
+    const claimCodesAt = claimCodesAtOf(parsedFeatures(sources, [held]));
     expect(parseCucumberEvidenceObservations(report, undefined, claimCodesAt)).toEqual([
       { cites: [ONE], result: "passed", kind: "integration", place: "one.feature", notes: [], name: "one adds one" },
     ]);

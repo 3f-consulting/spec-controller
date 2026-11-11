@@ -50,8 +50,14 @@ const isRunner = (runner: unknown): runner is string | null => typeof runner ===
 
 const wrongKind = (entry: string): ConfigurationError => ({ kind: "configuration-wrong-kind", entry });
 
-function runnersIn(value: unknown, written: string, errors: ConfigurationError[]): TargetConfiguration["runners"] {
-  if (value === undefined) return {};
+interface SettingRead {
+  readonly written: string;
+  readonly value: unknown;
+}
+
+function runnersIn(read: SettingRead | undefined, errors: ConfigurationError[]): TargetConfiguration["runners"] {
+  if (read === undefined) return {};
+  const { written, value } = read;
   if (!isBlock(value)) return errors.push(wrongKind(written)), {};
   const runners: Partial<Record<Layer, string | null>> = {};
   for (const [key, runner] of Object.entries(value)) {
@@ -62,8 +68,9 @@ function runnersIn(value: unknown, written: string, errors: ConfigurationError[]
   return runners;
 }
 
-function stringsIn(value: unknown, setting: string, errors: ConfigurationError[]): string[] {
-  if (value === undefined) return [];
+function stringsIn(read: SettingRead | undefined, errors: ConfigurationError[]): string[] {
+  if (read === undefined) return [];
+  const { written: setting, value } = read;
   if (!Array.isArray(value)) return errors.push(wrongKind(setting)), [];
   return value.flatMap((entry: unknown, at) => (typeof entry === "string" ? [entry] : (errors.push(wrongKind(`${setting}[${at}]`)), [])));
 }
@@ -92,7 +99,7 @@ function nonChecksIn(entries: readonly string[], stepsRead: readonly PipelineSte
 export function targetConfigurationOf(block: unknown, names: SettingNames, stepsRead: readonly PipelineStep[]): ConfigurationRead {
   if (block === undefined) return { configuration: NOTHING_READ, errors: [] };
   const errors: ConfigurationError[] = [];
-  const read: Partial<Record<Setting, { readonly written: string; readonly value: unknown }>> = {};
+  const read: Partial<Record<Setting, SettingRead>> = {};
   for (const [written, value] of Object.entries(block as Readonly<Record<string, unknown>>)) {
     const setting = names.settings[written];
     if (setting === undefined) errors.push({ kind: "configuration-unknown-key", entry: written });
@@ -100,9 +107,9 @@ export function targetConfigurationOf(block: unknown, names: SettingNames, steps
   }
   const { runners, nonChecks, deferralTags } = read;
   const configuration = {
-    runners: runnersIn(runners?.value, runners?.written ?? "", errors),
-    nonChecks: nonChecksIn(stringsIn(nonChecks?.value, nonChecks?.written ?? "", errors), stepsRead, errors),
-    deferralTags: stringsIn(deferralTags?.value, deferralTags?.written ?? "", errors),
+    runners: runnersIn(runners, errors),
+    nonChecks: nonChecksIn(stringsIn(nonChecks, errors), stepsRead, errors),
+    deferralTags: stringsIn(deferralTags, errors),
   };
   return { configuration, errors };
 }
