@@ -347,7 +347,7 @@ function exampleObservationOf(example: ExampleAsWritten, root?: string): Evidenc
   const result = resultOfTestStatus(example.status);
   if (result === undefined) return [];
   const cites = nearestCitation([claimCodeCitationsIn(example.title), claimCodeCitationsIn(example.fullTitle)]);
-  return [{ cites, result, kind: TEST_REPORT_KIND, place: placeOfExample(example.path ?? "", root), notes: [], name: example.fullTitle }];
+  return [{ cites, result, kind: TEST_REPORT_KIND, place: placeOfExample(String(example.path), root), notes: [], name: example.fullTitle }];
 }
 
 // Each example posts at its file under its full title, then each error outside the examples posts as never ran.
