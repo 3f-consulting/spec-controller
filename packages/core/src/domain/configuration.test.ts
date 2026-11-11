@@ -12,6 +12,7 @@ const stepIn = (workflow: string, job: string, name: string): PipelineStep => ({
 describe("balance turns each configuration setting into its internal setting", () => {
   it.each([
     ["CLM-CFG-008", { runners: { unit: "vitest" } }, { ...NOTHING, runners: { unit: "vitest" } }],
+    ["CLM-CFG-008", { runners: { e2e: "playwright" } }, { ...NOTHING, runners: { e2e: "playwright" } }],
     ["CLM-CFG-009", { runners: { performance: null } }, { ...NOTHING, runners: { performance: null } }],
     [
       "CLM-CFG-010",
