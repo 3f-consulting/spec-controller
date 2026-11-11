@@ -5,7 +5,7 @@ import { renderJson, renderMarkdown, type EvidenceReconciliation, type Identifie
 import { writeReports } from "./balance.js";
 import { regularFileIdentity } from "../output/outputLocation.js";
 import { settlingRefusal } from "../runEnding/usageRefusal.js";
-import { AppError } from "../messages/messages.js";
+import { AppError, AppMessage } from "../messages/messages.js";
 import { message } from "../messages/appText.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "../programOutput.test-utils.js";
@@ -158,6 +158,7 @@ describe("two reports will not go in one file", () => {
         return { spec: `json:${join(dir, "link.json")}`, shown: `json:${join(dir, "link.json")}`, stdout: "/dev/null" };
       },
     ],
+    ["CLM-FMT-025", "standard output, redirected to the file", (file: string, _dir: string) => ({ spec: "json", shown: message(AppMessage.FormatOnStandardOutput, { fmt: "json" }), stdout: file })],
   ])("[%s] a report on a file beside one at %s stops the run, naming the file and both reports, and leaves the file as it was", (_clm, _other, arrange) => {
     const dir = temporaryDirectory("spec-controller-one-file-");
     const file = join(dir, "shared.out");
