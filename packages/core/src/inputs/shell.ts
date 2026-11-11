@@ -4,7 +4,7 @@ import type { ShellReading } from "../domain/postEvidenceObservation.js";
 
 const SCRIPT_CHAIN_DEPTH = 3;
 
-const ASSIGNMENT = /^[A-Za-z_]\w*=/;
+const ASSIGNMENT = /[A-Za-z_]\w*=/;
 type Words = readonly [string, ...(readonly string[])];
 
 type Whitespace = " " | "\t" | "\n" | "\r" | "\v" | "\f";
