@@ -25,7 +25,7 @@ const RUN: EvidenceReconciliation = {
 recordWhatTheProgramWrites();
 
 // Standard error, as the tool finds its file, can be redirected onto a file a test opened, leaving the process's own alone.
-const standardErrorRedirect = vi.hoisted(() => ({ fd: 2, to: undefined as number | undefined }));
+const standardErrorRedirect: { readonly fd: number; to: number | undefined } = { fd: 2, to: undefined };
 
 vi.mock("node:fs", async (importOriginal) => {
   const fs = await importOriginal<typeof import("node:fs")>();
