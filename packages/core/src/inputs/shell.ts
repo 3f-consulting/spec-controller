@@ -39,7 +39,6 @@ const COMMAND_PREFIXES: readonly CommandPrefix[] = [
   launcher(["pnpm", "dlx"], "--package", "--allow-build"),
   launcher(["npx"], "--package", "-p", "-w", "--workspace"),
   launcher(["pnpm"]),
-  launcher(["yarn", "exec"]),
   launcher(["yarn", "dlx"], "-p", "--package"),
   YARN_FOREACH,
   launcher(["yarn"]),
