@@ -13,15 +13,16 @@ interface ErroringStream {
 }
 
 // A verdict is read from the run finishing, never from an exit code being set: a refusal's 2 and the guard's own 6 are codes, not verdicts.
+// A run that has not finished, or has written no line, holds no mark for it.
 interface RunState {
-  finished: boolean;
-  lineWritten: boolean;
+  finished?: true;
+  lineWritten?: true;
 }
 
-let run: RunState = { finished: false, lineWritten: false };
+let run: RunState = {};
 
 export function beginRun(): void {
-  run = { finished: false, lineWritten: false };
+  run = {};
   forgetRunEnding();
 }
 
@@ -89,7 +90,7 @@ function settleExitCode(proc: ExitCodeHolder): void {
 
 const CRASH_TEXTS: Readonly<Record<CrashError, string>> = APP_TEXTS;
 
-function unexpectedErrorLine(err: unknown, afterVerdict: boolean): CodedLine {
+function unexpectedErrorLine(err: unknown, afterVerdict: true | undefined): CodedLine {
   const code = afterVerdict ? AppError.UnexpectedErrorAfterVerdict : AppError.UnexpectedError;
   return filled(CRASH_TEXTS[code], { name: nameOf(err), firstLine: firstLineOf(err) }) as CodedLine;
 }

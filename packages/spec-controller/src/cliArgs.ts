@@ -7,20 +7,12 @@ export function asksForHelp(argv: readonly string[]): boolean {
   return argv.includes("--help") || argv.includes("-h");
 }
 
+// A flag's value is the argument after it, unless that is a flag too; a flag given no value reads as "true".
 export function parseArgs(argv: readonly string[]): Record<string, string> {
   const args: Record<string, string> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a !== undefined && a.startsWith("--")) {
-      const key = a.slice(2);
-      const value = argv[i + 1];
-      if (value !== undefined && !value.startsWith("--")) {
-        args[key] = value;
-        i++;
-      } else {
-        args[key] = "true";
-      }
-    }
+  for (const [i, token] of argv.entries()) {
+    const value = argv[i + 1];
+    if (isFlagShaped(token)) args[token.slice(2)] = value === undefined || isFlagShaped(value) ? "true" : value;
   }
   return args;
 }
@@ -34,14 +26,13 @@ function takesValue(flag: FlagSpec): flag is ValueFlagSpec {
 function valueFlagsOf(flags: readonly FlagSpec[]): Map<string, ValueFlagSpec> {
   const valueFlags = new Map<string, ValueFlagSpec>();
   for (const flag of flags) {
-    if (!takesValue(flag)) continue;
-    for (const name of [flag.name, ...(flag.aliases ?? [])]) valueFlags.set(name, flag);
+    if (takesValue(flag)) valueFlags.set(flag.name, flag);
   }
   return valueFlags;
 }
 
 function givenValue(next: string | undefined): string | undefined {
-  return next === undefined || next === "" || next.startsWith("--") ? undefined : next;
+  return next === undefined || next.startsWith("--") ? undefined : next;
 }
 
 export function checkMissingValues(
@@ -100,18 +91,14 @@ function positionalsOf(registry: CliRegistry, command: string): readonly Positio
 type CommandEntry = Pick<CommandSpec, "flags" | "positionals">;
 
 function commandEntry(registry: CliRegistry, command: string): CommandEntry {
-  return registry.commands.find((c) => c.name === command) ?? { flags: [] };
-}
-
-function bareName(name: string): string {
-  return name.replace(/^-+/, "");
+  return registry.commands.find((c) => c.name === command)!;
 }
 
 export function positionalArguments(argv: readonly string[], registry: CliRegistry, command: string): string[] {
   const scope = flagScopeOf(registry, command);
   const words: string[] = [];
   for (let i = 0; i < argv.length; i++) {
-    const token = argv[i] ?? "";
+    const token = argv[i]!;
     if (!isFlagShaped(token)) words.push(token);
     else if (scope.get(token)?.arg !== undefined) i++;
   }
@@ -119,13 +106,13 @@ export function positionalArguments(argv: readonly string[], registry: CliRegist
 }
 
 function readToken(argv: readonly string[], i: number, walk: Walk, command: string): Refusal | number {
-  const token = argv[i] ?? "";
+  const token = argv[i]!;
   const next = argv[i + 1];
   if (isEqualsForm(token)) return equalsFormRefusal(token, walk.scope, `spec-controller ${command}`);
   if (!isFlagShaped(token) && !walk.scope.has(token)) return positionalRead(token, walk, command);
   const flag = walk.scope.get(token);
-  if (flag === undefined) return valueTokensAfter(undefined, next);
-  return registeredFlagRefusal(flag, token, next, walk, command) ?? valueTokensAfter(flag, next);
+  const refused = flag === undefined ? undefined : registeredFlagRefusal(flag, token, next, walk, command);
+  return refused ?? valueTokensAfter(next);
 }
 
 function registeredFlagRefusal(
@@ -137,7 +124,7 @@ function registeredFlagRefusal(
 ): Refusal | undefined {
   if (walk.seen.has(flag) && flag.repeatable !== true) return givenTwiceRefusal(token, `spec-controller ${command}`);
   walk.seen.add(flag);
-  if (flag.arg === undefined && next !== undefined && !isFlagShaped(next) && !walk.scope.has(next) && walk.slotsLeft === 0) {
+  if (flag.arg === undefined && next !== undefined && !isFlagShaped(next)) {
     return takesNoValueRefusal(token, next, command);
   }
   return undefined;
@@ -150,7 +137,7 @@ function givenTwiceRefusal(given: string, scope: string): Refusal {
 function flagScopeOf(registry: CliRegistry, command: string): Map<string, FlagSpec> {
   const scope = new Map<string, FlagSpec>();
   for (const flag of commandEntry(registry, command).flags) {
-    for (const name of [flag.name, ...(flag.aliases ?? [])]) scope.set(name, flag);
+    scope.set(flag.name, flag);
   }
   return scope;
 }
@@ -173,9 +160,9 @@ export function equalsFormRefusal(token: string, flags: ReadonlyMap<string, Flag
   return refusal(AppError.EqualsForm, { token, scope, spelling }, [message(AppMessage.SeeFlags, { scope })]);
 }
 
-function valueTokensAfter(flag: FlagSpec | undefined, next: string | undefined): number {
-  if (next === undefined || isFlagShaped(next)) return 0;
-  return flag === undefined || flag.arg !== undefined ? 1 : 0;
+// A registered flag that takes no value has been refused if a value follows it, so a value here is the flag's.
+function valueTokensAfter(next: string | undefined): number {
+  return next === undefined || isFlagShaped(next) ? 0 : 1;
 }
 
 function takesNoValueRefusal(flag: string, value: string, command: string): Refusal {
@@ -218,13 +205,8 @@ export function checkUnknownFlags(
   toolVersion: string,
 ): Refusal | null {
   const entry = commandEntry(registry, command);
-  const accepted = new Set<string>();
-  for (const flag of entry.flags) {
-    accepted.add(bareName(flag.name));
-    for (const alias of flag.aliases ?? []) accepted.add(bareName(alias));
-  }
   for (const key of Object.keys(args)) {
-    if (!accepted.has(key)) {
+    if (!entry.flags.some((flag) => flag.name === `--${key}`)) {
       return unknownFlagRefusal(`--${key}`, command, toolVersion);
     }
   }
