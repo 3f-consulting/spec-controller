@@ -159,14 +159,16 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       then the provenance will include <details>
 
       Examples:
-        | clm         | what it had                                                   | details                       |
-        | CLM-EVR-037 | a target given as acme/web                                    | the target acme/web           |
-        | CLM-EVR-038 | a source SHA given as abc1234, in a git repository at def5678 | the source SHA abc1234        |
+        | clm         | what it had                                                                  | details                                                                               |
+        | CLM-EVR-037 | a target given as acme/web                                                   | the target acme/web                                                                   |
+        | CLM-EVR-038 | a source SHA given as abc1234, in a git repository at def5678                | the source SHA abc1234                                                                |
         | CLM-EVR-039 | no target given, and the origin https://ci:s3cret@example.com/acme/web?x=1#y | a target named from its host and path only, with no user, password, query or fragment |
-        | CLM-EVR-045 | no target given, and the origin git@github.com:acme/web.git   | the target acme/web           |
-        | CLM-EVR-040 | the tool running from its own checkout at 9f8e7d6             | the tool SHA 9f8e7d6          |
-        | CLM-EVR-041 | the tool installed as a package, version 0.1.256              | no tool SHA, version 0.1.256  |
-        | CLM-EVR-046 | the tool copied in, its nearest package.json with no version | no tool SHA, version unknown |
-        | CLM-EVR-042 | a Cucumber evidence report given                              | that report, among the inputs |
-        | CLM-EVR-043 | no Cucumber evidence report given                             | that report, named as absent  |
-        | CLM-EVR-044 | an input at /work/acme/a.json, for a target at /work/acme     | that input as a.json          |
+        | CLM-EVR-045 | no target given, and the origin git@github.com:acme/web.git                  | the target acme/web                                                                   |
+        | CLM-EVR-047 | no target given, and the origin /srv/git/web.git                             | the target web                                                                        |
+        | CLM-EVR-048 | no target given, and the origin file:///srv/git/web.git                      | the target web                                                                        |
+        | CLM-EVR-040 | the tool running from its own checkout at 9f8e7d6                            | the tool SHA 9f8e7d6                                                                  |
+        | CLM-EVR-041 | the tool installed as a package, version 0.1.256                             | no tool SHA, version 0.1.256                                                          |
+        | CLM-EVR-046 | the tool copied in, its nearest package.json with no version                 | no tool SHA, version unknown                                                          |
+        | CLM-EVR-042 | a Cucumber evidence report given                                             | that report, among the inputs                                                         |
+        | CLM-EVR-043 | no Cucumber evidence report given                                            | that report, named as absent                                                          |
+        | CLM-EVR-044 | an input at /work/acme/a.json, for a target at /work/acme                    | that input as a.json                                                                  |

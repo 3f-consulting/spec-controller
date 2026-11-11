@@ -281,6 +281,17 @@ describe("the provenance says what the run used", () => {
     expect(provenanceOf(runIdentityOf({ origin: readTargetOrigin(repo), toolFolder: TOOL_FOLDER, ...VERSION }), []).target).toBe("acme/web");
   });
 
+  it.each([
+    ["CLM-EVR-047", "/srv/git/web.git"],
+    ["CLM-EVR-047", "../web"],
+    ["CLM-EVR-047", "../web/"],
+    ["CLM-EVR-047", "web.git"],
+    ["CLM-EVR-048", "file:///srv/git/web.git"],
+  ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote) => {
+    const { repo } = committedRepository("evr-path-origin-", remote);
+    expect(provenanceOf(runIdentityOf({ origin: readTargetOrigin(repo), toolFolder: TOOL_FOLDER, ...VERSION }), []).target).toBe("web");
+  });
+
   it("[CLM-EVR-040] the provenance describes the run", () => {
     const { repo, head } = committedRepository("evr-tool-");
     writeFileSync(join(repo, "package.json"), JSON.stringify({ version: "0.1.256" }));
