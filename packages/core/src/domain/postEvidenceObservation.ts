@@ -1,5 +1,6 @@
-import { claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
+import { claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
 import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
+import { relativizeToRoot } from "./targetPath.js";
 
 export interface EvidenceObservation {
   readonly cites: readonly ClaimCode[];
@@ -174,6 +175,49 @@ export function nearestCitation(levels: readonly (readonly ClaimCode[])[]): read
 }
 
 export const TEST_REPORT_KIND: QualityCheckKind = "unit";
+
+// A test in a report of test results, as the report wrote it: its own title, its title within its groups, its status.
+interface TestAsWritten {
+  readonly title?: string;
+  readonly fullTitle?: string;
+  readonly status?: string;
+}
+
+// A test file in a report of test results, as the report wrote it.
+export interface TestFileAsWritten {
+  readonly path?: string;
+  readonly status?: string;
+  readonly message?: string;
+  readonly tests: readonly TestAsWritten[];
+}
+
+// A test that passed or failed posts that result; one skipped, pending or marked todo posts nothing.
+const RESULT_OF_TEST_STATUS: ReadonlyMap<string, EvidenceObservation["result"]> = new Map([
+  ["passed", "passed"],
+  ["failed", "failed"],
+]);
+
+const resultOfTestStatus = (status: string | undefined): EvidenceObservation["result"] | undefined =>
+  status === undefined ? undefined : RESULT_OF_TEST_STATUS.get(status);
+
+const FAILED_FILE = "failed";
+
+function testObservationOf(test: TestAsWritten, place: string): EvidenceObservation[] {
+  const result = resultOfTestStatus(test.status);
+  if (result === undefined) return [];
+  const cites = nearestCitation([claimCodeCitationsIn(test.title ?? ""), claimCodeCitationsIn(test.fullTitle ?? "")]);
+  const name = test.fullTitle ?? test.title;
+  return [{ cites, result, kind: TEST_REPORT_KIND, place, notes: [], ...(name === undefined ? {} : { name }) }];
+}
+
+// Each test posts at its file; a file that failed with no test in it never reached its tests, and posts as never ran.
+export function testFileObservationsOf(files: readonly TestFileAsWritten[], root?: string): EvidenceObservation[] {
+  return files.flatMap((file) => {
+    const place = relativizeToRoot(file.path ?? "", root);
+    if (file.status === FAILED_FILE && file.tests.length === 0) return [neverRanObservation(TEST_REPORT_KIND, place, file.message)];
+    return file.tests.flatMap((test) => testObservationOf(test, place));
+  });
+}
 
 const KINDS_A_SCENARIO_TAG_NAMES: readonly QualityCheckKind[] = ["integration", "e2e", "performance"];
 

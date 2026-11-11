@@ -5,7 +5,6 @@ import { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from 
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
 import { parseRspecEvidenceObservations } from "../inputs/rspec.js";
 import { targetConfigurationFrom } from "../inputs/manifest.js";
-import { parseVitestEvidenceObservations } from "../inputs/vitest.js";
 import type { ClaimCode } from "./claimCodes.js";
 import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
 import { provenanceOf } from "./provenance.js";
@@ -14,6 +13,7 @@ import {
   claimPostedTo,
   fitnessObservationsOf,
   stepDispositionOf,
+  testFileObservationsOf,
   type EvidenceObservation,
   type PipelineStep,
   type PipelineStepAction,
@@ -28,11 +28,11 @@ const PHANTOM: ClaimCode = { featureCode: "ONE", number: "999" };
 
 type Posted = () => readonly EvidenceObservation[];
 
-const vitest = (status: string, title = "[CLM-ONE-001] a test", fullName = title): EvidenceObservation[] =>
-  parseVitestEvidenceObservations({ testResults: [{ name: "a.test.ts", status: "passed", assertionResults: [{ title, fullName, status }] }] });
+const vitest = (status: string, title = "[CLM-ONE-001] a test", fullTitle = title): EvidenceObservation[] =>
+  testFileObservationsOf([{ path: "a.test.ts", status: "passed", tests: [{ title, fullTitle, status }] }]);
 
 const vitestFile = (message: string): EvidenceObservation[] =>
-  parseVitestEvidenceObservations({ testResults: [{ name: "a.test.ts", status: "failed", message, assertionResults: [] }] });
+  testFileObservationsOf([{ path: "a.test.ts", status: "failed", message, tests: [] }]);
 
 type Testcase = Parameters<typeof parseJunitEvidenceObservations>[0] extends infer R
   ? R extends { testsuites?: { testsuite?: ReadonlyArray<{ testcase?: ReadonlyArray<infer T> }> } }
@@ -491,8 +491,8 @@ describe("balance posts each result citing the nearest code it has", () => {
 
 describe("an Evidence Observation says where to look", () => {
   it.each<[string, { posted: Posted; where: Partial<EvidenceObservation> }]>([
-    ["CLM-OBS-078", { posted: () => parseVitestEvidenceObservations({ testResults: [{ name: "a.test.ts", assertionResults: [{ title: "adds two numbers", fullName: "adds two numbers", status: "passed" }] }] }), where: { place: "a.test.ts", name: "adds two numbers" } }],
-    ["CLM-OBS-079", { posted: () => parseVitestEvidenceObservations({ testResults: [{ name: "/work/acme/a.test.ts", assertionResults: [{ title: "adds two numbers", fullName: "adds two numbers", status: "passed" }] }] }, "/work/acme"), where: { place: "a.test.ts", name: "adds two numbers" } }],
+    ["CLM-OBS-078", { posted: () => testFileObservationsOf([{ path: "a.test.ts", tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }]), where: { place: "a.test.ts", name: "adds two numbers" } }],
+    ["CLM-OBS-079", { posted: () => testFileObservationsOf([{ path: "/work/acme/a.test.ts", tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }], "/work/acme"), where: { place: "a.test.ts", name: "adds two numbers" } }],
     ["CLM-OBS-080", { posted: () => parseCucumberEvidenceObservations(scenario(["@CLM-ONE-001"], ["passed"]), undefined, () => []), where: { place: "one.feature", name: "one adds one" } }],
     ["CLM-OBS-081", { posted: () => fitness([{ id: "CLM-ONE-002", name: "Build", command: "pnpm build" }, CITING_STEP], [{ key: "CLM-ONE-001", outcome: "success" }]), where: { place: "ci.yml:build:Lint" } }],
   ])("[%s] balance posts an Evidence Observation saying where to look", (_clm, { posted, where }) => {
@@ -553,7 +553,7 @@ describe("balance posts a recorded step that no workflow holds at its claim code
 describe("a test file outside the target's folder will be placed at the absolute path its evidence report recorded", () => {
   it("[CLM-OBS-098] a test file outside the target's folder will be placed at the absolute path its evidence report recorded", () => {
     const file = "/home/runner/work/app/src/a.test.ts";
-    const report = { testResults: [{ name: file, assertionResults: [{ title: "adds two numbers", fullName: "adds two numbers", status: "passed" }] }] };
-    expect(parseVitestEvidenceObservations(report, "/work/app").map(({ place }) => place)).toEqual([file]);
+    const files = [{ path: file, tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }];
+    expect(testFileObservationsOf(files, "/work/app").map(({ place }) => place)).toEqual([file]);
   });
 });
