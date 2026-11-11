@@ -400,14 +400,14 @@ function scenarioResultOf(steps: readonly StepRunAsWritten[]): EvidenceObservati
   return endings.length > 0 && endings.every((ending) => ending === "passed") ? "passed" : undefined;
 }
 
-const stepText = (step: StepRunAsWritten): string => `${(step.keyword ?? "").trim()} ${step.text ?? ""}`;
+const stepText = (step: StepRunAsWritten): string => `${String(step.keyword).trim()} ${step.text}`;
 
 const codesIn = (texts: readonly string[]): ClaimCode[] => texts.flatMap((text) => claimCodeFrom(text) ?? []);
 
 function scenarioRunObservationOf(run: ScenarioRunAsWritten, root: string | undefined, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
   const result = scenarioResultOf(run.steps);
   if (result === undefined) return [];
-  const place = relativizeToRoot(run.featurePath ?? run.featureName ?? "", root);
+  const place = relativizeToRoot(String(run.featurePath ?? run.featureName), root);
   const rowCodes = run.line === undefined ? [] : claimCodesAt(place, run.line);
   const [firstKind, ...otherKinds] = kindsTheTagsName(run.tags);
   const cites = nearestCitation([codesIn([...run.tags, ...rowCodes])]);
