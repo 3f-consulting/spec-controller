@@ -15,14 +15,6 @@ export function unwritableRefusal(format: string, path: string, err: unknown): R
   return refusal(AppError.ReportNotWritten, { format, path, reason });
 }
 
-export function writeOrRefuse(format: string, path: string, write: () => void): void {
-  try {
-    write();
-  } catch (err) {
-    refuse(unwritableRefusal(format, path, err));
-  }
-}
-
 // Only balance refuses through here; allocate and the host print their own refusals.
 const REFUSING_COMMAND = "balance";
 
@@ -73,12 +65,7 @@ export function regularFileIdentity(path: string): RegularFileIdentity | undefin
 }
 
 function streamIdentity(fd: number): RegularFileIdentity | undefined {
-  try {
-    return regularIdentity(fstatSync(fd, { bigint: true }));
-  } catch {
-    // A closed stream has no file for a destination to share.
-  }
-  return undefined;
+  return regularIdentity(fstatSync(fd, { bigint: true }));
 }
 
 export function stdoutIdentity(): RegularFileIdentity | undefined {
@@ -91,7 +78,7 @@ export function stderrIdentity(): RegularFileIdentity | undefined {
 
 function identityOf(fd: number): RegularFileIdentity | undefined {
   try {
-    return regularIdentity(fstatSync(fd, { bigint: true }));
+    return streamIdentity(fd);
   } finally {
     closeSync(fd);
   }

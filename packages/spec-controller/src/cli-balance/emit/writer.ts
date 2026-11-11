@@ -18,7 +18,6 @@ import {
   stderrIdentity,
   stdoutIdentity,
   unwritableRefusal,
-  writeOrRefuse,
 } from "../../outputLocation.js";
 import { standardError } from "../../standardError.js";
 import type { Refusal } from "../../refusal.js";
@@ -81,5 +80,5 @@ function emit(output: PlannedOutput, text: string): void {
     standardError(process.stderr).report(text);
     return;
   }
-  writeOrRefuse(output.fmt, dest.path, () => writeFileSync(dest.path, text));
+  writeFileSync(dest.path, text);
 }
