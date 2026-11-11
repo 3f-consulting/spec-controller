@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parseJunitEvidenceObservations } from "../inputs/junit.js";
 import { shellReading } from "../inputs/shell.js";
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
 import { targetConfigurationFrom } from "../inputs/manifest.js";
@@ -403,6 +404,7 @@ describe("balance posts each result with how it went", () => {
     ["CLM-OBS-038", { posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-ONE-001"), skipped: true }) }],
     ["CLM-OBS-039", { posted: () => junit({ classname: "example.com/a", name: "TestA/[CLM-ONE-001]_a", skipped: true }) }],
     ["CLM-OBS-040", { posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test", skipped: true }) }],
+    ["CLM-OBS-040", { posted: () => parseJunitEvidenceObservations({ testsuites: { testsuite: [{ name: "a.suite", testcase: [{ classname: "example.ATest", name: "[CLM-ONE-001] a test", skipped: "" }] }] } }) }],
     ["CLM-OBS-041", { posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test", skipped: true }) }],
     ["CLM-OBS-042", { posted: () => [...rspec("pending"), ...rspec("skipped")] }],
     ["CLM-OBS-043", { posted: () => cucumber(["CLM-ONE-001"], ["passed", "skipped"]) }],
