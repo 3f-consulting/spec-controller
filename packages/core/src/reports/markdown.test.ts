@@ -215,6 +215,16 @@ describe("the report quotes an Evidence Observation's first line and every note"
       laterLines: rowsQuoting("second line") + rowsQuoting("third line"),
     }).toEqual({ firstLine: 2, notes: [2, 2], laterLines: 0 });
   });
+
+  it("[CLM-RPT-085] the report quotes the first line that holds anything, as RSpec writes a load error's message", () => {
+    const neverRan = observation({ result: "never-ran", message: "\nWhile loading ./spec/a_spec.rb a `raise` occurred\nFailure/Error", notes: [] });
+    const markdown = renderMarkdown({ ...everySection(neverRan), runIntegrity: { neverRan: [neverRan] } });
+    const rows = markdown.split("\n").filter((line) => line.startsWith("|"));
+    expect({
+      quoted: rows.filter((line) => line.includes("While loading ./spec/a_spec.rb")).length,
+      empty: rows.filter((line) => line.includes("`\"\"`")).length,
+    }).toEqual({ quoted: 2, empty: 0 });
+  });
 });
 
 describe("each section will have its heading, each value its label, and each table a key", () => {
