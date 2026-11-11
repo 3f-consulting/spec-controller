@@ -200,18 +200,13 @@ export function claimCodeMarksFor(featureCode: string): readonly string[] {
 
 const numberOf = (code: string): number => Number(code.slice(code.lastIndexOf("-") + 1));
 
-function outranks(code: string, occurrence: ClaimCodeOccurrence, highest: HighestSeen): boolean {
-  const difference = numberOf(code) - numberOf(highest.code);
-  return difference > 0 || (difference === 0 && occurrence.commit === undefined && highest.occurrence.commit !== undefined);
-}
-
 function highestOf(featureCode: string, occurrences: readonly ClaimCodeOccurrence[]): HighestSeen | undefined {
   let highest: HighestSeen | undefined;
   for (const occurrence of occurrences) {
     for (const [code] of occurrence.text.matchAll(CODE_SHAPED)) {
       // A number a retired scenario code had is never handed out again.
       const counted = claimCodeFrom(code) ?? retiredScenarioCodeFrom(code);
-      if (counted?.featureCode === featureCode && (highest === undefined || outranks(code, occurrence, highest))) highest = { code, occurrence };
+      if (counted?.featureCode === featureCode && (highest === undefined || numberOf(code) > numberOf(highest.code))) highest = { code, occurrence };
     }
   }
   return highest;
