@@ -317,8 +317,8 @@ describe("each section will have its heading, each value its label, and each tab
   });
 });
 
-describe("the unnamed claim's evidence will be shown one group per file, each counting the tests that ran, passed and failed", () => {
-  it("[CLM-RPT-110] the unnamed claim's evidence will be shown one group per file, each counting the tests that ran, passed and failed", () => {
+describe("the report shows the unnamed claim's evidence one group per file, with how many tests ran, passed and failed", () => {
+  it("[CLM-RPT-110] the report shows the unnamed claim's evidence one group per file, with how many tests ran, passed and failed", () => {
     const citingNoClaim = (place: string, name: string, result: EvidenceObservation["result"]) =>
       ({ outcome: "cites-no-claim", kind: "unit", observation: { cites: [], result, kind: "unit", place, name, notes: [] } }) as const;
     const run: EvidenceReconciliation = {

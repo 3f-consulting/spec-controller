@@ -135,7 +135,8 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
     Before a command does its work, it validates every input it reads, named on the command line or
     left to its default: the evidence reports, the step record, the feature corpus, the CI
-    workflows and the manifest. A well-formed input that is empty is valid. A valid evidence report whose
+    workflows and the manifest. A well-formed input that is empty is valid.
+    A CI workflows folder read by default that does not exist counts as no workflows. A valid evidence report whose
     evidence did not fully materialise is valid too, and the run is unsound. A configuration setting
     balance cannot use is left out, as configuration.feature says.
 

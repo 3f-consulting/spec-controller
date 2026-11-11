@@ -82,10 +82,10 @@ Feature: Each report has the right structure, and the Markdown explains it
       when its Markdown report is written
       then the report will quote the message's first line and both notes
 
-  Rule: the Markdown report groups the unnamed claim's evidence by where it came from
+  Rule: the Markdown report shows the unnamed claim's evidence in its groups
 
     @unit @CLM-RPT-110
-    Scenario: the unnamed claim's evidence will be shown one group per file, each counting the tests that ran, passed and failed
+    Scenario: the report shows the unnamed claim's evidence one group per file, with how many tests ran, passed and failed
       given a run had unit tests citing no claim in two files, and one test in one of them failed
       when its Markdown report is written
       then the unnamed claim will show one group for each file, with how many of its tests ran, passed and failed, and the name of the test that failed
