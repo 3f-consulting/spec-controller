@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest";
 import { readCorpus } from "../../../spec-controller/src/inputs/ingestQualityChecks.js";
 import { committedRepository } from "../../../spec-controller/src/runIdentity/gitRepository.test-utils.js";
 import { temporaryDirectory } from "../../../spec-controller/src/temporaryDirectory.test-utils.js";
-import { resolveSourceSha, resolveTargetOrigin, resolveToolIdentity } from "../../../spec-controller/src/runIdentity/resolveRunInputs.js";
+import { readTargetHead, readToolInstall, resolveTargetOrigin } from "../../../spec-controller/src/runIdentity/resolveRunInputs.js";
 import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
 import { shellReading } from "../inputs/shell.js";
 import { targetConfigurationFrom } from "../inputs/manifest.js";
-import { provenanceFrom, provenanceOf } from "./provenance.js";
+import { provenanceFrom, provenanceOf, runIdentityOf } from "./provenance.js";
 import { coreText } from "../messages/coreText.js";
 import { renderJson } from "../reports/json.js";
 import { renderMarkdown } from "../reports/markdown.js";
@@ -254,9 +254,9 @@ describe("the provenance says what the run used", () => {
 
   it("[CLM-EVR-038] the provenance describes the run", () => {
     const { repo, head } = committedRepository("evr-source-");
-    const sourceSha = resolveSourceSha({ sourceSha: "abc1234", targetDir: repo }) ?? undefined;
+    const identity = runIdentityOf({ givenSourceSha: "abc1234", head: readTargetHead(repo), ...readToolInstall(repo) });
     expect(head).not.toBe("abc1234");
-    expect(provenanceOf({ ...(sourceSha === undefined ? {} : { sourceSha }), ...VERSION }, []).sourceSha).toBe("abc1234");
+    expect(provenanceOf(identity, []).sourceSha).toBe("abc1234");
   });
 
   it.each<[string, string, { target?: string; hidden: readonly string[] }]>([
@@ -286,8 +286,7 @@ describe("the provenance says what the run used", () => {
   it("[CLM-EVR-040] the provenance describes the run", () => {
     const { repo, head } = committedRepository("evr-tool-");
     writeFileSync(join(repo, "package.json"), JSON.stringify({ version: "0.1.256" }));
-    const { toolSha, toolVersion } = resolveToolIdentity({ toolDir: repo });
-    expect(provenanceOf({ ...(toolSha === null ? {} : { toolSha }), toolVersion }, []).toolSha).toBe(head);
+    expect(provenanceOf(runIdentityOf(readToolInstall(repo)), []).toolSha).toBe(head);
   });
 
   it("[CLM-EVR-041] the provenance describes the run", () => {
@@ -295,8 +294,7 @@ describe("the provenance says what the run used", () => {
     const toolDir = join(repo, "node_modules", "spec-controller", "dist");
     mkdirSync(toolDir, { recursive: true });
     writeFileSync(join(repo, "node_modules", "spec-controller", "package.json"), JSON.stringify({ version: "0.1.256" }));
-    const { toolSha, toolVersion } = resolveToolIdentity({ toolDir });
-    const provenance = provenanceOf({ ...(toolSha === null ? {} : { toolSha }), toolVersion }, []);
+    const provenance = provenanceOf(runIdentityOf(readToolInstall(toolDir)), []);
     expect(provenance).not.toHaveProperty("toolSha");
     expect(provenance.toolVersion).toBe("0.1.256");
   });
@@ -306,8 +304,7 @@ describe("the provenance says what the run used", () => {
     const toolDir = join(repo, "node_modules", "vendored", "spec-controller");
     mkdirSync(toolDir, { recursive: true });
     writeFileSync(join(repo, "node_modules", "vendored", "package.json"), JSON.stringify({ name: "vendored" }));
-    const { toolSha, toolVersion } = resolveToolIdentity({ toolDir });
-    const provenance = provenanceOf({ ...(toolSha === null ? {} : { toolSha }), toolVersion }, []);
+    const provenance = provenanceOf(runIdentityOf(readToolInstall(toolDir)), []);
     expect(provenance).not.toHaveProperty("toolSha");
     expect(provenance.toolVersion).toBe("unknown");
   });

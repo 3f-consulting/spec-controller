@@ -6,7 +6,7 @@ export type { EvidenceReconciliation, RunToReconcile, RunVerdict } from "./domai
 export { BUILT_IN_DEFERRAL_TAGS } from "./domain/postEvidenceObligation.js";
 export type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./domain/postEvidenceObligation.js";
 export type { ClaimCodesAt, EvidenceObservation, WorkflowStep } from "./domain/postEvidenceObservation.js";
-export { provenanceFrom } from "./domain/provenance.js";
+export { provenanceFrom, runIdentityOf, toolVersionOf } from "./domain/provenance.js";
 export type { Provenance, RunInput } from "./domain/provenance.js";
 export { relativizeToRoot, targetFolderOf } from "./domain/targetPath.js";
 

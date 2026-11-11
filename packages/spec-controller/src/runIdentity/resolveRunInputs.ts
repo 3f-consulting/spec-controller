@@ -4,8 +4,9 @@ import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { targetFolderOf } from "@3f-consulting/spec-controller-core";
 
-export function resolveSourceSha(opts: { sourceSha?: string; targetDir?: string }): string | undefined {
-  return opts.sourceSha ?? readGit(opts.targetDir, ["rev-parse", "HEAD"]);
+// The commit the target's folder has checked out, if it is in a git repository.
+export function readTargetHead(targetDir: string | undefined): string | undefined {
+  return readGit(targetDir, ["rev-parse", "HEAD"]);
 }
 
 export function resolveTargetOrigin(targetDir: string | undefined): string | undefined {
@@ -73,30 +74,31 @@ function ownerRepoOf(path: string): string | null {
   return segments.length >= 2 ? segments.slice(-2).join("/") : null;
 }
 
-export interface ToolIdentity {
-  toolSha: string | undefined;
-  toolVersion: string;
+// The tool's install as written: its folder, its parts joined by "/", the commit of any checkout that folder is in, and
+// the version field of the nearest package.json at or above it.
+export interface ToolInstall {
+  readonly toolFolder: string;
+  readonly toolHead: string | undefined;
+  readonly toolVersion: unknown;
 }
 
-export function resolveToolIdentity(opts: { toolDir?: string } = {}): ToolIdentity {
-  const toolDir = opts.toolDir ?? dirname(fileURLToPath(import.meta.url));
-  return { toolSha: resolveToolSha(toolDir), toolVersion: resolveToolVersion(toolDir) };
+const toolFolder = (): string => dirname(fileURLToPath(import.meta.url));
+
+export function readToolInstall(toolDir: string = toolFolder()): ToolInstall {
+  return { toolFolder: toolDir.split(sep).join("/"), toolHead: readGit(toolDir, ["rev-parse", "HEAD"]), toolVersion: readToolVersion(toolDir) };
 }
 
-function resolveToolSha(toolDir: string): string | undefined {
-  return toolDir.split(sep).includes("node_modules") ? undefined : readGit(toolDir, ["rev-parse", "HEAD"]);
-}
-
-// The version is the one in the nearest package.json at or above the tool's folder.
-function resolveToolVersion(fromDir: string): string {
+// The version field, as written, of the nearest package.json at or above the tool's folder that reads as JSON; nothing
+// when no such file is found.
+export function readToolVersion(fromDir: string = toolFolder()): unknown {
   let dir = fromDir;
   for (;;) {
     try {
       const { version } = JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as { version?: unknown };
-      return typeof version === "string" && version !== "" ? version : "unknown";
+      return version;
     } catch {
       const parent = dirname(dir);
-      if (parent === dir) return "unknown";
+      if (parent === dir) return undefined;
       dir = parent;
     }
   }

@@ -1,8 +1,8 @@
 import { join } from "node:path";
-import { claimCodeMarksFor, nextClaimCode, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
+import { claimCodeMarksFor, nextClaimCode, toolVersionOf, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { asksForHelp } from "../runRequest/cliArgs.js";
 import { allocateCommand, cliRegistry, renderCommandHelp } from "../runRequest/cliRegistry.js";
-import { resolveToolIdentity } from "../runIdentity/resolveRunInputs.js";
+import { readToolVersion } from "../runIdentity/resolveRunInputs.js";
 import { readFeatureCodes } from "../repository/readParts.js";
 import { readRequest, type AllocateRequest } from "../runRequest/request.js";
 import { DEFAULT_FEATURES_DIR } from "../runRequest/defaults.js";
@@ -24,7 +24,7 @@ export function runAllocate(argv: string[]): void {
     process.stdout.write(renderCommandHelp(allocateCommand) + "\n");
     return;
   }
-  answerOrRefuse(readRequest(argv, cliRegistry, resolveToolIdentity().toolVersion));
+  answerOrRefuse(readRequest(argv, cliRegistry, toolVersionOf(readToolVersion())));
 }
 
 function answerOrRefuse(request: ReturnType<typeof readRequest>): void {

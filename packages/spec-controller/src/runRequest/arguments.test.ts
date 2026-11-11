@@ -5,7 +5,8 @@ import { message } from "../messages/appText.js";
 import { main } from "../commands/main.js";
 import { AppError } from "../messages/messages.js";
 import { forgetWhatTheProgramWrote, recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "../programOutput.test-utils.js";
-import { resolveToolIdentity } from "../runIdentity/resolveRunInputs.js";
+import { toolVersionOf } from "@3f-consulting/spec-controller-core";
+import { readToolVersion } from "../runIdentity/resolveRunInputs.js";
 import { printedRefusal } from "../messages/shownText.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
@@ -146,7 +147,7 @@ describe("an argument the tool does not accept will stop the run", () => {
       (): string =>
         printedRefusal(
           AppError.UnknownFlag,
-          message(AppError.UnknownFlag, { flag: "--bogus", scope: BALANCE, toolVersion: resolveToolIdentity().toolVersion, command: "balance" }),
+          message(AppError.UnknownFlag, { flag: "--bogus", scope: BALANCE, toolVersion: toolVersionOf(readToolVersion()), command: "balance" }),
           "balance",
         ),
     ],

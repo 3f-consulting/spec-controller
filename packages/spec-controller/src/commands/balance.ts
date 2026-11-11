@@ -6,9 +6,11 @@ import {
   evidenceReconciliationOf,
   pipelineStepsOf,
   provenanceFrom,
+  runIdentityOf,
   recordedCheckStepsOf,
   shellReading,
   targetConfigurationFrom,
+  toolVersionOf,
   type EvidenceReconciliation,
   type ParsedFeatureFile,
   type ParsedWorkflow,
@@ -45,7 +47,7 @@ import {
 } from "../inputs/unreadableInputs.js";
 import { exitCodeOf } from "../runEnding/exitStatus.js";
 import { endRunOn } from "../runEnding/exitCode.js";
-import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "../runIdentity/resolveRunInputs.js";
+import { readTargetHead, readToolInstall, readToolVersion, resolveTargetOrigin, resolveTargetRoot } from "../runIdentity/resolveRunInputs.js";
 import { balanceCommand, cliRegistry, renderCommandHelp } from "../runRequest/cliRegistry.js";
 import {
   asksForHelp,
@@ -73,7 +75,7 @@ function reconcile(argv: string[]): boolean {
   const shapeError = checkArgvShape(argv, cliRegistry, "balance");
   if (shapeError) refuse(shapeError);
 
-  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance", resolveToolIdentity().toolVersion);
+  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance", toolVersionOf(readToolVersion()));
   if (unknownFlagError) refuse(unknownFlagError);
 
   const missingValueError = checkMissingValues(argv, cliRegistry, "balance");
@@ -136,12 +138,13 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
 
 function provenanceOf(args: Record<string, string>, inputs: InputPaths, root: string): Provenance {
   const targetDir = args["features"] !== undefined ? dirname(args["features"]) : undefined;
-  const identity = {
+  const identity = runIdentityOf({
     target: args["target"],
     origin: resolveTargetOrigin(targetDir),
-    sourceSha: resolveSourceSha({ sourceSha: args["source-sha"], targetDir }),
-    ...resolveToolIdentity(),
-  };
+    givenSourceSha: args["source-sha"],
+    head: readTargetHead(targetDir),
+    ...readToolInstall(),
+  });
   return provenanceFrom(identity, runInputsOf(inputs), root);
 }
 
