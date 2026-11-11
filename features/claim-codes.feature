@@ -86,7 +86,7 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-060 | one.feature contains an Outline with a clm column and an Examples block tagged @CLM-ONE-009       | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
 
     @unit @CLM-STG-091
-    Scenario: a feature file with no feature code and no claim code will have no claim code error
+    Scenario: balance finds no claim code error in a feature file with no feature code and no claim code
       given three.feature had no feature code, and contained a scenario with no claim code
       when balance reads it
       then it will find no claim code error

@@ -169,7 +169,7 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
   });
 });
 
-describe("a feature file with no feature code and no claim code will have no claim code error", () => {
+describe("balance finds no claim code error in a feature file with no feature code and no claim code", () => {
   it("[CLM-STG-091] three.feature, with no feature code and a scenario tagged only @unit", () => {
     const features = parsedFeatures([featureFile("", scenarioTagged("@unit"))], ["three.feature"]);
 
