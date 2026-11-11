@@ -32,7 +32,7 @@ function clmColumnOf(examples: Examples): number {
 
 function rowsOf(examples: Examples): RowAsWritten[] {
   const column = clmColumnOf(examples);
-  return examples.tableBody.map((row) => ({ cell: row.cells[column]?.value }));
+  return examples.tableBody.map((row) => ({ cell: row.cells[column]!.value }));
 }
 
 function scenarioAsWrittenOf(scenario: Scenario): ScenarioAsWritten {
@@ -47,7 +47,7 @@ function scenarioAsWrittenOf(scenario: Scenario): ScenarioAsWritten {
 
 function gherkinScenariosIn(children: readonly (FeatureChild | RuleChild)[]): Scenario[] {
   return children.flatMap((child) => {
-    if ("rule" in child && child.rule) return gherkinScenariosIn(child.rule.children);
+    if ("rule" in child) return gherkinScenariosIn(child.rule!.children);
     return child.scenario ? [child.scenario] : [];
   });
 }
@@ -82,17 +82,15 @@ export function parseFeatureCorpus(sources: readonly Source[]): SourcesParse<Fea
   return parseSources(sources, gherkinDocumentOf, contentOf);
 }
 
-const portable = (path: string): string => path.replaceAll("\\", "/");
-
-// A report names a feature file by a path that ends in the file's path within the corpus; the longest such file is the one meant.
+// A report names a feature file by a path that ends in the file's path within the corpus.
 export function claimCodesAtOf(features: readonly ParsedFeatureFile[]): ClaimCodesAt {
   const byLine = new Map<number, { readonly file: string; readonly codes: readonly string[] }[]>();
   for (const { file, codesAtLines } of features) {
-    for (const { line, codes } of codesAtLines) byLine.set(line, [...(byLine.get(line) ?? []), { file: `/${portable(file)}`, codes }]);
+    for (const { line, codes } of codesAtLines) byLine.set(line, [...(byLine.get(line) ?? []), { file: `/${file}`, codes }]);
   }
   return (path, line) => {
-    const reported = `/${portable(path)}`;
+    const reported = `/${path}`;
     const matching = (byLine.get(line) ?? []).filter((at) => reported.endsWith(at.file));
-    return matching.sort((a, b) => b.file.length - a.file.length)[0]?.codes ?? [];
+    return matching[0]?.codes ?? [];
   };
 }

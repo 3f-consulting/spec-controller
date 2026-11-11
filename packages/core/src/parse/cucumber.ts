@@ -35,7 +35,7 @@ function runResultOf(steps: readonly CucumberStep[]): RunResult {
   return steps.length > 0 && steps.every((step) => statusOf(step) === "passed") ? "passed" : "inconclusive";
 }
 
-const stepText = (step: CucumberStep): string => `${(step.keyword ?? "").trim()} ${step.name ?? ""}`.trim();
+const stepText = (step: CucumberStep): string => `${(step.keyword ?? "").trim()} ${step.name ?? ""}`;
 
 function codesIn(texts: readonly string[]): ClaimCode[] {
   return texts.flatMap((text) => claimCodeFrom(text) ?? []);

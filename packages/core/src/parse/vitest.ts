@@ -4,7 +4,7 @@ import { nearestCitation, neverRanObservation, resultOfRun, TEST_REPORT_KIND, ty
 import { relativizeToRoot } from "../lib/portablePath.js";
 
 export interface VitestJsonReport {
-  readonly testResults?: ReadonlyArray<{
+  readonly testResults: ReadonlyArray<{
     readonly name?: string;
     readonly status?: string;
     readonly message?: string;
@@ -21,7 +21,7 @@ function runResultOf(status: string | undefined): RunResult {
 }
 
 export function parseVitestEvidenceObservations(report: VitestJsonReport, root?: string): EvidenceObservation[] {
-  return (report.testResults ?? []).flatMap((file): EvidenceObservation[] => {
+  return report.testResults.flatMap((file): EvidenceObservation[] => {
     const place = relativizeToRoot(file.name ?? "", root);
     const assertions = file.assertionResults ?? [];
     if (file.status === "failed" && assertions.length === 0) {
