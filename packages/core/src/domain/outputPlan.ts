@@ -74,7 +74,7 @@ export function outputClashOf<Format extends string>(
     toStandardErrorSeen ||= toStandardError;
     return shown;
   });
-  return inputOverwrittenOf(compared, inputs);
+  return sharedFileOf(compared) ?? inputOverwrittenOf(compared, inputs);
 }
 
 interface ComparedOutput<Format extends string> {
