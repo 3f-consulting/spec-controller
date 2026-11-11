@@ -23,9 +23,8 @@ export interface ConfigurationRead {
 
 type Setting = "runners" | "nonChecks" | "deferralTags";
 
-// How the target spells the block and each of its settings, so an error names the setting as written.
+// How the target spells each setting, so an error names the setting as written.
 export interface SettingNames {
-  readonly block: string;
   readonly settings: Readonly<Record<string, Setting>>;
 }
 
@@ -83,10 +82,9 @@ function nonChecksIn(entries: readonly string[], stepsRead: readonly PipelineSte
 
 export function targetConfigurationOf(block: unknown, names: SettingNames, stepsRead: readonly PipelineStep[]): ConfigurationRead {
   if (block === undefined) return { configuration: NOTHING_READ, errors: [] };
-  if (!isBlock(block)) return { configuration: NOTHING_READ, errors: [wrongKind(names.block)] };
   const errors: ConfigurationError[] = [];
   const read: Partial<Record<Setting, { readonly written: string; readonly value: unknown }>> = {};
-  for (const [written, value] of Object.entries(block)) {
+  for (const [written, value] of Object.entries(block as Readonly<Record<string, unknown>>)) {
     const setting = names.settings[written];
     if (setting === undefined) errors.push({ kind: "configuration-unknown-key", entry: written });
     else read[setting] = { written, value };

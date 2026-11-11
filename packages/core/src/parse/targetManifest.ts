@@ -3,7 +3,6 @@ import type { PipelineStep } from "../domain/postEvidenceObservation.js";
 import { bareTerm } from "../lib/bareTerm.js";
 
 const SPEC_CONTROLLER_BLOCK: SettingNames = {
-  block: "specController",
   settings: { runners: "runners", notChecks: "nonChecks", deferralTags: "deferralTags" },
 };
 
