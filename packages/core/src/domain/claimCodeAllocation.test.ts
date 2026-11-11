@@ -79,7 +79,7 @@ describe("the answer is one past the highest code the repository has contained",
   });
 });
 
-describe("when git cannot answer, it stops and gives no code", () => {
+describe("allocate names what it could not read, and gives no code", () => {
   it.skipIf(runsAsRoot())("[CLM-STG-072] a file git cannot read: its index", () => {
     const repo = repositoryHeadedOneCarrying003("allocate-withheld-index-");
     withhold(join(repo, ".git", "index"), 0o000);

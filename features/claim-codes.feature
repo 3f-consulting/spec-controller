@@ -116,17 +116,18 @@ Feature: every claim code is well formed, filed under its file's code, and never
   Rule: allocate stops when something it must read cannot be read
 
     @unit
-    Scenario Outline: when git cannot answer, it stops and gives no code
+    Scenario Outline: allocate names what it could not read, and gives no code
       given there was <what>
       when the developer asks for the next code
       then it will stop as a usage error, naming what it could not read
       and it will give no code
 
       Examples:
-        | clm         | what                         |
-        | CLM-STG-072 | a file git cannot read       |
-        | CLM-STG-073 | history git failed to read   |
-        | CLM-STG-074 | a damaged repository         |
+        | clm         | what                                |
+        | CLM-STG-072 | a file git cannot read              |
+        | CLM-STG-073 | history git failed to read          |
+        | CLM-STG-074 | a damaged repository                |
+        | CLM-STG-085 | a folder in the tree it cannot read |
 
   Rule: allocate says what history it did not read
 
@@ -143,6 +144,19 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | clm         | copy                                 | boundary                                             |
         | CLM-STG-075 | not a git repository                 | no history was read                                  |
         | CLM-STG-076 | a shallow clone from after that line | history before the clone's first commit was not read |
+
+    @unit
+    Scenario Outline: with no history to read and no code seen, it answers and says what it did not read
+      given the repository's features folder contained a feature file tagged @ONE
+      and the developer's copy of it is <copy>
+      when the developer asks for the next code for ZZ, as a new feature code
+      then the answer will be CLM-ZZ-001
+      and it will note that <boundary>
+
+      Examples:
+        | clm         | copy                 | boundary                                             |
+        | CLM-STG-087 | not a git repository | no history was read                                  |
+        | CLM-STG-088 | a shallow clone      | history before the clone's first commit was not read |
 
   Rule: allocate takes only a feature code a feature file has
 
@@ -172,6 +186,12 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-080 | ZZ   | CLM-ZZ-001  | it will say nothing more                         |
         | CLM-STG-081 | ONE  | CLM-ONE-004 | it will note that a feature file already has ONE |
         | CLM-STG-082 | OLD  | CLM-OLD-008 | it will say nothing more                         |
+
+    @unit @CLM-STG-086
+    Scenario: --new in a repository with no features folder gives the feature code's first claim code
+      given the repository had no features folder
+      when the developer asks for the next code for ZZ, as a new feature code
+      then the answer will be CLM-ZZ-001, and nothing else
 
     @unit @CLM-STG-083
     Scenario: a feature code on a feature file in a subdirectory is found

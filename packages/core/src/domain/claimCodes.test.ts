@@ -1,7 +1,7 @@
 import { cpSync, mkdirSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { allocateIn, gitExited, refusalReason, type Answered } from "../../../spec-controller/src/cli-allocate/answered.test-utils.js";
+import { allocateIn, expectAnsweredEnding, gitExited, refusalReason, type Answered } from "../../../spec-controller/src/cli-allocate/answered.test-utils.js";
 import {
   expectAnsweredWithHistoryUnreadBeforeItsFirstCommit,
   expectAnsweredWithNoHistoryRead,
@@ -262,6 +262,15 @@ function withheldFile(): void {
   expect(refusalReason(allocateIn(repo, ["ONE"]), message(AppMessage.TreeFile), notes)).toMatch(/^(EACCES|EPERM): /);
 }
 
+function withheldFolder(): void {
+  const repo = repositoryCarrying("CLM-ONE-001");
+  writeInto(repo, "docs/notes.md", "CLM-ONE-009\n");
+  const docs = join(repo, "docs");
+  withhold(docs, 0o000);
+
+  expect(refusalReason(allocateIn(repo, ["ONE"]), message(AppMessage.TreeDirectory), docs)).toMatch(/^(EACCES|EPERM): /);
+}
+
 function withheldHistory(): void {
   const repo = repositoryCarrying("CLM-ONE-001");
   committedThenDeleted(repo, "docs/old.md", "CLM-ONE-005\n");
@@ -285,11 +294,12 @@ function damagedRepository(): void {
   expect(answered.stderr).toContain(message(AppError.CouldNotBeRead, { subject: message(AppMessage.Repository), path: gitEntry, reason }));
 }
 
-describe("when git cannot answer, it stops and gives no code", () => {
+describe("allocate names what it could not read, and gives no code", () => {
   it.for([
     ["CLM-STG-072", "a file git cannot read", withheldFile],
     ["CLM-STG-073", "history git failed to read", withheldHistory],
     ["CLM-STG-074", "a damaged repository", damagedRepository],
+    ["CLM-STG-085", "a folder in the tree it cannot read", withheldFolder],
   ] as const)("[%s] %s", ([, , stopsUnread], { skip }) => {
     skip(runsAsRoot());
     stopsUnread();
@@ -402,5 +412,47 @@ describe("a request that is not a feature code stops as a usage error", () => {
     expect(answered.stdout).toBe("");
     expect(answered.exitCode).toBe(2);
     expect(answered.stderr).toBe(`${printedRefusal(AppError.NotAFeaturePart, message(AppError.NotAFeaturePart, { part: "fit" }), "allocate")}\n`);
+  });
+});
+
+function newCodeInCopyWithoutGit(): Answered {
+  const copy = freshDirectory("claim-codes-new-copy-");
+  cpSync(repositoryCarrying("CLM-ONE-001"), copy, { recursive: true, filter: (source) => basename(source) !== ".git" });
+  return allocateIn(copy, ["ZZ", "--new"]);
+}
+
+function newCodeInShallowClone(): Answered {
+  const clone = join(freshDirectory("claim-codes-new-clone-"), "clone");
+  git(repositoryCarrying("CLM-ONE-001"), ["clone", "-q", "--depth", "1", `file://${repositoryCarrying("CLM-ONE-001")}`, clone]);
+  return allocateIn(clone, ["ZZ", "--new"]);
+}
+
+describe("with no history to read and no code seen, it answers and says what it did not read", () => {
+  it("[CLM-STG-087] not a git repository", () => {
+    const answered = newCodeInCopyWithoutGit();
+    expect({ answer: answered.stdout, note: answered.stderr }).toEqual({
+      answer: "CLM-ZZ-001\n",
+      note: `${message(AppMessage.NoRepositoryRisksPartCode, { part: "ZZ" })}\n${message(AppMessage.HighestSeenNone)}\n`,
+    });
+  });
+
+  it("[CLM-STG-088] a shallow clone", () => {
+    const answered = newCodeInShallowClone();
+    expect(answered.stdout).toBe("CLM-ZZ-001\n");
+    expect(answered.stderr.split("\n")[0]).toMatch(new RegExp(`^${message(AppMessage.ShallowHistoryRisksPartCode, { before: "EDGE", part: "ZZ" }).split("EDGE").map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[0-9a-f]+")}$`));
+  });
+});
+
+describe("--new in a repository with no features folder gives the feature code's first claim code", () => {
+  it("[CLM-STG-086] --new in a repository with no features folder gives the feature code's first claim code", () => {
+    const repo = freshDirectory("claim-codes-no-features-");
+    git(repo, ["init", "-q", "-b", "main"]);
+    writeInto(repo, "README.md", "a repository with no features folder\n");
+    commitAll(repo, "a readme");
+
+    const answered = allocateIn(repo, ["ZZ", "--new"]);
+
+    expectAnsweredEnding(answered, "ZZ-001");
+    expect(answered.stderr).toBe(`${message(AppMessage.HighestSeenNone)}\n`);
   });
 });
