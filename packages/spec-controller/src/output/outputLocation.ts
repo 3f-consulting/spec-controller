@@ -67,22 +67,26 @@ function regularIdentity(stats: { isFile(): boolean; dev: bigint; ino: bigint })
 
 const MAX_LINKS_FOLLOWED = 40;
 
-function namesStream(path: string, stream: string): boolean {
+function namesStream(path: string, spellings: readonly string[]): boolean {
   let current: string | undefined = resolve(path);
   for (let followed = 0; current !== undefined && followed <= MAX_LINKS_FOLLOWED; followed++) {
-    if (current === stream) return true;
+    if (spellings.includes(current)) return true;
     current = withFirstLinkFollowed(current);
   }
   return false;
 }
 
+// Standard output is named by its device or by its descriptor. A descriptor's links lead to the pipe or terminal
+// itself, never through /dev/stdout, so each spelling is matched where it is met.
+const STANDARD_OUTPUT_SPELLINGS: readonly string[] = ["/dev/stdout", "/dev/fd/1", "/proc/self/fd/1"];
+
 export function namesStdout(path: string): boolean {
-  return namesStream(path, "/dev/stdout");
+  return namesStream(path, STANDARD_OUTPUT_SPELLINGS);
 }
 
 // Standard error may be a socket a parent process handed over, which cannot be opened by its path, so a report bound for it is written to the stream.
 export function namesStderr(path: string): boolean {
-  return namesStream(path, "/dev/stderr");
+  return namesStream(path, ["/dev/stderr"]);
 }
 
 function withFirstLinkFollowed(path: string): string | undefined {
