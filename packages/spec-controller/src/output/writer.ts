@@ -1,16 +1,14 @@
 import { unlinkSync, writeFileSync } from "node:fs";
-import { renderJson, renderMarkdown, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import {
-  inputOverwriteRefusal,
-  planOutput,
-  sharedFileRefusal,
-  type FileIdentity,
-  type IdentifiedInput,
+  renderJson,
+  renderMarkdown,
+  type EvidenceReconciliation,
   type IdentifiedOutput,
-  type OutputFormat,
+  type LocatedOutput,
   type PlannedOutput,
   type RequestedOutput,
-} from "./format.js";
+} from "@3f-consulting/spec-controller-core";
+import type { OutputFormat } from "./format.js";
 import {
   namesStderr,
   namesStdout,
@@ -18,51 +16,53 @@ import {
   stderrIdentity,
   stdoutIdentity,
   unwritableRefusal,
+  type RegularFileIdentity,
 } from "./outputLocation.js";
 import { standardError } from "../runEnding/standardError.js";
-import { refuse } from "../runEnding/usageRefusal.js";
 import type { Refusal } from "../runEnding/refusal.js";
+
+type Planned = PlannedOutput<OutputFormat>;
+
+// Each requested report, with whether the file it names is standard output, following any links.
+export function locatedOutputs(requested: readonly RequestedOutput[]): LocatedOutput[] {
+  return requested.map((output) => ({ ...output, namesStandardOutput: output.dest.kind === "file" && namesStdout(output.dest.path) }));
+}
+
+export interface RenderedReport {
+  readonly output: Planned;
+  readonly text: string;
+}
+
+export function renderedReports(outputs: readonly Planned[], evidenceReconciliation: EvidenceReconciliation): RenderedReport[] {
+  return outputs.map((output) => ({ output, text: render(output.fmt, evidenceReconciliation) }));
+}
 
 function render(fmt: OutputFormat, evidenceReconciliation: EvidenceReconciliation): string {
   return fmt === "json" ? renderJson(evidenceReconciliation) : renderMarkdown(evidenceReconciliation);
 }
 
-export function writeRequestedReports(
-  requested: readonly RequestedOutput[],
-  evidenceReconciliation: EvidenceReconciliation,
-  inputs: readonly IdentifiedInput[],
-): void {
-  const planned = planOutput(requested, namesStdout);
-  if (!planned.ok) refuse(planned.error);
-  const { outputs } = planned.plan;
-  const emissions = outputs.map((output) => ({ output, text: render(output.fmt, evidenceReconciliation) }));
-  const refused = vetDestinations(outputs, inputs);
-  if (refused !== undefined) refuse(refused);
-  for (const { output, text } of emissions) emit(output, text);
-}
+export type ProbedOutputs = { readonly identified: readonly IdentifiedOutput<OutputFormat>[] } | { readonly refusal: Refusal };
 
-function vetDestinations(outputs: readonly PlannedOutput[], inputs: readonly IdentifiedInput[]): Refusal | undefined {
+// Each planned report's destination, probed for the file it would write: the first that cannot be written refuses them
+// all. A file made only to probe it is removed again.
+export function probedOutputs(outputs: readonly Planned[]): ProbedOutputs {
   const created: string[] = [];
   try {
-    const identified: IdentifiedOutput[] = [];
-    let stderrIdentified = false;
+    const identified: IdentifiedOutput<OutputFormat>[] = [];
     for (const output of outputs) {
       const probe = identify(output, created);
-      if ("refusal" in probe) return probe.refusal;
-      const toStderr = output.dest.kind === "file" && namesStderr(output.dest.path);
-      // Two reports on standard error follow one another in its stream, so only the first is checked against the files.
-      identified.push({ output, identity: toStderr && stderrIdentified ? undefined : probe.identity });
-      stderrIdentified ||= toStderr;
+      if ("refusal" in probe) return probe;
+      identified.push({ output, identity: probe.identity, toStandardError: output.dest.kind === "file" && namesStderr(output.dest.path) });
     }
-    return sharedFileRefusal(identified) ?? inputOverwriteRefusal(identified, inputs);
+    return { identified };
   } finally {
     for (const path of created) unlinkSync(path);
   }
 }
 
-type Probe = { readonly identity: FileIdentity | undefined } | { readonly refusal: Refusal };
+type Probe = { readonly identity: RegularFileIdentity | undefined } | { readonly refusal: Refusal };
 
-function identify(output: PlannedOutput, created: string[]): Probe {
+function identify(output: Planned, created: string[]): Probe {
   const dest = output.dest;
   if (dest.kind === "stdout") return { identity: stdoutIdentity() };
   if (namesStderr(dest.path)) return { identity: stderrIdentity() };
@@ -75,7 +75,11 @@ function identify(output: PlannedOutput, created: string[]): Probe {
   }
 }
 
-function emit(output: PlannedOutput, text: string): void {
+export function writeRenderedReports(reports: readonly RenderedReport[]): void {
+  for (const { output, text } of reports) emit(output, text);
+}
+
+function emit(output: Planned, text: string): void {
   const dest = output.dest;
   if (dest.kind === "stdout") {
     process.stdout.write(text);

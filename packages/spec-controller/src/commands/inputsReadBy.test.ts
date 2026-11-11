@@ -3,9 +3,9 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { AppError, AppMessage } from "../messages/messages.js";
 import { message } from "../messages/appText.js";
-import { runBalanceCaptured } from "../commands/runBalance.test-utils.js";
-import { inputsReadBy } from "../commands/balance.js";
-import type { InputReader } from "./inputsRead.js";
+import { runBalanceCaptured } from "./runBalance.test-utils.js";
+import { inputsReadBy } from "./balance.js";
+import type { InputReader } from "../inputs/inputsRead.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { printedRefusal } from "../messages/shownText.test-utils.js";
 

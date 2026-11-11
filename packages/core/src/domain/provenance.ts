@@ -16,7 +16,38 @@ export interface RunIdentity {
   readonly toolVersion: string;
 }
 
+// What the run identity port read, as written, beside what the run was given.
+export interface RunIdentityAsRead {
+  readonly target?: string | undefined;
+  readonly origin?: string | undefined;
+  readonly givenSourceSha?: string | undefined;
+  readonly head?: string | undefined;
+  readonly toolFolder: string;
+  readonly toolHead?: string | undefined;
+  readonly toolVersion: unknown;
+}
+
 const UNKNOWN = "unknown";
+
+const INSTALLED_PACKAGES = "node_modules";
+
+// A source SHA the run was given wins over the commit the target has checked out. A tool installed as a package has no
+// commit of its own, whatever checkout its folder sits in.
+export function runIdentityOf(read: RunIdentityAsRead): RunIdentity {
+  const installed = read.toolFolder.split("/").includes(INSTALLED_PACKAGES);
+  return {
+    target: read.target,
+    origin: read.origin,
+    sourceSha: read.givenSourceSha ?? read.head,
+    toolSha: installed ? undefined : read.toolHead,
+    toolVersion: toolVersionOf(read.toolVersion),
+  };
+}
+
+// A version that is no string, or an empty one, is unknown.
+export function toolVersionOf(version: unknown): string {
+  return typeof version === "string" && version !== "" ? version : UNKNOWN;
+}
 
 const UNKNOWN_TARGET = "unknown-target";
 

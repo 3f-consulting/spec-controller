@@ -4,12 +4,18 @@ import {
   claimCodesAtOf,
   commandRuns,
   evidenceReconciliationOf,
+  outputClashOf,
+  outputPlanOf,
   pipelineStepsOf,
   provenanceFrom,
+  runIdentityOf,
   recordedCheckStepsOf,
   shellReading,
+  targetFolderOf,
   targetConfigurationFrom,
+  toolVersionOf,
   type EvidenceReconciliation,
+  type IdentifiedInput,
   type ParsedFeatureFile,
   type ParsedWorkflow,
   type Provenance,
@@ -26,9 +32,9 @@ import {
 import { inputPathsOf, requestedInputsOf, runInputsOf, type InputPaths } from "../runRequest/evidenceInputs.js";
 import { INPUT_DEFAULTS } from "../runRequest/defaults.js";
 import { collectFormatSpecs, requestedOutputsOf } from "../runRequest/formats.js";
-import { writeRequestedReports } from "../output/writer.js";
+import { locatedOutputs, probedOutputs, renderedReports, writeRenderedReports } from "../output/writer.js";
 import { identifiedInputs } from "../output/outputLocation.js";
-import type { IdentifiedInput } from "../output/format.js";
+import { outputRefusal, WRITTEN_FORMATS } from "../output/format.js";
 import { refuse, settlingRefusal } from "../runEnding/usageRefusal.js";
 import { inputsReadFrom, NODE_INPUT_READER, type InputReader } from "../inputs/inputsRead.js";
 import { corpusDirOf } from "../inputs/corpusDir.js";
@@ -45,7 +51,7 @@ import {
 } from "../inputs/unreadableInputs.js";
 import { exitCodeOf } from "../runEnding/exitStatus.js";
 import { endRunOn } from "../runEnding/exitCode.js";
-import { resolveSourceSha, resolveTargetOrigin, resolveTargetRoot, resolveToolIdentity } from "../runIdentity/resolveRunInputs.js";
+import { readTargetHead, readToolInstall, readRepositoryTop, readToolVersion, readWorkingFolder, resolveTargetOrigin } from "../runIdentity/resolveRunInputs.js";
 import { balanceCommand, cliRegistry, renderCommandHelp } from "../runRequest/cliRegistry.js";
 import {
   asksForHelp,
@@ -73,7 +79,7 @@ function reconcile(argv: string[]): boolean {
   const shapeError = checkArgvShape(argv, cliRegistry, "balance");
   if (shapeError) refuse(shapeError);
 
-  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance", resolveToolIdentity().toolVersion);
+  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance", toolVersionOf(readToolVersion()));
   if (unknownFlagError) refuse(unknownFlagError);
 
   const missingValueError = checkMissingValues(argv, cliRegistry, "balance");
@@ -83,7 +89,7 @@ function reconcile(argv: string[]): boolean {
 
   const inputs = inputPathsOf(args);
 
-  const root = resolveTargetRoot({ features: inputs.features });
+  const root = targetRootOf(inputs.features);
 
   const evidenceReconciliation = runReconcile(reports, root, corpus, workflows, {
     strict: args["strict"] !== undefined,
@@ -101,9 +107,16 @@ export function inputsReadBy(args: Record<string, string>, reader: InputReader):
   return inputsReadFrom(args, requestedInputsOf(args), reader, INPUT_DEFAULTS);
 }
 
-// The reports the --format specs ask for, written once each destination is vetted.
+// The reports the --format specs ask for: planned, probed, checked against one another and the inputs, then written.
 export function writeReports(formatSpecs: readonly string[], evidenceReconciliation: EvidenceReconciliation, inputs: readonly IdentifiedInput[]): void {
-  writeRequestedReports(requestedOutputsOf(formatSpecs), evidenceReconciliation, inputs);
+  const plan = outputPlanOf(locatedOutputs(requestedOutputsOf(formatSpecs)), WRITTEN_FORMATS);
+  if (!plan.ok) refuse(outputRefusal(plan.refusal));
+  const reports = renderedReports(plan.outputs, evidenceReconciliation);
+  const probed = probedOutputs(plan.outputs);
+  if ("refusal" in probed) refuse(probed.refusal);
+  const clash = outputClashOf(probed.identified, inputs);
+  if (clash !== undefined) refuse(outputRefusal(clash));
+  writeRenderedReports(reports);
 }
 
 interface ReadInputs {
@@ -134,14 +147,21 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
   return { corpus: corpusReading.corpus, workflows: workflowReading.workflows, reports: reportsReading.reports };
 }
 
+// The target's folder, from the folder the corpus is in and the top of any git repository that folder is in.
+function targetRootOf(features: string | undefined): string {
+  const corpusFolder = features === undefined ? undefined : dirname(features);
+  return targetFolderOf(readWorkingFolder, corpusFolder, corpusFolder === undefined ? undefined : readRepositoryTop(corpusFolder));
+}
+
 function provenanceOf(args: Record<string, string>, inputs: InputPaths, root: string): Provenance {
   const targetDir = args["features"] !== undefined ? dirname(args["features"]) : undefined;
-  const identity = {
+  const identity = runIdentityOf({
     target: args["target"],
     origin: resolveTargetOrigin(targetDir),
-    sourceSha: resolveSourceSha({ sourceSha: args["source-sha"], targetDir }),
-    ...resolveToolIdentity(),
-  };
+    givenSourceSha: args["source-sha"],
+    head: readTargetHead(targetDir),
+    ...readToolInstall(),
+  });
   return provenanceFrom(identity, runInputsOf(inputs), root);
 }
 

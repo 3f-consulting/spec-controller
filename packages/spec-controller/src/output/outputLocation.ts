@@ -3,7 +3,7 @@ import { dirname, resolve, sep } from "node:path";
 
 import { refusal, type Refusal } from "../runEnding/refusal.js";
 import { AppError } from "../messages/messages.js";
-import type { IdentifiedInput } from "./format.js";
+import type { IdentifiedInput } from "@3f-consulting/spec-controller-core";
 
 export function unwritableRefusal(format: string, path: string, err: unknown): Refusal {
   const reason = err instanceof Error ? err.message : String(err);
