@@ -78,7 +78,7 @@ const codesIn = (words: readonly string[]): string[] => words.filter((word) => c
 // if its block has one, at the line of each row.
 export function claimCodesAtLinesOf(scenario: ScenarioAsWritten): { readonly line: number; readonly codes: readonly string[] }[] {
   const rows = scenario.examples
-    .flatMap((block) => block.rows.map(({ line }) => ({ line, codes: codesIn([block.rows[0]!.cells[clmColumnOf(block)]!]) })));
+    .flatMap((block) => block.rows.map(({ line, cells }) => ({ line, codes: codesIn([cells[clmColumnOf(block)]!]) })));
   return [{ line: scenario.line, codes: codesIn(scenario.tags) }, ...rows];
 }
 
