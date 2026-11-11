@@ -2,7 +2,7 @@
 
 **One command, `balance`, that checks the behaviour your scenarios name against the evidence that actually ran.**
 
-You give it your Gherkin scenarios and the reports your tools already write: a Vitest report, a Cucumber report, and your CI run's own record of what its steps did. It prints one table showing which scenarios have living evidence, which do not, and which evidence ran that no scenario asked for.
+You give it your Gherkin scenarios and the reports your tools already write: a Vitest report, a Cucumber report, and your CI run's own record of what its steps did. It prints one report showing which scenarios have living evidence, which do not, and which evidence ran that no scenario asked for.
 
 It runs nothing itself; it only reads what your pipeline wrote.
 
@@ -28,7 +28,7 @@ Point it at your scenarios and nothing else:
 spec-controller balance --features ./features
 ```
 
-Every scenario gets a row, whether or not any evidence exists for it. You have supplied no reports, so every scenario that names evidence reads **missing** and the run is out-of-balance. That is by design, not a fault in your repository. The tool starts from what you specified, not from what a tool happened to find, and no input makes saying nothing the right answer.
+Every scenario gets a Claim Reconciliation, whether or not any evidence exists for it. You have supplied no reports, so every scenario that names evidence reads **missing** and the run is out-of-balance. That is by design, not a fault in your repository. The tool starts from what you specified, not from what a tool happened to find, and no input makes saying nothing the right answer.
 
 **`balance` fails your build by default.** An out-of-balance run exits `1`, so the run above fails any pipeline you put it in. Two tools it sits beside do the opposite: Stryker's `thresholds.break` defaults to `null` (*"never let your build fail"*), and the Sonar scanner exits `0` whatever its quality gate says unless you set `sonar.qualitygate.wait`. Both make you opt in to gating. `balance` makes you opt out.
 
@@ -40,10 +40,10 @@ To add it to an existing pipeline without failing that pipeline on day one, add 
 spec-controller balance --features ./features --vitest ./vitest-report.json --exit-zero
 ```
 
-Apart from the timestamp each run stamps for itself, the report is byte for byte the one a run without the flag prints: the same rows, the same out-of-balance count, and the same headline naming the code that run would give. Only the exit status changes:
+The report is the one a run without the flag prints: the same Claim Reconciliations, the same counts and the same run verdict. Only the exit status changes:
 
-- Out-of-balance and claim code errors (`1`), and pending under `--strict` (`3`), exit `0`.
-- Usage (`2`), unsound (`4`), nothing to reconcile (`5`) and an unexpected error before the verdict (`6`) still fail. Each means the run could not reach a verdict, and a flag that suppresses verdicts does not suppress that.
+- Out-of-balance (`1`) exits `0`.
+- Usage (`2`), not reconciled (`3`) and an unexpected error (`4`) still fail. Each means the run could not be relied on, or reached no verdict, and a flag that eases a verdict does not ease that.
 
 Work through the out-of-balance rows, then delete `--exit-zero`. The gate is then on. Do not wrap the step in `continue-on-error` or `|| true` instead. Those swallow the codes that mean the run could not be trusted, and leave nothing in the command to show the gate is off.
 
@@ -56,23 +56,21 @@ spec-controller balance \
   --cucumber ./cucumber-report.json
 ```
 
-A scenario tagged `@unit` names an obligation: a unit test must exist and pass. The evidence answers it by citing the scenario's claim code in its test name. Where the two agree, the row is **balanced**. Where they do not, the row says how: evidence missing, evidence failing, or evidence that cites a scenario nobody wrote.
+A scenario tagged `@unit` names an obligation: a unit test must exist and pass. The evidence answers it by citing the scenario's claim code in its test name. Where the two agree, the Claim Reconciliation is **balanced**. Where they do not, it says how: evidence missing, evidence failing, or evidence that cites a scenario nobody wrote.
 
 ## Exit codes
 
 | Exit | What it says |
 | --- | --- |
 | `0` | balanced — every obligation has evidence, and it holds |
-| `1` | out-of-balance — the scenarios and the evidence disagree, and the report says where; or a claim code is misfiled, listed under `### Claim code errors` |
-| `2` | usage — the invocation was wrong |
-| `3` | balanced, but carrying Pending Items, and you asked for `--strict` |
-| `4` | unsound — a proving suite failed to collect, so the ledger cannot be trusted to show a disagreement |
-| `5` | nothing to reconcile — no scenario is carried and no evidence is produced, so the run has no basis for a verdict |
-| `6` | unexpected error — the run stops on an error no refusal names, and gives no verdict; one line on stderr names it. `--exit-zero` never moves it |
+| `1` | out-of-balance — the scenarios and the evidence disagree, and the report says where |
+| `2` | usage — the invocation was wrong, or an input could not be read |
+| `3` | not reconciled — the run could not be relied on, and its run verdict says why: `unsound`, when some evidence never ran; `claim-code-errors`, when a claim code is misfiled, listed under `### Claim code errors`; or `nothing-to-reconcile`, when there is no Claim Reconciliation at all |
+| `4` | unexpected error — the run stops on an error no refusal names, and gives no verdict; one line on stderr names it |
 
 The whole report is written before the exit code is set, so a failing run still tells you why.
 
-**Design your pipeline for new codes.** The list is open at the top: a state that is none of the above gets a **new** code, not the nearest existing one. The highest is `6`. **Treat an unrecognised non-zero code as a failure you have not seen before**, not as a synonym for `1`. A pipeline that matches `1` exactly is not affected when a code is added. A pipeline that treats any non-zero code as a failed build is correct, only less precise about why.
+**Design your pipeline for new codes.** The list is open at the top: a state that is none of the above gets a **new** code, not the nearest existing one. The highest is `4`. **Treat an unrecognised non-zero code as a failure you have not seen before**, not as a synonym for `1`. A pipeline that matches `1` exactly is not affected when a code is added. A pipeline that treats any non-zero code as a failed build is correct, only less precise about why.
 
 **Node's default exit code is never one of these.** A run that cannot reconcile ends on one of the codes above, never by crashing out of the process. A crash that exits `1` would look, by status, exactly like an honest disagreement.
 
@@ -87,7 +85,7 @@ The refusal names the input, the path, and what was wrong with it. A well-formed
 
 **An output location it cannot write is also `2`**: a `--format` path that is read-only, a directory, under a regular file or in a directory that does not exist. It is refused before any report is printed, naming the location and the operating system's reason.
 
-`--exit-zero` changes `1` and `3` to `0` and leaves every other code alone (see *Report first, gate later*).
+`--exit-zero` changes `1` to `0` and leaves every other code alone (see *Report first, gate later*).
 
 ### `allocate`
 

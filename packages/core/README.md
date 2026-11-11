@@ -2,7 +2,7 @@
 
 **The reconciliation engine behind `spec-controller`, as a pure library.**
 
-Scenarios and evidence observations go in; a ledger comes out. Nothing in this package reads a file, spawns a process, looks at the clock or writes to a stream. File reading, git-derived provenance, output routing and the command line live in the [`spec-controller`](https://www.npmjs.com/package/spec-controller) package, which is built on this one.
+Scenarios and Evidence Observations go in; an Evidence Reconciliation comes out. Nothing in this package reads a file, spawns a process, looks at the clock or writes to a stream. File reading, git-derived provenance, output routing and the command line live in the [`spec-controller`](https://www.npmjs.com/package/spec-controller) package, which is built on this one.
 
 **Use this package** to build your own tooling around the reconciliation: a service, an editor integration, a different front end, or a pipeline that already holds the reports in memory. **Use `spec-controller`** when you want a command to put in CI.
 
@@ -19,43 +19,53 @@ npm install @3f-consulting/spec-controller-core
 ```ts
 import {
   parseFeatureCorpus,
-  scenariosOf,
   parseVitestEvidenceObservations,
-  reconcile,
-  isBalanced,
+  evidenceReconciliationOf,
+  targetConfigurationFrom,
+  provenanceFrom,
+  shellReading,
+  renderMarkdown,
 } from "@3f-consulting/spec-controller-core";
 
 // One .feature file's text, and one already-parsed Vitest JSON report.
-const corpus = parseFeatureCorpus([{ file: "features/checkout.feature", source: featureSource }]);
+const corpus = parseFeatureCorpus([{ file: "checkout.feature", source: featureSource }]);
 if (corpus.kind === "unparseable") throw new Error(corpus.faults[0].message);
-const scenarios = corpus.parsed.flatMap((feature) => scenariosOf(feature));
-const observed = parseVitestEvidenceObservations(vitestReport);
 
-const ledger = reconcile(scenarios, observed);
-isBalanced(ledger); // false while any scenario names evidence that did not arrive
+const evidenceReconciliation = evidenceReconciliationOf({
+  features: corpus.parsed,
+  testObservations: parseVitestEvidenceObservations(vitestReport),
+  steps: [],
+  readings: { runsTheReconciler: () => false, scripts: {}, shell: shellReading },
+  configuration: targetConfigurationFrom({}),
+  strict: false,
+  provenance: provenanceFrom({ target: "acme/shop", toolVersion: "0.1.0" }, [], "."),
+});
+
+evidenceReconciliation.runVerdict; // { verdict: "balanced" } while every scenario's evidence arrived and passed
+renderMarkdown(evidenceReconciliation);
 ```
 
-- `parseFeatureCorpus` parses each feature file once. It returns every file parsed or, if any file does not parse, each file's fault in the parser's own words. `scenariosOf` reads the claim code and the tags naming its kinds of quality check off each parsed scenario and turns them into the **obligations** the scenario names.
-- `parseVitestEvidenceObservations` turns a test report into the **observations** that posted back, each citing the claim code it claims.
-- `reconcile` sets the two sides against each other and gives an answer per scenario.
+- `parseFeatureCorpus` parses each feature file once. It returns every file parsed or, if any file does not parse, each file's fault in the parser's own words. `evidenceReconciliationOf` reads the executable claims off the parsed files, and the **Evidence Obligations** each claim's tags raise.
+- `parseVitestEvidenceObservations` turns a test report into the **Evidence Observations** it reports, each citing the claim code it cites.
+- `evidenceReconciliationOf` sets the two sides against each other: a **Claim Reconciliation** per claim, the totals, the run verdict and the provenance. `steps`, `readings` and `configuration` carry the CI workflows' steps and the target's `specController` block; with no CI they are empty, as here.
 
-Everything else the package exports is a variation on these three steps.
+Everything else the package exports is a variation on these steps.
 
 ## What it exports
 
 The package publishes exactly one entrypoint, a barrel that exports the following.
 
 - **Parse**:
-  - scenarios: `parseFeatureCorpus`, which parses the feature files once; `scenariosOf`, `untaggedScenariosOf` and `featureCountsOf` over a parsed file; `corpusCountsOfFeatures` over the parsed files; and `countClaimCodeOccurrences` over a file's text;
+  - scenarios: `parseFeatureCorpus`, which parses the feature files once, and `claimCodesAtOf`, which maps a Cucumber report's lines back to the claim codes the corpus carries there;
   - evidence: `parseVitestEvidenceObservations`; `parseJunitEvidenceObservations` and `parsePytestEvidenceObservations`, both over a JUnit XML report you have already parsed into objects, from pytest, gotestsum or another runner; `parseRspecEvidenceObservations`, over RSpec's JSON report; and `parseCucumberEvidenceObservations`;
-  - workflows: `parseWorkflows`, which parses the CI workflows once;
-  - the readers for fitness functions, and for what a pipeline's steps actually ran.
+  - workflows and steps: `parseWorkflows`, which parses the CI workflows once, `pipelineStepsOf` over them, `recordedCheckStepsOf` over a run's step record, and `commandRuns` and `shellReading`, which say whether a step's command runs a given command;
+  - configuration: `targetConfigurationFrom`, over a `package.json`'s `specController` block.
 
-  The two JUnit readers differ in how they read an `<error>` on an ordinary test: `parseJunitEvidenceObservations` reads it as a failing observation, and `parsePytestEvidenceObservations` reads it as never-ran, as pytest's setup error.
-- **Reconcile**: `reconcile` for the ledger, `evidenceReconciliationOf` for the ledger plus its summary, and `evidenceReconciliationFromSources` for the whole composition over the parsed feature files, the parsed workflows and the other sources you have already read.
-- **Ask the ledger**: `isBalanced`, `hasPendingItems`, `hasNeverRanEvidence` and `hasNothingToReconcile`, the four questions a caller decides on. The run verdict itself is on the report: `assembleRenderInput` names it at `summary.runVerdict`, and the CLI reads its exit code from there.
-- **Render**: `renderMarkdown`, `renderJson`, `renderReport`, and `assembleRenderInput` if you want the payload rather than a string.
-- **Provenance**: the pure subset, which records what a run was without asking the filesystem what it is.
+  The two JUnit readers differ in how they read an `<error>` on an ordinary test: `parseJunitEvidenceObservations` reads it as a failing Evidence Observation, and `parsePytestEvidenceObservations` reads it as never-ran, as pytest's setup error.
+- **Reconcile**: `evidenceReconciliationOf`, which gives the whole Evidence Reconciliation. Its `runVerdict` is `balanced`, `out-of-balance`, or `not-reconciled` with a `why` of `unsound`, `claim-code-errors` or `nothing-to-reconcile`; the CLI reads its exit code from there.
+- **Claim codes**: `claimCodeFrom`, `isFeatureCode`, `featureCodeOfFile`, `claimCodeMarksFor` and `nextClaimCode`, the reading of claim codes and the allocation of the next one; `BUILT_IN_DEFERRAL_TAGS`.
+- **Render**: `renderMarkdown` and `renderJson`, and `messagesFrom` for a message catalogue of your own.
+- **Provenance**: `provenanceFrom`, the pure subset, which records what a run was without asking the filesystem what it is, and `relativizeToRoot`.
 
 The types these functions take and return are exported alongside them, so a consumer can name any value it holds.
 
