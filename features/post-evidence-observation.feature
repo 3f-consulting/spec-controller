@@ -104,6 +104,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-045 | Jest's evidence report            | a test file failed to run                                                            | no claim code | the file and its error    |
         | CLM-OBS-046 | pytest's evidence report          | a test file failed to collect                                                        | no claim code | the file and its error    |
         | CLM-OBS-047 | Go's evidence report              | a package failed to compile                                                          | no claim code | the package and its error |
+        | CLM-OBS-100 | Go's evidence report              | TestMain failed before any test ran                                                  | no claim code | the package and its error |
         | CLM-OBS-048 | JUnit 5 in Java's evidence report | a class's setup before all its tests failed                                          | no claim code | the class and its error   |
         | CLM-OBS-049 | RSpec's evidence report           | a spec file failed to load                                                           | no claim code | the file and its error    |
         | CLM-OBS-099 | RSpec's evidence report           | the suite failed to load, naming no spec file                                        | no claim code | the error                 |
