@@ -75,6 +75,13 @@ describe("a configuration setting balance cannot use will be left out", () => {
       [{ kind: "not-checks-entry-matches-no-step", entry: "ci.yml:ci:No such step" }],
     ],
     [
+      "CLM-CFG-015",
+      { notChecks: ["ci.yml:other:Install dependencies"] },
+      ["Install dependencies"],
+      { ...NOTHING },
+      [{ kind: "not-checks-entry-matches-no-step", entry: "ci.yml:other:Install dependencies" }],
+    ],
+    [
       "CLM-CFG-016",
       { notChecks: ["Install dependencies"] },
       [],
