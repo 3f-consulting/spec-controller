@@ -8,7 +8,8 @@ import { parseRspecEvidenceObservations } from "../inputs/rspec.js";
 import { targetConfigurationFrom } from "../inputs/manifest.js";
 import { parseVitestEvidenceObservations } from "../inputs/vitest.js";
 import type { ClaimCode } from "./claimCodes.js";
-import { evidenceReconciliationOf, provenanceOf } from "./evidenceReconciliation.js";
+import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
+import { provenanceOf } from "./provenance.js";
 import type { ExecutableClaim } from "./postEvidenceObligation.js";
 import {
   claimPostedTo,

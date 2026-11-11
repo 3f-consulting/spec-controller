@@ -1,4 +1,4 @@
-import type { Provenance } from "../domain/evidenceReconciliation.js";
+import type { Provenance } from "../domain/provenance.js";
 import { coreText } from "../messages/coreText.js";
 import { heading } from "./heading.js";
 import { labelled } from "./labelled.js";

@@ -1,5 +1,5 @@
 import { claimCodeFrom, type ClaimCode } from "../domain/claimCodes.js";
-import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
+import type { ClaimCodesAt, EvidenceObservation } from "../domain/postEvidenceObservation.js";
 import { kindsTheTagsName, nearestCitation, resultOfRun, type RunResult } from "../domain/postEvidenceObservation.js";
 import { withoutSigil } from "./tags.js";
 import { relativizeToRoot } from "../domain/targetPath.js";
@@ -19,8 +19,6 @@ export type CucumberJsonReport = ReadonlyArray<{
     }>;
   }>;
 }>;
-
-export type ClaimCodesAt = (file: string, line: number) => readonly string[];
 
 type CucumberScenario = NonNullable<CucumberJsonReport[number]["elements"]>[number];
 type CucumberStep = NonNullable<CucumberScenario["steps"]>[number];

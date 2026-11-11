@@ -3,7 +3,7 @@ import { IdGenerator, type Examples, type FeatureChild, type GherkinDocument, ty
 import { bareTerm } from "./tags.js";
 import { claimCodeFrom } from "../domain/claimCodes.js";
 import type { RowAsWritten, ScenarioAsWritten } from "../domain/postEvidenceObligation.js";
-import type { ClaimCodesAt } from "./cucumber.js";
+import type { ClaimCodesAt } from "../domain/postEvidenceObservation.js";
 import { parseSources, type Parsed, type Source, type SourcesParse } from "./sourceParse.js";
 
 interface CodesAtLine {

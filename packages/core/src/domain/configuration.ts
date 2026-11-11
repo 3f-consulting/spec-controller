@@ -1,6 +1,15 @@
-import type { ConfigurationError } from "./evidenceReconciliation.js";
 import type { QualityCheckKind } from "./postEvidenceObligation.js";
 import type { PipelineStep } from "./postEvidenceObservation.js";
+
+export interface ConfigurationError {
+  readonly kind:
+    | "configuration-wrong-kind"
+    | "configuration-unknown-key"
+    | "runner-key-not-a-layer"
+    | "not-checks-entry-matches-no-step"
+    | "not-checks-entry-not-a-step-name";
+  readonly entry: string;
+}
 
 type Layer = Exclude<QualityCheckKind, "fitness">;
 

@@ -1,6 +1,6 @@
 import { sameCode, type ClaimCode } from "./claimCodes.js";
 import type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
-import { claimPostedTo, type EvidenceObservation, type PhantomClaim, type UnnamedClaim } from "./postEvidenceObservation.js";
+import { claimPostedTo, filedUnder, type EvidenceObservation, type PhantomClaim, type UnnamedClaim } from "./postEvidenceObservation.js";
 
 type ObligationNamingItsKind = Required<EvidenceObligation>;
 
@@ -103,17 +103,6 @@ function linesOf(claim: Claim, evidence: readonly EvidenceObservation[], sharedC
   if (isExecutable(claim)) return executableLines(claim, evidence, sharedCodes);
   const unasked = claim.claimCode === undefined ? "cites-no-claim" : "cites-unknown-claim";
   return evidence.map((observation) => evidenceLine(observation, false, unasked));
-}
-
-function filedUnder(claim: Claim, phantoms: PhantomClaim[], unnamed: UnnamedClaim): Claim {
-  if (isExecutable(claim)) return claim;
-  const { claimCode } = claim;
-  if (claimCode === undefined) return unnamed;
-  const known = phantoms.find((phantom) => sameCode(phantom.claimCode, claimCode));
-  if (known) return known;
-  const phantom = { claimCode };
-  phantoms.push(phantom);
-  return phantom;
 }
 
 const KIND_RANK: Readonly<Record<QualityCheckKind, number>> = { unit: 0, integration: 1, e2e: 2, performance: 3, fitness: 4 };

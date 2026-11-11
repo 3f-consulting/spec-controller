@@ -9,7 +9,7 @@ import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
 import { shellReading } from "../inputs/shell.js";
 import { targetConfigurationFrom } from "../inputs/manifest.js";
-import { provenanceFrom } from "./provenance.js";
+import { provenanceFrom, provenanceOf } from "./provenance.js";
 import { coreText } from "../messages/coreText.js";
 import { renderJson } from "../reports/json.js";
 import { renderMarkdown } from "../reports/markdown.js";
@@ -18,7 +18,6 @@ import { claimReconciliationsOf, type ClaimReconciliation, type QualityCheckReco
 import {
   evidenceReconciliationOf,
   excludedClaimCodeOccurrencesOf,
-  provenanceOf,
   runVerdictOf,
   stepAccountOf,
   totalsOf,
