@@ -33,7 +33,7 @@ export function markRunFinished(): void {
 // An error that arrives after main has returned — a stream that fails, a throw in a later tick, a rejected promise — would otherwise reach Node's default handler and end the run at 1.
 // Node treats a process past an uncaught exception as unsafe to resume, so that guard ends it once its line is written.
 // The others leave the process to end when its work drains, so a report still being written is not cut short.
-export function installCrashGuards(proc: CrashingProcess, stdout: ErroringStream, stderr: ErroringStream & LineWriter): void {
+export function installCrashGuards(proc: CrashingProcess, stdout: ErroringStream, stderr: LineWriter): void {
   beginRun();
   const settle = (err: unknown): void => settleUnexpectedError(err, proc, stderr);
   proc.on("uncaughtException", (err) => {
@@ -42,9 +42,6 @@ export function installCrashGuards(proc: CrashingProcess, stdout: ErroringStream
   });
   proc.on("unhandledRejection", settle);
   stdout.on("error", settle);
-  stderr.on("error", () => {
-    settleExitCode(proc);
-  });
 }
 
 interface LoadedProgram {
@@ -55,7 +52,7 @@ interface LoadedProgram {
 export async function boot(
   proc: CrashingProcess,
   stdout: ErroringStream,
-  stderr: ErroringStream & LineWriter,
+  stderr: LineWriter,
   argv: string[],
   load: () => Promise<unknown>,
 ): Promise<void> {
@@ -101,20 +98,13 @@ function filled(text: string, values: AppErrorValues[CrashError]): string {
 }
 
 function nameOf(err: unknown): string {
-  if (!(err instanceof Error)) return typeof err;
-  const name = readOrUndefined(() => err.name);
-  return typeof name === "string" ? name : Error.name;
+  return (err as Error).name;
 }
 
 function firstLineOf(err: unknown): string {
-  const message = readOrUndefined(() => (err instanceof Error ? err.message : String(err)));
-  return typeof message === "string" ? (message.split("\n", 1)[0] ?? "") : "";
-}
-
-function readOrUndefined(read: () => unknown): unknown {
   try {
-    return read();
+    return (err as Error).message.split("\n", 1)[0]!;
   } catch {
-    return undefined;
+    return "";
   }
 }
