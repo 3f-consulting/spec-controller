@@ -61,7 +61,7 @@ function actionOf(step: Record<string, unknown>): PipelineStepAction {
 }
 
 function nameOf(value: unknown): { readonly name?: string } {
-  return value === undefined ? {} : { name: String(value) };
+  return typeof value === "string" ? { name: value } : {};
 }
 
 function stepsOfJob(job: string, jobBody: Record<string, unknown>): WorkflowStep[] {
