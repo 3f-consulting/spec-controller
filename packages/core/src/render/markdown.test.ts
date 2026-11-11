@@ -185,6 +185,8 @@ describe("a name will read as it was given, in a table that stays a table", () =
 
   it.each([
     ["CLM-RPT-084", "a|b", "`a\\|b`"],
+    ["CLM-RPT-084", "", '`""`'],
+    ["CLM-RPT-084", " a ", '`" a "`'],
     ["CLM-RPT-106", "a\\b", "`a\\b`"],
     ["CLM-RPT-107", "a\nb", '`"a\\nb"`'],
     ["CLM-RPT-088", "`a`", "`` `a` ``"],
