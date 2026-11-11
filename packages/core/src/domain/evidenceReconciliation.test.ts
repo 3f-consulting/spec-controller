@@ -265,6 +265,9 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-039", "https://ci:s3cret@example.com/group/acme/web?x=1#y", { target: "acme/web", hidden: ["ci", "s3cret", "x=1", "#y"] }],
     ["CLM-EVR-039", "https://ci:s3cret@[fe80::1]/acme/web?x=1#y", { target: "acme/web", hidden: ["ci", "s3cret", "x=1", "#y"] }],
     ["CLM-EVR-039", "https://ci:s3/cret@example.com/web?x=1#y", { target: "unknown-target", hidden: ["ci", "s3", "cret", "x=1", "#y"] }],
+    ["CLM-EVR-039", "git@github.com:web.git", { target: "github.com:web.git", hidden: ["git@"] }],
+    ["CLM-EVR-039", "https://ci@/acme/web", { target: "unknown-target", hidden: ["ci"] }],
+    ["CLM-EVR-039", "git@:acme/web.git", { target: "unknown-target", hidden: ["git"] }],
   ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote, { target, hidden }) => {
     const { repo } = committedRepository("evr-origin-", remote);
     const provenance = provenanceOf(runIdentityOf({ origin: readTargetOrigin(repo), toolFolder: TOOL_FOLDER, ...VERSION }), []);
@@ -288,6 +291,7 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-047", "../web"],
     ["CLM-EVR-047", "../web/"],
     ["CLM-EVR-047", "web.git"],
+    ["CLM-EVR-047", "../a:b/web"],
     ["CLM-EVR-048", "file:///srv/git/web.git"],
   ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote) => {
     const { repo } = committedRepository("evr-path-origin-", remote);
