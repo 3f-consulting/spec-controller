@@ -430,6 +430,12 @@ describe("balance posts each result with how it went", () => {
     expect(posted()).toMatchObject([{ result: "never-ran", cites, ...named }]);
   });
 
+  it("[CLM-OBS-033] a fitness function whose recorded step succeeded is posted as passed, citing its claim code at its step, and nothing else", () => {
+    expect(fitness([CITING_STEP], [{ key: "CLM-ONE-001", outcome: "success" }])).toEqual([
+      { cites: [ONE], result: "passed", kind: "fitness", place: "ci.yml:build:Lint", notes: [] },
+    ]);
+  });
+
   it("[CLM-OBS-044] balance posts what could not run as never ran, naming the file and its error and nothing else", () => {
     expect(vitestFile("no such module")).toEqual([{ cites: [], result: "never-ran", kind: "unit", place: "a.test.ts", message: "no such module", notes: [] }]);
   });
