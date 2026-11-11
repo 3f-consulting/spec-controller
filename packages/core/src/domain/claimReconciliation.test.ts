@@ -230,6 +230,16 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations",
       () => [observation("unit", "passed", ["ONE-001"], "a.test.ts", { name: "Adds one" }), observation("unit", "passed", ["ONE-001"], "a.test.ts")],
       [1, 0],
     ],
+    [
+      "CLM-LDG-064",
+      "ONE-001",
+      () => [claim("ONE-001", ["unit"])],
+      () => [
+        observation("unit", "failed", ["ONE-001"], "a.test.ts", { message: "AssertionError: expected 1 to be 2" }),
+        observation("unit", "failed", ["ONE-001"], "a.test.ts"),
+      ],
+      [1, 0],
+    ],
   ])("[%s] the Claim Reconciliation of %s lists its evidence in one order", (_clm, subject, claims, observations, order) => {
     const evidence = observations();
     const reconciliation = reconciliationOf(claimReconciliationsOf(claims(), evidence), subject);
