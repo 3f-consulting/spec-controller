@@ -85,7 +85,7 @@ interface ComparedOutput<Format extends string> {
 function sharedFileOf<Format extends string>(outputs: readonly ComparedOutput<Format>[]): OutputRefusal<Format> | undefined {
   const onFiles = outputs.filter((o): o is ComparedOutput<Format> & { identity: FileIdentity } => o.identity !== undefined);
   for (const [index, first] of onFiles.entries()) {
-    const second = onFiles.slice(index + 1).find((o) => JSON.stringify(o.output.dest) === JSON.stringify(first.output.dest));
+    const second = onFiles.slice(index + 1).find((o) => sameFile(o.identity, first.identity));
     if (second !== undefined) return { kind: "outputs-share-a-file", first: first.output, second: second.output };
   }
   return undefined;
