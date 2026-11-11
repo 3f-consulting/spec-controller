@@ -6,8 +6,9 @@ import { targetConfigurationFrom } from "../inputs/manifest.js";
 import type { ClaimCode } from "./claimCodes.js";
 import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
 import { provenanceOf } from "./provenance.js";
-import type { ExecutableClaim } from "./postEvidenceObligation.js";
+import type { ExecutableClaim, FeatureAsWritten } from "./postEvidenceObligation.js";
 import {
+  claimCodesAtOf,
   claimPostedTo,
   exampleObservationsOf,
   fitnessObservationsOf,
@@ -509,6 +510,22 @@ describe("balance posts each result citing the nearest code it has", () => {
     ["CLM-OBS-076", { posted: () => rspec("passed", "a spec", `${DESCRIBE} a spec`), cites: [TWO] }],
   ])("[%s] balance posts a nested test citing its own code, or its parent's code when the report gives one", (_clm, { posted, cites }) => {
     expect(posted()).toMatchObject([{ cites }]);
+  });
+
+  it("[CLM-OBS-077] balance posts each row of an Outline citing the claim code in its own row's clm cell", () => {
+    const rows = [
+      { line: 10, cells: ["CLM-ONE-001", "1"] },
+      { line: 11, cells: ["CLM-ONE-002", "2"] },
+    ];
+    const outline: FeatureAsWritten = {
+      file: "one.feature",
+      featureTags: [],
+      tagFormWords: [],
+      scenarios: [{ tags: ["integration"], title: "adds <n>", line: 4, examples: [{ tags: [], columns: ["clm", "n"], rows }] }],
+    };
+    const runs = rows.map(({ line, cells }) => ({ featurePath: "one.feature", line, name: `adds ${cells[1]}`, tags: ["integration"], steps: [{ keyword: "Given ", text: cells[1], status: "passed" }] }));
+    const posted = scenarioRunObservationsOf(runs, undefined, claimCodesAtOf([outline]));
+    expect(posted.map(({ cites }) => cites)).toEqual([[ONE], [TWO]]);
   });
 });
 
