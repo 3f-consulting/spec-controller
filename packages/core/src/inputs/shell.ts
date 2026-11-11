@@ -268,17 +268,11 @@ function scriptsNamedBy(head: readonly string[]): readonly (string | undefined)[
   if (invocations === undefined) return undefined;
   const each = invocations.eachWorkspace;
   if (each !== undefined && opensWith(head, each.words)) {
-    return scriptsNamedBy([each.words[0], ...head.slice(pastOptions(head, each.words.length, each))]);
+    return scriptsNamedBy([each.words[0], ...commandAfter(head, each.words.length, each)]);
   }
   const [word, next] = head.slice(afterSelections(head, 1, invocations));
   if (isOneOf(invocations.runWords, word)) return [next];
   return [isOneOf(invocations.testShortcuts, word) ? "test" : undefined, invocations.runsBareName ? word : undefined];
-}
-
-function pastOptions(words: readonly string[], at: number, prefix: CommandPrefix): number {
-  const word = words[at];
-  if (word === undefined || !(word.startsWith("-") || ASSIGNMENT.test(word))) return at;
-  return pastOptions(words, at + (prefix.valued.includes(word) ? 2 : 1), prefix);
 }
 
 const WHITESPACE = /\s+/;
