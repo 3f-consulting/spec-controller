@@ -8,10 +8,6 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^@3f-consulting\/spec-controller-core$/, replacement: coreSource("index.ts") },
-      {
-        find: /^@3f-consulting\/spec-controller-core\/internal$/,
-        replacement: coreSource("internal.ts"),
-      },
     ],
   },
   test: {
