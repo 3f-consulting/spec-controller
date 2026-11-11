@@ -23,10 +23,7 @@ export function messagesFrom<Code extends string, Values extends { readonly [C i
     const given = values[0];
     if (text === undefined || text.trim() === "" || Object.values(given ?? {}).includes(null)) return withValues(code, given);
     try {
-      return new IntlMessageFormat(text, "en", undefined, { ignoreTag: true })
-        .formatToParts<never>(given)
-        .map((part) => part.value)
-        .join("");
+      return String(new IntlMessageFormat(text, "en", undefined, { ignoreTag: true }).format(given));
     } catch {
       return withValues(code, given);
     }
