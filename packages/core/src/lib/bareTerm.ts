@@ -1,7 +1,7 @@
 export function withoutSigil(value: string): string {
-  return value.replace(/^@/, "");
+  return value.startsWith("@") ? value.slice(1) : value;
 }
 
 export function bareTerm(value: string): string {
-  return withoutSigil(value.trim()).trim();
+  return withoutSigil(value.trim());
 }

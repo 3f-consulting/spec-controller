@@ -9,6 +9,6 @@ export interface RunInput {
 export function provenanceFrom(identity: RunIdentity, inputs: readonly RunInput[], root: string): Provenance {
   return provenanceOf(
     identity,
-    inputs.map(({ name, path }) => (path === undefined || path.trim() === "" ? { name } : { name, path: relativizeToRoot(path, root) })),
+    inputs.map(({ name, path }) => (path === undefined ? { name } : { name, path: relativizeToRoot(path, root) })),
   );
 }
