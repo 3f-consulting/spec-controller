@@ -19,9 +19,12 @@ on:
         default: false
 
 env:
-  # Production files no scope mutates. These re-export only, so there is no mutant to raise.
+  # Production files no scope mutates. Core's index.ts re-exports only. The app's messages/ holds no executable code, only
+  # its catalogue's codes and types, and the catalogue code it calls is mutated in core-messages; a scope with no mutant
+  # scores NaN and passes, so it could never go red. If messages/ gains a function, it goes back in as a scope.
   UNSCOPED: |
     packages/core/src/index.ts
+    packages/spec-controller/src/messages/**/*.ts
 
 jobs:
   mutation:
@@ -54,8 +57,6 @@ jobs:
             mutate: "packages/spec-controller/src/output/**/*.ts,!packages/spec-controller/src/output/**/*.test.ts,!packages/spec-controller/src/output/**/*.test-utils.ts"
           - scope: app-run-ending
             mutate: "packages/spec-controller/src/runEnding/**/*.ts,!packages/spec-controller/src/runEnding/**/*.test.ts,!packages/spec-controller/src/runEnding/**/*.test-utils.ts"
-          - scope: app-messages
-            mutate: "packages/spec-controller/src/messages/**/*.ts,!packages/spec-controller/src/messages/**/*.test.ts,!packages/spec-controller/src/messages/**/*.test-utils.ts"
           - scope: app-commands
             mutate: "packages/spec-controller/src/commands/**/*.ts,!packages/spec-controller/src/commands/**/*.test.ts,!packages/spec-controller/src/commands/**/*.test-utils.ts"
     env:
