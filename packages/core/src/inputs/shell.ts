@@ -245,7 +245,6 @@ function walk(node: SyntaxNode, outputs: Outputs): readonly SimpleCommand[] {
   if (node.type === "Command") return simple(node, outputs);
   if (node.type === "Pipeline") return pipeline(node, outputs);
   if (node.type === "Coproc") return walk(node.body, pointing(outputs, 1, true));
-  if (node.type === "Redirected") return walk(node.command, outputs);
   return childrenOf(node).flatMap((child) => walk(child, outputs));
 }
 
@@ -287,7 +286,7 @@ const WHITESPACE = /\s+/;
 
 function commandAfter(words: readonly string[], at: number, prefix: CommandPrefix): readonly string[] {
   const word = words[at];
-  if (word !== undefined && prefix.splits?.includes(word)) return [...(words[at + 1] ?? "").split(WHITESPACE).filter((part) => part !== ""), ...words.slice(at + 2)];
+  if (prefix.splits?.includes(String(word))) return [...(words[at + 1] ?? "").split(WHITESPACE).filter((part) => part !== ""), ...words.slice(at + 2)];
   if (word === undefined || !(word.startsWith("-") || ASSIGNMENT.test(word))) return words.slice(at + prefix.operands);
   return commandAfter(words, at + (prefix.valued.includes(word) ? 2 : 1), prefix);
 }
@@ -343,7 +342,7 @@ function runs(
 ): boolean {
   if (reading.names(command, invocation)) return true;
   const entries = Object.entries(scripts);
-  if (depth === 0 || entries.length === 0) return false;
+  if (depth === 0) return false;
   const run = reading.heads(command).flatMap(scriptsRunBy);
   return entries.some(([name, body]) => run.includes(name) && runs(body, invocation, scripts, depth - 1, reading));
 }
@@ -353,7 +352,7 @@ function runsBy(
 ): (command: string, invocation: string, scripts: Readonly<Record<string, string>>) => boolean {
   return (command, invocation, scripts) => {
     const words = wordsOf(invocation);
-    return words.join(" ") !== "" && runs(command, words, scripts, SCRIPT_CHAIN_DEPTH, reading);
+    return String(words) !== "" && runs(command, words, scripts, SCRIPT_CHAIN_DEPTH, reading);
   };
 }
 

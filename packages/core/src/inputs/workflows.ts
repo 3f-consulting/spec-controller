@@ -25,9 +25,7 @@ function envValuesOf(value: unknown): readonly string[] {
 }
 
 function idOf(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  const id = value.trim();
-  return id === "" ? undefined : id;
+  return typeof value === "string" ? value.trim() || undefined : undefined;
 }
 
 const STEP_RECORD_EXPRESSION = "tojson(steps)";
