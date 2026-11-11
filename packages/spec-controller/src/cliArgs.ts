@@ -108,7 +108,7 @@ export function positionalArguments(argv: readonly string[], registry: CliRegist
 function readToken(argv: readonly string[], i: number, walk: Walk, command: string): Refusal | number {
   const token = argv[i]!;
   const next = argv[i + 1];
-  if (isEqualsForm(token)) return equalsFormRefusal(token, walk.scope, `spec-controller ${command}`);
+  if (isEqualsForm(token)) return equalsFormRefusal(token, `spec-controller ${command}`);
   if (!isFlagShaped(token) && !walk.scope.has(token)) return positionalRead(token, walk, command);
   const flag = walk.scope.get(token);
   const refused = flag === undefined ? undefined : registeredFlagRefusal(flag, token, next, walk, command);
@@ -146,17 +146,13 @@ function isFlagShaped(token: string): boolean {
   return token.startsWith("--");
 }
 
-export function isEqualsForm(token: string): boolean {
+function isEqualsForm(token: string): boolean {
   return isFlagShaped(token) && token.includes("=");
 }
 
-export function equalsFormRefusal(token: string, flags: ReadonlyMap<string, FlagSpec>, scope: string): Refusal {
+function equalsFormRefusal(token: string, scope: string): Refusal {
   const at = token.indexOf("=");
-  const name = token.slice(0, at);
-  const value = token.slice(at + 1);
-  const flag = flags.get(name);
-  const spelling =
-    flag !== undefined && flag.arg === undefined ? name : `${name} ${value === "" ? (flag?.arg ?? "<value>") : value}`;
+  const spelling = `${token.slice(0, at)} ${token.slice(at + 1)}`;
   return refusal(AppError.EqualsForm, { token, scope, spelling }, [message(AppMessage.SeeFlags, { scope })]);
 }
 

@@ -1,4 +1,3 @@
-import { equalsFormRefusal, isEqualsForm } from "./cliArgs.js";
 import { AppError, AppMessage } from "./messages.js";
 import { message } from "./appText.js";
 import { refusal, type Refusal } from "./refusal.js";
@@ -20,7 +19,6 @@ export function parseHostInvocation(argv: readonly string[]): HostInvocation {
 }
 
 function leadingFlagRefusal(token: string): Refusal | undefined {
-  if (isEqualsForm(token)) return equalsFormRefusal(token, new Map(), "spec-controller");
   if (isFlagOutOfPlace(token)) return flagBeforeCommandRefusal(token);
   return undefined;
 }
