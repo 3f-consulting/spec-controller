@@ -3,7 +3,7 @@ import { accessSync, constants, lstatSync, readdirSync, readFileSync, type Diren
 import { join, relative, sep } from "node:path";
 import type { ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { AppMessage } from "../messages.js";
-import { gitExited, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
+import { gitExited, readOrRefuse, UnreadableInput } from "./unreadable.js";
 
 const MAX_OUTPUT_BYTES = 1024 * 1024 * 1024;
 
@@ -18,7 +18,6 @@ export function readTree(top: string, marks: readonly string[]): ClaimCodeOccurr
 
 function gitListing(top: string, args: readonly string[]): string[] {
   const result = spawnSync("git", args, { cwd: top, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES });
-  if (result.error !== undefined) refuse(AppMessage.Tree, top, result.error);
   if (result.status !== 0) {
     throw new UnreadableInput(AppMessage.Tree, top, gitExited(args, result.status, result.stderr));
   }

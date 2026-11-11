@@ -3,7 +3,7 @@ import { lstatSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import type { ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { AppMessage } from "../messages.js";
-import { gitExited, readOrRefuse, refuse, UnreadableInput } from "./unreadable.js";
+import { gitExited, readOrRefuse, UnreadableInput } from "./unreadable.js";
 
 export type HistoryBoundary = { kind: "complete" } | { kind: "not-a-repository" } | { kind: "shallow"; before: string };
 
@@ -14,7 +14,6 @@ const COMMIT_MARKER = "\u0001";
 export function readHistory(cwd: string, marks: readonly string[]): ClaimCodeOccurrence[] {
   const args = ["log", "--all", "-p", "-U0", "--no-color", "--no-ext-diff", "--format=%x01%h", "-G", `(${marks.join("|")})`];
   const result = spawnSync("git", args, { cwd, encoding: "utf8", maxBuffer: MAX_OUTPUT_BYTES });
-  if (result.error !== undefined) refuse(AppMessage.History, cwd, result.error);
   if (result.status !== 0) {
     throw new UnreadableInput(AppMessage.History, cwd, gitExited(args, result.status, result.stderr));
   }
@@ -30,7 +29,7 @@ export function repositoryTop(cwd: string): string | null {
   const args = ["rev-parse", "--show-toplevel"];
   const result = spawnSync("git", args, { cwd, encoding: "utf8" });
   if (result.status === 0) return result.stdout.trim();
-  const gitEntry = result.error === undefined ? gitEntryAtOrAbove(cwd) : null;
+  const gitEntry = gitEntryAtOrAbove(cwd);
   if (gitEntry === null) return null;
   throw new UnreadableInput(AppMessage.Repository, gitEntry, gitExited(args, result.status, result.stderr));
 }
