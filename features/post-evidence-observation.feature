@@ -207,6 +207,13 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-080 | Cucumber's evidence report | integration           | the scenario "one adds one" in one.feature                                      | "one adds one" in one.feature   |
         | CLM-OBS-081 | the step record            | fitness               | the step Lint in job build of ci.yml                                            | ci.yml:build:Lint               |
 
+    @unit @CLM-OBS-098
+    Scenario: a test file outside the target's folder will be placed at the absolute path its evidence report recorded
+      given the target's folder was /work/app
+      and Jest's evidence report recorded a test file at /home/runner/work/app/src/a.test.ts
+      when balance posts the evidence
+      then the Evidence Observation's place will be /home/runner/work/app/src/a.test.ts
+
   Rule: balance files each Evidence Observation under the claim it cites, or else on a phantom claim or the unnamed claim
 
     @unit @CLM-OBS-082

@@ -291,3 +291,11 @@ describe("balance posts a recorded step that no workflow holds at its claim code
     ]);
   });
 });
+
+describe("a test file outside the target's folder will be placed at the absolute path its evidence report recorded", () => {
+  it("[CLM-OBS-098] a test file outside the target's folder will be placed at the absolute path its evidence report recorded", () => {
+    const file = "/home/runner/work/app/src/a.test.ts";
+    const report = { testResults: [{ name: file, assertionResults: [{ title: "adds two numbers", fullName: "adds two numbers", status: "passed" }] }] };
+    expect(parseVitestEvidenceObservations(report, "/work/app").map(({ place }) => place)).toEqual([file]);
+  });
+});
