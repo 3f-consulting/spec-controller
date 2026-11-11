@@ -29,12 +29,15 @@ interface UsedAction {
 
 export type PipelineStepAction = { readonly command: string } | { readonly action: UsedAction };
 
+// A workflow's step as the workflow wrote it: its name, its id, the continue-on-error of the step and of its job,
+// whatever was written there, whether it writes out the record of the job's steps, and whether it only sets the job up.
 export type WorkflowStep = {
   readonly job: string;
-  readonly identity: string;
+  readonly name?: string;
   readonly id?: string;
+  readonly continueOnError?: unknown;
+  readonly jobContinueOnError?: unknown;
   readonly writesStepRecord: boolean;
-  readonly abortsJob: boolean;
   readonly plumbing: boolean;
 } & PipelineStepAction;
 
@@ -56,9 +59,24 @@ export interface StepReadings {
   readonly shell: ShellReading;
 }
 
-function qualifiedStepName(step: PipelineStep): string {
-  return `${step.workflow}:${step.job}:${step.identity}`;
+// A step is known by its name, else the action it uses, else the first line of its command.
+export function stepIdentityOf(step: WorkflowStep): string {
+  const name = step.name?.trim() ?? "";
+  if (name !== "") return name;
+  if ("action" in step) return step.action.name;
+  return step.command.split(/\r?\n/).find((line) => line.trim() !== "")?.trim() ?? "";
 }
+
+function qualifiedStepName(step: PipelineStep): string {
+  return `${step.workflow}:${step.job}:${stepIdentityOf(step)}`;
+}
+
+// Only a continue-on-error left unset or written false lets a step's failure fail its job.
+function vouchesForTheStep(continueOnError: unknown): boolean {
+  return continueOnError === undefined || continueOnError === false || continueOnError === "false";
+}
+
+const abortsJob = (step: WorkflowStep): boolean => vouchesForTheStep(step.continueOnError) && vouchesForTheStep(step.jobContinueOnError);
 
 function runsARunner(step: PipelineStep, { runners, scripts, shell }: StepReadings): boolean {
   if (!("command" in step)) return false;
@@ -94,7 +112,7 @@ function citesOfId(id: string | undefined): ClaimCode[] {
 function workflowObservationOf(step: PipelineStep): EvidenceObservation {
   return {
     cites: citesOfId(step.id),
-    result: step.abortsJob ? "passed" : "passed-on-error",
+    result: abortsJob(step) ? "passed" : "passed-on-error",
     kind: "fitness",
     place: qualifiedStepName(step),
     notes: [],
