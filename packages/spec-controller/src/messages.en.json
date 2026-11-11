@@ -41,7 +41,6 @@
   "working-directory-unreadable": "{subject} could not be read ({reason})",
   "could-not-be-read": "{subject} could not be read: {path} ({reason})",
   "git-exited": "git {command} exited {status}: {said}",
-  "feature-corpus-directory-missing": "The feature corpus directory does not exist: {directory}",
   "input-path-missing": "The {flag} path does not exist: {path}",
   "flagged-report": "The {flag} report",
   "flagged-record": "The {flag} record",

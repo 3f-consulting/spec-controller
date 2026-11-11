@@ -60,7 +60,6 @@ export enum AppMessage {
   FeatureCorpus = "feature-corpus",
   WorkingDirectory = "working-directory",
   GitExited = "git-exited",
-  FeatureCorpusDirectoryMissing = "feature-corpus-directory-missing",
   FlaggedReport = "flagged-report",
   FlaggedRecord = "flagged-record",
   FlaggedManifest = "flagged-manifest",
@@ -146,7 +145,6 @@ export interface AppMessageValues {
   [AppMessage.CodedUsageError]: { command: string; code: AppError; message: string };
   [AppMessage.CodedHostUsageError]: { code: AppError; message: string };
   [AppMessage.GitExited]: { command: string; status: string; said: string };
-  [AppMessage.FeatureCorpusDirectoryMissing]: { directory: string };
   [AppMessage.FlaggedReport]: { flag: string };
   [AppMessage.FlaggedRecord]: { flag: string };
   [AppMessage.FlaggedManifest]: { flag: string };
