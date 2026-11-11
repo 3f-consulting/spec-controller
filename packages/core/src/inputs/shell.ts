@@ -4,7 +4,7 @@ import type { ShellReading } from "../domain/postEvidenceObservation.js";
 
 const SCRIPT_CHAIN_DEPTH = 3;
 
-const ASSIGNMENT = /^[A-Za-z_]\w*=/;
+const ASSIGNMENT = /[A-Za-z_]\w*=/;
 type Words = readonly [string, ...(readonly string[])];
 
 type Whitespace = " " | "\t" | "\n" | "\r" | "\v" | "\f";
@@ -34,12 +34,11 @@ const YARN_FOREACH = launcher(["yarn", "workspaces", "foreach"], "--from", "--in
 // A row matches a command opening with its words; the first row to match is read, so a longer phrase comes before its first word.
 const COMMAND_PREFIXES: readonly CommandPrefix[] = [
   { ...launcher(["timeout"], "-k", "--kill-after", "-s", "--signal"), operands: 1 },
-  launcher(["npm", "exec"], "--package", "-w", "--workspace", "-c", "--call"),
+  launcher(["npm", "exec"], "--package", "-w", "--workspace"),
   launcher(["pnpm", "exec"], "--resume-from"),
   launcher(["pnpm", "dlx"], "--package", "--allow-build"),
-  launcher(["npx"], "--package", "-p", "-w", "--workspace", "-c", "--call"),
+  launcher(["npx"], "--package", "-p", "-w", "--workspace"),
   launcher(["pnpm"]),
-  launcher(["yarn", "exec"]),
   launcher(["yarn", "dlx"], "-p", "--package"),
   YARN_FOREACH,
   launcher(["yarn"]),
@@ -124,8 +123,8 @@ const opensAt = (words: readonly string[], prefix: readonly string[], from: numb
 
 const opensWith = (words: readonly string[], prefix: readonly string[]): boolean => opensAt(words, prefix, 0);
 
-const namedOnLine = (line: string, invocation: readonly string[]): boolean => {
-  const words = wordsOf(line);
+const namedIn = (text: string, invocation: readonly string[]): boolean => {
+  const words = wordsOf(text);
   return words.some((_, at) => opensAt(words, invocation, at));
 };
 
@@ -269,17 +268,11 @@ function scriptsNamedBy(head: readonly string[]): readonly (string | undefined)[
   if (invocations === undefined) return undefined;
   const each = invocations.eachWorkspace;
   if (each !== undefined && opensWith(head, each.words)) {
-    return scriptsNamedBy([each.words[0], ...head.slice(pastOptions(head, each.words.length, each))]);
+    return scriptsNamedBy([each.words[0], ...commandAfter(head, each.words.length, each)]);
   }
   const [word, next] = head.slice(afterSelections(head, 1, invocations));
   if (isOneOf(invocations.runWords, word)) return [next];
   return [isOneOf(invocations.testShortcuts, word) ? "test" : undefined, invocations.runsBareName ? word : undefined];
-}
-
-function pastOptions(words: readonly string[], at: number, prefix: CommandPrefix): number {
-  const word = words[at];
-  if (word === undefined || !(word.startsWith("-") || ASSIGNMENT.test(word))) return at;
-  return pastOptions(words, at + (prefix.valued.includes(word) ? 2 : 1), prefix);
 }
 
 const WHITESPACE = /\s+/;
@@ -324,7 +317,7 @@ interface Reading {
 }
 
 const anywhere: Reading = {
-  names: (command, invocation) => command.split(/\r?\n/).some((line) => namedOnLine(line, invocation)),
+  names: namedIn,
   heads: headsOf,
 };
 
@@ -351,8 +344,7 @@ function runsBy(
   reading: Reading
 ): (command: string, invocation: string, scripts: Readonly<Record<string, string>>) => boolean {
   return (command, invocation, scripts) => {
-    const words = wordsOf(invocation);
-    return String(words) !== "" && runs(command, words, scripts, SCRIPT_CHAIN_DEPTH, reading);
+    return runs(command, wordsOf(invocation), scripts, SCRIPT_CHAIN_DEPTH, reading);
   };
 }
 

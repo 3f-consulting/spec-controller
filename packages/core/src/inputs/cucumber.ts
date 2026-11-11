@@ -13,7 +13,7 @@ export type CucumberJsonReport = ReadonlyArray<{
       readonly keyword?: string;
       readonly name?: string;
       readonly hidden?: boolean;
-      readonly result?: { readonly status?: string; readonly duration?: number };
+      readonly result: { readonly status?: string; readonly duration?: number };
     }>;
   }>;
 }>;
@@ -28,7 +28,7 @@ function scenarioRunsOf(report: CucumberJsonReport): ScenarioRunAsWritten[] {
       line: scenario.line,
       name: scenario.name,
       tags: (scenario.tags ?? []).map((tag) => withoutSigil(tag.name ?? "")),
-      steps: (scenario.steps ?? []).map((step) => ({ keyword: step.keyword, text: step.name, status: step.result?.status })),
+      steps: (scenario.steps ?? []).map((step) => ({ keyword: step.keyword, text: step.name, status: step.result.status })),
     })),
   );
 }

@@ -6,7 +6,7 @@ export interface VitestJsonReport {
     readonly name?: string;
     readonly status?: string;
     readonly message?: string;
-    readonly assertionResults?: ReadonlyArray<{
+    readonly assertionResults: ReadonlyArray<{
       readonly fullName?: string;
       readonly title?: string;
       readonly status?: string;
@@ -20,7 +20,7 @@ function testFilesOf(report: VitestJsonReport): TestFileAsWritten[] {
     path: file.name,
     status: file.status,
     message: file.message,
-    tests: (file.assertionResults ?? []).map((test) => ({ title: test.title, fullTitle: test.fullName, status: test.status })),
+    tests: file.assertionResults.map((test) => ({ title: test.title, fullTitle: test.fullName, status: test.status })),
   }));
 }
 

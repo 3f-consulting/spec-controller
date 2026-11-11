@@ -149,7 +149,7 @@ function recordedObservationOf(recorded: RecordedCheckStep, steps: readonly Pipe
   const { outcome } = recorded;
   const result = RESULT_OF_OUTCOME.get(outcome);
   if (result === undefined) {
-    return { cites, result: "never-ran", kind: "fitness", place, notes: outcome === undefined ? [] : [outcome] };
+    return { cites, result: "never-ran", kind: "fitness", place, notes: [String(outcome)] };
   }
   return { cites, result, kind: "fitness", place, notes: [] };
 }
@@ -217,7 +217,7 @@ function testObservationOf(test: TestAsWritten, place: string): EvidenceObservat
 // Each test posts at its file; a file that failed with no test in it never reached its tests, and posts as never ran.
 export function testFileObservationsOf(files: readonly TestFileAsWritten[], root?: string): EvidenceObservation[] {
   return files.flatMap((file) => {
-    const place = relativizeToRoot(file.path ?? "", root);
+    const place = relativizeToRoot(String(file.path), root);
     if (file.status === FAILED_FILE && file.tests.length === 0) return [neverRanObservation(TEST_REPORT_KIND, place, file.message)];
     return file.tests.flatMap((test) => testObservationOf(test, place));
   });
@@ -244,9 +244,6 @@ export interface TestCaseAsWritten {
 }
 
 const CLAIM_CODE_PROPERTY = "clm";
-// Go writes a package whose tests never ran, because it failed to build or its TestMain failed, as a failing TestMain with no classname.
-const GO_PACKAGE_TESTCASE = "TestMain";
-
 type Errored = TestCaseAsWritten & { readonly error: ErrorAsWritten };
 
 const isCollectionFailure = (testCase: TestCaseAsWritten): testCase is Errored => testCase.error !== undefined && !testCase.classname;
@@ -255,8 +252,10 @@ const isClassSetupFailure = (testCase: TestCaseAsWritten): testCase is Errored =
 
 const isSetupError = (testCase: TestCaseAsWritten): testCase is Errored => testCase.error?.inSetupOrTeardown === true;
 
+// Go writes a package whose tests never ran, because it failed to build or its TestMain failed, as a failing TestMain with no
+// classname; no writer leaves the classname off a test that ran.
 const isPackageFailure = (testCase: TestCaseAsWritten): testCase is TestCaseAsWritten & { readonly failure: EndingAsWritten } =>
-  !testCase.classname && testCase.name === GO_PACKAGE_TESTCASE && testCase.failure !== undefined;
+  !testCase.classname && testCase.failure !== undefined;
 
 const errorTextOf = ({ error }: Errored): string | undefined => error.text ?? error.message;
 
@@ -288,15 +287,15 @@ function testCaseResultOf(testCase: TestCaseAsWritten): EvidenceObservation["res
 
 function testCaseObservationOf(testCase: TestCaseAsWritten): EvidenceObservation[] {
   if (testCase.skipped === true) return [];
-  if (isCollectionFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.name ?? "", errorTextOf(testCase))];
-  if (isPackageFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.suite ?? "", testCase.failure.text)];
+  if (isCollectionFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, String(testCase.name), errorTextOf(testCase))];
+  if (isPackageFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, String(testCase.suite), testCase.failure.text)];
   // A class setup failure has a class: a failure with neither class nor name was taken as a collection failure.
   if (isClassSetupFailure(testCase)) return [neverRanObservation(TEST_REPORT_KIND, testCase.classname!, errorTextOf(testCase))];
   return [{
     cites: testCaseCitesOf(testCase),
     result: testCaseResultOf(testCase),
     kind: TEST_REPORT_KIND,
-    place: testCase.classname ?? "",
+    place: String(testCase.classname),
     notes: [],
     name: testCase.name,
     message: isSetupError(testCase) ? errorTextOf(testCase) : undefined,
@@ -326,15 +325,14 @@ export interface ExamplesAsWritten {
 }
 
 function placeOfExample(path: string, root?: string): string {
-  return relativizeToRoot(path.replace(/^\.\//, ""), root);
+  return relativizeToRoot(path.replace(/\.\//, ""), root);
 }
 
-const LOADED_FILE = /^\s*(?:While loading (.+?) a |An error occurred while loading (.+?)\.(?:\n|$))/;
+const LOADED_FILE = /(?:While loading (.+?) a |An error occurred while loading (.+?)\.(?:\n|$))/;
 
 // Each error outside the examples never ran: one naming the file it was loading posts at that file, and the rest,
 // when the messages name fewer files than the report counted errors, post once together at no file.
 function loadErrorsOf({ errorsOutsideExamples = 0, messages }: ExamplesAsWritten, root?: string): EvidenceObservation[] {
-  if (errorsOutsideExamples === 0) return [];
   const read = messages.map((message) => ({ message, loaded: LOADED_FILE.exec(message) }));
   const named = read.flatMap(({ message, loaded }) => {
     const path = loaded?.[1] ?? loaded?.[2];
@@ -342,14 +340,14 @@ function loadErrorsOf({ errorsOutsideExamples = 0, messages }: ExamplesAsWritten
   });
   if (errorsOutsideExamples <= named.length) return named;
   const unnamed = read.filter(({ loaded }) => loaded === null).map(({ message }) => message);
-  return [...named, neverRanObservation(TEST_REPORT_KIND, "", unnamed.length > 0 ? unnamed.join("\n") : undefined)];
+  return [...named, neverRanObservation(TEST_REPORT_KIND, "", unnamed.join("\n"))];
 }
 
 function exampleObservationOf(example: ExampleAsWritten, root?: string): EvidenceObservation[] {
   const result = resultOfTestStatus(example.status);
   if (result === undefined) return [];
   const cites = nearestCitation([claimCodeCitationsIn(example.title), claimCodeCitationsIn(example.fullTitle)]);
-  return [{ cites, result, kind: TEST_REPORT_KIND, place: placeOfExample(example.path ?? "", root), notes: [], name: example.fullTitle }];
+  return [{ cites, result, kind: TEST_REPORT_KIND, place: placeOfExample(String(example.path), root), notes: [], name: example.fullTitle }];
 }
 
 // Each example posts at its file under its full title, then each error outside the examples posts as never ran.
@@ -402,14 +400,14 @@ function scenarioResultOf(steps: readonly StepRunAsWritten[]): EvidenceObservati
   return endings.length > 0 && endings.every((ending) => ending === "passed") ? "passed" : undefined;
 }
 
-const stepText = (step: StepRunAsWritten): string => `${(step.keyword ?? "").trim()} ${step.text ?? ""}`;
+const stepText = (step: StepRunAsWritten): string => `${String(step.keyword).trim()} ${step.text}`;
 
 const codesIn = (texts: readonly string[]): ClaimCode[] => texts.flatMap((text) => claimCodeFrom(text) ?? []);
 
 function scenarioRunObservationOf(run: ScenarioRunAsWritten, root: string | undefined, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
   const result = scenarioResultOf(run.steps);
   if (result === undefined) return [];
-  const place = relativizeToRoot(run.featurePath ?? run.featureName ?? "", root);
+  const place = relativizeToRoot(String(run.featurePath ?? run.featureName), root);
   const rowCodes = run.line === undefined ? [] : claimCodesAt(place, run.line);
   const [firstKind, ...otherKinds] = kindsTheTagsName(run.tags);
   const cites = nearestCitation([codesIn([...run.tags, ...rowCodes])]);
