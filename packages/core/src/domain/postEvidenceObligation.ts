@@ -87,7 +87,7 @@ export interface ReadingSettings {
   readonly strict: boolean;
 }
 
-export const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
+const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
 function isDeferred(tags: readonly string[], { deferralTags, strict }: ReadingSettings): boolean {
   return !strict && tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));

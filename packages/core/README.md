@@ -36,7 +36,7 @@ const evidenceReconciliation = evidenceReconciliationOf({
   testObservations: parseVitestEvidenceObservations(vitestReport),
   steps: [],
   readings: { scripts: {}, shell: shellReading },
-  configuration: targetConfigurationFrom({}),
+  configuration: targetConfigurationFrom({}, []),
   strict: false,
   provenance: provenanceFrom({ target: "acme/shop", toolVersion: "0.1.0" }, [], "."),
 });
@@ -63,11 +63,11 @@ The package publishes exactly one entrypoint, a barrel that exports the followin
 
   The two JUnit readers differ in how they read an `<error>` on an ordinary test: `parseJunitEvidenceObservations` reads it as a failing Evidence Observation, and `parsePytestEvidenceObservations` reads it as never-ran, as pytest's setup error.
 - **Reconcile**: `evidenceReconciliationOf`, which gives the whole Evidence Reconciliation. Its `runVerdict` is `balanced`, `out-of-balance`, or `not-reconciled` with a `why` of `unsound`, `claim-code-errors` or `nothing-to-reconcile`; the CLI reads its exit code from there.
-- **Claim codes**: `claimCodeFrom`, `isFeatureCode`, `featureCodeOfFile`, `claimCodeMarksFor` and `nextClaimCode`, the reading of claim codes and the allocation of the next one; `BUILT_IN_DEFERRAL_TAGS`.
+- **Claim codes**: `isFeatureCode`, `featureCodeOfFile`, `claimCodeMarksFor` and `nextClaimCode`, the reading of claim codes and the allocation of the next one.
 - **Render**: `renderMarkdown` and `renderJson`, and `messagesFrom` for a message catalogue of your own.
-- **Provenance**: `provenanceFrom`, the pure subset, which records what a run was without asking the filesystem what it is, and `relativizeToRoot`.
+- **Provenance**: `provenanceFrom`, the pure subset, which records what a run was without asking the filesystem what it is.
 
-The types these functions take and return are exported alongside them, so a consumer can name any value it holds.
+The types the CLI names are exported alongside them. A type nested inside one of them, such as a Claim Reconciliation inside an Evidence Reconciliation, is reached through its parent.
 
 ## Stability
 
