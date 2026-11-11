@@ -19,7 +19,7 @@ export interface CommandSpec {
   name: string;
   summary: string;
   flags: FlagSpec[];
-  positionals?: PositionalSpec[];
+  positional?: PositionalSpec;
 }
 
 export interface CliRegistry {
@@ -68,9 +68,7 @@ export const balanceCommand: CommandSpec = {
 export const allocateCommand: CommandSpec = {
   name: "allocate",
   summary: message(AppMessage.AllocateSummary),
-  positionals: [
-    { name: "<FFF>", description: message(AppMessage.FeaturePartArgument) },
-  ],
+  positional: { name: "<FFF>", description: message(AppMessage.FeaturePartArgument) },
   flags: [
     {
       name: "--new",
@@ -99,17 +97,17 @@ export function renderCommandHelp(command: CommandSpec): string {
   return message(AppMessage.CommandHelp, {
     command: command.name,
     summary: command.summary,
-    arguments: argumentHelp(command.name, command.positionals ?? []),
+    arguments: argumentHelp(command.name, command.positional),
     options: entries(command.flags.map((flag) => ({ name: flagLabel(flag), description: flag.description })), 2),
   });
 }
 
-function argumentHelp(command: string, positionals: readonly PositionalSpec[]): string {
-  if (positionals.length === 0) return "";
+function argumentHelp(command: string, positional: PositionalSpec | undefined): string {
+  if (positional === undefined) return "";
   return message(AppMessage.CommandHelpArguments, {
     command,
-    arguments: positionals.map((positional) => positional.name).join(" "),
-    entries: entries(positionals, 2),
+    arguments: positional.name,
+    entries: entries([positional], 2),
   });
 }
 
