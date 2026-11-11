@@ -132,7 +132,7 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       then none will name a code identifier or a source file
 
     @fitness @CLM-FIT-030
-    Scenario: no given, when, then, and or but line in the corpus, capitalised or lowercase, names an output channel, an exit code, a flag, a file name or the binary
+    Scenario: no given, when, then, and or but line in the corpus outside the files whose subject is where output goes, capitalised or lowercase, names an output channel, an exit code, a flag, a file name or the binary
       given the corpus had given, when, then, and and but lines, capitalised and lowercase
       when CI runs the fitness function over those lines
       then none will name an interface mechanic
