@@ -239,16 +239,26 @@ describe("the provenance says what the run used", () => {
     expect(provenanceOf({ ...(sourceSha === undefined ? {} : { sourceSha }), ...VERSION }, []).sourceSha).toBe("abc1234");
   });
 
-  it("[CLM-EVR-039] the provenance describes the run", () => {
-    const { repo } = committedRepository("evr-origin-", "https://ci:s3cret@example.com/acme/web?x=1#y");
+  it.each<[string, string, { target?: string; hidden: readonly string[] }]>([
+    ["CLM-EVR-039", "https://ci:s3cret@example.com/acme/web?x=1#y", { target: "acme/web", hidden: ["ci", "s3cret", "x=1", "#y"] }],
+    ["CLM-EVR-039", "https://ci:s3cret@example.com/web?x=1#y", { target: "https://example.com/web", hidden: ["ci", "s3cret", "x=1", "#y"] }],
+    ["CLM-EVR-039", "https://ci:s3cret@example.com/group/acme/web?x=1#y", { target: "acme/web", hidden: ["ci", "s3cret", "x=1", "#y"] }],
+    ["CLM-EVR-039", "https://ci:s3cret@[fe80::1]/acme/web?x=1#y", { target: "acme/web", hidden: ["ci", "s3cret", "x=1", "#y"] }],
+    ["CLM-EVR-039", "https://ci:s3/cret@example.com/web?x=1#y", { hidden: ["ci", "s3", "cret", "x=1", "#y"] }],
+  ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote, { target, hidden }) => {
+    const { repo } = committedRepository("evr-origin-", remote);
     const origin = resolveTargetOrigin(repo) ?? undefined;
-    const { target } = provenanceOf({ ...(origin === undefined ? {} : { origin }), ...VERSION }, []);
-    expect(target).toBe("acme/web");
-    for (const part of ["ci", "s3cret", "x=1", "#y"]) expect(target).not.toContain(part);
+    const provenance = provenanceOf({ ...(origin === undefined ? {} : { origin }), ...VERSION }, []);
+    if (target !== undefined) expect(provenance.target).toBe(target);
+    for (const part of hidden) expect(provenance.target).not.toContain(part);
   });
 
-  it("[CLM-EVR-045] the provenance describes the run", () => {
-    const { repo } = committedRepository("evr-scp-origin-", "git@github.com:acme/web.git");
+  it.each([
+    ["CLM-EVR-045", "git@github.com:acme/web.git"],
+    ["CLM-EVR-045", "ci:s3cret@github.com:acme/web.git"],
+    ["CLM-EVR-045", "g@github.com:acme/web.git"],
+  ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote) => {
+    const { repo } = committedRepository("evr-scp-origin-", remote);
     const origin = resolveTargetOrigin(repo) ?? undefined;
     expect(provenanceOf({ ...(origin === undefined ? {} : { origin }), ...VERSION }, []).target).toBe("acme/web");
   });
