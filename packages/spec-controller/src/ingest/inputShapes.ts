@@ -1,5 +1,3 @@
-import { claimCodeFrom } from "@3f-consulting/spec-controller-core";
-
 import { AppMessage } from "../messages.js";
 import { message } from "../appText.js";
 
@@ -12,7 +10,7 @@ export type Shape =
       readonly fields: Readonly<Record<string, Shape>>;
       readonly required?: readonly string[];
     }
-  | { readonly entries: Shape; readonly keys?: (key: string) => boolean };
+  | { readonly entries: Shape };
 
 type Fields = Extract<Shape, { fields: unknown }>;
 type Entries = Extract<Shape, { entries: unknown }>;
@@ -72,10 +70,7 @@ export const CUCUMBER_REPORT: Shape = {
   },
 };
 
-export const CI_STEP_RECORD: Shape = {
-  entries: { fields: { outcome: "string" } },
-  keys: (key) => claimCodeFrom(key) !== undefined,
-};
+export const CI_STEP_RECORD: Shape = { entries: { fields: { outcome: "string" } } };
 
 export const PACKAGE_MANIFEST: Shape = { fields: { scripts: { entries: "string" } } };
 
@@ -151,7 +146,6 @@ function fieldsFault(record: Record<string, unknown>, shape: Fields, where: Posi
 
 function entriesFault(record: Record<string, unknown>, shape: Entries, where: Position): string | null {
   for (const [key, value] of Object.entries(record)) {
-    if (shape.keys !== undefined && !shape.keys(key)) continue;
     const fault = faultAt(value, shape.entries, fieldOf(where, key));
     if (fault !== null) return fault;
   }
