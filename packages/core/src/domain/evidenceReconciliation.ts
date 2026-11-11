@@ -1,5 +1,6 @@
 import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
+import type { ConfigurationError } from "./configuration.js";
 import { executableClaimsOf, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import {
   fitnessObservationsOf,
@@ -10,6 +11,7 @@ import {
   type StepDisposition,
   type StepReadings,
 } from "./postEvidenceObservation.js";
+import type { Provenance } from "./provenance.js";
 
 export type RunVerdict =
   | { readonly verdict: "balanced" }
@@ -57,24 +59,6 @@ interface StepCounts {
 export interface StepAccount {
   readonly jobs: readonly (StepCounts & { readonly workflow: string; readonly job: string })[];
   readonly total: StepCounts & { readonly accountedFor: number };
-}
-
-export interface Provenance {
-  readonly target: string;
-  readonly sourceSha: string;
-  readonly toolSha?: string;
-  readonly toolVersion: string;
-  readonly inputs: readonly { readonly name: string; readonly path?: string }[];
-}
-
-export interface ConfigurationError {
-  readonly kind:
-    | "configuration-wrong-kind"
-    | "configuration-unknown-key"
-    | "runner-key-not-a-layer"
-    | "not-checks-entry-matches-no-step"
-    | "not-checks-entry-not-a-step-name";
-  readonly entry: string;
 }
 
 export interface ErrorsInTheInputs {
@@ -197,28 +181,6 @@ export function stepAccountOf(steps: readonly PipelineStep[], dispositionOf: (st
   const total = Object.fromEntries(counts.map((count) => [count, jobsRead.reduce((sum, job) => sum + job[count], 0)])) as unknown as StepCounts;
   const accountedFor = counts.filter((count) => count !== "stepsRead").reduce((sum, count) => sum + total[count], 0);
   return { jobs: jobsRead, total: { ...total, accountedFor } };
-}
-
-export interface RunIdentity {
-  readonly target?: string;
-  readonly origin?: string;
-  readonly sourceSha?: string;
-  readonly toolSha?: string;
-  readonly toolVersion: string;
-}
-
-const UNKNOWN = "unknown";
-
-const UNKNOWN_TARGET = "unknown-target";
-
-export function provenanceOf(identity: RunIdentity, inputs: Provenance["inputs"]): Provenance {
-  return {
-    target: identity.target ?? identity.origin ?? UNKNOWN_TARGET,
-    sourceSha: identity.sourceSha ?? UNKNOWN,
-    ...(identity.toolSha === undefined ? {} : { toolSha: identity.toolSha }),
-    toolVersion: identity.toolVersion,
-    inputs,
-  };
 }
 
 interface NonCheckNamed {

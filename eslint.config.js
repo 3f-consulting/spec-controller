@@ -367,7 +367,7 @@ export default [
     files: ["packages/**/*.test.ts", "packages/**/*.test-utils.ts"],
     ignores: [
       // A test title in each of these is built from a call over the CLI registry, so the call must run at collection.
-      "packages/spec-controller/src/host.helpAtHostScope.test.ts",
+      "packages/spec-controller/src/runRequest/host.helpAtHostScope.test.ts",
     ],
     languageOptions: tsLanguageOptions,
     rules: {
@@ -477,7 +477,7 @@ export default [
 
   {
     files: [PRODUCTION_FILES],
-    ignores: [...TEST_FILES, "packages/spec-controller/src/exitCode.ts"],
+    ignores: [...TEST_FILES, "packages/spec-controller/src/runEnding/exitCode.ts"],
     languageOptions: tsLanguageOptions,
     rules: {
       "exitCode/no-restricted-syntax": [

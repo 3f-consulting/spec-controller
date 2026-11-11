@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 const DATA_FILES = [
-  join(repoRoot, "packages", "spec-controller", "src", "messages.en.json"),
-  join(repoRoot, "packages", "core", "src", "render", "messages.en.json"),
+  join(repoRoot, "packages", "spec-controller", "src", "messages", "messages.en.json"),
+  join(repoRoot, "packages", "core", "src", "messages", "messages.en.json"),
 ];
 
 type Values = Readonly<Record<string, string>>;

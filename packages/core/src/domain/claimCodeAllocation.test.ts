@@ -1,9 +1,9 @@
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { message } from "../../../spec-controller/src/appText.js";
-import { AppError, AppMessage } from "../../../spec-controller/src/messages.js";
-import { allocateIn, gitExited, refusalReason, type Answered } from "../../../spec-controller/src/cli-allocate/answered.test-utils.js";
+import { message } from "../../../spec-controller/src/messages/appText.js";
+import { AppError, AppMessage } from "../../../spec-controller/src/messages/messages.js";
+import { allocateIn, gitExited, refusalReason, type Answered } from "../../../spec-controller/src/commands/answered.test-utils.js";
 import {
   commitAll,
   commitAllReturningHash,
@@ -13,7 +13,7 @@ import {
   taken,
   withhold,
   writeInto,
-} from "../../../spec-controller/src/cli-allocate/repository.test-utils.js";
+} from "../../../spec-controller/src/repository/repository.test-utils.js";
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ClaimCode } from "./claimCodes.js";
 import { claimReconciliationsOf, groupsOf, type ClaimReconciliation, type EvidenceGroup } from "./claimReconciliation.js";
-import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { executableClaimsOf, type ExecutableClaim, type QualityCheckKind } from "./postEvidenceObligation.js";
 import type { EvidenceObservation } from "./postEvidenceObservation.js";
 

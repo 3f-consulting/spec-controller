@@ -1,11 +1,11 @@
 import { cpSync, mkdirSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { allocateIn, expectAnsweredEnding, gitExited, refusalReason, type Answered } from "../../../spec-controller/src/cli-allocate/answered.test-utils.js";
+import { allocateIn, expectAnsweredEnding, gitExited, refusalReason, type Answered } from "../../../spec-controller/src/commands/answered.test-utils.js";
 import {
   expectAnsweredWithHistoryUnreadBeforeItsFirstCommit,
   expectAnsweredWithNoHistoryRead,
-} from "../../../spec-controller/src/cli-allocate/historyBoundary.test-utils.js";
+} from "../../../spec-controller/src/repository/historyBoundary.test-utils.js";
 import {
   commitAll,
   commitAllReturningHash,
@@ -16,11 +16,11 @@ import {
   taken,
   withhold,
   writeInto,
-} from "../../../spec-controller/src/cli-allocate/repository.test-utils.js";
-import { message } from "../../../spec-controller/src/appText.js";
-import { AppError, AppMessage } from "../../../spec-controller/src/messages.js";
-import { printedRefusal } from "../../../spec-controller/src/shownText.test-utils.js";
-import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
+} from "../../../spec-controller/src/repository/repository.test-utils.js";
+import { message } from "../../../spec-controller/src/messages/appText.js";
+import { AppError, AppMessage } from "../../../spec-controller/src/messages/messages.js";
+import { printedRefusal } from "../../../spec-controller/src/messages/shownText.test-utils.js";
+import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { claimCodeErrorsOf, claimCodeFrom, featureCodeOfFile, isFeatureCode, retiredScenarioCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 
 afterEach(() => {

@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runBalanceCaptured } from "../../../spec-controller/src/runBalance.test-utils.js";
+import { runBalanceCaptured } from "../../../spec-controller/src/commands/runBalance.test-utils.js";
 import { temporaryDirectory } from "../../../spec-controller/src/temporaryDirectory.test-utils.js";
 
 afterEach(() => {

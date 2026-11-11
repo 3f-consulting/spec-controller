@@ -6,5 +6,10 @@
   // yaml: imported by the inline Node script in scripts/red-proof.sh, which knip does not read.
   "ignoreDependencies": ["tsx", "remark-cli", "remark-validate-links", "yaml"],
   // remark-feature-prose.mjs: a remark plugin loaded by path through --use in a package script, which knip does not read.
-  "ignoreFiles": ["scripts/remark-feature-prose.mjs"]
+  "ignoreFiles": ["scripts/remark-feature-prose.mjs"],
+  "workspaces": {
+    // commands/cli.ts: the command's entry point, named in bundle.mjs, which knip does not read. Its bin, dist/cli.js, maps
+    // by name only to a src/cli.ts.
+    "packages/spec-controller": { "entry": ["src/commands/cli.ts"] }
+  }
 }

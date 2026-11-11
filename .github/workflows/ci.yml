@@ -131,7 +131,7 @@ jobs:
         # The tree line runs without --quiet: --quiet skips warn rules, and with them the dead-suppression reports for those rules and for a blanket directive.
         # So it reds on an error anywhere, a dead suppression included, and prints every warning, which exits 0, before an error ends the step.
         run: |
-          for sample in "core's source:packages/core/src/index.ts" "the app's source:packages/spec-controller/src/cli.ts" "the step files:tests/steps/runVerdict.steps.ts" "the scripts:scripts/docs-check.mjs"; do
+          for sample in "core's source:packages/core/src/index.ts" "the app's source:packages/spec-controller/src/commands/cli.ts" "the step files:tests/steps/runVerdict.steps.ts" "the scripts:scripts/docs-check.mjs"; do
             [ "$(node_modules/.bin/eslint --print-config "${sample#*:}" | jq '[.rules // {} | .[] | select(.[0] > 0)] | length')" -gt 0 ] || { echo "ESLint enforces no rule on ${sample%%:*} (${sample#*:})"; exit 1; }
           done
           node_modules/.bin/eslint --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/" .
@@ -161,8 +161,8 @@ jobs:
         # It scans both packages' src as TypeScript, with tests, shared test helpers and fixtures ignored: production code only.
         # minTokens 50 and minLines 5 are jscpd's own default definition of a clone, stated in full so a copier inherits it.
         # The step reds on jscpd's own exit code, so a clone anywhere in that population reds it, whichever files the change touches.
-        # --fail-on-empty reds an analysis of no file. jscpd does not count five files under the 50-token clone size, so none can hold a clone:
-        # core's domain/outcome.ts, model.ts and parse/stepNames.ts, and spec-controller's cli.ts and defaultCorpus.ts.
+        # --fail-on-empty reds an analysis of no file. jscpd does not count seven files under the 50-token clone size, so none can hold a clone:
+        # core's messages/coreText.ts, reports/heading.ts, reports/json.ts and reports/labelled.ts, and spec-controller's commands/cli.ts, runEnding/exitStatus.ts and runRequest/defaults.ts.
         run: node_modules/.bin/jscpd --config .jscpd.json --exit-code --fail-on-empty
 
       - name: Unused code — no unused file, export or dependency outside the test code

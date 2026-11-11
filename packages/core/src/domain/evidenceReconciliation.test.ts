@@ -1,24 +1,23 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readCorpus } from "../../../spec-controller/src/ingest/ingestQualityChecks.js";
-import { committedRepository } from "../../../spec-controller/src/run-management/gitRepository.test-utils.js";
+import { readCorpus } from "../../../spec-controller/src/inputs/ingestQualityChecks.js";
+import { committedRepository } from "../../../spec-controller/src/runIdentity/gitRepository.test-utils.js";
 import { temporaryDirectory } from "../../../spec-controller/src/temporaryDirectory.test-utils.js";
-import { resolveSourceSha, resolveTargetOrigin, resolveToolIdentity } from "../../../spec-controller/src/run-management/resolveRunInputs.js";
-import { parsedFeatures } from "../parse/parsedFeatures.test-utils.js";
-import { workflowSteps } from "../parse/parsedWorkflows.test-utils.js";
-import { shellReading } from "../parse/commandRuns.js";
-import { targetConfigurationFrom } from "../parse/targetManifest.js";
-import { provenanceFrom } from "../provenance/provenance.js";
-import { coreText } from "../render/coreText.js";
-import { renderJson } from "../render/json.js";
-import { renderMarkdown } from "../render/markdown.js";
+import { resolveSourceSha, resolveTargetOrigin, resolveToolIdentity } from "../../../spec-controller/src/runIdentity/resolveRunInputs.js";
+import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
+import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
+import { shellReading } from "../inputs/shell.js";
+import { targetConfigurationFrom } from "../inputs/manifest.js";
+import { provenanceFrom, provenanceOf } from "./provenance.js";
+import { coreText } from "../messages/coreText.js";
+import { renderJson } from "../reports/json.js";
+import { renderMarkdown } from "../reports/markdown.js";
 import type { ClaimCode, ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, type ClaimReconciliation, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import {
   evidenceReconciliationOf,
   excludedClaimCodeOccurrencesOf,
-  provenanceOf,
   runVerdictOf,
   stepAccountOf,
   totalsOf,

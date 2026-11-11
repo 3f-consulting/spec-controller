@@ -21,6 +21,8 @@ export interface UnnamedClaim {
   readonly file?: never;
 }
 
+export type ClaimCodesAt = (file: string, line: number) => readonly string[];
+
 interface UsedAction {
   readonly name: string;
 }
@@ -152,4 +154,21 @@ export function claimPostedTo(
   const [only, ...shared] = claims.filter(({ claimCode }) => claimCode !== undefined && sameCode(claimCode, code));
   if (only === undefined) return { claimCode: code };
   return shared.length > 0 ? {} : only;
+}
+
+type Claim = ExecutableClaim | PhantomClaim | UnnamedClaim;
+
+const isExecutable = (claim: Claim): claim is ExecutableClaim => "title" in claim;
+
+export const isUnnamedClaim = (claim: Claim): claim is UnnamedClaim => !isExecutable(claim) && claim.claimCode === undefined;
+
+export function filedUnder(claim: Claim, phantoms: PhantomClaim[], unnamed: UnnamedClaim): Claim {
+  if (isExecutable(claim)) return claim;
+  const { claimCode } = claim;
+  if (claimCode === undefined) return unnamed;
+  const known = phantoms.find((phantom) => sameCode(phantom.claimCode, claimCode));
+  if (known) return known;
+  const phantom = { claimCode };
+  phantoms.push(phantom);
+  return phantom;
 }

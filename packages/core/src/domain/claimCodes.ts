@@ -190,6 +190,11 @@ export interface UnknownFeatureCode {
   readonly featureCodes: readonly string[];
 }
 
+export type HistoryBoundary =
+  | { readonly kind: "complete" }
+  | { readonly kind: "not-a-repository" }
+  | { readonly kind: "shallow"; readonly before: string };
+
 // Each word in a code's shape; the claim code and retired scenario code forms decide which count.
 const CODE_SHAPED = /[A-Z]+-[A-Z0-9]+-\d+/g;
 
