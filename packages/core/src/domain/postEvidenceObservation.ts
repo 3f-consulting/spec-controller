@@ -149,7 +149,7 @@ function recordedObservationOf(recorded: RecordedCheckStep, steps: readonly Pipe
   const { outcome } = recorded;
   const result = RESULT_OF_OUTCOME.get(outcome);
   if (result === undefined) {
-    return { cites, result: "never-ran", kind: "fitness", place, notes: outcome === undefined ? [] : [outcome] };
+    return { cites, result: "never-ran", kind: "fitness", place, notes: [String(outcome)] };
   }
   return { cites, result, kind: "fitness", place, notes: [] };
 }
