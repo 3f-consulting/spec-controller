@@ -1,10 +1,10 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readCorpus } from "../../../spec-controller/src/ingest/ingestQualityChecks.js";
-import { committedRepository } from "../../../spec-controller/src/run-management/gitRepository.test-utils.js";
+import { readCorpus } from "../../../spec-controller/src/inputs/ingestQualityChecks.js";
+import { committedRepository } from "../../../spec-controller/src/runIdentity/gitRepository.test-utils.js";
 import { temporaryDirectory } from "../../../spec-controller/src/temporaryDirectory.test-utils.js";
-import { resolveSourceSha, resolveTargetOrigin, resolveToolIdentity } from "../../../spec-controller/src/run-management/resolveRunInputs.js";
+import { resolveSourceSha, resolveTargetOrigin, resolveToolIdentity } from "../../../spec-controller/src/runIdentity/resolveRunInputs.js";
 import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
 import { shellReading } from "../inputs/shell.js";

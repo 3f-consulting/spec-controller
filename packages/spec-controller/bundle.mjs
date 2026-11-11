@@ -13,7 +13,7 @@ const dist = join(here, "dist");
 const bundleTheCommand = async () => {
   rmSync(dist, { recursive: true, force: true });
   const { metafile } = await build({
-    entryPoints: [join(here, "src", "cli.ts")],
+    entryPoints: [join(here, "src", "commands", "cli.ts")],
     outfile: join(dist, "cli.js"),
     bundle: true,
     platform: "node",
