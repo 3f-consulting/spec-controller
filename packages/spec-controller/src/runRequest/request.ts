@@ -21,7 +21,7 @@ export function readRequest(
 ): AllocateRequest | { readonly usageError: Refusal } {
   const why = argvRefusal(argv, registry, toolVersion);
   if (why !== null) return { usageError: why };
-  const [part] = positionalArguments(argv, registry, "allocate");
+  const [part] = positionalArguments(argv);
   if (part === undefined) return { usageError: refusal(AppError.NoFeaturePartGiven, {}) };
   if (!isFeatureCode(part)) return { usageError: refusal(AppError.NotAFeaturePart, { part }) };
   return { featureCode: part, isNew: argv.includes("--new") };

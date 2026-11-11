@@ -50,15 +50,20 @@ function answerRequest({ featureCode, isNew }: AllocateRequest): void {
   const top = repositoryTop(cwd);
   const featureCodes = readFeatureCodes(featureFilesIn(join(top ?? cwd, DEFAULT_FEATURES_DIR)));
   const answer = nextClaimCode({ featureCode, featureCodes, isNew }, occurrencesFrom(cwd, featureCode, top));
-  if (answer.kind === "unknown-feature-code") {
-    refuseUsage(unknownFeatureCodeRefusal(answer));
-    return;
-  }
-  writeLineIfAny(historyBoundaryLine(historyBoundaryOf(cwd), answer));
-  shown().note(highestSeenLine(answer));
-  writeLineIfAny(alreadyHeadedNote(answer));
-  process.stdout.write(answer.code + "\n");
+  (ANSWERED[answer.kind] as (answer: Answer, cwd: string) => void)(answer, cwd);
 }
+
+type Answer = ReturnType<typeof nextClaimCode>;
+
+const ANSWERED: { readonly [K in Answer["kind"]]: (answer: Extract<Answer, { kind: K }>, cwd: string) => void } = {
+  allocated: (answer, cwd) => {
+    writeLineIfAny(historyBoundaryLine(historyBoundaryOf(cwd), answer));
+    shown().note(highestSeenLine(answer));
+    writeLineIfAny(alreadyHeadedNote(answer));
+    process.stdout.write(answer.code + "\n");
+  },
+  "unknown-feature-code": (answer) => refuseUsage(unknownFeatureCodeRefusal(answer)),
+};
 
 function featureFilesIn(dir: string): CorpusFeatureFile[] {
   try {

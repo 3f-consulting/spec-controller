@@ -52,7 +52,7 @@ export function historyBoundaryOf(cwd: string): HistoryBoundary {
 
 function shallowBoundaryOf(cwd: string): HistoryBoundary {
   const shallowPath = shallowRecordPath(cwd);
-  const record = readOrRefuse(AppMessage.History, shallowPath, () => readFileSync(shallowPath, "utf8"));
+  const record = String(readOrRefuse(AppMessage.History, shallowPath, () => readFileSync(shallowPath)));
   const edge = record.slice(0, record.indexOf("\n"));
   return { kind: "shallow", before: gitAnswer(cwd, ["rev-parse", "--short", edge]) ?? edge };
 }
@@ -104,10 +104,11 @@ function pathOf(header: string): string {
   return header.slice(4).replace(/^[ab]\//, "");
 }
 
+// Git writes a hunk header at each line opening "@@ ", always with both line numbers.
 function readHunkHeader(line: string, at: PatchPosition): void {
-  const match = /@@ -(\d+)(?:,\d+)? \+(\d+)/.exec(line);
-  at.oldLine = Number(match?.[1] ?? 0);
-  at.newLine = Number(match?.[2] ?? 0);
+  const [, oldLine, newLine] = /@@ -(\d+)(?:,\d+)? \+(\d+)/.exec(line)!;
+  at.oldLine = Number(oldLine);
+  at.newLine = Number(newLine);
 }
 
 function occurrenceAt(text: string, path: string, line: number, commit: string | undefined): ClaimCodeOccurrence {

@@ -14,19 +14,17 @@ function partsOf(absolute: string): string[] {
   return parts;
 }
 
-function relative(root: string, path: string): string {
+function below(root: string, path: string): string | undefined {
   const from = partsOf(root);
   const to = partsOf(path);
-  let shared = 0;
-  while (shared < from.length && shared < to.length && from[shared] === to[shared]) shared++;
-  return [...from.slice(shared).map(() => UP), ...to.slice(shared)].join(SEPARATOR);
+  return from.every((part, at) => to[at] === part) ? to.slice(from.length).join(SEPARATOR) : undefined;
 }
 
-// The root is absolute: the target's folder is.
+// The root is absolute: the target's folder is. A path not below it, or whose first part below it starts with .., is kept.
 export function relativizeToRoot(path: string, root: string | undefined): string {
   if (root === undefined || !isAbsolute(path)) return path;
-  const rel = relative(root, path);
-  if (rel.startsWith(UP)) return path;
+  const rel = below(root, path);
+  if (rel === undefined || rel.startsWith(UP)) return path;
   return rel === "" ? "." : rel;
 }
 

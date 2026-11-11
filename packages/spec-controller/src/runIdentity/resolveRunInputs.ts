@@ -49,7 +49,7 @@ function urlParts(transport: string, scheme: RegExpExecArray, rest: string): Ori
   const host = authority.slice(at + 1);
   if (afterAuthority.includes("@") || host === "") return UNREAD;
   const lead = `${transport}${scheme[0]}`;
-  return { form: "address", transport, scheme: scheme[1], lead, carriesUser: at !== -1, host, separator: "", ...pathParts(afterAuthority) };
+  return { form: "address", transport, scheme: scheme[1]!, lead, host, separator: "", path: pathOf(afterAuthority) };
 }
 
 // The scp form's host and path follow its last @, split at their first :.
@@ -59,15 +59,11 @@ function scpParts(address: string): OriginAsWritten {
   const colon = hostPath.indexOf(":");
   if (colon <= 0) return UNREAD;
   const host = hostPath.slice(0, colon);
-  return { form: "address", transport: "", scheme: undefined, lead: "", carriesUser: at !== -1, host, separator: ":", ...pathParts(hostPath.slice(colon + 1)) };
+  return { form: "address", scheme: undefined, lead: "", carriesUser: at !== -1, host, separator: ":", path: pathOf(hostPath.slice(colon + 1)) };
 }
 
-function pathParts(rest: string): { path: string; query: string | undefined; fragment: string | undefined } {
-  const path = rest.split(/[?#]/, 1)[0]!;
-  const after = rest.slice(path.length);
-  const hash = after.indexOf("#");
-  const query = after.startsWith("?") ? after.slice(1, hash === -1 ? undefined : hash) : undefined;
-  return { path, query, fragment: hash === -1 ? undefined : after.slice(hash + 1) };
+function pathOf(rest: string): string {
+  return rest.split(/[?#]/, 1)[0]!;
 }
 
 // The tool's install as written: its folder joined by "/", the commit of its checkout, and its package.json's version.
@@ -112,7 +108,7 @@ function readGit(dir: string | undefined, args: readonly string[]): string | und
   try {
     const out = execFileSync("git", ["-C", dir ?? process.cwd(), ...args], {
       encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
+      stdio: "pipe",
     });
     return out.trim() || undefined;
   } catch {

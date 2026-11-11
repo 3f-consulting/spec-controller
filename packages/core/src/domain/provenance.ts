@@ -16,23 +16,21 @@ export interface RunIdentity {
   readonly toolVersion: string;
 }
 
+interface OriginAddress {
+  readonly form: "address";
+  readonly lead: string;
+  readonly host: string;
+  readonly separator: string;
+  readonly path: string;
+}
+
 // The parts of the target's origin, as written. A path git sends to no server; an address with a host, whose lead is
 // what is written before its host and whose separator is what is written between its host and its path; or a form the
 // run identity port does not read, or cannot tell where its user part ends.
 export type OriginAsWritten =
   | { readonly form: "path"; readonly path: string; readonly carriesUser: boolean }
-  | {
-      readonly form: "address";
-      readonly transport: string;
-      readonly scheme: string | undefined;
-      readonly lead: string;
-      readonly carriesUser: boolean;
-      readonly host: string;
-      readonly separator: string;
-      readonly path: string;
-      readonly query: string | undefined;
-      readonly fragment: string | undefined;
-    }
+  | (OriginAddress & { readonly scheme: string; readonly transport: string })
+  | (OriginAddress & { readonly scheme: undefined; readonly carriesUser: boolean })
   | { readonly form: "unread" };
 
 // What the run identity port read, as written, beside what the run was given.
@@ -70,13 +68,20 @@ const REPOSITORY_SUFFIX = ".git";
 // The target is named from the origin's host and path alone, so no user, password, query or fragment reaches it. An
 // https or ssh address with no transport, and one with no scheme that carries a user, are named owner/repo, the path's
 // last two parts, where it has two. A path with no user is named as written; an origin that was not read names nothing.
-function originNameOf(origin: OriginAsWritten): string | undefined {
-  if (origin.form === "unread") return undefined;
-  if (origin.form === "path") return origin.carriesUser ? undefined : origin.path;
+function addressNameOf(origin: Extract<OriginAsWritten, { form: "address" }>): string | undefined {
   const namedByOwnerRepo =
     origin.scheme === undefined ? origin.carriesUser : origin.transport === "" && OWNER_REPO_SCHEMES.includes(origin.scheme);
   return (namedByOwnerRepo ? ownerRepoOf(origin.path) : undefined) ?? `${origin.lead}${origin.host}${origin.separator}${origin.path}`;
 }
+
+const NAME_OF_FORM: { readonly [F in OriginAsWritten["form"]]: (origin: Extract<OriginAsWritten, { form: F }>) => string | undefined } = {
+  unread: () => undefined,
+  path: (origin) => (origin.carriesUser ? undefined : origin.path),
+  address: addressNameOf,
+};
+
+const originNameOf = (origin: OriginAsWritten): string | undefined =>
+  (NAME_OF_FORM[origin.form] as (origin: OriginAsWritten) => string | undefined)(origin);
 
 function ownerRepoOf(path: string): string | undefined {
   const bare = path.replace(/^\//, "");

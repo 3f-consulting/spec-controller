@@ -42,14 +42,14 @@ export function main(hostArgv: string[]): void {
 function run(hostArgv: string[]): void {
   const inv = parseHostInvocation(hostArgv);
   if (refuseLeadingFaults(inv)) return;
-  const command = inv.command;
+  const { run: toRun } = inv;
 
-  if (command === undefined || asksForHelp(command)) {
+  if (toRun === undefined || asksForHelp(toRun.command)) {
     process.stdout.write(renderTopLevelHelp(cliRegistry) + "\n");
     return;
   }
 
-  if (runCommand(command, inv.commandArgs)) markRunFinished();
+  if (runCommand(toRun.command, toRun.commandArgs)) markRunFinished();
 }
 
 function asksForHelp(command: string): boolean {

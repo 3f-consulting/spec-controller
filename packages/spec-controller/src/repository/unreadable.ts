@@ -42,5 +42,5 @@ export function gitExited(args: readonly string[], status: number | null, stderr
 }
 
 function firstLine(text: string): string {
-  return text.split("\n")[0] ?? "";
+  return text.split("\n")[0]!;
 }

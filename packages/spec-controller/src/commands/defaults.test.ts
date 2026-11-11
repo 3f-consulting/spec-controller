@@ -99,9 +99,34 @@ describe("balance will use the default when an input is not named", () => {
 });
 
 describe("balance works out the target's folder", () => {
+  it("[CLM-CLI-142] no feature corpus named, run from the folder, as balance names its inputs", () => {
+    const dir = realpathSync(temporaryDirectory("target-run-from-inputs-"));
+    corpusIn(dir);
+    const vitest = join(dir, "vitest.json");
+    writeFileSync(vitest, '{"testResults":[]}\n');
+    vi.spyOn(process, "cwd").mockReturnValue(dir);
+
+    const { inputs } = reportOf(["--ci", workflowsIn(dir), "--vitest", vitest]).provenance;
+
+    expect(inputs.find(({ name }) => name === "vitest")).toEqual({ name: "vitest", path: "vitest.json" });
+  });
+
   it("[CLM-CLI-143] the corpus in a git repository at the folder, as balance names its inputs", () => {
     const { repo } = committedRepository("target-in-git-inputs-");
     const features = corpusIn(repo);
+    const vitest = join(repo, "vitest.json");
+    writeFileSync(vitest, '{"testResults":[]}\n');
+
+    const { inputs } = reportOf(["--features", features, "--ci", workflowsIn(repo), "--vitest", vitest]).provenance;
+
+    expect(inputs.find(({ name }) => name === "vitest")).toEqual({ name: "vitest", path: "vitest.json" });
+  });
+
+  it("[CLM-CLI-184] the corpus in a folder below the top of a git repository, as balance names its inputs", () => {
+    const { repo } = committedRepository("target-below-git-top-inputs-");
+    const docs = join(repo, "docs");
+    mkdirSync(docs);
+    const features = corpusIn(docs);
     const vitest = join(repo, "vitest.json");
     writeFileSync(vitest, '{"testResults":[]}\n');
 

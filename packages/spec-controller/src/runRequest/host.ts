@@ -3,19 +3,18 @@ import { message } from "../messages/appText.js";
 import { refusal, type Refusal } from "../runEnding/refusal.js";
 import { USAGE_EXIT_CODE } from "../runEnding/exitCode.js";
 
+// A command to run with its arguments, a refusal, or neither: then the run answers with the top-level help.
 export interface HostInvocation {
-  command?: string;
-  commandArgs: string[];
-  refusal?: Refusal;
+  readonly run?: { readonly command: string; readonly commandArgs: string[] };
+  readonly refusal?: Refusal;
 }
 
 export function parseHostInvocation(argv: readonly string[]): HostInvocation {
   const [first, ...rest] = argv;
-  if (first === undefined) return { commandArgs: [] };
+  if (first === undefined) return {};
   const refusal = leadingFlagRefusal(first);
-  if (refusal === undefined) return { command: first, commandArgs: rest };
-  const help = argv.find((token) => TOP_LEVEL_HELP.has(token));
-  return help === undefined ? { commandArgs: [], refusal } : { command: help, commandArgs: [] };
+  if (refusal === undefined) return { run: { command: first, commandArgs: rest } };
+  return argv.some((token) => TOP_LEVEL_HELP.has(token)) ? {} : { refusal };
 }
 
 function leadingFlagRefusal(token: string): Refusal | undefined {
