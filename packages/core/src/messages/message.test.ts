@@ -15,6 +15,12 @@ describe("the text for a code will be its text, unchanged", () => {
   it("[CLM-MSG-008] the text for a code will be its text, unchanged", () => {
     expect(textFor({ "no-features": "No feature files were found." }, "no-features")).toBe("No feature files were found.");
   });
+
+  it("[CLM-MSG-008] a text holding angle brackets will be its text, unchanged", () => {
+    expect(textFor({ "no-features": "No feature files were found under <path>." }, "no-features")).toBe(
+      "No feature files were found under <path>.",
+    );
+  });
 });
 
 describe("each value will fill its gap in the text", () => {
