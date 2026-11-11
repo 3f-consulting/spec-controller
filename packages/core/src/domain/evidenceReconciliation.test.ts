@@ -302,6 +302,17 @@ describe("the provenance says what the run used", () => {
     expect(provenance.toolVersion).toBe("0.1.256");
   });
 
+  it("[CLM-EVR-046] the provenance describes the run", () => {
+    const { repo } = committedRepository("evr-copied-in-");
+    const toolDir = join(repo, "node_modules", "vendored", "spec-controller");
+    mkdirSync(toolDir, { recursive: true });
+    writeFileSync(join(repo, "node_modules", "vendored", "package.json"), JSON.stringify({ name: "vendored" }));
+    const { toolSha, toolVersion } = resolveToolIdentity({ toolDir });
+    const provenance = provenanceOf({ ...(toolSha === null ? {} : { toolSha }), toolVersion }, []);
+    expect(provenance).not.toHaveProperty("toolSha");
+    expect(provenance.toolVersion).toBe("unknown");
+  });
+
   it.each<[string, { given?: string; input: { readonly name: string; readonly path?: string } }]>([
     ["CLM-EVR-042", { given: "/work/acme/cucumber.json", input: { name: "cucumber", path: "cucumber.json" } }],
     ["CLM-EVR-043", { input: { name: "cucumber" } }],
