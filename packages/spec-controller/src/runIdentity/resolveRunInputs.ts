@@ -18,11 +18,10 @@ const URL_SCHEME = /^([A-Za-z][A-Za-z0-9+.-]*):\/\//;
 const OWNER_REPO_SCHEMES = new Set(["https", "ssh"]);
 
 /**
- * Names a remote only in a form it reads, built only from the parts read as host, port and path: a URL, a transport
- * prefix followed by a URL, the scp form, or a local path. An https or ssh URL, and an scp-form remote with a user, name
- * owner/repo, the last two path segments, where they have them. A remote whose user part's end can only be guessed
- * names nothing, since any guess leaks for some remote, and so does any form not read, such as a transport to a command.
- * A local path, and a file: URL holding no user, are named as given: git sends them to no server, so they carry no credential.
+ * Names a remote only in a form it reads, from its host, port and path: a URL, a transport prefix and a URL, the scp
+ * form, or a local path. An https or ssh URL, and an scp-form remote with a user, name owner/repo, its last two path
+ * segments. A remote whose user part's end can only be guessed names nothing, since any guess leaks for some remote, nor
+ * does a form not read. A local path, and a file: URL with no user, are named as given: git sends them to no server.
  */
 function targetOriginName(remote: string): string | null {
   if (isLocalPath(remote)) return remote;
@@ -73,8 +72,7 @@ function ownerRepoOf(path: string): string | null {
   return segments.length >= 2 ? segments.slice(-2).join("/") : null;
 }
 
-// The tool's install as written: its folder, its parts joined by "/", the commit of any checkout that folder is in, and
-// the version field of the nearest package.json at or above it.
+// The tool's install as written: its folder joined by "/", the commit of its checkout, and its package.json's version.
 export interface ToolInstall {
   readonly toolFolder: string;
   readonly toolHead: string | undefined;
@@ -87,8 +85,7 @@ export function readToolInstall(toolDir: string = toolFolder()): ToolInstall {
   return { toolFolder: toolDir.split(sep).join("/"), toolHead: readGit(toolDir, ["rev-parse", "HEAD"]), toolVersion: readToolVersion(toolDir) };
 }
 
-// The version field, as written, of the nearest package.json at or above the tool's folder that reads as JSON; nothing
-// when no such file is found.
+// The version field, as written, of the nearest package.json at or above the folder that reads as JSON, if any.
 export function readToolVersion(fromDir: string = toolFolder()): unknown {
   let dir = fromDir;
   for (;;) {
@@ -112,8 +109,7 @@ export function readRepositoryTop(folder: string): string | undefined {
   return readGit(folder, ["rev-parse", "--show-toplevel"]);
 }
 
-// An undefined dir means the working directory. It is read inside the try because
-// process.cwd() throws once that directory is removed, which must read as no output.
+// No dir means the working directory, read inside the try: process.cwd() throws once it is removed, read as no output.
 function readGit(dir: string | undefined, args: readonly string[]): string | undefined {
   try {
     const out = execFileSync("git", ["-C", dir ?? process.cwd(), ...args], {
