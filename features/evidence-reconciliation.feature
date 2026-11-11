@@ -164,6 +164,7 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-038 | a source SHA given as abc1234, in a git repository at def5678                | the source SHA abc1234                                                                |
         | CLM-EVR-039 | no target given, and the origin https://ci:s3cret@example.com/acme/web?x=1#y | a target named from its host and path only, with no user, password, query or fragment |
         | CLM-EVR-045 | no target given, and the origin git@github.com:acme/web.git                  | the target acme/web                                                                   |
+        | CLM-EVR-050 | no target given, and the origin github.com:acme/web.git                      | the target acme/web                                                                   |
         | CLM-EVR-047 | no target given, and the origin /srv/git/web.git                             | the target web                                                                        |
         | CLM-EVR-048 | no target given, and the origin file:///srv/git/web.git                      | the target web                                                                        |
         | CLM-EVR-049 | no target given, and the origin ssh://git@github.com/acme/web.git            | the target acme/web                                                                   |
