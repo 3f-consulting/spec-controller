@@ -87,6 +87,16 @@ describe("an input that is not valid will stop the run", () => {
       },
     ],
     [
+      "CLM-CLI-148",
+      "a Jest evidence report that does not parse",
+      (t: Target): Met => {
+        const path = written(t.dir, "jest.json", "{not json");
+        const reason = thrownBy(() => JSON.parse("{not json"));
+        const complaint = message(AppError.NotValidJsonInShape, { subject: report("--jest"), shape: message(AppMessage.JestReportShape), path, reason });
+        return { argv: ["--features", t.features, "--ci", t.ci, "--jest", path], complaint };
+      },
+    ],
+    [
       "CLM-CLI-186",
       "a JUnit evidence report that does not parse",
       (t: Target): Met => {
@@ -95,6 +105,17 @@ describe("an input that is not valid will stop the run", () => {
         const reason = thrownBy(() => parseJunitXml(content));
         const complaint = message(AppError.NotValidXml, { subject: report("--junit"), shape: message(AppMessage.JunitXmlReportShape), path, reason });
         return { argv: ["--features", t.features, "--ci", t.ci, "--junit", path], complaint };
+      },
+    ],
+    [
+      "CLM-CLI-186",
+      "a pytest evidence report, in JUnit XML, that does not parse",
+      (t: Target): Met => {
+        const content = '<testsuites><testsuite name="s"><testcase classname="a" name="t"/></testsuite></testsuite>';
+        const path = written(t.dir, "report.xml", content);
+        const reason = thrownBy(() => parseJunitXml(content));
+        const complaint = message(AppError.NotValidXml, { subject: report("--pytest"), shape: message(AppMessage.JunitReportShape), path, reason });
+        return { argv: ["--features", t.features, "--ci", t.ci, "--pytest", path], complaint };
       },
     ],
     [
@@ -198,6 +219,16 @@ describe("an input that is not valid will stop the run", () => {
       },
     ],
     [
+      "CLM-CLI-160",
+      "a folder named where a report file goes",
+      (t: Target): Met => {
+        const path = join(t.dir, "vitest-results");
+        mkdirSync(path);
+        const reason = thrownBy(() => readFileSync(path, "utf8"));
+        return { argv: ["--features", t.features, "--ci", t.ci, "--vitest", path], complaint: message(AppError.CouldNotBeRead, { subject: report("--vitest"), path, reason }) };
+      },
+    ],
+    [
       "CLM-CLI-161",
       "a named input that the tool is not permitted to read",
       (t: Target): Met => {
@@ -217,11 +248,35 @@ describe("an input that is not valid will stop the run", () => {
         return { argv: ["--features", t.features, "--ci", t.ci], complaint: message(AppError.CouldNotBeRead, { subject, path: t.ci, reason }) };
       },
     ],
+    [
+      "CLM-CLI-161",
+      "a named JUnit folder that the tool is not permitted to list",
+      (t: Target): Met => {
+        const path = join(t.dir, "surefire-reports");
+        mkdirSync(path);
+        chmodSync(path, 0o000);
+        const reason = thrownBy(() => readFileSync(path, "utf8"));
+        return { argv: ["--features", t.features, "--ci", t.ci, "--junit", path], complaint: message(AppError.CouldNotBeRead, { subject: report("--junit"), path, reason }) };
+      },
+    ],
   ] as const)("[%s] the run met %s", ([clm, , met], { skip }) => {
     skip(clm === "CLM-CLI-161" && process.getuid?.() === 0);
     const { argv, complaint } = met(target());
 
     expectRefused(captured([...argv]), complaint);
+  });
+});
+
+describe("balance will use the default when an input is not named", () => {
+  it("[CLM-CLI-136] input feature corpus, default the features folder, even one the tool is not permitted to read", ({ skip }) => {
+    skip(process.getuid?.() === 0);
+    const t = target();
+    vi.spyOn(process, "cwd").mockReturnValue(t.dir);
+    const features = t.features;
+    chmodSync(features, 0o000);
+    const complaint = message(AppError.CouldNotBeRead, { subject: message(AppMessage.DefaultFeatureCorpus), path: features, reason: thrownBy(() => readdirSync(features)) });
+
+    expectRefused(captured(["--ci", t.ci]), complaint);
   });
 });
 

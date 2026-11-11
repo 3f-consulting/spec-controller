@@ -195,6 +195,21 @@ describe("if one report cannot be written, neither will be", () => {
       stays: true,
     });
   });
+
+  it("[CLM-FMT-009] with the other report asked for at no destination, a report asked for at a link that leads back to itself stops the run", () => {
+    const dir = temporaryDirectory("spec-controller-neither-");
+    const loop = join(dir, "loop.json");
+    symlinkSync(join(dir, "back.json"), loop);
+    symlinkSync(loop, join(dir, "back.json"));
+
+    const written = reportsWritten(["md", `json:${loop}`]);
+
+    expect({
+      exitCode: written.exitCode,
+      complaint: written.stderr.includes(loop) && written.stderr.includes("ELOOP"),
+      standardOutput: written.stdout,
+    }).toEqual({ exitCode: 2, complaint: true, standardOutput: "" });
+  });
 });
 
 describe("a report will not be written over a file the run reads", () => {
@@ -207,5 +222,18 @@ describe("a report will not be written over a file the run reads", () => {
       complaint: written.stderr.includes(testResults),
       asItWas: readFileSync(testResults, "utf8"),
     }).toEqual({ exitCode: 2, complaint: true, asItWas: "{}\n" });
+  });
+
+  it("[CLM-FMT-013] the second of two reports will not be written over a file the run reads", () => {
+    const dir = temporaryDirectory("spec-controller-input-");
+    const testResults = join(dir, "vitest.json");
+    writeFileSync(testResults, "{}\n");
+    const written = reportsWritten([`md:${join(dir, "report.md")}`, `json:${testResults}`], [{ subject: "Vitest report", path: testResults, identity: regularFileIdentity(testResults) }]);
+    expect({
+      exitCode: written.exitCode,
+      complaint: written.stderr.includes(testResults),
+      asItWas: readFileSync(testResults, "utf8"),
+      report: existsSync(join(dir, "report.md")),
+    }).toEqual({ exitCode: 2, complaint: true, asItWas: "{}\n", report: false });
   });
 });
