@@ -45,7 +45,7 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-018 | a file that already exists                             | the file will contain the new report                                             |
         | CLM-FMT-019 | a file in the corpus folder that is not a feature file | the file will contain the new report, and the feature files will be as they were |
 
-    @e2e
+    @unit @e2e
     Scenario Outline: each of two reports will be where you asked
       Given a run had two reports to write
       When you ask for them at <destination>

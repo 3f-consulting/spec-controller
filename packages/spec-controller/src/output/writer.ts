@@ -25,7 +25,7 @@ type Planned = PlannedOutput<OutputFormat>;
 
 // Each requested report, with whether the file it names is standard output, following any links.
 export function locatedOutputs(requested: readonly RequestedOutput[]): LocatedOutput[] {
-  return requested.map((output) => ({ ...output, namesStandardOutput: output.dest.kind === "file" && namesStdout(output.dest.path) }));
+  return requested.map((output) => ({ ...output, namesStandardOutput: output.dest.kind === "file" }));
 }
 
 export interface RenderedReport {

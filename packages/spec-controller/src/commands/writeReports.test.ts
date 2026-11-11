@@ -124,6 +124,26 @@ describe("a report will be where you asked", () => {
   });
 });
 
+describe("each of two reports will be where you asked", () => {
+  const holds = (path: string, report: string): boolean => existsSync(path) && readFileSync(path, "utf8") === report;
+
+  it.each([
+    [
+      "CLM-FMT-004",
+      "no destination for one, a file for the other",
+      (dir: string) => ["md", `json:${join(dir, "report.json")}`],
+      (dir: string, written: Written) => ({ onStandardOutput: written.stdout === renderMarkdown(RUN), inTheFile: holds(join(dir, "report.json"), renderJson(RUN)) }),
+    ],
+  ])("[%s] two reports asked for at %s are each where asked", (clm, _destination, arrange, observe) => {
+    const dir = temporaryDirectory("spec-controller-two-places-");
+    const written = withStandardStreamsOn({ stdout: "/dev/null", stderr: "/dev/null" }, () => reportsWritten(arrange(dir)));
+    const expected: Record<string, unknown> = {
+      "CLM-FMT-004": { onStandardOutput: true, inTheFile: true },
+    };
+    expect({ exitCode: written.exitCode, seen: observe(dir, written) }).toEqual({ exitCode: undefined, seen: expected[clm] });
+  });
+});
+
 describe("two reports will not both go to standard output", () => {
   it.each([
     ["CLM-FMT-005", "no destination", (_dir: string) => "json"],
