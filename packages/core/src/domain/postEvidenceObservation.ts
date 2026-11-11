@@ -80,7 +80,7 @@ export function stepIdentityOf(step: WorkflowStep): string {
   const name = step.name?.trim() ?? "";
   if (name !== "") return name;
   if ("action" in step) return step.action.name;
-  return step.command.split(/\r?\n/).find((line) => line.trim() !== "")?.trim() ?? step.job;
+  return step.command.split(/\r?\n/).find((line) => line.trim() !== "")?.trim() ?? "";
 }
 
 function qualifiedStepName(step: PipelineStep): string {
