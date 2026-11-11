@@ -123,8 +123,8 @@ const opensAt = (words: readonly string[], prefix: readonly string[], from: numb
 
 const opensWith = (words: readonly string[], prefix: readonly string[]): boolean => opensAt(words, prefix, 0);
 
-const namedOnLine = (line: string, invocation: readonly string[]): boolean => {
-  const words = wordsOf(line);
+const namedIn = (text: string, invocation: readonly string[]): boolean => {
+  const words = wordsOf(text);
   return words.some((_, at) => opensAt(words, invocation, at));
 };
 
@@ -317,7 +317,7 @@ interface Reading {
 }
 
 const anywhere: Reading = {
-  names: (command, invocation) => command.split(/\r?\n/).some((line) => namedOnLine(line, invocation)),
+  names: namedIn,
   heads: headsOf,
 };
 
