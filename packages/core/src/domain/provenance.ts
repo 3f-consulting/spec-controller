@@ -61,7 +61,7 @@ export function runIdentityOf(read: RunIdentityAsRead): RunIdentity {
   };
 }
 
-const OWNER_REPO_SCHEMES: readonly string[] = ["https"];
+const OWNER_REPO_SCHEMES: readonly string[] = ["https", "ssh"];
 
 const REPOSITORY_SUFFIX = ".git";
 
