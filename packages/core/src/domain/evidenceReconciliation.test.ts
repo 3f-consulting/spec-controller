@@ -291,6 +291,7 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-047", "../web"],
     ["CLM-EVR-047", "../web/"],
     ["CLM-EVR-047", "web.git"],
+    ["CLM-EVR-047", "../a:b/web"],
     ["CLM-EVR-048", "file:///srv/git/web.git"],
   ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote) => {
     const { repo } = committedRepository("evr-path-origin-", remote);
