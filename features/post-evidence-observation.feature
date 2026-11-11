@@ -106,6 +106,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-047 | Go's evidence report              | a package failed to compile                                                          | no claim code | the package and its error |
         | CLM-OBS-048 | JUnit 5 in Java's evidence report | a class's setup before all its tests failed                                          | no claim code | the class and its error   |
         | CLM-OBS-049 | RSpec's evidence report           | a spec file failed to load                                                           | no claim code | the file and its error    |
+        | CLM-OBS-099 | RSpec's evidence report           | the suite failed to load, naming no spec file                                        | no claim code | the error                 |
         | CLM-OBS-050 | pytest's evidence report          | the setup of a test citing CLM-ONE-001 errored                                       | CLM-ONE-001   | the test                  |
         | CLM-OBS-051 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched two definitions    | CLM-ONE-001   | that step                 |
         | CLM-OBS-052 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched no definition      | CLM-ONE-001   | that step                 |
