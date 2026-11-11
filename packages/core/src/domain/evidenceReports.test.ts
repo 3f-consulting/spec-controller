@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { shellReading } from "../inputs/shell.js";
 import { parseCucumberEvidenceObservations } from "../inputs/cucumber.js";
 import { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "../inputs/junit.js";
+import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
 import { parseRspecEvidenceObservations } from "../inputs/rspec.js";
 import { parseVitestEvidenceObservations } from "../inputs/vitest.js";
 import type { ClaimCode } from "./claimCodes.js";
-import { stepDispositionOf } from "./postEvidenceObservation.js";
+import { claimCodesAtOf, stepDispositionOf } from "./postEvidenceObservation.js";
 
 const ONE: ClaimCode = { featureCode: "ONE", number: "001" };
 
@@ -72,6 +73,17 @@ describe("balance posts each result with how it went, as each report gives it", 
   it("[CLM-OBS-031] a Cucumber scenario tagged @CLM-ONE-001, which the corpus also finds at its line, is posted citing CLM-ONE-001 once", () => {
     const report = [{ uri: "one.feature", elements: [{ name: "one adds one", line: 4, tags: [{ name: "@CLM-ONE-001" }], steps: [{ keyword: "Given ", name: "one", result: { status: "passed" } }] }] }];
     expect(parseCucumberEvidenceObservations(report, undefined, () => ["CLM-ONE-001"]).map(({ cites }) => cites)).toEqual([[ONE]]);
+  });
+
+  it.each([
+    ["CLM-OBS-031", "a feature file the corpus holds", ["@ONE\nFeature: one\n\n  @CLM-ONE-001\n  Scenario: one adds one\n    Given one\n"]],
+    ["CLM-OBS-031", "a feature file the corpus does not hold", []],
+  ])("[%s] a Cucumber scenario tagged @CLM-ONE-001 from %s is posted as passed, citing CLM-ONE-001", (_clm, _held, sources) => {
+    const report = [{ uri: "one.feature", elements: [{ name: "one adds one", line: 5, tags: [{ name: "@CLM-ONE-001" }], steps: [{ keyword: "Given ", name: "one", result: { status: "passed" } }] }] }];
+    const claimCodesAt = claimCodesAtOf(parsedFeatures(sources, ["one.feature"]));
+    expect(parseCucumberEvidenceObservations(report, undefined, claimCodesAt)).toEqual([
+      { cites: [ONE], result: "passed", kind: "integration", place: "one.feature", notes: [], name: "one adds one" },
+    ]);
   });
 
   it("[CLM-OBS-051] a scenario whose middle step matched two definitions is posted as never-ran, naming only that step", () => {
