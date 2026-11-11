@@ -103,4 +103,25 @@ describe("an input that is not valid will stop the run", () => {
   ] as const)("[%s] the --%s report holds a value in the wrong shape: %s", (_clm, flag, name, content, where, found, expected) => {
     expectNotInShape(flag, name, content, message(AppMessage.ShapeWrongKind, { where, found: worded(found), expected: worded(expected) }));
   });
+
+  it("[CLM-CLI-157] the --rspec report has no examples", () => {
+    expectNotInShape("rspec", "rspec.json", '{"summary":{"errors_outside_of_examples_count":0}}', message(AppMessage.ShapeFieldMissing, { path: "examples" }));
+  });
+
+  it("[CLM-CLI-158] the step record's second step is not in the shape of a step's outcome", () => {
+    const dir = temporaryDirectory("step-record-shape-");
+    const features = join(dir, "features");
+    mkdirSync(features);
+    writeFileSync(join(features, "a.feature"), "Feature: a\n");
+    const ci = join(dir, "ci.yml");
+    writeFileSync(ci, "jobs: {}\n");
+    const path = join(dir, "ci-steps.json");
+    writeFileSync(path, '{"CLM-ABC-001":{"outcome":"success"},"CLM-ABC-002":{"outcome":1}}');
+    const fault = message(AppMessage.ShapeWrongKind, { where: "CLM-ABC-002.outcome", found: worded(NUMBER), expected: worded(STRING) });
+
+    const run = captured(["--features", features, "--ci", ci, "--ci-steps", path]);
+
+    const subject = message(AppMessage.FlaggedRecord, { flag: "--ci-steps" });
+    expectRefused(run, message(AppError.NotInShape, { subject, shape: message(AppMessage.CiStepRecordShape), path, fault }));
+  });
 });
