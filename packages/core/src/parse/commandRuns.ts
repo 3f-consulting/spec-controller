@@ -16,26 +16,19 @@ type OneWordEach<T extends Words> = { readonly [At in keyof T]: OneWord<T[At]> }
 
 interface CommandPrefix {
   readonly words: Words;
-  readonly launcher: boolean;
   readonly operands: number;
   readonly valued: readonly string[];
+  // Options whose value is itself the command to run, written as one word.
+  readonly splits?: readonly string[];
 }
 
 const launcher = <const T extends Words>(words: T & OneWordEach<T>, ...valued: readonly string[]): CommandPrefix => ({
   words,
-  launcher: true,
   operands: 0,
   valued,
 });
 
-const runsNext = <const T extends Words>(words: T & OneWordEach<T>, ...valued: readonly string[]): CommandPrefix => ({
-  words,
-  launcher: false,
-  operands: 0,
-  valued,
-});
-
-const YARN_FOREACH = runsNext(["yarn", "workspaces", "foreach"], "--from", "--include", "--exclude", "-j", "--jobs");
+const YARN_FOREACH = launcher(["yarn", "workspaces", "foreach"], "--from", "--include", "--exclude", "-j", "--jobs");
 
 // Each row's options that take the next word as their value, from the command's own documentation.
 // A row matches a command opening with its words; the first row to match is read, so a longer phrase comes before its first word.
@@ -46,8 +39,8 @@ const COMMAND_PREFIXES: readonly CommandPrefix[] = [
   launcher(["pnpm", "dlx"], "--package", "--allow-build"),
   launcher(["npx"], "--package", "-p", "-w", "--workspace", "-c", "--call"),
   launcher(["pnpm"]),
-  runsNext(["yarn", "exec"]),
-  runsNext(["yarn", "dlx"], "-p", "--package"),
+  launcher(["yarn", "exec"]),
+  launcher(["yarn", "dlx"], "-p", "--package"),
   YARN_FOREACH,
   launcher(["yarn"]),
   launcher(["bunx"], "-p", "--package"),
@@ -60,30 +53,28 @@ const COMMAND_PREFIXES: readonly CommandPrefix[] = [
   launcher(["pdm", "run"]),
   launcher(["coverage", "run", "-m"]),
   launcher(["bundle", "exec"]),
-  runsNext(["env"], "-u", "--unset", "-C", "--chdir", "-S", "--split-string"),
-  runsNext(["nice"], "-n", "--adjustment"),
-  runsNext(["nohup"]),
-  runsNext(["time"], "-f", "--format", "-o", "--output"),
-  runsNext(["command"]),
-  runsNext(["exec"], "-a"),
-  runsNext(
+  { ...launcher(["env"], "-u", "--unset", "-C", "--chdir"), splits: ["-S", "--split-string"] },
+  launcher(["nice"], "-n", "--adjustment"),
+  launcher(["nohup"]),
+  launcher(["time"], "-f", "--format", "-o", "--output"),
+  launcher(["command"]),
+  launcher(["exec"], "-a"),
+  launcher(
     ["xargs"],
     "-a", "--arg-file", "-d", "--delimiter", "-E", "-I", "-L", "-n", "--max-args", "-P", "--max-procs", "-s", "--max-chars", "--process-slot-var"
   ),
-  runsNext(["stdbuf"], "-i", "--input", "-o", "--output", "-e", "--error"),
-  runsNext(
+  launcher(["stdbuf"], "-i", "--input", "-o", "--output", "-e", "--error"),
+  launcher(
     ["sudo"],
     "-u", "--user", "-g", "--group", "-C", "--close-from", "-D", "--chdir", "--host", "-p", "--prompt", "-r", "--role", "-t", "--type", "-T", "--command-timeout", "-U", "--other-user", "-R", "--chroot"
   ),
-  runsNext(["cross-env"]),
-  runsNext(["dotenv"], "-e"),
-  runsNext(["xvfb-run"], "-e", "--error-file", "-f", "--auth-file", "-n", "--server-num", "-p", "--xauth-protocol", "-s", "--server-args", "-w", "--wait"),
-  runsNext(["nyc"], "-r", "--reporter", "--report-dir", "-t", "--temp-dir", "-n", "--include", "-x", "--exclude", "-e", "--extension", "-i", "--require", "--cwd", "--nycrc-path"),
-  runsNext(["c8"], "-r", "--reporter", "-o", "--reports-dir", "--report-dir", "-n", "--include", "-x", "--exclude", "-e", "--extension", "--temp-directory", "--src"),
-  { ...runsNext(["flock"], "-E", "--conflict-exit-code", "-w", "--wait", "--timeout"), operands: 1 },
+  launcher(["cross-env"]),
+  launcher(["dotenv"], "-e"),
+  launcher(["xvfb-run"], "-e", "--error-file", "-f", "--auth-file", "-n", "--server-num", "-p", "--xauth-protocol", "-s", "--server-args", "-w", "--wait"),
+  launcher(["nyc"], "-r", "--reporter", "--report-dir", "-t", "--temp-dir", "-n", "--include", "-x", "--exclude", "-e", "--extension", "-i", "--require", "--cwd", "--nycrc-path"),
+  launcher(["c8"], "-r", "--reporter", "-o", "--reports-dir", "--report-dir", "-n", "--include", "-x", "--exclude", "-e", "--extension", "--temp-directory", "--src"),
+  { ...launcher(["flock"], "-E", "--conflict-exit-code", "-w", "--wait", "--timeout"), operands: 1 },
 ];
-
-const LAUNCHERS = COMMAND_PREFIXES.filter((prefix) => prefix.launcher);
 
 interface ScriptInvocations {
   readonly runWords: readonly string[];
@@ -263,15 +254,6 @@ function simpleCommands(text: string): readonly SimpleCommand[] {
   return walk(parse(text), UNPIPED);
 }
 
-function handedOn(words: readonly string[]): readonly string[] | undefined {
-  const prefix = LAUNCHERS.find((row) => opensWith(words, row.words));
-  return prefix === undefined ? undefined : words.slice(prefix.words.length + prefix.operands);
-}
-
-function launched(words: readonly string[]): readonly string[] {
-  const next = handedOn(words);
-  return next === undefined ? words : launched(next);
-}
 
 const isOneOf = (words: readonly string[] | undefined, word: string | undefined): boolean =>
   words?.some((each) => each === word) === true;
@@ -301,9 +283,24 @@ function pastOptions(words: readonly string[], at: number, prefix: CommandPrefix
   return pastOptions(words, at + (prefix.valued.includes(word) ? 2 : 1), prefix);
 }
 
+const WHITESPACE = /\s+/;
+
+function commandAfter(words: readonly string[], at: number, prefix: CommandPrefix): readonly string[] {
+  const word = words[at];
+  if (word !== undefined && prefix.splits?.includes(word)) return [...(words[at + 1] ?? "").split(WHITESPACE).filter((part) => part !== ""), ...words.slice(at + 2)];
+  if (word === undefined || !(word.startsWith("-") || ASSIGNMENT.test(word))) return words.slice(at + prefix.operands);
+  return commandAfter(words, at + (prefix.valued.includes(word) ? 2 : 1), prefix);
+}
+
 function passedOn(words: readonly string[]): readonly string[] | undefined {
   const prefix = COMMAND_PREFIXES.find((row) => opensWith(words, row.words));
-  return prefix === undefined ? undefined : words.slice(pastOptions(words, prefix.words.length, prefix) + prefix.operands);
+  return prefix === undefined ? undefined : commandAfter(words, prefix.words.length, prefix);
+}
+
+// The command a step's words run, past every launcher and wrapper with its options.
+function launched(words: readonly string[]): readonly string[] {
+  const next = passedOn(words);
+  return next === undefined ? words : launched(next);
 }
 
 // The scripts a command runs: those its own words name, then those of each command it hands on to.
