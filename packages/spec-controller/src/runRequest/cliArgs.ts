@@ -7,12 +7,12 @@ export function asksForHelp(argv: readonly string[]): boolean {
   return argv.includes("--help") || argv.includes("-h");
 }
 
-// A flag's value is the argument after it, unless that is a flag too; a flag given no value reads as "true".
+// A flag's value is the argument after it, unless that is a flag too; a flag given no value reads as itself.
 export function parseArgs(argv: readonly string[]): Record<string, string> {
   const args: Record<string, string> = {};
   for (const [i, token] of argv.entries()) {
     const value = argv[i + 1];
-    if (isFlagShaped(token)) args[token.slice(2)] = value === undefined || isFlagShaped(value) ? "true" : value;
+    if (isFlagShaped(token)) args[token.slice(2)] = value === undefined || isFlagShaped(value) ? token : value;
   }
   return args;
 }
@@ -94,15 +94,9 @@ function commandEntry(registry: CliRegistry, command: string): CommandEntry {
   return registry.commands.find((c) => c.name === command)!;
 }
 
-export function positionalArguments(argv: readonly string[], registry: CliRegistry, command: string): string[] {
-  const scope = flagScopeOf(registry, command);
-  const words: string[] = [];
-  for (let i = 0; i < argv.length; i++) {
-    const token = argv[i]!;
-    if (!isFlagShaped(token)) words.push(token);
-    else if (scope.get(token)?.arg !== undefined) i++;
-  }
-  return words;
+// The arguments that are no flag, for allocate, whose flags take no value.
+export function positionalArguments(argv: readonly string[]): string[] {
+  return argv.filter((token) => !isFlagShaped(token));
 }
 
 function readToken(argv: readonly string[], i: number, walk: Walk, command: string): Refusal | number {
