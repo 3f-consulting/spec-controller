@@ -244,9 +244,6 @@ export interface TestCaseAsWritten {
 }
 
 const CLAIM_CODE_PROPERTY = "clm";
-// Go writes a package whose tests never ran, because it failed to build or its TestMain failed, as a failing TestMain with no classname.
-const GO_PACKAGE_TESTCASE = "TestMain";
-
 type Errored = TestCaseAsWritten & { readonly error: ErrorAsWritten };
 
 const isCollectionFailure = (testCase: TestCaseAsWritten): testCase is Errored => testCase.error !== undefined && !testCase.classname;
@@ -255,8 +252,10 @@ const isClassSetupFailure = (testCase: TestCaseAsWritten): testCase is Errored =
 
 const isSetupError = (testCase: TestCaseAsWritten): testCase is Errored => testCase.error?.inSetupOrTeardown === true;
 
+// Go writes a package whose tests never ran, because it failed to build or its TestMain failed, as a failing TestMain with no
+// classname; no writer leaves the classname off a test that ran.
 const isPackageFailure = (testCase: TestCaseAsWritten): testCase is TestCaseAsWritten & { readonly failure: EndingAsWritten } =>
-  !testCase.classname && testCase.name === GO_PACKAGE_TESTCASE && testCase.failure !== undefined;
+  !testCase.classname && testCase.failure !== undefined;
 
 const errorTextOf = ({ error }: Errored): string | undefined => error.text ?? error.message;
 
