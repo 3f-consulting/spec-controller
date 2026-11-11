@@ -268,6 +268,7 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-039", "git@github.com:web.git", { target: "github.com:web.git", hidden: ["git@"] }],
     ["CLM-EVR-039", "https://ci@/acme/web", { target: "unknown-target", hidden: ["ci"] }],
     ["CLM-EVR-039", "git@:acme/web.git", { target: "unknown-target", hidden: ["git"] }],
+    ["CLM-EVR-051", "git://example.com/acme/web.git", { target: "unknown-target", hidden: [] }],
   ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote, { target, hidden }) => {
     const { repo } = committedRepository("evr-origin-", remote);
     const provenance = provenanceOf(runIdentityOf({ origin: readTargetOrigin(repo), toolFolder: TOOL_FOLDER, ...VERSION }), []);

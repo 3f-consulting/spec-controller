@@ -25,7 +25,7 @@ function originPartsOf(remote: string): OriginAsWritten {
   if (remote.startsWith("file:")) return { form: "path", path: remote, carriesUser: remote.includes("@") };
   const scheme = URL_SCHEME.exec(remote);
   if (scheme !== null) return urlParts(scheme, remote.slice(scheme[0].length));
-  return OTHER_SCHEME_OR_TRANSPORT.test(remote) ? UNREAD : scpParts(remote);
+  return scpParts(remote);
 }
 
 // Git's own test: a remote with a / before its first :, or with no : at all, is a local path.
