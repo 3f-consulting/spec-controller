@@ -217,7 +217,7 @@ function testObservationOf(test: TestAsWritten, place: string): EvidenceObservat
 // Each test posts at its file; a file that failed with no test in it never reached its tests, and posts as never ran.
 export function testFileObservationsOf(files: readonly TestFileAsWritten[], root?: string): EvidenceObservation[] {
   return files.flatMap((file) => {
-    const place = relativizeToRoot(file.path ?? "", root);
+    const place = relativizeToRoot(String(file.path), root);
     if (file.status === FAILED_FILE && file.tests.length === 0) return [neverRanObservation(TEST_REPORT_KIND, place, file.message)];
     return file.tests.flatMap((test) => testObservationOf(test, place));
   });
