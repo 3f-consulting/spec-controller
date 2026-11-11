@@ -173,7 +173,7 @@ function groupKeyOf({ kind, place, cites }: EvidenceObservation): GroupKey {
   return {
     kind,
     ...(kind !== "fitness" && { file: place }),
-    ...(claimCode !== undefined && others.length >= 0 && { claimCode }),
+    ...(claimCode !== undefined && others.length === 0 && { claimCode }),
   };
 }
 
