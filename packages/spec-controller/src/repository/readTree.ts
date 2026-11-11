@@ -29,7 +29,6 @@ function isDirectoryEntry(entry: string): boolean {
 function proveListable(top: string, dir: string, ignored: ReadonlySet<string>): void {
   const path = join(top, dir);
   const entries = readOrRefuse(AppMessage.TreeDirectory, path, () => listedAndEntered(path));
-  if (dir !== "" && entries.some((entry) => entry.name === ".git")) return;
   for (const entry of entries) {
     const child = dir === "" ? entry.name : `${dir}/${entry.name}`;
     if (entry.isDirectory() && entry.name !== ".git" && !ignored.has(child)) proveListable(top, child, ignored);

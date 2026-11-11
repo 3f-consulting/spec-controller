@@ -130,6 +130,13 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-085 | a folder in the tree it cannot read |
         | CLM-STG-089 | a feature file that does not parse  |
 
+    @unit @CLM-STG-090
+    Scenario: allocate still answers when a nested checkout holds a folder it cannot read
+      given the repository's features folder contained a feature file tagged @ONE, with a scenario tagged @CLM-ONE-001
+      and the repository contained a nested checkout, such as a submodule, holding a folder allocate could not read
+      when the developer asks for the next code for ONE
+      then the answer will be CLM-ONE-002, and nothing else
+
   Rule: allocate says what history it did not read
 
     @unit

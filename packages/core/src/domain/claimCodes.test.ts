@@ -395,6 +395,24 @@ describe("allocate names what it could not read, and gives no code", () => {
   });
 });
 
+describe("allocate still answers when a nested checkout holds a folder it cannot read", () => {
+  it("[CLM-STG-090] a checkout in vendor/lib, as a submodule is, holding a folder allocate cannot read", ({ skip }) => {
+    skip(runsAsRoot());
+    const repo = repositoryCarrying("CLM-ONE-001");
+    const nested = join(repo, "vendor", "lib");
+    writeInto(nested, "README", "a vendored library\n");
+    git(nested, ["init", "-q", "-b", "main"]);
+    commitAll(nested, "the library");
+    writeInto(nested, "data/notes.md", "CLM-ONE-009\n");
+    withhold(join(nested, "data"), 0o000);
+
+    const answered = allocateIn(repo, ["ONE"]);
+
+    expect(answered.stdout).toBe("CLM-ONE-002\n");
+    expect(answered.stderr).toBe(`${inTree("CLM-ONE-001", FEATURE_PATH, 4)}\n`);
+  });
+});
+
 function repositoryWhoseHistoryOnceCarried005(): string {
   const repo = repositoryCarrying("CLM-ONE-001");
   committedThenDeleted(repo, "docs/old.md", "CLM-ONE-005\n");
