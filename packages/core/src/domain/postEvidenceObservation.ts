@@ -157,19 +157,12 @@ export function fitnessObservationsOf(
   ];
 }
 
-export type RunResult = "passed" | "failed" | "never-reached-its-assertions" | "inconclusive";
-
-export function resultOfRun(run: RunResult): EvidenceObservation["result"] | undefined {
-  if (run === "inconclusive") return undefined;
-  return run === "never-reached-its-assertions" ? "never-ran" : run;
-}
-
 function neverRanObservation(kind: QualityCheckKind, place: string, message: string | undefined): EvidenceObservation {
   return { cites: [], result: "never-ran", kind, place, notes: [], ...(message === undefined ? {} : { message }) };
 }
 
 // One code written in two places, such as a scenario's tag and the corpus at its line, is one citation.
-export function nearestCitation(levels: readonly (readonly ClaimCode[])[]): readonly ClaimCode[] {
+function nearestCitation(levels: readonly (readonly ClaimCode[])[]): readonly ClaimCode[] {
   const nearest = levels.find((codes) => codes.length > 0) ?? [];
   return nearest.filter((code, at) => nearest.findIndex((other) => sameCode(code, other)) === at);
 }
@@ -348,9 +341,71 @@ export function exampleObservationsOf(report: ExamplesAsWritten, root?: string):
 
 const KINDS_A_SCENARIO_TAG_NAMES: readonly QualityCheckKind[] = ["integration", "e2e", "performance"];
 
-export function kindsTheTagsName(tags: readonly string[]): QualityCheckKind[] {
+function kindsTheTagsName(tags: readonly string[]): QualityCheckKind[] {
   const named = KINDS_A_SCENARIO_TAG_NAMES.filter((kind) => tags.includes(kind));
   return named.length > 0 ? named : ["integration"];
+}
+
+// A step of a scenario run, as the report wrote it: its keyword, its text and its status.
+interface StepRunAsWritten {
+  readonly keyword?: string;
+  readonly text?: string;
+  readonly status?: string;
+}
+
+// A scenario run in a report of scenario runs, as the report wrote it: its feature's path and name, the line it ran
+// from, its name, its tags without their at-sign, and its steps.
+export interface ScenarioRunAsWritten {
+  readonly featurePath?: string;
+  readonly featureName?: string;
+  readonly line?: number;
+  readonly name?: string;
+  readonly tags: readonly string[];
+  readonly steps: readonly StepRunAsWritten[];
+}
+
+type StepEnding = "passed" | "failed" | "could-not-run";
+
+// A step that matched no definition, or two, could not run; a step skipped, pending or of any other status ends nothing.
+const ENDING_OF_STEP_STATUS: ReadonlyMap<string, StepEnding> = new Map([
+  ["passed", "passed"],
+  ["failed", "failed"],
+  ["ambiguous", "could-not-run"],
+  ["undefined", "could-not-run"],
+]);
+
+const endingOf = (step: StepRunAsWritten): StepEnding | undefined => (step.status === undefined ? undefined : ENDING_OF_STEP_STATUS.get(step.status));
+
+// A failed step fails the scenario; else one that could not run means it never ran; else it passed only when every step passed.
+function scenarioResultOf(steps: readonly StepRunAsWritten[]): EvidenceObservation["result"] | undefined {
+  const endings = steps.map(endingOf);
+  if (endings.includes("failed")) return "failed";
+  if (endings.includes("could-not-run")) return "never-ran";
+  return endings.length > 0 && endings.every((ending) => ending === "passed") ? "passed" : undefined;
+}
+
+const stepText = (step: StepRunAsWritten): string => `${(step.keyword ?? "").trim()} ${step.text ?? ""}`;
+
+const codesIn = (texts: readonly string[]): ClaimCode[] => texts.flatMap((text) => claimCodeFrom(text) ?? []);
+
+function scenarioRunObservationOf(run: ScenarioRunAsWritten, root: string | undefined, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
+  const result = scenarioResultOf(run.steps);
+  if (result === undefined) return [];
+  const place = relativizeToRoot(run.featurePath ?? run.featureName ?? "", root);
+  const rowCodes = run.line === undefined ? [] : claimCodesAt(place, run.line);
+  const [firstKind, ...otherKinds] = kindsTheTagsName(run.tags);
+  const cites = nearestCitation([codesIn([...run.tags, ...rowCodes])]);
+  if (result === "never-ran") {
+    return [{ cites, result, kind: firstKind!, place, notes: run.steps.filter((step) => endingOf(step) === "could-not-run").map(stepText) }];
+  }
+  const { name } = run;
+  return [firstKind!, ...otherKinds].map((kind) => ({ cites, result, kind, place, notes: [], ...(name === undefined ? {} : { name }) }));
+}
+
+// A scenario run posts at its feature file, citing its tags' codes and the code the corpus has at its line, once at each
+// kind its tags name; one that never ran posts once, naming the steps that could not run.
+export function scenarioRunObservationsOf(runs: readonly ScenarioRunAsWritten[], root: string | undefined, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
+  return runs.flatMap((run) => scenarioRunObservationOf(run, root, claimCodesAt));
 }
 
 export function claimPostedTo(

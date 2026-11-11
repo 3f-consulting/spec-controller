@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { shellReading } from "../inputs/shell.js";
-import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../inputs/cucumber.js";
 import { workflowSteps } from "../inputs/parsedWorkflows.test-utils.js";
 import { targetConfigurationFrom } from "../inputs/manifest.js";
 import type { ClaimCode } from "./claimCodes.js";
@@ -11,6 +10,7 @@ import {
   claimPostedTo,
   exampleObservationsOf,
   fitnessObservationsOf,
+  scenarioRunObservationsOf,
   stepDispositionOf,
   testCaseObservationsOf,
   testFileObservationsOf,
@@ -48,15 +48,11 @@ const rspec = (status: string, title = "[CLM-ONE-001] a spec", fullTitle = title
 const rspecLoadError = (message: string): EvidenceObservation[] =>
   exampleObservationsOf({ examples: [], errorsOutsideExamples: 1, messages: [message] });
 
-const scenario = (tags: readonly string[], statuses: readonly string[], name = "one adds one"): CucumberJsonReport => [
-  {
-    uri: "one.feature",
-    elements: [{ name, tags: tags.map((tag) => ({ name: tag })), steps: statuses.map((status) => ({ keyword: "Given ", name: "one adds one", result: { status } })) }],
-  },
-];
-
-const cucumber = (tags: readonly string[], statuses: readonly string[]): EvidenceObservation[] =>
-  parseCucumberEvidenceObservations(scenario(tags, statuses), undefined, () => []);
+// One scenario run in one.feature, tagged as given, whose steps ended in the statuses given.
+const cucumber = (tags: readonly string[], statuses: readonly string[]): EvidenceObservation[] => {
+  const steps = statuses.map((status) => ({ keyword: "Given ", text: "one adds one", status }));
+  return scenarioRunObservationsOf([{ featurePath: "one.feature", name: "one adds one", tags, steps }], undefined, () => []);
+};
 
 const workflow = (step: string, jobExtra = ""): string =>
   `jobs:\n  build:\n    runs-on: ubuntu-latest\n${jobExtra}    steps:\n${step}`;
@@ -389,8 +385,8 @@ describe("balance posts each result with how it went", () => {
     ["CLM-OBS-028", { result: "failed", posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test", failure: { message: "boom" } }) }],
     ["CLM-OBS-029", { result: "passed", posted: () => rspec("passed") }],
     ["CLM-OBS-030", { result: "failed", posted: () => rspec("failed") }],
-    ["CLM-OBS-031", { result: "passed", posted: () => cucumber(["@CLM-ONE-001"], ["passed", "passed"]) }],
-    ["CLM-OBS-032", { result: "failed", posted: () => cucumber(["@CLM-ONE-001"], ["failed", "skipped"]) }],
+    ["CLM-OBS-031", { result: "passed", posted: () => cucumber(["CLM-ONE-001"], ["passed", "passed"]) }],
+    ["CLM-OBS-032", { result: "failed", posted: () => cucumber(["CLM-ONE-001"], ["failed", "skipped"]) }],
     ["CLM-OBS-033", { result: "passed", posted: () => fitness([CITING_STEP], [{ key: "CLM-ONE-001", outcome: "success" }]) }],
     ["CLM-OBS-034", { result: "failed", posted: () => fitness([CITING_STEP], [{ key: "CLM-ONE-001", outcome: "failure" }]) }],
     ["CLM-OBS-035", { result: "failed", posted: () => fitness([{ ...CITING_STEP, continueOnError: true }], [{ key: "CLM-ONE-001", outcome: "failure", conclusion: "success" }]) }],
@@ -406,7 +402,7 @@ describe("balance posts each result with how it went", () => {
     ["CLM-OBS-040", { posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test", skipped: true }) }],
     ["CLM-OBS-041", { posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] a test", skipped: true }) }],
     ["CLM-OBS-042", { posted: () => [...rspec("pending"), ...rspec("skipped")] }],
-    ["CLM-OBS-043", { posted: () => cucumber(["@CLM-ONE-001"], ["passed", "skipped"]) }],
+    ["CLM-OBS-043", { posted: () => cucumber(["CLM-ONE-001"], ["passed", "skipped"]) }],
   ])("[%s] balance posts nothing for a test that was skipped", (_clm, { posted }) => {
     expect(posted()).toEqual([]);
   });
@@ -421,8 +417,8 @@ describe("balance posts each result with how it went", () => {
     ["CLM-OBS-049", { posted: () => rspecLoadError("An error occurred while loading ./spec/a_spec.rb.\n"), cites: [], named: { place: "spec/a_spec.rb", message: "An error occurred while loading ./spec/a_spec.rb.\n" } }],
     ["CLM-OBS-099", { posted: () => rspecLoadError("NameError: uninitialized constant Widget\n"), cites: [], named: { message: "NameError: uninitialized constant Widget\n" } }],
     ["CLM-OBS-050", { posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-ONE-001"), error: { text: "fixture failed" } }), cites: [ONE], named: { place: "tests.a", name: "test_a" } }],
-    ["CLM-OBS-051", { posted: () => cucumber(["@CLM-ONE-001"], ["ambiguous"]), cites: [ONE], named: { notes: ["Given one adds one"] } }],
-    ["CLM-OBS-052", { posted: () => cucumber(["@CLM-ONE-001"], ["undefined"]), cites: [ONE], named: { notes: ["Given one adds one"] } }],
+    ["CLM-OBS-051", { posted: () => cucumber(["CLM-ONE-001"], ["ambiguous"]), cites: [ONE], named: { notes: ["Given one adds one"] } }],
+    ["CLM-OBS-052", { posted: () => cucumber(["CLM-ONE-001"], ["undefined"]), cites: [ONE], named: { notes: ["Given one adds one"] } }],
     ["CLM-OBS-053", { posted: () => fitness([CITING_STEP], [{ key: "CLM-ONE-001", outcome: "skipped" }]), cites: [ONE], named: { place: "ci.yml:build:Lint" } }],
     ["CLM-OBS-054", { posted: () => fitness([CITING_STEP], [{ key: "CLM-ONE-001", outcome: "neutral" }]), cites: [ONE], named: { place: "ci.yml:build:Lint" } }],
   ])("[%s] balance posts what could not run as never ran", (_clm, { posted, cites, named }) => {
@@ -454,10 +450,10 @@ describe("balance posts each result at the kind of quality check its source and 
   it.each<[string, { posted: Posted; kinds: readonly string[] }]>([
     ["CLM-OBS-059", { posted: () => vitest("passed", "[CLM-ONE-001] @e2e @integration a test"), kinds: ["unit"] }],
     ["CLM-OBS-060", { posted: () => pytest({ classname: "tests.a", name: "test_e2e", properties: clmProperty("CLM-ONE-001") }), kinds: ["unit"] }],
-    ["CLM-OBS-061", { posted: () => cucumber(["@CLM-ONE-001"], ["passed"]), kinds: ["integration"] }],
-    ["CLM-OBS-062", { posted: () => cucumber(["@CLM-ONE-001", "@e2e"], ["passed"]), kinds: ["e2e"] }],
-    ["CLM-OBS-063", { posted: () => cucumber(["@CLM-ONE-001", "@performance"], ["passed"]), kinds: ["performance"] }],
-    ["CLM-OBS-064", { posted: () => cucumber(["@CLM-ONE-001", "@integration", "@e2e"], ["passed"]), kinds: ["integration", "e2e"] }],
+    ["CLM-OBS-061", { posted: () => cucumber(["CLM-ONE-001"], ["passed"]), kinds: ["integration"] }],
+    ["CLM-OBS-062", { posted: () => cucumber(["CLM-ONE-001", "e2e"], ["passed"]), kinds: ["e2e"] }],
+    ["CLM-OBS-063", { posted: () => cucumber(["CLM-ONE-001", "performance"], ["passed"]), kinds: ["performance"] }],
+    ["CLM-OBS-064", { posted: () => cucumber(["CLM-ONE-001", "integration", "e2e"], ["passed"]), kinds: ["integration", "e2e"] }],
   ])("[%s] a test report's result will be unit evidence, and a Cucumber result will take the kind its tags name", (_clm, { posted, kinds }) => {
     expect(posted().map(({ kind }) => kind)).toEqual(kinds);
   });
@@ -487,7 +483,7 @@ describe("an Evidence Observation says where to look", () => {
   it.each<[string, { posted: Posted; where: Partial<EvidenceObservation> }]>([
     ["CLM-OBS-078", { posted: () => testFileObservationsOf([{ path: "a.test.ts", tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }]), where: { place: "a.test.ts", name: "adds two numbers" } }],
     ["CLM-OBS-079", { posted: () => testFileObservationsOf([{ path: "/work/acme/a.test.ts", tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }], "/work/acme"), where: { place: "a.test.ts", name: "adds two numbers" } }],
-    ["CLM-OBS-080", { posted: () => parseCucumberEvidenceObservations(scenario(["@CLM-ONE-001"], ["passed"]), undefined, () => []), where: { place: "one.feature", name: "one adds one" } }],
+    ["CLM-OBS-080", { posted: () => cucumber(["CLM-ONE-001"], ["passed"]), where: { place: "one.feature", name: "one adds one" } }],
     ["CLM-OBS-081", { posted: () => fitness([{ id: "CLM-ONE-002", name: "Build", command: "pnpm build" }, CITING_STEP], [{ key: "CLM-ONE-001", outcome: "success" }]), where: { place: "ci.yml:build:Lint" } }],
   ])("[%s] balance posts an Evidence Observation saying where to look", (_clm, { posted, where }) => {
     expect(posted()).toMatchObject([where]);
@@ -520,7 +516,7 @@ describe("balance files each Evidence Observation under the claim it cites, or e
     ["CLM-OBS-092", { posted: () => junit({ classname: "example.com/a", name: "TestA/[CLM-ONE-001][CLM-ONE-002]_a" }), claims: () => [claim(ONE), claim(TWO)], named: [ONE, TWO] }],
     ["CLM-OBS-093", { posted: () => junit({ classname: "example.ATest", name: "[CLM-ONE-001] [CLM-ONE-002] a test" }), claims: () => [claim(ONE), claim(TWO)], named: [ONE, TWO] }],
     ["CLM-OBS-094", { posted: () => rspec("passed", "[CLM-ONE-001] [CLM-ONE-002] a spec"), claims: () => [claim(ONE), claim(TWO)], named: [ONE, TWO] }],
-    ["CLM-OBS-095", { posted: () => cucumber(["@CLM-ONE-001", "@CLM-ONE-002"], ["passed"]), claims: () => [claim(ONE), claim(TWO)], named: [ONE, TWO] }],
+    ["CLM-OBS-095", { posted: () => cucumber(["CLM-ONE-001", "CLM-ONE-002"], ["passed"]), claims: () => [claim(ONE), claim(TWO)], named: [ONE, TWO] }],
   ])("[%s] balance posts an Evidence Observation no single executable claim can take to the unnamed claim", (_clm, { posted, claims, named }) => {
     const [observation] = posted();
     expect(claimPostedTo(observation!, claims())).toEqual({});
