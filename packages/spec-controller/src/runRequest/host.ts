@@ -40,6 +40,6 @@ export interface UnknownCommandAnswer {
 export function answerUnknownCommand(command: string, help: string): UnknownCommandAnswer {
   return {
     exitCode: USAGE_EXIT_CODE,
-    refusal: refusal(AppError.UnknownCommand, { command }, ["", help]),
+    refusal: refusal(AppError.UnknownCommand, { command }, [message(AppMessage.HelpAfterRefusal, { help })]),
   };
 }

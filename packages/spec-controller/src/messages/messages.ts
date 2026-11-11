@@ -1,10 +1,8 @@
 export enum AppMessage {
-  HelpTitle = "help-title",
-  HelpUsage = "help-usage",
-  HelpCommands = "help-commands",
-  HelpOptions = "help-options",
-  HelpArguments = "help-arguments",
-  HelpPointer = "help-pointer",
+  Help = "help",
+  HelpEntry = "help-entry",
+  CommandHelp = "command-help",
+  CommandHelpArguments = "command-help-arguments",
   HelpFlag = "help-flag",
   BalanceSummary = "balance-summary",
   FeaturesFlag = "features-flag",
@@ -33,9 +31,6 @@ export enum AppMessage {
   HighestSeenInTree = "highest-seen-in-tree",
   HighestSeenInCommit = "highest-seen-in-commit",
   PartAlreadyHeaded = "part-already-headed",
-  HelpUsageLine = "help-usage-line",
-  HelpCommandTitle = "help-command-title",
-  HelpCommandUsageLine = "help-command-usage-line",
   SeeCommands = "see-commands",
   SeeFlags = "see-flags",
   SeeFlagsAndValues = "see-flags-and-values",
@@ -51,6 +46,8 @@ export enum AppMessage {
   FormatOnStandardOutput = "format-on-standard-output",
   CodedUsageError = "coded-usage-error",
   CodedHostUsageError = "coded-host-usage-error",
+  PointedRefusal = "pointed-refusal",
+  HelpAfterRefusal = "help-after-refusal",
   History = "history",
   Repository = "repository",
   Tree = "tree",
@@ -132,8 +129,10 @@ export interface AppMessageValues {
   [AppMessage.HighestSeenInTree]: { code: string; path: string; line: number };
   [AppMessage.HighestSeenInCommit]: { code: string; path: string; line: number; commit: string };
   [AppMessage.PartAlreadyHeaded]: { part: string };
-  [AppMessage.HelpCommandTitle]: { command: string; summary: string };
-  [AppMessage.HelpCommandUsageLine]: { command: string; arguments: string };
+  [AppMessage.Help]: { commands: string };
+  [AppMessage.HelpEntry]: { name: string; description: string };
+  [AppMessage.CommandHelp]: { command: string; summary: string; arguments: string; options: string };
+  [AppMessage.CommandHelpArguments]: { command: string; arguments: string; entries: string };
   [AppMessage.SeeFlags]: { scope: string };
   [AppMessage.SeeFlagsAndValues]: { scope: string };
   [AppMessage.SeeArguments]: { scope: string };
@@ -142,6 +141,8 @@ export interface AppMessageValues {
   [AppMessage.FormatOnStandardOutput]: { fmt: string };
   [AppMessage.CodedUsageError]: { command: string; code: AppError; message: string };
   [AppMessage.CodedHostUsageError]: { code: AppError; message: string };
+  [AppMessage.PointedRefusal]: { refusal: string; pointers: string };
+  [AppMessage.HelpAfterRefusal]: { help: string };
   [AppMessage.GitExited]: { command: string; status: string; said: string };
   [AppMessage.FlaggedReport]: { flag: string };
   [AppMessage.FlaggedRecord]: { flag: string };
