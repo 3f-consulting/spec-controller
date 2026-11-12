@@ -64,11 +64,13 @@ suite_limit() {
 out=${RED_PROOF_DIR:-$(mktemp -d)}
 mkdir -p "$out"
 
+# An it.each row writes its code in its table and gets the bracket only in its resolved title, so the files are found by the
+# bare code and the filter picks the bracketed titles.
 prove_unit() {
   local filter="\\[$code\\]" files=() file
   while IFS= read -r file; do
     files+=("$file")
-  done < <(git grep -l -F "[$code]" -- ':(glob)packages/*/src/**/*.test.ts' || true)
+  done < <(git grep -l -F "$code" -- ':(glob)packages/*/src/**/*.test.ts' || true)
   refuse_empty "${#files[@]}"
 
   limit="$(suite_limit UNIT_SUITE_TIMEOUT_S)"
