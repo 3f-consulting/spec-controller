@@ -1,22 +1,25 @@
 @CLI
 Feature: the command line reads what you give it, and says where each kind of output goes
 
-  spec-controller runs a command, balance or allocate, and the command's flags go after it.
+  spec-controller runs a command, balance or allocate. A command's flags go after it.
 
-  Help answers first. It lists the commands, or a command's flags, and it
-  runs nothing and writes nothing. A bare invocation answers help too.
+  Help answers first. It lists the commands, or one command's flags. It runs nothing and writes
+  nothing. Running spec-controller with nothing after it also shows help. There is one exception:
+  help after a command the tool does not have does not answer. The run ends with a usage error, as
+  it does for any command the tool does not have.
 
-  Every argument is read as what it is, or validation fails. The invocation stops as a usage error
-  before anything runs, naming the argument and what is wrong with it.
+  Every argument is read as what it is, or validation fails. Then the run stops with a usage error
+  before anything runs. The error names the argument and says what is wrong with it.
 
-  An input the command line names, or leaves to its default, is validated the same way, and one that
-  cannot be read stops the run as a usage error too.
+  The tool validates each input the same way, whether the command line names it or leaves it to
+  its default. An input that cannot be read when it is validated also stops the run with a usage
+  error. A file that fails to read after validation accepted it is an unexpected error.
 
-  A run ends on an exit code: 0 balanced, 1 out of balance, 3 not reconciled, 2 for a usage error,
-  or 4 for an unexpected error before its verdict. --exit-zero moves only 1 to 0, never the code of
-  a run that could not be reconciled.
+  A run ends on an exit code: 0 if balanced, 1 if out of balance, 3 if not reconciled, 2 for a
+  usage error, and 4 for an unexpected error before the run verdict. --exit-zero changes only 1 to
+  0. It never changes the code of a run that could not be reconciled.
 
-  This is just about the command line. What a command does is specified in the feature files about it.
+  This file covers only the command line. The feature files for each command say what it does.
 
   Rule: asking for help shows what can be asked for
 
@@ -151,13 +154,14 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
   Rule: a command validates every input before it does its work
 
-    Before a command does its work, it validates every input it reads, named on the command line or
-    left to its default: the evidence reports, the step record, the feature corpus, the CI
-    workflows and the manifest. A well-formed input that is empty is valid.
-    A CI workflows folder read by default that does not exist counts as no workflows. A feature corpus
-    read by default that does not exist counts as no feature files. A valid evidence report whose
-    evidence did not fully materialise is valid too, and the run is unsound. A configuration setting
-    balance cannot use is left out, as configuration.feature says.
+    A command validates every input it reads before it does its work. This applies to inputs named
+    on the command line and to inputs left to their default: the evidence reports, the step record,
+    the feature corpus, the CI workflows and the manifest. An input that is well formed but empty
+    is valid. If the CI workflows are left to their default and that folder does not exist, the
+    tool reads no workflows. If the feature corpus is left to its default and that folder does not
+    exist, the tool reads no feature files. An evidence report that is valid stays valid even if
+    its evidence did not fully materialise; the run is then unsound. The balance command leaves out
+    any configuration setting it cannot use, as configuration.feature says.
 
     @unit @CLM-CLI-146
     Scenario: an empty evidence report will count as no evidence, not as a broken file
