@@ -89,7 +89,7 @@ The refusal names the input, the path, and what was wrong with it. A well-formed
 
 ### `allocate`
 
-`spec-controller allocate` prints the next claim code for a feature part. It reaches no verdict: it exits `0` when it answers, and `2` for a usage error or an unknown part. A file or directory it cannot read, directly or through git, is a usage error: it is refused, naming the path and the reason, and no code is given.
+`spec-controller allocate` prints the next claim code for a feature code. It reaches no verdict: it exits `0` when it answers, and `2` for a usage error or an unknown feature code. A file or directory it cannot read, directly or through git, is a usage error: it is refused, naming the path and the reason, and no code is given.
 
 ## On CI
 

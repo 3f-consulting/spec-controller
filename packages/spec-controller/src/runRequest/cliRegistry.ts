@@ -68,7 +68,7 @@ export const balanceCommand: CommandSpec = {
 export const allocateCommand: CommandSpec = {
   name: "allocate",
   summary: message(AppMessage.AllocateSummary),
-  positional: { name: "<FFF>", description: message(AppMessage.FeaturePartArgument) },
+  positional: { name: "<FFF>", description: message(AppMessage.FeatureCodeArgument) },
   flags: [
     {
       name: "--new",

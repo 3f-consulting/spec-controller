@@ -197,7 +197,7 @@ describe("balance finds no claim code error in a feature file with no feature co
 
 const FEATURE_PATH = "features/one.feature";
 
-const featureCarrying = (code: string): string => `@ONE\nFeature: part ONE\n\n  @${code} @unit\n  Scenario: scenario 1\n    Given a step\n`;
+const featureCarrying = (code: string): string => `@ONE\nFeature: feature code ONE\n\n  @${code} @unit\n  Scenario: scenario 1\n    Given a step\n`;
 
 function repositoryCarrying(code: string): string {
   const repo = freshDirectory("claim-codes-");
@@ -363,7 +363,7 @@ function withheldFolderBesideItsIgnoredBackup(): void {
 
 function withheldFeaturesSubfolder(): void {
   const repo = repositoryCarrying("CLM-ONE-001");
-  writeInto(repo, "features/more/two.feature", "@TWO\nFeature: part TWO\n");
+  writeInto(repo, "features/more/two.feature", "@TWO\nFeature: feature code TWO\n");
   const more = join(repo, "features", "more");
   withhold(more, 0o000);
 
@@ -395,7 +395,7 @@ function damagedRepository(): void {
 
 function unparseableFeatureFile(): void {
   const repo = repositoryCarrying("CLM-ONE-001");
-  writeInto(repo, "features/two.feature", "@TWO\nFeature: part TWO\n\n  Scenario: s\n    Given a step\n  this line is no Gherkin\n");
+  writeInto(repo, "features/two.feature", "@TWO\nFeature: feature code TWO\n\n  Scenario: s\n    Given a step\n  this line is no Gherkin\n");
   const file = join(repo, "features", "two.feature");
   const complaint = message(AppError.CorpusFileUnparseable, { corpus: message(AppMessage.FeatureCorpus), file, message: "" });
 
@@ -470,13 +470,13 @@ describe("with no history to read, it answers and says what it did not read", ()
 
 function headedOneAndTwo(): string {
   const repo = repositoryCarrying("CLM-ONE-001");
-  writeInto(repo, "features/two.feature", "@TWO\nFeature: part TWO\n\n  @CLM-TWO-001 @unit\n  Scenario: scenario 1\n    Given a step\n");
+  writeInto(repo, "features/two.feature", "@TWO\nFeature: feature code TWO\n\n  @CLM-TWO-001 @unit\n  Scenario: scenario 1\n    Given a step\n");
   commitAll(repo, "a second feature");
   return repo;
 }
 
 function fixtureHeadedZzz(repo: string): void {
-  writeInto(repo, "tests/fixtures/sample/features/zzz.feature", "@ZZZ\nFeature: part ZZZ\n");
+  writeInto(repo, "tests/fixtures/sample/features/zzz.feature", "@ZZZ\nFeature: feature code ZZZ\n");
   commitAll(repo, "a test fixture");
 }
 
@@ -486,12 +486,12 @@ function featureFileWithNoFeatureCode(repo: string): void {
 }
 
 function secondFeatureFileTaggedOne(repo: string): void {
-  writeInto(repo, "features/one-more.feature", "@ONE\nFeature: more of part ONE\n");
+  writeInto(repo, "features/one-more.feature", "@ONE\nFeature: more of feature code ONE\n");
   commitAll(repo, "a second feature file tagged ONE");
 }
 
 function deletedFeatureHeadedZzz(repo: string): void {
-  committedThenDeleted(repo, "features/zzz.feature", "@ZZZ\nFeature: part ZZZ\n");
+  committedThenDeleted(repo, "features/zzz.feature", "@ZZZ\nFeature: feature code ZZZ\n");
 }
 
 describe("a feature code no feature file has stops it, listing those that do", () => {
@@ -509,8 +509,8 @@ describe("a feature code no feature file has stops it, listing those that do", (
 
     expect(answered.stdout).toBe("");
     expect(answered.exitCode).toBe(2);
-    const listed = message(AppError.UnknownPartRefused, { part: "ZZZ", parts: "ONE, TWO" });
-    expect(answered.stderr).toBe(`${printedRefusal(AppError.UnknownPartRefused, listed, "allocate")}\n`);
+    const listed = message(AppError.UnknownFeatureCodeRefused, { featureCode: "ZZZ", featureCodes: "ONE, TWO" });
+    expect(answered.stderr).toBe(`${printedRefusal(AppError.UnknownFeatureCodeRefused, listed, "allocate")}\n`);
   });
 });
 
@@ -526,7 +526,7 @@ describe("--new gives the next code for any well-formed feature code", () => {
       "CLM-STG-081",
       "ONE",
       "CLM-ONE-004",
-      () => `${inTree("CLM-ONE-003", FEATURE_PATH, 4)}\n${message(AppMessage.PartAlreadyHeaded, { part: "ONE" })}`,
+      () => `${inTree("CLM-ONE-003", FEATURE_PATH, 4)}\n${message(AppMessage.FeatureCodeAlreadyHeaded, { featureCode: "ONE" })}`,
     ],
     ["CLM-STG-082", "OLD", "CLM-OLD-008", (retiring) => inCommit("CLM-OLD-007", "docs/old.md", 1, retiring)],
   ])("[%s] %s", (_clm, code, answer, said) => {
@@ -544,7 +544,7 @@ describe("a feature code on a feature file in a subdirectory is found", () => {
     const repo = freshDirectory("claim-codes-nested-");
     git(repo, ["init", "-q", "-b", "main"]);
     mkdirSync(join(repo, "features", "outer", "inner"), { recursive: true });
-    writeInto(repo, "features/outer/inner/nest.feature", "@NEST\nFeature: part NEST\n\n  @CLM-NEST-004 @unit\n  Scenario: scenario 1\n    Given a step\n");
+    writeInto(repo, "features/outer/inner/nest.feature", "@NEST\nFeature: feature code NEST\n\n  @CLM-NEST-004 @unit\n  Scenario: scenario 1\n    Given a step\n");
     commitAll(repo, "the corpus");
 
     expect(allocateIn(repo, ["NEST"]).stdout).toBe("CLM-NEST-005\n");
@@ -557,7 +557,7 @@ describe("a request that is not a feature code stops as a usage error", () => {
 
     expect(answered.stdout).toBe("");
     expect(answered.exitCode).toBe(2);
-    expect(answered.stderr).toBe(`${printedRefusal(AppError.NotAFeaturePart, message(AppError.NotAFeaturePart, { part: "fit" }), "allocate")}\n`);
+    expect(answered.stderr).toBe(`${printedRefusal(AppError.NotAFeatureCode, message(AppError.NotAFeatureCode, { featureCode: "fit" }), "allocate")}\n`);
   });
 });
 
@@ -578,14 +578,14 @@ describe("with no history to read and no code seen, it answers and says what it 
     const answered = newCodeInCopyWithoutGit();
     expect({ answer: answered.stdout, note: answered.stderr }).toEqual({
       answer: "CLM-ZZ-001\n",
-      note: `${message(AppMessage.NoRepositoryRisksPartCode, { part: "ZZ" })}\n${message(AppMessage.HighestSeenNone)}\n`,
+      note: `${message(AppMessage.NoRepositoryRisksFeatureCode, { featureCode: "ZZ" })}\n${message(AppMessage.HighestSeenNone)}\n`,
     });
   });
 
   it("[CLM-STG-088] a shallow clone", () => {
     const answered = newCodeInShallowClone();
     expect(answered.stdout).toBe("CLM-ZZ-001\n");
-    expect(answered.stderr.split("\n")[0]).toMatch(new RegExp(`^${message(AppMessage.ShallowHistoryRisksPartCode, { before: "EDGE", part: "ZZ" }).split("EDGE").map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[0-9a-f]+")}$`));
+    expect(answered.stderr.split("\n")[0]).toMatch(new RegExp(`^${message(AppMessage.ShallowHistoryRisksFeatureCode, { before: "EDGE", featureCode: "ZZ" }).split("EDGE").map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[0-9a-f]+")}$`));
   });
 });
 

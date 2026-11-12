@@ -73,7 +73,7 @@ There is one form per runner, and nothing else. The scenario's tag line (`@CLM-<
 
 | `kind of quality check` | the evidence observation | the form that cites | example |
 |---|---|---|---|
-| `unit` | a Vitest assertion | a bracketed `[CLM-…]` in its `it` title, else in an enclosing `describe` title; the most specific wins | `describe("[CLM-<FFF>-<NNN>] a feature part whose highest live code …", …)` |
+| `unit` | a Vitest assertion | a bracketed `[CLM-…]` in its `it` title, else in an enclosing `describe` title; the most specific wins | `describe("[CLM-<FFF>-<NNN>] a feature code whose highest live claim code …", …)` |
 | `integration`, `e2e`, `performance` | the Cucumber report's run of the scenario | the scenario's own claim code, which the report carries | the same `@CLM-<FFF>-<NNN>` tag line, as Cucumber reports it |
 | `unit` | a pytest test, in its JUnit XML report | exactly one `clm` property on its `<testcase>`, which a `@pytest.mark.clm` marker and a `conftest.py` hook write | `@pytest.mark.clm("CLM-<FFF>-<NNN>")` on the test |
 | `fitness` | the CI step that runs the check, read on its `outcome` | the step's `id:` | `id: CLM-FIT-<NNN>` on the step, against `@fitness @CLM-FIT-<NNN>` |
@@ -125,7 +125,7 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | Term | Meaning |
 |---|---|
 | `balance` | The command that reconciles the Gherkin scenarios against the test and CI evidence and writes the Evidence Reconciliation. It is a gate: an out-of-balance run exits `1`. |
-| `allocate` | The command that prints the next claim code for a feature part: one past the highest code the repository has ever carried. |
+| `allocate` | The command that prints the next claim code for a feature code: one past the highest code the repository has ever carried. |
 | evidence report | A report a test runner writes, which `balance` reads as runtime test evidence: the Vitest, Cucumber, pytest, Jest, JUnit or RSpec report, each named by its own flag. |
 | report of test results | An evidence report of tests that are not scenarios run step by step: the Vitest, Jest, pytest, JUnit or RSpec report. Its fallback is `unit`. |
 | report of scenario runs | An evidence report of Gherkin scenarios run step by step: the Cucumber report. Its fallback is `integration`. |
@@ -180,13 +180,13 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 
 | Term | Meaning |
 |---|---|
-| feature part | The `<FFF>` in `@CLM-<FFF>-<NNN>`: two to five uppercase letters or digits. |
-| header code | A feature file's own code tag, the feature part its scenarios' codes are filed under. |
+| feature code | The `<FFF>` in `@CLM-<FFF>-<NNN>`: two to five uppercase letters or digits. |
+| header code | A feature file's own code tag, the feature code its scenarios' codes are filed under. |
 | account class | A feature file, as the class its scenarios' codes are filed under. |
 | by-feature cut | The report's count of out-of-balance claims by feature file, *Out of balance by feature*, which a misfiled code falsifies. |
 | shared claim code | A code two scenarios carry. Each scenario is a claim of its own: it has its own Claim Reconciliation under the code, and every Quality Check Reconciliation on it reads `duplicate-claim-code`. An evidence observation citing the code credits neither and posts to the unnamed claim. |
-| known part, unknown part | A part is known when a feature file in `features/` is headed with it. `allocate` refuses an unknown part unless `--new` is given. |
-| highest seen | The highest code `allocate` found for a part, with where it was seen. |
+| known feature code, unknown feature code | A feature code is known when a feature file in `features/` is headed with it. `allocate` refuses an unknown feature code unless `--new` is given. |
+| highest seen | The highest code `allocate` found for a feature code, with where it was seen. |
 | excluded claim code occurrence | A claim code written in a feature file outside a tag, which marks no scenario. The `Summary` counts them as *claim codes written outside a tag*. |
 | Gherkin parse gate | The corpus reader's refusal of a corpus the Gherkin parser rejects. |
 

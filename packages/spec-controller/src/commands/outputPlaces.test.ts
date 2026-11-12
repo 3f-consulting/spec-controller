@@ -54,7 +54,7 @@ describe("an answer will be on standard output, and anything about it on standar
   });
 
   it("[CLM-CLI-164] a validation failure will be on standard error", () => {
-    const refusal = printedRefusal(AppError.NotAFeaturePart, message(AppError.NotAFeaturePart, { part: "one" }), "allocate");
+    const refusal = printedRefusal(AppError.NotAFeatureCode, message(AppError.NotAFeatureCode, { featureCode: "one" }), "allocate");
 
     const answered = allocateIn(repositoryHeadedOneCarrying003("output-places-refusal-"), ["one"]);
 

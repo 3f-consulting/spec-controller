@@ -21,21 +21,21 @@ export enum AppMessage {
   StrictFlag = "strict-flag",
   ExitZeroFlag = "exit-zero-flag",
   AllocateSummary = "allocate-summary",
-  FeaturePartArgument = "feature-part-argument",
+  FeatureCodeArgument = "feature-code-argument",
   NewFlag = "new-flag",
-  ShallowHistoryRisksPartCode = "shallow-history-risks-part-code",
+  ShallowHistoryRisksFeatureCode = "shallow-history-risks-feature-code",
   ShallowHistoryRisksCodeAbove = "shallow-history-risks-code-above",
-  NoRepositoryRisksPartCode = "no-repository-risks-part-code",
+  NoRepositoryRisksFeatureCode = "no-repository-risks-feature-code",
   NoRepositoryRisksCodeAbove = "no-repository-risks-code-above",
   HighestSeenNone = "highest-seen-none",
   HighestSeenInTree = "highest-seen-in-tree",
   HighestSeenInCommit = "highest-seen-in-commit",
-  PartAlreadyHeaded = "part-already-headed",
+  FeatureCodeAlreadyHeaded = "feature-code-already-headed",
   SeeCommands = "see-commands",
   SeeFlags = "see-flags",
   SeeFlagsAndValues = "see-flags-and-values",
   SeeArguments = "see-arguments",
-  NoPartsCarried = "no-parts-carried",
+  NoFeatureCodesCarried = "no-feature-codes-carried",
   CiWorkflow = "ci-workflow",
   ReadReport = "read-report",
   FormatOnStandardOutput = "format-on-standard-output",
@@ -91,9 +91,9 @@ export enum AppError {
   MoreThanOneToStdout = "more-than-one-to-stdout",
   OutputsShareFile = "outputs-share-file",
   OutputOverwritesInput = "output-overwrites-input",
-  UnknownPartRefused = "unknown-part-refused",
-  NoFeaturePartGiven = "no-feature-part-given",
-  NotAFeaturePart = "not-a-feature-part",
+  UnknownFeatureCodeRefused = "unknown-feature-code-refused",
+  FeatureCodeNotGiven = "feature-code-not-given",
+  NotAFeatureCode = "not-a-feature-code",
   CouldNotBeRead = "could-not-be-read",
   InputPathMissing = "input-path-missing",
   NotValidJson = "not-valid-json",
@@ -113,13 +113,13 @@ export type RefusalError = Exclude<AppError, CrashError>;
 export type PlainAppMessage = Exclude<AppMessage, keyof AppMessageValues>;
 
 export interface AppMessageValues {
-  [AppMessage.ShallowHistoryRisksPartCode]: { before: string; part: string };
+  [AppMessage.ShallowHistoryRisksFeatureCode]: { before: string; featureCode: string };
   [AppMessage.ShallowHistoryRisksCodeAbove]: { before: string; code: string };
-  [AppMessage.NoRepositoryRisksPartCode]: { part: string };
+  [AppMessage.NoRepositoryRisksFeatureCode]: { featureCode: string };
   [AppMessage.NoRepositoryRisksCodeAbove]: { code: string };
   [AppMessage.HighestSeenInTree]: { code: string; path: string; line: number };
   [AppMessage.HighestSeenInCommit]: { code: string; path: string; line: number; commit: string };
-  [AppMessage.PartAlreadyHeaded]: { part: string };
+  [AppMessage.FeatureCodeAlreadyHeaded]: { featureCode: string };
   [AppMessage.Help]: { commands: string };
   [AppMessage.HelpEntry]: { name: string; description: string };
   [AppMessage.CommandHelp]: { command: string; summary: string; arguments: string; options: string };
@@ -158,8 +158,8 @@ export interface AppErrorValues {
   [AppError.MoreThanOneToStdout]: { formats: string };
   [AppError.OutputsShareFile]: { first: string; second: string };
   [AppError.OutputOverwritesInput]: { output: string; subject: string; path: string };
-  [AppError.UnknownPartRefused]: { part: string; parts: string };
-  [AppError.NotAFeaturePart]: { part: string };
+  [AppError.UnknownFeatureCodeRefused]: { featureCode: string; featureCodes: string };
+  [AppError.NotAFeatureCode]: { featureCode: string };
   [AppError.CouldNotBeRead]: { subject: string; path: string; reason: string };
   [AppError.InputPathMissing]: { flag: string; path: string };
   [AppError.NotValidJson]: { subject: string; path: string; reason: string };

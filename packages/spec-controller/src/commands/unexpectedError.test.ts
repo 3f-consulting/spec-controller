@@ -98,7 +98,7 @@ async function stdoutFailsAfterTheRun(argv: string[], stdoutFails: boolean): Pro
 function plantedTarget(): string {
   const target = temporaryDirectory("unexpected-error-reading-");
   mkdirSync(join(target, "features"));
-  writeFileSync(join(target, "features", "part.feature"), `# ${PLANTED}\n@AB\nFeature: a part\n\n  @unit @CLM-AB-001\n  Scenario: a scenario\n`);
+  writeFileSync(join(target, "features", "ab.feature"), `# ${PLANTED}\n@AB\nFeature: feature code AB\n\n  @unit @CLM-AB-001\n  Scenario: a scenario\n`);
   writeFileSync(join(target, "ci.yml"), "name: ci\non: push\njobs:\n  ci:\n    runs-on: ubuntu-latest\n    steps:\n      - run: pnpm test\n");
   return target;
 }

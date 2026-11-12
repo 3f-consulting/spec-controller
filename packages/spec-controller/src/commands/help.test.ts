@@ -95,7 +95,7 @@ const BALANCE_LISTED = [
 ] as const;
 
 const ALLOCATE_LISTED = [
-  ["<FFF>", AppMessage.FeaturePartArgument],
+  ["<FFF>", AppMessage.FeatureCodeArgument],
   ["--new", AppMessage.NewFlag],
   ["--help, -h", AppMessage.HelpFlag],
 ] as const;

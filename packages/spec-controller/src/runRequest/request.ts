@@ -20,10 +20,10 @@ export function readRequest(
 ): AllocateRequest | { readonly usageError: Refusal } {
   const why = argvRefusal(argv, registry);
   if (why !== null) return { usageError: why };
-  const [part] = positionalArguments(argv);
-  if (part === undefined) return { usageError: refusal(AppError.NoFeaturePartGiven, {}) };
-  if (!isFeatureCode(part)) return { usageError: refusal(AppError.NotAFeaturePart, { part }) };
-  return { featureCode: part, isNew: argv.includes("--new") };
+  const [featureCode] = positionalArguments(argv);
+  if (featureCode === undefined) return { usageError: refusal(AppError.FeatureCodeNotGiven, {}) };
+  if (!isFeatureCode(featureCode)) return { usageError: refusal(AppError.NotAFeatureCode, { featureCode }) };
+  return { featureCode, isNew: argv.includes("--new") };
 }
 
 function argvRefusal(argv: readonly string[], registry: CliRegistry): Refusal | null {

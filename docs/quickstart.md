@@ -92,9 +92,9 @@ See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--run
 
 A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, both answering `CLM-<FFF>-<NNN>`. A `@unit` scenario needs no step definitions: a title and its tags are the whole scenario.
 
-`CLM-<FFF>-<NNN>` is the scenario's **claim code**. `<FFF>` is a feature part of two to five uppercase letters or digits, and `<NNN>` is a number. Each feature file carries a header code, `@<FFF>`, and its scenarios' codes must match it. A misfiled code leaves the run not reconciled. [Claim code errors](./user-guide.md#claim-code-errors) explains the header code and the five claim code errors.
+`CLM-<FFF>-<NNN>` is the scenario's **claim code**. `<FFF>` is a feature code of two to five uppercase letters or digits, and `<NNN>` is a number. Each feature file carries a header code, `@<FFF>`, and its scenarios' codes must match it. A misfiled code leaves the run not reconciled. [Claim code errors](./user-guide.md#claim-code-errors) explains the header code and the five claim code errors.
 
-Ask the tool for each code instead of inventing one. A feature part is known only when a feature file in `features/` at the top of the repository is headed with it. So in a project with no feature files yet, run `allocate` with `--new` for your first code. After that, `allocate <FFF>` gives the next one:
+Ask the tool for each code instead of inventing one. A feature code is known only when a feature file in `features/` at the top of the repository is headed with it. So in a project with no feature files yet, run `allocate` with `--new` for your first code. After that, `allocate <FFF>` gives the next one:
 
 ```bash
 spec-controller allocate <FFF>
@@ -104,7 +104,7 @@ spec-controller allocate <FFF>
 A Vitest test cites the scenario with the code **in square brackets** in its `it` title, or in an enclosing `describe` title. The most specific one wins:
 
 ```ts
-describe("[CLM-<FFF>-<NNN>] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
+describe("[CLM-<FFF>-<NNN>] a feature code whose highest live claim code is below a deleted one is offered one past the deleted claim code", () => {
   it("offers the next code", () => { /* … */ });
 });
 ```

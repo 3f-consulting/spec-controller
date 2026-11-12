@@ -35,7 +35,7 @@ export function commitAllReturningHash(repo: string, message: string): string {
   return git(repo, ["log", "-1", "--format=%h"]).trim();
 }
 
-const HEADED_ONE_CARRYING_003 = "@ONE\nFeature: part ONE\n\n  @CLM-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n";
+const HEADED_ONE_CARRYING_003 = "@ONE\nFeature: feature code ONE\n\n  @CLM-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n";
 
 export function repositoryHeadedOneCarrying003(prefix: string, files: Readonly<Record<string, string>> = {}): string {
   const repo = freshDirectory(prefix);

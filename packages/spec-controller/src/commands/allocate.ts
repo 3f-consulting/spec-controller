@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { claimCodeMarksFor, nextClaimCode, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
 import { asksForHelp } from "../runRequest/cliArgs.js";
 import { allocateCommand, cliRegistry, renderCommandHelp } from "../runRequest/cliRegistry.js";
-import { readFeatureCodes } from "../repository/readParts.js";
+import { readFeatureCodes } from "../repository/readFeatureCodes.js";
 import { readRequest, type AllocateRequest } from "../runRequest/request.js";
 import { DEFAULT_FEATURES_DIR } from "../runRequest/defaults.js";
 import { refuse, UnparseableFeatureFiles, UnreadableInput } from "../repository/unreadable.js";

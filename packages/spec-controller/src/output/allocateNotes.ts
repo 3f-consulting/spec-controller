@@ -16,13 +16,13 @@ export function historyBoundaryLine(boundary: HistoryBoundary, allocation: Alloc
 
 function shallowHistoryLine(before: string, allocation: Allocation): string {
   return allocation.highest === undefined
-    ? message(AppMessage.ShallowHistoryRisksPartCode, { before, part: allocation.featureCode })
+    ? message(AppMessage.ShallowHistoryRisksFeatureCode, { before, featureCode: allocation.featureCode })
     : message(AppMessage.ShallowHistoryRisksCodeAbove, { before, code: allocation.highest.code });
 }
 
 function noRepositoryLine(allocation: Allocation): string {
   return allocation.highest === undefined
-    ? message(AppMessage.NoRepositoryRisksPartCode, { part: allocation.featureCode })
+    ? message(AppMessage.NoRepositoryRisksFeatureCode, { featureCode: allocation.featureCode })
     : message(AppMessage.NoRepositoryRisksCodeAbove, { code: allocation.highest.code });
 }
 
@@ -36,14 +36,14 @@ export function highestSeenLine(allocation: Allocation): string {
 }
 
 function featureCodesListed({ featureCodes }: UnknownFeatureCode): string {
-  return featureCodes.length === 0 ? message(AppMessage.NoPartsCarried) : featureCodes.join(", ");
+  return featureCodes.length === 0 ? message(AppMessage.NoFeatureCodesCarried) : featureCodes.join(", ");
 }
 
 export function unknownFeatureCodeRefusal(unknown: UnknownFeatureCode): Refusal {
-  return refusal(AppError.UnknownPartRefused, { part: unknown.featureCode, parts: featureCodesListed(unknown) });
+  return refusal(AppError.UnknownFeatureCodeRefused, { featureCode: unknown.featureCode, featureCodes: featureCodesListed(unknown) });
 }
 
 export function alreadyHeadedNote(allocation: Allocation): string | null {
   if (allocation.alreadyHeaded !== true) return null;
-  return message(AppMessage.PartAlreadyHeaded, { part: allocation.featureCode });
+  return message(AppMessage.FeatureCodeAlreadyHeaded, { featureCode: allocation.featureCode });
 }

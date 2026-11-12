@@ -142,12 +142,12 @@ A feature file has a header code on the line above `Feature:`, then its Rules an
 
 ```gherkin
 @<FFF>
-Feature: Allocate the next claim code for a feature part
+Feature: Allocate the next claim code for a feature code
 
   Rule: the next code is one past the highest the repository has ever carried
 
     @unit @CLM-<FFF>-<NNN>
-    Scenario: a feature part whose highest live code is below a deleted one is offered one past the deleted code
+    Scenario: a feature code whose highest live claim code is below a deleted one is offered one past the deleted claim code
 ```
 
 Each piece of evidence names the scenario it answers, **in the one form its runner's report carries**:
@@ -167,7 +167,7 @@ Each piece of evidence names the scenario it answers, **in the one form its runn
 A Vitest citation:
 
 ```ts
-describe("[CLM-<FFF>-<NNN>] a feature part whose highest live code is below a deleted one is offered one past the deleted code", () => {
+describe("[CLM-<FFF>-<NNN>] a feature code whose highest live claim code is below a deleted one is offered one past the deleted claim code", () => {
   it("offers the next code", () => { /* … */ });
 });
 ```
@@ -846,7 +846,7 @@ The outcome to watch for is **cannot-fail**: a fitness function that is green, b
 
 ### What counts as a claim code
 
-A claim code has the form `CLM-<FFF>-<NNN>`: the prefix `CLM`, a feature part of two to five uppercase letters or digits, then a number of any width. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[CLM-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
+A claim code has the form `CLM-<FFF>-<NNN>`: the prefix `CLM`, a feature code of two to five uppercase letters or digits, then a number of any width. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[CLM-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
 
 So an id such as `@CLM-TOOLONGCODE-001` is not a claim code. It opens no account and cites nothing. A scenario tagged only with it has no claim code, and reconciles as `no-claim-code`.
 
@@ -920,9 +920,9 @@ An error in the inputs is not a refusal. Its row in the report's `## Errors in t
 | `more-than-one-to-stdout` | more than one output routes to stdout; at most one may |
 | `outputs-share-file` | two outputs name the same file |
 | `output-overwrites-input` | an output names a file the run reads |
-| `unknown-part-refused` | `allocate` was given a feature part no feature file's header carries |
-| `no-feature-part-given` | `allocate` was given no feature part |
-| `not-a-feature-part` | `allocate` was given a feature part not in its form: two to five characters, each `A`–`Z` or `0`–`9` |
+| `unknown-feature-code-refused` | `allocate` was given a feature code no feature file's header carries |
+| `feature-code-not-given` | `allocate` was given no feature code |
+| `not-a-feature-code` | `allocate` was given a feature code not in its form: two to five characters, each `A`–`Z` or `0`–`9` |
 | `could-not-be-read` | an input could not be read: a file, a directory or a report the run reads, or the repository `allocate` reads |
 | `working-directory-unreadable` | `allocate` could not read the working directory it was run in |
 | `input-path-missing` | the path given to an input flag does not exist |
@@ -1003,17 +1003,17 @@ spec-controller allocate <FFF>
 # CLM-<FFF>-<NNN>
 ```
 
-For a feature part no feature file carries yet, add `--new`:
+For a feature code no feature file carries yet, add `--new`:
 
 ```bash
 spec-controller allocate <FFF> --new
 # CLM-<FFF>-001
 ```
 
-The code is written under `CLM`, one past the highest number a claim code in the repository has **ever** carried for that feature part. So a number is never handed out again once a claim code has carried it, a retired number included, and every old reference to a code, in history, a chat or a stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and grows past them (`999` is followed by `1000`).
+The code is written under `CLM`, one past the highest number a claim code in the repository has **ever** carried for that feature code. So a number is never handed out again once a claim code has carried it, a retired number included, and every old reference to a code, in history, a chat or a stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and grows past them (`999` is followed by `1000`).
 
-- **The argument** is the feature part, `<FFF>`: two to five characters, each `A`–`Z` or `0`–`9`. A part is known when a feature file in `features/` at the top of the repository is headed with it. That is the corpus `balance` reads by default. A part that only history or a test fixture carries is not known.
-- **`--new`** starts a part no feature file's header carries yet, such as a first code in a tree with no feature files. Its first code is `001`, or one past any number the repository already carries for the part. Given for a part a header already carries, it answers as usual and says so on stderr.
+- **The argument** is the feature code, `<FFF>`: two to five characters, each `A`–`Z` or `0`–`9`. A feature code is known when a feature file in `features/` at the top of the repository is headed with it. That is the corpus `balance` reads by default. A feature code that only history or a test fixture carries is not known.
+- **`--new`** starts a feature code no feature file's header carries yet, such as a first code in a tree with no feature files. Its first code is `001`, or one past any number the repository already carries for the feature code. Given for a feature code a header already carries, it answers as usual and says so on stderr.
 - **stdout** carries the code and nothing else, so a script or an agent can consume it.
 - **stderr** says what the answer rests on:
   - `highest seen: <claim code>, features/<file>.feature:40`, the code as written, with ` in <commit>` when only history carries it;
@@ -1021,7 +1021,7 @@ The code is written under `CLM`, one past the highest number a claim code in the
   - when history is short, `history: not a git repository — none read` or `history: shallow clone — history before <commit> unread`, each followed by what that risks.
 - **Exit codes:**
   - `0` when it answers.
-  - `2` for a usage error (no part, a part not in the claim-code form, a second part, or a flag it does not take) or an unknown part. The message says which of the two it was. An unknown part's refusal lists the parts the feature files carry.
+  - `2` for a usage error (no feature code given, a feature code not in the claim-code form, a second feature code, or a flag it does not take) or an unknown feature code. The message says which of the two it was. An unknown feature code's refusal lists the feature codes the feature files carry.
   - It never refuses because history is short.
   - `--help` or `-h` anywhere among its arguments answers its help at `0`.
 

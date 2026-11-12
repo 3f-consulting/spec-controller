@@ -204,13 +204,13 @@ describe("an argument the tool does not accept will stop the run", () => {
       "CLM-CLI-134",
       "no feature code given to allocate",
       (): string[] => ["allocate"],
-      (): string => printedRefusal(AppError.NoFeaturePartGiven, message(AppError.NoFeaturePartGiven), "allocate"),
+      (): string => printedRefusal(AppError.FeatureCodeNotGiven, message(AppError.FeatureCodeNotGiven), "allocate"),
     ],
     [
       "CLM-CLI-134",
       "no feature code given to allocate, only its flag",
       (): string[] => ["allocate", "--new"],
-      (): string => printedRefusal(AppError.NoFeaturePartGiven, message(AppError.NoFeaturePartGiven), "allocate"),
+      (): string => printedRefusal(AppError.FeatureCodeNotGiven, message(AppError.FeatureCodeNotGiven), "allocate"),
     ],
     [
       "CLM-CLI-135",
