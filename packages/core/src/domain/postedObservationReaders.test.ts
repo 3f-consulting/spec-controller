@@ -116,7 +116,7 @@ describe("balance posts a result as passed or failed, citing its claim code", ()
   });
 });
 
-describe("balance posts a fitness Evidence Observation only for a step that is a fitness function", () => {
+describe("balance posts a fitness Evidence Observation only for a step that is a fitness function, unless its id is a claim code", () => {
   it("[CLM-OBS-012] a step running spec-controller balance posts nothing", () => {
     const reconciled = balanced(CLAIM_ONE, ONE_STEP("      - run: spec-controller balance --features features\n"), {});
 

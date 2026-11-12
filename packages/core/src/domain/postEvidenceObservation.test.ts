@@ -93,7 +93,7 @@ const CITING_STEP: StepAsWritten = { id: "CLM-ONE-001", name: "Lint", command: "
 const claim = (claimCode?: ClaimCode): ExecutableClaim => ({ ...(claimCode === undefined ? {} : { claimCode }), file: "one.feature", title: "t", obligations: [{ kind: "unit" }] });
 
 describe("balance posts only the steps that prove something", () => {
-  it.each<[string, { step: string; readings: Partial<StepReadings>; countedAs: StepDisposition; posted: number }]>([
+  it.each<[string, { step: string; readings: Partial<StepReadings>; countedAs: StepDisposition; posted: number; recorded?: readonly RecordedCheckStep[]; result?: EvidenceObservation["result"]; cites?: readonly ClaimCode[] }]>([
     ["CLM-OBS-002", { step: "      - uses: actions/dependency-review-action@v4\n", readings: {}, countedAs: "candidate", posted: 1 }],
     ["CLM-OBS-003", { step: "      - uses: someone/checkout@v1\n", readings: {}, countedAs: "candidate", posted: 1 }],
     ["CLM-OBS-004", { step: "      - run: pnpm audit-the-tree\n", readings: {}, countedAs: "candidate", posted: 1 }],
@@ -125,6 +125,7 @@ describe("balance posts only the steps that prove something", () => {
     ["CLM-OBS-011", { step: "      - run: pnpm lint && vitest run\n", readings: { runners: { unit: "vitest" } }, countedAs: "runner", posted: 0 }],
     ["CLM-OBS-012", { step: "      - run: spec-controller balance --features features\n", readings: {}, countedAs: "reconciler", posted: 0 }],
     ["CLM-OBS-013", { step: "      - name: Record\n        env:\n          STEPS: ${{ toJSON(steps) }}\n        run: echo done\n", readings: {}, countedAs: "reconciler", posted: 0 }],
+    ["CLM-OBS-109", { step: "      - name: Balance\n        run: spec-controller balance --features features\n", readings: { nonChecks: ["ci.yml:build:Balance"] }, countedAs: "reconciler", posted: 0 }],
     ["CLM-OBS-014", { step: "      - name: Install\n        run: pnpm install\n", readings: { nonChecks: ["ci.yml:build:Install"] }, countedAs: "nonCheck", posted: 0 }],
     ["CLM-OBS-015", { step: "      - uses: actions/checkout@v4\n", readings: {}, countedAs: "plumbing", posted: 0 }],
     ["CLM-OBS-015", { step: "      - uses: actions/setup-node@v4\n", readings: {}, countedAs: "plumbing", posted: 0 }],
@@ -133,13 +134,14 @@ describe("balance posts only the steps that prove something", () => {
     ["CLM-OBS-015", { step: "      - uses: actions/upload-artifact@v4\n", readings: {}, countedAs: "plumbing", posted: 0 }],
     ["CLM-OBS-015", { step: "      - uses: actions/download-artifact@v4\n", readings: {}, countedAs: "plumbing", posted: 0 }],
     ["CLM-OBS-016", { step: "      - name: Get the code\n        uses: actions/checkout@v4\n", readings: { nonChecks: ["ci.yml:build:Get the code"] }, countedAs: "nonCheck", posted: 0 }],
-  ])("[%s] balance posts a fitness Evidence Observation only for a step that is a fitness function", (_clm, { step, readings, countedAs, posted }) => {
+    ["CLM-OBS-108", { step: "      - id: CLM-ONE-001\n        run: vitest run\n", readings: { runners: { unit: "vitest" } }, countedAs: "runner", posted: 1, recorded: [{ key: "CLM-ONE-001", outcome: "failure" }], result: "failed", cites: [ONE] }],
+  ])("[%s] balance posts a fitness Evidence Observation only for a step that is a fitness function, unless its id is a claim code", (_clm, { step, readings, countedAs, posted, recorded, result = "passed", cites = [] }) => {
     const steps = stepsOf(step);
     const dispositionOf = (each: PipelineStep): StepDisposition => stepDispositionOf(each, readingsOf(readings));
     expect(steps.map(dispositionOf)).toEqual([countedAs]);
-    const observations = fitnessObservationsOf(steps, dispositionOf, undefined);
+    const observations = fitnessObservationsOf(steps, dispositionOf, recorded);
     expect(observations).toHaveLength(posted);
-    expect(observations.every(({ kind }) => kind === "fitness")).toBe(true);
+    expect(observations.map((each) => ({ kind: each.kind, result: each.result, cites: each.cites }))).toEqual(observations.map(() => ({ kind: "fitness", result, cites })));
   });
 
   it.each<[string, StepAsWritten, string]>([
@@ -435,6 +437,7 @@ describe("balance posts each result with how it went", () => {
     ["CLM-OBS-050", { posted: () => pytest({ classname: "tests.a", name: "test_a", properties: clmProperty("CLM-ONE-001"), error: { text: "fixture failed", inSetupOrTeardown: true } }), cites: [ONE], named: { place: "tests.a", name: "test_a" } }],
     ["CLM-OBS-051", { posted: () => cucumber(["CLM-ONE-001"], ["ambiguous"]), cites: [ONE], named: { notes: ["Given one adds one"] } }],
     ["CLM-OBS-052", { posted: () => cucumber(["CLM-ONE-001"], ["undefined"]), cites: [ONE], named: { notes: ["Given one adds one"] } }],
+    ["CLM-OBS-110", { posted: () => cucumber(["CLM-ONE-001"], ["failed", "undefined"]), cites: [ONE], named: { notes: ["Given one adds one"] } }],
     ["CLM-OBS-053", { posted: () => fitness([CITING_STEP], [{ key: "CLM-ONE-001", outcome: "skipped" }]), cites: [ONE], named: { place: "ci.yml:build:Lint" } }],
     ["CLM-OBS-054", { posted: () => fitness([CITING_STEP], [{ key: "CLM-ONE-001", outcome: "neutral" }]), cites: [ONE], named: { place: "ci.yml:build:Lint" } }],
   ])("[%s] balance posts what could not run as never ran", (_clm, { posted, cites, named }) => {
@@ -464,15 +467,23 @@ describe("balance posts each result with how it went", () => {
     expect(posted).toMatchObject([{ result: "failed", cites: [] }]);
   });
 
-  it.each<[string, { step: StepAsWritten; result: EvidenceObservation["result"] }]>([
+  it.each<[string, { step: StepAsWritten; result: EvidenceObservation["result"]; recorded?: readonly RecordedCheckStep[] }]>([
     ["CLM-OBS-056", { step: CITING_STEP, result: "passed" }],
+    ["CLM-OBS-056", { step: CITING_STEP, result: "passed", recorded: [{ key: "audit", outcome: "success" }] }],
     ["CLM-OBS-056", { step: { ...CITING_STEP, continueOnError: false }, result: "passed" }],
     ["CLM-OBS-056", { step: { ...CITING_STEP, jobContinueOnError: "false" }, result: "passed" }],
     ["CLM-OBS-057", { step: { ...CITING_STEP, continueOnError: true }, result: "passed-on-error" }],
     ["CLM-OBS-058", { step: { ...CITING_STEP, jobContinueOnError: true }, result: "passed-on-error" }],
     ["CLM-OBS-058", { step: { ...CITING_STEP, jobContinueOnError: "${{ matrix.experimental }}" }, result: "passed-on-error" }],
-  ])("[%s] balance posts a fitness function known only from its workflow as passed, or as passed-on-error when its failure is allowed", (_clm, { step, result }) => {
-    expect(fitness([step])).toEqual([{ cites: [ONE], result, kind: "fitness", place: "ci.yml:build:Lint", notes: [] }]);
+  ])("[%s] balance posts a fitness function known only from its workflow as passed, or as passed-on-error when its failure is allowed", (_clm, { step, result, recorded }) => {
+    expect(fitness([step], recorded)).toEqual([{ cites: [ONE], result, kind: "fitness", place: "ci.yml:build:Lint", notes: [] }]);
+  });
+
+  it("[CLM-OBS-056] a fitness function the step record does not name, beside a claim-coded step it does, is posted as its workflow says", () => {
+    const posted = fitness([CITING_STEP], [{ key: "CLM-ONE-009", outcome: "success" }]);
+    expect(posted.filter(({ place }) => place === "ci.yml:build:Lint")).toEqual([
+      { cites: [ONE], result: "passed", kind: "fitness", place: "ci.yml:build:Lint", notes: [] },
+    ]);
   });
 
   it("[CLM-OBS-057] a fitness function whose step in the workflow allows its failure is posted as passed-on-error", () => {
@@ -491,8 +502,12 @@ describe("balance posts each result at the kind of quality check its source and 
     ["CLM-OBS-062", { posted: () => cucumber(["CLM-ONE-001", "e2e"], ["passed"]), kinds: ["e2e"] }],
     ["CLM-OBS-063", { posted: () => cucumber(["CLM-ONE-001", "performance"], ["passed"]), kinds: ["performance"] }],
     ["CLM-OBS-064", { posted: () => cucumber(["CLM-ONE-001", "integration", "e2e"], ["passed"]), kinds: ["integration", "e2e"] }],
+    ["CLM-OBS-111", { posted: () => cucumber(["CLM-ONE-001", "integration", "e2e"], ["undefined"]), kinds: ["integration", "e2e"] }],
   ])("[%s] a test report's result will be unit evidence, and a Cucumber result will take the kind its tags name", (_clm, { posted, kinds }) => {
-    expect(posted().map(({ kind }) => kind)).toEqual(kinds);
+    const observations = posted();
+    expect(observations.map(({ kind }) => kind)).toEqual(kinds);
+    const [first, ...others] = observations.map(({ kind: _kind, ...alike }) => alike);
+    expect(others).toEqual(others.map(() => first));
   });
 });
 
@@ -537,7 +552,7 @@ describe("an Evidence Observation says where to look", () => {
     ["CLM-OBS-078", { posted: () => testFileObservationsOf([{ path: "a.test.ts", tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }], TARGET), where: { place: "a.test.ts", name: "adds two numbers" } }],
     ["CLM-OBS-079", { posted: () => testFileObservationsOf([{ path: "/work/acme/a.test.ts", tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }], "/work/acme"), where: { place: "a.test.ts", name: "adds two numbers" } }],
     ["CLM-OBS-080", { posted: () => cucumber(["CLM-ONE-001"], ["passed"]), where: { place: "one.feature", name: "one adds one" } }],
-    ["CLM-OBS-081", { posted: () => fitness([{ id: "CLM-ONE-002", name: "Build", command: "pnpm build" }, CITING_STEP], [{ key: "CLM-ONE-001", outcome: "success" }]), where: { place: "ci.yml:build:Lint" } }],
+    ["CLM-OBS-081", { posted: () => fitness([{ id: "CLM-ONE-002", name: "Build", command: "pnpm build" }, CITING_STEP], [{ key: "CLM-ONE-001", outcome: "success" }]).filter(({ place }) => place !== "ci.yml:build:Build"), where: { place: "ci.yml:build:Lint" } }],
     ["CLM-OBS-101", { posted: () => fitnessObservationsOf(stepsOf("      - id: CLM-ONE-001\n        name: 3\n        run: pnpm lint\n"), () => "candidate", [{ key: "CLM-ONE-001", outcome: "success" }]), where: { place: "ci.yml:build:pnpm lint" } }],
     ["CLM-OBS-102", { posted: () => fitness([{ id: "CLM-ONE-001", command: "" }], [{ key: "CLM-ONE-001", outcome: "success" }]), where: { place: "ci.yml:build:" } }],
     ["CLM-OBS-103", { posted: () => fitness([{ id: "CLM-ONE-001", command: "  \n  pnpm lint\n" }], [{ key: "CLM-ONE-001", outcome: "success" }]), where: { place: "ci.yml:build:pnpm lint" } }],
@@ -592,8 +607,8 @@ describe("a fitness function whose id is not a claim code will be posted once, c
 describe("balance posts a recorded step that no workflow holds at its claim code, as never ran, with the note the record gave", () => {
   it("[CLM-OBS-096] balance posts a recorded step that no workflow holds at its claim code, as never ran, with the note the record gave", () => {
     const posted = fitness([{ id: "CLM-ONE-002", name: "Build", command: "pnpm build" }], [{ key: "CLM-ONE-001", outcome: "skipped" }]);
-    expect(posted.filter(({ cites }) => cites.length > 0)).toEqual([
-      { cites: [{ featureCode: "ONE", number: "001" }], result: "never-ran", kind: "fitness", place: "CLM-ONE-001", notes: ["skipped"] },
+    expect(posted.filter(({ cites }) => cites.some(({ number }) => number === ONE.number))).toEqual([
+      { cites: [ONE], result: "never-ran", kind: "fitness", place: "CLM-ONE-001", notes: ["skipped"] },
     ]);
   });
 });

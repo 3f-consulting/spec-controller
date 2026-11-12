@@ -165,11 +165,14 @@ export function fitnessObservationsOf(
   dispositionOf: (step: PipelineStep) => StepDisposition,
   recorded: readonly RecordedCheckStep[] | undefined,
 ): EvidenceObservation[] {
-  const workflow = steps.filter((step) => dispositionOf(step) === "candidate").map(workflowObservationOf);
-  if (recorded === undefined) return workflow;
+  const candidates = steps.filter((step) => dispositionOf(step) === "candidate");
+  if (recorded === undefined) return candidates.map(workflowObservationOf);
+  const fitnessEntries = recorded.filter(isKeyedByAClaimCode);
+  // A step the record names posts from the record; one it does not name posts as its workflow says.
+  const isRecorded = (step: PipelineStep): boolean => fitnessEntries.some(({ key }) => key === step.id);
   return [
-    ...workflow.filter(({ cites }) => cites.length === 0),
-    ...recorded.filter(isKeyedByAClaimCode).map((entry) => recordedObservationOf(entry, steps)),
+    ...candidates.filter((step) => !isRecorded(step)).map(workflowObservationOf),
+    ...fitnessEntries.map((entry) => recordedObservationOf(entry, steps)),
   ];
 }
 
@@ -395,11 +398,12 @@ const ENDING_OF_STEP_STATUS: ReadonlyMap<string | undefined, StepEnding> = new M
 
 const endingOf = (step: StepRunAsWritten): StepEnding | undefined => ENDING_OF_STEP_STATUS.get(step.status);
 
-// A failed step fails the scenario; else one that could not run means it never ran; else it passed only when every step passed.
+// A step that could not run means the scenario never ran, whatever else failed; else a failed step fails it; else it passed
+// only when every step passed.
 function scenarioResultOf(steps: readonly StepRunAsWritten[]): EvidenceObservation["result"] | undefined {
   const endings = steps.map(endingOf);
-  if (endings.includes("failed")) return "failed";
   if (endings.includes("could-not-run")) return "never-ran";
+  if (endings.includes("failed")) return "failed";
   return endings.length > 0 && endings.every((ending) => ending === "passed") ? "passed" : undefined;
 }
 
@@ -412,16 +416,14 @@ function scenarioRunObservationOf(run: ScenarioRunAsWritten, root: string, claim
   if (result === undefined) return [];
   const place = relativizeToRoot(String(run.featurePath ?? run.featureName), root);
   const rowCodes = run.line === undefined ? [] : claimCodesAt(place, run.line);
-  const [firstKind, ...otherKinds] = kindsTheTagsName(run.tags);
   const cites = nearestCitation([codesIn([...run.tags, ...rowCodes])]);
-  if (result === "never-ran") {
-    return [{ cites, result, kind: firstKind!, place, notes: run.steps.filter((step) => endingOf(step) === "could-not-run").map(stepText) }];
-  }
-  return [firstKind!, ...otherKinds].map((kind) => ({ cites, result, kind, place, notes: [], name: run.name }));
+  const neverRan = result === "never-ran";
+  const notes = neverRan ? run.steps.filter((step) => endingOf(step) === "could-not-run").map(stepText) : [];
+  return kindsTheTagsName(run.tags).map((kind) => ({ cites, result, kind, place, notes, ...(neverRan ? {} : { name: run.name }) }));
 }
 
 // A scenario run posts at its feature file, citing its tags' codes and the code the corpus has at its line, once at each
-// kind its tags name; one that never ran posts once, naming the steps that could not run.
+// kind its tags name; one that never ran names the steps that could not run.
 export function scenarioRunObservationsOf(runs: readonly ScenarioRunAsWritten[], root: string, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
   return runs.flatMap((run) => scenarioRunObservationOf(run, root, claimCodesAt));
 }

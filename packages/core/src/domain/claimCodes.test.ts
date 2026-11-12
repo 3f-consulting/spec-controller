@@ -408,13 +408,13 @@ function unparseableFeatureFile(): void {
 
 describe("allocate names what it could not read, and gives no code", () => {
   it.for([
-    ["CLM-STG-072", "a file git cannot read", withheldFile],
     ["CLM-STG-073", "history git failed to read", withheldHistory],
     ["CLM-STG-074", "a damaged repository", damagedRepository],
     ["CLM-STG-085", "a folder in the tree it cannot read", withheldFolder],
     ["CLM-STG-085", "a folder two down in the tree it cannot read", withheldFolderTwoDown],
     ["CLM-STG-085", "a folder in the tree it cannot read, beside an ignored backup file named for it", withheldFolderBesideItsIgnoredBackup],
     ["CLM-STG-085", "a folder in the features folder it cannot read", withheldFeaturesSubfolder],
+    ["CLM-STG-093", "a file in the tree it cannot read", withheldFile],
     ["CLM-STG-089", "a feature file that does not parse", unparseableFeatureFile],
   ] as const)("[%s] %s", ([, , stopsUnread], { skip }) => {
     skip(runsAsRoot());

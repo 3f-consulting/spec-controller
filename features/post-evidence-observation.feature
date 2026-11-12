@@ -21,7 +21,7 @@ Feature: Evidence Observations are posted, each to its claim
   Rule: balance posts only the steps that prove something
 
     @unit
-    Scenario Outline: balance posts a fitness Evidence Observation only for a step that is a fitness function
+    Scenario Outline: balance posts a fitness Evidence Observation only for a step that is a fitness function, unless its id is a claim code
       given a workflow had <step>
       and the target's configuration had <configuration>
       when balance posts the evidence
@@ -29,22 +29,24 @@ Feature: Evidence Observations are posted, each to its claim
       and <posted>
 
       Examples:
-        | clm         | step                                               | configuration                  | counted as         | posted                                        |
-        | CLM-OBS-004 | a step running pnpm audit-the-tree                 | no setting for it              | a fitness function | a fitness Evidence Observation will be posted |
-        | CLM-OBS-002 | a step using actions/dependency-review-action      | no setting for it              | a fitness function | a fitness Evidence Observation will be posted |
-        | CLM-OBS-003 | a step using someone/checkout                      | no setting for it              | a fitness function | a fitness Evidence Observation will be posted |
-        | CLM-OBS-005 | a step running gradle lint                         | gradle test as its unit runner | a fitness function | a fitness Evidence Observation will be posted |
-        | CLM-OBS-006 | a step running eslint vitest.config.ts             | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted |
-        | CLM-OBS-007 | a step running vitest run \| tee out.txt           | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted |
-        | CLM-OBS-008 | a step running pnpm test                           | no unit runner                 | a fitness function | a fitness Evidence Observation will be posted |
-        | CLM-OBS-009 | a step running pnpm test, whose script runs vitest | vitest as its unit runner      | a runner           | nothing will be posted                        |
-        | CLM-OBS-010 | a step running CI=1 npx vitest run                 | vitest as its unit runner      | a runner           | nothing will be posted                        |
-        | CLM-OBS-011 | a step running pnpm lint && vitest run             | vitest as its unit runner      | a runner           | nothing will be posted                        |
-        | CLM-OBS-012 | a step running spec-controller balance             | no setting for it              | the reconciler     | nothing will be posted                        |
-        | CLM-OBS-013 | a step writing out the step record                 | no setting for it              | the reconciler     | nothing will be posted                        |
-        | CLM-OBS-015 | a step using actions/checkout                      | no setting for it              | plumbing           | nothing will be posted                        |
-        | CLM-OBS-014 | a step named Install                               | that step in notChecks         | a non-check        | nothing will be posted                        |
-        | CLM-OBS-016 | a step using actions/checkout                      | that step in notChecks         | a non-check        | nothing will be posted                        |
+        | clm         | step                                                                                    | configuration                  | counted as         | posted                                                                                    |
+        | CLM-OBS-004 | a step running pnpm audit-the-tree                                                      | no setting for it              | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-002 | a step using actions/dependency-review-action                                           | no setting for it              | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-003 | a step using someone/checkout                                                           | no setting for it              | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-005 | a step running gradle lint                                                              | gradle test as its unit runner | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-006 | a step running eslint vitest.config.ts                                                  | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-007 | a step running vitest run \| tee out.txt                                                | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-008 | a step running pnpm test                                                                | no unit runner                 | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-009 | a step running pnpm test, whose script runs vitest                                      | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
+        | CLM-OBS-010 | a step running CI=1 npx vitest run                                                      | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
+        | CLM-OBS-011 | a step running pnpm lint && vitest run                                                  | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
+        | CLM-OBS-012 | a step running spec-controller balance                                                  | no setting for it              | the reconciler     | nothing will be posted                                                                    |
+        | CLM-OBS-013 | a step writing out the step record                                                      | no setting for it              | the reconciler     | nothing will be posted                                                                    |
+        | CLM-OBS-109 | a step running spec-controller balance                                                  | that step in notChecks         | the reconciler     | nothing will be posted                                                                    |
+        | CLM-OBS-015 | a step using actions/checkout                                                           | no setting for it              | plumbing           | nothing will be posted                                                                    |
+        | CLM-OBS-014 | a step named Install                                                                    | that step in notChecks         | a non-check        | nothing will be posted                                                                    |
+        | CLM-OBS-016 | a step using actions/checkout                                                           | that step in notChecks         | a non-check        | nothing will be posted                                                                    |
+        | CLM-OBS-108 | a step running vitest run, with the id CLM-ONE-001, whose outcome the step record holds | vitest as its unit runner      | a runner           | its recorded outcome will be posted as a fitness Evidence Observation, citing CLM-ONE-001 |
 
   Rule: balance posts each result with how it went
 
@@ -106,20 +108,21 @@ Feature: Evidence Observations are posted, each to its claim
       then an Evidence Observation will be posted, as never-ran, citing <cited> and naming <named>
 
       Examples:
-        | clm         | source                            | what could not run                                                                   | cited         | named                     |
-        | CLM-OBS-044 | Vitest's evidence report          | a test file failed to collect                                                        | no claim code | the file and its error    |
-        | CLM-OBS-045 | Jest's evidence report            | a test file failed to run                                                            | no claim code | the file and its error    |
-        | CLM-OBS-046 | pytest's evidence report          | a test file failed to collect                                                        | no claim code | the file and its error    |
-        | CLM-OBS-047 | Go's evidence report              | a package failed to compile                                                          | no claim code | the package and its error |
-        | CLM-OBS-100 | Go's evidence report              | TestMain failed before any test ran                                                  | no claim code | the package and its error |
-        | CLM-OBS-048 | JUnit 5 in Java's evidence report | a class's setup before all its tests failed                                          | no claim code | the class and its error   |
-        | CLM-OBS-049 | RSpec's evidence report           | a spec file failed to load                                                           | no claim code | the file and its error    |
-        | CLM-OBS-099 | RSpec's evidence report           | the suite failed to load, naming no spec file                                        | no claim code | the error                 |
-        | CLM-OBS-050 | pytest's evidence report          | the setup of a test citing CLM-ONE-001 errored                                       | CLM-ONE-001   | the test                  |
-        | CLM-OBS-051 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched two definitions    | CLM-ONE-001   | that step                 |
-        | CLM-OBS-052 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched no definition      | CLM-ONE-001   | that step                 |
-        | CLM-OBS-053 | the step record                   | a fitness function's step with the id CLM-ONE-001 was skipped                        | CLM-ONE-001   | that step                 |
-        | CLM-OBS-054 | the step record                   | a fitness function's step with the id CLM-ONE-001 had a status balance does not know | CLM-ONE-001   | that step                 |
+        | clm         | source                            | what could not run                                                                                            | cited         | named                                      |
+        | CLM-OBS-044 | Vitest's evidence report          | a test file failed to collect                                                                                 | no claim code | the file and its error                     |
+        | CLM-OBS-045 | Jest's evidence report            | a test file failed to run                                                                                     | no claim code | the file and its error                     |
+        | CLM-OBS-046 | pytest's evidence report          | a test file failed to collect                                                                                 | no claim code | the file and its error                     |
+        | CLM-OBS-047 | Go's evidence report              | a package failed to compile                                                                                   | no claim code | the package and its error                  |
+        | CLM-OBS-100 | Go's evidence report              | TestMain failed before any test ran                                                                           | no claim code | the package and its error                  |
+        | CLM-OBS-048 | JUnit 5 in Java's evidence report | a class's setup before all its tests failed                                                                   | no claim code | the class and its error                    |
+        | CLM-OBS-049 | RSpec's evidence report           | a spec file failed to load                                                                                    | no claim code | the file and its error                     |
+        | CLM-OBS-099 | RSpec's evidence report           | the suite failed to load, naming no spec file                                                                 | no claim code | the error                                  |
+        | CLM-OBS-050 | pytest's evidence report          | the setup of a test citing CLM-ONE-001 errored                                                                | CLM-ONE-001   | the test                                   |
+        | CLM-OBS-051 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched two definitions                             | CLM-ONE-001   | that step as written, "Given one adds one" |
+        | CLM-OBS-052 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched no definition                               | CLM-ONE-001   | that step as written, "Given one adds one" |
+        | CLM-OBS-110 | Cucumber's evidence report        | a scenario tagged @CLM-ONE-001 had a step that failed, and the step "one adds one" that matched no definition | CLM-ONE-001   | that step as written, "Given one adds one" |
+        | CLM-OBS-053 | the step record                   | a fitness function's step with the id CLM-ONE-001 was skipped                                                 | CLM-ONE-001   | that step                                  |
+        | CLM-OBS-054 | the step record                   | a fitness function's step with the id CLM-ONE-001 had a status balance does not know                          | CLM-ONE-001   | that step                                  |
 
     @unit @CLM-OBS-055
     Scenario: a Kotlin class whose setup failed will be posted as one failing result citing no claim code
@@ -163,13 +166,14 @@ Feature: Evidence Observations are posted, each to its claim
       then it will be posted as <kind of quality check> evidence
 
       Examples:
-        | clm         | source                     | tags                                  | kind of quality check |
-        | CLM-OBS-059 | Vitest's evidence report   | any tags                              | unit                  |
-        | CLM-OBS-060 | pytest's evidence report   | any tags                              | unit                  |
-        | CLM-OBS-061 | Cucumber's evidence report | no @integration, @e2e or @performance | integration           |
-        | CLM-OBS-062 | Cucumber's evidence report | @e2e                                  | e2e                   |
-        | CLM-OBS-063 | Cucumber's evidence report | @performance                          | performance           |
-        | CLM-OBS-064 | Cucumber's evidence report | @integration @e2e                     | integration and e2e   |
+        | clm         | source                                                    | tags                                  | kind of quality check |
+        | CLM-OBS-059 | Vitest's evidence report                                  | any tags                              | unit                  |
+        | CLM-OBS-060 | pytest's evidence report                                  | any tags                              | unit                  |
+        | CLM-OBS-061 | Cucumber's evidence report                                | no @integration, @e2e or @performance | integration           |
+        | CLM-OBS-062 | Cucumber's evidence report                                | @e2e                                  | e2e                   |
+        | CLM-OBS-063 | Cucumber's evidence report                                | @performance                          | performance           |
+        | CLM-OBS-064 | Cucumber's evidence report                                | @integration @e2e                     | integration and e2e   |
+        | CLM-OBS-111 | Cucumber's evidence report, for a scenario that never ran | @integration @e2e                     | integration and e2e   |
 
   Rule: balance posts each result citing the nearest code it has
 

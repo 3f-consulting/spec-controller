@@ -196,16 +196,17 @@ Feature: every claim code is well formed, filed under its file's code, and never
     Scenario Outline: allocate names what it could not read, and gives no code
       given there was <what>
       when the developer asks for the next code
-      then it will stop as a usage error, naming what it could not read
+      then it will stop as a usage error, naming <what it names>
       and it will give no code
 
       Examples:
-        | clm         | what                                |
-        | CLM-STG-072 | a file git cannot read              |
-        | CLM-STG-073 | history git failed to read          |
-        | CLM-STG-074 | a damaged repository                |
-        | CLM-STG-085 | a folder in the tree it cannot read |
-        | CLM-STG-089 | a feature file that does not parse  |
+        | clm         | what                                | what it names                             |
+        | CLM-STG-072 | a file git cannot read              | what it could not read, and what git said |
+        | CLM-STG-073 | history git failed to read          | what it could not read                    |
+        | CLM-STG-074 | a damaged repository                | what it could not read, and what git said |
+        | CLM-STG-085 | a folder in the tree it cannot read | what it could not read                    |
+        | CLM-STG-093 | a file in the tree it cannot read   | what it could not read                    |
+        | CLM-STG-089 | a feature file that does not parse  | what it could not read                    |
 
     @unit @CLM-STG-090
     Scenario: allocate still answers when a nested checkout holds a folder it cannot read
