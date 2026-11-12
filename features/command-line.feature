@@ -154,7 +154,8 @@ Feature: the command line reads what you give it, and says where each kind of ou
     Before a command does its work, it validates every input it reads, named on the command line or
     left to its default: the evidence reports, the step record, the feature corpus, the CI
     workflows and the manifest. A well-formed input that is empty is valid.
-    A CI workflows folder read by default that does not exist counts as no workflows. A valid evidence report whose
+    A CI workflows folder read by default that does not exist counts as no workflows. A feature corpus
+    read by default that does not exist counts as no feature files. A valid evidence report whose
     evidence did not fully materialise is valid too, and the run is unsound. A configuration setting
     balance cannot use is left out, as configuration.feature says.
 
@@ -170,6 +171,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       given the run named no CI workflows, and the folder .github/workflows did not exist
       when balance reads its inputs
       then it will read no workflows
+      and the run will not stop
+
+    @unit @CLM-CLI-190
+    Scenario: a feature corpus read by default that does not exist will count as no feature files, not as a missing input
+      given the run named no feature corpus, and the folder features did not exist
+      when balance reads its inputs
+      then it will read no feature files
       and the run will not stop
 
     @unit

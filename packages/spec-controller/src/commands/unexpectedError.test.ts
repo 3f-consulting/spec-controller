@@ -133,8 +133,7 @@ describe("the run will give no verdict, and will exit 4", () => {
 
     expect(run.exitCode).toBe(4);
     expect(run.stderr.split("\n")).toHaveLength(2);
-    expect(run.stderr.startsWith(crashLine("TypeError", "", false))).toBe(true);
-    expect(run.stderr).not.toContain("part.feature");
+    expect(run.stderr.startsWith(crashLine("TypeError", ""))).toBe(true);
   });
 });
 
@@ -146,7 +145,7 @@ describe("an unexpected error after the run verdict will leave its exit code alo
     expect(verdictAlone.stderr).toBe("");
     expect(verdictAlone.exitCode).toBeDefined();
     expect(afterwards.exitCode).toBe(verdictAlone.exitCode);
-    expect(afterwards.stderr).toBe(`${crashLine("Error", FIRST_LINE, true)}\n`);
+    expect(afterwards.stderr).toBe(`${crashLine("Error", FIRST_LINE)}\n`);
   });
 });
 

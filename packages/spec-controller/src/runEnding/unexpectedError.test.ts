@@ -85,7 +85,7 @@ describe("the run will give no verdict, and will exit 4", () => {
     g.proc.emit("uncaughtException", thrown(), "uncaughtException");
 
     expect(g.proc.exitCode).toBe(4);
-    expect(g.happened).toEqual([{ stderr: `${crashLine(name, "", false)}\n` }, { exit: 4 }]);
+    expect(g.happened).toEqual([{ stderr: `${crashLine(name, "")}\n` }, { exit: 4 }]);
   });
 
   it("[CLM-CLI-179] the run met an error while the program loads", async () => {
@@ -94,7 +94,7 @@ describe("the run will give no verdict, and will exit 4", () => {
     await boot(g.proc, g.stdout, g.stderr, [], () => Promise.reject(moduleNotFound()));
 
     expect(g.proc.exitCode).toBe(4);
-    expect(g.stderr.written).toEqual([`${crashLine("Error", LOAD_FIRST_LINE, false)}\n`]);
+    expect(g.stderr.written).toEqual([`${crashLine("Error", LOAD_FIRST_LINE)}\n`]);
     expect(g.stdout.written).toEqual([]);
   });
 });

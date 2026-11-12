@@ -895,13 +895,13 @@ When Cucumber runs an Outline with a `clm` column, each row is credited by Cucum
 
 When several reasons apply, this order decides: unsound, then claim code errors, then nothing to reconcile, all before out of balance. An unexpected error (`4`) is not in the order. A run exits `4` only when it does not finish, a run already refused as a usage error included. `--exit-zero` moves only `1`, to `0`.
 
-An error after the run reaches its verdict does not change the exit code. One line goes to stderr, `spec-controller hit an unexpected error [unexpected-error-after-verdict] after its verdict: <name>: <message>`, and the run exits with the verdict's code: the report stands as written. A run writes at most one such line, whichever kind it is.
+An error after the run reaches its verdict does not change the exit code. One line goes to stderr, `spec-controller hit an unexpected error [unexpected-error]: <name>: <message>`, and the run exits with the verdict's code: the report stands as written. A run writes at most one such line.
 
 ### Error codes
 
 **A refusal of a flag, a command, an argument or an input carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one.
 
-Every error below except the two unexpected errors refuses the command as given. That is a usage error, and the run exits `2`. An unexpected error's line carries its code too, as in `spec-controller stopped on an unexpected error [unexpected-error], and gives no verdict: …`.
+Every error below except the unexpected error refuses the command as given. That is a usage error, and the run exits `2`. An unexpected error's line carries its code too, as in `spec-controller hit an unexpected error [unexpected-error]: …`.
 
 An error in the inputs is not a refusal. Its row in the report's `## Errors in the inputs` gives its code, and those codes are listed under [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped) and [Claim code errors](#claim-code-errors).
 
@@ -927,14 +927,12 @@ An error in the inputs is not a refusal. Its row in the report's `## Errors in t
 | `working-directory-unreadable` | `allocate` could not read the working directory it was run in |
 | `input-path-missing` | the path given to an input flag does not exist |
 | `not-valid-json` | a report read as JSON is not valid JSON |
-| `not-valid-json-in-shape` | a report read as JSON is not valid JSON, so not in the shape its tool writes |
 | `not-valid-xml` | a report read as JUnit XML is not valid XML |
 | `not-in-shape` | a report parses, but is not in the shape its tool writes |
 | `corpus-file-unparseable` | a feature file in the corpus could not be parsed as Gherkin; each such file has its own coded line, with the parser's words beneath it |
 | `workflow-not-yaml` | a CI workflow is not valid YAML |
 | `report-not-written` | a report could not be written to the path its `--format` names |
-| `unexpected-error` | the run stopped on an unexpected error before its verdict, and exits `4`, even if it was already refused as a usage error |
-| `unexpected-error-after-verdict` | an unexpected error came after the run's verdict; the run exits with the verdict's code |
+| `unexpected-error` | the run met an unexpected error; before its verdict it exits `4`, even if it was already refused as a usage error, and after its verdict it exits with the verdict's code |
 
 ---
 

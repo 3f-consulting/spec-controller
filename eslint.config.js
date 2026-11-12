@@ -365,10 +365,6 @@ export default [
 
   {
     files: ["packages/**/*.test.ts", "packages/**/*.test-utils.ts"],
-    ignores: [
-      // A test title in each of these is built from a call over the CLI registry, so the call must run at collection.
-      "packages/spec-controller/src/runRequest/host.helpAtHostScope.test.ts",
-    ],
     languageOptions: tsLanguageOptions,
     rules: {
       "collection/no-restricted-syntax": [

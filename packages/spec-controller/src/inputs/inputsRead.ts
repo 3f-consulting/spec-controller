@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
-import { corpusFeatureFiles } from "./ingestScenarios.js";
+import { corpusFeatureFiles, MissingFeatureCorpusError } from "./ingestScenarios.js";
 import { AppMessage } from "../messages/messages.js";
 import { message } from "../messages/appText.js";
 import type { GivenInput } from "./inputKinds.js";
@@ -12,9 +12,18 @@ export interface InputReader {
   workflowFiles(path: string): string[];
 }
 
+function featureFilesIn(dir: string): string[] {
+  try {
+    return corpusFeatureFiles(dir).map(({ path }) => path);
+  } catch (err) {
+    if (err instanceof MissingFeatureCorpusError) return [];
+    throw err;
+  }
+}
+
 export const NODE_INPUT_READER: InputReader = {
   exists: existsSync,
-  featureFiles: (dir) => corpusFeatureFiles(dir).map(({ path }) => path),
+  featureFiles: featureFilesIn,
   workflowFiles: (path) => ciSourcePathsOf(path),
 };
 

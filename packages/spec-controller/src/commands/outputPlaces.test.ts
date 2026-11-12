@@ -63,7 +63,7 @@ describe("an answer will be on standard output, and anything about it on standar
   });
 
   it("[CLM-CLI-165] an unexpected error will be on standard error", () => {
-    const complaint = crashLine("Error", FIRST_LINE, false);
+    const complaint = crashLine("Error", FIRST_LINE);
 
     const placed = balanceWhoseStdoutFails();
 

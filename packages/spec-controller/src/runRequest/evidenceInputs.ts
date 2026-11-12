@@ -1,4 +1,4 @@
-import { AppMessage, type PlainWordedAppMessage } from "../messages/messages.js";
+import { AppMessage, type PlainAppMessage } from "../messages/messages.js";
 import type { RunInput } from "@3f-consulting/spec-controller-core";
 
 export interface EvidenceInput {
@@ -6,7 +6,7 @@ export interface EvidenceInput {
   // Held, not derived from the flag: it names a field of the JSON report, a published format.
   readonly key: string;
   readonly arg: string;
-  readonly description: PlainWordedAppMessage;
+  readonly description: PlainAppMessage;
 }
 
 // The order is the canonical order: the help lists the flags in it, the pre-checks take the inputs in it,

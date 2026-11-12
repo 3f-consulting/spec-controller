@@ -97,24 +97,20 @@ export enum AppError {
   CouldNotBeRead = "could-not-be-read",
   InputPathMissing = "input-path-missing",
   NotValidJson = "not-valid-json",
-  NotValidJsonInShape = "not-valid-json-in-shape",
   NotValidXml = "not-valid-xml",
   NotInShape = "not-in-shape",
   CorpusFileUnparseable = "corpus-file-unparseable",
   WorkflowNotYaml = "workflow-not-yaml",
   ReportNotWritten = "report-not-written",
   UnexpectedError = "unexpected-error",
-  UnexpectedErrorAfterVerdict = "unexpected-error-after-verdict",
 }
 
 // A crash line is filled by the crash guards from the data file's entry, so they word it without loading the formatter.
-export type CrashError = AppError.UnexpectedError | AppError.UnexpectedErrorAfterVerdict;
+export type CrashError = AppError.UnexpectedError;
 
 export type RefusalError = Exclude<AppError, CrashError>;
 
-export type WordedAppMessage = AppMessage;
-
-export type PlainWordedAppMessage = Exclude<WordedAppMessage, keyof AppMessageValues>;
+export type PlainAppMessage = Exclude<AppMessage, keyof AppMessageValues>;
 
 export interface AppMessageValues {
   [AppMessage.ShallowHistoryRisksPartCode]: { before: string; part: string };
@@ -167,14 +163,12 @@ export interface AppErrorValues {
   [AppError.CouldNotBeRead]: { subject: string; path: string; reason: string };
   [AppError.InputPathMissing]: { flag: string; path: string };
   [AppError.NotValidJson]: { subject: string; path: string; reason: string };
-  [AppError.NotValidJsonInShape]: { subject: string; shape: string; path: string; reason: string };
   [AppError.NotValidXml]: { subject: string; shape: string; path: string; reason: string };
   [AppError.NotInShape]: { subject: string; shape: string; path: string; fault: string };
   [AppError.CorpusFileUnparseable]: { corpus: string; file: string; message: string };
   [AppError.WorkflowNotYaml]: { workflows: string; file: string; message: string };
   [AppError.ReportNotWritten]: { format: string; path: string; reason: string };
   [AppError.UnexpectedError]: { name: string; firstLine: string };
-  [AppError.UnexpectedErrorAfterVerdict]: { name: string; firstLine: string };
 }
 
 export const Unreadable = {

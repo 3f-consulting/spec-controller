@@ -1,9 +1,0 @@
-[
-  {
-    "uri": "features/widget.feature",
-    "elements": [
-      { "tags": [{ "name": "@CLM-TGT-002" }], "steps": [{ "result": { "status": "passed" } }] },
-      { "tags": [{ "name": "@smoke" }], "steps": [{ "result": { "status": "passed" } }] }
-    ]
-  }
-]

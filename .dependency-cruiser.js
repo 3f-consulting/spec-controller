@@ -34,11 +34,11 @@ export default {
       name: "app-test-imports-core-internals",
       severity: "error",
       comment:
-        "an app test reaches the engine only through its entry point or its internal seam, so a test cannot pin a core module's private shape",
+        "an app test reaches the engine only through its entry point, so a test cannot pin a core module's private shape",
       from: { path: "^packages/spec-controller/src/.*\\.(test|test-utils)\\.ts$" },
       to: {
         path: "^packages/core/(src|dist)/",
-        pathNot: ["^packages/core/src/(index|internal)\\.ts$", "^packages/core/dist/(index|internal)\\.(js|d\\.ts)$"],
+        pathNot: ["^packages/core/src/index\\.ts$", "^packages/core/dist/index\\.(js|d\\.ts)$"],
       },
     },
 

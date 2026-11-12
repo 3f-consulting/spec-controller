@@ -1,14 +1,12 @@
 @TGT
 Feature: a evidence observation-reconciliation fixture target
 
-  A FIXTURE feature (NOT under features/) standing in for a target repo whose Vitest /
-  Cucumber reports the evidence observation reconciliation reads (@CLM-RPT-010). It names
-  two scenarios so the fixture reports can carry evidence observations attributed to a NAMED
-  scenario, alongside a phantom claim's id (a claim code no scenario here names) and cites-no-claim evidence observation
-  results — the spanning partition the @integration arm asserts balances.
+  A fixture target whose Vitest report the tests reconcile. It names two scenarios, so the
+  report can carry a result for a named scenario, a result citing a claim code no scenario here
+  names, and a result citing no claim.
 
-  This file lives under tests/fixtures/ (NOT features/), so this repository's own checks,
-  which scan features/*.feature only, never see @TGT / @CLM-TGT-NNN.
+  It lives under tests/fixtures/, not features/, so this repository's own checks never read its
+  feature code or its claim codes.
 
   Rule: the fixture target names scenarios at two levels
 

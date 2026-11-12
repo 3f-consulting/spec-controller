@@ -72,7 +72,7 @@ export function settleUnexpectedError(err: unknown, proc: ExitCodeHolder, stderr
   if (run.lineWritten) return;
   run.lineWritten = true;
   settleExitCode(proc);
-  standardError(stderr).error(unexpectedErrorLine(err, run.finished));
+  standardError(stderr).error(unexpectedErrorLine(err));
 }
 
 function settleExitCode(proc: ExitCodeHolder): void {
@@ -82,9 +82,8 @@ function settleExitCode(proc: ExitCodeHolder): void {
 
 const CRASH_TEXTS: Readonly<Record<CrashError, string>> = APP_TEXTS;
 
-function unexpectedErrorLine(err: unknown, afterVerdict: true | undefined): CodedLine {
-  const code = afterVerdict ? AppError.UnexpectedErrorAfterVerdict : AppError.UnexpectedError;
-  return filled(CRASH_TEXTS[code], { name: nameOf(err), firstLine: firstLineOf(err) }) as CodedLine;
+function unexpectedErrorLine(err: unknown): CodedLine {
+  return filled(CRASH_TEXTS[AppError.UnexpectedError], { name: nameOf(err), firstLine: firstLineOf(err) }) as CodedLine;
 }
 
 // Both placeholders are filled in one pass, so a value holding a placeholder or a brace is printed as given.

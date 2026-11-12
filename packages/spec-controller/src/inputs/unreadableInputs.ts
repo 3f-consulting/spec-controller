@@ -13,7 +13,6 @@ type NotValid = (subject: string, shape: string, path: string, reason: string) =
 
 const NOT_VALID_IN: Readonly<Record<ReportFormat, NotValid>> = {
   json: (subject, _shape, path, reason) => refusal(AppError.NotValidJson, { subject, path, reason }),
-  "json-naming-its-shape": (subject, shape, path, reason) => refusal(AppError.NotValidJsonInShape, { subject, shape, path, reason }),
   "junit-xml": (subject, shape, path, reason) => refusal(AppError.NotValidXml, { subject, shape, path, reason }),
   "junit-xml-or-one-suite": (subject, shape, path, reason) => refusal(AppError.NotValidXml, { subject, shape, path, reason }),
 };

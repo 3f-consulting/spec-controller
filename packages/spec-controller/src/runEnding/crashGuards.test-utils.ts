@@ -23,13 +23,10 @@ export function closedPipe(): Error {
   return Object.assign(new Error(`${FIRST_LINE}\nthe reader closed its end of the pipe`), { code: "EPIPE" });
 }
 
-export const crashLine = (name: string, firstLine: string, afterVerdict: boolean): string =>
-  messagesFrom<CrashError, Pick<AppErrorValues, CrashError>>(APP_TEXTS)(
-    afterVerdict ? AppError.UnexpectedErrorAfterVerdict : AppError.UnexpectedError,
-    { name, firstLine },
-  );
+export const crashLine = (name: string, firstLine: string): string =>
+  messagesFrom<CrashError, Pick<AppErrorValues, CrashError>>(APP_TEXTS)(AppError.UnexpectedError, { name, firstLine });
 
-export const noVerdictLine = (): string => `${crashLine("Error", FIRST_LINE, false)}\n`;
+export const noVerdictLine = (): string => `${crashLine("Error", FIRST_LINE)}\n`;
 
 interface Raised {
   proc: EventEmitter;

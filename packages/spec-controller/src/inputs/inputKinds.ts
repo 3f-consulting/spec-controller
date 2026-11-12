@@ -1,4 +1,4 @@
-import { AppMessage, type PlainWordedAppMessage } from "../messages/messages.js";
+import { AppMessage, type PlainAppMessage } from "../messages/messages.js";
 import {
   CI_STEP_RECORD,
   CUCUMBER_REPORT,
@@ -16,7 +16,7 @@ export interface ReportInput {
   readonly format: ReportFormat;
   readonly shape: Shape;
   readonly subject: AppMessage.FlaggedReport | AppMessage.FlaggedRecord | AppMessage.FlaggedManifest;
-  readonly writer: PlainWordedAppMessage;
+  readonly writer: PlainAppMessage;
   readonly takesADirectory?: true;
 }
 
@@ -45,7 +45,7 @@ const REPORT_INPUTS: Readonly<Partial<Record<string, ReportInput>>> = {
   },
   jest: {
     reader: "jest",
-    format: "json-naming-its-shape",
+    format: "json",
     shape: VITEST_REPORT,
     subject: AppMessage.FlaggedReport,
     writer: AppMessage.JestReportShape,
@@ -60,7 +60,7 @@ const REPORT_INPUTS: Readonly<Partial<Record<string, ReportInput>>> = {
   },
   rspec: {
     reader: "rspec",
-    format: "json-naming-its-shape",
+    format: "json",
     shape: RSPEC_REPORT,
     subject: AppMessage.FlaggedReport,
     writer: AppMessage.RspecReportShape,

@@ -92,8 +92,16 @@ describe("an input that is not valid will stop the run", () => {
       (t: Target): Met => {
         const path = written(t.dir, "jest.json", "{not json");
         const reason = thrownBy(() => JSON.parse("{not json"));
-        const complaint = message(AppError.NotValidJsonInShape, { subject: report("--jest"), shape: message(AppMessage.JestReportShape), path, reason });
-        return { argv: ["--features", t.features, "--ci", t.ci, "--jest", path], complaint };
+        return { argv: ["--features", t.features, "--ci", t.ci, "--jest", path], complaint: message(AppError.NotValidJson, { subject: report("--jest"), path, reason }) };
+      },
+    ],
+    [
+      "CLM-CLI-148",
+      "an RSpec evidence report that does not parse",
+      (t: Target): Met => {
+        const path = written(t.dir, "rspec.json", "{not json");
+        const reason = thrownBy(() => JSON.parse("{not json"));
+        return { argv: ["--features", t.features, "--ci", t.ci, "--rspec", path], complaint: message(AppError.NotValidJson, { subject: report("--rspec"), path, reason }) };
       },
     ],
     [

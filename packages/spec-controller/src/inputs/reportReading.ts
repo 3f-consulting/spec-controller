@@ -2,11 +2,10 @@ import { parseJunitXml, parseJunitXmlLiftingBareSuite } from "./junitXml.js";
 import { shapeFaultIn, type Shape } from "./inputShapes.js";
 import { readingOf, readUtf8, reasonOf, type ReadFault } from "./inputReading.js";
 
-export type ReportFormat = "json" | "json-naming-its-shape" | "junit-xml" | "junit-xml-or-one-suite";
+export type ReportFormat = "json" | "junit-xml" | "junit-xml-or-one-suite";
 
 const PARSER_OF: Readonly<Record<ReportFormat, (text: string) => unknown>> = {
   json: (text) => JSON.parse(text),
-  "json-naming-its-shape": (text) => JSON.parse(text),
   "junit-xml": parseJunitXml,
   "junit-xml-or-one-suite": parseJunitXmlLiftingBareSuite,
 };
