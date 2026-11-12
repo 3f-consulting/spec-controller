@@ -38,11 +38,11 @@ Feature: balance reads and validates the configuration settings in the specContr
       Examples:
         | clm         | configuration setting                                   | error                                                           |
         | CLM-CFG-004 | "unit": 3 under runners                                 | configuration-wrong-kind, naming runners.unit                   |
-        | CLM-CFG-005 | "runer": {} beside runners                              | configuration-unknown-key, naming runer                         |
         | CLM-CFG-003 | "unittest": "vitest" under runners                      | runner-key-not-a-layer, naming runners.unittest                 |
+        | CLM-CFG-018 | "runners": null                                         | configuration-wrong-kind, naming runners                        |
+        | CLM-CFG-005 | "runer": {} beside runners                              | configuration-unknown-key, naming runer                         |
         | CLM-CFG-015 | "ci.yml:ci:No such step" in notChecks, with ci.yml read | not-checks-entry-matches-no-step, naming ci.yml:ci:No such step |
         | CLM-CFG-016 | "Install dependencies" in notChecks                     | not-checks-entry-not-a-step-name, naming Install dependencies   |
-        | CLM-CFG-018 | "runners": null                                         | configuration-wrong-kind, naming runners                        |
         | CLM-CFG-019 | "notChecks": "Install"                                  | configuration-wrong-kind, naming notChecks                      |
         | CLM-CFG-020 | 3 in deferralTags                                       | configuration-wrong-kind, naming deferralTags[0]                |
 

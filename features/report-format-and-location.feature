@@ -40,9 +40,9 @@ Feature: You get each report in the format and place you asked for, and the run 
         | clm         | destination                                            | where it will be                                                                 |
         | CLM-FMT-016 | no destination                                         | it will be on standard output                                                    |
         | CLM-FMT-003 | a file                                                 | it will be in that file, and nothing will be on standard output                  |
+        | CLM-FMT-018 | a file that already exists                             | the file will contain the new report                                             |
         | CLM-FMT-017 | a file whose name contains a colon                     | it will be in that file                                                          |
         | CLM-FMT-012 | a link to a file that does not exist yet               | it will be in the file the link points to, and the link will still point there   |
-        | CLM-FMT-018 | a file that already exists                             | the file will contain the new report                                             |
         | CLM-FMT-019 | a file in the corpus folder that is not a feature file | the file will contain the new report, and the feature files will be as they were |
 
     @unit @e2e
@@ -59,34 +59,6 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-022 | standard error for both                                | both reports will be on standard error, one after the other                      |
 
   Rule: it stops before it damages anything
-
-    @unit
-    Scenario Outline: two reports will not both go to standard output
-      given a run had two reports to write
-      when you ask for them at <one destination> and <the other destination>
-      then the run will stop, give no verdict and exit 2
-      and it will complain, naming what each report asked for
-      and nothing will be on standard output
-
-      Examples:
-        | clm         | one destination | the other destination             |
-        | CLM-FMT-005 | no destination  | no destination                    |
-        | CLM-FMT-011 | no destination  | a path that names standard output |
-        | CLM-FMT-023 | no destination  | a link to standard output         |
-
-    @unit @e2e
-    Scenario Outline: two reports will not go in one file
-      Given a run had two reports to write
-      When you ask for them at a file and at <the other destination>
-      Then the run will stop, give no verdict and exit 2
-      And it will complain, naming the file and both reports
-      And the file will be as it was
-
-      Examples:
-        | clm         | the other destination                   |
-        | CLM-FMT-010 | the same path                           |
-        | CLM-FMT-024 | a link to it                            |
-        | CLM-FMT-025 | standard output, redirected to the file |
 
     @unit
     Scenario Outline: a place it cannot write will stop the run, and nothing will be written
@@ -117,6 +89,40 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-029 | a file that already exists    | the file will be as it was                        |
         | CLM-FMT-030 | a link to a file not yet made | the file will still not exist, and the link stays |
 
+    @unit
+    Scenario Outline: two reports will not both go to standard output
+      given a run had two reports to write
+      when you ask for them at <one destination> and <the other destination>
+      then the run will stop, give no verdict and exit 2
+      and it will complain, naming what each report asked for
+      and nothing will be on standard output
+
+      Examples:
+        | clm         | one destination | the other destination             |
+        | CLM-FMT-005 | no destination  | no destination                    |
+        | CLM-FMT-011 | no destination  | a path that names standard output |
+        | CLM-FMT-023 | no destination  | a link to standard output         |
+
+    @unit @e2e
+    Scenario Outline: two reports will not go in one file
+      Given a run had two reports to write
+      When you ask for them at a file and at <the other destination>
+      Then the run will stop, give no verdict and exit 2
+      And it will complain, naming the file and both reports
+      And the file will be as it was
+
+      Examples:
+        | clm         | the other destination                   |
+        | CLM-FMT-010 | the same path                           |
+        | CLM-FMT-024 | a link to it                            |
+        | CLM-FMT-025 | standard output, redirected to the file |
+
+    @unit @CLM-FMT-033
+    Scenario: a report will be written to a file the run does not read, even on the same device
+      given the run read one file
+      when you ask for the report to go in another file on the same device
+      then the report will be written there
+
     @unit @CLM-FMT-013
     Scenario: a report will not be written over a file the run reads
       given the run read a file, such as your test results
@@ -124,12 +130,6 @@ Feature: You get each report in the format and place you asked for, and the run 
       then the run will stop, give no verdict and exit 2
       and it will complain, naming the file
       and the file will be as it was
-
-    @unit @CLM-FMT-033
-    Scenario: a report will be written to a file the run does not read, even on the same device
-      given the run read one file
-      when you ask for the report to go in another file on the same device
-      then the report will be written there
 
     @unit
     Scenario Outline: a report on standard error will not go in a file another report names or the run reads

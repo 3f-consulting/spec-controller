@@ -18,26 +18,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
   This is just about the command line. What a command does is specified in the feature files about it.
 
-  Rule: help comes before anything else on the command line, unless it follows a command the tool does not have
-
-    @unit
-    Scenario Outline: help will answer, and nothing will run
-      given a command line had <help> <beside>
-      when it is read
-      then help will answer, and it will exit 0
-      and nothing will have run or been written
-
-      Examples:
-        | clm         | help               | beside                                   |
-        | CLM-CLI-112 | a request for help | beside an argument that fails validation |
-        | CLM-CLI-113 | allocate's help    | beside a flag allocate does not take     |
-
-    @unit @CLM-CLI-114
-    Scenario: help after a command the tool does not have will not answer
-      given a command line had a command the tool does not have, and a request for help after it
-      when it is read
-      then it will exit 2, as for a command the tool does not have
-
   Rule: asking for help shows what can be asked for
 
     @unit
@@ -60,6 +40,26 @@ Feature: the command line reads what you give it, and says where each kind of ou
       given balance took the flags --strict and --exit-zero
       when its help is shown
       then each flag will be on a line of its own, followed by its description
+
+  Rule: help comes before anything else on the command line, unless it follows a command the tool does not have
+
+    @unit
+    Scenario Outline: help will answer, and nothing will run
+      given a command line had <help> <beside>
+      when it is read
+      then help will answer, and it will exit 0
+      and nothing will have run or been written
+
+      Examples:
+        | clm         | help               | beside                                   |
+        | CLM-CLI-112 | a request for help | beside an argument that fails validation |
+        | CLM-CLI-113 | allocate's help    | beside a flag allocate does not take     |
+
+    @unit @CLM-CLI-114
+    Scenario: help after a command the tool does not have will not answer
+      given a command line had a command the tool does not have, and a request for help after it
+      when it is read
+      then it will exit 2, as for a command the tool does not have
 
   Rule: a command accepts only the arguments it takes
 
@@ -182,6 +182,8 @@ Feature: the command line reads what you give it, and says where each kind of ou
       Examples:
         | clm         | error                                                               | facts                                          |
         | CLM-CLI-147 | a named input that does not exist                                   | a named input, and what is wrong               |
+        | CLM-CLI-160 | a named path that is not the kind of path its flag reads            | a named path, and what is wrong                |
+        | CLM-CLI-161 | a named input that the tool is not permitted to read                | a named input, and what is wrong               |
         | CLM-CLI-148 | a JSON evidence report that does not parse                          | a JSON evidence report, and what is wrong      |
         | CLM-CLI-186 | a JUnit evidence report that does not parse                         | a JUnit evidence report, and what is wrong     |
         | CLM-CLI-149 | a feature file that does not parse                                  | a feature file, and what is wrong              |
@@ -195,8 +197,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-157 | an RSpec evidence report that is not in the shape RSpec writes      | an RSpec evidence report, and what is wrong    |
         | CLM-CLI-158 | a step record that is not in the shape of a record of step outcomes | a CI step record, and what is wrong            |
         | CLM-CLI-159 | a manifest that is not in a manifest's shape                        | a manifest, and what is wrong                  |
-        | CLM-CLI-160 | a named path that is not the kind of path its flag reads            | a named path, and what is wrong                |
-        | CLM-CLI-161 | a named input that the tool is not permitted to read                | a named input, and what is wrong               |
 
     @unit @CLM-CLI-185
     Scenario: a corpus with several feature files that do not parse will be refused, naming each of them
@@ -236,23 +236,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-169 | not reconciled, because claim code errors    | 3         |
         | CLM-CLI-170 | not reconciled, because nothing to reconcile | 3         |
 
-  Rule: --exit-zero moves only an out-of-balance run's exit code, to 0
-
-    @unit
-    Scenario Outline: under --exit-zero only an out-of-balance run will exit 0 instead of its code
-      given a run had ended on <ending> at <exit code>
-      when it runs again under --exit-zero
-      then it will exit <under --exit-zero>
-      and its run verdict, if it has one, will be the same
-
-      Examples:
-        | clm         | ending              | exit code | under --exit-zero |
-        | CLM-CLI-171 | balanced            | 0         | 0                 |
-        | CLM-CLI-172 | out of balance      | 1         | 0                 |
-        | CLM-CLI-173 | not reconciled      | 3         | 3                 |
-        | CLM-CLI-174 | a usage error       | 2         | 2                 |
-        | CLM-CLI-175 | an unexpected error | 4         | 4                 |
-
   Rule: an unexpected error stops the run, with exit code 4 and a complaint
 
     @unit
@@ -282,3 +265,20 @@ Feature: the command line reads what you give it, and says where each kind of ou
       given a run had met two unexpected errors
       when it ends
       then it will have complained about one of them
+
+  Rule: --exit-zero moves only an out-of-balance run's exit code, to 0
+
+    @unit
+    Scenario Outline: under --exit-zero only an out-of-balance run will exit 0 instead of its code
+      given a run had ended on <ending> at <exit code>
+      when it runs again under --exit-zero
+      then it will exit <under --exit-zero>
+      and its run verdict, if it has one, will be the same
+
+      Examples:
+        | clm         | ending              | exit code | under --exit-zero |
+        | CLM-CLI-171 | balanced            | 0         | 0                 |
+        | CLM-CLI-172 | out of balance      | 1         | 0                 |
+        | CLM-CLI-173 | not reconciled      | 3         | 3                 |
+        | CLM-CLI-174 | a usage error       | 2         | 2                 |
+        | CLM-CLI-175 | an unexpected error | 4         | 4                 |

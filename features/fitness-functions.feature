@@ -26,6 +26,13 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       when CI runs the fitness function over those files
       then no function in them will be over its complexity or length limit
 
+    @fitness @CLM-FIT-022
+    Scenario: every function in a file the push touches is under the CRAP limit for its complexity and coverage
+      given a push changed some source files in the packages
+      and the unit suite had measured each function's coverage
+      when CI runs the fitness function over those files
+      then every function in them will be under the CRAP limit
+
     @fitness @CLM-FIT-009
     Scenario: the packages, core's adapters and its domain import each other only where this repository's boundaries allow, with no list of tolerated breaks
       given the repository had drawn boundaries between its packages, core's adapters and its domain
@@ -37,13 +44,6 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       given the repository had each package's source, its unit tests and the behavioural suite's code
       when CI runs the fitness function over them
       then there will be no type error
-
-    @fitness @CLM-FIT-022
-    Scenario: every function in a file the push touches is under the CRAP limit for its complexity and coverage
-      given a push changed some source files in the packages
-      and the unit suite had measured each function's coverage
-      when CI runs the fitness function over those files
-      then every function in them will be under the CRAP limit
 
     @fitness @CLM-FIT-074
     Scenario: the packages have no child process started through a shell, no code built from a string, no regular expression built from an argument, and no file written outside the modules that check its location
@@ -74,27 +74,6 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       when CI runs the fitness function over that code
       then there will be no clone in it
 
-  Rule: the words around the code are few and stay true
-
-    @fitness @CLM-FIT-023
-    Scenario: no source, script, configuration or Gherkin file is over the comment-share limit, outside the test fixtures, the lockfile, git's ignore list and knip's configuration
-      given the repository had a comment-share limit
-      when CI runs the fitness function over its source, script, configuration and Gherkin files, leaving out the test fixtures, the lockfile, git's ignore list and knip's configuration
-      then none will be over the limit
-
-    @fitness @CLM-FIT-075
-    Scenario: outside the test fixtures, no comment, Feature, Rule or Scenario description or current-state document names a ticket or a claim code, or narrates how the product used to be
-      given the repository had comments, descriptions and current-state documents outside the test fixtures
-      when CI runs the fitness function over them
-      then none will name a ticket or a claim code
-      and none will narrate how the product used to be
-
-    @fitness @CLM-FIT-059
-    Scenario: every file, heading or path a current-state document cites exists
-      given the repository had current-state documents citing files, headings and paths
-      when CI runs the fitness function over those documents
-      then every file, heading and path they cite will exist
-
   Rule: the tests stay fast and in proportion to the code
 
     @fitness @CLM-FIT-012
@@ -122,6 +101,27 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       given the repository had mutation scopes and a recorded list of files no scope mutates
       when CI runs the fitness function over the production source files in the packages
       then every file will be in a scope or on the list
+
+  Rule: the words around the code are few and stay true
+
+    @fitness @CLM-FIT-023
+    Scenario: no source, script, configuration or Gherkin file is over the comment-share limit, outside the test fixtures, the lockfile, git's ignore list and knip's configuration
+      given the repository had a comment-share limit
+      when CI runs the fitness function over its source, script, configuration and Gherkin files, leaving out the test fixtures, the lockfile, git's ignore list and knip's configuration
+      then none will be over the limit
+
+    @fitness @CLM-FIT-075
+    Scenario: outside the test fixtures, no comment, Feature, Rule or Scenario description or current-state document names a ticket or a claim code, or narrates how the product used to be
+      given the repository had comments, descriptions and current-state documents outside the test fixtures
+      when CI runs the fitness function over them
+      then none will name a ticket or a claim code
+      and none will narrate how the product used to be
+
+    @fitness @CLM-FIT-059
+    Scenario: every file, heading or path a current-state document cites exists
+      given the repository had current-state documents citing files, headings and paths
+      when CI runs the fitness function over those documents
+      then every file, heading and path they cite will exist
 
   Rule: a feature file states behaviour in the reader's words
 

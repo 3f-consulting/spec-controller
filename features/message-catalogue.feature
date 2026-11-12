@@ -27,9 +27,9 @@ Feature: a message catalogue gives back the text for a code
       Examples:
         | clm         | text                                   | values                              | retrieved                          |
         | CLM-MSG-016 | The format {format} is not written.    | format html                         | The format html is not written.    |
+        | CLM-MSG-015 | {count} steps ran.                     | count 1000                          | 1000 steps ran.                    |
         | CLM-MSG-017 | {entry} is {is} where {reads} is read. | entry unit, is 3 and reads a runner | unit is 3 where a runner is read.  |
         | CLM-MSG-018 | {format} is not {format}.              | format html                         | html is not html.                  |
-        | CLM-MSG-015 | {count} steps ran.                     | count 1000                          | 1000 steps ran.                    |
         | CLM-MSG-019 | The format {format} is not written.    | format {other}                      | The format {other} is not written. |
         | CLM-MSG-020 | The format {format} is not written.    | format it's                         | The format it's is not written.    |
         | CLM-MSG-021 | The format {format} is not written.    | an empty format                     | The format  is not written.        |

@@ -29,9 +29,9 @@ Feature: Evidence Observations are posted, each to its claim
 
       Examples:
         | clm         | step                                               | configuration                  | counted as         | posted                                        |
+        | CLM-OBS-004 | a step running pnpm audit-the-tree                 | no setting for it              | a fitness function | a fitness Evidence Observation will be posted |
         | CLM-OBS-002 | a step using actions/dependency-review-action      | no setting for it              | a fitness function | a fitness Evidence Observation will be posted |
         | CLM-OBS-003 | a step using someone/checkout                      | no setting for it              | a fitness function | a fitness Evidence Observation will be posted |
-        | CLM-OBS-004 | a step running pnpm audit-the-tree                 | no setting for it              | a fitness function | a fitness Evidence Observation will be posted |
         | CLM-OBS-005 | a step running gradle lint                         | gradle test as its unit runner | a fitness function | a fitness Evidence Observation will be posted |
         | CLM-OBS-006 | a step running eslint vitest.config.ts             | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted |
         | CLM-OBS-007 | a step running vitest run \| tee out.txt           | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted |
@@ -41,8 +41,8 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-011 | a step running pnpm lint && vitest run             | vitest as its unit runner      | a runner           | nothing will be posted                        |
         | CLM-OBS-012 | a step running spec-controller balance             | no setting for it              | the reconciler     | nothing will be posted                        |
         | CLM-OBS-013 | a step writing out the step record                 | no setting for it              | the reconciler     | nothing will be posted                        |
-        | CLM-OBS-014 | a step named Install                               | that step in notChecks         | a non-check        | nothing will be posted                        |
         | CLM-OBS-015 | a step using actions/checkout                      | no setting for it              | plumbing           | nothing will be posted                        |
+        | CLM-OBS-014 | a step named Install                               | that step in notChecks         | a non-check        | nothing will be posted                        |
         | CLM-OBS-016 | a step using actions/checkout                      | that step in notChecks         | a non-check        | nothing will be posted                        |
 
   Rule: balance posts each result with how it went
