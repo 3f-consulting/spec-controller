@@ -108,19 +108,6 @@ describe("a report will be where you asked", () => {
       },
       (dir: string) => ({ inTheFile: holdsTheReport(join(dir, "report.md")) }),
     ],
-    [
-      "CLM-FMT-019",
-      "a file in the corpus folder that is not a feature file",
-      (dir: string) => {
-        mkdirSync(join(dir, "features"));
-        writeFileSync(join(dir, "features", "one.feature"), "Feature: one\n");
-        return [`md:${join(dir, "features", "report.md")}`];
-      },
-      (dir: string) => ({
-        inTheFile: holdsTheReport(join(dir, "features", "report.md")),
-        featureFile: readFileSync(join(dir, "features", "one.feature"), "utf8"),
-      }),
-    ],
   ])("[%s] a report asked for at %s is there", (clm, _destination, arrange, observe) => {
     const dir = temporaryDirectory("spec-controller-report-place-");
     const seen = observe(dir, reportsWritten(arrange(dir)));
@@ -130,7 +117,6 @@ describe("a report will be where you asked", () => {
       "CLM-FMT-017": { inTheFile: true },
       "CLM-FMT-012": { inTheFile: true, linkStays: true },
       "CLM-FMT-018": { inTheFile: true },
-      "CLM-FMT-019": { inTheFile: true, featureFile: "Feature: one\n" },
     };
     expect(seen).toEqual(expected[clm]);
   });

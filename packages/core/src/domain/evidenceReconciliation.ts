@@ -1,4 +1,4 @@
-import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
+import { claimCodeErrorsOf, claimCodesIn, type ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import type { ConfigurationError, ConfigurationRead } from "./configuration.js";
 import { executableClaimsOf, featureReadOf, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
@@ -121,9 +121,9 @@ function outOfBalanceByFeatureOf(claimReconciliations: readonly ClaimReconciliat
 }
 
 export function excludedClaimCodeOccurrencesOf(features: readonly FeatureAsWritten[]): number {
-  const codesIn = (words: readonly string[]): number => words.filter((word) => claimCodeFrom(word) !== undefined).length;
   return features.reduce(
-    (sum, { tagFormWords, scenarios }) => sum + codesIn(tagFormWords) - codesIn(scenarios.flatMap(({ tags }) => tags)),
+    (sum, { tagFormWords, scenarios }) =>
+      sum + claimCodesIn(tagFormWords).length - claimCodesIn(scenarios.flatMap(({ tags }) => tags)).length,
     0,
   );
 }

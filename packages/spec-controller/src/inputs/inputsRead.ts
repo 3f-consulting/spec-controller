@@ -1,59 +1,33 @@
-import { existsSync } from "node:fs";
-import { ciSourcePathsOf } from "./ciSourcePaths.js";
-import { corpusFeatureFiles, MissingFeatureCorpusError } from "./ingestScenarios.js";
 import { AppMessage } from "../messages/messages.js";
 import { message } from "../messages/appText.js";
-import type { GivenInput } from "./inputKinds.js";
-import { jsonInputsOf } from "./unreadableInputs.js";
+import { corpusPathOf } from "./ingestScenarios.js";
 
-export interface InputReader {
-  exists(path: string): boolean;
-  featureFiles(dir: string): string[];
-  workflowFiles(path: string): string[];
+// The files a run read, as its readings found them: feature files relative to the corpus folder it read.
+export interface FilesRead {
+  readonly reports: readonly string[];
+  readonly corpus: string;
+  readonly featureFiles: readonly string[];
+  readonly workflows: readonly string[];
 }
 
-function featureFilesIn(dir: string): string[] {
-  try {
-    return corpusFeatureFiles(dir).map(({ path }) => path);
-  } catch (err) {
-    if (err instanceof MissingFeatureCorpusError) return [];
-    throw err;
-  }
-}
-
-export const NODE_INPUT_READER: InputReader = {
-  exists: existsSync,
-  featureFiles: featureFilesIn,
-  workflowFiles: (path) => ciSourcePathsOf(path),
-};
-
-// The paths the run reads when an input is not named, as the run request fills them in.
-interface InputDefaults {
-  readonly features: string;
-  readonly ci: string;
-  readonly packageJson: string;
-}
-
-// A file the run reads, named by its kind: a feature file, a CI workflow or a report.
+// A file the run reads, named by its kind (a feature file, a CI workflow or a report) and its path as given, and found
+// where the run read it.
 interface InputRead {
   readonly subject: string;
   readonly path: string;
+  readonly readAt: string;
 }
 
-export function inputsReadFrom(
-  args: Record<string, string>,
-  given: readonly GivenInput[],
-  reader: InputReader,
-  defaults: InputDefaults,
-): InputRead[] {
-  const reports = jsonInputsOf(given, reader.exists, defaults.packageJson).map(({ path }) => ({ subject: message(AppMessage.ReadReport), path }));
-  return [...reports, ...featureInputs(args["features"], reader, defaults.features), ...workflowInputs(args["ci"], reader, defaults.ci)];
-}
-
-function featureInputs(dir: string | undefined, reader: InputReader, defaultCorpus: string): InputRead[] {
-  return reader.featureFiles(dir ?? defaultCorpus).map((path) => ({ subject: message(AppMessage.FeatureFile), path }));
-}
-
-function workflowInputs(ci: string | undefined, reader: InputReader, defaultWorkflows: string): InputRead[] {
-  return reader.workflowFiles(ci ?? defaultWorkflows).map((path) => ({ subject: message(AppMessage.CiWorkflow), path }));
+// Feature files are named under the corpus folder as given, so a corpus read by default is named relative to the run.
+export function inputsReadOf(args: Record<string, string>, read: FilesRead, defaultCorpus: string): InputRead[] {
+  const corpus = args["features"] ?? defaultCorpus;
+  return [
+    ...read.reports.map((path) => ({ subject: message(AppMessage.ReadReport), path, readAt: path })),
+    ...read.featureFiles.map((file) => ({
+      subject: message(AppMessage.FeatureFile),
+      path: corpusPathOf(corpus, file),
+      readAt: corpusPathOf(read.corpus, file),
+    })),
+    ...read.workflows.map((path) => ({ subject: message(AppMessage.CiWorkflow), path, readAt: path })),
+  ];
 }

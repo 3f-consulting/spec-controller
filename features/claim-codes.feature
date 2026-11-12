@@ -76,14 +76,15 @@ Feature: every claim code is well formed, filed under its file's code, and never
       then it will find <error>, about <facts>
 
       Examples:
-        | clm         | files                                                                                             | error                        | facts                                                             |
-        | CLM-STG-054 | one.feature, tagged @ONE, contains a scenario tagged @CLM-TWO-001, and two.feature is tagged @TWO | foreign-claim-code           | CLM-TWO-001, one.feature, and two.feature as the file tagged @TWO |
-        | CLM-STG-055 | one.feature, tagged @ONE, contains a scenario tagged @CLM-ZZZ-001, and no file is tagged @ZZZ     | foreign-claim-code           | CLM-ZZZ-001, one.feature, and no file tagged @ZZZ                 |
-        | CLM-STG-056 | three.feature has no feature code, and contains a scenario tagged @CLM-ONE-002                    | no-feature-code              | three.feature                                                     |
-        | CLM-STG-057 | one.feature and uno.feature are both tagged @ONE                                                  | duplicate-feature-code       | @ONE, one.feature and uno.feature                                 |
-        | CLM-STG-058 | one.feature contains a scenario tagged both @CLM-ONE-001 and @CLM-ONE-002                         | several-claim-codes          | one.feature, that scenario, CLM-ONE-001 and CLM-ONE-002           |
-        | CLM-STG-059 | one.feature contains an Outline tagged @CLM-ONE-009 with a clm column                             | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
-        | CLM-STG-060 | one.feature contains an Outline with a clm column and an Examples block tagged @CLM-ONE-009       | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
+        | clm         | files                                                                                                            | error                        | facts                                                             |
+        | CLM-STG-054 | one.feature, tagged @ONE, contains a scenario tagged @CLM-TWO-001, and two.feature is tagged @TWO                | foreign-claim-code           | CLM-TWO-001, one.feature, and two.feature as the file tagged @TWO |
+        | CLM-STG-055 | one.feature, tagged @ONE, contains a scenario tagged @CLM-ZZZ-001, and no file is tagged @ZZZ                    | foreign-claim-code           | CLM-ZZZ-001, one.feature, and no file tagged @ZZZ                 |
+        | CLM-STG-056 | three.feature has no feature code, and contains a scenario tagged @CLM-ONE-002                                   | no-feature-code              | three.feature                                                     |
+        | CLM-STG-057 | one.feature and uno.feature are both tagged @ONE                                                                 | duplicate-feature-code       | @ONE, one.feature and uno.feature                                 |
+        | CLM-STG-058 | one.feature contains a scenario tagged both @CLM-ONE-001 and @CLM-ONE-002                                        | several-claim-codes          | one.feature, that scenario, CLM-ONE-001 and CLM-ONE-002           |
+        | CLM-STG-059 | one.feature contains an Outline tagged @CLM-ONE-009 with a clm column                                            | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
+        | CLM-STG-060 | one.feature contains an Outline with a clm column and an Examples block tagged @CLM-ONE-009                      | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
+        | CLM-STG-094 | one.feature contains an Outline tagged @CLM-ONE-009, with a clm column and an Examples block tagged @CLM-ONE-009 | claim-code-beside-clm-column | one.feature, that Outline, and CLM-ONE-009 once                   |
 
   Rule: allocate's next code is one past the highest code that has ever been in the repository
 

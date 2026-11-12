@@ -18,6 +18,7 @@ export interface RegularFileIdentity {
 export interface ReadInput {
   readonly subject: string;
   readonly path: string;
+  readonly readAt: string;
 }
 
 export interface ProbedDestination {
@@ -105,5 +106,5 @@ function linkTarget(path: string): string | undefined {
 }
 
 export function identifiedInputs(inputs: readonly ReadInput[]): IdentifiedInput[] {
-  return inputs.map((input) => ({ ...input, identity: regularFileIdentity(input.path) }));
+  return inputs.map(({ subject, path, readAt }) => ({ subject, path, identity: regularFileIdentity(readAt) }));
 }

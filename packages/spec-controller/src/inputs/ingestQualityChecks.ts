@@ -61,7 +61,7 @@ export function readCorpus(featuresDir: string): CorpusReading {
 
 type ParsedWorkflows =
   | { readonly kind: "unparseable"; readonly faults: readonly SourceFault[] }
-  | { readonly kind: "read"; readonly workflows: readonly ParsedWorkflow[] };
+  | { readonly kind: "read"; readonly workflows: readonly ParsedWorkflow[]; readonly paths: readonly string[] };
 
 export type WorkflowReading = ParsedWorkflows | ReadFault;
 
@@ -81,7 +81,7 @@ function workflowSourcesOf(path: string, read: (path: string) => string): Workfl
 
 function parsedWorkflowsOf({ paths, sources }: WorkflowSources): ParsedWorkflows {
   const parse = parseWorkflows(sources);
-  if (parse.kind === "parsed") return { kind: "read", workflows: parse.parsed };
+  if (parse.kind === "parsed") return { kind: "read", workflows: parse.parsed, paths };
   const pathOf = new Map(paths.map((read) => [basename(read), read]));
   return { kind: "unparseable", faults: parse.faults.map(({ file, message }) => ({ file: pathOf.get(file)!, message })) };
 }

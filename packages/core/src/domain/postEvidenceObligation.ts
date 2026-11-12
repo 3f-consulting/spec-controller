@@ -1,4 +1,4 @@
-import { claimCodeFrom, type ClaimCode, type ClaimRow, type FeatureRead, type ScenarioRead } from "./claimCodes.js";
+import { claimCodeFrom, claimCodesIn, written, type ClaimCode, type ClaimRow, type FeatureRead, type ScenarioRead } from "./claimCodes.js";
 
 export type QualityCheckKind = "fitness" | "unit" | "integration" | "e2e" | "performance";
 
@@ -45,7 +45,7 @@ function claimRowsOf({ examples }: ScenarioAsWritten): ClaimRow[] | undefined {
   if (!examples.some((block) => clmColumnOf(block) >= 0)) return undefined;
   return examples.flatMap((block) => {
     const column = clmColumnOf(block);
-    return block.rows.map(({ line, cells }) => ({ line, cell: cells[column] }));
+    return block.rows.map(({ cells }) => ({ cell: cells[column] }));
   });
 }
 
@@ -58,7 +58,7 @@ export function featureReadOf({ file, featureTags, scenarios }: FeatureAsWritten
   return { file, featureTags, scenarios: scenarios.map(scenarioReadOf) };
 }
 
-const codesIn = (words: readonly string[]): string[] => words.filter((word) => claimCodeFrom(word) !== undefined);
+const codesIn = (words: readonly (string | undefined)[]): string[] => claimCodesIn(words).map(written);
 
 // The claim codes a scenario carries at each line a report may name it by: its tags at its own line, and the clm cell,
 // if its block has one, at the line of each row.
@@ -88,10 +88,6 @@ function obligationsRaisedBy(tags: readonly string[], strict: boolean): Evidence
 
 function claimOf(file: string, scenario: ScenarioRead, strict: boolean, claimCode: ClaimCode | undefined): ExecutableClaim {
   return { file, title: scenario.title, obligations: obligationsRaisedBy(scenario.tags, strict), ...(claimCode && { claimCode }) };
-}
-
-function claimCodesIn(tags: readonly string[]): ClaimCode[] {
-  return tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
 }
 
 function claimsOf(file: string, scenario: ScenarioRead, settings: ReadingSettings): ExecutableClaim[] {

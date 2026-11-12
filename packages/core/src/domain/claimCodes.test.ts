@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, readdirSync } from "node:fs";
+import { cpSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { allocateIn, expectAnsweredEnding, gitExited, refusalReason, type Answered } from "../../../spec-controller/src/commands/answered.test-utils.js";
@@ -168,6 +168,12 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
       "CLM-STG-060",
       "a code on an Examples block, with a clm column",
       () => ({ "one.feature": featureFile("@ONE", OUTLINE_WITH_CLM_COLUMN("", "@CLM-ONE-009")) }),
+      { kind: "claim-code-beside-clm-column", files: ["one.feature"], scenario: "an outline", codes: ["CLM-ONE-009"] },
+    ],
+    [
+      "CLM-STG-094",
+      "one code on an Outline and on its Examples block, with a clm column",
+      () => ({ "one.feature": featureFile("@ONE", OUTLINE_WITH_CLM_COLUMN("@CLM-ONE-009", "@CLM-ONE-009")) }),
       { kind: "claim-code-beside-clm-column", files: ["one.feature"], scenario: "an outline", codes: ["CLM-ONE-009"] },
     ],
   ])("[%s] %s", (_clm, _files, sourcesOf, error) => {
@@ -543,7 +549,6 @@ describe("a feature code on a feature file in a subdirectory is found", () => {
   it("[CLM-STG-083] the only file tagged @NEST, two folders down", () => {
     const repo = freshDirectory("claim-codes-nested-");
     git(repo, ["init", "-q", "-b", "main"]);
-    mkdirSync(join(repo, "features", "outer", "inner"), { recursive: true });
     writeInto(repo, "features/outer/inner/nest.feature", "@NEST\nFeature: feature code NEST\n\n  @CLM-NEST-004 @unit\n  Scenario: scenario 1\n    Given a step\n");
     commitAll(repo, "the corpus");
 
@@ -568,8 +573,9 @@ function newCodeInCopyWithoutGit(): Answered {
 }
 
 function newCodeInShallowClone(): Answered {
+  const repo = repositoryCarrying("CLM-ONE-001");
   const clone = join(freshDirectory("claim-codes-new-clone-"), "clone");
-  git(repositoryCarrying("CLM-ONE-001"), ["clone", "-q", "--depth", "1", `file://${repositoryCarrying("CLM-ONE-001")}`, clone]);
+  git(repo, ["clone", "-q", "--depth", "1", `file://${repo}`, clone]);
   return allocateIn(clone, ["ZZ", "--new"]);
 }
 

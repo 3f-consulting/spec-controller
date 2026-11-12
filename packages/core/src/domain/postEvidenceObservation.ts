@@ -1,4 +1,4 @@
-import { claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
+import { claimCodeCitationsIn, claimCodeFrom, claimCodesIn, sameCode, type ClaimCode } from "./claimCodes.js";
 import { claimCodesAtLinesOf, type ExecutableClaim, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { relativizeToRoot } from "./targetPath.js";
 
@@ -409,14 +409,12 @@ function scenarioResultOf(steps: readonly StepRunAsWritten[]): EvidenceObservati
 
 const stepText = (step: StepRunAsWritten): string => `${String(step.keyword).trim()} ${step.text}`;
 
-const codesIn = (texts: readonly string[]): ClaimCode[] => texts.flatMap((text) => claimCodeFrom(text) ?? []);
-
 function scenarioRunObservationOf(run: ScenarioRunAsWritten, root: string, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
   const result = scenarioResultOf(run.steps);
   if (result === undefined) return [];
   const place = relativizeToRoot(String(run.featurePath ?? run.featureName), root);
   const rowCodes = run.line === undefined ? [] : claimCodesAt(place, run.line);
-  const cites = nearestCitation([codesIn([...run.tags, ...rowCodes])]);
+  const cites = nearestCitation([claimCodesIn([...run.tags, ...rowCodes])]);
   const neverRan = result === "never-ran";
   const notes = neverRan ? run.steps.filter((step) => endingOf(step) === "could-not-run").map(stepText) : [];
   return kindsTheTagsName(run.tags).map((kind) => ({ cites, result, kind, place, notes, ...(neverRan ? {} : { name: run.name }) }));

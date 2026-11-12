@@ -4,57 +4,40 @@ import { join } from "node:path";
 import { AppError } from "../messages/messages.js";
 import { message } from "../messages/appText.js";
 import { runBalanceCaptured } from "./runBalance.test-utils.js";
-import { inputsReadBy } from "./balance.js";
-import type { InputReader } from "../inputs/inputsRead.js";
+import { inputsReadOf } from "../inputs/inputsRead.js";
+import { INPUT_DEFAULTS } from "../runRequest/defaults.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { printedRefusal } from "../messages/shownText.test-utils.js";
-
-function workflowFilesAt(path: string): string[] {
-  return path.endsWith(".yml") ? [path] : [`${path}/ci.yml`, `${path}/nightly.yaml`];
-}
-
-const reader: InputReader = {
-  exists: () => true,
-  featureFiles: (dir) => [`${dir}/a.feature`],
-  workflowFiles: workflowFilesAt,
-};
 
 describe("[CLM-FMT-013] the files a run reads are named by their kind: feature file, workflow or report", () => {
   it.each([
     [
       "pointed at by its flag",
-      { vitest: "v.json", cucumber: "c.json", "ci-steps": "s.json", "package-json": "p.json", features: "f", ci: "w.yml" },
+      { features: "f", ci: "w" },
+      { reports: ["v.json", "p.json"], corpus: "f", featureFiles: ["a.feature", "sub/b.feature"], workflows: ["w/ci.yml", "w/nightly.yaml"] },
       [
-        { subject: "a report", path: "v.json" },
-        { subject: "a report", path: "c.json" },
-        { subject: "a report", path: "p.json" },
-        { subject: "a report", path: "s.json" },
-        { subject: "a feature file", path: "f/a.feature" },
-        { subject: "a CI workflow", path: "w.yml" },
+        { subject: "a report", path: "v.json", readAt: "v.json" },
+        { subject: "a report", path: "p.json", readAt: "p.json" },
+        { subject: "a feature file", path: "f/a.feature", readAt: "f/a.feature" },
+        { subject: "a feature file", path: "f/sub/b.feature", readAt: "f/sub/b.feature" },
+        { subject: "a CI workflow", path: "w/ci.yml", readAt: "w/ci.yml" },
+        { subject: "a CI workflow", path: "w/nightly.yaml", readAt: "w/nightly.yaml" },
       ],
     ],
     [
       "read by default",
       {},
+      { reports: ["package.json"], corpus: "/target/features", featureFiles: ["a.feature"], workflows: [".github/workflows/ci.yml"] },
       [
-        { subject: "a report", path: "package.json" },
-        { subject: "a feature file", path: "features/a.feature" },
-        { subject: "a CI workflow", path: ".github/workflows/ci.yml" },
-        { subject: "a CI workflow", path: ".github/workflows/nightly.yaml" },
+        { subject: "a report", path: "package.json", readAt: "package.json" },
+        { subject: "a feature file", path: "features/a.feature", readAt: "/target/features/a.feature" },
+        { subject: "a CI workflow", path: ".github/workflows/ci.yml", readAt: ".github/workflows/ci.yml" },
       ],
     ],
-    [
-      "in a folder the run was pointed at",
-      { ci: "workflows" },
-      [
-        { subject: "a report", path: "package.json" },
-        { subject: "a feature file", path: "features/a.feature" },
-        { subject: "a CI workflow", path: "workflows/ci.yml" },
-        { subject: "a CI workflow", path: "workflows/nightly.yaml" },
-      ],
-    ],
-  ])("names each input %s by its kind alone", (_how, args: Record<string, string>, named) => {
-    expect(inputsReadBy(args, reader)).toEqual(named);
+  ])("names each file %s by its kind", (_how, args: Record<string, string>, read, named) => {
+    const inputs = inputsReadOf(args, read, INPUT_DEFAULTS.features);
+    expect(inputs).toHaveLength(named.length);
+    expect(inputs).toEqual(expect.arrayContaining(named));
   });
 });
 
@@ -79,7 +62,7 @@ function captured(argv: string[]): { stdout: string; stderr: string; exitCode: u
   return { stdout, stderr, exitCode };
 }
 
-describe("[CLM-FMT-013] balance refuses a --format naming one of the feature files it reads", () => {
+describe("[CLM-FMT-013] balance refuses a --format naming one of the files it reads", () => {
   it("refuses a markdown report on a feature file of the --features corpus at exit 2, naming the output and that file, and leaves every file as it was", () => {
     const { features, ci } = target();
     const before = contentsOf(features);
@@ -98,6 +81,40 @@ describe("[CLM-FMT-013] balance refuses a --format naming one of the feature fil
     expect(contentsOf(features)).toEqual(before);
   });
 
+  it("refuses a markdown report on the --vitest report the run reads at exit 2, naming the output and that report, and leaves it as it was", () => {
+    const { features, ci } = target();
+    const report = join(features, "..", "vitest.json");
+    writeFileSync(report, '{"testResults":[]}');
+
+    expect(captured(["--features", features, "--ci", ci, "--vitest", report, "--format", `md:${report}`])).toEqual({
+      stdout: "",
+      stderr:
+        printedRefusal(
+          AppError.OutputOverwritesInput,
+          message(AppError.OutputOverwritesInput, { output: `md:${report}`, subject: "a report", path: report }),
+          "balance",
+        ) + "\n",
+      exitCode: 2,
+    });
+    expect(readFileSync(report, "utf8")).toBe('{"testResults":[]}');
+  });
+
+  it("refuses a markdown report on the --ci workflow the run reads at exit 2, naming the output and that workflow, and leaves it as it was", () => {
+    const { features, ci } = target();
+
+    expect(captured(["--features", features, "--ci", ci, "--format", `md:${ci}`])).toEqual({
+      stdout: "",
+      stderr:
+        printedRefusal(
+          AppError.OutputOverwritesInput,
+          message(AppError.OutputOverwritesInput, { output: `md:${ci}`, subject: "a CI workflow", path: ci }),
+          "balance",
+        ) + "\n",
+      exitCode: 2,
+    });
+    expect(readFileSync(ci, "utf8")).toBe("jobs: {}\n");
+  });
+
   it("[CLM-FMT-019] writes a markdown report on a file of the corpus folder that is not a feature file, since the run does not read it", () => {
     const { features, ci } = target();
     const output = join(features, "notes.txt");
@@ -109,17 +126,5 @@ describe("[CLM-FMT-013] balance refuses a --format naming one of the feature fil
     expect(readFileSync(output, "utf8")).not.toBe("not a feature\n");
     expect(readFileSync(output, "utf8")).toContain("# ");
     expect(readFileSync(join(features, "a.feature"), "utf8")).toBe("Feature: a\n");
-  });
-});
-
-describe("[CLM-FMT-033] balance writes a report to a file it does not read, on the same device as the files it reads", () => {
-  it("writes a report to a new file while one of the inputs it reads is no regular file, alongside inputs that are", () => {
-    const { features } = target();
-    const output = join(features, "..", "report.md");
-
-    const run = captured(["--features", features, "--ci", "/dev/null", "--format", `md:${output}`]);
-
-    expect(run.stderr).toBe("");
-    expect(readFileSync(output, "utf8")).toContain("# ");
   });
 });

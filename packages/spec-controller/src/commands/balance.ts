@@ -34,7 +34,7 @@ import { locatedOutputs, probedOutputs, renderedReports, writeRenderedReports } 
 import { identifiedInputs } from "../output/outputLocation.js";
 import { outputRefusal, WRITTEN_FORMATS } from "../output/format.js";
 import { refuse, settlingRefusal } from "../runEnding/usageRefusal.js";
-import { inputsReadFrom, NODE_INPUT_READER, type InputReader } from "../inputs/inputsRead.js";
+import { inputsReadOf, type FilesRead } from "../inputs/inputsRead.js";
 import { corpusDirOf } from "../inputs/corpusDir.js";
 import {
   checkInputsExist,
@@ -81,7 +81,7 @@ function reconcile(argv: string[]): boolean {
   const missingValueError = checkMissingValues(argv, cliRegistry, "balance");
   if (missingValueError) refuse(missingValueError);
 
-  const { corpus, workflows, reports } = refuseUnreadableInputs(args);
+  const { corpus, workflows, reports, read } = refuseUnreadableInputs(args);
 
   const inputs = inputPathsOf(args);
 
@@ -92,15 +92,10 @@ function reconcile(argv: string[]): boolean {
     provenance: provenanceOf(args, inputs, root),
   });
 
-  writeReports(collectFormatSpecs(argv), evidenceReconciliation, identifiedInputs(inputsReadBy(args, NODE_INPUT_READER)));
+  writeReports(collectFormatSpecs(argv), evidenceReconciliation, identifiedInputs(inputsReadOf(args, read, INPUT_DEFAULTS.features)));
 
   endRunOn({ kind: "verdict", code: exitCodeOf(evidenceReconciliation.runVerdict, args["exit-zero"] !== undefined) });
   return true;
-}
-
-// The files the run reads, named by how the run came to read them: the inputs it was given, or the defaults.
-export function inputsReadBy(args: Record<string, string>, reader: InputReader): ReturnType<typeof inputsReadFrom> {
-  return inputsReadFrom(args, requestedInputsOf(args), reader, INPUT_DEFAULTS);
 }
 
 // The reports the --format specs ask for: planned, probed, checked against one another and the inputs, then written.
@@ -119,6 +114,7 @@ interface ReadInputs {
   readonly corpus: readonly ParsedFeatureFile[];
   readonly workflows: readonly ParsedWorkflow[];
   readonly reports: readonly EvidenceReport[];
+  readonly read: FilesRead;
 }
 
 function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
@@ -126,7 +122,8 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
   const missingInputError = checkInputsExist(given, existsSync);
   if (missingInputError) refuse(missingInputError);
 
-  const reportsReading = readReports(jsonInputsOf(given, existsSync, INPUT_DEFAULTS.packageJson));
+  const reportInputs = jsonInputsOf(given, existsSync, INPUT_DEFAULTS.packageJson);
+  const reportsReading = readReports(reportInputs);
 
   const corpusDir = corpusDirOf(args, INPUT_DEFAULTS.features);
   if (typeof corpusDir !== "string") refuse(corpusDirRefusal(corpusDir));
@@ -140,7 +137,17 @@ function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
   if (reportsReading.faulty !== undefined) refuse(reportRefusal(reportsReading.faulty));
 
   if (corpusReading.kind === "unparseable") refuse(corpusUnparseableRefusal(corpusReading.faults));
-  return { corpus: corpusReading.corpus, workflows: workflowReading.workflows, reports: reportsReading.reports };
+  return {
+    corpus: corpusReading.corpus,
+    workflows: workflowReading.workflows,
+    reports: reportsReading.reports,
+    read: {
+      reports: reportInputs.map(({ path }) => path),
+      corpus: corpusDir,
+      featureFiles: corpusReading.corpus.map(({ file }) => file),
+      workflows: workflowReading.paths,
+    },
+  };
 }
 
 // The target's folder, from the folder the corpus is in and the top of any git repository that folder is in.

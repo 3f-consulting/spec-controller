@@ -37,7 +37,6 @@ export function retiredScenarioCodeFrom(text: string): ClaimCode | undefined {
 }
 
 export interface ClaimRow {
-  readonly line: number;
   readonly cell: string | undefined;
 }
 
@@ -100,9 +99,9 @@ export type ClaimCodeError =
   | SeveralClaimCodesError
   | ClaimCodeBesideClmColumnError;
 
-const written = ({ featureCode, number }: ClaimCode): string => `${CLAIM_CODE_PREFIX}-${featureCode}-${number}`;
+export const written = ({ featureCode, number }: ClaimCode): string => `${CLAIM_CODE_PREFIX}-${featureCode}-${number}`;
 
-const claimCodesIn = (words: readonly (string | undefined)[]): ClaimCode[] => words.flatMap((word) => claimCodeFrom(word) ?? []);
+export const claimCodesIn = (words: readonly (string | undefined)[]): ClaimCode[] => words.flatMap((word) => claimCodeFrom(word) ?? []);
 
 // The codes a scenario carries: an Outline's clm cells, or else its tagged codes.
 function codesCarriedBy(scenario: ScenarioRead): ClaimCode[] {
