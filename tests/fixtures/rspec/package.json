@@ -1,9 +1,0 @@
-{
-  "name": "rspec-fixture-target",
-  "private": true,
-  "specController": {
-    "runners": {
-      "unit": "rspec"
-    }
-  }
-}

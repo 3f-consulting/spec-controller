@@ -1,7 +1,0 @@
-{
-  "name": "pending-only-fixture-target",
-  "private": true,
-  "scripts": {
-    "test": "vitest run"
-  }
-}

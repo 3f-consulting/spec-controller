@@ -1,7 +1,0 @@
-{
-  "name": "unsound-code-error-fixture-target",
-  "private": true,
-  "scripts": {
-    "test": "vitest run"
-  }
-}

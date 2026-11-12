@@ -1,9 +1,0 @@
-{
-  "name": "java-fixture-target",
-  "private": true,
-  "specController": {
-    "runners": {
-      "unit": "mvn"
-    }
-  }
-}

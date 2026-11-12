@@ -1,5 +1,5 @@
-// 4 is the owner's judgement, set by hand while the scenarios are reviewed for lines no claim needs; it comes down by hand once that review makes the room.
-export const testRatioCeiling = 4;
+// 1.5 sits a margin above the measured 1.20, so a return to tests no claim needs reds the gate. It is never raised to let work run.
+export const testRatioCeiling = 1.5;
 
 // Git pathspec globs: a tracked file matching an include and no exclude is counted.
 export const test = {

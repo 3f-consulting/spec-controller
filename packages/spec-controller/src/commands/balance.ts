@@ -12,7 +12,6 @@ import {
   shellReading,
   targetFolderOf,
   targetConfigurationFrom,
-  toolVersionOf,
   type EvidenceReconciliation,
   type IdentifiedInput,
   type ParsedFeatureFile,
@@ -50,7 +49,7 @@ import {
 } from "../inputs/unreadableInputs.js";
 import { exitCodeOf } from "../runEnding/exitStatus.js";
 import { endRunOn } from "../runEnding/exitCode.js";
-import { readTargetHead, readToolInstall, readRepositoryTop, readToolVersion, readWorkingFolder, readTargetOrigin } from "../runIdentity/resolveRunInputs.js";
+import { readTargetHead, readToolInstall, readRepositoryTop, readWorkingFolder, readTargetOrigin } from "../runIdentity/resolveRunInputs.js";
 import { balanceCommand, cliRegistry, renderCommandHelp } from "../runRequest/cliRegistry.js";
 import {
   asksForHelp,
@@ -76,7 +75,7 @@ function reconcile(argv: string[]): boolean {
   const shapeError = checkArgvShape(argv, cliRegistry, "balance");
   if (shapeError) refuse(shapeError);
 
-  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance", toolVersionOf(readToolVersion()));
+  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance");
   if (unknownFlagError) refuse(unknownFlagError);
 
   const missingValueError = checkMissingValues(argv, cliRegistry, "balance");

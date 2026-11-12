@@ -125,6 +125,12 @@ Feature: You get each report in the format and place you asked for, and the run 
       and it will complain, naming the file
       and the file will be as it was
 
+    @unit @CLM-FMT-033
+    Scenario: a report will be written to a file the run does not read, even on the same device
+      given the run read one file
+      when you ask for the report to go in another file on the same device
+      then the report will be written there
+
     @unit
     Scenario Outline: a report on standard error will not go in a file another report names or the run reads
       given standard error was redirected to <the file>

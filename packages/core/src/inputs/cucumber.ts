@@ -12,8 +12,7 @@ export type CucumberJsonReport = ReadonlyArray<{
     readonly steps?: ReadonlyArray<{
       readonly keyword?: string;
       readonly name?: string;
-      readonly hidden?: boolean;
-      readonly result: { readonly status?: string; readonly duration?: number };
+      readonly result: { readonly status?: string };
     }>;
   }>;
 }>;
@@ -35,7 +34,7 @@ function scenarioRunsOf(report: CucumberJsonReport): ScenarioRunAsWritten[] {
 
 export function parseCucumberEvidenceObservations(
   report: CucumberJsonReport,
-  root: string | undefined,
+  root: string,
   claimCodesAt: ClaimCodesAt,
 ): EvidenceObservation[] {
   return scenarioRunObservationsOf(scenarioRunsOf(report), root, claimCodesAt);

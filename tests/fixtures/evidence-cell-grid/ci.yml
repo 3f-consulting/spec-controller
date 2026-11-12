@@ -1,9 +1,0 @@
-name: CI
-on: [push, pull_request]
-jobs:
-  ci:
-    runs-on: ubuntu-latest
-    steps:
-      - run: pnpm install --frozen-lockfile
-      - id: CLM-CEL-001
-        run: pnpm guard:cell-grid

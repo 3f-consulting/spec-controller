@@ -1,8 +1,0 @@
-[
-  {
-    "uri": "features/widget.feature",
-    "elements": [
-      { "tags": [{ "name": "@e2e" }, { "name": "@CLM-CEL-003" }], "steps": [{ "result": { "status": "passed" } }] }
-    ]
-  }
-]

@@ -1,9 +1,0 @@
-{
-  "name": "pytest-fixture-target",
-  "private": true,
-  "specController": {
-    "runners": {
-      "unit": "pytest"
-    }
-  }
-}

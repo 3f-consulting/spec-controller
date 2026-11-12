@@ -1,9 +1,0 @@
-{
-  "name": "unnamed-claim-steps-fixture-target",
-  "private": true,
-  "scripts": {
-    "lint:bar": "echo bar-check",
-    "lint:foo": "echo foo-check",
-    "test": "vitest run"
-  }
-}

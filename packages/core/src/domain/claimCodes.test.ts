@@ -22,7 +22,7 @@ import { AppError, AppMessage } from "../../../spec-controller/src/messages/mess
 import { printedRefusal } from "../../../spec-controller/src/messages/shownText.test-utils.js";
 import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
 import { claimCodeErrorsOf, claimCodeFrom, featureCodeOfFile, isFeatureCode, retiredScenarioCodeFrom, type ClaimCodeError } from "./claimCodes.js";
-import { featureReadOf } from "./postEvidenceObligation.js";
+import { executableClaimsOf, featureReadOf } from "./postEvidenceObligation.js";
 
 afterEach(() => {
   while (taken.length > 0) taken.pop()?.();
@@ -93,7 +93,6 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
       {
         kind: "foreign-claim-code",
         files: ["one.feature"],
-        featureCode: "ONE",
         claimCode: "CLM-TWO-001",
         namedFeatureCode: "TWO",
         namedFeatureFiles: ["two.feature"],
@@ -106,7 +105,18 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
       {
         kind: "foreign-claim-code",
         files: ["one.feature"],
-        featureCode: "ONE",
+        claimCode: "CLM-TWO-001",
+        namedFeatureCode: "TWO",
+        namedFeatureFiles: ["two.feature"],
+      },
+    ],
+    [
+      "CLM-STG-054",
+      "a code under another file's feature code, written twice on one scenario",
+      () => ({ "one.feature": featureFile("@ONE", scenarioTagged("@CLM-TWO-001 @CLM-TWO-001")), "two.feature": featureFile("@TWO", "") }),
+      {
+        kind: "foreign-claim-code",
+        files: ["one.feature"],
         claimCode: "CLM-TWO-001",
         namedFeatureCode: "TWO",
         namedFeatureFiles: ["two.feature"],
@@ -119,7 +129,6 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
       {
         kind: "foreign-claim-code",
         files: ["one.feature"],
-        featureCode: "ONE",
         claimCode: "CLM-ZZZ-001",
         namedFeatureCode: "ZZZ",
         namedFeatureFiles: [],
@@ -166,6 +175,15 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
     const features = parsedFeatures(Object.values(sources), Object.keys(sources));
 
     expect(claimCodeErrorsOf(features.map(featureReadOf))).toEqual([error]);
+  });
+
+  it("[CLM-STG-058] one code written twice on one scenario is one code, to the claim code errors and to the claims", () => {
+    const features = parsedFeatures([featureFile("@ONE", scenarioTagged("@unit @CLM-ONE-001 @CLM-ONE-001"))], ["one.feature"]);
+
+    expect(claimCodeErrorsOf(features.map(featureReadOf))).toEqual([]);
+    expect(executableClaimsOf(features, { deferralTags: [], strict: false }).map(({ claimCode }) => claimCode)).toEqual([
+      { featureCode: "ONE", number: "001" },
+    ]);
   });
 });
 

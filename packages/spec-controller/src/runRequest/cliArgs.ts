@@ -185,21 +185,17 @@ export function checkUnknownFlags(
   args: Record<string, string>,
   registry: CliRegistry,
   command: string,
-  toolVersion: string,
 ): Refusal | null {
   const entry = commandEntry(registry, command);
   for (const key of Object.keys(args)) {
     if (!entry.flags.some((flag) => flag.name === `--${key}`)) {
-      return unknownFlagRefusal(`--${key}`, command, toolVersion);
+      return unknownFlagRefusal(`--${key}`, command);
     }
   }
   return null;
 }
 
-function unknownFlagRefusal(flag: string, command: string, toolVersion: string): Refusal {
+function unknownFlagRefusal(flag: string, command: string): Refusal {
   const scope = `spec-controller ${command}`;
-  return refusal(AppError.UnknownFlag, { flag, scope, toolVersion, command }, [
-    message(AppMessage.PinDrifted, { command, flag }),
-    message(AppMessage.OtherwiseSeeFlags, { scope }),
-  ]);
+  return refusal(AppError.UnknownFlag, { flag, scope }, [message(AppMessage.SeeFlags, { scope })]);
 }

@@ -155,7 +155,6 @@ export interface EvidenceGroup {
   readonly kind: QualityCheckKind;
   readonly file?: string;
   readonly claimCode?: ClaimCode;
-  readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[];
   readonly ran: number;
   readonly passed: number;
   readonly failed: number;
@@ -186,7 +185,7 @@ function withCounts(key: GroupKey, members: readonly QualityCheckReconciliation[
   const results = members.map(({ observation }) => observation!);
   const passed = results.filter(({ result }) => result === "passed" || result === "passed-on-error").length;
   const failures = results.filter(({ result }) => result === "failed").map(({ name, place }) => name ?? place);
-  return { ...key, qualityCheckReconciliations: members, ran: passed + failures.length, passed, failed: failures.length, failures };
+  return { ...key, ran: passed + failures.length, passed, failed: failures.length, failures };
 }
 
 // Only the unnamed claim is grouped, and each of its lines holds an observation.

@@ -1,8 +1,0 @@
-[
-  {
-    "uri": "features/widget.feature",
-    "elements": [
-      { "tags": [{ "name": "@integration" }, { "name": "@e2e" }, { "name": "@CLM-TGT-102" }], "steps": [{ "result": { "status": "passed" } }] }
-    ]
-  }
-]

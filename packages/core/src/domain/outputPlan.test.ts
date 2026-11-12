@@ -53,8 +53,12 @@ describe("a report will not be written over a file the run reads", () => {
     const onTheInput: IdentifiedOutput<Format> = { output: { fmt: "json", dest: { kind: "file", path: "vitest.json" } }, identity: { dev: 1n, ino: 2n }, toStandardError: false };
     expect(outputClashOf([elsewhere, onTheInput], [READ])).toMatchObject({ kind: "output-overwrites-an-input", output: onTheInput.output });
   });
+});
 
-  it("[CLM-FMT-013] a report on another file of the same device, or on a file of another device with the same number, is planned", () => {
+describe("a report will be written to a file the run does not read, even on the same device", () => {
+  const READ: IdentifiedInput = { subject: "the --vitest report", path: "vitest.json", identity: { dev: 1n, ino: 2n } };
+
+  it("[CLM-FMT-033] a report on another file of the same device, or on a file of another device with the same number, is planned", () => {
     const sameDevice: IdentifiedOutput<Format> = { output: { fmt: "md", dest: { kind: "file", path: "a.md" } }, identity: { dev: 1n, ino: 3n }, toStandardError: false };
     const otherDevice: IdentifiedOutput<Format> = { output: { fmt: "json", dest: { kind: "file", path: "b.json" } }, identity: { dev: 4n, ino: 2n }, toStandardError: false };
     expect(outputClashOf([sameDevice, otherDevice], [READ, { subject: "the corpus", path: "a.feature", identity: undefined }])).toBeUndefined();

@@ -25,7 +25,7 @@ export function parseSources<D, T extends object>(
     try {
       documents.push({ file, source, document: parse(source) });
     } catch (err) {
-      faults.push({ file, message: err instanceof Error ? err.message : String(err) });
+      faults.push({ file, message: (err as Error).message });
     }
   }
   if (faults.length > 0) return { kind: "unparseable", faults };

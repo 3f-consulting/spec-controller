@@ -1,4 +1,4 @@
-import { claimCodeFrom, type ClaimCode } from "./claimCodes.js";
+import { claimCodeFrom, type ClaimCode, type ClaimRow, type FeatureRead, type ScenarioRead } from "./claimCodes.js";
 
 export type QualityCheckKind = "fitness" | "unit" | "integration" | "e2e" | "performance";
 
@@ -35,19 +35,6 @@ export interface FeatureAsWritten {
   readonly tagFormWords: readonly string[];
 }
 
-interface ClaimRow {
-  readonly line: number;
-  readonly cell: string | undefined;
-}
-
-// A scenario as the claims are read off it: an Outline with a clm column has a row for each claim.
-interface ScenarioRead {
-  readonly tags: readonly string[];
-  readonly title: string;
-  readonly examplesTags: readonly string[];
-  readonly rows: readonly ClaimRow[] | undefined;
-}
-
 const CLM_COLUMN = "clm";
 
 const clmColumnOf = (block: ExamplesBlockAsWritten): number => block.columns.indexOf(CLM_COLUMN);
@@ -64,11 +51,10 @@ function claimRowsOf({ examples }: ScenarioAsWritten): ClaimRow[] | undefined {
 
 function scenarioReadOf(scenario: ScenarioAsWritten): ScenarioRead {
   const rows = claimRowsOf(scenario);
-  return { tags: scenario.tags, title: scenario.title, examplesTags: scenario.examples.flatMap(({ tags }) => tags), rows };
+  return { tags: [...new Set(scenario.tags)], title: scenario.title, examplesTags: scenario.examples.flatMap(({ tags }) => tags), rows };
 }
 
-// Each feature file with its scenarios as the claims are read off them.
-export function featureReadOf({ file, featureTags, scenarios }: FeatureAsWritten): { readonly file: string; readonly featureTags: readonly string[]; readonly scenarios: readonly ScenarioRead[] } {
+export function featureReadOf({ file, featureTags, scenarios }: FeatureAsWritten): FeatureRead {
   return { file, featureTags, scenarios: scenarios.map(scenarioReadOf) };
 }
 

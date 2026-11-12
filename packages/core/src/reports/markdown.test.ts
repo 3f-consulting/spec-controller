@@ -27,7 +27,6 @@ function everySection(failing: EvidenceObservation = observation()): EvidenceRec
         {
           kind: "foreign-claim-code",
           files: ["four.feature", "five.feature"],
-          featureCode: "FOUR",
           claimCode: "CLM-FIVE-001",
           namedFeatureCode: "FIVE",
           namedFeatureFiles: ["five.feature"],
@@ -252,7 +251,7 @@ describe("each section will have its heading, each value its label, and each tab
       `| ${text("kind-column")} | ${text("about-column")} |`,
       "| --- | --- |",
       `| no-feature-code | ${text("files-label")}: \`three.feature\` |`,
-      `| foreign-claim-code | ${text("files-label")}: \`four.feature\` \`five.feature\`; ${text("feature-code-label")}: \`FOUR\`; ` +
+      `| foreign-claim-code | ${text("files-label")}: \`four.feature\` \`five.feature\`; ` +
         `${text("claim-code-label")}: \`CLM-FIVE-001\`; ${text("named-feature-code-label")}: \`FIVE\`; ${text("named-feature-files-label")}: \`five.feature\` |`,
       `| several-claim-codes | ${text("files-label")}: \`six.feature\`; ${text("scenario-label")}: \`a scenario\`; ${text("codes-label")}: \`CLM-SIX-001\` \`CLM-SIX-002\` |`,
       `### ${text("configuration-errors-heading")}`,

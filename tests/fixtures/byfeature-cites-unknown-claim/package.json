@@ -1,7 +1,0 @@
-{
-  "name": "byfeature-cites-unknown-claim-fixture-target",
-  "private": true,
-  "scripts": {
-    "test": "vitest run"
-  }
-}

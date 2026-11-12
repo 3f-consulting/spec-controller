@@ -1,7 +1,0 @@
-{
-  "name": "never-ran-fixture-target",
-  "private": true,
-  "scripts": {
-    "test": "vitest run"
-  }
-}

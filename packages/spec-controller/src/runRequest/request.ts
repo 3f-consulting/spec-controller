@@ -17,9 +17,8 @@ export interface AllocateRequest {
 export function readRequest(
   argv: readonly string[],
   registry: CliRegistry,
-  toolVersion: string,
 ): AllocateRequest | { readonly usageError: Refusal } {
-  const why = argvRefusal(argv, registry, toolVersion);
+  const why = argvRefusal(argv, registry);
   if (why !== null) return { usageError: why };
   const [part] = positionalArguments(argv);
   if (part === undefined) return { usageError: refusal(AppError.NoFeaturePartGiven, {}) };
@@ -27,10 +26,10 @@ export function readRequest(
   return { featureCode: part, isNew: argv.includes("--new") };
 }
 
-function argvRefusal(argv: readonly string[], registry: CliRegistry, toolVersion: string): Refusal | null {
+function argvRefusal(argv: readonly string[], registry: CliRegistry): Refusal | null {
   const args = parseArgs(argv);
   return (
     checkArgvShape(argv, registry, "allocate") ??
-    checkUnknownFlags(args, registry, "allocate", toolVersion)
+    checkUnknownFlags(args, registry, "allocate")
   );
 }

@@ -84,7 +84,7 @@ export function stepIdentityOf(step: WorkflowStep): string {
   const name = step.name?.trim() ?? "";
   if (name !== "") return name;
   if ("action" in step) return step.action.name;
-  return step.command.split(/\r?\n/).find((line) => line.trim() !== "")?.trim() ?? "";
+  return step.command.split(/\n/).find((line) => line.trim() !== "")?.trim() ?? "";
 }
 
 function qualifiedStepName(step: PipelineStep): string {
@@ -218,7 +218,7 @@ function testObservationOf(test: TestAsWritten, place: string): EvidenceObservat
 }
 
 // Each test posts at its file; a file that failed with no test in it never reached its tests, and posts as never ran.
-export function testFileObservationsOf(files: readonly TestFileAsWritten[], root?: string): EvidenceObservation[] {
+export function testFileObservationsOf(files: readonly TestFileAsWritten[], root: string): EvidenceObservation[] {
   return files.flatMap((file) => {
     const place = relativizeToRoot(String(file.path), root);
     if (file.status === FAILED_FILE && file.tests.length === 0) return [neverRanObservation(TEST_REPORT_KIND, place, file.message)];
@@ -327,7 +327,7 @@ export interface ExamplesAsWritten {
   readonly messages: readonly string[];
 }
 
-function placeOfExample(path: string, root?: string): string {
+function placeOfExample(path: string, root: string): string {
   return relativizeToRoot(path.replace(/\.\//, ""), root);
 }
 
@@ -335,7 +335,7 @@ const LOADED_FILE = /(?:While loading (.+?) a |An error occurred while loading (
 
 // Each error outside the examples never ran: one naming the file it was loading posts at that file, and the rest,
 // when the messages name fewer files than the report counted errors, post once together at no file.
-function loadErrorsOf({ errorsOutsideExamples = 0, messages }: ExamplesAsWritten, root?: string): EvidenceObservation[] {
+function loadErrorsOf({ errorsOutsideExamples = 0, messages }: ExamplesAsWritten, root: string): EvidenceObservation[] {
   const read = messages.map((message) => ({ message, loaded: LOADED_FILE.exec(message) }));
   const named = read.flatMap(({ message, loaded }) => {
     const path = loaded?.[1] ?? loaded?.[2];
@@ -346,7 +346,7 @@ function loadErrorsOf({ errorsOutsideExamples = 0, messages }: ExamplesAsWritten
   return [...named, neverRanObservation(TEST_REPORT_KIND, "", unnamed.join("\n"))];
 }
 
-function exampleObservationOf(example: ExampleAsWritten, root?: string): EvidenceObservation[] {
+function exampleObservationOf(example: ExampleAsWritten, root: string): EvidenceObservation[] {
   const result = resultOfTestStatus(example.status);
   if (result === undefined) return [];
   const cites = nearestCitation([claimCodeCitationsIn(example.title), claimCodeCitationsIn(example.fullTitle)]);
@@ -354,7 +354,7 @@ function exampleObservationOf(example: ExampleAsWritten, root?: string): Evidenc
 }
 
 // Each example posts at its file under its full title, then each error outside the examples posts as never ran.
-export function exampleObservationsOf(report: ExamplesAsWritten, root?: string): EvidenceObservation[] {
+export function exampleObservationsOf(report: ExamplesAsWritten, root: string): EvidenceObservation[] {
   return [...report.examples.flatMap((example) => exampleObservationOf(example, root)), ...loadErrorsOf(report, root)];
 }
 
@@ -407,7 +407,7 @@ const stepText = (step: StepRunAsWritten): string => `${String(step.keyword).tri
 
 const codesIn = (texts: readonly string[]): ClaimCode[] => texts.flatMap((text) => claimCodeFrom(text) ?? []);
 
-function scenarioRunObservationOf(run: ScenarioRunAsWritten, root: string | undefined, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
+function scenarioRunObservationOf(run: ScenarioRunAsWritten, root: string, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
   const result = scenarioResultOf(run.steps);
   if (result === undefined) return [];
   const place = relativizeToRoot(String(run.featurePath ?? run.featureName), root);
@@ -422,7 +422,7 @@ function scenarioRunObservationOf(run: ScenarioRunAsWritten, root: string | unde
 
 // A scenario run posts at its feature file, citing its tags' codes and the code the corpus has at its line, once at each
 // kind its tags name; one that never ran posts once, naming the steps that could not run.
-export function scenarioRunObservationsOf(runs: readonly ScenarioRunAsWritten[], root: string | undefined, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
+export function scenarioRunObservationsOf(runs: readonly ScenarioRunAsWritten[], root: string, claimCodesAt: ClaimCodesAt): EvidenceObservation[] {
   return runs.flatMap((run) => scenarioRunObservationOf(run, root, claimCodesAt));
 }
 

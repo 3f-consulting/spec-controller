@@ -1,7 +1,0 @@
-{
-  "name": "inherited-claim-code-feature-fixture-target",
-  "private": true,
-  "scripts": {
-    "test": "vitest run"
-  }
-}

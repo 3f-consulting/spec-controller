@@ -87,10 +87,8 @@ function flagLabel(flag: FlagSpec): string {
   return flag.arg !== undefined ? `${names} ${flag.arg}` : names;
 }
 
-// Each entry's name is padded to the longest, plus the gutter, so the descriptions line up.
-function entries(listed: readonly { name: string; description: string }[], gutter: number): string {
-  const width = Math.max(0, ...listed.map(({ name }) => name.length)) + gutter;
-  return listed.map(({ name, description }) => message(AppMessage.HelpEntry, { name: name.padEnd(width), description })).join("\n");
+function entries(listed: readonly { name: string; description: string }[]): string {
+  return listed.map(({ name, description }) => message(AppMessage.HelpEntry, { name, description })).join("\n");
 }
 
 export function renderCommandHelp(command: CommandSpec): string {
@@ -98,7 +96,7 @@ export function renderCommandHelp(command: CommandSpec): string {
     command: command.name,
     summary: command.summary,
     arguments: argumentHelp(command.name, command.positional),
-    options: entries(command.flags.map((flag) => ({ name: flagLabel(flag), description: flag.description })), 2),
+    options: entries(command.flags.map((flag) => ({ name: flagLabel(flag), description: flag.description }))),
   });
 }
 
@@ -107,12 +105,12 @@ function argumentHelp(command: string, positional: PositionalSpec | undefined): 
   return message(AppMessage.CommandHelpArguments, {
     command,
     arguments: positional.name,
-    entries: entries([positional], 2),
+    entries: entries([positional]),
   });
 }
 
 export function renderTopLevelHelp(registry: CliRegistry): string {
   return message(AppMessage.Help, {
-    commands: entries(registry.commands.map((command) => ({ name: command.name, description: command.summary })), 4),
+    commands: entries(registry.commands.map((command) => ({ name: command.name, description: command.summary }))),
   });
 }

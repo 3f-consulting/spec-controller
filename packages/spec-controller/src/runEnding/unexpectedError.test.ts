@@ -76,13 +76,16 @@ describe("the run will give no verdict, and will exit 4", () => {
     expect(g.happened).toEqual([{ stderr: noVerdictLine() }, ...afterTheLine]);
   });
 
-  it("[CLM-CLI-177] the run met an error that cannot be formatted", () => {
+  it.each([
+    ["an error whose message cannot be read", messageGetterThrows, "Error"],
+    ["a thrown undefined", (): undefined => undefined, ""],
+  ])("[CLM-CLI-177] the run met an error that cannot be formatted: %s", (_error, thrown, name) => {
     const g = guarded();
 
-    g.proc.emit("uncaughtException", messageGetterThrows(), "uncaughtException");
+    g.proc.emit("uncaughtException", thrown(), "uncaughtException");
 
     expect(g.proc.exitCode).toBe(4);
-    expect(g.happened).toEqual([{ stderr: `${crashLine("Error", "", false)}\n` }, { exit: 4 }]);
+    expect(g.happened).toEqual([{ stderr: `${crashLine(name, "", false)}\n` }, { exit: 4 }]);
   });
 
   it("[CLM-CLI-179] the run met an error while the program loads", async () => {

@@ -36,20 +36,27 @@ export function retiredScenarioCodeFrom(text: string): ClaimCode | undefined {
   return codeMatching(RETIRED_SCENARIO_CODE, text);
 }
 
-interface ScenarioAsWritten {
+export interface ClaimRow {
+  readonly line: number;
+  readonly cell: string | undefined;
+}
+
+// A scenario as the claims are read off it: a tag written twice is one tag, and an Outline with a clm column has a row for each claim.
+export interface ScenarioRead {
   readonly tags: readonly string[];
   readonly title: string;
-  readonly rows?: readonly { readonly cell: string | undefined }[] | undefined;
   readonly examplesTags: readonly string[];
+  readonly rows: readonly ClaimRow[] | undefined;
 }
 
-interface FeatureAsWritten {
+// Each feature file with its scenarios as the claims are read off them.
+export interface FeatureRead {
   readonly file: string;
   readonly featureTags: readonly string[];
-  readonly scenarios: readonly ScenarioAsWritten[];
+  readonly scenarios: readonly ScenarioRead[];
 }
 
-export function featureCodeOfFile({ featureTags }: Pick<FeatureAsWritten, "featureTags">): string | undefined {
+export function featureCodeOfFile({ featureTags }: Pick<FeatureRead, "featureTags">): string | undefined {
   return featureTags.find(isFeatureCode);
 }
 
@@ -62,7 +69,6 @@ interface DuplicateFeatureCodeError {
 interface ForeignClaimCodeError {
   readonly kind: "foreign-claim-code";
   readonly files: readonly string[];
-  readonly featureCode: string;
   readonly claimCode: string;
   readonly namedFeatureCode: string;
   readonly namedFeatureFiles: readonly string[];
@@ -99,11 +105,11 @@ const written = ({ featureCode, number }: ClaimCode): string => `${CLAIM_CODE_PR
 const claimCodesIn = (words: readonly (string | undefined)[]): ClaimCode[] => words.flatMap((word) => claimCodeFrom(word) ?? []);
 
 // The codes a scenario carries: an Outline's clm cells, or else its tagged codes.
-function codesCarriedBy(scenario: ScenarioAsWritten): ClaimCode[] {
+function codesCarriedBy(scenario: ScenarioRead): ClaimCode[] {
   return claimCodesIn(scenario.rows ? scenario.rows.map((row) => row.cell) : scenario.tags);
 }
 
-function filesByFeatureCode(features: readonly FeatureAsWritten[]): ReadonlyMap<string, readonly string[]> {
+function filesByFeatureCode(features: readonly FeatureRead[]): ReadonlyMap<string, readonly string[]> {
   const files = new Map<string, string[]>();
   for (const feature of features) {
     const featureCode = featureCodeOfFile(feature);
@@ -118,7 +124,7 @@ function duplicateFeatureCodes(filesByCode: ReadonlyMap<string, readonly string[
   );
 }
 
-function misfiledCodes(feature: FeatureAsWritten, filesByCode: ReadonlyMap<string, readonly string[]>): ClaimCodeError[] {
+function misfiledCodes(feature: FeatureRead, filesByCode: ReadonlyMap<string, readonly string[]>): ClaimCodeError[] {
   const carried = feature.scenarios.flatMap(codesCarriedBy);
   const featureCode = featureCodeOfFile(feature);
   if (featureCode === undefined) return carried.length === 0 ? [] : [{ kind: "no-feature-code", files: [feature.file] }];
@@ -127,21 +133,20 @@ function misfiledCodes(feature: FeatureAsWritten, filesByCode: ReadonlyMap<strin
     .map((code) => ({
       kind: "foreign-claim-code" as const,
       files: [feature.file],
-      featureCode,
       claimCode: written(code),
       namedFeatureCode: code.featureCode,
       namedFeatureFiles: filesByCode.get(code.featureCode) ?? [],
     }));
 }
 
-function codesOnOneScenario(file: string, scenario: ScenarioAsWritten): ClaimCodeError[] {
+function codesOnOneScenario(file: string, scenario: ScenarioRead): ClaimCodeError[] {
   const tagged = claimCodesIn(scenario.rows ? [...scenario.tags, ...scenario.examplesTags] : scenario.tags).map(written);
   const codes = [...new Set(tagged)];
   if (scenario.rows) return codes.length === 0 ? [] : [{ kind: "claim-code-beside-clm-column", files: [file], scenario: scenario.title, codes }];
   return codes.length < 2 ? [] : [{ kind: "several-claim-codes", files: [file], scenario: scenario.title, codes }];
 }
 
-export function claimCodeErrorsOf(features: readonly FeatureAsWritten[]): ClaimCodeError[] {
+export function claimCodeErrorsOf(features: readonly FeatureRead[]): ClaimCodeError[] {
   const filesByCode = filesByFeatureCode(features);
   return [
     ...duplicateFeatureCodes(filesByCode),

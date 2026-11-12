@@ -33,7 +33,7 @@ function testCaseOf(suite: JunitTestsuite, testcase: JunitTestcase, errorsWritte
     classname: testcase.classname,
     name: testcase.name,
     properties: testcase.properties?.property ?? [],
-    ...(failure === undefined ? {} : { failure: { message: failure.message, text: failure["#text"] } }),
+    ...(failure === undefined ? {} : { failure: { text: failure["#text"] } }),
     ...(error === undefined ? {} : { error: { message: error.message, text: error["#text"], ...errorsWritten } }),
     skipped: testcase.skipped !== undefined,
   };

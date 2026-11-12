@@ -35,14 +35,9 @@ export enum AppMessage {
   SeeFlags = "see-flags",
   SeeFlagsAndValues = "see-flags-and-values",
   SeeArguments = "see-arguments",
-  PinDrifted = "pin-drifted",
-  OtherwiseSeeFlags = "otherwise-see-flags",
   NoPartsCarried = "no-parts-carried",
-  DefaultCorpusFeatureFile = "default-corpus-feature-file",
-  FlaggedCorpusFeatureFile = "flagged-corpus-feature-file",
-  DefaultCiWorkflow = "default-ci-workflow",
-  FlaggedCiWorkflow = "flagged-ci-workflow",
-  FlaggedCiFolderWorkflow = "flagged-ci-folder-workflow",
+  CiWorkflow = "ci-workflow",
+  ReadReport = "read-report",
   FormatOnStandardOutput = "format-on-standard-output",
   CodedUsageError = "coded-usage-error",
   CodedHostUsageError = "coded-host-usage-error",
@@ -136,8 +131,6 @@ export interface AppMessageValues {
   [AppMessage.SeeFlags]: { scope: string };
   [AppMessage.SeeFlagsAndValues]: { scope: string };
   [AppMessage.SeeArguments]: { scope: string };
-  [AppMessage.PinDrifted]: { command: string; flag: string };
-  [AppMessage.OtherwiseSeeFlags]: { scope: string };
   [AppMessage.FormatOnStandardOutput]: { fmt: string };
   [AppMessage.CodedUsageError]: { command: string; code: AppError; message: string };
   [AppMessage.CodedHostUsageError]: { code: AppError; message: string };
@@ -156,7 +149,7 @@ export interface AppMessageValues {
 }
 
 export interface AppErrorValues {
-  [AppError.UnknownFlag]: { flag: string; scope: string; toolVersion: string; command: string };
+  [AppError.UnknownFlag]: { flag: string; scope: string };
   [AppError.UnknownCommand]: { command: string };
   [AppError.MissingValue]: { flag: string; scope: string; arg: string };
   [AppError.GivenTwice]: { flag: string; scope: string };

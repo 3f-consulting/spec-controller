@@ -1,6 +1,6 @@
 import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
-import type { ConfigurationError } from "./configuration.js";
+import type { ConfigurationError, ConfigurationRead } from "./configuration.js";
 import { executableClaimsOf, featureReadOf, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import {
   fitnessObservationsOf,
@@ -183,29 +183,13 @@ export function stepAccountOf(steps: readonly PipelineStep[], dispositionOf: (st
   return { jobs: jobsRead, total: { ...total, accountedFor: total.stepsRead } };
 }
 
-interface NonCheckNamed {
-  readonly workflow: string;
-  readonly job: string;
-  readonly step: string;
-}
-
-// The configuration as read, by shape, so this module and the one that reads it import nothing of each other.
-interface ConfigurationUsed {
-  readonly configuration: {
-    readonly runners: Readonly<Partial<Record<string, string | null>>>;
-    readonly nonChecks: readonly NonCheckNamed[];
-    readonly deferralTags: readonly string[];
-  };
-  readonly errors: readonly ConfigurationError[];
-}
-
 export interface RunToReconcile {
   readonly features: readonly FeatureAsWritten[];
   readonly testObservations: readonly EvidenceObservation[];
   readonly steps: readonly PipelineStep[];
   readonly readings: Omit<StepReadings, "nonChecks" | "runners">;
   readonly recordedSteps?: readonly RecordedCheckStep[];
-  readonly configuration: ConfigurationUsed;
+  readonly configuration: ConfigurationRead;
   readonly strict: boolean;
   readonly provenance: Provenance;
 }

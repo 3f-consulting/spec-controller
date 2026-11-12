@@ -261,14 +261,15 @@ describe("the provenance says what the run used", () => {
 
   it.each<[string, string, { target: string; hidden: readonly string[] }]>([
     ["CLM-EVR-039", "https://ci:s3cret@example.com/acme/web?x=1#y", { target: "acme/web", hidden: ["ci", "s3cret", "x=1", "#y"] }],
-    ["CLM-EVR-039", "https://ci:s3cret@example.com/web?x=1#y", { target: "https://example.com/web", hidden: ["ci", "s3cret", "x=1", "#y"] }],
     ["CLM-EVR-039", "https://ci:s3cret@example.com/group/acme/web?x=1#y", { target: "acme/web", hidden: ["ci", "s3cret", "x=1", "#y"] }],
     ["CLM-EVR-039", "https://ci:s3cret@[fe80::1]/acme/web?x=1#y", { target: "acme/web", hidden: ["ci", "s3cret", "x=1", "#y"] }],
-    ["CLM-EVR-039", "https://ci:s3/cret@example.com/web?x=1#y", { target: "unknown-target", hidden: ["ci", "s3", "cret", "x=1", "#y"] }],
-    ["CLM-EVR-039", "git@github.com:web.git", { target: "github.com:web.git", hidden: ["git@"] }],
-    ["CLM-EVR-039", "https://ci@/acme/web", { target: "unknown-target", hidden: ["ci"] }],
-    ["CLM-EVR-039", "git@:acme/web.git", { target: "unknown-target", hidden: ["git"] }],
     ["CLM-EVR-051", "git://example.com/acme/web.git", { target: "unknown-target", hidden: [] }],
+    ["CLM-EVR-052", "https://example.com/web", { target: "unknown-target", hidden: [] }],
+    ["CLM-EVR-052", "https://ci:s3cret@example.com/web?x=1#y", { target: "unknown-target", hidden: ["ci", "s3cret", "x=1", "#y"] }],
+    ["CLM-EVR-052", "https://ci:s3/cret@example.com/web?x=1#y", { target: "unknown-target", hidden: ["ci", "s3", "cret", "x=1", "#y"] }],
+    ["CLM-EVR-052", "git@github.com:web.git", { target: "unknown-target", hidden: ["git@"] }],
+    ["CLM-EVR-052", "https://ci@/acme/web", { target: "unknown-target", hidden: ["ci"] }],
+    ["CLM-EVR-052", "git@:acme/web.git", { target: "unknown-target", hidden: ["git"] }],
   ])("[%s] the provenance describes the run, from the origin %s", (_clm, remote, { target, hidden }) => {
     const { repo } = committedRepository("evr-origin-", remote);
     const provenance = provenanceOf(runIdentityOf({ origin: readTargetOrigin(repo), toolFolder: TOOL_FOLDER, ...VERSION }), []);
@@ -333,6 +334,7 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-044", { given: "/work/acme/a.json", root: "//work//acme/", input: { name: "cucumber", path: "a.json" } }],
     ["CLM-EVR-044", { given: "/work/acme/a.json", root: "/work/x/../acme", input: { name: "cucumber", path: "a.json" } }],
     ["CLM-EVR-044", { given: "/work/acme", input: { name: "junit", path: "." } }],
+    ["CLM-EVR-044", { given: "/work/acme/..x/a.json", input: { name: "cucumber", path: "..x/a.json" } }],
   ])("[%s] the provenance describes the run", (_clm, { given, root = "/work/acme", input }) => {
     const { inputs } = provenanceFrom(VERSION, [{ name: input.name, ...(given === undefined ? {} : { path: given }) }], root);
     expect(inputs).toEqual([input]);

@@ -1,7 +1,0 @@
-{
-  "name": "code-error-out-of-balance-fixture-target",
-  "private": true,
-  "scripts": {
-    "test": "vitest run"
-  }
-}

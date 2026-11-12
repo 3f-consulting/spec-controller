@@ -27,6 +27,6 @@ function examplesOf(report: RspecJsonReport): ExamplesAsWritten {
   };
 }
 
-export function parseRspecEvidenceObservations(report: RspecJsonReport, root?: string): EvidenceObservation[] {
+export function parseRspecEvidenceObservations(report: RspecJsonReport, root: string): EvidenceObservation[] {
   return exampleObservationsOf(examplesOf(report), root);
 }

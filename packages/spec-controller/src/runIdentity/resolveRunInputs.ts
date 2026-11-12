@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { dirname, join, sep } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { OriginAsWritten } from "@3f-consulting/spec-controller-core";
 
@@ -24,7 +24,7 @@ function originPartsOf(remote: string): OriginAsWritten {
   if (isLocalPath(remote)) return { form: "path", path: remote, carriesUser: false };
   if (remote.startsWith("file:")) return { form: "path", path: remote, carriesUser: remote.includes("@") };
   const scheme = URL_SCHEME.exec(remote);
-  if (scheme !== null) return urlParts(scheme, remote.slice(scheme[0].length));
+  if (scheme !== null) return urlParts(remote.slice(scheme[0].length));
   return OTHER_SCHEME_OR_TRANSPORT.test(remote) ? UNREAD : scpParts(remote);
 }
 
@@ -35,13 +35,12 @@ function isLocalPath(remote: string): boolean {
 
 // The authority runs to the first /, ? or #, and its host follows its last @. An @ after it means a password or a
 // query holds one, so where the user part ends can only be guessed.
-function urlParts(scheme: RegExpExecArray, rest: string): OriginAsWritten {
+function urlParts(rest: string): OriginAsWritten {
   const authority = rest.split(/[/?#]/, 1)[0]!;
   const afterAuthority = rest.slice(authority.length);
   const at = authority.lastIndexOf("@");
-  const host = authority.slice(at + 1);
-  if (afterAuthority.includes("@") || host === "") return UNREAD;
-  return { form: "address", lead: scheme[0], host, separator: "", path: pathOf(afterAuthority) };
+  if (afterAuthority.includes("@") || authority.slice(at + 1) === "") return UNREAD;
+  return { form: "address", path: pathOf(afterAuthority) };
 }
 
 // The scp form's host and path follow its last @, split at their first :.
@@ -50,8 +49,7 @@ function scpParts(address: string): OriginAsWritten {
   const hostPath = address.slice(at + 1);
   const colon = hostPath.indexOf(":");
   if (colon <= 0) return UNREAD;
-  const host = hostPath.slice(0, colon);
-  return { form: "address", lead: "", host, separator: ":", path: pathOf(hostPath.slice(colon + 1)) };
+  return { form: "address", path: pathOf(hostPath.slice(colon + 1)) };
 }
 
 function pathOf(rest: string): string {
@@ -68,11 +66,11 @@ export interface ToolInstall {
 const toolFolder = (): string => dirname(fileURLToPath(import.meta.url));
 
 export function readToolInstall(toolDir: string = toolFolder()): ToolInstall {
-  return { toolFolder: toolDir.split(sep).join("/"), toolHead: readGit(toolDir, ["rev-parse", "HEAD"]), toolVersion: readToolVersion(toolDir) };
+  return { toolFolder: toolDir, toolHead: readGit(toolDir, ["rev-parse", "HEAD"]), toolVersion: readToolVersion(toolDir) };
 }
 
 // The version field, as written, of the nearest package.json at or above the folder that reads as JSON, if any.
-export function readToolVersion(fromDir: string = toolFolder()): unknown {
+function readToolVersion(fromDir: string = toolFolder()): unknown {
   let dir = fromDir;
   for (;;) {
     try {
@@ -95,10 +93,11 @@ export function readRepositoryTop(folder: string): string | undefined {
   return readGit(folder, ["rev-parse", "--show-toplevel"]);
 }
 
-// No dir means the working directory, read inside the try: process.cwd() throws once it is removed, read as no output.
+// No dir means the working directory.
 function readGit(dir: string | undefined, args: readonly string[]): string | undefined {
+  const folder = dir ?? process.cwd();
   try {
-    const out = execFileSync("git", ["-C", dir ?? process.cwd(), ...args], {
+    const out = execFileSync("git", ["-C", folder, ...args], {
       encoding: "utf8",
       stdio: "pipe",
     });

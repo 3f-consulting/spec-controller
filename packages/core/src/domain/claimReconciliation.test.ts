@@ -278,15 +278,15 @@ describe("evidence of the same kind, file and shared claim code will share a gro
       "CLM-LDG-065",
       () => [],
       () => [observation("unit", "passed", [], "a.test.ts"), observation("unit", "passed", [], "a.test.ts")],
-      [{ kind: "unit", file: "a.test.ts", members: ["a.test.ts", "a.test.ts"] }],
+      [{ kind: "unit", file: "a.test.ts", ran: 2 }],
     ],
     [
       "CLM-LDG-066",
       () => [],
       () => [observation("unit", "passed", [], "a.test.ts"), observation("unit", "passed", [], "b.test.ts")],
       [
-        { kind: "unit", file: "a.test.ts", members: ["a.test.ts"] },
-        { kind: "unit", file: "b.test.ts", members: ["b.test.ts"] },
+        { kind: "unit", file: "a.test.ts", ran: 1 },
+        { kind: "unit", file: "b.test.ts", ran: 1 },
       ],
     ],
     [
@@ -294,8 +294,8 @@ describe("evidence of the same kind, file and shared claim code will share a gro
       () => [],
       () => [observation("unit", "passed", [], "a.test.ts"), observation("integration", "passed", [], "a.test.ts")],
       [
-        { kind: "unit", file: "a.test.ts", members: ["a.test.ts"] },
-        { kind: "integration", file: "a.test.ts", members: ["a.test.ts"] },
+        { kind: "unit", file: "a.test.ts", ran: 1 },
+        { kind: "integration", file: "a.test.ts", ran: 1 },
       ],
     ],
     [
@@ -303,54 +303,49 @@ describe("evidence of the same kind, file and shared claim code will share a gro
       twoClaimsSharingOne001,
       () => [observation("unit", "passed", [], "a.test.ts"), observation("unit", "passed", ["ONE-001"], "a.test.ts")],
       [
-        { kind: "unit", file: "a.test.ts", members: ["a.test.ts"] },
-        { kind: "unit", file: "a.test.ts", claimCode: ONE_001, members: ["a.test.ts"] },
+        { kind: "unit", file: "a.test.ts", ran: 1 },
+        { kind: "unit", file: "a.test.ts", claimCode: ONE_001, ran: 1 },
       ],
     ],
     [
       "CLM-LDG-068",
       twoClaimsSharingOne001,
       () => [observation("unit", "passed", ["ONE-001"], "a.test.ts"), observation("unit", "passed", ["ONE-001"], "a.test.ts")],
-      [{ kind: "unit", file: "a.test.ts", claimCode: ONE_001, members: ["a.test.ts", "a.test.ts"] }],
+      [{ kind: "unit", file: "a.test.ts", claimCode: ONE_001, ran: 2 }],
     ],
     [
       "CLM-LDG-068",
       twoClaimsSharingOne001,
       () => [observation("unit", "passed", ["ONE-001"], "a.test.ts"), observation("unit", "passed", [], "b.test.ts")],
       [
-        { kind: "unit", file: "a.test.ts", claimCode: ONE_001, members: ["a.test.ts"] },
-        { kind: "unit", file: "b.test.ts", members: ["b.test.ts"] },
+        { kind: "unit", file: "a.test.ts", claimCode: ONE_001, ran: 1 },
+        { kind: "unit", file: "b.test.ts", ran: 1 },
       ],
     ],
     [
       "CLM-LDG-073",
       () => [claim("ONE-001", ["unit"], "one.feature", "a"), claim("ONE-002", ["unit"], "one.feature", "b")],
       () => [observation("unit", "passed", [], "a.test.ts"), observation("unit", "passed", ["ONE-001", "ONE-002"], "a.test.ts")],
-      [{ kind: "unit", file: "a.test.ts", members: ["a.test.ts", "a.test.ts"] }],
+      [{ kind: "unit", file: "a.test.ts", ran: 2 }],
     ],
     [
       "CLM-LDG-069",
       () => [],
       () => [observation("fitness", "passed", [], "ci.yml:ci:a"), observation("fitness", "passed", [], "ci.yml:ci:b")],
-      [{ kind: "fitness", members: ["ci.yml:ci:a", "ci.yml:ci:b"] }],
+      [{ kind: "fitness", ran: 2 }],
     ],
     [
       "CLM-LDG-070",
       twoClaimsSharingOne001,
       () => [observation("fitness", "passed", [], "ci.yml:ci:a"), observation("fitness", "passed", ["ONE-001"], "ci.yml:ci:b")],
       [
-        { kind: "fitness", members: ["ci.yml:ci:a"] },
-        { kind: "fitness", claimCode: ONE_001, members: ["ci.yml:ci:b"] },
+        { kind: "fitness", ran: 1 },
+        { kind: "fitness", claimCode: ONE_001, ran: 1 },
       ],
     ],
   ])("[%s] the unnamed claim's evidence shares a group by kind, file and shared code", (_clm, claims, observations, groups) => {
     expect(
-      unnamedGroups(claims(), observations()).map(({ kind, file, claimCode, qualityCheckReconciliations }) => ({
-        kind,
-        file,
-        claimCode,
-        members: qualityCheckReconciliations.map((line) => line.observation?.place),
-      })),
+      unnamedGroups(claims(), observations()).map(({ kind, file, claimCode, ran }) => ({ kind, file, claimCode, ran })),
     ).toEqual(groups);
   });
 });

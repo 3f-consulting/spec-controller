@@ -16,20 +16,11 @@ export interface RunIdentity {
   readonly toolVersion: string;
 }
 
-interface OriginAddress {
-  readonly form: "address";
-  readonly lead: string;
-  readonly host: string;
-  readonly separator: string;
-  readonly path: string;
-}
-
-// The parts of the target's origin, as written. A path git sends to no server; an address with a host, whose lead is
-// what is written before its host and whose separator is what is written between its host and its path; or a form the
-// run identity port does not read, or cannot tell where its user part ends.
+// The parts of the target's origin, as written. A path git sends to no server; the path of an address with a host; or a
+// form the run identity port does not read, or cannot tell where its user part ends.
 export type OriginAsWritten =
   | { readonly form: "path"; readonly path: string; readonly carriesUser: boolean }
-  | OriginAddress
+  | { readonly form: "address"; readonly path: string }
   | { readonly form: "unread" };
 
 // What the run identity port read, as written, beside what the run was given.
@@ -62,17 +53,13 @@ export function runIdentityOf(read: RunIdentityAsRead): RunIdentity {
 
 const REPOSITORY_SUFFIX = ".git";
 
-// The target is named from the origin's host and path alone, so no user, password, query or fragment reaches it. An
-// address is named owner/repo, the path's last two parts, where it has two. A path with no user is named by its
-// repository folder, never in full; an origin that was not read names nothing.
-function addressNameOf(origin: Extract<OriginAsWritten, { form: "address" }>): string | undefined {
-  return ownerRepoOf(origin.path) ?? `${origin.lead}${origin.host}${origin.separator}${origin.path}`;
-}
-
+// The target is named from the origin's path alone, so no user, password, query or fragment reaches it. An address is
+// named owner/repo, the path's last two parts, and names nothing where its path has fewer. A path with no user is named
+// by its repository folder, never in full; an origin that was not read names nothing.
 const NAME_OF_FORM: { readonly [F in OriginAsWritten["form"]]: (origin: Extract<OriginAsWritten, { form: F }>) => string | undefined } = {
   unread: () => undefined,
   path: (origin) => (origin.carriesUser ? undefined : repositoryFolderOf(origin.path)),
-  address: addressNameOf,
+  address: (origin) => ownerRepoOf(origin.path),
 };
 
 const originNameOf = (origin: OriginAsWritten): string | undefined =>
@@ -93,7 +80,7 @@ const repositoryFolderOf = (path: string): string | undefined =>
     .at(-1);
 
 // A version that is no string, or an empty one, is unknown.
-export function toolVersionOf(version: unknown): string {
+function toolVersionOf(version: unknown): string {
   return typeof version === "string" && version !== "" ? version : UNKNOWN;
 }
 

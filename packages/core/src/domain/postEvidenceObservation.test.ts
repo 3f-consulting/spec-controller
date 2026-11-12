@@ -29,13 +29,16 @@ const ONE: ClaimCode = { featureCode: "ONE", number: "001" };
 const TWO: ClaimCode = { featureCode: "ONE", number: "002" };
 const PHANTOM: ClaimCode = { featureCode: "ONE", number: "999" };
 
+// The target's folder. Every path the reports below record is relative, or outside it, unless a test names its own.
+const TARGET = "/work/app";
+
 type Posted = () => readonly EvidenceObservation[];
 
 const vitest = (status: string, title = "[CLM-ONE-001] a test", fullTitle = title): EvidenceObservation[] =>
-  testFileObservationsOf([{ path: "a.test.ts", status: "passed", tests: [{ title, fullTitle, status }] }]);
+  testFileObservationsOf([{ path: "a.test.ts", status: "passed", tests: [{ title, fullTitle, status }] }], TARGET);
 
 const vitestFile = (message: string): EvidenceObservation[] =>
-  testFileObservationsOf([{ path: "a.test.ts", status: "failed", message, tests: [] }]);
+  testFileObservationsOf([{ path: "a.test.ts", status: "failed", message, tests: [] }], TARGET);
 
 // A JUnit report reads an error as a failure, and a pytest report as an error before the test's assertions.
 // A test case as a test writes it, with no properties unless it names them.
@@ -48,15 +51,15 @@ const pytest = (testcase: TestCaseInATest): EvidenceObservation[] => testCaseObs
 const clmProperty = (...codes: readonly string[]) => codes.map((value) => ({ name: "clm", value }));
 
 const rspec = (status: string, title = "[CLM-ONE-001] a spec", fullTitle = title): EvidenceObservation[] =>
-  exampleObservationsOf({ examples: [{ title, fullTitle, status, path: "./spec/a_spec.rb" }], messages: [] });
+  exampleObservationsOf({ examples: [{ title, fullTitle, status, path: "./spec/a_spec.rb" }], messages: [] }, TARGET);
 
 const rspecLoadError = (message: string): EvidenceObservation[] =>
-  exampleObservationsOf({ examples: [], errorsOutsideExamples: 1, messages: [message] });
+  exampleObservationsOf({ examples: [], errorsOutsideExamples: 1, messages: [message] }, TARGET);
 
 // One scenario run in one.feature, tagged as given, whose steps ended in the statuses given.
 const cucumber = (tags: readonly string[], statuses: readonly string[]): EvidenceObservation[] => {
   const steps = statuses.map((status) => ({ keyword: "Given ", text: "one adds one", status }));
-  return scenarioRunObservationsOf([{ featurePath: "one.feature", name: "one adds one", tags, steps }], undefined, () => []);
+  return scenarioRunObservationsOf([{ featurePath: "one.feature", name: "one adds one", tags, steps }], TARGET, () => []);
 };
 
 const workflow = (step: string, jobExtra = ""): string =>
@@ -524,14 +527,14 @@ describe("balance posts each result citing the nearest code it has", () => {
       scenarios: [{ tags: ["integration"], title: "adds <n>", line: 4, examples: [{ tags: [], columns: ["clm", "n"], rows }] }],
     };
     const runs = rows.map(({ line, cells }) => ({ featurePath: "one.feature", line, name: `adds ${cells[1]}`, tags: ["integration"], steps: [{ keyword: "Given ", text: cells[1], status: "passed" }] }));
-    const posted = scenarioRunObservationsOf(runs, undefined, claimCodesAtOf([outline]));
+    const posted = scenarioRunObservationsOf(runs, TARGET, claimCodesAtOf([outline]));
     expect(posted.map(({ cites }) => cites)).toEqual([[ONE], [TWO]]);
   });
 });
 
 describe("an Evidence Observation says where to look", () => {
   it.each<[string, { posted: Posted; where: Partial<EvidenceObservation> }]>([
-    ["CLM-OBS-078", { posted: () => testFileObservationsOf([{ path: "a.test.ts", tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }]), where: { place: "a.test.ts", name: "adds two numbers" } }],
+    ["CLM-OBS-078", { posted: () => testFileObservationsOf([{ path: "a.test.ts", tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }], TARGET), where: { place: "a.test.ts", name: "adds two numbers" } }],
     ["CLM-OBS-079", { posted: () => testFileObservationsOf([{ path: "/work/acme/a.test.ts", tests: [{ title: "adds two numbers", fullTitle: "adds two numbers", status: "passed" }] }], "/work/acme"), where: { place: "a.test.ts", name: "adds two numbers" } }],
     ["CLM-OBS-080", { posted: () => cucumber(["CLM-ONE-001"], ["passed"]), where: { place: "one.feature", name: "one adds one" } }],
     ["CLM-OBS-081", { posted: () => fitness([{ id: "CLM-ONE-002", name: "Build", command: "pnpm build" }, CITING_STEP], [{ key: "CLM-ONE-001", outcome: "success" }]), where: { place: "ci.yml:build:Lint" } }],

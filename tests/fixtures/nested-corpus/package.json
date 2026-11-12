@@ -1,7 +1,0 @@
-{
-  "name": "nested-corpus-fixture-target",
-  "private": true,
-  "scripts": {
-    "test": "vitest run"
-  }
-}

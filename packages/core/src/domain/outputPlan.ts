@@ -31,7 +31,7 @@ export interface IdentifiedOutput<Format extends string> {
   readonly toStandardError: boolean;
 }
 
-// A file the run reads, named by how the run came to read it, with its identity if it is a regular file.
+// A file the run reads, named by its kind, with its identity if it is a regular file.
 export interface IdentifiedInput {
   readonly subject: string;
   readonly path: string;

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { targetConfigurationFrom } from "../inputs/manifest.js";
-import { claimReconciliationsOf } from "./claimReconciliation.js";
+import { parsedFeatures } from "../inputs/parsedFeatures.test-utils.js";
+import { shellReading } from "../inputs/shell.js";
 import type { TargetConfiguration } from "./configuration.js";
-import { runVerdictOf } from "./evidenceReconciliation.js";
+import { evidenceReconciliationOf } from "./evidenceReconciliation.js";
 import type { PipelineStep } from "./postEvidenceObservation.js";
+import { provenanceOf } from "./provenance.js";
 
 const NOTHING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
 
@@ -48,9 +50,16 @@ describe("balance turns each configuration setting into its internal setting", (
 
 describe("the run will still reach its run verdict, using the configuration settings it could use", () => {
   it("[CLM-CFG-017] the run will still reach its run verdict, using the configuration settings it could use", () => {
-    const { configuration } = targetConfigurationFrom({ specController: { runners: { unit: 3, integration: "cucumber-js" } } }, []);
-    const runVerdict = runVerdictOf(claimReconciliationsOf([], []), []);
-    expect({ reached: runVerdict.verdict !== undefined, runners: configuration.runners }).toEqual({ reached: true, runners: { integration: "cucumber-js" } });
+    const { runVerdict, stepAccount } = evidenceReconciliationOf({
+      features: parsedFeatures(["@ONE\nFeature: one\n\n  @integration @CLM-ONE-001\n  Scenario: a claim\n    Given a step\n"], ["one.feature"]),
+      testObservations: [{ cites: [{ featureCode: "ONE", number: "001" }], result: "passed", kind: "integration", place: "one.feature", notes: [] }],
+      steps: [{ ...stepIn("ci.yml", "ci", "Integration"), command: "cucumber-js" }],
+      readings: { scripts: {}, shell: shellReading },
+      configuration: targetConfigurationFrom({ specController: { runners: { unit: 3, integration: "cucumber-js" } } }, []),
+      strict: false,
+      provenance: provenanceOf({ toolVersion: "0.1.256" }, []),
+    });
+    expect({ runVerdict, runners: stepAccount?.total.runners }).toEqual({ runVerdict: { verdict: "balanced" }, runners: 1 });
   });
 });
 
@@ -99,7 +108,7 @@ describe("a configuration setting balance cannot use will be left out", () => {
     ["CLM-CFG-018", { runners: "vitest" }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "runners" }]],
     ["CLM-CFG-019", { notChecks: "Install" }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "notChecks" }]],
     ["CLM-CFG-020", { deferralTags: [3] }, [], { ...NOTHING }, [{ kind: "configuration-wrong-kind", entry: "deferralTags[0]" }]],
-  ])("[%s] the setting %j is left out with its error", (_clm, specController, stepsInCi, configuration, errors) => {
+  ])("[%s] the setting %j is left out, with an error naming it", (_clm, specController, stepsInCi, configuration, errors) => {
     expect(targetConfigurationFrom({ specController }, stepsInCi.map(ci))).toEqual({ configuration, errors });
   });
 });

@@ -24,6 +24,6 @@ function testFilesOf(report: VitestJsonReport): TestFileAsWritten[] {
   }));
 }
 
-export function parseVitestEvidenceObservations(report: VitestJsonReport, root?: string): EvidenceObservation[] {
+export function parseVitestEvidenceObservations(report: VitestJsonReport, root: string): EvidenceObservation[] {
   return testFileObservationsOf(testFilesOf(report), root);
 }

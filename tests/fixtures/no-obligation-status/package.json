@@ -1,7 +1,0 @@
-{
-  "name": "no-obligation-status-fixture-target",
-  "private": true,
-  "scripts": {
-    "test": "vitest run"
-  }
-}

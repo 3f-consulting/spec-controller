@@ -6,7 +6,7 @@ export { claimCodesAtOf } from "./domain/postEvidenceObservation.js";
 export type { ClaimCodesAt, EvidenceObservation } from "./domain/postEvidenceObservation.js";
 export { outputClashOf, outputPlanOf } from "./domain/outputPlan.js";
 export type { IdentifiedInput, IdentifiedOutput, LocatedOutput, OutputRefusal, PlannedOutput, RequestedOutput } from "./domain/outputPlan.js";
-export { provenanceFrom, runIdentityOf, toolVersionOf } from "./domain/provenance.js";
+export { provenanceFrom, runIdentityOf } from "./domain/provenance.js";
 export type { OriginAsWritten, Provenance, RunInput } from "./domain/provenance.js";
 export { targetFolderOf } from "./domain/targetPath.js";
 

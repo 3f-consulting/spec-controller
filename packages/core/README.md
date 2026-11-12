@@ -28,17 +28,19 @@ import {
 } from "@3f-consulting/spec-controller-core";
 
 // One .feature file's text, and one already-parsed Vitest JSON report.
+// The target's folder: a test file the report records at an absolute path below it is placed relative to it.
+const root = "/work/shop";
 const corpus = parseFeatureCorpus([{ file: "checkout.feature", source: featureSource }]);
 if (corpus.kind === "unparseable") throw new Error(corpus.faults[0].message);
 
 const evidenceReconciliation = evidenceReconciliationOf({
   features: corpus.parsed,
-  testObservations: parseVitestEvidenceObservations(vitestReport),
+  testObservations: parseVitestEvidenceObservations(vitestReport, root),
   steps: [],
   readings: { scripts: {}, shell: shellReading },
   configuration: targetConfigurationFrom({}, []),
   strict: false,
-  provenance: provenanceFrom({ target: "acme/shop", toolVersion: "0.1.0" }, [], "."),
+  provenance: provenanceFrom({ target: "acme/shop", toolVersion: "0.1.0" }, [], root),
 });
 
 evidenceReconciliation.runVerdict; // { verdict: "balanced" } while every scenario's evidence arrived and passed
@@ -46,7 +48,7 @@ renderMarkdown(evidenceReconciliation);
 ```
 
 - `parseFeatureCorpus` parses each feature file once. It returns every file parsed or, if any file does not parse, each file's fault in the parser's own words. `evidenceReconciliationOf` reads the executable claims off the parsed files, and the **Evidence Obligations** each claim's tags raise.
-- `parseVitestEvidenceObservations` turns a test report into the **Evidence Observations** it reports, each citing the claim code it cites.
+- `parseVitestEvidenceObservations` turns a test report into the **Evidence Observations** it reports, each citing the claim code it cites, at its place relative to the target's folder.
 - `evidenceReconciliationOf` sets the two sides against each other: a **Claim Reconciliation** per claim, the totals, the run verdict and the provenance. `steps`, `readings` and `configuration` carry the CI workflows' steps and the target's `specController` block; with no CI they are empty, as here.
 
 Everything else the package exports is a variation on these steps.

@@ -1,6 +1,4 @@
 {
-  // Cucumber step files and their support are test code; knip checks what ships.
-  "ignore": ["tests/**"],
   // tsx: loaded through the requireModule string in cucumber.js, which knip's Cucumber plugin does not read.
   // remark-cli, remark-validate-links: run from a package script behind xargs, which knip does not read through.
   // yaml: imported by the inline Node script in scripts/red-proof.sh, which knip does not read.

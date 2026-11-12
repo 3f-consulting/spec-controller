@@ -5,8 +5,6 @@ import { message } from "../messages/appText.js";
 import { main } from "./main.js";
 import { AppError } from "../messages/messages.js";
 import { forgetWhatTheProgramWrote, recordWhatTheProgramWrites, whatTheProgramWrote, type Written } from "../programOutput.test-utils.js";
-import { toolVersionOf } from "@3f-consulting/spec-controller-core";
-import { readToolVersion } from "../runIdentity/resolveRunInputs.js";
 import { printedRefusal } from "../messages/shownText.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
@@ -145,11 +143,7 @@ describe("an argument the tool does not accept will stop the run", () => {
       "a flag the command does not take",
       (): string[] => ["balance", ...balanced(), "--bogus"],
       (): string =>
-        printedRefusal(
-          AppError.UnknownFlag,
-          message(AppError.UnknownFlag, { flag: "--bogus", scope: BALANCE, toolVersion: toolVersionOf(readToolVersion()), command: "balance" }),
-          "balance",
-        ),
+        printedRefusal(AppError.UnknownFlag, "Unknown flag --bogus for 'spec-controller balance'.", "balance"),
     ],
     [
       "CLM-CLI-127",

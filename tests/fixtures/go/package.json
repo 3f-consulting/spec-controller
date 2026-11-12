@@ -1,9 +1,0 @@
-{
-  "name": "go-fixture-target",
-  "private": true,
-  "specController": {
-    "runners": {
-      "unit": "gotestsum"
-    }
-  }
-}

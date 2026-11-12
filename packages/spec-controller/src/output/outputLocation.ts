@@ -33,12 +33,7 @@ export function probeDestination(path: string): ProbedDestination {
 }
 
 export function regularFileIdentity(path: string): RegularFileIdentity | undefined {
-  try {
-    return regularIdentity(statSync(path, { bigint: true }));
-  } catch {
-    // A path that cannot be stat'd is no file, so it is no input's file either.
-  }
-  return undefined;
+  return regularIdentity(statSync(path, { bigint: true }));
 }
 
 function streamIdentity(fd: number): RegularFileIdentity | undefined {

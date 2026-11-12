@@ -83,7 +83,7 @@ function parsedWorkflowsOf({ paths, sources }: WorkflowSources): ParsedWorkflows
   const parse = parseWorkflows(sources);
   if (parse.kind === "parsed") return { kind: "read", workflows: parse.parsed };
   const pathOf = new Map(paths.map((read) => [basename(read), read]));
-  return { kind: "unparseable", faults: parse.faults.map(({ file, message }) => ({ file: pathOf.get(file) ?? file, message })) };
+  return { kind: "unparseable", faults: parse.faults.map(({ file, message }) => ({ file: pathOf.get(file)!, message })) };
 }
 
 export function readWorkflows(path: string, read: (path: string) => string = readUtf8): WorkflowReading {

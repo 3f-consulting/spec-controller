@@ -8,7 +8,7 @@ describe("an error will be shown with its error code", () => {
   it("[CLM-ERC-001] an error will be shown with its error code", () => {
     const unknownFlag = refusal(
       AppError.UnknownFlag,
-      { flag: "--colour", scope: "spec-controller balance", toolVersion: "0.2.0", command: "balance" },
+      { flag: "--colour", scope: "spec-controller balance" },
       ["first pointer", "second pointer"],
     );
     const [opening = "", ...after] = errorText(unknownFlag, "balance").split("\n");

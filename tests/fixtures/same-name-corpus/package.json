@@ -1,7 +1,0 @@
-{
-  "name": "same-name-corpus-fixture-target",
-  "private": true,
-  "scripts": {
-    "test": "vitest run"
-  }
-}

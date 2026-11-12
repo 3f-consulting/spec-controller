@@ -20,11 +20,11 @@ function below(root: string, path: string): string | undefined {
   return from.every((part, at) => to[at] === part) ? to.slice(from.length).join(SEPARATOR) : undefined;
 }
 
-// The root is absolute: the target's folder is. A path not below it, or whose first part below it starts with .., is kept.
-export function relativizeToRoot(path: string, root: string | undefined): string {
-  if (root === undefined || !isAbsolute(path)) return path;
+// The root is absolute: the target's folder is. A path not below it is kept.
+export function relativizeToRoot(path: string, root: string): string {
+  if (!isAbsolute(path)) return path;
   const rel = below(root, path);
-  if (rel === undefined || rel.startsWith(UP)) return path;
+  if (rel === undefined) return path;
   return rel === "" ? "." : rel;
 }
 

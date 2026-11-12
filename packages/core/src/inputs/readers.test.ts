@@ -4,7 +4,7 @@ import { parseVitestEvidenceObservations } from "./vitest.js";
 
 describe("a command validates every input before it does its work", () => {
   it("[CLM-CLI-146] a Vitest file that ran no tests posts nothing", () => {
-    expect(parseVitestEvidenceObservations({ testResults: [{ name: "a.test.ts", status: "passed", assertionResults: [] }] })).toEqual([]);
+    expect(parseVitestEvidenceObservations({ testResults: [{ name: "a.test.ts", status: "passed", assertionResults: [] }] }, "/work/app")).toEqual([]);
   });
 
   it("[CLM-CLI-150] a workflow that does not parse is named, with what is wrong", () => {

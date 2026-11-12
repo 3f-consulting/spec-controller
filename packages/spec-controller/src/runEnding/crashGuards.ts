@@ -66,17 +66,13 @@ export async function boot(
   (program as LoadedProgram).main(argv);
 }
 
-// The code is settled first, so neither a value that cannot be formatted nor a stderr that cannot be written can leave the run on Node's 1.
+// The code is settled first, so a value that cannot be formatted cannot leave the run on Node's 1.
 // A run writes one line at most: a later error changes nothing and says nothing.
 export function settleUnexpectedError(err: unknown, proc: ExitCodeHolder, stderr: LineWriter): void {
   if (run.lineWritten) return;
   run.lineWritten = true;
   settleExitCode(proc);
-  try {
-    standardError(stderr).error(unexpectedErrorLine(err, run.finished));
-  } catch {
-    // stderr is what failed, and the exit code already says the run stopped.
-  }
+  standardError(stderr).error(unexpectedErrorLine(err, run.finished));
 }
 
 function settleExitCode(proc: ExitCodeHolder): void {
@@ -97,7 +93,7 @@ function filled(text: string, values: AppErrorValues[CrashError]): string {
 }
 
 function nameOf(err: unknown): string {
-  return (err as Error).name;
+  return (err as Error | undefined)?.name ?? "";
 }
 
 function firstLineOf(err: unknown): string {
