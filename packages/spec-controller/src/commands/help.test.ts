@@ -119,6 +119,7 @@ describe("help will list what you can ask for", () => {
     ["CLM-CLI-116", ["balance", "-h"], balanceHelp, BALANCE_LISTED],
     ["CLM-CLI-117", ["allocate", "--help"], allocateHelp, ALLOCATE_LISTED],
     ["CLM-CLI-118", ["--help"], topLevelHelp, COMMANDS_LISTED],
+    ["CLM-CLI-118", ["-h"], topLevelHelp, COMMANDS_LISTED],
     ["CLM-CLI-119", ["help"], topLevelHelp, COMMANDS_LISTED],
     ["CLM-CLI-120", [], topLevelHelp, COMMANDS_LISTED],
   ])("[%s] the command line %j", (_clm, argv, help, listed) => {

@@ -1,6 +1,6 @@
 import { parseJunitXml, parseJunitXmlLiftingBareSuite } from "./junitXml.js";
 import { shapeFaultIn, type Shape } from "./inputShapes.js";
-import { readingOf, readUtf8, reasonOf, type ReadFault } from "./inputReading.js";
+import { readingOf, readUtf8, type ReadFault } from "./inputReading.js";
 
 export type ReportFormat = "json" | "junit-xml" | "junit-xml-or-one-suite";
 
@@ -28,7 +28,7 @@ function documentOf(text: string, parse: (text: string) => unknown): Unparseable
   try {
     return { kind: "parsed", document: parse(text) };
   } catch (err) {
-    return { kind: "unparseable", reason: reasonOf(err) };
+    return { kind: "unparseable", reason: (err as Error).message };
   }
 }
 

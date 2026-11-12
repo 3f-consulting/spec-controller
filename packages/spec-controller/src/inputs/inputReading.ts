@@ -24,7 +24,3 @@ export function readingOf<S, R>(path: string, read: () => S, parse: (sources: S)
 export function readUtf8(path: string): string {
   return readFileSync(path, "utf8");
 }
-
-export function reasonOf(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}

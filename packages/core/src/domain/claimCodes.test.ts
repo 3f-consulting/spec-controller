@@ -485,6 +485,11 @@ function featureFileWithNoFeatureCode(repo: string): void {
   commitAll(repo, "an untagged feature file");
 }
 
+function secondFeatureFileTaggedOne(repo: string): void {
+  writeInto(repo, "features/one-more.feature", "@ONE\nFeature: more of part ONE\n");
+  commitAll(repo, "a second feature file tagged ONE");
+}
+
 function deletedFeatureHeadedZzz(repo: string): void {
   committedThenDeleted(repo, "features/zzz.feature", "@ZZZ\nFeature: part ZZZ\n");
 }
@@ -493,6 +498,7 @@ describe("a feature code no feature file has stops it, listing those that do", (
   it.each([
     ["CLM-STG-077", "no file mentions ZZZ", (): void => {}],
     ["CLM-STG-077", "no file mentions ZZZ, and a feature file has no feature code", featureFileWithNoFeatureCode],
+    ["CLM-STG-077", "no file mentions ZZZ, and two feature files are tagged @ONE", secondFeatureFileTaggedOne],
     ["CLM-STG-078", "a test fixture's feature file is tagged @ZZZ", fixtureHeadedZzz],
     ["CLM-STG-079", "a feature file tagged @ZZZ was deleted by a later commit", deletedFeatureHeadedZzz],
   ])("[%s] %s", (_clm, _where, arrange) => {
