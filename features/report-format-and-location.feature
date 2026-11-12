@@ -1,20 +1,17 @@
 @FMT
 Feature: You get each report in the format and place you asked for, and the run stops before it damages anything
 
-  The tool writes a report saying what it found. You can choose what kind of report
-  you want, Markdown or JSON, and where it goes: on the screen, or in a file you name. If you say
-  nothing, you get Markdown on the screen.
+  The tool writes a report of what it found. You choose its format, Markdown or JSON, and where it
+  goes: standard output, standard error, or a file you name. Without a format you get Markdown; without a
+  destination, standard output.
 
-  This file makes sure of two things.
+  Each report goes where you asked.
 
-  You get what you asked for: each report ends up where you said.
+  The run stops before it writes anything, and so damages nothing, when:
 
-  It won't damage anything. Before it writes anything, it checks whether something would go wrong,
-  and stops if so:
-
-  - it can't write there, such as a read-only file or a folder that doesn't exist
-  - two reports would land in the same place, so one would wipe out the other
-  - a report would overwrite one of the files it's reading, such as your test results
+  - it cannot write there, such as to a read-only file or a folder that does not exist
+  - two reports would go to the same place
+  - a report would overwrite a file the run reads, such as your test results
 
   Rule: you get what you asked for
 

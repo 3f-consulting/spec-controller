@@ -3,16 +3,14 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   The tool writes what it found: JSON for programs, Markdown for people.
 
-  This file makes sure of six things:
+  - Each report has the structure it promises.
+  - A report leaves out an optional section with nothing in it.
+  - Every report has its Claim Reconciliations.
+  - Odd characters in what a report quotes break nothing.
+  - The Markdown report shows the unnamed claim's evidence in groups, by kind of quality check, file and shared claim code.
+  - The Markdown adds the words a person needs to read it.
 
-  - each report has the right structure
-  - an optional section with nothing in it is left out
-  - the Claim Reconciliations are always there, because they are the heart of the report
-  - odd characters in what it quotes don't break anything
-  - the unnamed claim's evidence is shown in groups, so a reader can tell which file to fix
-  - the Markdown adds words so a person can read it
-
-  Whether an answer or a count is right is proved where it's worked out, not here.
+  Whether an answer or a count is right is proved where it is worked out, not here.
 
   Rule: each report has the structure it promises
 

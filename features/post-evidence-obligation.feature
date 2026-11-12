@@ -14,7 +14,7 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
   as @integration.
 
   Last, balance reads the claim's code. An executable claim has one claim code. With more than
-  one, it is read under none of them.
+  one, it raises its Evidence Obligations under none of them.
 
   Rule: an executable claim is a scenario, or a row of an Outline with a clm column
 

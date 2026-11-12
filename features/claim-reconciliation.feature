@@ -1,15 +1,17 @@
 @LDG
 Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its Evidence Observations
 
-  balance sets one side against the other, matching each Evidence Obligation on its kind of
-  quality check. Each Quality Check Reconciliation has an outcome, such as satisfied when evidence is present and
-  passing, failing when it is present and failing, or missing when it is absent.
+  balance sets a claim's Evidence Obligations against its Evidence Observations, matching them
+  on their kind of quality check. Each Quality Check Reconciliation has an outcome, such as
+  satisfied when evidence is present and passing, failing when it is present and failing, or
+  missing when it is absent.
 
-  Balancing runs in both directions, so there is a Claim Reconciliation for every claim, whichever
-  kind of claim it is.
+  balance works from both sides, the Evidence Obligations and the Evidence Observations, so every
+  claim, of whichever kind, has a Claim Reconciliation.
 
-  A claim's verdict is binary. A claim is balanced when every Quality Check Reconciliation on it is satisfied. Otherwise it
-  is out of balance, and it lists every reconciling item, each typed and none ranked.
+  A claim's verdict has two values. It is balanced when every Quality Check Reconciliation on it
+  is satisfied. Otherwise it is out of balance, and it lists every reconciling item, each typed
+  and none ranked.
 
   Rule: a Claim Reconciliation follows from its evidence
 
@@ -58,8 +60,8 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
   Rule: a Claim Reconciliation sorts its Quality Check Reconciliations, so two runs over the same evidence list them in the same order
 
     They are sorted by kind of quality check: unit, integration, e2e, performance, then fitness.
-    Within a kind, they are sorted by where their tests are, then by the
-    code each cites, then by everything else each records.
+    Within a kind, they are sorted by where their tests are, then by the code each cites, then by
+    everything else each records.
 
     @unit
     Scenario Outline: balance sorts a Claim Reconciliation's Quality Check Reconciliations by kind of quality check, then where the test is, then the code it cites, then what else it records

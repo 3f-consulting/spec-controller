@@ -1,21 +1,22 @@
 @OBS
 Feature: Evidence Observations are posted, each to its claim
 
-  Your project makes claims. Running your tests and your CI produces evidence. This file is about
-  turning that evidence into Evidence Observations and posting each one to the right claim.
+  Your project makes claims. Running your tests and your CI produces evidence. balance turns that
+  evidence into Evidence Observations and posts each one to its claim.
 
-  Evidence comes from two places: the report a test runner writes, and the steps your CI ran.
+  Evidence comes from two places: the evidence report a test runner writes, and the steps your CI
+  ran.
 
-  First, balance decides what counts as evidence. Some CI steps prove nothing, like downloading the code. Those are
-  skipped. A step recognised as running your tests is skipped too, because the test runner's own report already
-  tells us about each test. Any other step is a fitness function.
+  First, balance decides what counts as evidence. A CI step that proves nothing, such as checking
+  out the code, posts nothing. Nor does a step balance recognises as running your tests. Any other step is a fitness
+  function.
 
-  Next, balance writes each Evidence Observation. It says which claim it cites, whether it passed,
-  failed or never ran, what kind of quality check it is, and where to look if you need to fix it.
+  Next, balance writes each Evidence Observation. It says which claim it cites, whether it
+  passed, failed or never ran, its kind of quality check, and where to look.
 
-  Last, balance posts each one. One that cites one executable claim goes to that claim. One that cites
-  a claim nobody wrote goes to a phantom claim. One that cites none, or could mean more than one,
-  goes to the unnamed claim.
+  Last, balance posts each one. One that cites one executable claim goes to that claim. One that
+  cites a claim nobody wrote goes to a phantom claim. One that cites none, or could mean more than
+  one, goes to the unnamed claim.
 
   Rule: balance posts only the steps that prove something
 

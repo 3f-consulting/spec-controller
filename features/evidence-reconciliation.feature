@@ -2,13 +2,12 @@
 Feature: The Evidence Reconciliation states the run verdict, the totals, the step account and the provenance
 
   balance reconciles each executable claim against the test and CI evidence, and writes the
-  Evidence Reconciliation: the Claim Reconciliations and the Summary over them. spec-controller is a reconciliation
-  engine, not a spec engine.
+  Evidence Reconciliation: the Claim Reconciliations and the Summary over them.
 
-  A run verdict is what the whole run comes to: balanced, out of balance, or not reconciled. A run
-  is not reconciled when balance cannot rely on what it read, and the verdict names why: unsound, when some
-  evidence never ran; claim code errors, when a code is misfiled; or nothing to reconcile, when there
-  are no Claim Reconciliations. A run that cannot reach a
+  A run verdict is what the whole run comes to: balanced, out of balance, or not reconciled. A
+  run is not reconciled when balance cannot rely on what it read, and the verdict names why:
+  unsound, when some evidence never ran; claim code errors, when a claim code is misfiled; or
+  nothing to reconcile, when there are no Claim Reconciliations. A run that cannot reach a
   verdict gives none.
 
   Rule: a run is balanced only when all its Claim Reconciliations are

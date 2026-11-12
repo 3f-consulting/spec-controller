@@ -1,22 +1,16 @@
 @STG
 Feature: every claim code is well formed, filed under its file's code, and never reused
 
-  A feature code is two to five uppercase letters or digits. A claim code has the form
-  CLM-<FFF>-<NNN>: a feature code, then a number of any width. balance reads every id by this one form.
-  An id not in this form is not a claim code.
+  A feature code is two to five uppercase letters or digits. A claim code is CLM, a feature
+  code and a number of any width: CLM-<FFF>-<NNN>. balance reads every id by this one form, and
+  an id in any other form is not a claim code.
 
-  A feature file's feature code is the class its scenarios' codes are filed under.
+  A feature file's feature code is the class its scenarios' claim codes are filed under.
 
-  The developer asks allocate for the next claim code instead of inventing one. The code is
-  one past the highest inside the repository for that feature code, so a code that was
-  retired is never handed out again: a reissued code would make every old reference to it, in
-  history, in a chat, in a stale document, resolve silently to a different capability.
-
-  Feature codes come from the feature files. Numbers come from every text file in the tree
-  and from the diff lines of reachable history. The answer is the code alone, so an agent or a
-  script can consume it. What the repository's shape leaves unread, having no repository or being a
-  shallow clone, is a note, never part of the answer. What the tool is prevented from reading
-  stops it, and it gives no code rather than one worked out without that file.
+  allocate gives the next claim code for a feature code, and its answer is the code alone.
+  What the repository's shape leaves unread, when there is no repository or it is a shallow
+  clone, it notes beside the answer, never in it. When something it must read cannot be read,
+  it stops and gives no code, never one worked out without it.
 
   @unit
   Scenario Outline: a feature code is two to five uppercase letters or digits
@@ -93,9 +87,10 @@ Feature: every claim code is well formed, filed under its file's code, and never
 
   Rule: allocate's next code is one past the highest code that has ever been in the repository
 
-    allocate asks git which files the repository has and reads each for codes, and asks git for
-    every line its history has contained. It counts a code written under CLM or the retired SCN, and
-    writes its answer under CLM, so no number a code has had is handed out again.
+    allocate takes feature codes from the feature files. It takes numbers from every file git lists
+    in the tree, leaving out the files git ignores, and from every line the repository's reachable history has contained. It counts a
+    code written under CLM or under the retired SCN, and answers under CLM, so it never hands out
+    again a number a code has had, even one since retired.
 
     @unit
     Scenario Outline: the answer is one past the highest code the repository has contained

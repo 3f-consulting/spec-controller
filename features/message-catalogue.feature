@@ -1,12 +1,12 @@
 @MSG
 Feature: a message catalogue gives back the text for a code
 
-  The tool's sentences for a reader are kept in a message catalogue, a data file apart from the
-  code, so mutation testing has no words to change. There is one catalogue for each package.
+  The tool's sentences for a reader are in a message catalogue, a data file apart from the code.
+  Each package has one.
 
-  To get a sentence, the program asks the catalogue for the text under a message code, and gives it any values
-  to fill in. A mistake in a catalogue is a mistake made in development. It never stops a run: what
-  comes back names the code and its values instead.
+  Asked for the text under a message code, with any values to fill in, the catalogue gives back
+  that text. A mistake in a catalogue never stops a run: what comes back names the code and its
+  values instead.
 
   Rule: a code that takes no values gives back its text unchanged
 

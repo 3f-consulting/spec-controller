@@ -1,8 +1,7 @@
 @ERC
 Feature: an error a reader is shown has its error code
 
-  Every error the tool shows a reader has an error code, so it can be quoted and looked up
-  whatever its words.
+  Every error the tool shows a reader has an error code.
 
   @unit @CLM-ERC-001
   Scenario: an error will be shown with its error code

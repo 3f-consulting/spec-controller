@@ -1,16 +1,13 @@
 @FIT
 Feature: the fitness functions CI runs over this repository, one scenario for each
 
-  These are the fitness functions for spec-controller's own repository. Each one looks at the whole
-  repository, or at what a push changed, and fails its CI step if it finds a fault.
+  These are the fitness functions CI runs over spec-controller's own repository. Each one looks at
+  the whole repository, or at what a push changed, and fails its CI step when it finds a fault.
 
-  A scenario here is one fitness function. It is tagged @fitness, and its title says what will be
-  true of the repository. The CI step that runs it has the scenario's claim code as its id. A
-  fitness function that finds nothing prints nothing, so balance reads the run's step
-  record to see that it ran and how it ended.
-
-  A title never says a fitness function passed: that is balance's to say. A fitness function's
-  limit is set where it runs, and is not repeated here.
+  Each scenario is one fitness function, tagged @fitness. The CI step that runs it has the
+  scenario's claim code as its id, and balance reads the run's step record to see that the step
+  ran and how it ended. A title says what will be true of the repository, never that a fitness
+  function passed. A fitness function's limit is set where it runs, not here.
 
   Rule: the source code follows this repository's design rules
 
