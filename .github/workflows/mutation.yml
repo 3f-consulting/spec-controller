@@ -19,11 +19,12 @@ on:
         default: false
 
 env:
-  # Production files no scope mutates. These re-export only, so there is no mutant to raise.
+  # Production files no scope mutates. Core's index.ts re-exports only. The app's messages/ holds no executable code, only
+  # its catalogue's codes and types, and the catalogue code it calls is mutated in core-messages; a scope with no mutant
+  # scores NaN and passes, so it could never go red. If messages/ gains a function, it goes back in as a scope.
   UNSCOPED: |
     packages/core/src/index.ts
-    packages/core/src/internal.ts
-    packages/core/src/model.ts
+    packages/spec-controller/src/messages/**/*.ts
 
 jobs:
   mutation:
@@ -38,26 +39,26 @@ jobs:
         include:
           - scope: core-domain
             mutate: "packages/core/src/domain/**/*.ts,!packages/core/src/domain/**/*.test.ts,!packages/core/src/domain/**/*.test-utils.ts"
-          - scope: core-provenance
-            mutate: "packages/core/src/provenance/**/*.ts,!packages/core/src/provenance/**/*.test.ts,!packages/core/src/provenance/**/*.test-utils.ts"
-          - scope: core-assemble
-            mutate: "packages/core/src/assemble/**/*.ts,!packages/core/src/assemble/**/*.test.ts,!packages/core/src/assemble/**/*.test-utils.ts"
-          - scope: spec-controller-cli-allocate
-            mutate: "packages/spec-controller/src/cli-allocate/**/*.ts,!packages/spec-controller/src/cli-allocate/**/*.test.ts,!packages/spec-controller/src/cli-allocate/**/*.test-utils.ts"
-          - scope: core-render
-            mutate: "packages/core/src/render/**/*.ts,!packages/core/src/render/**/*.test.ts,!packages/core/src/render/**/*.test-utils.ts"
-          - scope: spec-controller-run-management
-            mutate: "packages/spec-controller/src/run-management/**/*.ts,!packages/spec-controller/src/run-management/**/*.test.ts,!packages/spec-controller/src/run-management/**/*.test-utils.ts"
-          - scope: spec-controller-shell
-            mutate: "packages/spec-controller/src/*.ts,!packages/spec-controller/src/*.test.ts,!packages/spec-controller/src/*.test-utils.ts"
-          - scope: spec-controller-ingest
-            mutate: "packages/spec-controller/src/ingest/**/*.ts,!packages/spec-controller/src/ingest/**/*.test.ts,!packages/spec-controller/src/ingest/**/*.test-utils.ts"
-          - scope: spec-controller-cli-balance
-            mutate: "packages/spec-controller/src/cli-balance/**/*.ts,!packages/spec-controller/src/cli-balance/**/*.test.ts,!packages/spec-controller/src/cli-balance/**/*.test-utils.ts"
-          - scope: core-parse
-            mutate: "packages/core/src/parse/**/*.ts,!packages/core/src/parse/**/*.test.ts,!packages/core/src/parse/**/*.test-utils.ts"
-          - scope: core-lib
-            mutate: "packages/core/src/lib/**/*.ts,!packages/core/src/lib/**/*.test.ts,!packages/core/src/lib/**/*.test-utils.ts"
+          - scope: core-inputs
+            mutate: "packages/core/src/inputs/**/*.ts,!packages/core/src/inputs/**/*.test.ts,!packages/core/src/inputs/**/*.test-utils.ts"
+          - scope: core-reports
+            mutate: "packages/core/src/reports/**/*.ts,!packages/core/src/reports/**/*.test.ts,!packages/core/src/reports/**/*.test-utils.ts"
+          - scope: core-messages
+            mutate: "packages/core/src/messages/**/*.ts,!packages/core/src/messages/**/*.test.ts,!packages/core/src/messages/**/*.test-utils.ts"
+          - scope: app-run-request
+            mutate: "packages/spec-controller/src/runRequest/**/*.ts,!packages/spec-controller/src/runRequest/**/*.test.ts,!packages/spec-controller/src/runRequest/**/*.test-utils.ts"
+          - scope: app-inputs
+            mutate: "packages/spec-controller/src/inputs/**/*.ts,!packages/spec-controller/src/inputs/**/*.test.ts,!packages/spec-controller/src/inputs/**/*.test-utils.ts"
+          - scope: app-run-identity
+            mutate: "packages/spec-controller/src/runIdentity/**/*.ts,!packages/spec-controller/src/runIdentity/**/*.test.ts,!packages/spec-controller/src/runIdentity/**/*.test-utils.ts"
+          - scope: app-repository
+            mutate: "packages/spec-controller/src/repository/**/*.ts,!packages/spec-controller/src/repository/**/*.test.ts,!packages/spec-controller/src/repository/**/*.test-utils.ts"
+          - scope: app-output
+            mutate: "packages/spec-controller/src/output/**/*.ts,!packages/spec-controller/src/output/**/*.test.ts,!packages/spec-controller/src/output/**/*.test-utils.ts"
+          - scope: app-run-ending
+            mutate: "packages/spec-controller/src/runEnding/**/*.ts,!packages/spec-controller/src/runEnding/**/*.test.ts,!packages/spec-controller/src/runEnding/**/*.test-utils.ts"
+          - scope: app-commands
+            mutate: "packages/spec-controller/src/commands/**/*.ts,!packages/spec-controller/src/commands/**/*.test.ts,!packages/spec-controller/src/commands/**/*.test-utils.ts"
     env:
       SELECTED: ${{ github.event_name != 'workflow_dispatch' || inputs.scope == '' || matrix.scope == inputs.scope }}
       FORCE: ${{ github.event.schedule == '17 3 * * 0' || inputs.force == true }}

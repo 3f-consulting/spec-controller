@@ -1,0 +1,45 @@
+import { AppError, AppMessage } from "../messages/messages.js";
+import { message } from "../messages/appText.js";
+import { refusal, type Refusal } from "../runEnding/refusal.js";
+import { USAGE_EXIT_CODE } from "../runEnding/exitCode.js";
+
+// A command to run with its arguments, a refusal, or neither: then the run answers with the top-level help.
+export interface HostInvocation {
+  readonly run?: { readonly command: string; readonly commandArgs: string[] };
+  readonly refusal?: Refusal;
+}
+
+export function parseHostInvocation(argv: readonly string[]): HostInvocation {
+  const [first, ...rest] = argv;
+  if (first === undefined) return {};
+  const refusal = leadingFlagRefusal(first);
+  if (refusal === undefined) return { run: { command: first, commandArgs: rest } };
+  return argv.some((token) => TOP_LEVEL_HELP.has(token)) ? {} : { refusal };
+}
+
+function leadingFlagRefusal(token: string): Refusal | undefined {
+  if (isFlagOutOfPlace(token)) return flagBeforeCommandRefusal(token);
+  return undefined;
+}
+
+const TOP_LEVEL_HELP: ReadonlySet<string> = new Set(["--help", "-h"]);
+
+function isFlagOutOfPlace(token: string): boolean {
+  return token.length > 1 && token.startsWith("-") && !TOP_LEVEL_HELP.has(token);
+}
+
+function flagBeforeCommandRefusal(flag: string): Refusal {
+  return refusal(AppError.FlagBeforeCommand, { flag }, [message(AppMessage.SeeCommands)]);
+}
+
+export interface UnknownCommandAnswer {
+  exitCode: number;
+  refusal: Refusal;
+}
+
+export function answerUnknownCommand(command: string, help: string): UnknownCommandAnswer {
+  return {
+    exitCode: USAGE_EXIT_CODE,
+    refusal: refusal(AppError.UnknownCommand, { command }, [message(AppMessage.HelpAfterRefusal, { help })]),
+  };
+}

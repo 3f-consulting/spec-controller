@@ -6,7 +6,6 @@ import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "no
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createGenerator } from "ts-json-schema-generator";
-import { thirdPartyNotices } from "./src/thirdPartyNotices.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = join(here, "dist");
@@ -14,7 +13,7 @@ const dist = join(here, "dist");
 const bundleTheCommand = async () => {
   rmSync(dist, { recursive: true, force: true });
   const { metafile } = await build({
-    entryPoints: [join(here, "src", "cli.ts")],
+    entryPoints: [join(here, "src", "commands", "cli.ts")],
     outfile: join(dist, "cli.js"),
     bundle: true,
     platform: "node",
@@ -60,25 +59,30 @@ const bundleTheCommand = async () => {
     const files = licenceFiles(dir).length > 0 ? licenceFiles(dir) : inheritedLicence(dir);
     const authorName = typeof author === "string" ? author : author?.name;
     const texts = files.length > 0 ? files.map((f) => readFileSync(f, "utf8").trim()) : [authorName === undefined ? declared : `${declared}, by ${authorName}`];
-    return { directory: dir, installed: installed(dir), name, version, license: declared, texts };
+    // A workspace package's version is stamped at release, after the build, so the tree's version would misname it.
+    const header = installed(dir) ? `${name}@${version} (${declared})` : `${name} (${declared})`;
+    return { directory: dir, notice: [header, ...texts].join("\n\n") };
   });
-  const wording = {
-    field: (directory, field) => `The bundled package at ${directory} gives no ${field} in its package.json, or one that is empty or not text, so its licence notice cannot be written.`,
-    engine: (engine) => `The engine, ${engine}, is not among the packages the command's bundle carries, so the command would ship without it and without its licence notice.`,
-  };
-  writeFileSync(join(dist, "THIRD-PARTY-NOTICES.txt"), thirdPartyNotices(packages, wording));
+  // Inside the repository the workspace resolves the engine at run time, so a bundle without it passes every test and
+  // breaks only the published command.
+  const engine = "@3f-consulting/spec-controller-core";
+  if (!packages.some(({ directory }) => manifestOf(directory).name === engine)) {
+    throw new Error(`The engine, ${engine}, is not among the packages the command's bundle carries, so the command would ship without it.`);
+  }
+  const notices = packages.sort((a, b) => (a.directory < b.directory ? -1 : 1)).map(({ notice }) => notice);
+  writeFileSync(join(dist, "THIRD-PARTY-NOTICES.txt"), notices.join("\n\n" + "-".repeat(72) + "\n\n") + "\n");
 };
 
 // The JSON report is the report type serialised as it is, so its schema is generated from that type and never written by hand.
 const writeTheReportSchema = () => {
   const core = resolve(here, "../core");
   const schema = createGenerator({
-    path: join(core, "src", "domain", "renderInput.ts"),
+    path: join(core, "src", "domain", "evidenceReconciliation.ts"),
     tsconfig: join(core, "tsconfig.build.json"),
-    type: "RenderInput",
+    type: "EvidenceReconciliation",
     additionalProperties: false,
     skipTypeCheck: true,
-  }).createSchema("RenderInput");
+  }).createSchema("EvidenceReconciliation");
   writeFileSync(join(dist, "spec-reconciliation.schema.json"), `${JSON.stringify(schema, null, 2)}\n`);
 };
 

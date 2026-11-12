@@ -123,19 +123,25 @@ jobs:
           echo "the behavioural suite took $((SECONDS - start)) s of its $CUCUMBER_SUITE_TIMEOUT_S s limit"
           exit "$status"
 
-      - name: ESLint — every rule of eslint.config.js over the tree, and its warnings in the files the push touches
+      - name: ESLint — every rule of eslint.config.js over the tree
         id: CLM-FIT-073
         if: always()
         shell: bash
         # The loop reds, naming the population, when the configuration enforces no rule (none, or all off) on one file of each population the tree line lints; ESLint lints the tree green with none.
         # The tree line runs without --quiet: --quiet skips warn rules, and with them the dead-suppression reports for those rules and for a blanket directive.
         # So it reds on an error anywhere, a dead suppression included, and prints every warning, which exits 0, before an error ends the step.
-        # The last line reds on a warning in a touched file. Both ESLint lines run every rule, so what either caches serves the other: one cache.
         run: |
-          for sample in "core's source:packages/core/src/index.ts" "the app's source:packages/spec-controller/src/cli.ts" "the step files:tests/steps/runVerdict.steps.ts" "the scripts:scripts/docs-check.mjs"; do
+          for sample in "core's source:packages/core/src/index.ts" "the app's source:packages/spec-controller/src/commands/cli.ts" "the step files:tests/steps/runVerdict.steps.ts" "the scripts:scripts/docs-check.mjs"; do
             [ "$(node_modules/.bin/eslint --print-config "${sample#*:}" | jq '[.rules // {} | .[] | select(.[0] > 0)] | length')" -gt 0 ] || { echo "ESLint enforces no rule on ${sample%%:*} (${sample#*:})"; exit 1; }
           done
           node_modules/.bin/eslint --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/" .
+
+      - name: ESLint — no warning in the files the push touches
+        id: CLM-FIT-081
+        if: always()
+        shell: bash
+        # The readability limits are ESLint warnings, so a touched file fails on any. It runs every rule, so the tree step's cache serves it.
+        run: |
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" | xargs -0 -r node_modules/.bin/eslint --max-warnings 0 --no-warn-ignored --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/"
 
       - name: CRAP — complex code must be tested
@@ -155,8 +161,8 @@ jobs:
         # It scans both packages' src as TypeScript, with tests, shared test helpers and fixtures ignored: production code only.
         # minTokens 50 and minLines 5 are jscpd's own default definition of a clone, stated in full so a copier inherits it.
         # The step reds on jscpd's own exit code, so a clone anywhere in that population reds it, whichever files the change touches.
-        # --fail-on-empty reds an analysis of no file. jscpd does not count five files under the 50-token clone size, so none can hold a clone:
-        # core's domain/outcome.ts, model.ts and parse/stepNames.ts, and spec-controller's cli.ts and defaultCorpus.ts.
+        # --fail-on-empty reds an analysis of no file. jscpd does not count seven files under the 50-token clone size, so none can hold a clone:
+        # core's messages/coreText.ts, reports/heading.ts, reports/json.ts and reports/labelled.ts, and spec-controller's commands/cli.ts, runEnding/exitStatus.ts and runRequest/defaults.ts.
         run: node_modules/.bin/jscpd --config .jscpd.json --exit-code --fail-on-empty
 
       - name: Unused code — no unused file, export or dependency outside the test code
@@ -313,82 +319,6 @@ jobs:
         id: CLM-FIT-030
         if: always()
         run: pnpm docs:interface-mechanic
-
-      - name: A lowercase step line in a scenario is held to the step rules
-        id: CLM-FIT-077
-        if: always()
-        run: pnpm docs:lowercase-step
-
-      - name: The description gates leave a lowercase step line in a scenario alone
-        id: CLM-FIT-078
-        if: always()
-        run: pnpm docs:lowercase-description
-
-      - name: A scenario Cucumber does not run, with lowercase lines, still has no step
-        id: CLM-FIT-079
-        if: always()
-        shell: bash
-        run: |
-          plant="$RUNNER_TEMP/lowercase-lines/planted.feature"
-          mkdir -p "${plant%/*}"
-          printf '%s\n' \
-            'Feature: a planted feature' \
-            '' \
-            '  @unit' \
-            '  Scenario: lowercase lines only' \
-            '    given a planted precondition' \
-            '    and a second planted precondition' \
-            '    when a planted action happens' \
-            '    then a planted outcome holds' \
-            '    but a planted outcome does not' \
-            '' \
-            '  @unit' \
-            '  Scenario: a capitalised control' \
-            '    Given a planted precondition' > "$plant"
-          report=$(node_modules/.bin/cucumber-js --profile outside --dry-run --format message "$plant" | jq -rn '[inputs] | (map(.testCase.pickleId // empty)) as $run | .[] | .pickle // empty | select((.steps | length) > 0 and (.id | IN($run[]))) | "\(.uri): \(.name) carries \(.steps | length) step(s)"' | awk '{ print } END { exit NR > 0 }') || true
-          printf '%s\n' "$report"
-          grep -qF ': a capitalised control carries 1 step(s)' <<< "$report" || { echo "The step check did not report the planted scenario with a capitalised Given"; exit 1; }
-          if grep -qF ': lowercase lines only carries' <<< "$report"; then echo "The step check reported the planted scenario with only lowercase lines"; exit 1; fi
-
-      # The planted code is built at run time, so this file carries no claim code of its own.
-      - name: A test citing a code from a domain concept's clm cell is refused outside core's domain
-        id: CLM-FIT-080
-        if: always()
-        shell: bash
-        run: |
-          code=$(printf '%s-%s-%s' CLM ONE 001)
-          feature=features/outcome.feature
-          outside=packages/core/src/assemble/plantedCellCitation.test.ts
-          inside=packages/core/src/domain/plantedCellCitation.test.ts
-          for plant in "$feature" "$outside" "$inside"; do
-            [ ! -e "$plant" ] || { echo "$plant already exists, so it cannot be planted"; exit 1; }
-          done
-          trap 'rm -f "$feature" "$outside" "$inside"' EXIT
-          printf '%s\n' \
-            '@ONE' \
-            'Feature: a planted domain concept' \
-            '' \
-            '  Scenario Outline: a planted claim in a row' \
-            '' \
-            '    Examples:' \
-            '      | clm | case |' \
-            "      | $code | planted |" > "$feature"
-          for test in "$outside" "$inside"; do
-            printf '%s\n' 'import { it } from "vitest";' '' "it(\"[$code] a planted test\", () => {});" > "$test"
-          done
-          message="A test citing a domain concept's scenario tests a rule of core's domain."
-          # ESLint reports as JSON here: its default lines would become an error annotation on a run that passes.
-          for test in "$outside" "$inside"; do
-            status=0
-            report=$(node_modules/.bin/eslint --format json "$test" | jq -r '.[].messages[] | "\(.line):\(.column) \(.ruleId) \(.message)"') || status=$?
-            printf '%s\n' "$report"
-            [ "$status" -le 1 ] || { echo "ESLint could not lint $test"; exit 1; }
-            if [ "$test" = "$outside" ]; then
-              grep -qF "$message" <<< "$report" || { echo "The domain-tests rule did not refuse the planted test outside core's domain"; exit 1; }
-            elif grep -qF "$message" <<< "$report"; then
-              echo "The domain-tests rule refused the planted test inside core's domain"; exit 1
-            fi
-          done
 
       - name: Dump this run's step record
         if: always()

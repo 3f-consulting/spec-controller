@@ -12,7 +12,7 @@ rules:
       exclude:
         - "*.test.ts"
         - "*.test-utils.ts"
-        - "packages/spec-controller/src/standardError.ts"
+        - "packages/spec-controller/src/runEnding/standardError.ts"
     pattern-either:
       - pattern: console.error(...)
       - pattern: console.warn(...)

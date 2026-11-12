@@ -1,366 +1,244 @@
-import type {
-  Scenario,
-  EvidenceObservation,
-  FitnessEvidenceObservation,
-  PendingItem,
-} from "./journal.js";
-import type { ClaimReconciliation } from "./claimReconciliation.js";
-import type { Ledger } from "./ledger.js";
+import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
+import { claimReconciliationsOf, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
+import type { ConfigurationError } from "./configuration.js";
+import { executableClaimsOf, featureReadOf, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import {
-  evidenceObligationPairsOf,
-  evidenceObligationsOf,
-  pendingItemsOf,
-} from "./journal.js";
-import {
-  reconcileEvidenceObligation,
-  notAskedForReconciliationsOf,
-  citesUnknownClaimReconciliationsOf,
-  unnamedClaimReconciliationsOf,
-  noClaimCodeReconciliations,
-  duplicateClaimCodeReconciliationsOf,
-} from "./qualityCheckReconciliation.js";
-import type { ScenarioName } from "./qualityCheckReconciliation.js";
-import {
-  ledgerTally,
-  evidenceObservationTally,
-  runningFitnessObservations,
-} from "./ledger.js";
-import type {
-  ClaimReconciliationTotals,
-  ReconciliationLineTotals,
-  EvidenceObservationTally,
-  QualityCheckKindObservations,
-} from "./ledger.js";
-import {
-  verdictFor,
-  qualityCheckReconciliationsOf,
-  UNNAMED_CLAIM_ID,
-} from "./claimReconciliation.js";
-import type { ClaimCodeError, ClaimCodePopulation } from "./claimCodes.js";
-import { postingOf } from "./posting.js";
-import { inEvidenceOrder } from "./evidenceOrder.js";
+  fitnessObservationsOf,
+  stepDispositionOf,
+  type EvidenceObservation,
+  type PipelineStep,
+  type RecordedCheckStep,
+  type StepDisposition,
+  type StepReadings,
+} from "./postEvidenceObservation.js";
+import type { Provenance } from "./provenance.js";
 
-type CitedPosting = { readonly kind: "scenario" | "phantom-claim"; readonly claimCode: string };
+export type RunVerdict =
+  | { readonly verdict: "balanced" }
+  | { readonly verdict: "out-of-balance" }
+  | { readonly verdict: "not-reconciled"; readonly why: "unsound" | "claim-code-errors" | "nothing-to-reconcile" };
 
-interface CitationIndex {
-  file(posting: CitedPosting, observation: EvidenceObservation): void;
-  observationsFor(claimCode: string): readonly EvidenceObservation[];
-  readonly phantomClaimCodes: readonly string[];
+interface CountByKind {
+  readonly kind: QualityCheckKind;
+  readonly count: number;
 }
 
-function citationIndex(): CitationIndex {
-  const byClaimCode = new Map<string, EvidenceObservation[]>();
-  const phantomClaimCodes: string[] = [];
-  return {
-    file(posting, observation) {
-      const list = byClaimCode.get(posting.claimCode) ?? [];
-      list.push(observation);
-      byClaimCode.set(posting.claimCode, list);
-      if (posting.kind === "phantom-claim" && !phantomClaimCodes.includes(posting.claimCode)) {
-        phantomClaimCodes.push(posting.claimCode);
-      }
-    },
-    observationsFor: (claimCode) => byClaimCode.get(claimCode) ?? [],
-    phantomClaimCodes,
+export interface Totals {
+  readonly claimReconciliations: {
+    readonly total: number;
+    readonly balanced: number;
+    readonly outOfBalance: number;
   };
-}
-
-interface RoutedObservations {
-  readonly citations: CitationIndex;
-  readonly onUnnamedClaim: readonly EvidenceObservation[];
-}
-
-/** An evidence observation citing a code several scenarios share credits none of them, and names the code. */
-function namingSharedCode(observation: EvidenceObservation, code: string): EvidenceObservation {
-  return { ...observation, notes: [...(observation.notes ?? []), { kind: "shared-claim-code", code }] };
-}
-
-function routeObservations(
-  evidenceObservations: readonly EvidenceObservation[],
-  carriedClaimCodes: ReadonlySet<string>,
-  sharedClaimCodes: ReadonlySet<string>
-): RoutedObservations {
-  const citations = citationIndex();
-  const onUnnamedClaim: EvidenceObservation[] = [];
-  for (const o of evidenceObservations) {
-    const posting = postingOf(o, carriedClaimCodes, sharedClaimCodes);
-    if (posting.kind !== "unnamed-claim") citations.file(posting, o);
-    else if (o.claimCode !== null && o.claimCode !== undefined && sharedClaimCodes.has(o.claimCode)) onUnnamedClaim.push(namingSharedCode(o, o.claimCode));
-    else onUnnamedClaim.push(o);
-  }
-  return { citations, onUnnamedClaim };
-}
-
-function scenarioRow(
-  d: Scenario,
-  evidenceObservations: EvidenceObservation[],
-  citations: CitationIndex,
-  evidenceObligationPairs: ReadonlySet<string>
-): ClaimReconciliation {
-  const pendingItems: PendingItem[] = pendingItemsOf(d);
-
-  const reconciledEvidenceObligations = evidenceObligationsOf(d.evidenceObligations).map((obligation) =>
-    reconcileEvidenceObligation(d.claimCode, obligation, evidenceObservations)
-  );
-
-  const notAskedForItems = notAskedForReconciliationsOf(
-    d.claimCode,
-    citations.observationsFor(d.claimCode),
-    evidenceObligationPairs
-  );
-
-  const qualityCheckReconciliations = qualityCheckReconciliationsOf(
-    reconciledEvidenceObligations,
-    notAskedForItems,
-    pendingItems
-  );
-  return {
-    claim: d.claimCode,
-    kind: "scenario",
-    verdict: verdictFor(qualityCheckReconciliations),
-    qualityCheckReconciliations,
-    pendingItems,
+  readonly qualityCheckReconciliations: {
+    readonly total: number;
+    readonly outOfBalance: number;
+    readonly byOutcome: readonly { readonly outcome: Exclude<Outcome, "satisfied">; readonly count: number }[];
+    readonly missingByKind: readonly CountByKind[];
   };
-}
-
-function scenarioNameOf({ feature, title }: Scenario): ScenarioName | undefined {
-  return feature === undefined || title === undefined ? undefined : { feature, title };
-}
-
-function accountsByCode(scenarios: readonly Scenario[]): Scenario[][] {
-  const byCode = new Map<string, Scenario[]>();
-  for (const scenario of scenarios) {
-    const sharers = byCode.get(scenario.claimCode) ?? [];
-    sharers.push(scenario);
-    byCode.set(scenario.claimCode, sharers);
-  }
-  return [...byCode.values()];
-}
-
-function duplicateClaimCodeRow(sharer: Scenario): ClaimReconciliation {
-  const items = duplicateClaimCodeReconciliationsOf(sharer.evidenceObligations, scenarioNameOf(sharer));
-  return {
-    claim: sharer.claimCode,
-    kind: "scenario",
-    verdict: verdictFor(items),
-    qualityCheckReconciliations: items,
-    pendingItems: [],
+  readonly evidenceObservations: {
+    readonly total: number;
+    readonly byKind: readonly CountByKind[];
+    readonly onExecutableClaim: number;
+    readonly onPhantomClaim: number;
+    readonly onUnnamedClaim: number;
+    readonly fitnessFunctionsRan: number;
   };
+  readonly outOfBalanceByFeature?: readonly { readonly file: string; readonly count: number }[];
+  readonly excludedClaimCodeOccurrences: number;
 }
 
-function phantomClaimRows(citations: CitationIndex): ClaimReconciliation[] {
-  const rows: ClaimReconciliation[] = [];
-  for (const claimCode of citations.phantomClaimCodes) {
-    const observations = citations.observationsFor(claimCode);
-    const items = citesUnknownClaimReconciliationsOf(observations);
-    rows.push({
-      claim: claimCode,
-      kind: "phantom-claim",
-      verdict: verdictFor(items),
-      qualityCheckReconciliations: items,
-      pendingItems: [],
-    });
-  }
-  return rows;
-}
-
-function unnamedClaimRows({ onUnnamedClaim }: Omit<RoutedObservations, "citations">): ClaimReconciliation[] {
-  const rows: ClaimReconciliation[] = [];
-  if (onUnnamedClaim.length > 0) {
-    const items = unnamedClaimReconciliationsOf(onUnnamedClaim);
-    rows.push({
-      claim: UNNAMED_CLAIM_ID,
-      kind: "unnamed-claim",
-      verdict: verdictFor(items),
-      qualityCheckReconciliations: items,
-      pendingItems: [],
-    });
-  }
-  return rows;
-}
-
-function untaggedScenarioRows(untaggedScenarios: readonly string[]): ClaimReconciliation[] {
-  const rows: ClaimReconciliation[] = [];
-  for (const name of untaggedScenarios) {
-    const items = noClaimCodeReconciliations();
-    rows.push({
-      claim: name,
-      kind: "scenario",
-      verdict: verdictFor(items),
-      qualityCheckReconciliations: items,
-      pendingItems: [],
-    });
-  }
-  return rows;
-}
-
-export function reconcile(
-  scenarios: readonly Scenario[],
-  evidenceObservations: EvidenceObservation[],
-  untaggedScenarios: readonly string[] = []
-): Ledger {
-  const carriedClaimCodes = new Set(scenarios.map((d) => d.claimCode));
-  const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
-  const observations = inEvidenceOrder(evidenceObservations);
-  const accounts = accountsByCode(scenarios);
-  const sharedClaimCodes = new Set(accounts.filter((sharers) => sharers.length > 1).map((sharers) => sharers[0]!.claimCode));
-  const { citations, ...unnamed } = routeObservations(observations, carriedClaimCodes, sharedClaimCodes);
-  return {
-    claimReconciliations: [
-      ...accounts.flatMap((sharers) =>
-        sharers.length === 1
-          ? [scenarioRow(sharers[0]!, observations, citations, evidenceObligationPairs)]
-          : sharers.map(duplicateClaimCodeRow)
-      ),
-      ...phantomClaimRows(citations),
-      ...unnamedClaimRows(unnamed),
-      ...untaggedScenarioRows(untaggedScenarios),
-    ],
-  };
-}
-
-export interface ReconcilerStep {
-  readonly step: string;
-  readonly role: "reconciles" | "records";
-}
-
-export interface BehaviouralRunner {
-  readonly layer: string;
-  readonly runner: string;
-  readonly step: string;
-}
-
-function stepsNamed(running: readonly FitnessEvidenceObservation[], stepsInOrder: readonly string[]): string[] {
-  const named = new Set(running.map((observation) => observation.step));
-  return eachOnce(stepsInOrder.filter((step) => named.has(step)));
-}
-
-function eachOnce(steps: readonly string[]): string[] {
-  return [...new Set(steps)];
-}
-
-function withSteps(entry: QualityCheckKindObservations, ciSteps: readonly string[]): QualityCheckKindObservations {
-  if (ciSteps.length === 0) return entry;
-  return { ...entry, ciSteps };
-}
-
-function withDeclaredRunner(
-  entry: QualityCheckKindObservations,
-  layers: Readonly<Record<string, string | null>>
-): QualityCheckKindObservations {
-  if (!Object.hasOwn(layers, entry.qualityCheckKind)) return entry;
-  return { ...entry, runner: layers[entry.qualityCheckKind] as string | null };
-}
-
-export function ciStepsJoined(
-  observations: EvidenceObservationTally,
-  ledger: Ledger,
-  runners: readonly BehaviouralRunner[],
-  layers: Readonly<Record<string, string | null>>,
-  stepsInOrder: readonly string[]
-): EvidenceObservationTally {
-  return {
-    ...observations,
-    byQualityCheckKind: observations.byQualityCheckKind.map((entry) => {
-      if (entry.qualityCheckKind === "fitness") {
-        return withSteps(entry, stepsNamed(runningFitnessObservations(ledger), stepsInOrder));
-      }
-      const running = runners.filter((row) => row.layer === entry.qualityCheckKind);
-      return withSteps(withDeclaredRunner(entry, layers), eachOnce(running.map((row) => row.step)));
-    }),
-  };
-}
-
-export type ConfigurationKind =
-  | "list"
-  | "object"
-  | "string-or-null"
-  | "null"
-  | "string"
-  | "number"
-  | "bigint"
-  | "boolean"
-  | "symbol"
-  | "undefined"
-  | "function";
-
-export interface WrongKindEntry {
-  readonly entry: string;
-  readonly is: ConfigurationKind;
-  readonly reads: ConfigurationKind;
-}
-
-export interface JobStepAccount {
-  readonly workflow: string;
-  readonly job: string;
+interface StepCounts {
   readonly stepsRead: number;
-  readonly candidates: number;
   readonly runners: number;
-  readonly reconciler: number;
+  readonly reconcilerSteps: number;
   readonly nonChecks: number;
   readonly plumbing: number;
+  readonly candidates: number;
 }
 
-export type StepAccountTotal = Omit<JobStepAccount, "workflow" | "job">;
-
-export interface StepsBehindCounts {
-  readonly runners?: readonly string[];
-  readonly reconciler?: readonly ReconcilerStep[];
-  readonly nonChecks?: readonly string[];
-  readonly plumbing?: readonly string[];
+export interface StepAccount {
+  readonly jobs: readonly (StepCounts & { readonly workflow: string; readonly job: string })[];
+  readonly total: StepCounts & { readonly accountedFor: number };
 }
 
-export interface StepAccounting {
-  readonly byJob: readonly JobStepAccount[];
-  readonly total: StepAccountTotal;
-  readonly steps: StepsBehindCounts;
-  readonly nonChecksNamingAWorkflowNotRead?: readonly string[];
-  readonly workflowsRead?: readonly string[];
+export interface ErrorsInTheInputs {
+  readonly claimCodeErrors?: readonly ClaimCodeError[];
+  readonly configurationErrors?: readonly ConfigurationError[];
 }
 
-interface ReconciliationTotals {
-  readonly claimReconciliations: ClaimReconciliationTotals;
-  readonly reconciliationLines: ReconciliationLineTotals;
-  readonly pending: number;
-}
-
-export interface Summary {
-  readonly reconciliationTotals: ReconciliationTotals;
-  readonly evidenceObservations?: EvidenceObservationTally;
-  readonly runnerKeysNotALayer?: readonly string[];
-  readonly configurationOfWrongKind?: readonly WrongKindEntry[];
-  readonly configurationKeysNotRead?: readonly string[];
-  readonly nonChecksMatchingNoStep?: readonly string[];
-  readonly nonChecksNotAStepName?: readonly string[];
-  readonly stepAccounting?: StepAccounting;
+export interface RunIntegrity {
+  readonly neverRan: readonly EvidenceObservation[];
 }
 
 export interface EvidenceReconciliation {
-  readonly summary: Summary;
-  readonly ledger: Ledger;
-  readonly claimCodeErrors?: readonly ClaimCodeError[];
-  readonly claimCodePopulation?: ClaimCodePopulation;
+  readonly claimReconciliations: readonly ClaimReconciliation[];
+  readonly runVerdict: RunVerdict;
+  readonly totals: Totals;
+  readonly stepAccount?: StepAccount;
+  readonly provenance: Provenance;
+  readonly errorsInTheInputs?: ErrorsInTheInputs;
+  readonly runIntegrity?: RunIntegrity;
 }
 
-export function summaryOf(ledger: Ledger, withEvidenceObservations: boolean): Summary {
-  const tally = ledgerTally(ledger);
+const qualityCheckReconciliationsOf = (claimReconciliations: readonly ClaimReconciliation[]): QualityCheckReconciliation[] =>
+  claimReconciliations.flatMap(({ qualityCheckReconciliations }) => qualityCheckReconciliations);
+
+const isOutOfBalance = ({ verdict }: ClaimReconciliation): boolean => verdict === "out-of-balance";
+
+export function runVerdictOf(
+  claimReconciliations: readonly ClaimReconciliation[],
+  claimCodeErrors: readonly ClaimCodeError[],
+): RunVerdict {
+  if (qualityCheckReconciliationsOf(claimReconciliations).some(({ outcome }) => outcome === "never-ran")) {
+    return { verdict: "not-reconciled", why: "unsound" };
+  }
+  if (claimCodeErrors.length > 0) return { verdict: "not-reconciled", why: "claim-code-errors" };
+  if (claimReconciliations.length === 0) return { verdict: "not-reconciled", why: "nothing-to-reconcile" };
+  return claimReconciliations.some(isOutOfBalance) ? { verdict: "out-of-balance" } : { verdict: "balanced" };
+}
+
+function countsBy<T, K>(items: readonly T[], keyOf: (item: T) => K): { readonly key: K; readonly count: number }[] {
+  const counts = new Map<K, number>();
+  for (const item of items) {
+    const key = keyOf(item);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts].map(([key, count]) => ({ key, count }));
+}
+
+const kindCounts = (kinds: readonly QualityCheckKind[]): CountByKind[] =>
+  countsBy(kinds, (kind) => kind).map(({ key, count }) => ({ kind: key, count }));
+
+function observedOn(claimReconciliations: readonly ClaimReconciliation[]) {
+  return claimReconciliations.flatMap(({ claim, qualityCheckReconciliations }) =>
+    qualityCheckReconciliations.flatMap(({ observation }) => (observation === undefined ? [] : [{ claim, observation }])),
+  );
+}
+
+function outOfBalanceByFeatureOf(claimReconciliations: readonly ClaimReconciliation[]): Totals["outOfBalanceByFeature"] {
+  const files = claimReconciliations.filter(isOutOfBalance).flatMap(({ claim }) => (claim.file === undefined ? [] : [claim.file]));
+  return files.length === 0 ? undefined : countsBy(files, (file) => file).map(({ key, count }) => ({ file: key, count }));
+}
+
+export function excludedClaimCodeOccurrencesOf(features: readonly FeatureAsWritten[]): number {
+  const codesIn = (words: readonly string[]): number => words.filter((word) => claimCodeFrom(word) !== undefined).length;
+  return features.reduce(
+    (sum, { tagFormWords, scenarios }) => sum + codesIn(tagFormWords) - codesIn(scenarios.flatMap(({ tags }) => tags)),
+    0,
+  );
+}
+
+export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], excludedClaimCodeOccurrences: number): Totals {
+  const qualityChecks = qualityCheckReconciliationsOf(claimReconciliations);
+  const reconciling = qualityChecks.filter(({ outcome }) => outcome !== "satisfied");
+  const observed = observedOn(claimReconciliations);
+  const balanced = claimReconciliations.filter((each) => !isOutOfBalance(each)).length;
+  const onExecutableClaim = observed.filter(({ claim }) => claim.file !== undefined).length;
+  // An executable claim with no code has no evidence, so what cites no code is on the unnamed claim; the rest is on phantom claims.
+  const onUnnamedClaim = observed.filter(({ claim }) => claim.claimCode === undefined).length;
   return {
-    reconciliationTotals: {
-      claimReconciliations: tally.claimReconciliations,
-      reconciliationLines: tally.reconciliationLines,
-      pending: tally.pending,
+    claimReconciliations: { total: claimReconciliations.length, balanced, outOfBalance: claimReconciliations.length - balanced },
+    qualityCheckReconciliations: {
+      total: qualityChecks.length,
+      outOfBalance: reconciling.length,
+      byOutcome: countsBy(reconciling, ({ outcome }) => outcome as Exclude<Outcome, "satisfied">).map(({ key, count }) => ({ outcome: key, count })),
+      missingByKind: kindCounts(qualityChecks.flatMap((each) => (each.outcome === "missing" ? [each.kind] : []))),
     },
-    ...(withEvidenceObservations
-      ? { evidenceObservations: evidenceObservationTally(ledger) }
-      : {}),
+    evidenceObservations: {
+      total: observed.length,
+      byKind: kindCounts(observed.map(({ observation }) => observation.kind)),
+      onExecutableClaim,
+      onPhantomClaim: observed.length - onExecutableClaim - onUnnamedClaim,
+      onUnnamedClaim,
+      fitnessFunctionsRan: observed.filter(({ observation }) => observation.kind === "fitness" && observation.result !== "never-ran").length,
+    },
+    outOfBalanceByFeature: outOfBalanceByFeatureOf(claimReconciliations),
+    excludedClaimCodeOccurrences,
   };
 }
 
-export function evidenceReconciliationOf(
-  scenarios: readonly Scenario[],
-  evidenceObservations: EvidenceObservation[],
-  untaggedScenarios: readonly string[]
-): EvidenceReconciliation {
-  const ledger = reconcile(scenarios, evidenceObservations, untaggedScenarios);
-  return { summary: summaryOf(ledger, true), ledger };
+const NO_STEPS: StepCounts = { stepsRead: 0, runners: 0, reconcilerSteps: 0, nonChecks: 0, plumbing: 0, candidates: 0 };
+
+const COUNTED_AS: Readonly<Record<StepDisposition, keyof StepCounts>> = {
+  runner: "runners",
+  reconciler: "reconcilerSteps",
+  nonCheck: "nonChecks",
+  plumbing: "plumbing",
+  candidate: "candidates",
+};
+
+const added = (counts: StepCounts, count: keyof StepCounts): StepCounts => ({ ...counts, stepsRead: counts.stepsRead + 1, [count]: counts[count] + 1 });
+
+export function stepAccountOf(steps: readonly PipelineStep[], dispositionOf: (step: PipelineStep) => StepDisposition): StepAccount {
+  const jobs = new Map<string, StepAccount["jobs"][number]>();
+  for (const step of steps) {
+    const key = `${step.workflow}\u0000${step.job}`;
+    const job = jobs.get(key) ?? { workflow: step.workflow, job: step.job, ...NO_STEPS };
+    jobs.set(key, { workflow: job.workflow, job: job.job, ...added(job, COUNTED_AS[dispositionOf(step)]) });
+  }
+  const jobsRead = [...jobs.values()];
+  const counts = Object.keys(NO_STEPS) as (keyof StepCounts)[];
+  const total = Object.fromEntries(counts.map((count) => [count, jobsRead.reduce((sum, job) => sum + job[count], 0)])) as unknown as StepCounts;
+  // Each step read is counted under exactly one of what it was counted as, so every step read is accounted for.
+  return { jobs: jobsRead, total: { ...total, accountedFor: total.stepsRead } };
+}
+
+interface NonCheckNamed {
+  readonly workflow: string;
+  readonly job: string;
+  readonly step: string;
+}
+
+// The configuration as read, by shape, so this module and the one that reads it import nothing of each other.
+interface ConfigurationUsed {
+  readonly configuration: {
+    readonly runners: Readonly<Partial<Record<string, string | null>>>;
+    readonly nonChecks: readonly NonCheckNamed[];
+    readonly deferralTags: readonly string[];
+  };
+  readonly errors: readonly ConfigurationError[];
+}
+
+export interface RunToReconcile {
+  readonly features: readonly FeatureAsWritten[];
+  readonly testObservations: readonly EvidenceObservation[];
+  readonly steps: readonly PipelineStep[];
+  readonly readings: Omit<StepReadings, "nonChecks" | "runners">;
+  readonly recordedSteps?: readonly RecordedCheckStep[];
+  readonly configuration: ConfigurationUsed;
+  readonly strict: boolean;
+  readonly provenance: Provenance;
+}
+
+function dispositionsOf({ readings, configuration: { configuration } }: RunToReconcile): (step: PipelineStep) => StepDisposition {
+  const runners = configuration.runners as Readonly<Record<string, string | null>>;
+  const nonChecks = configuration.nonChecks.map(({ workflow, job, step }) => `${workflow}:${job}:${step}`);
+  return (step) => stepDispositionOf(step, { ...readings, runners, nonChecks });
+}
+
+function errorsInTheInputsOf(claimCodeErrors: readonly ClaimCodeError[], configurationErrors: readonly ConfigurationError[]): ErrorsInTheInputs | undefined {
+  if (claimCodeErrors.length === 0 && configurationErrors.length === 0) return undefined;
+  return {
+    ...(claimCodeErrors.length === 0 ? {} : { claimCodeErrors }),
+    ...(configurationErrors.length === 0 ? {} : { configurationErrors }),
+  };
+}
+
+export function evidenceReconciliationOf(run: RunToReconcile): EvidenceReconciliation {
+  const { features, configuration, strict, steps } = run;
+  const claims = executableClaimsOf(features, { deferralTags: configuration.configuration.deferralTags, strict });
+  const dispositionOf = dispositionsOf(run);
+  const observations = [...run.testObservations, ...fitnessObservationsOf(steps, dispositionOf, run.recordedSteps)];
+  const claimReconciliations = claimReconciliationsOf(claims, observations);
+  const claimCodeErrors = claimCodeErrorsOf(features.map(featureReadOf));
+  const neverRan = observations.filter(({ result }) => result === "never-ran");
+  return {
+    claimReconciliations,
+    runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors),
+    totals: totalsOf(claimReconciliations, excludedClaimCodeOccurrencesOf(features)),
+    ...(steps.length === 0 ? {} : { stepAccount: stepAccountOf(steps, dispositionOf) }),
+    provenance: run.provenance,
+    errorsInTheInputs: errorsInTheInputsOf(claimCodeErrors, configuration.errors),
+    ...(neverRan.length === 0 ? {} : { runIntegrity: { neverRan } }),
+  };
 }

@@ -1,130 +1,68 @@
 @MSG
-Feature: Human-facing message prose lives off the mutated surface, keyed by a code
+Feature: a message catalogue gives back the text for a code
 
-  THE MUTANT NOBODY CAN KILL. Stryker mutates every string literal in the domain, so the two
-  invariant messages a Quality Check Reconciliation throws, when a side's presence differs from
-  what its outcome requires, carry sixteen mutants between them —
-  the template chunks emptied, the `"Exists"` / `"None"` words emptied, and the ternaries that pick
-  between them flipped. Every one survives, and the test that would kill them is a test asserting
-  wording. That test must not be written: prose is the one thing in this tree allowed to be
-  rewritten without a ticket, and a suite that pins it turns every copy-edit red. So the survivors
-  are not a gap in the suite — they are the suite being asked a question it must refuse to answer.
+  The tool's sentences for a reader are kept in a message catalogue, a data file apart from the
+  code, so mutation testing has no words to change. There is one catalogue for each package.
 
-  THE CURE IS TO MOVE THE QUESTION, NOT TO ANSWER IT. A fault gets a CODE at the throw site and
-  carries its parameters as fields; the prose that renders it moves to a catalogue held as data,
-  which mutation never reads, because it mutates code. What remains on the mutated surface is the
-  logic — which fault, and what its parameters are — and that logic is exactly what the suite can
-  and should pin. The sixteen mutants do not become killed; they cease to exist, and the ones
-  that replace them are the ternaries deciding `Exists` against `None`, now asserted as fields.
+  To get a sentence, the program asks the catalogue for the text under a message code, and gives it any values
+  to fill in. A mistake in a catalogue is a mistake made in development. It never stops a run: what
+  comes back names the code and its values instead.
 
-  ONE CATALOGUE PER PACKAGE, AND THE RULE HOLDS FOR EVERY ONE. The domain's faults are not the only
-  prose in this tree: every human-facing message is reached by a code, through a catalogue held as
-  data. Each adapter that prints text owns its catalogue as a JSON data file, named for its
-  language, keyed by each code's stable value and written in the ICU message format, so a
-  message names the values it prints as placeholders. There is one catalogue per package, because the import rules let core import
-  nothing of the app and let the app reach core only through its published entry point, so no
-  single catalogue can serve both. Core's lives in `render`, keyed by a code of its own. The
-  app's lives beside the app package's own messages module, keyed by an app-wide
-  code, and every app scope extends it. Whichever catalogue a code belongs to, the same rule
-  holds: every code has exactly one entry, nothing else does, and no entry renders blank.
-
-  NOTHING IS EXCLUDED BY NAME. Each package's messages module holds its codes and the types of the
-  values each code is given, and no sentence. It is source like any other: mutation testing mutates
-  it in the scope that contains it, and the lint that refuses prose in production code reads it.
-  A sentence written there is refused like a sentence written anywhere else, so no logic and no
-  prose can hide in a file the gates were told to skip. The data file holds the words, and it is
-  held to its codes not by a promise but by the compiler: each data file is typed against its
-  codes, so a code cannot exist without a message, the way `OUTCOME_DESCRIPTION` already forces an
-  outcome to have a gloss. A code given two entries is what the compiler cannot see, because the
-  data file keeps only the last, so the linter refuses a key given twice.
-
-  WHERE IT LIVES. The domain says what happened as a typed value — a fault's code and its
-  parameters, an outcome, a kind — and holds no sentence for a reader. The words are presentation,
-  so core's catalogue lives in `render`, the adapter that writes the report, and holds an entry for
-  each sentence core words. It is off the mutated surface because it is data, not because a mutate
-  glob names it.
-
-  TWO THINGS STAY OUT OF THE CATALOGUE. A runner's own words are passed through verbatim, never
-  rewritten into a catalogue entry, and a message with parameters keeps its
-  parameter logic in code where mutation still reaches it. The catalogue holds the sentence; it
-  never holds the reasoning that fills the blanks.
-
-  Rule: a domain invariant names its fault by code and carries its parameters, not its prose
-
-    @unit @CLM-MSG-001
-    Scenario: an Evidence Obligation or Evidence Observation that diverges from its outcome is refused with a coded fault that carries its parameters, and the report catalogue words that fault from its parameters alone
-
-  Rule: every code in a message catalogue has one message, which prints the values its code is given
-
-    @unit @CLM-MSG-002
-    Scenario: every code has exactly one message
-
-    @unit @CLM-MSG-003
-    Scenario: every message belongs to a code
-
-    @unit @CLM-MSG-004
-    Scenario: no message is empty
-
-    @unit @CLM-MSG-005
-    Scenario: a message uses only the values its code gives it
-
-    @unit @CLM-MSG-006
-    Scenario: a message uses every value its code gives it
-
-    @unit @CLM-MSG-007
-    Scenario: every message parses
+  Rule: a code that takes no values gives back its text unchanged
 
     @unit @CLM-MSG-008
-    Scenario: every message prints its words as written
+    Scenario: the text for a code will be its text, unchanged
+      given the catalogue had the text "No feature files were found." under the code no-features
+      when the text for no-features is retrieved
+      then the text will be "No feature files were found."
 
-  Rule: a message holds no choice between words, other than a count's plural forms
+  Rule: a code that takes values gives back its text with each gap filled in
 
-    @unit @CLM-MSG-009
-    Scenario: no message chooses between words other than by a count's plural forms
-
-  Rule: a counted noun reads in the number its count calls for
-
-    @unit @CLM-MSG-015
-    Scenario Outline: a counted noun agrees with its count — <message>
-
-      Examples:
-        | message                                         | counts                      |
-        | the run-integrity stamp's proofs that never ran | 1 proof                     |
-        | the run-integrity stamp's proofs that never ran | 1000 proofs                 |
-        | the clean statement's feature files and codes   | 1 feature file and 1 code   |
-        | the clean statement's feature files and codes   | 3 feature files and 1 code  |
-        | the clean statement's feature files and codes   | 2 feature files and 0 codes |
-
-  Rule: every error a reader is shown carries one error code, and nothing else the tool prints carries one
-
-    An error is what refuses a run, stops it on an unexpected error, or is named under the report's
-    errors in the inputs.
-
-    @unit @CLM-MSG-010
-    Scenario Outline: an error shows its reader the error code of what went wrong — <error>
+    @unit
+    Scenario Outline: each value will fill its gap in the text
+      given the catalogue had the text "<text>" under a code
+      when the text for that code is retrieved with <values>
+      then the text will be "<retrieved>"
 
       Examples:
-        | error                                                      | what went wrong                      |
-        | a flag the command does not take                           | the flag unknown to the command      |
-        | a command the tool does not have                           | the unknown command                  |
-        | a request for a claim code not in its form              | the request not in the code's form   |
-        | an unexpected error before its verdict                     | the unexpected error                 |
-        | an unexpected error that cannot be formatted               | the unexpected error                 |
-        | an unexpected error after its verdict                      | the unexpected error after a verdict |
-        | an input it cannot read                                    | the input that could not be read     |
-        | a configuration entry of a kind it does not read           | the entry of the wrong kind          |
-        | a scenario carrying a code of another feature              | the misfiled code                    |
+        | clm         | text                                   | values                              | retrieved                          |
+        | CLM-MSG-016 | The format {format} is not written.    | format html                         | The format html is not written.    |
+        | CLM-MSG-017 | {entry} is {is} where {reads} is read. | entry unit, is 3 and reads a runner | unit is 3 where a runner is read.  |
+        | CLM-MSG-018 | {format} is not {format}.              | format html                         | html is not html.                  |
+        | CLM-MSG-015 | {count} steps ran.                     | count 1000                          | 1000 steps ran.                    |
+        | CLM-MSG-019 | The format {format} is not written.    | format {other}                      | The format {other} is not written. |
+        | CLM-MSG-020 | The format {format} is not written.    | format it's                         | The format it's is not written.    |
+        | CLM-MSG-021 | The format {format} is not written.    | an empty format                     | The format  is not written.        |
+        | CLM-MSG-022 | No format was written.                 | format html                         | No format was written.             |
 
-    @unit @CLM-MSG-011
-    Scenario: a balanced run shows no error code
+  Rule: a mistake in a catalogue gives back the code and its values
 
-  Rule: a reader can look up every error code and every way a run can end
+    @unit
+    Scenario Outline: a code with no usable text will give back the code
+      given the catalogue had <entry> under the code no-features
+      when the text for no-features is retrieved
+      then the text will be "no-features"
 
-    @unit @CLM-MSG-012
-    Scenario: every code the tool can give is documented
+      Examples:
+        | clm         | entry                                    |
+        | CLM-MSG-002 | no text                                  |
+        | CLM-MSG-004 | a blank text                             |
+        | CLM-MSG-007 | the text "No feature {files were found." |
 
-    @unit @CLM-MSG-013
-    Scenario: every documented code is one the tool can give
+    @unit
+    Scenario Outline: a text the values cannot fill will give back the code and its values
+      given the catalogue had <entry> under the code unknown-format
+      when the text for unknown-format is retrieved with format html
+      then the text will be "unknown-format (format: html)"
 
-    @unit @CLM-MSG-014
-    Scenario: no error code stands for two errors
+      Examples:
+        | clm         | entry                                         |
+        | CLM-MSG-023 | no text                                       |
+        | CLM-MSG-005 | the text "The format {name} is not written."  |
+        | CLM-MSG-024 | the text "The format {format is not written." |
+
+    @unit @CLM-MSG-025
+    Scenario: a value of null will give back the code and its values
+      given the catalogue had the text "The format {format} is not written." under the code unknown-format
+      when the text for unknown-format is retrieved with format null
+      then the text will be "unknown-format (format: null)"

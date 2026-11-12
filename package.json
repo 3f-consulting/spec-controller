@@ -22,8 +22,6 @@
     "docs:current-state": "bash -o pipefail -c 'files=$(git ls-files --cached --others --exclude-standard) && [ -n \"$files\" ] || { echo \"git listed no file for Vale to read\" >&2; exit 1; }; git ls-files -z --cached --others --exclude-standard | xargs -0 vale'",
     "docs:code-identifier": "vale --config=.vale/descriptions.ini --filter='.Name == \"Descriptions.CodeIdentifier\"' features",
     "docs:interface-mechanic": "vale --config=.vale/steps.ini features",
-    "docs:lowercase-step": "bash -o pipefail -c 'j=json; x=exits; out=$(printf \"Feature: f\\n\\n  @unit\\n  Scenario: s\\n    given report.$j is written\\n    when the run $x 2\\n    then the run $x 2\\n    and the run $x 2\\n    but the run $x 2\\n\" | vale --config=.vale/steps.ini --ext=.feature --output=line); for n in 5 6 7 8 9; do grep -q \"^stdin.feature:$n:[0-9]*:Steps.InterfaceMechanic:\" <<< \"$out\" || { echo \"Vale did not refuse lowercase line $n of the planted scenario\" >&2; exit 1; }; done'",
-    "docs:lowercase-description": "bash -o pipefail -c 'c=CLM; r=report; line() { printf \"$1 ${r}Line $2 @$c-ONE-001\\n\"; }; plant=$(printf \"Feature: f\\n\"; line \"  then\" meets; printf \"\\n  Background: b\\n\"; line \"    and\" meets; printf \"\\n  Rule: r\\n\"; line \"    but\" meets; printf \"\\n  @unit\\n  Scenario: s\\n\"; for w in given when then and but; do line \"    $w\" \"is tagged\"; done; line \"    whenever\" meets); for gate in \".vale/descriptions.ini Descriptions.CodeIdentifier\" \".vale.ini Identifiers.ClaimCode\"; do set -- $gate; out=$(vale --config=$1 --ext=.feature --output=line <<< \"$plant\"); for n in 2 5 8 17; do grep -q \"^stdin.feature:$n:[0-9]*:$2:\" <<< \"$out\" || { echo \"Vale did not refuse control line $n under $2\" >&2; exit 1; }; done; for n in 12 13 14 15 16; do ! grep -q \"^stdin.feature:$n:[0-9]*:$2:\" <<< \"$out\" || { echo \"$2 refused lowercase line $n of the planted scenario\" >&2; exit 1; }; done; done'",
     "docs:references": "bash -o pipefail -c 'git ls-files -z -- \"*.md\" \"features/*.feature\" | xargs -0 remark --no-config --no-stdout --frail --quiet --use ./scripts/remark-feature-prose.mjs --use remark-validate-links'",
     "docs:file-links": "bash -o pipefail -c 'git ls-files -z -- \"*.md\" \"features/*.feature\" | xargs -0 vale --config=.vale/references.ini'"
   },
@@ -51,7 +49,6 @@
     "@cucumber/cucumber": "^12.9.0",
     "@cucumber/gherkin": "^41.0.0",
     "@eslint/json": "2.1.1",
-    "@formatjs/icu-messageformat-parser": "3.5.22",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",

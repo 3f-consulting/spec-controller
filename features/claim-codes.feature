@@ -1,143 +1,220 @@
 @STG
-Feature: The claim code scheme polices itself — the rules a target runs from the package it installed
+Feature: every claim code is well formed, filed under its file's code, and never reused
 
-  The claim code scheme is the mechanism the whole tool turns on, and every rule policing it ships in
-  the package a target installs, so a target that gets the codes inherits the policing. The
-  Rules here are `balance`'s: the command a target already runs is the one that polices its codes.
+  A feature code is two to five uppercase letters or digits. A claim code has the form
+  CLM-<FFF>-<NNN>: a feature code, then a number of any width. balance reads every id by this one form.
+  An id not in this form is not a claim code.
 
-  A CLAIM CODE IS AN ACCOUNT NUMBER, AND A FEATURE FILE IS ITS ACCOUNT CLASS. A code
-  two scenarios carry makes that account unreconcilable, so it is reported on the account's rows.
-  A code filed under the wrong class leaves every account reconciling but falsifies the by-feature
-  cut, so it is listed as a claim code error and reds the run.
+  A feature file's feature code is the class its scenarios' codes are filed under.
 
-  WHAT THE LEDGER ALREADY SAYS IS NOT SAID TWICE. An unparked scenario with a claim code and no evidence tag reconciles
-  no-quality-check and is named by id in the report's own cut, and a tag the tool does not
-  read is a consumer's own tag, not a fault (the `unrecognised-tag` diagnosis left). The
-  `tags` command that ran the older Rules here left the tool with them.
+  The developer asks allocate for the next claim code instead of inventing one. The code is
+  one past the highest inside the repository for that feature code, so a code that was
+  retired is never handed out again: a reissued code would make every old reference to it, in
+  history, in a chat, in a stale document, resolve silently to a different capability.
 
-  Rule: a code filed under the wrong class, a class with no number, or two classes with one number is a claim code error, listed in its own section
+  Feature codes come from the feature files. Numbers come from every text file in the tree
+  and from the diff lines of reachable history. The answer is the code alone, so an agent or a
+  script can consume it. What the repository's shape leaves unread, having no repository or being a
+  shallow clone, is a note, never part of the answer. What the tool is prevented from reading
+  stops it, and it gives no code rather than one worked out without that file.
 
-    THE CLAIM CODE IS THE ACCOUNT NUMBER AND THE FEATURE FILE IS ITS ACCOUNT CLASS. A misfiled code
-    leaves every posting unambiguous — the account still reconciles exactly as it would if it
-    were filed correctly — but the report's by-feature cut groups on the code, so a misfiled one
-    makes that cut say something false. So `balance` lists each misfiling under
-    `### Claim code errors` (`errorsInTheInputs.claimCodeErrors` in the JSON), and any one of them reds the
-    run. A duplicated claim code is not one of these: it makes its account unreconcilable, and it is
-    reported on that account's rows.
+  @unit
+  Scenario Outline: a feature code is two to five uppercase letters or digits
+    given there was the id <code>
+    when it is checked against the feature code form
+    then it will <result>
 
-    THE CODE ARRIVES AND THE GRAMMAR IS READ ONCE. The file's header comes from the ingest edge,
-    the reading the by-feature cut groups on; a scenario's `<FFF>` comes off its id through the
-    one helper that owns that grammar, and every reader takes the same grammar. An id
-    whose feature part is longer than five characters is no claim code, so there is no code for
-    these rules to judge — it is the one-grammar Rule below that says so.
+    Examples:
+        | clm         | code   | result                |
+        | CLM-STG-037 | AB     | be a feature code     |
+        | CLM-STG-038 | ABCDE  | be a feature code     |
+        | CLM-STG-039 | A1     | be a feature code     |
+        | CLM-STG-040 | A      | not be a feature code |
+        | CLM-STG-041 | ABCDEF | not be a feature code |
+        | CLM-STG-042 | abc    | not be a feature code |
 
-    @unit @CLM-STG-011
-    Scenario: A scenario whose feature part is another file's header code is listed as foreign-claim-code, naming that file as where the by-feature cut counts it, and the run reds
+  @unit @CLM-STG-043
+  Scenario: a tag above Feature: will be the feature code of that file
+    given a feature file had the tag @ONE above Feature:
+    when balance reads it
+    then ONE will be the feature code of that file
 
-    @unit @CLM-STG-022
-    Scenario: A scenario whose feature part no file's header carries is listed as foreign-claim-code, saying its by-feature row has no file behind it, and it offers no move to a file the corpus lacks
+  @unit
+  Scenario Outline: a claim code is CLM, a feature code and a number
+    given there was the id <id>
+    when it is checked against the claim code form
+    then it will <result>
 
-    @unit @CLM-STG-010
-    Scenario: Two feature files carrying one header code are listed as duplicate-feature-code, and the run reds
+    Examples:
+        | clm         | id           | result              |
+        | CLM-STG-044 | CLM-ONE-001  | be a claim code     |
+        | CLM-STG-045 | CLM-ONE-7    | be a claim code     |
+        | CLM-STG-046 | CLM-ONE-1000 | be a claim code     |
+        | CLM-STG-047 | CLM-A-001    | not be a claim code |
+        | CLM-STG-048 | CLM-ONE-     | not be a claim code |
 
-    @unit @CLM-STG-019
-    Scenario: A feature file with no header code whose scenarios carry codes is listed as no-feature-code, and the run reds
+  @unit
+  Scenario Outline: a retired scenario code is SCN, a feature code and a number
+    given there was the id <id>
+    when it is checked against the retired scenario code form
+    then it will <result>
 
-  Rule: a claim code is one account number, and two scenarios carrying it are two claims that cannot reconcile
+    Examples:
+      | clm         | id           | result                         |
+      | CLM-STG-049 | SCN-ONE-001  | be a retired scenario code     |
+      | CLM-STG-050 | SCN-ONE-7    | be a retired scenario code     |
+      | CLM-STG-051 | SCN-ONE-1000 | be a retired scenario code     |
+      | CLM-STG-052 | SCN-A-001    | not be a retired scenario code |
+      | CLM-STG-053 | SCN-ONE-     | not be a retired scenario code |
 
-    Each scenario is a claim. Two scenarios carrying one code are two claims, each its own Claim
-    Reconciliation under the code, and every kind of quality check each one raises reads `duplicate-claim-code`.
-    No evidence observation citing that code can be attributed to either of them, so it credits
-    neither and posts to the unnamed claim. Each `duplicate-claim-code` is a reconciling item, so each
-    claim is out of balance by the ordinary rule: no new verdict, no precedence. It is not `never-ran` —
-    the proofs ran; what fails is the attribution.
+  Rule: balance checks where each claim code is written before it reconciles
 
-    `balance` does not refuse such a corpus as unreadable, so one bad code does not blank the
-    whole report. Reported on its account, it reds the run and leaves every other account
-    reconciling exactly as it would without it.
-
-    @unit @CLM-STG-013
-    Scenario: two scenarios in one file sharing a claim code are two claims, each reading duplicate-claim-code at every kind of quality check it raises
-
-    @unit @CLM-STG-014
-    Scenario: two scenarios in different files sharing a claim code are two claims, each reading duplicate-claim-code at every kind of quality check it raises
-
-    @unit @CLM-STG-015
-    Scenario: scenarios sharing a code but naming disjoint kinds of quality check still never balance, on either claim
-
-    @unit @CLM-STG-035
-    Scenario: the Evidence Obligation a scenario sharing its claim code raises is never deferred, whatever pending or deferral tag it carries
-
-  Rule: a claim code is read by one grammar in every role — a feature part of two to five characters, and a number of any width
-
-    A claim code is CLM-<FFF>-<NNN>, the feature part two to five
-    characters and the number any width. Every place the tool reads an id — a scenario's tag, a
-    Vitest title's citation, a Cucumber scenario's tag, a CI step's id and a prose mention — takes
-    that one grammar, so an id that grammar says is not a claim code is not one anywhere, and no account,
-    citation or finding rests on it. Each scenario holds the bound from both sides in one
-    target: a feature part of two and of five characters is read, one of one and of six is not.
-
-    @unit @CLM-STG-024
-    Scenario: A claim code has a feature part of two to five characters and a number of any width, so a part of one or of six characters makes no code
-
-    @integration @CLM-STG-025
-    Scenario: A Vitest title citing a feature part outside two to five characters cites no claim, beside citations of two and five characters that are read
-      Given a target with one scenario of its own, and a Vitest report whose passing titles cite feature parts of one, two, five and six characters that no scenario carries
-      When balance reconciles that grammar target
-      Then the two- and five-character citations open phantom claims
-      And the one- and six-character titles cite no claim, so both evidence observations post to the unnamed claim
-      And the grammar target lists no claim code error
-
-    @integration @CLM-STG-026
-    Scenario: A Cucumber scenario tagged with a feature part outside two to five characters cites no claim, beside tags of two and five characters that are read
-      Given a target with one scenario of its own, and a Cucumber report whose passing scenarios are tagged with feature parts of one, two, five and six characters that no scenario carries
-      When balance reconciles that grammar target
-      Then the two- and five-character citations open phantom claims
-      And the one- and six-character Cucumber scenarios cite no claim, so both evidence observations post to the unnamed claim
-      And the grammar target lists no claim code error
-
-    @integration @CLM-STG-027
-    Scenario: A CI step whose id is a feature part outside two to five characters is no fitness evidence observation's citation, beside step ids of two and five characters that are
-      Given a target with one scenario of its own, and a CI step record whose successful steps are keyed by feature parts of one, two, five and six characters that no scenario carries
-      When balance reconciles that grammar target
-      Then the two- and five-character citations open phantom claims
-      And the one- and six-character step ids post no evidence observation at all
-      And the grammar target lists no claim code error
-
-  Rule: a scenario carrying more than one claim code raises its obligations under none of them, and is a claim code error naming each
-
-    ONE SCENARIO, ONE ACCOUNT NUMBER, ON THE DEBIT SIDE AS ON THE CREDIT SIDE. An evidence
-    observation that cites more than one scenario credits none of them, naming each code, so no
-    reader picks one ([ubiquitous-language.md → Posting](../docs/ubiquitous-language.md#posting)). A scenario carrying more than
-    one claim code is the same fault from the other side: no reader picks one either, so it raises no
-    evidence obligation under any of its codes and opens no account under any of them. It is not
-    untagged, since it carries codes, so `balance` lists it under `### Claim code errors`
-    (`errorsInTheInputs.claimCodeErrors` in the JSON) as several-claim-codes, naming the file, the scenario and every
-    code it carries, and the run reds. A test citing one of those codes cites a code no scenario
-    carries, as any such citation does.
-
-    @unit @CLM-STG-029
-    Scenario: a scenario tagged with two claim codes raises no evidence obligation under either, and is listed as a claim code error naming both
-
-    @unit @CLM-STG-030
-    Scenario Outline: a code a scenario inherits from its <ancestor> is one of its codes, so a different code of its own makes two, and the same code makes one
+    @unit
+    Scenario Outline: a misplaced or clashing claim code will be a claim code error
+      given <files>
+      when balance reads them
+      then it will find <error>, about <facts>
 
       Examples:
-        | ancestor |
-        | Rule     |
-        | Feature  |
+        | clm         | files                                                                                             | error                        | facts                                                             |
+        | CLM-STG-054 | one.feature, tagged @ONE, contains a scenario tagged @CLM-TWO-001, and two.feature is tagged @TWO | foreign-claim-code           | CLM-TWO-001, one.feature, and two.feature as the file tagged @TWO |
+        | CLM-STG-055 | one.feature, tagged @ONE, contains a scenario tagged @CLM-ZZZ-001, and no file is tagged @ZZZ     | foreign-claim-code           | CLM-ZZZ-001, one.feature, and no file tagged @ZZZ                 |
+        | CLM-STG-056 | three.feature has no feature code, and contains a scenario tagged @CLM-ONE-002                    | no-feature-code              | three.feature                                                     |
+        | CLM-STG-057 | one.feature and uno.feature are both tagged @ONE                                                  | duplicate-feature-code       | @ONE, one.feature and uno.feature                                 |
+        | CLM-STG-058 | one.feature contains a scenario tagged both @CLM-ONE-001 and @CLM-ONE-002                         | several-claim-codes          | one.feature, that scenario, CLM-ONE-001 and CLM-ONE-002           |
+        | CLM-STG-059 | one.feature contains an Outline tagged @CLM-ONE-009 with a clm column                             | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
+        | CLM-STG-060 | one.feature contains an Outline with a clm column and an Examples block tagged @CLM-ONE-009       | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
 
-  Rule: the claim codes are judged over a counted corpus, every feature file and each header code once
+    @unit @CLM-STG-091
+    Scenario: balance finds no claim code error in a feature file with no feature code and no claim code
+      given three.feature had no feature code, and contained a scenario with no claim code
+      when balance reads it
+      then it will find no claim code error
 
-    The claim codes are judged over every feature file the corpus holds, so each file is
-    counted, a file with no header code among them. A header code is counted once however many
-    files carry it, so two files carrying one code add one feature code, not two. The report
-    states clean claim codes with these two counts.
+  Rule: allocate's next code is one past the highest code that has ever been in the repository
 
-    @unit @CLM-STG-034
-    Scenario: A corpus's feature files are each counted, and a header code is counted once however many files carry it
+    allocate asks git which files the repository has and reads each for codes, and asks git for
+    every line its history has contained. It counts a code written under CLM or the retired SCN, and
+    writes its answer under CLM, so no number a code has had is handed out again.
 
-  Rule: a claim code is written under CLM
+    @unit
+    Scenario Outline: the answer is one past the highest code the repository has contained
+      given the repository's features folder contained a feature file tagged @ONE, with a scenario tagged @<in the file>
+      and <elsewhere>
+      when the developer asks for the next code for ONE
+      then the answer will be <answer>, and nothing else
+      and it will note the highest code it saw, and where: <seen>
 
-    @unit @CLM-STG-036
-    Scenario: a test citing a code under CLM answers the scenario tagged with it
+      Examples:
+        | clm         | in the file | elsewhere                                                                                                          | answer       | seen                                        |
+        | CLM-STG-061 | CLM-ONE-001 | a file git tracks, such as a workflow or a test, contained CLM-ONE-005                                             | CLM-ONE-006  | that file and line                          |
+        | CLM-STG-062 | CLM-ONE-001 | a line in git history, since deleted, had CLM-ONE-005                                                              | CLM-ONE-006  | the file and line it was in, and the commit |
+        | CLM-STG-063 | CLM-ONE-001 | a file git tracks contained SCN-ONE-005                                                                            | CLM-ONE-006  | that file and line                          |
+        | CLM-STG-064 | CLM-ONE-001 | a line in git history, since deleted, had SCN-ONE-005                                                              | CLM-ONE-006  | the file and line it was in, and the commit |
+        | CLM-STG-065 | CLM-ONE-001 | a file git tracks contained SCN-ONE-                                                                               | CLM-ONE-002  | the feature file and line                   |
+        | CLM-STG-066 | CLM-ONE-001 | a new file git does not ignore contained CLM-ONE-005                                                               | CLM-ONE-006  | that file and line                          |
+        | CLM-STG-067 | CLM-ONE-001 | a file at the repository's top contained CLM-ONE-005, and the developer stood in a subdirectory containing no code | CLM-ONE-006  | that file and line                          |
+        | CLM-STG-068 | CLM-ONE-001 | only a commit's message contained CLM-ONE-900                                                                      | CLM-ONE-002  | the feature file and line                   |
+        | CLM-STG-069 | CLM-ONE-001 | only a file git ignores contained CLM-ONE-900                                                                      | CLM-ONE-002  | the feature file and line                   |
+        | CLM-STG-070 | CLM-ONE-7   | nothing else contained a ONE code                                                                                  | CLM-ONE-008  | the feature file and line                   |
+        | CLM-STG-071 | CLM-ONE-999 | nothing else contained a ONE code                                                                                  | CLM-ONE-1000 | the feature file and line                   |
+
+  Rule: allocate stops when something it must read cannot be read
+
+    @unit
+    Scenario Outline: allocate names what it could not read, and gives no code
+      given there was <what>
+      when the developer asks for the next code
+      then it will stop as a usage error, naming what it could not read
+      and it will give no code
+
+      Examples:
+        | clm         | what                                |
+        | CLM-STG-072 | a file git cannot read              |
+        | CLM-STG-073 | history git failed to read          |
+        | CLM-STG-074 | a damaged repository                |
+        | CLM-STG-085 | a folder in the tree it cannot read |
+        | CLM-STG-089 | a feature file that does not parse  |
+
+    @unit @CLM-STG-090
+    Scenario: allocate still answers when a nested checkout holds a folder it cannot read
+      given the repository's features folder contained a feature file tagged @ONE, with a scenario tagged @CLM-ONE-001
+      and the repository contained a nested checkout, such as a submodule, holding a folder allocate could not read
+      when the developer asks for the next code for ONE
+      then the answer will be CLM-ONE-002, and nothing else
+
+  Rule: allocate says what history it did not read
+
+    @unit
+    Scenario Outline: with no history to read, it answers and says what it did not read
+      given the repository's features folder contained a feature file tagged @ONE, with a scenario tagged @CLM-ONE-001
+      and its git history once contained CLM-ONE-005
+      and the developer's copy of it is <copy>
+      when the developer asks for the next code for ONE in that copy
+      then the answer will be CLM-ONE-002, and nothing else
+      and it will note that <boundary>
+
+      Examples:
+        | clm         | copy                                 | boundary                                             |
+        | CLM-STG-075 | not a git repository                 | no history was read                                  |
+        | CLM-STG-076 | a shallow clone from after that line | history before the clone's first commit was not read |
+
+    @unit
+    Scenario Outline: with no history to read and no code seen, it answers and says what it did not read
+      given the repository's features folder contained a feature file tagged @ONE
+      and the developer's copy of it is <copy>
+      when the developer asks for the next code for ZZ, as a new feature code
+      then the answer will be CLM-ZZ-001
+      and it will note that <boundary>
+
+      Examples:
+        | clm         | copy                 | boundary                                             |
+        | CLM-STG-087 | not a git repository | no history was read                                  |
+        | CLM-STG-088 | a shallow clone      | history before the clone's first commit was not read |
+
+  Rule: allocate takes only a feature code a feature file has
+
+    @unit
+    Scenario Outline: a feature code no feature file has stops it, listing those that do
+      given the repository's features folder contained feature files tagged @ONE and @TWO, where <where>
+      when the developer asks for the next code for ZZZ
+      then it will stop as an unknown feature code, and give no code
+      and it will list ONE and TWO
+
+      Examples:
+        | clm         | where                                                    |
+        | CLM-STG-077 | no file mentions ZZZ                                     |
+        | CLM-STG-078 | a test fixture's feature file is tagged @ZZZ             |
+        | CLM-STG-079 | a feature file tagged @ZZZ was deleted by a later commit |
+
+    @unit
+    Scenario Outline: --new gives the next code for any well-formed feature code
+      given the repository's features folder contained a feature file tagged @ONE, with a scenario tagged @CLM-ONE-003
+      and its git history once contained CLM-OLD-007
+      when the developer asks for the next code for <code>, as a new feature code
+      then the answer will be <answer>, and nothing else
+      and <note>
+
+      Examples:
+        | clm         | code | answer      | note                                             |
+        | CLM-STG-080 | ZZ   | CLM-ZZ-001  | it will say nothing more                         |
+        | CLM-STG-081 | ONE  | CLM-ONE-004 | it will note that a feature file already has ONE |
+        | CLM-STG-082 | OLD  | CLM-OLD-008 | it will say nothing more                         |
+
+    @unit @CLM-STG-086
+    Scenario: --new in a repository with no features folder gives the feature code's first claim code
+      given the repository had no features folder
+      when the developer asks for the next code for ZZ, as a new feature code
+      then the answer will be CLM-ZZ-001, and nothing else
+
+    @unit @CLM-STG-083
+    Scenario: a feature code on a feature file in a subdirectory is found
+      given the repository's features folder contained, two folders down, the only feature file tagged @NEST, with a scenario tagged @CLM-NEST-004
+      when the developer asks for the next code for NEST
+      then the answer will be CLM-NEST-005, and nothing else
+
+    @unit @CLM-STG-084
+    Scenario: a request that is not a feature code stops as a usage error
+      given the repository's features folder contained a feature file tagged @ONE
+      when the developer asks for the next code giving something that is not a feature code
+      then it will stop as a usage error, and give no code

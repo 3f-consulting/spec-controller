@@ -16,6 +16,6 @@ A pytest test cites its claim code by a `clm` property, written by `@pytest.mark
 
 The tool reads no load runner's report, so a `@performance` obligation is answered only by a Cucumber report of a scenario carrying that tag.
 
-**Any other key in the `specController` block is not read.** The report names it under `### Configuration not read`, in the same words whatever the key, and the run reconciles exactly as it would without it.
+**Any other key in the `specController` block is not read.** The report names it under `### Configuration errors`, in the same words whatever the key, and the run reconciles exactly as it would without it.
 
 **No script prefix is read.** A `lint:` or `guard:` prefix means nothing to the tool. Every step is observed, and the declared behavioural runners are the only steps it names.

@@ -23,9 +23,6 @@ importers:
       '@eslint/json':
         specifier: 2.1.1
         version: 2.1.1
-      '@formatjs/icu-messageformat-parser':
-        specifier: 3.5.22
-        version: 3.5.22
       '@stryker-mutator/core':
         specifier: ^9.6.1
         version: 9.6.1(@types/node@22.20.0)

@@ -1,90 +1,35 @@
-export type {
-  QualityCheckKind,
-  Layer,
-  EvidenceStatus,
-  EvidenceObligation,
-  Scenario,
-  BehaviouralEvidenceObservation,
-  FitnessEvidenceObservation,
-  EvidenceObservation,
-  Outcome,
-  Verdict,
-  ClaimKind,
-  QualityCheckReconciliation,
-  ClaimReconciliation,
-  Ledger,
-} from "./model.js";
+export { claimCodeMarksFor, featureCodeOfFile, isFeatureCode, nextClaimCode } from "./domain/claimCodes.js";
+export type { Allocation, ClaimCodeOccurrence, HistoryBoundary, UnknownFeatureCode } from "./domain/claimCodes.js";
+export { evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
+export type { EvidenceReconciliation, RunVerdict } from "./domain/evidenceReconciliation.js";
+export { claimCodesAtOf } from "./domain/postEvidenceObservation.js";
+export type { ClaimCodesAt, EvidenceObservation } from "./domain/postEvidenceObservation.js";
+export { outputClashOf, outputPlanOf } from "./domain/outputPlan.js";
+export type { IdentifiedInput, IdentifiedOutput, LocatedOutput, OutputRefusal, PlannedOutput, RequestedOutput } from "./domain/outputPlan.js";
+export { provenanceFrom, runIdentityOf, toolVersionOf } from "./domain/provenance.js";
+export type { OriginAsWritten, Provenance, RunInput } from "./domain/provenance.js";
+export { targetFolderOf } from "./domain/targetPath.js";
 
-export {
-  countClaimCodeOccurrences,
-  parseFeatureCorpus,
-  scenariosOf,
-  untaggedScenariosOf,
-  featureCountsOf,
-  corpusCountsOfFeatures,
-  claimCodesAtOf,
-} from "./parse/scenarios.js";
-export type { ClaimCodesAt } from "./parse/scenarios.js";
-export type { ParsedFeatureFile } from "./parse/scenarios.js";
+export { parseFeatureCorpus } from "./inputs/gherkin.js";
+export type { ParsedFeatureFile } from "./inputs/gherkin.js";
 
-export { evidenceObligations, corpusCountsOf, sharedClaimCodesOf, untaggedScenarioId } from "./domain/corpusCounts.js";
-export type { EvidenceObligations, SharedClaimCode } from "./domain/corpusCounts.js";
-export type { ScenarioName } from "./domain/qualityCheckReconciliation.js";
+export { parseVitestEvidenceObservations } from "./inputs/vitest.js";
+export type { VitestJsonReport } from "./inputs/vitest.js";
+export { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "./inputs/junit.js";
+export type { JunitXmlReport } from "./inputs/junit.js";
+export { parseRspecEvidenceObservations } from "./inputs/rspec.js";
+export type { RspecJsonReport } from "./inputs/rspec.js";
+export { parseCucumberEvidenceObservations } from "./inputs/cucumber.js";
+export type { CucumberJsonReport } from "./inputs/cucumber.js";
+export { recordedCheckStepsOf } from "./inputs/stepRecord.js";
+export type { StepRecord } from "./inputs/stepRecord.js";
+export { parseWorkflows, pipelineStepsOf } from "./inputs/workflows.js";
+export { shellReading } from "./inputs/shell.js";
+export { targetConfigurationFrom } from "./inputs/manifest.js";
+export type { PackageJsonScripts, ParsedWorkflow } from "./inputs/workflows.js";
+export type { Source, SourceFault } from "./inputs/sourceParse.js";
 
-export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
-export { hasClaimCodeErrors } from "./domain/claimCodes.js";
-export type { ClaimCodeError, ClaimCodeErrorKind, ClaimCodePopulation } from "./domain/claimCodes.js";
-export {
-  isBalanced,
-  hasPendingItems,
-  hasNeverRanEvidence,
-  hasNothingToReconcile,
-} from "./domain/ledger.js";
-export { BUILT_IN_DEFERRAL_TAGS } from "./domain/pendingItems.js";
-export type { RunVerdict } from "./domain/runVerdict.js";
-
-export { ALLOCATION_COUNTED_PREFIXES, nextClaimCode, unknownPartCarried } from "./domain/claimCodeAllocation.js";
-export type { Allocation, AllocationRequest, ClaimCodeOccurrence, UnknownPart, UnknownPartCarried } from "./domain/claimCodeAllocation.js";
-
-export { parseVitestEvidenceObservations } from "./parse/vitest.js";
-export type { VitestJsonReport } from "./parse/vitest.js";
-export { parseJunitEvidenceObservations, parsePytestEvidenceObservations } from "./parse/junit.js";
-export type { JunitXmlReport } from "./parse/junit.js";
-export { parseRspecEvidenceObservations } from "./parse/rspec.js";
-export type { RspecJsonReport } from "./parse/rspec.js";
-export { parseCucumberEvidenceObservations } from "./parse/cucumber.js";
-export type { CucumberJsonReport } from "./parse/cucumber.js";
-export { runningFitnessFunctions } from "./parse/runningFitnessFunctions.js";
-export type { StepRecord } from "./parse/ciStepRecord.js";
-export { parseWorkflows } from "./parse/checkScriptsRunInCI.js";
-export { commandInvokesScript } from "./parse/commandRuns.js";
-export type { PackageJsonScripts, ParsedWorkflow } from "./parse/checkScriptsRunInCI.js";
-export type { WorkflowStep } from "./domain/pipelineStep.js";
-export type { Parsed, Source, SourceFault, SourcesParse } from "./parse/sourceParse.js";
-
-export { assembleRenderInput } from "./assemble/renderInput.js";
-export type { RenderInput, FeatureNames, ExitCodeOf } from "./domain/renderInput.js";
-export type {
-  EvidenceReconciliation,
-  Summary,
-  ClaimReconciliationTotals,
-  ReconciliationLineTotals,
-  MissingByQualityCheckKind,
-} from "./assemble/renderInput.js";
-
-export { evidenceReconciliationFromSources } from "./assemble/evidenceReconciliationFromSources.js";
-
-export { renderJson, renderMarkdown, projectProvenance } from "./assemble/composers.js";
-export { renderReport } from "./render/markdown.js";
-
-export { provenanceObject } from "./provenance/provenance.js";
-export { projectProvenanceObject } from "./render/provenanceFacts.js";
-export type { ProvenanceFacts, ProvenanceInput } from "./render/provenanceFacts.js";
-export type { RunContext, RunInput, RunInputName, RunInputs, ProvenanceObject } from "./domain/runProvenance.js";
-
-export { CLAIM_CODE_PREFIXES, featureCodeOf, isFeaturePart } from "./domain/featureCode.js";
-export { relativizeToRoot } from "./lib/portablePath.js";
-
-export { messagesFrom } from "./render/message.js";
-export { CoreError } from "./render/messages.js";
-export type { Message, MessageValues } from "./render/message.js";
+export { messagesFrom } from "./messages/message.js";
+export { renderJson } from "./reports/json.js";
+export { renderMarkdown } from "./reports/markdown.js";
+export type { Message } from "./messages/message.js";

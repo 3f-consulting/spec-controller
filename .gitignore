@@ -7,7 +7,7 @@ dist/
 .claude/*.local.json
 
 .stryker-tmp/
-reports/
+/reports/
 
 coverage/
 
