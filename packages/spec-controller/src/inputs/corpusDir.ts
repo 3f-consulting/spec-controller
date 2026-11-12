@@ -7,6 +7,6 @@ export function corpusDirOf(args: Record<string, string>, defaultCorpus: string)
   try {
     return join(process.cwd(), defaultCorpus);
   } catch (err) {
-    return { path: defaultCorpus, reason: err instanceof Error ? err.message : String(err) };
+    return { path: defaultCorpus, reason: (err as Error).message };
   }
 }

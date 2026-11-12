@@ -6,7 +6,7 @@ import { AppError } from "../messages/messages.js";
 import type { IdentifiedInput } from "@3f-consulting/spec-controller-core";
 
 export function unwritableRefusal(format: string, path: string, err: unknown): Refusal {
-  const reason = err instanceof Error ? err.message : String(err);
+  const reason = (err as Error).message;
   return refusal(AppError.ReportNotWritten, { format, path, reason });
 }
 
