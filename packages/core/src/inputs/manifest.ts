@@ -2,8 +2,8 @@ import { targetConfigurationOf, type ConfigurationError, type SettingSpellings, 
 import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
 import { whereShapeBreaks } from "./shape.js";
 
-// A step as notChecks writes it: its workflow, which ends .yml or .yaml and may hold a colon, its job, and its step.
-const STEP_AS_WRITTEN = /^(.+?\.ya?ml):([^:]+):(.+)$/;
+// A step as notChecks writes it: its workflow, which ends .yml and may hold a colon, its job, and its step.
+const STEP_AS_WRITTEN = /^(.+?\.yml):([^:]+):(.+)$/;
 
 const settingSpellings: SettingSpellings = {
   keyOf: { runners: "runners", nonChecks: "notChecks", deferralTags: "deferralTags" },
