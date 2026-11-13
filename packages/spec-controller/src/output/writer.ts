@@ -29,8 +29,10 @@ interface Placed {
   readonly write: (report: string) => void;
 }
 
+const STREAM_OF = { "standard-output": "output", "standard-error": "error" } as const;
+
 function onStream(output: OutputRequest<string>, named: NamedStream, streams: StandardStreams): Placed {
-  const stream = named.is === "standard-output" ? streams.output : streams.error;
+  const stream = streams[STREAM_OF[named.is]];
   return { output, identity: streamIdentity(stream.fd, named), write: stream.write };
 }
 
