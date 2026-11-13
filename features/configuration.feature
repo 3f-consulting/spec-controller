@@ -16,16 +16,16 @@ Feature: balance reads and validates the configuration settings in the specContr
       then the target's configuration will include <internal setting>
 
       Examples:
-        | clm         | configuration setting                                        | internal setting                                    |
-        | CLM-CFG-008 | "unit": "vitest" under runners                               | vitest as what runs the unit layer                  |
-        | CLM-CFG-009 | "performance": null under runners                            | that the target has no performance runner           |
-        | CLM-CFG-010 | "ci.yml:ci:Install dependencies" in notChecks                | the step Install dependencies, in job ci, in ci.yml |
-        | CLM-CFG-011 | "nightly:build.yml:ci:Install" in notChecks                  | the step Install, in job ci, in nightly:build.yml   |
-        | CLM-CFG-023 | "nightly.yml:ci:Install" in notChecks, with only ci.yml read | the step Install, in job ci, in nightly.yml         |
-        | CLM-CFG-012 | "deferred" in deferralTags                                   | the tag @deferred                                   |
-        | CLM-CFG-013 | "@blocked" in deferralTags                                   | the tag @blocked                                    |
-        | CLM-CFG-014 | " deferred " in deferralTags                                 | the tag @deferred                                   |
-        | CLM-CFG-006 | nothing                                                      | no configuration setting                            |
+        | clm         | configuration setting                                                                                           | internal setting                                    |
+        | CLM-CFG-008 | "unit": "vitest" under runners                                                                                  | vitest as what runs the unit layer                  |
+        | CLM-CFG-009 | "performance": null under runners                                                                               | that the target has no performance runner           |
+        | CLM-CFG-010 | "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies | the step Install dependencies, in job ci, in ci.yml |
+        | CLM-CFG-011 | "nightly:build.yml:ci:Install" in notChecks                                                                     | the step Install, in job ci, in nightly:build.yml   |
+        | CLM-CFG-023 | "nightly.yml:ci:Install" in notChecks, with only ci.yml read                                                    | the step Install, in job ci, in nightly.yml         |
+        | CLM-CFG-012 | "deferred" in deferralTags                                                                                      | the tag @deferred                                   |
+        | CLM-CFG-013 | "@blocked" in deferralTags                                                                                      | the tag @blocked                                    |
+        | CLM-CFG-014 | " deferred " in deferralTags                                                                                    | the tag @deferred                                   |
+        | CLM-CFG-006 | nothing                                                                                                         | no configuration setting                            |
 
   Rule: balance leaves out any configuration setting it cannot use, and runs anyway
 

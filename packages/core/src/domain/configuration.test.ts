@@ -18,12 +18,6 @@ describe("balance turns each configuration setting into its internal setting", (
     ["CLM-CFG-008", '"unit": "vitest" under runners', { runners: { unit: "vitest" } }, { ...NONE, runners: { unit: "vitest" } }],
     ["CLM-CFG-009", '"performance": null under runners', { runners: { performance: null } }, { ...NONE, runners: { performance: null } }],
     [
-      "CLM-CFG-010",
-      '"ci.yml:ci:Install dependencies" in notChecks',
-      { notChecks: ["ci.yml:ci:Install dependencies"] },
-      { ...NONE, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }] },
-    ],
-    [
       "CLM-CFG-011",
       '"nightly:build.yml:ci:Install" in notChecks',
       { notChecks: ["nightly:build.yml:ci:Install"] },
@@ -35,6 +29,18 @@ describe("balance turns each configuration setting into its internal setting", (
     ["CLM-CFG-006", "nothing", undefined, NONE],
   ] as const)("[%s] a specController block with %s gives that internal setting", (_clm, _setting, block, configuration) => {
     expect(targetConfigurationFrom(block === undefined ? {} : { specController: block }, [])).toEqual({ configuration, errors: [] });
+  });
+
+  it('[CLM-CFG-010] a specController block with "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies, gives that step', () => {
+    const ciRead = [
+      { workflow: "ci.yml", job: "ci", name: "Build", plumbing: false, writesStepRecord: false },
+      { workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false },
+    ];
+
+    expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yml:ci:Install dependencies"] } }, ciRead)).toEqual({
+      configuration: { ...NONE, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }] },
+      errors: [],
+    });
   });
 
   it('[CLM-CFG-023] a specController block with "nightly.yml:ci:Install" in notChecks, with only ci.yml read, gives that step', () => {
