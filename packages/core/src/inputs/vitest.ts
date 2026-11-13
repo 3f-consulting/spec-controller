@@ -26,7 +26,7 @@ export function resultsByFileFrom(report: unknown, from: "vitest" | "jest"): Res
     report: from,
     file: name,
     status,
-    ...(message === undefined ? {} : { message }),
+    message,
     results: assertionResults.map(({ ancestorTitles, title, status: resultStatus, failureMessages }) => ({
       ancestorTitles,
       title,

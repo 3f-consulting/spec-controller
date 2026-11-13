@@ -35,7 +35,7 @@ export function scenarioResultsFrom(report: unknown): ScenarioResultAsWritten[] 
           keyword,
           text,
           status,
-          ...(error_message === undefined ? {} : { message: error_message }),
+          message: error_message,
         })),
       })),
   );
