@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { shellAnswers } from "../inputs/shell.js";
 import { stepRecordFrom } from "../inputs/stepRecord.js";
-import plumbingActions from "../inputs/plumbingActions.json" with { type: "json" };
-import shellForms from "../inputs/shellForms.json" with { type: "json" };
+import shellVariants from "../inputs/shell.variants.json" with { type: "json" };
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
@@ -42,7 +41,7 @@ const workflowOf = (jobs: object) => workflowStepsFrom("ci.yml", JSON.stringify(
 const recordOf = (record: object) => stepRecordFrom(record);
 
 describe("a step using a plumbing action is plumbing", () => {
-  it.each(plumbingActions)("[CLM-OBS-015] a step using %s will be counted as plumbing, and nothing will be posted", (action) => {
+  it.each(shellVariants["CLM-OBS-015"].variants)("[CLM-OBS-015] a step using %s will be counted as plumbing, and nothing will be posted", (action) => {
     const steps = stepsOf({ uses: `${action.replace("*", "node")}@v4` });
 
     expect({
@@ -135,22 +134,28 @@ describe("a runner is recognised only as the command a step runs", () => {
     ["CLM-OBS-005", "gradle lint", "gradle test", "candidate"],
     ["CLM-OBS-006", "eslint vitest.config.ts", "vitest", "candidate"],
     ["CLM-OBS-007", "vitest run | tee out.txt", "vitest", "candidate"],
-    ["CLM-OBS-011", "pnpm lint && vitest run", "vitest", "runner"],
-    ["CLM-OBS-011", "pnpm lint; vitest run", "vitest", "runner"],
   ] as const)("[%s] a step running %s, with %s as its unit runner, will be counted as a %s", (_clm, run, runner, countedAs) => {
     expect(dispositionOf(run, runner)).toBe(countedAs);
   });
 
-  it.each(shellForms.launchers)("[CLM-OBS-010] a step running vitest after a NAME=value setting, through the launcher %s, will be counted as a runner", (launcher) => {
-    expect(dispositionOf(`CI=1 ${launcher} vitest run`, "vitest")).toBe("runner");
+  it.each(shellVariants["CLM-OBS-011"].variants)("[CLM-OBS-011] a step running pnpm lint, then vitest run after %s, will be counted as a runner", (separator) => {
+    expect(dispositionOf(`pnpm lint ${separator} vitest run`, "vitest")).toBe("runner");
+  });
+
+  it.each(shellVariants["CLM-OBS-010"].variants)("[CLM-OBS-010] a step running vitest after a NAME=value setting, through the launcher %s, will be counted as a runner", (launcher) => {
+    const handedOn = launcher.includes("<bin>") ? launcher.replace("<bin>", "vitest") : `${launcher} vitest`;
+
+    expect(dispositionOf(`CI=1 ${handedOn} run`, "vitest")).toBe("runner");
   });
 
   it("[CLM-OBS-010] launchers chain, so a runner behind two launchers will be counted as a runner", () => {
     expect(dispositionOf("uv run python -m pytest -q", "pytest")).toBe("runner");
   });
 
-  it.each(shellForms.scripts)("[CLM-OBS-009] a step running a script in the form $form, whose script runs vitest, will be counted as a runner", ({ form, script = "check" }) => {
-    expect(dispositionOf(form.replace("<script>", script).replace("<name>", "app"), "vitest", { [script]: "vitest run" })).toBe("runner");
+  it.each(shellVariants["CLM-OBS-009"].variants)("[CLM-OBS-009] a step running a script as %s, whose script runs vitest, will be counted as a runner", (variant) => {
+    const script = variant.includes("<script>") ? "check" : variant.split(" ").at(-1)!;
+
+    expect(dispositionOf(variant.replace("<script>", script).replace("<name>", "app"), "vitest", { [script]: "vitest run" })).toBe("runner");
   });
 
   it("[CLM-OBS-009] a script is followed however deep, and a script that runs itself ends as a check", () => {
@@ -159,24 +164,16 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect({ deep: dispositionOf("pnpm test", "vitest", scripts), loop: dispositionOf("pnpm loop", "vitest", scripts) }).toEqual({ deep: "runner", loop: "candidate" });
   });
 
-  it.each(shellForms.wrappers)(
-    "[CLM-OBS-112] a step running its unit runner behind the wrapper $command, past its options and their values, will be counted as a runner",
-    ({ command, optionsTakingAValue }) => {
-      const optionSets = ["-a --server-args=-screen", ...optionsTakingAValue.map((option) => `${option} 99`)];
+  it.each(shellVariants["CLM-OBS-112"].variants)("[CLM-OBS-112] a step running its unit runner behind the wrapper %s, past its options, will be counted as a runner", (wrapper) => {
+    expect(dispositionOf(`${wrapper} -a --server-args=-screen vitest run`, "vitest")).toBe("runner");
+  });
 
-      expect(optionSets.map((options) => dispositionOf(`${command} ${options} vitest run`, "vitest"))).toEqual(optionSets.map(() => "runner"));
-    },
-  );
+  it.each(["-n", "-s", "-e", "-f", "-p", "-w"])("[CLM-OBS-112] a step running its unit runner behind xvfb-run, past its option %s and that option's value, will be counted as a runner", (option) => {
+    expect(dispositionOf(`xvfb-run ${option} 99 vitest run`, "vitest")).toBe("runner");
+  });
 
-  it.each([
-    ["mvn test", "mvn test -B"],
-    ["./mvnw test", "./mvnw test"],
-    ["./gradlew test", "./gradlew test --info"],
-    ["./gradlew check", "./gradlew check"],
-    ["./gradlew :app:test", "./gradlew :app:test"],
-    ["gotestsum", "gotestsum --junitfile report.xml"],
-  ] as const)("[CLM-OBS-113] a step running %s, a runner named in several words, will be counted as a runner", (runner, run) => {
-    expect(dispositionOf(run, runner)).toBe("runner");
+  it.each(shellVariants["CLM-OBS-113"].variants)("[CLM-OBS-113] a step running %s, a runner named in several words, will be counted as a runner", (runner) => {
+    expect(dispositionOf(`${runner} --verbose`, runner)).toBe("runner");
   });
 
   it("[CLM-OBS-108] a step running vitest run, with the id CLM-ONE-001, whose outcome the step record holds, posts that outcome as a fitness Evidence Observation", () => {
