@@ -21,7 +21,7 @@ Feature: Evidence Observations are posted, each to its claim
   Rule: balance posts only the steps that prove something
 
     @unit
-    Scenario Outline: balance posts a fitness Evidence Observation only for a step that is a fitness function, unless its id is a claim code
+    Scenario Outline: balance posts a fitness Evidence Observation only for a step that is a fitness function, unless it runs a runner and its id is a claim code the step record holds
       given a workflow had <step>
       and the target's configuration had <configuration>
       when balance posts the evidence
@@ -37,6 +37,9 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-006 | a step running eslint vitest.config.ts                                                  | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
         | CLM-OBS-007 | a step running vitest run \| tee out.txt                                                | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
         | CLM-OBS-008 | a step running pnpm test                                                                | no unit runner                 | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-126 | a step named Install in job test of ci.yml, whose job ci had a step named Install       | ci.yml:ci:Install in notChecks | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-127 | a step named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci   | ci.yml:ci:Install in notChecks | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-128 | a step using actions/dependency-review-action                                           | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
         | CLM-OBS-009 | a step running pnpm test, whose script runs vitest                                      | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
         | CLM-OBS-114 | a step running pnpm test, whose script runs another script, whose script runs vitest    | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
         | CLM-OBS-131 | a step running pnpm run //, whose scripts entry is a list, not a string                 | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
@@ -64,34 +67,37 @@ Feature: Evidence Observations are posted, each to its claim
   Rule: balance posts each result with how it went
 
     @unit
-    Scenario Outline: balance posts a result as passed or failed, citing its claim code
+    Scenario Outline: balance posts a result as passed or failed
       given <source> had a result with <citation>, and <outcome of it>
       when balance posts the evidence
-      then an Evidence Observation will be posted, as <result>, citing CLM-ONE-001
+      then an Evidence Observation will be posted, as <result>, citing <cited>
 
       Examples:
-        | clm         | source                              | citation                            | outcome of it                                                | result |
-        | CLM-OBS-017 | Vitest's evidence report            | [CLM-ONE-001] in its title          | it passed                                                    | passed |
-        | CLM-OBS-018 | Vitest's evidence report            | [CLM-ONE-001] in its title          | it failed                                                    | failed |
-        | CLM-OBS-019 | Jest's evidence report              | [CLM-ONE-001] in its title          | it passed                                                    | passed |
-        | CLM-OBS-020 | Jest's evidence report              | [CLM-ONE-001] in its title          | it failed                                                    | failed |
-        | CLM-OBS-021 | pytest's evidence report            | the clm property CLM-ONE-001        | it passed                                                    | passed |
-        | CLM-OBS-022 | pytest's evidence report            | the clm property CLM-ONE-001        | it failed                                                    | failed |
-        | CLM-OBS-023 | Go's evidence report                | [CLM-ONE-001] in its subtest's name | it passed                                                    | passed |
-        | CLM-OBS-024 | Go's evidence report                | [CLM-ONE-001] in its subtest's name | it failed                                                    | failed |
-        | CLM-OBS-025 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it passed                                                    | passed |
-        | CLM-OBS-026 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it failed                                                    | failed |
-        | CLM-OBS-118 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it raised an error                                           | failed |
-        | CLM-OBS-027 | JUnit 5 in Kotlin's evidence report | [CLM-ONE-001] in its display name   | it passed                                                    | passed |
-        | CLM-OBS-028 | JUnit 5 in Kotlin's evidence report | [CLM-ONE-001] in its display name   | it failed                                                    | failed |
-        | CLM-OBS-029 | RSpec's evidence report             | [CLM-ONE-001] in its description    | it passed                                                    | passed |
-        | CLM-OBS-030 | RSpec's evidence report             | [CLM-ONE-001] in its description    | it failed                                                    | failed |
-        | CLM-OBS-031 | Cucumber's evidence report          | the tag @CLM-ONE-001                | every step passed                                            | passed |
-        | CLM-OBS-032 | Cucumber's evidence report          | the tag @CLM-ONE-001                | one step failed and the next was skipped                     | failed |
-        | CLM-OBS-121 | Cucumber's evidence report          | the tag @CLM-ONE-001                | every step passed, after a Background and a hook that passed | passed |
-        | CLM-OBS-033 | the step record                     | the id CLM-ONE-001                  | it succeeded                                                 | passed |
-        | CLM-OBS-034 | the step record                     | the id CLM-ONE-001                  | it failed                                                    | failed |
-        | CLM-OBS-035 | the step record                     | the id CLM-ONE-001                  | it failed, and continue-on-error hid it                      | failed |
+        | clm         | source                              | citation                                                      | outcome of it                                                | result           | cited         |
+        | CLM-OBS-017 | Vitest's evidence report            | [CLM-ONE-001] in its title                                    | it passed                                                    | passed           | CLM-ONE-001   |
+        | CLM-OBS-018 | Vitest's evidence report            | [CLM-ONE-001] in its title                                    | it failed                                                    | failed           | CLM-ONE-001   |
+        | CLM-OBS-019 | Jest's evidence report              | [CLM-ONE-001] in its title                                    | it passed                                                    | passed           | CLM-ONE-001   |
+        | CLM-OBS-020 | Jest's evidence report              | [CLM-ONE-001] in its title                                    | it failed                                                    | failed           | CLM-ONE-001   |
+        | CLM-OBS-021 | pytest's evidence report            | the clm property CLM-ONE-001                                  | it passed                                                    | passed           | CLM-ONE-001   |
+        | CLM-OBS-022 | pytest's evidence report            | the clm property CLM-ONE-001                                  | it failed                                                    | failed           | CLM-ONE-001   |
+        | CLM-OBS-023 | Go's evidence report                | [CLM-ONE-001] in its subtest's name                           | it passed                                                    | passed           | CLM-ONE-001   |
+        | CLM-OBS-024 | Go's evidence report                | [CLM-ONE-001] in its subtest's name                           | it failed                                                    | failed           | CLM-ONE-001   |
+        | CLM-OBS-025 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name                             | it passed                                                    | passed           | CLM-ONE-001   |
+        | CLM-OBS-026 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name                             | it failed                                                    | failed           | CLM-ONE-001   |
+        | CLM-OBS-118 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name                             | it raised an error                                           | failed           | CLM-ONE-001   |
+        | CLM-OBS-027 | JUnit 5 in Kotlin's evidence report | [CLM-ONE-001] in its display name                             | it passed                                                    | passed           | CLM-ONE-001   |
+        | CLM-OBS-028 | JUnit 5 in Kotlin's evidence report | [CLM-ONE-001] in its display name                             | it failed                                                    | failed           | CLM-ONE-001   |
+        | CLM-OBS-029 | RSpec's evidence report             | [CLM-ONE-001] in its description                              | it passed                                                    | passed           | CLM-ONE-001   |
+        | CLM-OBS-030 | RSpec's evidence report             | [CLM-ONE-001] in its description                              | it failed                                                    | failed           | CLM-ONE-001   |
+        | CLM-OBS-031 | Cucumber's evidence report          | the tag @CLM-ONE-001                                          | every step passed                                            | passed           | CLM-ONE-001   |
+        | CLM-OBS-032 | Cucumber's evidence report          | the tag @CLM-ONE-001                                          | one step failed and the next was skipped                     | failed           | CLM-ONE-001   |
+        | CLM-OBS-121 | Cucumber's evidence report          | the tag @CLM-ONE-001                                          | every step passed, after a Background and a hook that passed | passed           | CLM-ONE-001   |
+        | CLM-OBS-033 | the step record                     | the id CLM-ONE-001                                            | it succeeded                                                 | passed           | CLM-ONE-001   |
+        | CLM-OBS-034 | the step record                     | the id CLM-ONE-001                                            | it failed                                                    | failed           | CLM-ONE-001   |
+        | CLM-OBS-035 | the step record                     | the id CLM-ONE-001                                            | it failed, and continue-on-error hid it                      | failed           | CLM-ONE-001   |
+        | CLM-OBS-122 | the step record                     | the id audit, on a step in ci.yml running pnpm audit-the-tree | it succeeded                                                 | passed           | no claim code |
+        | CLM-OBS-123 | the step record                     | the id audit, on a step in ci.yml running pnpm audit-the-tree | it failed                                                    | failed           | no claim code |
+        | CLM-OBS-130 | the step record                     | the ids CLM-ONE-001 and CLM-ONE-002, on two steps in ci.yml   | each succeeded                                               | passed, for each | its own code  |
 
     @unit
     Scenario Outline: balance posts nothing for a test that was skipped
@@ -145,6 +151,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-052 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched no definition                               | CLM-ONE-001   | that step as written, "Given one adds one" |
         | CLM-OBS-110 | Cucumber's evidence report        | a scenario tagged @CLM-ONE-001 had a step that failed, and the step "one adds one" that matched no definition | CLM-ONE-001   | that step as written, "Given one adds one" |
         | CLM-OBS-053 | the step record                   | a fitness function's step with the id CLM-ONE-001 was skipped                                                 | CLM-ONE-001   | that step                                  |
+        | CLM-OBS-124 | the step record                   | a fitness function's step with the id audit, in ci.yml running pnpm audit-the-tree, was skipped               | no claim code | that step                                  |
         | CLM-OBS-054 | the step record                   | a fitness function's step with the id CLM-ONE-001 had a status balance does not know                          | CLM-ONE-001   | that step                                  |
 
     @unit @CLM-OBS-055
@@ -152,6 +159,19 @@ Feature: Evidence Observations are posted, each to its claim
       given JUnit 5 in Kotlin's evidence report said a class's setup before all its tests failed
       when balance posts the evidence
       then an Evidence Observation will be posted, as failed, citing no claim code
+
+    @unit
+    Scenario Outline: balance posts a failed test with the message its report gave
+      given <source> had a failed test, citing CLM-ONE-001, whose report gave <said>
+      when balance posts the evidence
+      then an Evidence Observation will be posted, as failed, with the message <message>
+
+      Examples:
+        | clm         | source                     | said                                      | message                               |
+        | CLM-OBS-132 | Vitest's evidence report   | the failure message "expected 2"          | "expected 2"                          |
+        | CLM-OBS-133 | Vitest's evidence report   | the failure messages "first" and "second" | "first" and "second", the first first |
+        | CLM-OBS-134 | RSpec's evidence report    | the message "expected 2"                  | "expected 2"                          |
+        | CLM-OBS-135 | Cucumber's evidence report | the failed step's message "expected 2"    | "expected 2"                          |
 
     @unit
     Scenario Outline: balance posts a fitness function known only from its workflow as passed, or as passed-on-error when its failure is allowed
@@ -229,12 +249,17 @@ Feature: Evidence Observations are posted, each to its claim
       When balance posts the evidence
       Then an Evidence Observation will be posted for each row, citing the claim code of its row
 
-    @unit @CLM-OBS-107
-    Scenario: balance posts an Outline row's result citing the claim code of the row in its own feature file
-      given one.feature and two.feature each had an Outline row at line 10, with the claim codes CLM-ONE-001 and CLM-TWO-001
-      and Cucumber's evidence report had a result for the row in two.feature
+    @unit
+    Scenario Outline: balance posts an Outline row's result citing the claim code of the row in its own feature file
+      given <its file> and one.feature each had an Outline row at line 10, with the claim codes <its code> and CLM-ONE-001
+      and Cucumber's evidence report had a result for the row in <its file>
       when balance posts the evidence
-      then an Evidence Observation will be posted, citing CLM-TWO-001
+      then an Evidence Observation will be posted, citing <its code>
+
+      Examples:
+        | clm         | its file        | its code    |
+        | CLM-OBS-107 | two.feature     | CLM-TWO-001 |
+        | CLM-OBS-125 | sub/one.feature | CLM-SUB-001 |
 
   Rule: an Evidence Observation says where to look
 
@@ -245,15 +270,16 @@ Feature: Evidence Observations are posted, each to its claim
       then an Evidence Observation will be posted, saying where to look: <where to look>
 
       Examples:
-        | clm         | source                     | kind of quality check | result                                                                             | where to look                   |
-        | CLM-OBS-078 | Vitest's evidence report   | unit                  | the test "adds two numbers" in a.test.ts                                           | "adds two numbers" in a.test.ts |
-        | CLM-OBS-079 | Vitest's evidence report   | unit                  | the test "adds two numbers" in /work/acme/a.test.ts, for a target at /work/acme    | "adds two numbers" in a.test.ts |
-        | CLM-OBS-080 | Cucumber's evidence report | integration           | the scenario "one adds one" in one.feature                                         | "one adds one" in one.feature   |
-        | CLM-OBS-081 | the step record            | fitness               | the step Lint in job build of ci.yml                                               | ci.yml:build:Lint               |
-        | CLM-OBS-101 | the step record            | fitness               | the step with 3 as its name, running pnpm lint, in job build of ci.yml             | ci.yml:build:pnpm lint          |
-        | CLM-OBS-102 | the step record            | fitness               | the step with no name and an empty command, in job build of ci.yml                 | ci.yml:build:                   |
-        | CLM-OBS-103 | the step record            | fitness               | the step with no name, running a blank line then pnpm lint, in job build of ci.yml | ci.yml:build:pnpm lint          |
-        | CLM-OBS-104 | the step record            | fitness               | the step Lint in jobs build and test of ci.yml                                     | CLM-ONE-001                     |
+        | clm         | source                     | kind of quality check | result                                                                                                                              | where to look                   |
+        | CLM-OBS-078 | Vitest's evidence report   | unit                  | the test "adds two numbers" in a.test.ts                                                                                            | "adds two numbers" in a.test.ts |
+        | CLM-OBS-079 | Vitest's evidence report   | unit                  | the test "adds two numbers" in /work/acme/a.test.ts, for a target at /work/acme                                                     | "adds two numbers" in a.test.ts |
+        | CLM-OBS-080 | Cucumber's evidence report | integration           | the scenario "one adds one" in one.feature                                                                                          | "one adds one" in one.feature   |
+        | CLM-OBS-081 | the step record            | fitness               | the step Lint in job build of ci.yml                                                                                                | ci.yml:build:Lint               |
+        | CLM-OBS-101 | the step record            | fitness               | the step with 3 as its name, running pnpm lint, in job build of ci.yml                                                              | ci.yml:build:pnpm lint          |
+        | CLM-OBS-102 | the step record            | fitness               | the step with no name and an empty command, in job build of ci.yml                                                                  | ci.yml:build:                   |
+        | CLM-OBS-103 | the step record            | fitness               | the step with no name, running a blank line then pnpm lint, in job build of ci.yml                                                  | ci.yml:build:pnpm lint          |
+        | CLM-OBS-104 | the step record            | fitness               | the step Lint in jobs build and test of ci.yml                                                                                      | CLM-ONE-001                     |
+        | CLM-OBS-129 | the step record            | fitness               | the step Lint with the id CLM-ONE-001 in job build of ci.yml, recorded, while job test had the fitness function pnpm audit-the-tree | ci.yml:build:Lint               |
 
     @unit @CLM-OBS-098
     Scenario: a test file outside the target's folder will be placed at the absolute path its evidence report recorded
@@ -286,18 +312,19 @@ Feature: Evidence Observations are posted, each to its claim
       then an Evidence Observation will be posted to the unnamed claim, naming <named>
 
       Examples:
-        | clm         | source                            | citation                                              | named                       |
-        | CLM-OBS-084 | Vitest's evidence report          | no claim code in its title                            | no claim code               |
-        | CLM-OBS-085 | Vitest's evidence report          | [CLM-ABCDEF-001] in its title                         | no claim code               |
-        | CLM-OBS-086 | Vitest's evidence report          | CLM-ONE-999 in its title, with no brackets            | no claim code               |
-        | CLM-OBS-087 | the step record                   | no id                                                 | no claim code               |
-        | CLM-OBS-105 | pytest's evidence report          | the clm property CLM-A-001, which is not a claim code | no claim code               |
-        | CLM-OBS-128 | pytest's evidence report          | the ticket property CLM-ONE-002, not a clm property   | no claim code               |
-        | CLM-OBS-088 | Vitest's evidence report          | [CLM-ONE-001] in its title, a code two claims share   | CLM-ONE-001                 |
-        | CLM-OBS-089 | Vitest's evidence report          | [CLM-ONE-001] and [CLM-ONE-002] in its title          | CLM-ONE-001 and CLM-ONE-002 |
-        | CLM-OBS-090 | Jest's evidence report            | [CLM-ONE-001] and [CLM-ONE-002] in its title          | CLM-ONE-001 and CLM-ONE-002 |
-        | CLM-OBS-091 | pytest's evidence report          | the clm properties CLM-ONE-001 and CLM-ONE-002        | CLM-ONE-001 and CLM-ONE-002 |
-        | CLM-OBS-092 | Go's evidence report              | [CLM-ONE-001] and [CLM-ONE-002] in its subtest's name | CLM-ONE-001 and CLM-ONE-002 |
-        | CLM-OBS-093 | JUnit 5 in Java's evidence report | [CLM-ONE-001] and [CLM-ONE-002] in its display name   | CLM-ONE-001 and CLM-ONE-002 |
-        | CLM-OBS-094 | RSpec's evidence report           | [CLM-ONE-001] and [CLM-ONE-002] in its description    | CLM-ONE-001 and CLM-ONE-002 |
-        | CLM-OBS-095 | Cucumber's evidence report        | the tags @CLM-ONE-001 and @CLM-ONE-002                | CLM-ONE-001 and CLM-ONE-002 |
+        | clm         | source                            | citation                                                                  | named                       |
+        | CLM-OBS-084 | Vitest's evidence report          | no claim code in its title                                                | no claim code               |
+        | CLM-OBS-085 | Vitest's evidence report          | [CLM-ABCDEF-001] in its title                                             | no claim code               |
+        | CLM-OBS-086 | Vitest's evidence report          | CLM-ONE-999 in its title, with no brackets                                | no claim code               |
+        | CLM-OBS-087 | the step record                   | no id                                                                     | no claim code               |
+        | CLM-OBS-105 | pytest's evidence report          | the clm property CLM-A-001, which is not a claim code                     | no claim code               |
+        | CLM-OBS-128 | pytest's evidence report          | the ticket property CLM-ONE-002, not a clm property                       | no claim code               |
+        | CLM-OBS-131 | Cucumber's evidence report        | a scenario of a feature file balance did not read, with no claim-code tag | no claim code               |
+        | CLM-OBS-088 | Vitest's evidence report          | [CLM-ONE-001] in its title, a code two claims share                       | CLM-ONE-001                 |
+        | CLM-OBS-089 | Vitest's evidence report          | [CLM-ONE-001] and [CLM-ONE-002] in its title                              | CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-OBS-090 | Jest's evidence report            | [CLM-ONE-001] and [CLM-ONE-002] in its title                              | CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-OBS-091 | pytest's evidence report          | the clm properties CLM-ONE-001 and CLM-ONE-002                            | CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-OBS-092 | Go's evidence report              | [CLM-ONE-001] and [CLM-ONE-002] in its subtest's name                     | CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-OBS-093 | JUnit 5 in Java's evidence report | [CLM-ONE-001] and [CLM-ONE-002] in its display name                       | CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-OBS-094 | RSpec's evidence report           | [CLM-ONE-001] and [CLM-ONE-002] in its description                        | CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-OBS-095 | Cucumber's evidence report        | the tags @CLM-ONE-001 and @CLM-ONE-002                                    | CLM-ONE-001 and CLM-ONE-002 |
