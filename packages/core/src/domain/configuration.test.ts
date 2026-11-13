@@ -37,11 +37,11 @@ describe("balance turns each configuration setting into its internal setting", (
     expect(targetConfigurationFrom(block === undefined ? {} : { specController: block }, [])).toEqual({ configuration, errors: [] });
   });
 
-  it('[CLM-CFG-010] a specController block with "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, gives that step', () => {
+  it('[CLM-CFG-023] a specController block with "nightly.yml:ci:Install" in notChecks, with only ci.yml read, gives that step', () => {
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
-    expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yml:ci:Install dependencies"] } }, ciRead)).toEqual({
-      configuration: { ...NONE, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }] },
+    expect(targetConfigurationFrom({ specController: { notChecks: ["nightly.yml:ci:Install"] } }, ciRead)).toEqual({
+      configuration: { ...NONE, nonChecks: [{ workflow: "nightly.yml", job: "ci", step: "Install" }] },
       errors: [],
     });
   });
@@ -58,6 +58,12 @@ describe("a configuration setting balance cannot use will be left out", () => {
       '"ci.yml:ci:No such step" in notChecks, with ci.yml read',
       { notChecks: ["ci.yml:ci:No such step"] },
       { kind: "not-checks-entry-matches-no-step", entry: "ci.yml:ci:No such step" },
+    ],
+    [
+      "CLM-CFG-022",
+      '"ci.yml:lint:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies and whose job lint had none',
+      { notChecks: ["ci.yml:lint:Install dependencies"] },
+      { kind: "not-checks-entry-matches-no-step", entry: "ci.yml:lint:Install dependencies" },
     ],
     ["CLM-CFG-016", '"Install dependencies" in notChecks', { notChecks: ["Install dependencies"] }, { kind: "not-checks-entry-not-a-step-name", entry: "Install dependencies" }],
     [

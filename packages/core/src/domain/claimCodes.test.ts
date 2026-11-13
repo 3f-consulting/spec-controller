@@ -65,9 +65,25 @@ const outlineWith = (outlineTags: string, examplesTags: string): string =>
 const errorsIn = (files: readonly FileWritten[], scenarioOf: (file: FileWritten) => string): unknown[] =>
   claimCodeErrorsOf(files.map((file) => featureAsWrittenFrom(file[0], featureText([file[0], file[1], scenarioOf(file)]))));
 
-describe("balance finds no claim code error in a feature file with no feature code and no claim code", () => {
-  it("[CLM-STG-091] three.feature, with no feature code and a scenario with no claim code, has no claim code error", () => {
-    expect(errorsIn([["three.feature", "", "@unit"]], ([, , tags]) => scenarioTagged(tags))).toEqual([]);
+describe("balance finds no claim code error in feature files with no feature code and no claim code", () => {
+  it("[CLM-STG-091] three.feature and four.feature, each with no feature code and a scenario with no claim code, have no claim code error", () => {
+    expect(
+      errorsIn(
+        [
+          ["three.feature", "", "@unit"],
+          ["four.feature", "", "@unit"],
+        ],
+        ([, , tags]) => scenarioTagged(tags),
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("a claim code in an Examples cell of an Outline with no clm column is no claim code error", () => {
+  it("[CLM-STG-096] one.feature, tagged @ONE, with an Outline with no clm column and an Examples cell CLM-TWO-001, has no claim code error", () => {
+    const outline = "  @unit\n  Scenario Outline: that Outline\n    Given <code>\n\n    Examples:\n      | code        |\n      | CLM-TWO-001 |\n";
+
+    expect(errorsIn([["one.feature", "@ONE", ""]], () => outline)).toEqual([]);
   });
 });
 
@@ -147,8 +163,8 @@ describe("the answer is one past the highest code the repository has contained",
 });
 
 describe("a feature code no feature file has stops it, listing those that do", () => {
-  it("[CLM-STG-077] feature files tagged @ONE and @TWO, and no file mentioning ZZZ, stop the request for ZZZ as an unknown feature code listing ONE and TWO", () => {
-    expect(allocationOf({ featureCode: "ZZZ", asNewFeatureCode: false }, ["ONE", "TWO"], [{ text: "  @CLM-ONE-001", ...IN_THE_FILE }])).toEqual({
+  it("[CLM-STG-077] feature files tagged @TWO and @ONE, and no file mentioning ZZZ, stop the request for ZZZ as an unknown feature code listing ONE and TWO, in alphabetical order", () => {
+    expect(allocationOf({ featureCode: "ZZZ", asNewFeatureCode: false }, ["TWO", "ONE"], [{ text: "  @CLM-ONE-001", ...IN_THE_FILE }])).toEqual({
       kind: "unknown-feature-code",
       featureCode: "ZZZ",
       featureCodes: ["ONE", "TWO"],
