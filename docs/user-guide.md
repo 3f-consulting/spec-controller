@@ -581,28 +581,13 @@ Discovery is not Node-shaped: it does not match `package.json` script names agai
 - **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this layer*. An omitted key says nothing about the layer.
 - **A key outside the four** is named under `### Configuration errors` as `runner-key-not-a-layer`, excludes nothing, and does not abort the run.
 - **No `runners` block at all is not an error.** Every step that is not a reconciler step, a non-check or plumbing becomes a candidate. That is the zero-annotation report.
-- **A runner is recognised only as the command a step runs.** That is the first word of each command in an `&&`, `||` or `;` list, or its opening words for a runner named in several words (see below). `NAME=value` settings before it are passed over.
-  - The word may also be the one a launcher hands on to. The launchers are `timeout` with its duration, `npx`, `npm exec`, `pnpm exec`, `pnpm dlx`, `pnpm`, `yarn`, `bunx`, `python -m`, `python3 -m`, `poetry run`, `uv run`, `pipenv run`, `hatch run`, `pdm run`, `coverage run -m` and `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`.
-  - This holds in the step's own command and in the `package.json` script the step invokes, following aliases three deep.
-  - A runner named anywhere else, as an argument, a path or a flag, leaves the step a check.
-- **A step invokes a `package.json` script where a command runs it in a form its package manager documents.**
-  - A command runs in any of these positions: at the head of each command in an `&&`, `||`, `;` or `|` list, or after a background `&`; after a shell word (`!`, `(`, `{`, `if`, `then`, `elif`, `else`, `while`, `until`, `do`); and after a command that runs the command after it, past that command's options and `NAME=value` settings.
-  - The commands that run the command after them are the launchers above, `env`, `nice`, `nohup`, `time`, `command`, `exec`, `xargs`, `stdbuf`, `sudo`, `yarn exec`, `yarn dlx`, `cross-env`, `dotenv`, `xvfb-run`, `nyc`, `c8` and `flock`. So `env CI=1 pnpm test`, `sudo -u ci npm test`, `pnpm start & pnpm test` and `( cd pkg && pnpm test )` each run `test`.
-  - The npm forms are `npm run <script>` or its aliases `run-script`, `rum` and `urn`, and npm's test shortcut `npm test`, `npm t` or `npm tst`.
-  - The pnpm forms are `pnpm <script>`, `pnpm run <script>` and pnpm's `t` or `tst`, after any of the selections `--filter <selector>`, `-F <selector>`, `-r` and `--recursive`.
-  - The yarn forms are `yarn <script>` and `yarn run <script>`, either of them optionally after `yarn workspace <name>`, and `yarn workspaces foreach <options> run <script>`. After `yarn workspaces foreach <options> exec`, the command after `exec` runs, never a script by that command's name.
-  - Only the target's own `package.json` is read, so a selection is followed into its script of that name.
-  - A script named anywhere else, as in `echo pnpm check`, is not run.
-  - A runner is still recognised only through the launchers, as above.
-- **A runner is matched only in the last stage of a pipeline.** A step that pipes the runner's output into another command is a check that uses the runner, and is reported as one.
-- **Jest, RSpec, Go and Python work the same way:**
-  - `"unit": "jest"` recognises a step that runs `jest …`, directly or behind `npx`, `pnpm` or another of the launchers above.
-  - `"unit": "rspec"` recognises a step that runs `rspec …`, directly or through `bundle exec`.
-  - `"unit": "gotestsum"` recognises a step that runs `gotestsum …`. A step that runs `go test` directly writes no report `balance` reads, so it is reported as a check.
-  - `"unit": "pytest"` recognises a step that runs `pytest …`, directly or behind the Python launchers above. A launcher hands on to the word right after it, so these are reported as checks: an option between a launcher and the runner (`uv run --frozen pytest`), a project script (`hatch run test`, `pdm run test`), and a suite started by `tox` or `nox`. Add such a step to `notChecks`.
-- **A runner named in several words is recognised where a command opens with all of them**, after any launchers. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher. The launcher is set aside before the words are compared, so `"rspec"` covers `bundle exec rspec`, and `"bundle exec rspec"` matches no step.
-- **Java:** `"unit": "mvn test"` recognises a step that runs `mvn test …`, and `"unit": "./mvnw test"` one that runs it through the Maven wrapper. `mvn checkstyle:check` stays a check. Declare the words your test step opens with: a step running `mvn clean test` or `mvn -B test` is declared as `"mvn clean test"` or `"mvn -B test"`, and a step that runs the tests through a later phase, such as `mvn verify` or `mvn install`, is declared with those words. Otherwise the step is reported as a check.
-- **Kotlin:** `"unit": "./gradlew test"` recognises a step that runs `./gradlew test …`, and `"unit": "gradle test"` one that runs `gradle test …`. `./gradlew detekt` stays a check. Declare the words your test step opens with: a step running `./gradlew clean test`, `./gradlew build`, `./gradlew check` or `./gradlew :app:test` is declared with those words, or it is reported as a check.
+- **A runner is recognised only as the command a step runs.** That is the command a step's line opens with, or a command after `&&` or `;` in it, past any `NAME=value` settings. A runner named anywhere else, as an argument or a path, leaves the step a check, and so does a step that pipes the runner's output into another command.
+- **A runner may be handed on to.** The launchers are `npx`, `pnpm exec`, `pnpm <bin>`, `yarn <bin>`, `bunx`, `python -m`, `python3 -m`, `uv run`, `poetry run`, `pipenv run`, `coverage run -m` and `bundle exec`, and launchers chain, so `uv run python -m pytest` reaches `pytest`. The wrapper `xvfb-run` hands on too, past its options and their values.
+- **A runner may be run by a `package.json` script.** A step runs a script as `npm test`, `npm run <script>`, `pnpm <script>`, `pnpm run <script>`, `pnpm -r <script>`, `pnpm --filter <name> <script>`, `yarn <script>`, `yarn run <script>` or `yarn workspace <name> <script>`, when the target's own `package.json` has a script by that name. The script is followed, through any scripts it runs in turn, however deep. A script that runs itself ends as a check.
+- **A runner named in several words is recognised where a command opens with all of them**, such as `mvn test`, `./mvnw test`, `./gradlew test`, `./gradlew check` or `./gradlew :app:test`. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: `"rspec"` covers `bundle exec rspec`.
+- **Any other variant is a check.** A launcher, script runner or wrapper not listed here leaves the step a check that runs the runner. Add such a step to `notChecks`, or run the runner in one of the variants above.
+
+These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The plumbing actions, which are neither checks nor runners, are listed there too: `actions/checkout`, `actions/cache`, `actions/setup-*`, `actions/upload-artifact` and `actions/download-artifact`.
 
 ### Naming your non-checks — `notChecks`
 
@@ -950,7 +935,7 @@ Run `spec-controller --help` for the top-level summary of the commands. Run `spe
 
 | Flag | Purpose |
 |---|---|
-| `--features <dir>` | A directory of Gherkin `.feature` files: the scenarios. The tool reads every `.feature` file under it, at any depth, and names each one in the report by its path within the directory. It does not enter a symbolically linked directory. |
+| `--features <dir>` | A directory of Gherkin `.feature` files: the scenarios. The tool reads every `.feature` file under it, at any depth, and names each one in the report by its path within the directory. |
 | `--vitest <report.json>` | A Vitest JSON report: runtime test evidence. |
 | `--pytest <report.xml>` | A pytest JUnit XML report (`pytest --junitxml`): runtime unit test evidence. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from pytest](#citing-a-scenario-from-pytest). |
 | `--jest <report.json>` | A Jest JSON report (`jest --json --outputFile=<path>`): runtime unit test evidence. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from Jest](#citing-a-scenario-from-jest). |
