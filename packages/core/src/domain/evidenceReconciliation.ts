@@ -70,3 +70,7 @@ export interface EvidenceReconciliation {
   readonly errorsInTheInputs?: ErrorsInTheInputs;
   readonly runIntegrity?: RunIntegrity;
 }
+
+export function runVerdictOf(_claimReconciliations: readonly ClaimReconciliation[]): RunVerdict {
+  return { verdict: "out-of-balance" };
+}
