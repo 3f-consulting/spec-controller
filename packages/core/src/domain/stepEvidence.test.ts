@@ -40,6 +40,31 @@ describe("balance posts only the steps that prove something", () => {
 });
 
 const NO_SETTING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
+
+describe("balance posts a fitness Evidence Observation only for a step that is a fitness function, unless it runs a runner and its id is a claim code the step record holds", () => {
+  const installIn = (workflow: string, job: string) => workflowStepsFrom(workflow, JSON.stringify({ jobs: { [job]: { steps: [{ name: "Install", run: "pnpm install" }] } } }));
+  const notCheckingCiInstall: TargetConfiguration = { runners: {}, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install" }], deferralTags: [] };
+
+  it.each([
+    ["CLM-OBS-126", "named Install in job test of ci.yml, whose job ci had a step named Install", () => installIn("ci.yml", "test")],
+    ["CLM-OBS-127", "named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci", () => installIn("nightly.yml", "ci")],
+  ] as const)("[%s] a step %s, with ci.yml:ci:Install in notChecks, is counted as a fitness function and posted", (_clm, _step, step) => {
+    const steps = [...installIn("ci.yml", "ci"), ...step()];
+    const counted = steps.slice(1).map((one) => stepDispositionOf(one, notCheckingCiInstall, {}, shellAnswers));
+
+    expect({ counted, posted: fitnessObservationsOf(steps, [], notCheckingCiInstall, {}, shellAnswers).length }).toEqual({ counted: ["candidate"], posted: 1 });
+  });
+
+  it("[CLM-OBS-128] a step using actions/dependency-review-action, with vitest as its unit runner, is counted as a fitness function and posted", () => {
+    const steps = stepsOf({ uses: "actions/dependency-review-action@v4" });
+    const configuration: TargetConfiguration = { runners: { unit: "vitest" }, nonChecks: [], deferralTags: [] };
+
+    expect({ counted: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers), posted: fitnessObservationsOf(steps, [], configuration, {}, shellAnswers).length }).toEqual({
+      counted: "candidate",
+      posted: 1,
+    });
+  });
+});
 const ONE_001 = { featureCode: "ONE", number: "001" };
 const workflowOf = (jobs: object) => workflowStepsFrom("ci.yml", JSON.stringify({ jobs }));
 const recordOf = (record: object) => stepRecordFrom(record);
@@ -160,10 +185,18 @@ describe("an Evidence Observation says where to look", () => {
     ["CLM-OBS-102", "the step with no name and an empty command, in job build", { build: { steps: [{ id: "CLM-ONE-001", run: "" }] } }, "ci.yml:build:"],
     ["CLM-OBS-103", "the step with no name, running a blank line then pnpm lint, in job build", { build: { steps: [{ id: "CLM-ONE-001", run: "  \n  pnpm lint" }] } }, "ci.yml:build:pnpm lint"],
     ["CLM-OBS-104", "the step Lint in jobs build and test", { build: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] }, test: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] } }, "CLM-ONE-001"],
+    [
+      "CLM-OBS-129",
+      "the step Lint in job build, while job test had the fitness function pnpm audit-the-tree,",
+      { build: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] }, test: { steps: [{ run: "pnpm audit-the-tree" }] } },
+      "ci.yml:build:Lint",
+    ],
   ] as const)("[%s] the step record had a passing fitness result, %s of ci.yml, citing CLM-ONE-001: it says where to look", (_clm, _step, jobs, place) => {
     const record = recordOf({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
 
-    expect(fitnessObservationsOf(workflowOf(jobs), record, NO_SETTING, {}, shellAnswers).map((observation) => observation.place)).toEqual([place]);
+    const citing = fitnessObservationsOf(workflowOf(jobs), record, NO_SETTING, {}, shellAnswers).filter(({ cites }) => cites.length > 0);
+
+    expect(citing.map((observation) => observation.place)).toEqual([place]);
   });
 });
 
