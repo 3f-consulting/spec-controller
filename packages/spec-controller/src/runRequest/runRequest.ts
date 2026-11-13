@@ -34,6 +34,19 @@ export type RunRequest =
     }
   | { readonly command: "allocate"; readonly featureCode: string; readonly asNewFeatureCode: boolean };
 
-export function runRequestOf(_argv: readonly string[]): RunRequest {
-  return { command: "balance", inputs: [], outputs: [], strict: false, exitZero: false };
+const INPUT_FLAGS: Readonly<Record<string, InputKind>> = { "--features": "features", "--vitest": "vitest" };
+
+// Each flag takes the argument after it as its value.
+function inputsOf(args: readonly string[]): InputRequest[] {
+  const inputs: InputRequest[] = [];
+  for (let at = 0; at < args.length; at += 2) {
+    const kind = INPUT_FLAGS[args[at]!];
+    const path = args[at + 1];
+    if (kind !== undefined && path !== undefined) inputs.push({ kind, path, byDefault: false });
+  }
+  return inputs;
+}
+
+export function runRequestOf([, ...args]: readonly string[]): RunRequest {
+  return { command: "balance", inputs: inputsOf(args), outputs: [], strict: false, exitZero: false };
 }
