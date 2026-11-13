@@ -10,40 +10,47 @@ import {
 } from "@3f-consulting/spec-controller-core";
 import { writeFileSync } from "node:fs";
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
-import { pathIdentity, streamIdentity } from "./identity.js";
-import type { StandardStream, StandardStreams } from "./streams.js";
+import { pathIdentity, streamIdentity, type NamedStream } from "./identity.js";
+import type { StandardStreams } from "./streams.js";
 import { refusalText } from "../runEnding/refusal.js";
 import { whyUnwritable } from "./writable.js";
 import { exitCodeOf, USAGE_ERROR } from "../runEnding/exitCode.js";
 import type { ExitCode, Refusal } from "../runEnding/runEnding.js";
 
-export type ReportedReconciliation = EvidenceReconciliation;
-
-const reportIn = (format: string, reconciliation: ReportedReconciliation): string =>
+const reportIn = (format: string, reconciliation: EvidenceReconciliation): string =>
   format === "json" ? jsonReportOf(reconciliation) : markdownReportOf(reconciliation);
 
 // Where a report goes, probed once: the standard stream it names, by request or by its path, as that stream stands,
-// redirected into a file or not; otherwise the place its path names.
+// redirected into a file or not; otherwise the file its path names, which is checked before anything is written.
 interface Placed {
   readonly output: OutputRequest<string>;
   readonly identity: FileIdentity;
-  readonly stream?: StandardStream;
+  readonly file?: string;
+  readonly write: (report: string) => void;
+}
+
+const STREAM_OF = { "standard-output": "output", "standard-error": "error" } as const;
+
+function onStream(output: OutputRequest<string>, named: NamedStream, streams: StandardStreams): Placed {
+  const stream = streams[STREAM_OF[named.is]];
+  return { output, identity: streamIdentity(stream.fd, named), write: stream.write };
 }
 
 function placed(output: OutputRequest<string>, streams: StandardStreams): Placed {
   const { destination } = output;
-  const named = destination.to === "file" ? pathIdentity(destination.path) : { is: destination.to };
-  if (named.is === "standard-output") return { output, identity: streamIdentity(streams.output.fd, "standard-output"), stream: streams.output };
-  if (named.is === "standard-error") return { output, identity: streamIdentity(streams.error.fd, "standard-error"), stream: streams.error };
-  return { output, identity: named };
+  if (destination.to !== "file") return onStream(output, { is: destination.to }, streams);
+  const named = pathIdentity(destination.path);
+  if (named.is === "regular-file" || named.is === "absent" || named.is === "not-a-regular-file")
+    return { output, identity: named, file: destination.path, write: (report) => writeFileSync(destination.path, report) };
+  return onStream(output, named, streams);
 }
 
 // The first file a report cannot be written to, with why.
 function unwritableRefusal(outputs: readonly Placed[]): Refusal | undefined {
-  for (const { output, stream } of outputs) {
-    if (stream !== undefined || output.destination.to !== "file") continue;
-    const why = whyUnwritable(output.destination.path);
-    if (why !== undefined) return { key: "report-not-written", values: { place: output.destination.path, why: textFor(appCatalogue, why) } };
+  for (const { file } of outputs) {
+    if (file === undefined) continue;
+    const why = whyUnwritable(file);
+    if (why !== undefined) return { key: "report-not-written", values: { place: file, why: textFor(appCatalogue, why) } };
   }
   return undefined;
 }
@@ -62,9 +69,9 @@ function planRefusal(refusal: OutputRefusal<string>): Refusal {
 export function writeReports(
   outputs: readonly OutputRequest<string>[],
   inputsRead: readonly string[],
-  reconciliation: ReportedReconciliation,
+  reconciliation: EvidenceReconciliation,
   streams: StandardStreams,
-  under: { readonly exitZero: boolean } = { exitZero: false },
+  under: { readonly exitZero: boolean },
 ): ExitCode {
   const outputsPlaced = outputs.map((output) => placed(output, streams));
   const plan = outputPlanOf(
@@ -76,10 +83,6 @@ export function writeReports(
     streams.error.write(`${refusalText(refusal)}\n`);
     return USAGE_ERROR;
   }
-  outputsPlaced.forEach(({ output: { format, destination }, stream }) => {
-    const report = reportIn(format, reconciliation);
-    if (stream !== undefined) stream.write(report);
-    else if (destination.to === "file") writeFileSync(destination.path, report);
-  });
+  outputsPlaced.forEach(({ output, write }) => write(reportIn(output.format, reconciliation)));
   return exitCodeOf(reconciliation.runVerdict, under);
 }
