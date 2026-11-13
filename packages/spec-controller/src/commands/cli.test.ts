@@ -1,7 +1,8 @@
 import type { EventEmitter } from "node:events";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import catalogue from "../messages/messages.en.json" with { type: "json" };
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 type Guard = (error: unknown) => void;
@@ -9,6 +10,7 @@ type Guard = (error: unknown) => void;
 interface BinRun {
   readonly exitCode: string | number | undefined;
   readonly output: string;
+  readonly error: string;
   readonly complaints: () => readonly string[];
   // The guards the bin put in place, to meet an error nothing else handles.
   readonly uncaught: Guard;
@@ -52,7 +54,11 @@ async function binRun(args: readonly string[], folder: string, output: (text: st
     written.error += String(text);
     return true;
   });
-  vi.spyOn(process, "cwd").mockReturnValue(folder);
+  // The working directory is the folder, and cannot be found once the folder has been removed, as the system says.
+  vi.spyOn(process, "cwd").mockImplementation(() => {
+    if (!existsSync(folder)) throw Object.assign(new Error("ENOENT: no such file or directory, uv_cwd"), { code: "ENOENT" });
+    return folder;
+  });
   const argv = process.argv;
   process.argv = [process.execPath, "spec-controller", ...args];
   process.exitCode = undefined;
@@ -68,6 +74,7 @@ async function binRun(args: readonly string[], folder: string, output: (text: st
   return {
     exitCode: process.exitCode,
     output: written.output,
+    error: written.error,
     complaints: () => written.error.split("\n").filter((line) => line.startsWith("[unexpected-error]")),
     uncaught: (error) => uncaught.forEach((guard) => guard(error)),
     rejected: (error) => rejected.forEach((guard) => guard(error)),
@@ -79,6 +86,20 @@ describe("each run verdict will have its exit code", () => {
     const run = await binRun(["balance", "--format", "json"], folderOutOfBalance());
 
     expect({ exitCode: run.exitCode, reported: run.output.includes('"out-of-balance"') }).toEqual({ exitCode: 1, reported: true });
+  });
+});
+
+describe("a default that cannot be read will stop the run", () => {
+  it("[CLM-CLI-145] balance run from the command line in a working directory that has been removed: no verdict, exit 2, and a complaint naming the corpus read by default and what is wrong", async () => {
+    const removed = join(temporaryDirectory("removed-"), "work");
+    mkdirSync(join(removed, "features"), { recursive: true });
+    rmSync(removed, { recursive: true });
+
+    const run = await binRun(["balance"], removed);
+
+    const complaint = run.error.split("\n").find((line) => line.startsWith(`[input-default-unreadable] ${catalogue["input-features"]} features,`));
+
+    expect({ exitCode: run.exitCode, output: run.output, whatIsWrong: complaint?.endsWith(catalogue["working-folder-removed"]) }).toEqual({ exitCode: 2, output: "", whatIsWrong: true });
   });
 });
 

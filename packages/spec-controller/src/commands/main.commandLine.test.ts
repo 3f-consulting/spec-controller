@@ -202,6 +202,45 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
   });
 });
 
+describe("balance reads the feature corpus in path order", () => {
+  it("[CLM-CLI-197] a corpus holding b.feature and a/x.feature: the report lists the claims of a/x.feature before those of b.feature", () => {
+    const folder = folderWith({
+      "features/b.feature": "@BBB\nFeature: b\n\n  @unit @CLM-BBB-001\n  Scenario: b\n",
+      "features/a/x.feature": "@AAA\nFeature: x\n\n  @unit @CLM-AAA-001\n  Scenario: x\n",
+    });
+
+    const { output } = ran(["balance", "--format", "json"], folder);
+
+    expect((JSON.parse(output) as { claimReconciliations: { claim: { file: string } }[] }).claimReconciliations.map(({ claim }) => claim.file)).toEqual(["a/x.feature", "b.feature"]);
+  });
+});
+
+// One passing result citing CLM-ONE-001, as each runner writes it.
+const BY_FILE_PASSING = '{"testResults":[{"name":"/work/one.test.ts","status":"passed","message":"","assertionResults":[{"title":"[CLM-ONE-001] one","fullName":"[CLM-ONE-001] one","status":"passed","ancestorTitles":[],"failureMessages":[]}]}]}';
+const RSPEC_PASSING = '{"examples":[{"id":"./spec/one_spec.rb[1:1]","description":"[CLM-ONE-001] one","full_description":"[CLM-ONE-001] one","status":"passed","file_path":"./spec/one_spec.rb","line_number":1}],"summary":{}}';
+const CUCUMBER_PASSING =
+  '[{"uri":"features/one.feature","name":"one","elements":[{"keyword":"Scenario","name":"one","type":"scenario","line":5,"tags":[{"name":"@unit"},{"name":"@CLM-ONE-001"}],"steps":[{"keyword":"Given ","name":"one","result":{"status":"passed"}}]}]}]';
+
+interface ClaimsReported {
+  readonly claimReconciliations: readonly { readonly qualityCheckReconciliations: readonly { readonly observation?: { readonly result: string } }[] }[];
+}
+
+describe("balance posts the result in the evidence report each runner's flag names", () => {
+  it.each([
+    ["CLM-CLI-196", "--vitest", BY_FILE_PASSING],
+    ["CLM-CLI-199", "--jest", BY_FILE_PASSING],
+    ["CLM-CLI-200", "--rspec", RSPEC_PASSING],
+    ["CLM-CLI-201", "--cucumber", CUCUMBER_PASSING],
+  ] as const)("[%s] %s naming a report of one passing result citing CLM-ONE-001: that result is posted", (_clm, flag, report) => {
+    const folder = folderWith({ "features/one.feature": "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n", "report.json": report });
+
+    const { output } = ran(["balance", flag, "report.json", "--format", "json"], folder);
+
+    const { claimReconciliations } = JSON.parse(output) as ClaimsReported;
+    expect(claimReconciliations.flatMap(({ qualityCheckReconciliations }) => qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.result] : [])))).toEqual(["passed"]);
+  });
+});
+
 describe("an input that is not valid will stop the run", () => {
   it.each([
     ["CLM-CLI-147", "a named input that does not exist", {}, ["--vitest", "absent.json"], ["absent.json", "Vitest evidence report", "[input-absent]"]],
@@ -300,6 +339,20 @@ describe("an input that is not valid will stop the run", () => {
     const { exitCode, output, error } = ran(["balance", "--features", "features"], folder);
 
     expect({ exitCode, output, facts: [shown("{input-features} features"), "[input-not-permitted]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
+  });
+});
+
+describe("an input read by default that the tool is not permitted to read will stop the run, not count as none", () => {
+  it.each([
+    ["the folder itself", ".github/workflows"],
+    ["the folder that holds it", ".github"],
+  ] as const)("[CLM-CLI-198] no CI workflows named, and the tool not permitted to read %s: no verdict, exit 2, and a complaint that it is not permitted to read .github/workflows", (_closed, path) => {
+    const folder = folderWith({ ".github/workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: echo ci\n" });
+    chmodSync(join(folder, path), 0o000);
+
+    const { exitCode, output, error } = ran(["balance"], folder);
+
+    expect({ exitCode, output, facts: [shown("{input-workflows} .github/workflows"), "[input-not-permitted]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
   });
 });
 
