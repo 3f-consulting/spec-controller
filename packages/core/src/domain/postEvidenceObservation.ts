@@ -51,8 +51,6 @@ export interface ResultsBySuiteAsWritten {
   readonly report: string;
   readonly name: string;
   readonly results: readonly ResultInSuiteAsWritten[];
-  // A failure the suite records outside any of its results, such as a package that did not compile.
-  readonly failure?: FailureAsWritten;
 }
 
 export interface ResultInSuiteAsWritten {
