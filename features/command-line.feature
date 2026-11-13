@@ -141,7 +141,7 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-184 | /work/acme/docs/features | in a git repository at /work/acme | /work/acme |
         | CLM-CLI-144 | /tmp/x/features          | in no git repository              | /tmp/x     |
 
-    @e2e
+    @unit @e2e
     Scenario Outline: a default that cannot be read will stop the run
       Given the run met <error>
       When it stops
