@@ -71,6 +71,6 @@ export interface EvidenceReconciliation {
   readonly runIntegrity?: RunIntegrity;
 }
 
-export function runVerdictOf(_claimReconciliations: readonly ClaimReconciliation[]): RunVerdict {
-  return { verdict: "out-of-balance" };
+export function runVerdictOf(claimReconciliations: readonly ClaimReconciliation[]): RunVerdict {
+  return { verdict: claimReconciliations.every(({ verdict }) => verdict === "balanced") ? "balanced" : "out-of-balance" };
 }
