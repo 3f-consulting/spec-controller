@@ -17,8 +17,6 @@ const parser = new XMLParser({
   ignoreAttributes: false,
   // Attributes keep a prefix so that none is read as a child element of the same name.
   attributeNamePrefix: "@",
-  // Go and Surefire write newlines, tabs and quotes as numeric character references.
-  htmlEntities: true,
   parseTagValue: false,
   parseAttributeValue: false,
   isArray: (name) => ["testsuite", "testcase", "property", ...OUTCOMES].includes(name),
