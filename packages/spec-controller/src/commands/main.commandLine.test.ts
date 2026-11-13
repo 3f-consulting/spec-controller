@@ -187,6 +187,13 @@ describe("an input that is not valid will stop the run", () => {
     ["CLM-CLI-155", "a JUnit evidence report not in JUnit's shape", { "junit.xml": "<html/>" }, ["--junit", "junit.xml"], ["junit.xml", "JUnit", "[input-not-in-its-shape]"]],
     ["CLM-CLI-156", "a file in a JUnit directory not in JUnit's shape", { "junit/one.xml": "<testsuite/>", "junit/two.xml": "<html/>" }, ["--junit", "junit"], ["two.xml", "JUnit", "[input-not-in-its-shape]"]],
     ["CLM-CLI-157", "an RSpec evidence report not in RSpec's shape", { "rspec.json": '{"examples":3}' }, ["--rspec", "rspec.json"], ["rspec.json", "examples", "[input-not-in-its-shape]"]],
+    [
+      "CLM-CLI-157",
+      "an RSpec evidence report with its messages, its summary and one example in RSpec's shape, and one example not",
+      { "rspec.json": '{"messages":["Run options: include {:focus=>true}"],"examples":[{"description":"adds one"},3],"summary":{}}' },
+      ["--rspec", "rspec.json"],
+      ["rspec.json", "$.examples[1]", "[input-not-in-its-shape]"],
+    ],
     ["CLM-CLI-158", "a step record not in the shape of a record of step outcomes", { "steps.json": '{"test":"passed"}' }, ["--ci-steps", "steps.json"], ["steps.json", "step outcomes", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-158",
