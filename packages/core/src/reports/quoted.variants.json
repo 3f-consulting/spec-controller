@@ -1,7 +1,7 @@
 {
   "CLM-RPT-084": {
-    "class": "a name with a character Markdown reads as formatting",
-    "variants": ["a|b", "a\\b", "a`b", "a*b"]
+    "class": "a name with characters Markdown would read as formatting or trim",
+    "variants": ["a|b", "a\\b", "a`b", "a*b", "`", "`a", "a`", "a``b", " a", "a "]
   },
   "CLM-RPT-107": {
     "class": "a name a code span cannot show as it is",
