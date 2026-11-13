@@ -10,6 +10,7 @@ describe("the provenance describes the run", () => {
     ["CLM-EVR-049", "no target given, and an ssh origin", { origin: "ssh://git@github.com/acme/web.git" }, [], { target: "acme/web" }],
     ["CLM-EVR-050", "no target given, and an scp-form origin with no user", { origin: "github.com:acme/web.git" }, [], { target: "acme/web" }],
     ["CLM-EVR-074", "no target given, and the origin git@github.com:acme/acme.github.io.git", { origin: "git@github.com:acme/acme.github.io.git" }, [], { target: "acme/acme.github.io" }],
+    ["CLM-EVR-075", "no target given, and the origin https://gitlab.com/group/sub/web.git", { origin: "https://gitlab.com/group/sub/web.git" }, [], { target: "sub/web" }],
     ["CLM-EVR-047", "no target given, and a local path origin", { origin: "/srv/git/web.git" }, [], { target: "web" }],
     ["CLM-EVR-048", "no target given, and a file origin", { origin: "file:///srv/git/web.git" }, [], { target: "web" }],
     ["CLM-EVR-051", "no target given, and a git origin", { origin: "git://example.com/acme/web.git" }, [], { target: "unknown-target" }],
