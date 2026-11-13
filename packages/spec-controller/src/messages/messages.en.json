@@ -13,6 +13,7 @@
   "may-not-be-written": "it may not be written",
   "is-a-folder": "it is a folder",
   "folder-does-not-exist": "its folder does not exist",
+  "leads-round-to-itself": "it is a link that leads round to itself",
   "more-than-one-to-stdout": "more than one report would go to standard output, and at most one may: {reports}",
   "outputs-share-file": "two reports would go in one file: {reports}",
   "output-overwrites-input": "a report would overwrite {file}, a file the run reads",
