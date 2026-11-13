@@ -216,10 +216,9 @@ function rowCodesOf(features: readonly FeatureAsWritten[]): (file: string, line:
     }
     byFile.set(file, byLine);
   }
-  // The longest feature file path the result's path ends with is its file.
-  const longestFirst = [...byFile.keys()].sort((one, other) => other.length - one.length);
+  // The feature file path the result's path ends with is its file.
   return (file, line) => {
-    const featureFile = longestFirst.find((candidate) => file === candidate || file.endsWith(`/${candidate}`));
+    const featureFile = [...byFile.keys()].find((candidate) => file === candidate || file.endsWith(`/${candidate}`));
     const code = featureFile === undefined ? undefined : byFile.get(featureFile)!.get(line);
     return code ? [code] : [];
   };
