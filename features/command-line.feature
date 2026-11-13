@@ -199,6 +199,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then it will read no manifest
       and the run will not stop
 
+    @unit @CLM-CLI-198
+    Scenario: an input read by default that the tool is not permitted to read will stop the run, not count as none
+      given the run named no CI workflows, and the tool was not permitted to read the folder .github/workflows
+      when balance reads its inputs
+      then it will give no verdict, and will exit 2
+      and it will complain that it is not permitted to read .github/workflows
+
     @unit @CLM-CLI-191
     Scenario: balance reads a feature file in a subfolder of the feature corpus
       given the feature corpus's one feature file was two folders down, at area/deeper/one.feature

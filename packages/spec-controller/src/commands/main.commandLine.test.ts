@@ -316,6 +316,20 @@ describe("an input that is not valid will stop the run", () => {
   });
 });
 
+describe("an input read by default that the tool is not permitted to read will stop the run, not count as none", () => {
+  it.each([
+    ["the folder itself", ".github/workflows"],
+    ["the folder that holds it", ".github"],
+  ] as const)("[CLM-CLI-198] no CI workflows named, and the tool not permitted to read %s: no verdict, exit 2, and a complaint that it is not permitted to read .github/workflows", (_closed, path) => {
+    const folder = folderWith({ ".github/workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: echo ci\n" });
+    chmodSync(join(folder, path), 0o000);
+
+    const { exitCode, output, error } = ran(["balance"], folder);
+
+    expect({ exitCode, output, facts: [shown("{input-workflows} .github/workflows"), "[input-not-permitted]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
+  });
+});
+
 describe("a corpus with several feature files that do not parse will be refused, naming each of them", () => {
   it("[CLM-CLI-185] two feature files that do not parse: no verdict, exit 2, and a complaint about each, with what is wrong in each", () => {
     const folder = folderWith({ "features/one.feature": "not Gherkin\n", "features/two.feature": "@TWO\nFeature: two\n  Scenario: a\n    Given a table\n      | a | b |\n      | c |\n" });
