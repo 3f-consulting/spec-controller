@@ -117,6 +117,14 @@ describe("the report shows the unnamed claim's evidence one group per file", () 
   });
 });
 
+describe("a group of the unnamed claim's evidence with a shared claim code shows that code", () => {
+  it("[CLM-RPT-162] a passing unit test in a.test.ts citing no code, and one citing CLM-ONE-001, which two scenarios share, show two unit groups for a.test.ts, one showing CLM-ONE-001", () => {
+    const table = claimTable([["one.feature", "ONE", [["@unit @CLM-ONE-001", "adds"], ["@unit @CLM-ONE-001", "adds again"]]]], [["unit", "passed", undefined, "a.test.ts", "subtracts"], ["unit", "passed", "ONE-001", "a.test.ts", "adds"]]);
+
+    expect(cellUnder("Reconciling items", table, 2)).toBe("unit: cites-no-claim (a.test.ts) — 1 ran, 1 passed, 0 failed; unit: cites-no-claim (a.test.ts, CLM-ONE-001) — 1 ran, 1 passed, 0 failed");
+  });
+});
+
 describe("the unnamed claim's fitness evidence shows as one group with no file", () => {
   it("[CLM-RPT-159] the step ci.yml:build:Lint passing, citing no claim, shows as one fitness group with no file, 1 ran, 1 passed and 0 failed", () => {
     expect(cellUnder("Reconciling items", claimTable([], [["fitness", "passed", undefined, "ci.yml:build:Lint"]]))).toBe("fitness: cites-no-claim — 1 ran, 1 passed, 0 failed");

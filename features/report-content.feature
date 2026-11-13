@@ -98,6 +98,12 @@ Feature: Each report has the right structure, and the Markdown explains it
       when its Markdown report is written
       then the unnamed claim will show one group for each file, with how many of its tests ran, passed and failed, and the name of the test that failed
 
+    @unit @CLM-RPT-162
+    Scenario: a group of the unnamed claim's evidence with a shared claim code shows that code
+      given a run had a passing unit test in a.test.ts citing no code, and one in a.test.ts citing CLM-ONE-001, which two scenarios share
+      when its Markdown report is written
+      then the unnamed claim will show two unit groups for a.test.ts, one showing CLM-ONE-001
+
     @unit @CLM-RPT-159
     Scenario: the unnamed claim's fitness evidence shows as one group with no file
       given a run had the step ci.yml:build:Lint passing, citing no claim
