@@ -72,6 +72,10 @@ describe("a strict run will raise the Evidence Obligations a deferral put off", 
     ["CLM-OBL-017", "@wip @unit", ["unit"]],
     ["CLM-OBL-018", "@integrationpending", ["integration"]],
     ["CLM-OBL-019", "@unit @integrationpending", ["integration", "unit"]],
+    ["CLM-OBL-027", "@unitpending", ["unit"]],
+    ["CLM-OBL-028", "@e2epending", ["e2e"]],
+    ["CLM-OBL-029", "@performancepending", ["performance"]],
+    ["CLM-OBL-030", "@fitnesspending", ["fitness"]],
   ])("[%s] in a strict run, a scenario tagged %s raises its Evidence Obligations", (_clm, tags, kinds) => {
     expect(claimsIn(scenario(`@CLM-ONE-001 ${tags}`), { deferralTags: [], strict: true }).map(kindsOf)).toEqual([kinds]);
   });

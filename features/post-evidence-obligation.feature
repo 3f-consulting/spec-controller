@@ -80,6 +80,10 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
         | CLM-OBL-017 | @wip @unit                | a unit Evidence Obligation                    |
         | CLM-OBL-018 | @integrationpending       | an integration Evidence Obligation            |
         | CLM-OBL-019 | @unit @integrationpending | a unit and an integration Evidence Obligation |
+        | CLM-OBL-027 | @unitpending              | a unit Evidence Obligation                    |
+        | CLM-OBL-028 | @e2epending               | an e2e Evidence Obligation                    |
+        | CLM-OBL-029 | @performancepending       | a performance Evidence Obligation             |
+        | CLM-OBL-030 | @fitnesspending           | a fitness Evidence Obligation                 |
 
   Rule: an executable claim raises its Evidence Obligations under the one claim code it has
 
