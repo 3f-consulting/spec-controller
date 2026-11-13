@@ -34,7 +34,8 @@ function placed(output: OutputRequest<string>, streams: StandardStreams): Placed
   const { destination } = output;
   const named = destination.to === "file" ? pathIdentity(destination.path) : { is: destination.to };
   if (named.is === "standard-output") return { output, identity: streamIdentity(streams.output.fd, "standard-output"), stream: streams.output };
-  if (named.is === "standard-error") return { output, identity: streamIdentity(streams.error.fd, "standard-error"), stream: streams.error };
+  if (named.is === "standard-error")
+    return { output: { ...output, destination: { to: "standard-error" } }, identity: streamIdentity(streams.error.fd, "standard-error"), stream: streams.error };
   return { output, identity: named };
 }
 
@@ -49,7 +50,8 @@ function unwritableRefusal(outputs: readonly Placed[]): Refusal | undefined {
 }
 
 // A report as its --format asked for it.
-const asGiven = ({ format, destination }: OutputRequest<string>): string => (destination.to === "file" ? `${format}:${destination.path}` : format);
+const asGiven = ({ format, destination }: OutputRequest<string>): string =>
+  destination.to === "file" ? `${format}:${destination.path}` : destination.to === "standard-error" ? `${format}:/dev/stderr` : format;
 
 // Each refusal names what it is about: the reports as asked for, which name any file they share, or the file the run reads.
 function planRefusal(refusal: OutputRefusal<string>): Refusal {

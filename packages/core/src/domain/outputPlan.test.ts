@@ -20,6 +20,13 @@ describe("each of two reports will be where you asked", () => {
   ] as const)("[%s] reports asked for at %s are each planned for their own file", (_clm, _files, one, other) => {
     expect(outputPlanOf([toFile("md", "a/report", one), toFile("json", "b/report", other)], [])).toEqual({ ok: true });
   });
+
+  it("[CLM-FMT-022] two reports asked for on standard error, redirected into a file, are planned one after the other", () => {
+    const redirected: FileIdentity = { is: "regular-file", device: 1n, inode: 7n };
+    const onStandardError = (format: string): IdentifiedOutput<string> => ({ output: { format, destination: { to: "standard-error" } }, identity: redirected });
+
+    expect(outputPlanOf([onStandardError("md"), onStandardError("json")], [])).toEqual({ ok: true });
+  });
 });
 
 describe("a report will not be written over a file the run reads", () => {

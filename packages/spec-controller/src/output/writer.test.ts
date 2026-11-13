@@ -166,6 +166,24 @@ describe("each of two reports will be where you asked", () => {
 
     expect(areThere(folder, output.join(""), error.join(""))).toBe(true);
   });
+
+  it("[CLM-FMT-022] two reports asked for on standard error, redirected into a file, are both on standard error, one after the other", () => {
+    const file = join(temporaryDirectory("standard-error-redirected-"), "log.txt");
+    const { output, error, streams } = capturedStreams();
+    const redirected = openSync(file, "a");
+    onTestFinished(() => closeSync(redirected));
+
+    const ending = endingOf(() =>
+      writeReports(outputsAskedFor(["--format", "md:/dev/stderr", "--format", "json:/dev/stderr"]), [], RECONCILIATION, { ...streams, error: { ...streams.error, fd: redirected } }),
+    );
+
+    const onStandardError = error.join("");
+    expect({ ending, bothThere: opensAsMarkdown(onStandardError) && isJsonReport(onStandardError.slice(onStandardError.indexOf("\n{") + 1)), output: output.join("") }).toEqual({
+      ending: 0,
+      bothThere: true,
+      output: "",
+    });
+  });
 });
 
 describe("a place it cannot write will stop the run, and nothing will be written", () => {
