@@ -28,6 +28,7 @@ export type {
   ResultsBySuiteAsWritten,
   ScenarioResultAsWritten,
   ShellAnswers,
+  StepDisposition,
   StepRecordEntryAsWritten,
   UnnamedClaim,
   WorkflowStepAsWritten,
@@ -56,9 +57,12 @@ export type {
 } from "./domain/outputPlan.js";
 
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";
-export { runVerdictOf } from "./domain/evidenceReconciliation.js";
+export { runVerdictOf, stepAccountOf } from "./domain/evidenceReconciliation.js";
 export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
-export { evidenceObservationsOf } from "./domain/postEvidenceObservation.js";
+export { evidenceObservationsOf, fitnessObservationsOf, stepDispositionOf } from "./domain/postEvidenceObservation.js";
 export { featureAsWrittenFrom } from "./inputs/gherkin.js";
+export { shellAnswers } from "./inputs/shell.js";
+export { stepRecordFrom } from "./inputs/stepRecord.js";
 export { resultsByFileFrom } from "./inputs/vitest.js";
+export { workflowStepsFrom } from "./inputs/workflows.js";
 export { markdownReportOf } from "./reports/markdown.js";

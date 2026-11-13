@@ -1,3 +1,13 @@
 {
-  "balanced-opening": "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention."
+  "balanced-opening": "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention.",
+  "step-account-heading": "Step account",
+  "step-account-workflow": "Workflow",
+  "step-account-job": "Job",
+  "step-account-steps-read": "Steps read",
+  "step-account-runners": "Runners",
+  "step-account-reconciler-steps": "Reconciler steps",
+  "step-account-non-checks": "Non-checks",
+  "step-account-plumbing": "Plumbing",
+  "step-account-candidates": "Candidates",
+  "step-account-total": "Total"
 }

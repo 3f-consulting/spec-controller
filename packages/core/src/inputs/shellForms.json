@@ -1,0 +1,59 @@
+{
+  "launchers": [
+    "npx",
+    "pnpm exec",
+    "pnpm",
+    "yarn",
+    "bunx",
+    "python -m",
+    "python3 -m",
+    "uv run",
+    "poetry run",
+    "pipenv run",
+    "coverage run -m",
+    "bundle exec"
+  ],
+  "wrappers": [
+    {
+      "command": "xvfb-run",
+      "optionsTakingAValue": [
+        "-n",
+        "-s",
+        "-e",
+        "-f",
+        "-p",
+        "-w"
+      ]
+    }
+  ],
+  "scripts": [
+    {
+      "form": "npm test",
+      "script": "test"
+    },
+    {
+      "form": "npm run <script>"
+    },
+    {
+      "form": "pnpm <script>"
+    },
+    {
+      "form": "pnpm run <script>"
+    },
+    {
+      "form": "pnpm -r <script>"
+    },
+    {
+      "form": "pnpm --filter <name> <script>"
+    },
+    {
+      "form": "yarn <script>"
+    },
+    {
+      "form": "yarn run <script>"
+    },
+    {
+      "form": "yarn workspace <name> <script>"
+    }
+  ]
+}

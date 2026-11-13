@@ -1,4 +1,5 @@
-import { claimCodeCitationsIn, sameCode, type ClaimCode } from "./claimCodes.js";
+import { claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
+import type { TargetConfiguration } from "./configuration.js";
 import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
 
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
@@ -115,7 +116,7 @@ export interface StepRecordEntryAsWritten {
 
 // The shell reader's two answers, handed to the domain so it decides which question serves which step.
 export interface ShellAnswers {
-  readonly invokesAnywhere: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
+  readonly invokesAnywhere: (commandLine: string, program: string) => boolean;
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
 }
 
@@ -129,4 +130,81 @@ export function evidenceObservationsOf(results: readonly ResultsByFileAsWritten[
 
 export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {
   return claimCode === undefined ? [] : observations.filter(({ cites }) => cites.some((cited) => sameCode(cited, claimCode)));
+}
+
+// What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a candidate fitness function.
+export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "candidate";
+
+const RECONCILER = "spec-controller balance";
+
+// A step is known by its name, else the action it uses, else the first line of its command.
+function stepIdentityOf({ name, uses, run }: WorkflowStepAsWritten): string {
+  return name ?? uses ?? run?.split("\n").find((line) => line.trim() !== "")?.trim() ?? "";
+}
+
+const isNamedIn = (step: WorkflowStepAsWritten, { nonChecks }: TargetConfiguration): boolean =>
+  nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === stepIdentityOf(step));
+
+// The reconciler is recognised in any command of the step, a runner only as the command the step runs, through its scripts.
+const runsARunner = (run: string, { runners }: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): boolean =>
+  Object.values(runners).some((runner) => typeof runner === "string" && shell.invokesAsCommand(run, runner, scripts));
+
+export type Scripts = Readonly<Record<string, string>>;
+
+export function stepDispositionOf(step: WorkflowStepAsWritten, configuration: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): StepDisposition {
+  if (step.writesStepRecord || (step.run !== undefined && shell.invokesAnywhere(step.run, RECONCILER))) return "reconciler";
+  if (isNamedIn(step, configuration)) return "nonCheck";
+  if (step.plumbing) return "plumbing";
+  if (step.run !== undefined && runsARunner(step.run, configuration, scripts, shell)) return "runner";
+  return "candidate";
+}
+
+// The step record says how a step went by its outcome, read before continue-on-error turns a failure into success.
+const resultFrom = (outcome: string): Result => (outcome === "success" ? "passed" : outcome === "failure" ? "failed" : "never-ran");
+
+const allowsFailure = ({ continueOnError, jobContinueOnError }: WorkflowStepAsWritten): boolean => continueOnError === true || jobContinueOnError === true;
+
+const placeOf = (step: WorkflowStepAsWritten): string => `${step.workflow}:${step.job}:${stepIdentityOf(step)}`;
+
+function observationOf(step: WorkflowStepAsWritten, steps: readonly WorkflowStepAsWritten[], entry: StepRecordEntryAsWritten | undefined): EvidenceObservation {
+  const claimCode = step.id === undefined ? undefined : claimCodeFrom(step.id);
+  const result = entry === undefined ? "passed" : resultFrom(entry.outcome);
+  const jobsRecorded = new Set(steps.filter(({ id }) => entry !== undefined && id === entry.key).map(({ workflow, job }) => `${workflow}:${job}`));
+  return {
+    cites: claimCode === undefined ? [] : [claimCode],
+    result: result === "passed" && allowsFailure(step) ? "passed-on-error" : result,
+    kind: "fitness",
+    place: jobsRecorded.size > 1 ? entry!.key : placeOf(step),
+    notes: [],
+  };
+}
+
+// A recorded entry no step carries never ran where the workflows say; it is placed at its code, with the record's word.
+const unheldObservationOf = ({ key, outcome }: StepRecordEntryAsWritten, claimCode: ClaimCode): EvidenceObservation => ({
+  cites: [claimCode],
+  result: "never-ran",
+  kind: "fitness",
+  place: key,
+  notes: [outcome],
+});
+
+export function fitnessObservationsOf(
+  steps: readonly WorkflowStepAsWritten[],
+  record: readonly StepRecordEntryAsWritten[],
+  configuration: TargetConfiguration,
+  scripts: Scripts,
+  shell: ShellAnswers,
+): EvidenceObservation[] {
+  const byClaimCode = record.filter(({ key }) => claimCodeFrom(key) !== undefined);
+  const entryFor = ({ id }: WorkflowStepAsWritten) => byClaimCode.find(({ key }) => key === id);
+  // A runner posts nothing of its own, unless its id is a claim code the step record holds.
+  const posting = steps.filter((step) => {
+    const disposition = stepDispositionOf(step, configuration, scripts, shell);
+    return disposition === "candidate" || (disposition === "runner" && entryFor(step) !== undefined);
+  });
+  const postedOnce = posting.filter((step, at) => entryFor(step) === undefined || posting.findIndex(({ id }) => id === step.id) === at);
+  return [
+    ...postedOnce.map((step) => observationOf(step, posting, entryFor(step))),
+    ...byClaimCode.flatMap((entry) => (steps.some(({ id }) => id === entry.key) ? [] : [unheldObservationOf(entry, claimCodeFrom(entry.key)!)])),
+  ];
 }

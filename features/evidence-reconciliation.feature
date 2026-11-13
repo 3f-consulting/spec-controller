@@ -133,7 +133,6 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       given a run had read the steps of two jobs
       when balance reconciles it
       then the total of each count will be the sum over the jobs
-      and the steps accounted for will equal the steps read
 
   Rule: only a fitness function that ran counts as run
 

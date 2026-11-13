@@ -9,6 +9,7 @@ Feature: Each report has the right structure, and the Markdown explains it
   - Odd characters in what a report quotes break nothing.
   - The Markdown report shows the unnamed claim's evidence in groups, by kind of quality check, file and shared claim code.
   - The Markdown adds the words a person needs to read it.
+  - The step account totals its jobs only when it has more than one.
 
   Whether an answer or a count is right is proved where it is worked out, not here.
 
@@ -107,3 +108,16 @@ Feature: Each report has the right structure, and the Markdown explains it
       Examples:
         | clm         | run verdict |
         | CLM-RPT-111 | balanced    |
+
+  Rule: the step account totals its jobs only when it has more than one
+
+    @unit
+    Scenario Outline: one job has no Total row, and two jobs have one
+      given a run read the steps of <jobs>
+      when the Markdown report is written
+      then the step account will <total> a Total row
+
+      Examples:
+        | clm         | jobs                       | total    |
+        | CLM-RPT-112 | one job                    | not have |
+        | CLM-RPT-113 | two jobs, in two workflows | have     |
