@@ -174,6 +174,13 @@ describe("an input that is not valid will stop the run", () => {
     ["CLM-CLI-156", "a file in a JUnit directory not in JUnit's shape", { "junit/one.xml": "<testsuite/>", "junit/two.xml": "<html/>" }, ["--junit", "junit"], ["two.xml", "JUnit", "[input-not-in-its-shape]"]],
     ["CLM-CLI-157", "an RSpec evidence report not in RSpec's shape", { "rspec.json": '{"examples":3}' }, ["--rspec", "rspec.json"], ["rspec.json", "examples", "[input-not-in-its-shape]"]],
     ["CLM-CLI-158", "a step record not in the shape of a record of step outcomes", { "steps.json": '{"test":"passed"}' }, ["--ci-steps", "steps.json"], ["steps.json", "step outcomes", "[input-not-in-its-shape]"]],
+    [
+      "CLM-CLI-158",
+      "a step record with one step's outcomes, and one step not in their shape",
+      { "steps.json": '{"lint":{"outcome":"success","conclusion":"success"},"test":"passed"}' },
+      ["--ci-steps", "steps.json"],
+      ["steps.json", "step outcomes", "$.test", "[input-not-in-its-shape]"],
+    ],
     ["CLM-CLI-159", "a manifest not in a manifest's shape", { "package.json": "[]" }, ["--package-json", "package.json"], ["package.json", "manifest", "[input-not-in-its-shape]"]],
   ] as const)("[%s] %s: no verdict, exit 2, and a complaint with its facts", (_clm, _error, files, args, facts) => {
     const { exitCode, output, error } = ran(["balance", ...args], folderWith(files));
