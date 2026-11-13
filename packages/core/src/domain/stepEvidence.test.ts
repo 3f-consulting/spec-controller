@@ -9,8 +9,9 @@ import { claimReconciliationsOf } from "./claimReconciliation.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
 
+// A step named in notChecks, if any; a unit layer that has no runner is set to null.
 const configurationNaming = (notCheck: string | undefined): TargetConfiguration => ({
-  runners: {},
+  runners: { unit: null },
   nonChecks: notCheck === undefined ? [] : [{ workflow: "ci.yml", job: "ci", step: notCheck }],
   deferralTags: [],
 });
@@ -112,9 +113,13 @@ describe("balance posts a fitness function known only from its workflow as passe
 
 describe("a recorded step no workflow holds, and a step whose id is not a claim code", () => {
   it("[CLM-OBS-096] balance posts a recorded step that no workflow holds at its claim code, as never ran, with the note the record gave", () => {
-    const observations = fitnessObservationsOf([], recordOf({ "CLM-ONE-001": { outcome: "skipped", conclusion: "skipped" } }), NO_SETTING, {}, shellAnswers);
+    const steps = workflowOf({ ci: { steps: [{ id: "CLM-ONE-002", run: "pnpm lint" }] } });
+    const observations = fitnessObservationsOf(steps, recordOf({ "CLM-ONE-001": { outcome: "skipped", conclusion: "skipped" } }), NO_SETTING, {}, shellAnswers);
 
-    expect(observations).toEqual([{ cites: [ONE_001], result: "never-ran", kind: "fitness", place: "CLM-ONE-001", notes: ["skipped"] }]);
+    expect(observations).toEqual([
+      { cites: [{ featureCode: "ONE", number: "002" }], result: "passed", kind: "fitness", place: "ci.yml:ci:pnpm lint" },
+      { cites: [ONE_001], result: "never-ran", kind: "fitness", place: "CLM-ONE-001", notes: ["skipped"] },
+    ]);
   });
 
   it("[CLM-OBS-097] a fitness function whose id is not a claim code will be posted once, citing no claim code", () => {

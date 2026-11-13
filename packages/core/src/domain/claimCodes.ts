@@ -64,8 +64,9 @@ export function claimCodeCitationsIn(text: string): ClaimCode[] {
   return [...text.matchAll(CITATION)].map(([, featureCode, number]) => ({ featureCode: featureCode!, number: number! }));
 }
 
-export function claimCodeFrom(word: string): ClaimCode | undefined {
-  const match = CLAIM_CODE.exec(word);
+// An absent word is no code.
+export function claimCodeFrom(word: string | undefined): ClaimCode | undefined {
+  const match = CLAIM_CODE.exec(String(word));
   return match === null ? undefined : { featureCode: match[1]!, number: match[2]! };
 }
 

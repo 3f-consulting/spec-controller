@@ -240,7 +240,7 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
   });
 
   it.each<[string, readonly StepRun[]]>([
-    ["CLM-OBS-043", [["Given ", "one adds one", "skipped"], ["Then ", "it is two", "skipped"]]],
+    ["CLM-OBS-043", [PASSED, ["Then ", "it is two", "skipped"]]],
     ["CLM-OBS-106", []],
   ])("[%s] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 that skipped a step and failed none, or had no steps, posts nothing", (_clm, steps) => {
     expect(postedByScenario(reportByScenario("features/one.feature", [{ tags: ["integration", "CLM-ONE-001"], steps }]))).toEqual([]);
@@ -312,17 +312,17 @@ describe("balance posts what could not run as never ran", () => {
 });
 
 describe("balance posts what could not run as never ran, from a report kept by suite", () => {
-  it.each<[string, SuiteWriter, string, string, string, string, readonly ClaimCode[], string, string]>([
-    ["CLM-OBS-046", "pytest", "pytest", "", "test_uncollectable", '<error message="collection failure">test_uncollectable.py:1: in &lt;module&gt;\n    import module_that_does_not_exist\nE   ModuleNotFoundError: No module named \'module_that_does_not_exist\'</error>', [], "test_uncollectable", "collection failure"],
-    ["CLM-OBS-047", "go", "example.com/broken", "", "TestMain", '<failure message="Failed" type="">FAIL&#x9;example.com/broken [build failed]&#xA;</failure>', [], "example.com/broken", "Failed"],
-    ["CLM-OBS-100", "go", "example.com/setup", "", "TestMain", '<failure message="Failed" type="">main_test.go:12: the database could not be reached&#xA;FAIL&#x9;example.com/setup&#x9;0.004s&#xA;</failure>', [], "example.com/setup", "Failed"],
-    ["CLM-OBS-048", "surefire", "example.SetupFailsTest", "example.SetupFailsTest", "", '<error message="the shared resource could not be set up" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: the shared resource could not be set up]]></error>', [], "example.SetupFailsTest", "the shared resource could not be set up"],
-    ["CLM-OBS-050", "pytest", "pytest", "test_adds", "test_adds_one", `${CLM_PROPERTY}<error message="failed on setup with &quot;RuntimeError: the resource could not be set up&quot;">@pytest.fixture\ndef broken_resource():\n&gt;       raise RuntimeError("the resource could not be set up")</error>`, [ONE_001], "test_adds", 'failed on setup with "RuntimeError: the resource could not be set up"'],
-  ])("[%s] what could not run in %s's evidence report is posted as never-ran, citing what it cites and naming where and its error", (_clm, writer, suite, className, name, inside, cites, place, message) => {
+  it.each<[string, SuiteWriter, string, string, string, string, readonly ClaimCode[], string, string, string | undefined]>([
+    ["CLM-OBS-046", "pytest", "pytest", "", "test_uncollectable", '<error message="collection failure">test_uncollectable.py:1: in &lt;module&gt;\n    import module_that_does_not_exist\nE   ModuleNotFoundError: No module named \'module_that_does_not_exist\'</error>', [], "test_uncollectable", "collection failure", undefined],
+    ["CLM-OBS-047", "go", "example.com/broken", "", "TestMain", '<failure message="Failed" type="">FAIL&#x9;example.com/broken [build failed]&#xA;</failure>', [], "example.com/broken", "Failed", undefined],
+    ["CLM-OBS-100", "go", "example.com/setup", "", "TestMain", '<failure message="Failed" type="">main_test.go:12: the database could not be reached&#xA;FAIL&#x9;example.com/setup&#x9;0.004s&#xA;</failure>', [], "example.com/setup", "Failed", undefined],
+    ["CLM-OBS-048", "surefire", "example.SetupFailsTest", "example.SetupFailsTest", "", '<error message="the shared resource could not be set up" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: the shared resource could not be set up]]></error>', [], "example.SetupFailsTest", "the shared resource could not be set up", undefined],
+    ["CLM-OBS-050", "pytest", "pytest", "test_adds", "test_adds_one", `${CLM_PROPERTY}<error message="failed on setup with &quot;RuntimeError: the resource could not be set up&quot;">@pytest.fixture\ndef broken_resource():\n&gt;       raise RuntimeError("the resource could not be set up")</error>`, [ONE_001], "test_adds", 'failed on setup with "RuntimeError: the resource could not be set up"', "test_adds_one"],
+  ])("[%s] what could not run in %s's evidence report is posted as never-ran, citing what it cites and naming where and its error", (_clm, writer, suite, className, name, inside, cites, place, message, test) => {
     const posted = postedBySuite(writer, suite, testCase(className, name, inside));
 
-    expect(posted.map(({ result, cites: cited, place: placed, message: said }) => ({ result, cites: cited, place: placed, message: said }))).toEqual([
-      { result: "never-ran", cites, place, message },
+    expect(posted.map(({ result, cites: cited, place: placed, name: named, message: said }) => ({ result, cites: cited, place: placed, name: named, message: said }))).toStrictEqual([
+      { result: "never-ran", cites, place, name: test, message },
     ]);
   });
 });

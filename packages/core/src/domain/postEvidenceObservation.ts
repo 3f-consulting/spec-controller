@@ -7,6 +7,7 @@ import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
 
 // place is a file or a CI step; name is a test's title where it has one. A report joins them to say where to look.
+// notes are what balance adds to what the evidence said, when it adds anything.
 export interface EvidenceObservation {
   readonly cites: readonly ClaimCode[];
   readonly result: Result;
@@ -14,7 +15,7 @@ export interface EvidenceObservation {
   readonly place: string;
   readonly name?: string;
   readonly message?: string;
-  readonly notes: readonly string[];
+  readonly notes?: readonly string[];
 }
 
 export interface PhantomClaim {
@@ -117,13 +118,13 @@ export function observationsByFile(results: readonly ResultsByFileAsWritten[], t
   return results.flatMap(({ file, status, message, results: inFile }): EvidenceObservation[] => {
     const place = shownFromTarget(file, targetFolder);
     if (status === "failed" && inFile.length === 0) {
-      return [{ cites: [], result: "never-ran", kind: "unit", place, ...(message === undefined ? {} : { message }), notes: [] }];
+      return [{ cites: [], result: "never-ran", kind: "unit", place, message }];
     }
     return inFile.flatMap(({ ancestorTitles, title, status: resultStatus, failureMessages }) => {
       const result = RESULT_BY_STATUS[resultStatus];
       if (result === undefined) return [];
       const failure = failureMessages.join("\n");
-      return [{ cites: nearestCitations([...ancestorTitles, title]), result, kind: "unit", place, name: title, ...(failure && { message: failure }), notes: [] }];
+      return [{ cites: nearestCitations([...ancestorTitles, title]), result, kind: "unit", place, name: title, ...(failure && { message: failure }) }];
     });
   });
 }
@@ -139,7 +140,7 @@ function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFo
   const cites = collected ? clmProperties.flatMap((property) => claimCodeFrom(property) ?? []) : [];
   const resultOf: Result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
   const place = shownFromTarget(collected ? className! : name, targetFolder);
-  return [{ cites, result: resultOf, kind: "unit", place, ...(collected && { name }), ...saidBy(failure), notes: [] }];
+  return [{ cites, result: resultOf, kind: "unit", place, ...(collected && { name }), ...saidBy(failure) }];
 }
 
 // A case with no class name is its suite's own failure, such as a package that did not build; one with no name is its
@@ -148,11 +149,11 @@ function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: Re
   const { className = "", name, outcome, failure } = result;
   if (outcome === "skipped") return [];
   if (outcome !== "" && (className === "" || name === "")) {
-    return [{ cites: [], result: "never-ran", kind: "unit", place: className || suite.name, ...saidBy(failure), notes: [] }];
+    return [{ cites: [], result: "never-ran", kind: "unit", place: className || suite.name, ...saidBy(failure) }];
   }
   const cites = nearestCitations([...classesIn(className), ...name.split("/")]);
   const place = shownFromTarget(className || suite.name, targetFolder);
-  return [{ cites, result: outcome === "" ? "passed" : "failed", kind: "unit", place, name, ...saidBy(failure), notes: [] }];
+  return [{ cites, result: outcome === "" ? "passed" : "failed", kind: "unit", place, name, ...saidBy(failure) }];
 }
 
 // Results kept by suite, each case in its suite.
@@ -172,15 +173,14 @@ export function observationsByExample({ examples, loadErrors }: ResultsByExample
     if (result === undefined) return [];
     // Its own description cites first; failing that, its groups' do, in its full description.
     const cites = nearestCitations([fullDescription, description]);
-    return [{ cites, result, kind: "unit", place: shownFromTarget(file, targetFolder), name: description, ...(message === undefined ? {} : { message }), notes: [] }];
+    return [{ cites, result, kind: "unit", place: shownFromTarget(file, targetFolder), name: description, message }];
   });
   const neverRan = loadErrors.map(({ file, message }): EvidenceObservation => ({
     cites: [],
     result: "never-ran",
     kind: "unit",
     place: file === undefined ? "" : shownFromTarget(file, targetFolder),
-    message,
-    notes: [],
+    message
   }));
   return [...ran, ...neverRan];
 }
@@ -203,7 +203,7 @@ function resultOfSteps(steps: readonly StepAsWritten[]): { readonly result: Resu
   const unmatched = steps.find(({ status }) => status === "undefined" || status === "ambiguous");
   if (unmatched) return { result: "never-ran", message: asWritten(unmatched) };
   const failed = steps.find(({ status }) => status === "failed");
-  if (failed) return { result: "failed", ...(failed.message === undefined ? {} : { message: failed.message }) };
+  if (failed) return { result: "failed", message: failed.message };
   return steps.some(({ text }) => text !== undefined) && steps.every(({ status }) => status === "passed") ? { result: "passed" } : undefined;
 }
 
@@ -213,7 +213,7 @@ function rowCodesOf(features: readonly FeatureAsWritten[]): (file: string, line:
   for (const { file, scenarios } of features) {
     const byLine = new Map<number, ClaimCode | undefined>();
     for (const { columns, rows } of scenarios.flatMap(({ examples }) => examples)) {
-      for (const { line, cells } of rows) byLine.set(line, claimCodeFrom(cells[columns.indexOf(CLM_COLUMN)] ?? ""));
+      for (const { line, cells } of rows) byLine.set(line, claimCodeFrom(cells[columns.indexOf(CLM_COLUMN)]));
     }
     byFile.set(file, byLine);
   }
@@ -238,7 +238,7 @@ export function observationsOfScenarios(
     const tagged = tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
     const cites = tagged.length > 0 ? tagged : rowCodeOf(file, line);
     const place = shownFromTarget(file, targetFolder);
-    return kindsOf(tags).map((kind): EvidenceObservation => ({ cites, ...outcome, kind, place, name: title, notes: [] }));
+    return kindsOf(tags).map((kind): EvidenceObservation => ({ cites, ...outcome, kind, place, name: title }));
   });
 }
 
@@ -272,15 +272,14 @@ const allowsFailure = ({ continueOnError, jobContinueOnError }: WorkflowStepAsWr
 const placeOf = (step: WorkflowStepAsWritten): string => `${step.workflow}:${step.job}:${stepIdentityOf(step)}`;
 
 function observationOf(step: WorkflowStepAsWritten, steps: readonly WorkflowStepAsWritten[], entry: StepRecordEntryAsWritten | undefined): EvidenceObservation {
-  const claimCode = step.id === undefined ? undefined : claimCodeFrom(step.id);
+  const claimCode = claimCodeFrom(step.id);
   const result = entry === undefined ? "passed" : resultFrom(entry.outcome);
   const jobsRecorded = new Set(steps.filter(({ id }) => entry !== undefined && id === entry.key).map(({ workflow, job }) => `${workflow}:${job}`));
   return {
     cites: claimCode === undefined ? [] : [claimCode],
     result: result === "passed" && allowsFailure(step) ? "passed-on-error" : result,
     kind: "fitness",
-    place: jobsRecorded.size > 1 ? entry!.key : placeOf(step),
-    notes: [],
+    place: jobsRecorded.size > 1 ? entry!.key : placeOf(step)
   };
 }
 

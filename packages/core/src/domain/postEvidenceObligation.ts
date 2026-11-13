@@ -68,7 +68,7 @@ function claimsOf({ file, fileTags }: FeatureAsWritten, scenario: ScenarioAsWrit
   const claim = (claimCode: ClaimCode | undefined): ExecutableClaim => ({ file, title: scenario.title, obligations, ...(claimCode && { claimCode }) });
   const cells = clmCellsOf(scenario);
   if (cells === undefined) return [claim(tagged.length === 1 ? tagged[0] : undefined)];
-  return cells.map((cell) => claim(tagged.length === 0 ? claimCodeFrom(cell ?? "") : undefined));
+  return cells.map((cell) => claim(tagged.length === 0 ? claimCodeFrom(cell) : undefined));
 }
 
 export function executableClaimsOf(features: readonly FeatureAsWritten[], settings: ClaimReadingSettings): ExecutableClaim[] {

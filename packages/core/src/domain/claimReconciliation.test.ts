@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { ClaimCode } from "./claimCodes.js";
 import { citedClaimReconciliationOf, claimReconciliationOf, claimReconciliationsOf, evidenceGroupsOf } from "./claimReconciliation.js";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
+import { shellAnswers } from "../inputs/shell.js";
+import { workflowStepsFrom } from "../inputs/workflows.js";
 import { executableClaimsOf, type ExecutableClaim, type QualityCheckKind } from "./postEvidenceObligation.js";
-import type { EvidenceObservation, PhantomClaim, Result, UnnamedClaim } from "./postEvidenceObservation.js";
+import { fitnessObservationsOf, type EvidenceObservation, type PhantomClaim, type Result, type UnnamedClaim } from "./postEvidenceObservation.js";
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
 const ONE_999: ClaimCode = { featureCode: "ONE", number: "999" };
@@ -189,8 +191,9 @@ const unnamedObservation = ([kind, result, place, cites, name]: Unnamed): Eviden
   notes: [],
 });
 
-const groupsOn = (evidence: readonly Unnamed[]): ReturnType<typeof evidenceGroupsOf> =>
-  evidenceGroupsOf(citedClaimReconciliationOf({}, evidence.map(unnamedObservation)));
+const groupsOf = (observations: readonly EvidenceObservation[]): ReturnType<typeof evidenceGroupsOf> => evidenceGroupsOf(citedClaimReconciliationOf({}, observations));
+
+const groupsOn = (evidence: readonly Unnamed[]): ReturnType<typeof evidenceGroupsOf> => groupsOf(evidence.map(unnamedObservation));
 
 describe("evidence of the same kind, file and shared claim code will share a group", () => {
   it.each<[string, readonly Unnamed[], readonly string[]]>([
@@ -199,7 +202,6 @@ describe("evidence of the same kind, file and shared claim code will share a gro
     ["CLM-LDG-067", [["unit", "passed", "a.test.ts", [], "x"], ["integration", "passed", "a.test.ts", [], "y"]], ["unit a.test.ts  1", "integration a.test.ts  1"]],
     ["CLM-LDG-068", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "a.test.ts", ["001"], "y"]], ["unit a.test.ts  1", "unit a.test.ts ONE-001 1"]],
     ["CLM-LDG-073", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "a.test.ts", ["001", "002"], "y"]], ["unit a.test.ts  2"]],
-    ["CLM-LDG-069", [["fitness", "passed", "ci / Lint", [], "Lint"], ["fitness", "passed", "ci / Audit", [], "Audit"]], ["fitness   2"]],
     ["CLM-LDG-070", [["fitness", "passed", "ci / Lint", [], "Lint"], ["fitness", "passed", "ci / Audit", ["001"], "Audit"]], ["fitness   1", "fitness  ONE-001 1"]],
   ])("[%s] the unnamed claim's evidence falls into its groups", (_clm, evidence, groups) => {
     const read = groupsOn(evidence).map(({ kind, file, claimCode, qualityCheckReconciliations }) =>
@@ -207,6 +209,17 @@ describe("evidence of the same kind, file and shared claim code will share a gro
     );
 
     expect([...read].sort()).toEqual([...groups].sort());
+  });
+});
+
+describe("two uncited fitness functions share one group", () => {
+  it("[CLM-LDG-069] two steps with no id, in jobs build and test, posted from an empty step record, are one fitness group naming both", () => {
+    const steps = workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: [{ run: "pnpm lint" }] }, test: { steps: [{ run: "pnpm audit-the-tree" }] } } }));
+    const posted = fitnessObservationsOf(steps, [], { runners: {}, nonChecks: [], deferralTags: [] }, {}, shellAnswers);
+
+    expect(groupsOf(posted).map(({ kind, file, qualityCheckReconciliations }) => ({ kind, file, places: qualityCheckReconciliations.map(({ observation }) => observation?.place) }))).toEqual([
+      { kind: "fitness", file: undefined, places: ["ci.yml:build:pnpm lint", "ci.yml:test:pnpm audit-the-tree"] },
+    ]);
   });
 });
 
