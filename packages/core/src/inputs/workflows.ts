@@ -15,7 +15,6 @@ type Mapping = Readonly<Record<string, unknown>>;
 
 const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null && !Array.isArray(value);
 const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
-const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value.filter(isMapping) : []);
 
 function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping): WorkflowStepAsWritten {
   const uses = text(step["uses"]);
@@ -35,11 +34,8 @@ function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknow
 }
 
 export function workflowStepsFrom(workflow: string, source: string): WorkflowStepAsWritten[] {
-  const document: unknown = parse(source);
-  const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
+  const { jobs } = parse(source) as { readonly jobs: Readonly<Record<string, Mapping>> };
   return Object.entries(jobs).flatMap(([job, definition]) =>
-    isMapping(definition)
-      ? mappingsIn(definition["steps"]).map((step) => stepAsWritten(workflow, job, definition["continue-on-error"], step))
-      : [],
+    (definition["steps"] as readonly unknown[]).filter(isMapping).map((step) => stepAsWritten(workflow, job, definition["continue-on-error"], step)),
   );
 }
