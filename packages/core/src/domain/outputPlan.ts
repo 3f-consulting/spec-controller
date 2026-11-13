@@ -48,9 +48,8 @@ function fileKeyOf(identity: FileIdentity): string | undefined {
       return `${identity.device}:${identity.inode}`;
     case "absent":
       return identity.folder && `${identity.folder.device}:${identity.folder.inode}/${identity.name}`;
-    default:
-      return undefined;
   }
+  return undefined;
 }
 
 function sameFile(one: FileIdentity, other: FileIdentity): boolean {
