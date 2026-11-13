@@ -222,6 +222,10 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(dispositionOf(behindTheWrapper[wrapper]!, "vitest")).toBe("runner");
   });
 
+  it.each(["-k 5", "-s KILL"])("[CLM-OBS-112] a step running its unit runner behind timeout %s 75, past an option and that option's value, will be counted as a runner", (option) => {
+    expect(dispositionOf(`timeout ${option} 75 vitest run`, "vitest")).toBe("runner");
+  });
+
   it.each(["-n", "-s", "-e", "-f", "-p", "-w"])("[CLM-OBS-117] a step running xvfb-run %s 99 vitest run, past an option and that option's value, will be counted as a runner, and nothing will be posted", (option) => {
     expect(countedAndPosted(`xvfb-run ${option} 99 vitest run`, "vitest")).toEqual({ countedAs: "runner", posted: 0 });
   });
