@@ -106,6 +106,9 @@ export interface ShellAnswers {
 const nearestCitations = (chain: readonly string[]): ClaimCode[] =>
   chain.reduceRight<ClaimCode[]>((found, title) => (found.length > 0 ? found : claimCodeCitationsIn(title)), []);
 
+// A nested class's name holds its outer classes' display names first, each opening with its citation when it has one.
+const classesIn = (className: string): string[] => className.split(/(?=\[CLM-)/);
+
 const RESULT_BY_STATUS: Readonly<Record<string, Result>> = { passed: "passed", failed: "failed" };
 
 // Results kept by test file: Vitest's and Jest's. A failed file with no results is one that could not run.
@@ -151,7 +154,7 @@ function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: Re
   if (outcome !== "" && (className === "" || name === "")) {
     return [{ cites: [], result: "never-ran", kind: "unit", place: className || suite.name, ...saidBy(failure), notes: [] }];
   }
-  const cites = nearestCitations([className, ...name.split("/")]);
+  const cites = nearestCitations([...classesIn(className), ...name.split("/")]);
   const place = shownFromTarget(className || suite.name, targetFolder);
   return [{ cites, result: outcome === "" ? "passed" : "failed", kind: "unit", place, name, ...saidBy(failure), notes: [] }];
 }
