@@ -159,7 +159,8 @@ Feature: the command line reads what you give it, and says where each kind of ou
     the feature corpus, the CI workflows and the manifest. An input that is well formed but empty
     is valid. If the CI workflows are left to their default and that folder does not exist, the
     tool reads no workflows. If the feature corpus is left to its default and that folder does not
-    exist, the tool reads no feature files. An evidence report that is valid stays valid even if
+    exist, the tool reads no feature files. If the manifest is left to its default and that file
+    does not exist, the tool reads no manifest. An evidence report that is valid stays valid even if
     its evidence did not fully materialise; the run is then unsound. The balance command leaves out
     any configuration setting it cannot use, as configuration.feature says.
 
@@ -183,6 +184,25 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads its inputs
       then it will read no feature files
       and the run will not stop
+
+    @unit @CLM-CLI-192
+    Scenario: a manifest read by default that does not exist will count as no manifest, not as a missing input
+      given the run named no manifest, and the file package.json did not exist
+      when balance reads its inputs
+      then it will read no manifest
+      and the run will not stop
+
+    @unit @CLM-CLI-191
+    Scenario: balance reads a feature file in a subfolder of the feature corpus
+      given the feature corpus's one feature file was two folders down, at area/deeper/one.feature
+      when balance reads its inputs
+      then it will read area/deeper/one.feature
+
+    @unit @CLM-CLI-193
+    Scenario: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
+      given the run named the workflow ci.yml as its CI workflows, and then a folder holding ci.yml and release.yaml
+      when balance reads its inputs
+      then it will read ci.yml alone, and then both workflows
 
     @unit
     Scenario Outline: an input that is not valid will stop the run

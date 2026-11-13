@@ -12,7 +12,7 @@ import { writeFileSync } from "node:fs";
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import { pathIdentity, streamIdentity } from "./identity.js";
 import type { StandardStream, StandardStreams } from "./streams.js";
-import { refusalText } from "./allocateNotes.js";
+import { refusalText } from "../runEnding/refusal.js";
 import { whyUnwritable } from "./writable.js";
 import { exitCodeOf, USAGE_ERROR } from "../runEnding/exitCode.js";
 import type { ExitCode, Refusal } from "../runEnding/runEnding.js";
@@ -64,6 +64,7 @@ export function writeReports(
   inputsRead: readonly string[],
   reconciliation: ReportedReconciliation,
   streams: StandardStreams,
+  under: { readonly exitZero: boolean } = { exitZero: false },
 ): ExitCode {
   const outputsPlaced = outputs.map((output) => placed(output, streams));
   const plan = outputPlanOf(
@@ -80,5 +81,5 @@ export function writeReports(
     if (stream !== undefined) stream.write(report);
     else if (destination.to === "file") writeFileSync(destination.path, report);
   });
-  return exitCodeOf(reconciliation.runVerdict);
+  return exitCodeOf(reconciliation.runVerdict, under);
 }

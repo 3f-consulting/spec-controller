@@ -55,10 +55,7 @@ const itemOf = (reconciliation: QualityCheckReconciliation): string =>
 function groupItemsOf(claimReconciliation: ClaimReconciliation): string[] {
   return evidenceGroupsOf(claimReconciliation).map(
     ({ kind, file, qualityCheckReconciliations, ran, passed, failed, failures }) =>
-      `${kind}: ${qualityCheckReconciliations[0]!.outcome}${file === undefined ? "" : ` (${inCell(file)})`} — ${coreText("group-counts")
-        .replace("{ran}", String(ran))
-        .replace("{passed}", String(passed))
-        .replace("{failed}", String(failed))}${failures.length === 0 ? "" : `: ${failures.map(inCell).join(", ")}`}`,
+      `${kind}: ${qualityCheckReconciliations[0]!.outcome}${file === undefined ? "" : ` (${inCell(file)})`} — ${coreText("group-counts", { ran, passed, failed })}${failures.length === 0 ? "" : `: ${failures.map(inCell).join(", ")}`}`,
   );
 }
 

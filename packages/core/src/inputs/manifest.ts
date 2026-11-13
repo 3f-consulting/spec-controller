@@ -1,5 +1,6 @@
 import { targetConfigurationOf, type ConfigurationError, type SettingSpellings, type TargetConfiguration } from "../domain/configuration.js";
 import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
+import { whereShapeBreaks } from "./shape.js";
 
 // A step as notChecks writes it: its workflow, which ends .yml or .yaml and may hold a colon, its job, and its step.
 const STEP_AS_WRITTEN = /^(.+?\.ya?ml):([^:]+):(.+)$/;
@@ -14,6 +15,9 @@ const settingSpellings: SettingSpellings = {
 };
 
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> => typeof value === "object" && value !== null && !Array.isArray(value);
+
+// A manifest is a record of fields; what each holds is its own reader's to say.
+export const whereManifestBreaks = (manifest: unknown): string | undefined => whereShapeBreaks(manifest, { fields: {} });
 
 export function targetConfigurationFrom(
   manifest: unknown,

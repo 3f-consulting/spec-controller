@@ -44,7 +44,7 @@ function endingOf(write: () => number): unknown {
 
 const outputsAskedFor = (args: readonly string[]) => {
   const request = runRequestOf(["balance", ...args]);
-  return request.command === "balance" ? request.outputs : [];
+  return "command" in request && request.command === "balance" ? request.outputs : [];
 };
 
 describe("you will get the report format you named", () => {

@@ -1,4 +1,5 @@
 import type { ResultsByFileAsWritten } from "../domain/postEvidenceObservation.js";
+import { whereShapeBreaks, type Shape } from "./shape.js";
 
 // Jest's JSON evidence report, which Vitest also writes, as far as its reader reads it.
 interface JestJsonReport {
@@ -14,6 +15,24 @@ interface JestJsonReport {
     }[];
   }[];
 }
+
+const REPORT: Shape = {
+  fields: {
+    testResults: {
+      listOf: {
+        fields: {
+          name: "string",
+          status: "string",
+          message: "string",
+          assertionResults: { listOf: { fields: { ancestorTitles: { listOf: "string" }, title: "string", status: "string", failureMessages: { listOf: "string" } } } },
+        },
+        optional: ["message"],
+      },
+    },
+  },
+};
+
+export const whereResultsByFileBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
 export function resultsByFileFrom(report: unknown, from: "vitest" | "jest"): ResultsByFileAsWritten[] {
   return (report as JestJsonReport).testResults.map(({ name, status, message, assertionResults }) => ({
