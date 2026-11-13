@@ -1,165 +1,28 @@
+// A claim code as written: CLM, a feature code, and a number kept as written, so 001 stays 001.
 export interface ClaimCode {
   readonly featureCode: string;
   readonly number: string;
 }
 
-const CLAIM_CODE_PREFIX = "CLM";
-
-const RETIRED_SCENARIO_CODE_PREFIX = "SCN";
-
-const FEATURE_CODE_FORM = "[A-Z0-9]{2,5}";
-
-const FEATURE_CODE = new RegExp(`^${FEATURE_CODE_FORM}$`);
-
-const CLAIM_CODE = new RegExp(`^${CLAIM_CODE_PREFIX}-(${FEATURE_CODE_FORM})-(\\d+)$`);
-
-const RETIRED_SCENARIO_CODE = new RegExp(`^${RETIRED_SCENARIO_CODE_PREFIX}-(${FEATURE_CODE_FORM})-(\\d+)$`);
-
-export function isFeatureCode(text: string): boolean {
-  return FEATURE_CODE.test(text);
-}
-
-export function sameCode(a: ClaimCode, b: ClaimCode): boolean {
-  return a.featureCode === b.featureCode && a.number === b.number;
-}
-
-function codeMatching(form: RegExp, text: string): ClaimCode | undefined {
-  const parts = form.exec(text);
-  return parts ? { featureCode: parts[1]!, number: parts[2]! } : undefined;
-}
-
-export function claimCodeFrom(text: string | undefined): ClaimCode | undefined {
-  return codeMatching(CLAIM_CODE, String(text));
-}
-
-export function retiredScenarioCodeFrom(text: string): ClaimCode | undefined {
-  return codeMatching(RETIRED_SCENARIO_CODE, text);
-}
-
-export interface ClaimRow {
-  readonly cell: string | undefined;
-}
-
-// A scenario as the claims are read off it: a tag written twice is one tag, and an Outline with a clm column has a row for each claim.
-export interface ScenarioRead {
-  readonly tags: readonly string[];
-  readonly title: string;
-  readonly examplesTags: readonly string[];
-  readonly rows: readonly ClaimRow[] | undefined;
-}
-
-// Each feature file with its scenarios as the claims are read off them.
-export interface FeatureRead {
-  readonly file: string;
-  readonly featureTags: readonly string[];
-  readonly scenarios: readonly ScenarioRead[];
-}
-
-export function featureCodeOfFile({ featureTags }: Pick<FeatureRead, "featureTags">): string | undefined {
-  return featureTags.find(isFeatureCode);
-}
-
-interface DuplicateFeatureCodeError {
-  readonly kind: "duplicate-feature-code";
-  readonly featureCode: string;
-  readonly files: readonly string[];
-}
-
-interface ForeignClaimCodeError {
-  readonly kind: "foreign-claim-code";
-  readonly files: readonly string[];
-  readonly claimCode: string;
-  readonly namedFeatureCode: string;
-  readonly namedFeatureFiles: readonly string[];
-}
-
-interface NoFeatureCodeError {
-  readonly kind: "no-feature-code";
-  readonly files: readonly string[];
-}
-
-interface SeveralClaimCodesError {
-  readonly kind: "several-claim-codes";
-  readonly files: readonly string[];
-  readonly scenario: string;
-  readonly codes: readonly string[];
-}
-
-interface ClaimCodeBesideClmColumnError {
-  readonly kind: "claim-code-beside-clm-column";
-  readonly files: readonly string[];
-  readonly scenario: string;
-  readonly codes: readonly string[];
-}
-
 export type ClaimCodeError =
-  | DuplicateFeatureCodeError
-  | ForeignClaimCodeError
-  | NoFeatureCodeError
-  | SeveralClaimCodesError
-  | ClaimCodeBesideClmColumnError;
+  | {
+      readonly kind: "foreign-claim-code";
+      readonly claimCode: ClaimCode;
+      readonly file: string;
+      // The files tagged with the code's feature code: none, one, or several where the feature code is duplicated.
+      readonly filesWithItsFeatureCode: readonly string[];
+    }
+  | { readonly kind: "no-feature-code"; readonly file: string }
+  | { readonly kind: "duplicate-feature-code"; readonly featureCode: string; readonly files: readonly string[] }
+  | {
+      readonly kind: "several-claim-codes";
+      readonly file: string;
+      readonly title: string;
+      readonly claimCodes: readonly ClaimCode[];
+    }
+  | { readonly kind: "claim-code-beside-clm-column"; readonly file: string; readonly title: string; readonly claimCode: ClaimCode };
 
-export const written = ({ featureCode, number }: ClaimCode): string => `${CLAIM_CODE_PREFIX}-${featureCode}-${number}`;
-
-export const claimCodesIn = (words: readonly (string | undefined)[]): ClaimCode[] => words.flatMap((word) => claimCodeFrom(word) ?? []);
-
-// The codes a scenario carries: an Outline's clm cells, or else its tagged codes.
-function codesCarriedBy(scenario: ScenarioRead): ClaimCode[] {
-  return claimCodesIn(scenario.rows ? scenario.rows.map((row) => row.cell) : scenario.tags);
-}
-
-function filesByFeatureCode(features: readonly FeatureRead[]): ReadonlyMap<string, readonly string[]> {
-  const files = new Map<string, string[]>();
-  for (const feature of features) {
-    const featureCode = featureCodeOfFile(feature);
-    if (featureCode !== undefined) files.set(featureCode, [...(files.get(featureCode) ?? []), feature.file]);
-  }
-  return files;
-}
-
-function duplicateFeatureCodes(filesByCode: ReadonlyMap<string, readonly string[]>): ClaimCodeError[] {
-  return [...filesByCode].flatMap(([featureCode, files]) =>
-    files.length < 2 ? [] : [{ kind: "duplicate-feature-code" as const, featureCode, files }],
-  );
-}
-
-function misfiledCodes(feature: FeatureRead, filesByCode: ReadonlyMap<string, readonly string[]>): ClaimCodeError[] {
-  const carried = feature.scenarios.flatMap(codesCarriedBy);
-  const featureCode = featureCodeOfFile(feature);
-  if (featureCode === undefined) return carried.length === 0 ? [] : [{ kind: "no-feature-code", files: [feature.file] }];
-  return carried
-    .filter((code) => code.featureCode !== featureCode)
-    .map((code) => ({
-      kind: "foreign-claim-code" as const,
-      files: [feature.file],
-      claimCode: written(code),
-      namedFeatureCode: code.featureCode,
-      namedFeatureFiles: filesByCode.get(code.featureCode) ?? [],
-    }));
-}
-
-function codesOnOneScenario(file: string, scenario: ScenarioRead): ClaimCodeError[] {
-  const tagged = claimCodesIn(scenario.rows ? [...scenario.tags, ...scenario.examplesTags] : scenario.tags).map(written);
-  const codes = [...new Set(tagged)];
-  if (scenario.rows) return codes.length === 0 ? [] : [{ kind: "claim-code-beside-clm-column", files: [file], scenario: scenario.title, codes }];
-  return codes.length < 2 ? [] : [{ kind: "several-claim-codes", files: [file], scenario: scenario.title, codes }];
-}
-
-export function claimCodeErrorsOf(features: readonly FeatureRead[]): ClaimCodeError[] {
-  const filesByCode = filesByFeatureCode(features);
-  return [
-    ...duplicateFeatureCodes(filesByCode),
-    ...features.flatMap((feature) => misfiledCodes(feature, filesByCode)),
-    ...features.flatMap(({ file, scenarios }) => scenarios.flatMap((scenario) => codesOnOneScenario(file, scenario))),
-  ];
-}
-
-const CITATION = new RegExp(`\\[${CLAIM_CODE_PREFIX}-(${FEATURE_CODE_FORM})-(\\d+)\\]`, "g");
-
-export function claimCodeCitationsIn(text: string | undefined): ClaimCode[] {
-  return [...String(text).matchAll(CITATION)].map(([, featureCode, number]) => ({ featureCode: featureCode!, number: number! }));
-}
-
+// What the Repository port reads for allocate: a code-shaped word, where it was, and the commit when it came from history.
 export interface ClaimCodeOccurrence {
   readonly text: string;
   readonly path: string;
@@ -167,65 +30,21 @@ export interface ClaimCodeOccurrence {
   readonly commit?: string;
 }
 
-export interface AllocationRequest {
-  readonly featureCode: string;
-  readonly featureCodes: readonly string[];
-  readonly isNew: boolean;
-}
-
-interface HighestSeen {
-  readonly code: string;
-  readonly occurrence: ClaimCodeOccurrence;
-}
-
-export interface Allocation {
-  readonly kind: "allocated";
-  readonly featureCode: string;
-  readonly code: string;
-  readonly highest?: HighestSeen;
-  readonly alreadyHeaded?: true;
-}
-
-export interface UnknownFeatureCode {
-  readonly kind: "unknown-feature-code";
-  readonly featureCode: string;
-  readonly featureCodes: readonly string[];
-}
-
 export type HistoryBoundary =
   | { readonly kind: "complete" }
   | { readonly kind: "not-a-repository" }
   | { readonly kind: "shallow"; readonly before: string };
 
-// Each word in a code's shape; the claim code and retired scenario code forms decide which count.
-const CODE_SHAPED = /[A-Z]+-[A-Z0-9]+-\d+/g;
-
-const NUMBER_WIDTH = 3;
-
-export function claimCodeMarksFor(featureCode: string): readonly string[] {
-  return [`${CLAIM_CODE_PREFIX}-${featureCode}-`, `${RETIRED_SCENARIO_CODE_PREFIX}-${featureCode}-`];
+export interface AllocationAsked {
+  readonly featureCode: string;
+  readonly asNewFeatureCode: boolean;
 }
 
-const numberOf = (code: string): number => Number(code.slice(code.lastIndexOf("-") + 1));
-
-function highestOf(featureCode: string, occurrences: readonly ClaimCodeOccurrence[]): HighestSeen | undefined {
-  let highest: HighestSeen | undefined;
-  for (const occurrence of occurrences) {
-    for (const [code] of occurrence.text.matchAll(CODE_SHAPED)) {
-      // A number a retired scenario code had is never handed out again.
-      const counted = claimCodeFrom(code) ?? retiredScenarioCodeFrom(code);
-      if (counted?.featureCode === featureCode && (highest === undefined || numberOf(code) > numberOf(highest.code))) highest = { code, occurrence };
+export type Allocation =
+  | {
+      readonly kind: "allocated";
+      readonly claimCode: ClaimCode;
+      readonly highestSeen?: ClaimCodeOccurrence;
+      readonly featureCodeAlreadyOnAFile: boolean;
     }
-  }
-  return highest;
-}
-
-export function nextClaimCode(request: AllocationRequest, occurrences: readonly ClaimCodeOccurrence[]): Allocation | UnknownFeatureCode {
-  const { featureCode, featureCodes, isNew } = request;
-  const headed = featureCodes.includes(featureCode);
-  if (!headed && !isNew) return { kind: "unknown-feature-code", featureCode, featureCodes: [...new Set(featureCodes)] };
-  const highest = highestOf(featureCode, occurrences);
-  const next = (highest === undefined ? 0 : numberOf(highest.code)) + 1;
-  const code = written({ featureCode, number: String(next).padStart(NUMBER_WIDTH, "0") });
-  return { kind: "allocated", featureCode, code, ...(highest && { highest }), ...(headed && isNew && { alreadyHeaded: true as const }) };
-}
+  | { readonly kind: "unknown-feature-code"; readonly featureCode: string; readonly featureCodes: readonly string[] };
