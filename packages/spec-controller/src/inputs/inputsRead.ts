@@ -158,10 +158,11 @@ function statAt(path: string): Stats | InputFault {
 }
 
 // The files an input names, or why it cannot be read; a default that does not exist names none.
-function filesOf({ kind, path: shown }: InputNamed, folder: string): { readonly files: InputRead<FileText>[] } | { readonly none: true } {
+function filesOf({ kind, path: shown, byDefault }: InputNamed, folder: string): { readonly files: InputRead<FileText>[] } | { readonly none: true } {
   const path = resolve(folder, shown);
   const reads = READERS[kind].reads;
   const stats = statAt(path);
+  if (stats === "absent" && byDefault) return { none: true };
   if (typeof stats === "string") return { files: [failed(shown, stats, "")] };
   if (stats.isDirectory() && reads !== "file") {
     try {
