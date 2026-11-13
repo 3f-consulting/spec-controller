@@ -4,3 +4,7 @@ import type { ExitCode } from "./runEnding.js";
 export function exitCodeOf(_runVerdict: RunVerdict): ExitCode {
   return 0;
 }
+
+export function endRunOn(runVerdict: RunVerdict): void {
+  process.exitCode = exitCodeOf(runVerdict);
+}
