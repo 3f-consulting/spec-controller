@@ -80,3 +80,77 @@ describe("each executable claim sharing a claim code will have its own Claim Rec
     expect(claimReconciliationsOf(claims, []).map(({ claim }) => claim)).toEqual(claims);
   });
 });
+
+// An Evidence Observation as a sort row writes it: its kind, result, test file, the code it cites, and its message.
+type Placed = readonly [kind: QualityCheckKind, result: Result, place: string, cites: "it" | "no code" | "CLM-ONE-002", message: string];
+
+const ONE_002: ClaimCode = { featureCode: "ONE", number: "002" };
+
+const placedObservation = ([kind, result, place, cites, message]: Placed): EvidenceObservation => ({
+  cites: cites === "it" ? [ONE_001] : cites === "CLM-ONE-002" ? [ONE_002] : [],
+  result,
+  kind,
+  place,
+  notes: [],
+  ...(message === "" ? {} : { message }),
+});
+
+const sortedAs = ({ kind, observation }: { kind?: QualityCheckKind; observation?: EvidenceObservation }): string =>
+  [kind, observation?.place, observation?.cites.map(({ number }) => number).join(" "), observation?.message].join("|");
+
+describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations by kind of quality check, then where the test is, then the code it cites, then what else it records", () => {
+  it.each<[string, "under its code" | "unnamed", readonly QualityCheckKind[], readonly Placed[], readonly string[]]>([
+    [
+      "CLM-LDG-059",
+      "under its code",
+      ["unit", "integration", "e2e", "performance", "fitness"],
+      [
+        ["fitness", "passed", "a.test.ts", "it", ""],
+        ["performance", "passed", "a.test.ts", "it", ""],
+        ["e2e", "passed", "a.test.ts", "it", ""],
+        ["integration", "passed", "a.test.ts", "it", ""],
+        ["unit", "passed", "a.test.ts", "it", ""],
+      ],
+      ["unit|a.test.ts|001|", "integration|a.test.ts|001|", "e2e|a.test.ts|001|", "performance|a.test.ts|001|", "fitness|a.test.ts|001|"],
+    ],
+    [
+      "CLM-LDG-060",
+      "under its code",
+      ["unit"],
+      [["unit", "passed", "z.test.ts", "it", ""], ["unit", "failed", "a.test.ts", "it", ""]],
+      ["unit|a.test.ts|001|", "unit|z.test.ts|001|"],
+    ],
+    [
+      "CLM-LDG-061",
+      "unnamed",
+      [],
+      [["unit", "passed", "z.test.ts", "no code", ""], ["unit", "passed", "a.test.ts", "CLM-ONE-002", ""]],
+      ["unit|a.test.ts|002|", "unit|z.test.ts||"],
+    ],
+    [
+      "CLM-LDG-062",
+      "unnamed",
+      [],
+      [["unit", "passed", "a.test.ts", "CLM-ONE-002", ""], ["unit", "passed", "a.test.ts", "no code", ""]],
+      ["unit|a.test.ts||", "unit|a.test.ts|002|"],
+    ],
+    [
+      "CLM-LDG-063",
+      "unnamed",
+      [],
+      [["unit", "failed", "a.test.ts", "CLM-ONE-002", "a"], ["unit", "failed", "a.test.ts", "no code", "b"]],
+      ["unit|a.test.ts||b", "unit|a.test.ts|002|a"],
+    ],
+    [
+      "CLM-LDG-064",
+      "under its code",
+      ["unit"],
+      [["unit", "failed", "a.test.ts", "it", "b"], ["unit", "failed", "a.test.ts", "it", "a"]],
+      ["unit|a.test.ts|001|a", "unit|a.test.ts|001|b"],
+    ],
+  ])("[%s] a claim %s has its Quality Check Reconciliations sorted", (_clm, read, kinds, observations, sorted) => {
+    const reconciliation = claimReconciliationOf(claimOf(read, kinds), observations.map(placedObservation), false);
+
+    expect(reconciliation.qualityCheckReconciliations.map(sortedAs)).toEqual(sorted);
+  });
+});
