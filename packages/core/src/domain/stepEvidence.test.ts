@@ -176,6 +176,10 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(countedAndPosted("start=$SECONDS\nvitest run", "vitest")).toEqual({ countedAs: "runner", posted: 0 });
   });
 
+  it("[CLM-OBS-127] a step running an if … fi block, then vitest run, will be counted as a runner, and nothing will be posted", () => {
+    expect(countedAndPosted('if [ -n "$CI" ]; then\n  echo in CI\nfi\nvitest run', "vitest")).toEqual({ countedAs: "runner", posted: 0 });
+  });
+
   it.each(shellVariants["CLM-OBS-010"].variants)("[CLM-OBS-010] a step running vitest after a NAME=value setting, through the launcher %s, will be counted as a runner", (launcher) => {
     const handedOn = launcher.includes("<bin>") ? launcher.replace("<bin>", "vitest") : `${launcher} vitest`;
 
