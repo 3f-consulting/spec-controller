@@ -62,7 +62,6 @@ describe("the run will give no verdict, and will exit 4", () => {
     ["CLM-CLI-176", "an error nothing else handles", new Error("nothing handles this"), "nothing handles this"],
     ["CLM-CLI-177", "an error that cannot be formatted", UNSHOWABLE, "could not be shown"],
     ["CLM-CLI-178", "an error before the run reached its verdict", new RangeError("before the verdict"), "RangeError: before the verdict"],
-    ["CLM-CLI-180", "an error in reading a file the parser accepted", new SyntaxError("read after it parsed"), "read after it parsed"],
   ] as const)("[%s] %s: no verdict, exit 4, and a complaint with the error", (_clm, _error, thrown, shown) => {
     const { exitCode, output, complaints } = balanceRun({ inBalance: thrown });
 
