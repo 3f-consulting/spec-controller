@@ -72,30 +72,43 @@ describe("a step using a plumbing action is plumbing", () => {
   });
 });
 
-describe("balance posts each result with how it went", () => {
+describe("balance posts a result as passed or failed", () => {
   it.each([
-    ["CLM-OBS-033", "it succeeded", { outcome: "success", conclusion: "success" }, false, "passed"],
-    ["CLM-OBS-034", "it failed", { outcome: "failure", conclusion: "failure" }, false, "failed"],
-    ["CLM-OBS-035", "it failed, and continue-on-error hid it", { outcome: "failure", conclusion: "success" }, true, "failed"],
-  ] as const)("[%s] the step record had a result with the id CLM-ONE-001, and %s: it is posted, as its result, citing CLM-ONE-001", (_clm, _how, entry, continueOnError, result) => {
-    const steps = workflowOf({ ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint", "continue-on-error": continueOnError }] } });
+    ["CLM-OBS-033", "CLM-ONE-001", "pnpm lint", "it succeeded", { outcome: "success", conclusion: "success" }, false, "passed", [ONE_001]],
+    ["CLM-OBS-034", "CLM-ONE-001", "pnpm lint", "it failed", { outcome: "failure", conclusion: "failure" }, false, "failed", [ONE_001]],
+    ["CLM-OBS-035", "CLM-ONE-001", "pnpm lint", "it failed, and continue-on-error hid it", { outcome: "failure", conclusion: "success" }, true, "failed", [ONE_001]],
+    ["CLM-OBS-122", "audit", "pnpm audit-the-tree", "it succeeded", { outcome: "success", conclusion: "success" }, false, "passed", []],
+    ["CLM-OBS-123", "audit", "pnpm audit-the-tree", "it failed", { outcome: "failure", conclusion: "failure" }, false, "failed", []],
+  ] as const)("[%s] the step record had a result with the id %s, on a step running %s, and %s: it is posted as its result, citing the code it has", (_clm, id, run, _how, entry, continueOnError, result, cites) => {
+    const steps = workflowOf({ ci: { steps: [{ id, run, "continue-on-error": continueOnError }] } });
 
-    expect(fitnessObservationsOf(steps, recordOf({ "CLM-ONE-001": entry }), NO_SETTING, {}, shellAnswers).map(({ result, cites }) => ({ result, cites }))).toEqual([
-      { result, cites: [ONE_001] },
+    expect(fitnessObservationsOf(steps, recordOf({ [id]: entry }), NO_SETTING, {}, shellAnswers).map(({ result: posted, cites: cited }) => ({ result: posted, cites: cited }))).toEqual([
+      { result, cites },
+    ]);
+  });
+
+  it("[CLM-OBS-130] the step record had results with the ids CLM-ONE-001 and CLM-ONE-002, on two steps in ci.yml, each succeeded: each is posted as passed, citing its own code", () => {
+    const steps = workflowOf({ ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }, { id: "CLM-ONE-002", run: "pnpm audit-the-tree" }] } });
+    const record = recordOf({ "CLM-ONE-001": { outcome: "success", conclusion: "success" }, "CLM-ONE-002": { outcome: "success", conclusion: "success" } });
+
+    expect(fitnessObservationsOf(steps, record, NO_SETTING, {}, shellAnswers).map(({ result, cites }) => ({ result, cites }))).toEqual([
+      { result: "passed", cites: [ONE_001] },
+      { result: "passed", cites: [{ featureCode: "ONE", number: "002" }] },
     ]);
   });
 });
 
 describe("balance posts what could not run as never ran", () => {
   it.each([
-    ["CLM-OBS-053", "was skipped", "skipped"],
-    ["CLM-OBS-054", "had a status balance does not know", "neutral"],
-  ] as const)("[%s] the step record said a fitness function's step with the id CLM-ONE-001 %s: it is posted as never-ran, citing CLM-ONE-001 and naming that step", (_clm, _what, outcome) => {
-    const steps = workflowOf({ ci: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] } });
+    ["CLM-OBS-053", "CLM-ONE-001", "was skipped", { name: "Lint", run: "pnpm lint" }, "skipped", [ONE_001], "ci.yml:ci:Lint"],
+    ["CLM-OBS-054", "CLM-ONE-001", "had a status balance does not know", { name: "Lint", run: "pnpm lint" }, "neutral", [ONE_001], "ci.yml:ci:Lint"],
+    ["CLM-OBS-124", "audit", "was skipped", { run: "pnpm audit-the-tree" }, "skipped", [], "ci.yml:ci:pnpm audit-the-tree"],
+  ] as const)("[%s] the step record said a fitness function's step with the id %s %s: it is posted as never-ran, citing the code it has and naming that step", (_clm, id, _what, step, outcome, cites, place) => {
+    const steps = workflowOf({ ci: { steps: [{ id, ...step }] } });
 
     expect(
-      fitnessObservationsOf(steps, recordOf({ "CLM-ONE-001": { outcome, conclusion: outcome } }), NO_SETTING, {}, shellAnswers).map(({ result, cites, place }) => ({ result, cites, place })),
-    ).toEqual([{ result: "never-ran", cites: [ONE_001], place: "ci.yml:ci:Lint" }]);
+      fitnessObservationsOf(steps, recordOf({ [id]: { outcome, conclusion: outcome } }), NO_SETTING, {}, shellAnswers).map(({ result, cites: cited, place: placed }) => ({ result, cites: cited, place: placed })),
+    ).toEqual([{ result: "never-ran", cites, place }]);
   });
 });
 
