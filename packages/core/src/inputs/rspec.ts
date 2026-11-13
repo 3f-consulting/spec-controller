@@ -25,8 +25,8 @@ export const whereResultsByExampleBreak = (report: unknown): string | undefined 
 const LOADING = /while loading (\S+?)\.?\s/i;
 
 export function resultsByExampleFrom(report: unknown): ResultsByExampleAsWritten {
-  const { messages = [], examples, summary } = report as RspecJsonReport;
-  // The errors outside any example are the last of its messages, one each.
+  const { messages, examples, summary } = report as RspecJsonReport;
+  // The errors outside any example are the last of its messages, one each. RSpec writes messages only when it has some.
   const errors = summary.errors_outside_of_examples_count ?? 0;
   return {
     examples: examples.map(({ description, full_description, status, file_path, exception }) => ({
@@ -36,6 +36,6 @@ export function resultsByExampleFrom(report: unknown): ResultsByExampleAsWritten
       status,
       message: exception?.message,
     })),
-    loadErrors: (errors === 0 ? [] : messages.slice(-errors)).map((message) => ({ file: LOADING.exec(message)?.[1], message })),
+    loadErrors: (messages?.slice(messages.length - errors) ?? []).map((message) => ({ file: LOADING.exec(message)?.[1], message })),
   };
 }

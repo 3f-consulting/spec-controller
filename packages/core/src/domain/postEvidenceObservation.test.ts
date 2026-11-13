@@ -72,23 +72,28 @@ interface Example {
   readonly status: string;
 }
 
-const reportByExample = (examples: readonly Example[], errorsOutsideExamples: readonly string[] = []): unknown => ({
-  version: "3.13.0",
-  messages: ["Run options: include {:focus=>true}", ...errorsOutsideExamples],
-  examples: examples.map(({ group = "Adding", description, status }, at) => ({
-    id: `./spec/adds_spec.rb[1:${at + 1}]`,
-    description,
-    full_description: `${group} ${description}`,
-    status,
-    file_path: "./spec/adds_spec.rb",
-    line_number: 2 + at * 2,
-    run_time: 0.000378728,
-    pending_message: status === "pending" ? "not yet" : null,
-    ...(status === "failed" && { exception: { class: "RSpec::Expectations::ExpectationNotMetError", message: "\nexpected: 2\n     got: 1\n" } }),
-  })),
-  summary: { duration: 0.014, example_count: examples.length, failure_count: 0, pending_count: 0, errors_outside_of_examples_count: errorsOutsideExamples.length },
-  summary_line: `${examples.length} examples, 0 failures`,
-});
+// RSpec writes its messages only when it has some: a filtered run's Run options message, then each error outside its
+// examples.
+const reportByExample = (examples: readonly Example[], errorsOutsideExamples: readonly string[] = [], filtered = false): unknown => {
+  const messages = [...(filtered ? ["Run options: include {:focus=>true}"] : []), ...errorsOutsideExamples];
+  return {
+    version: "3.13.0",
+    ...(messages.length > 0 && { messages }),
+    examples: examples.map(({ group = "Adding", description, status }, at) => ({
+      id: `./spec/adds_spec.rb[1:${at + 1}]`,
+      description,
+      full_description: `${group} ${description}`,
+      status,
+      file_path: "./spec/adds_spec.rb",
+      line_number: 2 + at * 2,
+      run_time: 0.000378728,
+      pending_message: status === "pending" ? "not yet" : null,
+      ...(status === "failed" && { exception: { class: "RSpec::Expectations::ExpectationNotMetError", message: "\nexpected: 2\n     got: 1\n" } }),
+    })),
+    summary: { duration: 0.014, example_count: examples.length, failure_count: 0, pending_count: 0, errors_outside_of_examples_count: errorsOutsideExamples.length },
+    summary_line: `${examples.length} examples, 0 failures`,
+  };
+};
 
 const postedByExample = (report: unknown): EvidenceObservation[] => observationsByExample(resultsByExampleFrom(report), "/work");
 
@@ -212,7 +217,7 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
     ["CLM-OBS-029", "passed", "passed"],
     ["CLM-OBS-030", "failed", "failed"],
   ])("[%s] a result in RSpec's evidence report, CLM-ONE-001 in brackets in its description, that %s, is posted as %s, citing CLM-ONE-001", (_clm, status, result) => {
-    const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status }]));
+    const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status }], [], true));
 
     expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
   });
@@ -332,7 +337,7 @@ describe("balance posts what could not run as never ran, from a report kept by e
     ["CLM-OBS-049", "\nAn error occurred while loading ./spec/unloadable_spec.rb\nSyntaxError:\n  Unmatched `{', missing `}' ?\n", "./spec/unloadable_spec.rb"],
     ["CLM-OBS-099", "\nAn error occurred in a `before(:suite)` hook.\nFailure/Error: raise \"the database could not be reached\"\n", ""],
   ])("[%s] RSpec's evidence report saying %j is posted as never-ran, citing no claim code, naming where and the error", (_clm, error, place) => {
-    const posted = postedByExample(reportByExample([], [error]));
+    const posted = postedByExample(reportByExample([], [error], true));
 
     expect(posted.map(({ result, cites, place: placed, message }) => ({ result, cites, place: placed, message }))).toEqual([
       { result: "never-ran", cites: [], place, message: error },
@@ -342,7 +347,7 @@ describe("balance posts what could not run as never ran, from a report kept by e
   it("[CLM-OBS-129] RSpec's evidence report whose only message is a spec file's load error is posted as never-ran, citing no claim code, naming the file and its error", () => {
     const error = "\nAn error occurred while loading ./spec/unloadable_spec.rb.\nFailure/Error: __send__(method, file)\n\nSyntaxError:\n  Unmatched `{', missing `}' ?\n";
     // A run with no filter writes no Run options message, so its messages are its load errors alone.
-    const posted = postedByExample({ ...(reportByExample([], [error]) as object), messages: [error] });
+    const posted = postedByExample(reportByExample([], [error]));
 
     expect(posted.map(({ result, cites, place, message }) => ({ result, cites, place, message }))).toEqual([
       { result: "never-ran", cites: [], place: "./spec/unloadable_spec.rb", message: error },
