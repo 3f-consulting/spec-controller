@@ -46,9 +46,10 @@ interface ResultInFileAsWritten {
   readonly failureMessages: readonly string[];
 }
 
-// A report of test results kept by suite, each result with its properties.
+// A report of test results kept by suite, each result with its properties. errorMeansNeverRan is the reader's to say: a
+// report that writes an error only for a test that never reached its assertions, and cites in its properties.
 export interface ResultsBySuiteAsWritten {
-  readonly report: string;
+  readonly errorMeansNeverRan: boolean;
   readonly name: string;
   readonly results: readonly ResultInSuiteAsWritten[];
 }
@@ -130,11 +131,6 @@ export function observationsByFile(results: readonly ResultsByFileAsWritten[], t
 const saidBy = (failure: FailureAsWritten | undefined): { message?: string } =>
   failure?.message === undefined ? {} : { message: failure.message };
 
-// The report kept by suite whose errors are written only for a test that never reached its assertions, and which cites a
-// test's claim codes in its properties. Its reader names its reports so; any other report kept by suite writes an error for
-// a test that failed, and cites in its names.
-export const ERRORS_BEFORE_ASSERTIONS = "errors-before-assertions";
-
 // An error is a test that never reached its assertions; with no class name, a file that was never collected.
 function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
   const { className, name, clmProperties, outcome, failure } = result;
@@ -163,7 +159,7 @@ function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: Re
 export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], targetFolder: string): EvidenceObservation[] {
   return suites.flatMap((suite) =>
     suite.results.flatMap((result) => 
-      suite.report === ERRORS_BEFORE_ASSERTIONS ? observationWhereErrorsNeverRan(result, targetFolder) : observationWhereErrorsFailed(suite, result, targetFolder),
+      suite.errorMeansNeverRan ? observationWhereErrorsNeverRan(result, targetFolder) : observationWhereErrorsFailed(suite, result, targetFolder),
     ),
   );
 }

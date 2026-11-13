@@ -1,10 +1,5 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
-import {
-  ERRORS_BEFORE_ASSERTIONS,
-  type FailureAsWritten,
-  type ResultInSuiteAsWritten,
-  type ResultsBySuiteAsWritten,
-} from "../domain/postEvidenceObservation.js";
+import type { FailureAsWritten, ResultInSuiteAsWritten, ResultsBySuiteAsWritten } from "../domain/postEvidenceObservation.js";
 
 // A JUnit XML evidence report, as far as its reader reads it: suites, nested or not, each holding its test cases.
 interface Element {
@@ -68,7 +63,7 @@ export function resultsBySuiteFrom(xml: string, from: "junit" | "pytest"): Resul
   const document = parser.parse(xml) as Element;
   return [...suitesIn(document), ...suitesIn((document["testsuites"] as Element | undefined) ?? {})].map((suite) => ({
     // pytest writes an error only for a test that never reached its assertions; JUnit writes one for a test that failed.
-    report: from === "pytest" ? ERRORS_BEFORE_ASSERTIONS : from,
+    errorMeansNeverRan: from === "pytest",
     name: suite["@name"] as string,
     results: elementsIn(suite, "testcase").map(resultAsWritten),
   }));
