@@ -1,5 +1,5 @@
 import type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
-import { sameCode, type ClaimCode } from "./claimCodes.js";
+import type { ClaimCode } from "./claimCodes.js";
 import { observationsFiledUnder, type EvidenceObservation, type PhantomClaim, type UnnamedClaim } from "./postEvidenceObservation.js";
 
 type ObligationWithAKind = EvidenceObligation & { readonly kind: QualityCheckKind };
@@ -67,9 +67,11 @@ const hasAKind = (obligation: EvidenceObligation): obligation is ObligationWithA
 
 const isExecutable = (claim: ExecutableClaim | PhantomClaim | UnnamedClaim): claim is ExecutableClaim => "obligations" in claim;
 
-const ran = ({ result }: EvidenceObservation): boolean => result !== "never-ran";
+type RanObservation = EvidenceObservation & { readonly result: Exclude<EvidenceObservation["result"], "never-ran"> };
 
-const BOTH_SIDES_OUTCOME: Readonly<Record<Exclude<EvidenceObservation["result"], "never-ran">, BothSides["outcome"]>> = {
+const ran = (observation: EvidenceObservation): observation is RanObservation => observation.result !== "never-ran";
+
+const BOTH_SIDES_OUTCOME: Readonly<Record<RanObservation["result"], BothSides["outcome"]>> = {
   passed: "satisfied",
   failed: "failing",
   "passed-on-error": "cannot-fail",
@@ -83,9 +85,9 @@ function unanswerable(obligations: readonly EvidenceObligation[], outcome: Oblig
 }
 
 function answered(obligation: ObligationWithAKind, observations: readonly EvidenceObservation[]): QualityCheckReconciliation[] {
-  const ofItsKind = observations.filter((observation) => ran(observation) && observation.kind === obligation.kind);
+  const ofItsKind = observations.filter(ran).filter((observation) => observation.kind === obligation.kind);
   if (ofItsKind.length === 0) return [{ outcome: "missing", kind: obligation.kind, obligation }];
-  return ofItsKind.map((observation) => ({ outcome: BOTH_SIDES_OUTCOME[observation.result as keyof typeof BOTH_SIDES_OUTCOME], kind: obligation.kind, obligation, observation }));
+  return ofItsKind.map((observation) => ({ outcome: BOTH_SIDES_OUTCOME[observation.result], kind: obligation.kind, obligation, observation }));
 }
 
 function executableReconciliations(claim: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): QualityCheckReconciliation[] {
@@ -135,9 +137,11 @@ export function claimReconciliationOf(
 }
 
 export function claimReconciliationsOf(claims: readonly ExecutableClaim[], observations: readonly EvidenceObservation[]): ClaimReconciliation[] {
-  const shared = (code: ClaimCode): boolean => claims.filter(({ claimCode }) => claimCode !== undefined && sameCode(claimCode, code)).length > 1;
+  const written = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
+  const claimsWith = new Map<string, number>();
+  for (const { claimCode } of claims) if (claimCode) claimsWith.set(written(claimCode), (claimsWith.get(written(claimCode)) ?? 0) + 1);
   return claims.map((claim) =>
-    claimReconciliationOf(claim, observationsFiledUnder(claim, observations), claim.claimCode !== undefined && shared(claim.claimCode)),
+    claimReconciliationOf(claim, observationsFiledUnder(claim, observations), claim.claimCode !== undefined && claimsWith.get(written(claim.claimCode))! > 1),
   );
 }
 
@@ -169,7 +173,9 @@ export function evidenceGroupsOf({ qualityCheckReconciliations }: ClaimReconcili
     if (observation === undefined) continue;
     const code = sharedCodeOf(observation);
     const key = [observation.kind, fileOf(observation) ?? "", code ? `${code.featureCode}-${code.number}` : ""].join("|");
-    groups.set(key, [...(groups.get(key) ?? []), reconciliation]);
+    const members = groups.get(key);
+    if (members) members.push(reconciliation);
+    else groups.set(key, [reconciliation]);
   }
   return [...groups.values()].map((members) => {
     const observation = members[0]!.observation!;

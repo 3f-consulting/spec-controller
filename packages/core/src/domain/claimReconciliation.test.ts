@@ -57,11 +57,13 @@ describe("balance works out each Quality Check Reconciliation's outcome, and fro
     ["CLM-LDG-057", "unnamed", [], [["unit", "never-ran"]], "out-of-balance", ["never-ran"]],
     ["CLM-LDG-058", "unnamed", [], [["unit", "passed"], ["unit", "passed"]], "out-of-balance", ["cites-no-claim", "cites-no-claim"]],
   ])("[%s] a claim %s, with its Evidence Obligations and Evidence Observations, has its verdict and outcomes", (_clm, read, kinds, observations, verdict, outcomes) => {
-    const reconciliation = claimReconciliationOf(
-      claimOf(read, kinds),
-      observations.map((observation) => observationOf(read, observation)),
-      read === "sharing its code",
-    );
+    const filed = observations.map((observation) => observationOf(read, observation));
+    const claim = claimOf(read, kinds);
+    // A claim sharing its code is reconciled beside the other claim that has it.
+    const reconciliation =
+      read === "sharing its code"
+        ? claimReconciliationsOf([claim as ExecutableClaim, { ...(claim as ExecutableClaim), title: "another scenario" }], filed)[0]!
+        : claimReconciliationOf(claim, filed, false);
 
     expect({ verdict: reconciliation.verdict, outcomes: reconciliation.qualityCheckReconciliations.map(({ outcome }) => outcome).sort() }).toEqual({
       verdict,
