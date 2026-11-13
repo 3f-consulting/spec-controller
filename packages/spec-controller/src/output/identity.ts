@@ -16,15 +16,18 @@ const STREAM_NAMES: Readonly<Record<"standard-output" | "standard-error", readon
   "standard-error": ["/dev/stderr", "/dev/fd/2", "/proc/self/fd/2"],
 };
 
+const LINKS_FOLLOWED = 40;
+
 // The stream a path names, itself or through its links.
 function streamNamedBy(path: string): "standard-output" | "standard-error" | undefined {
   let current = resolve(path);
-  for (;;) {
+  for (let followed = 0; followed <= LINKS_FOLLOWED; followed++) {
     if (STREAM_NAMES["standard-output"].includes(current)) return "standard-output";
     if (STREAM_NAMES["standard-error"].includes(current)) return "standard-error";
     if (!lstatSync(current, { throwIfNoEntry: false })?.isSymbolicLink()) return undefined;
     current = resolve(dirname(current), readlinkSync(current));
   }
+  return undefined;
 }
 
 // A file not made yet is made where its path, or the link it is, points.
