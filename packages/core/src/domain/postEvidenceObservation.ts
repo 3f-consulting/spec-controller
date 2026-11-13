@@ -125,7 +125,7 @@ export interface ShellAnswers {
 const nearestCitations = (chain: readonly string[]): ClaimCode[] =>
   chain.reduceRight<ClaimCode[]>((found, title) => (found.length > 0 ? found : claimCodeCitationsIn(title)), []);
 
-const RESULT_BY_FILE: Readonly<Record<string, Result>> = { passed: "passed", failed: "failed" };
+const RESULT_BY_STATUS: Readonly<Record<string, Result>> = { passed: "passed", failed: "failed" };
 
 // Results kept by test file: Vitest's and Jest's. A failed file with no results is one that could not run.
 export function observationsByFile(results: readonly ResultsByFileAsWritten[], targetFolder: string): EvidenceObservation[] {
@@ -135,7 +135,7 @@ export function observationsByFile(results: readonly ResultsByFileAsWritten[], t
       return [{ cites: [], result: "never-ran", kind: "unit", place, ...(message === undefined ? {} : { message }), notes: [] }];
     }
     return inFile.flatMap(({ ancestorTitles, title, status: resultStatus, failureMessages }) => {
-      const result = RESULT_BY_FILE[resultStatus];
+      const result = RESULT_BY_STATUS[resultStatus];
       if (result === undefined) return [];
       const failure = failureMessages.join("\n");
       return [{ cites: nearestCitations([...ancestorTitles, title]), result, kind: "unit", place, name: title, ...(failure && { message: failure }), notes: [] }];
@@ -179,9 +179,24 @@ export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], 
   );
 }
 
-// Results kept by example: RSpec's, each example nested in its groups.
-export function observationsByExample(_report: ResultsByExampleAsWritten, _targetFolder: string): EvidenceObservation[] {
-  return [];
+// Results kept by example: RSpec's, each example nested in its groups. An error outside any example kept the examples
+// after it from running: it is placed at the spec file it names, or at none.
+export function observationsByExample({ examples, loadErrors }: ResultsByExampleAsWritten, targetFolder: string): EvidenceObservation[] {
+  const ran = examples.flatMap(({ file, groupDescriptions, description, status, message }): EvidenceObservation[] => {
+    const result = RESULT_BY_STATUS[status];
+    if (result === undefined) return [];
+    const cites = nearestCitations([...groupDescriptions, description]);
+    return [{ cites, result, kind: "unit", place: shownFromTarget(file, targetFolder), name: description, ...(message === undefined ? {} : { message }), notes: [] }];
+  });
+  const neverRan = loadErrors.map(({ file, message }): EvidenceObservation => ({
+    cites: [],
+    result: "never-ran",
+    kind: "unit",
+    place: file === undefined ? "" : shownFromTarget(file, targetFolder),
+    message,
+    notes: [],
+  }));
+  return [...ran, ...neverRan];
 }
 
 export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {

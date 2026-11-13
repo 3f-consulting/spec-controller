@@ -13,7 +13,7 @@ interface RspecJsonReport {
   readonly summary: { readonly errors_outside_of_examples_count?: number };
 }
 
-const LOADING = /while loading (\S+?)[.\s]/i;
+const LOADING = /while loading (\S+?)\.?\s/i;
 
 // An example's groups are written only as the start of its full description.
 const groupsOf = (description: string, fullDescription: string): string[] =>
