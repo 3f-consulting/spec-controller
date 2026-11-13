@@ -13,7 +13,6 @@ import { balance } from "./balance.js";
 // What main runs, and how it complains of an unexpected error: given by the bin, and by a test that needs one to fail.
 export interface MainRuns {
   readonly balance: typeof balance;
-  readonly allocate: typeof allocate;
   readonly complain: Complain;
 }
 
@@ -26,7 +25,7 @@ function run(args: readonly string[], folder: string, streams: StandardStreams, 
     return 0;
   }
   if (request.command === "balance") return runs.balance(request, folder, streams, runs.complain);
-  const outcome = runs.allocate(request, folder);
+  const outcome = allocate(request, folder);
   if (!("answer" in outcome)) return refusedWith([outcome.refusal], streams.error.write);
   streams.output.write(`${outcome.answer}\n`);
   outcome.notes.forEach((note) => streams.error.write(`${noteText(note)}\n`));
@@ -34,7 +33,7 @@ function run(args: readonly string[], folder: string, streams: StandardStreams, 
 }
 
 export function main(args: readonly string[], folder: string, streams: StandardStreams, runs: Partial<MainRuns> = {}): ExitCode {
-  const runsWith: MainRuns = { balance, allocate, complain: complainerTo((text) => streams.error.write(text)), ...runs };
+  const runsWith: MainRuns = { balance, complain: complainerTo((text) => streams.error.write(text)), ...runs };
   try {
     return run(args, folder, streams, runsWith);
   } catch (error) {
