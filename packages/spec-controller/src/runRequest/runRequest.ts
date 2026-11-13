@@ -33,3 +33,7 @@ export type RunRequest =
       readonly exitZero: boolean;
     }
   | { readonly command: "allocate"; readonly featureCode: string; readonly asNewFeatureCode: boolean };
+
+export function runRequestOf(_argv: readonly string[]): RunRequest {
+  return { command: "balance", inputs: [], outputs: [], strict: false, exitZero: false };
+}
