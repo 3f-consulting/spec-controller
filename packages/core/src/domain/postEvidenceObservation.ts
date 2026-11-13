@@ -50,7 +50,6 @@ export interface ResultInFileAsWritten {
 export interface ResultsBySuiteAsWritten {
   readonly report: string;
   readonly name: string;
-  readonly file?: string;
   readonly results: readonly ResultInSuiteAsWritten[];
   // A failure the suite records outside any of its results, such as a package that did not compile.
   readonly failure?: FailureAsWritten;
@@ -59,7 +58,6 @@ export interface ResultsBySuiteAsWritten {
 export interface ResultInSuiteAsWritten {
   readonly className?: string;
   readonly name: string;
-  readonly file?: string;
   readonly clmProperties: readonly string[];
   readonly outcome: string;
   readonly failure?: FailureAsWritten;
@@ -142,25 +140,25 @@ export const ERRORS_BEFORE_ASSERTIONS = "errors-before-assertions";
 
 // An error is a test that never reached its assertions; with no class name, a file that was never collected.
 function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
-  const { className, name, file, clmProperties, outcome, failure } = result;
+  const { className, name, clmProperties, outcome, failure } = result;
   if (outcome === "skipped") return [];
   const collected = (className ?? "") !== "";
   const cites = collected ? clmProperties.flatMap((property) => claimCodeFrom(property) ?? []) : [];
   const resultOf: Result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
-  const place = shownFromTarget(file ?? (collected ? className! : name), targetFolder);
+  const place = shownFromTarget(collected ? className! : name, targetFolder);
   return [{ cites, result: resultOf, kind: "unit", place, ...(collected && { name }), ...saidBy(failure), notes: [] }];
 }
 
 // A case with no class name is its suite's own failure, such as a package that did not build; one with no name is its
 // class's, such as a class whose setup before all its tests failed. Neither reached a test's assertions.
 function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
-  const { className = "", name, file, outcome, failure } = result;
+  const { className = "", name, outcome, failure } = result;
   if (outcome === "skipped") return [];
   if (outcome !== "" && (className === "" || name === "")) {
     return [{ cites: [], result: "never-ran", kind: "unit", place: className || suite.name, ...saidBy(failure), notes: [] }];
   }
   const cites = nearestCitations([className, ...name.split("/")]);
-  const place = shownFromTarget(file ?? (className || suite.name), targetFolder);
+  const place = shownFromTarget(className || suite.name, targetFolder);
   return [{ cites, result: outcome === "" ? "passed" : "failed", kind: "unit", place, name, ...saidBy(failure), notes: [] }];
 }
 

@@ -43,7 +43,6 @@ function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {
   return {
     ...(text(testCase["@classname"]) !== undefined && { className: text(testCase["@classname"]) }),
     name: text(testCase["@name"]) ?? "",
-    ...(text(testCase["@file"]) !== undefined && { file: text(testCase["@file"]) }),
     clmProperties,
     // A test case with no outcome element is one that passed; its outcome is written as an empty string.
     outcome: outcome ?? "",
@@ -72,7 +71,6 @@ export function resultsBySuiteFrom(xml: string, from: "junit" | "pytest"): Resul
     // pytest writes an error only for a test that never reached its assertions; JUnit writes one for a test that failed.
     report: from === "pytest" ? ERRORS_BEFORE_ASSERTIONS : from,
     name: text(suite["@name"]) ?? "",
-    ...(text(suite["@file"]) !== undefined && { file: text(suite["@file"]) }),
     results: elementsIn(suite, "testcase").map(resultAsWritten),
   }));
 }
