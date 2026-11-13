@@ -571,3 +571,76 @@ describe("balance posts an Evidence Observation no single executable claim can t
     ]);
   });
 });
+
+describe("balance posts a failed test with the message its report gave", () => {
+  const vitestFailing = (failureMessages: readonly string[]) => ({
+    testResults: [{ name: "/work/a.test.ts", status: "failed", message: "", assertionResults: [{ ancestorTitles: [], title: "[CLM-ONE-001] adds", status: "failed", failureMessages }] }],
+  });
+  const rspecFailing = (message: string) => ({
+    version: "3.13.0",
+    messages: [],
+    examples: [
+      {
+        id: "./spec/adds_spec.rb[1:1]",
+        description: "[CLM-ONE-001] adds",
+        full_description: "Adding [CLM-ONE-001] adds",
+        status: "failed",
+        file_path: "./spec/adds_spec.rb",
+        line_number: 2,
+        run_time: 0.0004,
+        pending_message: null,
+        exception: { class: "RSpec::Expectations::ExpectationNotMetError", message },
+      },
+    ],
+    summary: { duration: 0.01, example_count: 1, failure_count: 1, pending_count: 0, errors_outside_of_examples_count: 0 },
+    summary_line: "1 example, 1 failure",
+  });
+  const cucumberFailing = (errorMessage: string) => [
+    {
+      uri: "features/one.feature",
+      id: "one",
+      keyword: "Feature",
+      name: "one",
+      line: 2,
+      tags: [{ name: "@ONE", line: 1 }],
+      elements: [
+        {
+          id: "one;adds",
+          keyword: "Scenario",
+          type: "scenario",
+          name: "adds",
+          line: 5,
+          tags: [
+            { name: "@integration", line: 4 },
+            { name: "@CLM-ONE-001", line: 4 },
+          ],
+          steps: [{ keyword: "Then ", name: "it is two", line: 6, match: { location: "tests/steps/one.steps.ts:3" }, result: { status: "failed", duration: 1000, error_message: errorMessage } }],
+        },
+      ],
+    },
+  ];
+
+  it.each([
+    ["CLM-OBS-132", "Vitest's evidence report", "the failure message \"expected 2\"", () => observationsByFile(resultsByFileFrom(vitestFailing(["expected 2"]), "vitest"), "/work"), "expected 2"],
+    [
+      "CLM-OBS-133",
+      "Vitest's evidence report",
+      "the failure messages \"first\" and \"second\"",
+      () => observationsByFile(resultsByFileFrom(vitestFailing(["first", "second"]), "vitest"), "/work"),
+      "first\nsecond",
+    ],
+    ["CLM-OBS-134", "RSpec's evidence report", "the message \"expected 2\"", () => observationsByExample(resultsByExampleFrom(rspecFailing("expected 2")), "/work"), "expected 2"],
+    ["CLM-OBS-135", "Cucumber's evidence report", "the failed step's message \"expected 2\"", () => postedByScenario(cucumberFailing("expected 2")), "expected 2"],
+  ] as const)("[%s] a failed test in %s, citing CLM-ONE-001, whose report gave %s, is posted as failed with that message", (_clm, _source, _said, posted, message) => {
+    expect(posted().map(({ result, cites, message: said }) => ({ result, cites, message: said }))).toEqual([{ result: "failed", cites: [ONE_001], message }]);
+  });
+});
+
+describe("balance posts a result from a feature file it did not read to the unnamed claim", () => {
+  it("[CLM-OBS-131] a passing scenario of a feature file balance did not read, with no claim-code tag, is posted to the unnamed claim, naming no claim code", () => {
+    const posted = postedByScenario(reportByScenario("features/unread.feature", [{ tags: ["integration"], steps: [PASSED] }]), [featureAsWrittenFrom("one.feature", outlineIn("ONE"))]);
+
+    expect(filed(claimReconciliationsOf([], posted))).toEqual([{ claim: "the unnamed claim", cites: [[]] }]);
+  });
+});
+
