@@ -27,15 +27,14 @@ const writesStepRecord = (step: Mapping): boolean =>
 
 function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping): WorkflowStepAsWritten {
   const uses = text(step["uses"]);
-  const run = text(step["run"]);
   return {
     workflow,
     job,
     jobContinueOnError,
-    ...(text(step["name"]) === undefined ? {} : { name: text(step["name"]) }),
-    ...(uses === undefined ? {} : { uses }),
-    ...(run === undefined ? {} : { run }),
-    ...(text(step["id"]) === undefined ? {} : { id: text(step["id"]) }),
+    name: text(step["name"]),
+    uses,
+    run: text(step["run"]),
+    id: text(step["id"]),
     continueOnError: step["continue-on-error"],
     plumbing: uses !== undefined && isPlumbing(uses),
     writesStepRecord: writesStepRecord(step),
