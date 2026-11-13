@@ -79,8 +79,7 @@ function nonCheckOf(entry: string, steps: readonly WorkflowStepAsWritten[], { st
   return inItsWorkflow.length === 0 || named ? address : { kind: "not-checks-entry-matches-no-step", entry };
 }
 
-// Each setting is read under the key it is written under, and named by it; a block broken as a whole, such as null, is
-// no setting at all and throws.
+// Each setting is read under the key it is written under, and named by it.
 export function targetConfigurationOf(
   block: unknown,
   steps: readonly WorkflowStepAsWritten[],
