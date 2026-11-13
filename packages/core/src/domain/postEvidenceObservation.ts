@@ -1,6 +1,6 @@
 import { claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
-import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
+import type { ExecutableClaim, FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
 
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
@@ -197,6 +197,15 @@ export function observationsByExample({ examples, loadErrors }: ResultsByExample
     notes: [],
   }));
   return [...ran, ...neverRan];
+}
+
+// Results kept by scenario: Cucumber's. features is the corpus as written, where an Outline row's claim code is.
+export function observationsOfScenarios(
+  _results: readonly ScenarioResultAsWritten[],
+  _features: readonly FeatureAsWritten[],
+  _targetFolder: string,
+): EvidenceObservation[] {
+  return [];
 }
 
 export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {

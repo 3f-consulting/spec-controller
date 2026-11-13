@@ -3,9 +3,10 @@ import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { resultsByFileFrom } from "../inputs/jestJson.js";
 import { resultsBySuiteFrom } from "../inputs/junitXml.js";
 import { resultsByExampleFrom } from "../inputs/rspecJson.js";
+import { scenarioResultsFrom } from "../inputs/cucumberJson.js";
 import type { ClaimCode } from "./claimCodes.js";
-import { executableClaimsOf } from "./postEvidenceObligation.js";
-import { observationsByExample, observationsByFile, observationsBySuite, observationsFiledUnder, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { executableClaimsOf, type FeatureAsWritten } from "./postEvidenceObligation.js";
+import { observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, observationsFiledUnder, type EvidenceObservation } from "./postEvidenceObservation.js";
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
 const ONE_002: ClaimCode = { featureCode: "ONE", number: "002" };
@@ -90,6 +91,47 @@ const reportByExample = (examples: readonly Example[], errorsOutsideExamples: re
 
 const postedByExample = (report: unknown): EvidenceObservation[] => observationsByExample(resultsByExampleFrom(report), "/work");
 
+// A step as Cucumber's JSON evidence report records it: its keyword, its text and its status.
+type StepRun = readonly [keyword: string, text: string, status: string];
+
+interface ScenarioRun {
+  readonly title?: string;
+  readonly line?: number;
+  readonly tags: readonly string[];
+  readonly steps: readonly StepRun[];
+}
+
+const reportByScenario = (uri: string, scenarios: readonly ScenarioRun[]): unknown => [
+  {
+    uri,
+    id: "one",
+    keyword: "Feature",
+    name: "one",
+    line: 2,
+    tags: [{ name: "@ONE", line: 1 }],
+    elements: scenarios.map(({ title = "one adds one", line = 5, tags, steps }) => ({
+      id: `one;${title.replaceAll(" ", "-")}`,
+      keyword: "Scenario",
+      type: "scenario",
+      name: title,
+      line,
+      tags: tags.map((tag) => ({ name: `@${tag}`, line: line - 1 })),
+      steps: steps.map(([keyword, text, status], at) => ({
+        keyword,
+        name: text,
+        line: line + 1 + at,
+        ...(status === "undefined" ? {} : { match: { location: "tests/steps/one.steps.ts:3" } }),
+        result: { status, duration: 1000, ...(status === "failed" && { error_message: "AssertionError: expected 2 to equal 3" }) },
+      })),
+    })),
+  },
+];
+
+const postedByScenario = (report: unknown, features: readonly FeatureAsWritten[] = []): EvidenceObservation[] =>
+  observationsOfScenarios(scenarioResultsFrom(report), features, "/work");
+
+const PASSED: StepRun = ["Given ", "one adds one", "passed"];
+
 describe("balance posts a result as passed or failed, citing its claim code", () => {
   it.each<[string, "vitest" | "jest", string, string]>([
     ["CLM-OBS-017", "vitest", "passed", "passed"],
@@ -157,6 +199,24 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
   });
 });
 
+describe("balance posts a result as passed or failed, citing its claim code, from a report kept by scenario", () => {
+  it.each<[string, string, readonly StepRun[]]>([
+    ["CLM-OBS-031", "passed", [PASSED, ["Then ", "it is two", "passed"]]],
+    ["CLM-OBS-032", "failed", [["Given ", "one adds one", "failed"], ["Then ", "it is two", "skipped"]]],
+  ])("[%s] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 is posted as %s when every step passed, or one failed and the next was skipped, citing CLM-ONE-001", (_clm, result, steps) => {
+    const posted = postedByScenario(reportByScenario("features/one.feature", [{ tags: ["integration", "CLM-ONE-001"], steps }]));
+
+    expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
+  });
+
+  it.each<[string, readonly StepRun[]]>([
+    ["CLM-OBS-043", [["Given ", "one adds one", "skipped"], ["Then ", "it is two", "skipped"]]],
+    ["CLM-OBS-106", []],
+  ])("[%s] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 that skipped a step and failed none, or had no steps, posts nothing", (_clm, steps) => {
+    expect(postedByScenario(reportByScenario("features/one.feature", [{ tags: ["integration", "CLM-ONE-001"], steps }]))).toEqual([]);
+  });
+});
+
 describe("balance posts nothing for a test that was skipped", () => {
   it.each<[string, "vitest" | "jest", readonly string[]]>([
     ["CLM-OBS-036", "vitest", ["skipped", "todo"]],
@@ -214,6 +274,18 @@ describe("balance posts what could not run as never ran, from a report kept by e
   });
 });
 
+describe("balance posts what could not run as never ran, from a report kept by scenario", () => {
+  it.each<[string, readonly StepRun[]]>([
+    ["CLM-OBS-051", [["Given ", "one adds one", "ambiguous"], ["Then ", "it is two", "skipped"]]],
+    ["CLM-OBS-052", [["Given ", "one adds one", "undefined"], ["Then ", "it is two", "skipped"]]],
+    ["CLM-OBS-110", [["Given ", "one is ready", "failed"], ["Given ", "one adds one", "undefined"]]],
+  ])("[%s] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 whose step \"one adds one\" matched no single definition is posted as never-ran, citing CLM-ONE-001 and naming \"Given one adds one\"", (_clm, steps) => {
+    const posted = postedByScenario(reportByScenario("features/one.feature", [{ tags: ["integration", "CLM-ONE-001"], steps }]));
+
+    expect(posted.map(({ result, cites, message }) => ({ result, cites, message }))).toEqual([{ result: "never-ran", cites: [ONE_001], message: "Given one adds one" }]);
+  });
+});
+
 describe("a test report's result will be unit evidence, and a Cucumber result will take the kind its tags name", () => {
   it("[CLM-OBS-059] a result in Vitest's evidence report is posted as unit evidence", () => {
     const posted = postedByFile("vitest", reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "failed" }], "failed"));
@@ -225,6 +297,20 @@ describe("a test report's result will be unit evidence, and a Cucumber result wi
 describe("a test report kept by suite gives unit evidence", () => {
   it("[CLM-OBS-060] a result in pytest's evidence report is posted as unit evidence", () => {
     expect(postedBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)).map(({ kind }) => kind)).toEqual(["unit"]);
+  });
+});
+
+describe("a Cucumber result will take the kind its tags name", () => {
+  it.each<[string, readonly string[], string, readonly string[]]>([
+    ["CLM-OBS-061", ["CLM-ONE-001", "smoke"], "passed", ["integration"]],
+    ["CLM-OBS-062", ["CLM-ONE-001", "e2e"], "passed", ["e2e"]],
+    ["CLM-OBS-063", ["CLM-ONE-001", "performance"], "passed", ["performance"]],
+    ["CLM-OBS-064", ["CLM-ONE-001", "integration", "e2e"], "passed", ["integration", "e2e"]],
+    ["CLM-OBS-111", ["CLM-ONE-001", "integration", "e2e"], "undefined", ["integration", "e2e"]],
+  ])("[%s] a scenario in Cucumber's evidence report tagged %j whose step %s is posted at the kinds of quality check its tags name", (_clm, tags, status, kinds) => {
+    const posted = postedByScenario(reportByScenario("features/one.feature", [{ tags, steps: [["Given ", "one adds one", status]] }]));
+
+    expect(posted.map(({ kind }) => kind)).toEqual(kinds);
   });
 });
 
@@ -265,6 +351,28 @@ describe("balance posts a nested example citing its own code, or its group's cod
   });
 });
 
+// A feature file whose two-row Outline has its rows at lines 10 and 11, with the claim codes CLM-<FFF>-001 and -002.
+const outlineIn = (featureCode: string): string =>
+  `@${featureCode}\nFeature: ${featureCode.toLowerCase()}\n\n  @integration\n  Scenario Outline: adds <n>\n    Given one adds <n>\n\n    Examples:\n      | clm | n |\n      | CLM-${featureCode}-001 | 1 |\n      | CLM-${featureCode}-002 | 2 |\n`;
+
+describe("balance posts each row of an Outline citing its own claim code", () => {
+  it("[CLM-OBS-077] two rows of one Scenario Outline, CLM-ONE-001 and CLM-ONE-002, each with a result in Cucumber's evidence report, are posted citing the claim code of their row", () => {
+    const report = reportByScenario("features/one.feature", [
+      { title: "adds 1", line: 10, tags: ["integration"], steps: [["Given ", "one adds 1", "passed"]] },
+      { title: "adds 2", line: 11, tags: ["integration"], steps: [["Given ", "one adds 2", "passed"]] },
+    ]);
+
+    expect(postedByScenario(report, [featureAsWrittenFrom("one.feature", outlineIn("ONE"))]).map(({ cites }) => cites)).toEqual([[ONE_001], [ONE_002]]);
+  });
+
+  it("[CLM-OBS-107] a result for the row at line 10 of two.feature, when one.feature also has a row at line 10, is posted citing CLM-TWO-001", () => {
+    const features = [featureAsWrittenFrom("one.feature", outlineIn("ONE")), featureAsWrittenFrom("two.feature", outlineIn("TWO"))];
+    const report = reportByScenario("features/two.feature", [{ title: "adds 1", line: 10, tags: ["integration"], steps: [["Given ", "one adds 1", "passed"]] }]);
+
+    expect(postedByScenario(report, features).map(({ cites }) => cites)).toEqual([[{ featureCode: "TWO", number: "001" }]]);
+  });
+});
+
 describe("balance posts an Evidence Observation saying where to look", () => {
   it.each<[string, string, string]>([
     ["CLM-OBS-078", "a.test.ts", "/work/acme"],
@@ -273,6 +381,14 @@ describe("balance posts an Evidence Observation saying where to look", () => {
     const posted = postedByFile("vitest", reportByFile(file, [{ title: "[CLM-ONE-001] adds two numbers", status: "passed" }]), targetFolder);
 
     expect(posted.map(({ place, name }) => ({ place, name }))).toEqual([{ place: "a.test.ts", name: "[CLM-ONE-001] adds two numbers" }]);
+  });
+});
+
+describe("balance posts a Cucumber result saying where to look", () => {
+  it("[CLM-OBS-080] the scenario \"one adds one\" in one.feature is posted saying where to look: \"one adds one\" in one.feature", () => {
+    const posted = postedByScenario(reportByScenario("one.feature", [{ tags: ["integration", "CLM-ONE-001"], steps: [PASSED] }]));
+
+    expect(posted.map(({ place, name }) => ({ place, name }))).toEqual([{ place: "one.feature", name: "one adds one" }]);
   });
 });
 
