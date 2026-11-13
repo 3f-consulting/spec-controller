@@ -1,0 +1,10 @@
+{
+  "CLM-RPT-084": {
+    "class": "a name with a character Markdown reads as formatting",
+    "variants": ["a|b", "a\\b", "a`b", "a*b"]
+  },
+  "CLM-RPT-107": {
+    "class": "a name a code span cannot show as it is",
+    "variants": ["a\nb", "a\rb", "", " a b "]
+  }
+}
