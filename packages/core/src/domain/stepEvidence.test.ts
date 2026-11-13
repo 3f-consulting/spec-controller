@@ -170,6 +170,10 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(countedAndPosted("pnpm test", "vitest", { test: "pnpm unit", unit: "vitest run" })).toEqual({ countedAs: "runner", posted: 0 });
   });
 
+  it("[CLM-OBS-115] a step running pnpm loop, whose script runs itself, will be counted as a fitness function, and a fitness Evidence Observation will be posted", () => {
+    expect(countedAndPosted("pnpm loop", "vitest", { loop: "pnpm loop" })).toEqual({ countedAs: "candidate", posted: 1 });
+  });
+
   it.each(shellVariants["CLM-OBS-112"].variants)("[CLM-OBS-112] a step running its unit runner behind the wrapper %s, past its options, will be counted as a runner", (wrapper) => {
     expect(dispositionOf(`${wrapper} -a --server-args=-screen vitest run`, "vitest")).toBe("runner");
   });
