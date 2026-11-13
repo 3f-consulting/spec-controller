@@ -105,13 +105,16 @@ function citedOnly(observations: readonly EvidenceObservation[], outcome: "cites
   return observations.map((observation) => (ran(observation) ? { outcome, kind: observation.kind, observation } : neverRan(observation)));
 }
 
+// A claim code as one key, for sorting, grouping and filing alike.
+const written = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
+
 const KIND_ORDER: readonly QualityCheckKind[] = ["unit", "integration", "e2e", "performance", "fitness"];
 
 // What a Quality Check Reconciliation is sorted by: its kind, where its test is, the codes it cites, then the rest it records.
 const sortKey = ({ kind, observation }: QualityCheckReconciliation): readonly (number | string)[] => [
   kind === undefined ? KIND_ORDER.length : KIND_ORDER.indexOf(kind),
   observation?.place ?? "",
-  (observation?.cites ?? []).map(({ featureCode, number }) => `${featureCode}-${number}`).join(" "),
+  (observation?.cites ?? []).map(written).join(" "),
   observation?.message ?? "",
   observation?.name ?? "",
   observation?.result ?? "",
@@ -135,8 +138,6 @@ export function claimReconciliationOf(
   const balanced = qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied");
   return { claim, qualityCheckReconciliations, verdict: balanced ? "balanced" : "out-of-balance" };
 }
-
-const written = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
 
 // Each Evidence Observation goes to the one executable claim with the code it cites; to that code's phantom claim when no
 // executable claim has it; and to the unnamed claim when it cites none, several, or a code several claims share.
@@ -190,7 +191,7 @@ export function evidenceGroupsOf({ qualityCheckReconciliations }: ClaimReconcili
     const { observation } = reconciliation;
     if (observation === undefined) continue;
     const code = sharedCodeOf(observation);
-    const key = [observation.kind, fileOf(observation) ?? "", code ? `${code.featureCode}-${code.number}` : ""].join("|");
+    const key = [observation.kind, fileOf(observation) ?? "", code ? written(code) : ""].join("|");
     const members = groups.get(key);
     if (members) members.push(reconciliation);
     else groups.set(key, [reconciliation]);

@@ -148,20 +148,25 @@ const saidBy = (failure: FailureAsWritten | undefined): { message?: string } => 
   return message === undefined ? {} : { message };
 };
 
-// A pytest error is a test that never reached its assertions; with no class name, a file that did not collect.
-function pytestObservation(result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
+// The report kept by suite whose errors are written only for a test that never reached its assertions, and which cites a
+// test's claim codes in its properties. Its reader names its reports so; any other report kept by suite writes an error for
+// a test that failed, and cites in its names.
+export const ERRORS_BEFORE_ASSERTIONS = "errors-before-assertions";
+
+// An error is a test that never reached its assertions; with no class name, a file that was never collected.
+function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
   const { className, name, file, clmProperties, outcome, failure } = result;
   if (outcome === "skipped") return [];
-  const collected = className !== "";
+  const collected = (className ?? "") !== "";
   const cites = collected ? clmProperties.flatMap((property) => claimCodeFrom(property) ?? []) : [];
   const resultOf: Result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
-  const place = shownFromTarget(file ?? (collected ? className ?? name : name), targetFolder);
+  const place = shownFromTarget(file ?? (collected ? className! : name), targetFolder);
   return [{ cites, result: resultOf, kind: "unit", place, ...(collected && { name }), ...saidBy(failure), notes: [] }];
 }
 
-// A JUnit case with no class name is its suite's own failure, such as a Go package that did not build; one with no name
-// is its class's, such as a Java class whose setup before all its tests failed. Neither reached a test's assertions.
-function junitObservation(suite: ResultsBySuiteAsWritten, result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
+// A case with no class name is its suite's own failure, such as a package that did not build; one with no name is its
+// class's, such as a class whose setup before all its tests failed. Neither reached a test's assertions.
+function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
   const { className = "", name, file, outcome, failure } = result;
   if (outcome === "skipped") return [];
   if (outcome !== "" && (className === "" || name === "")) {
@@ -172,10 +177,12 @@ function junitObservation(suite: ResultsBySuiteAsWritten, result: ResultInSuiteA
   return [{ cites, result: outcome === "" ? "passed" : "failed", kind: "unit", place, name, ...saidBy(failure), notes: [] }];
 }
 
-// Results kept by suite: JUnit's, from Go, Java and Kotlin, and pytest's.
+// Results kept by suite, each case in its suite.
 export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], targetFolder: string): EvidenceObservation[] {
   return suites.flatMap((suite) =>
-    suite.results.flatMap((result) => (suite.report === "pytest" ? pytestObservation(result, targetFolder) : junitObservation(suite, result, targetFolder))),
+    suite.results.flatMap((result) => 
+      suite.report === ERRORS_BEFORE_ASSERTIONS ? observationWhereErrorsNeverRan(result, targetFolder) : observationWhereErrorsFailed(suite, result, targetFolder),
+    ),
   );
 }
 
@@ -221,16 +228,22 @@ function resultOfSteps(steps: readonly StepAsWritten[]): { readonly result: Resu
 }
 
 // An Outline row's code is its clm cell, in the feature file at the end of the result's path, at the row's line.
-function rowCodeOf(file: string, line: number, features: readonly FeatureAsWritten[]): ClaimCode[] {
-  const feature = features
-    .filter(({ file: featureFile }) => file === featureFile || file.endsWith(`/${featureFile}`))
-    .sort((one, other) => other.file.length - one.file.length)[0];
-  for (const { columns, rows } of (feature?.scenarios ?? []).flatMap(({ examples }) => examples)) {
-    const row = rows.find((candidate) => candidate.line === line);
-    const code = row && claimCodeFrom(row.cells[columns.indexOf(CLM_COLUMN)] ?? "");
-    if (row) return code ? [code] : [];
+function rowCodesOf(features: readonly FeatureAsWritten[]): (file: string, line: number) => ClaimCode[] {
+  const byFile = new Map<string, ReadonlyMap<number, ClaimCode | undefined>>();
+  for (const { file, scenarios } of features) {
+    const byLine = new Map<number, ClaimCode | undefined>();
+    for (const { columns, rows } of scenarios.flatMap(({ examples }) => examples)) {
+      for (const { line, cells } of rows) byLine.set(line, claimCodeFrom(cells[columns.indexOf(CLM_COLUMN)] ?? ""));
+    }
+    byFile.set(file, byLine);
   }
-  return [];
+  // The longest feature file path the result's path ends with is its file.
+  const longestFirst = [...byFile.keys()].sort((one, other) => other.length - one.length);
+  return (file, line) => {
+    const featureFile = longestFirst.find((candidate) => file === candidate || file.endsWith(`/${candidate}`));
+    const code = featureFile === undefined ? undefined : byFile.get(featureFile)!.get(line);
+    return code ? [code] : [];
+  };
 }
 
 // Results kept by scenario: Cucumber's. features is the corpus as written, where an Outline row's claim code is.
@@ -239,11 +252,12 @@ export function observationsOfScenarios(
   features: readonly FeatureAsWritten[],
   targetFolder: string,
 ): EvidenceObservation[] {
+  const rowCodeOf = rowCodesOf(features);
   return results.flatMap(({ file, line, title, tags, steps }) => {
     const outcome = resultOfSteps(steps);
     if (outcome === undefined) return [];
     const tagged = tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
-    const cites = tagged.length > 0 ? tagged : rowCodeOf(file, line, features);
+    const cites = tagged.length > 0 ? tagged : rowCodeOf(file, line);
     const place = shownFromTarget(file, targetFolder);
     return kindsOf(tags).map((kind): EvidenceObservation => ({ cites, ...outcome, kind, place, name: title, notes: [] }));
   });
