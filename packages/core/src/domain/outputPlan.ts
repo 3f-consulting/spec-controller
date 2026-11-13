@@ -38,8 +38,7 @@ export type OutputPlan<Format extends string> =
   | { readonly ok: true }
   | { readonly ok: false; readonly refusal: OutputRefusal<Format> };
 
-const toStandardOutput = <Format extends string>({ output, identity }: IdentifiedOutput<Format>): boolean =>
-  output.destination.to === "standard-output" || identity.is === "standard-output";
+const toStandardOutput = <Format extends string>({ identity }: IdentifiedOutput<Format>): boolean => identity.is === "standard-output";
 
 // A regular file by its device and inode, a file not yet made by its folder's and its name; anything else is no file.
 function fileKeyOf(identity: FileIdentity): string | undefined {
