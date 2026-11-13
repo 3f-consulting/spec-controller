@@ -139,7 +139,7 @@ const saidBy = (failure: FailureAsWritten | undefined): { message?: string } =>
 function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
   const { className, name, clmProperties, outcome, failure } = result;
   if (outcome === "skipped") return [];
-  const collected = (className ?? "") !== "";
+  const collected = Boolean(className);
   const cites = collected ? clmProperties.flatMap((property) => claimCodeFrom(property) ?? []) : [];
   const resultOf: Result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
   const place = shownFromTarget(collected ? className! : name, targetFolder);
@@ -147,15 +147,16 @@ function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFo
 }
 
 // A case with no class name is its suite's own failure, such as a package that did not build; one with no name is its
-// class's, such as a class whose setup before all its tests failed. Neither reached a test's assertions.
+// class's, such as a class whose setup before all its tests failed. Neither reached a test's assertions, and no report
+// writes either for a test that passed.
 function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
-  const { className = "", name, outcome, failure } = result;
+  const { className, name, outcome, failure } = result;
   if (outcome === "skipped") return [];
-  if (outcome !== "" && (className === "" || name === "")) {
+  if (!className || name === "") {
     return [unitObservation({ cites: [], result: "never-ran", place: className || suite.name, ...saidBy(failure) })];
   }
   const cites = nearestCitations([...classesIn(className), ...name.split("/")]);
-  const place = shownFromTarget(className || suite.name, targetFolder);
+  const place = shownFromTarget(className, targetFolder);
   return [unitObservation({ cites, result: outcome === "" ? "passed" : "failed", place, name, ...saidBy(failure) })];
 }
 

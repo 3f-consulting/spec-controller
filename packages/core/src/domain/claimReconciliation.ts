@@ -109,9 +109,10 @@ const sortKey = ({ kind, observation }: OfAKind): readonly (number | string)[] =
   observation?.message ?? "",
 ];
 
+// At the first part that differs, the lower of the two as text comes first; a kind's rank is one digit.
 function inOrder(one: OfAKind, other: OfAKind): number {
   const others = sortKey(other);
-  for (const [at, part] of sortKey(one).entries()) if (part !== others[at]) return part < others[at]! ? -1 : 1;
+  for (const [at, part] of sortKey(one).entries()) if (part !== others[at]) return [part, others[at]].sort()[0] === part ? -1 : 1;
   return 0;
 }
 
@@ -163,7 +164,7 @@ const fileOf = ({ kind, place }: EvidenceObservation): { readonly file?: string 
 const sharedCodeOf = ({ cites }: EvidenceObservation): ClaimCode | undefined => (cites.length === 1 ? cites[0] : undefined);
 
 function groupOf(kind: QualityCheckKind, file: { readonly file?: string }, claimCode: ClaimCode | undefined, members: readonly QualityCheckReconciliation[]): EvidenceGroup {
-  const observations = members.flatMap(({ observation }) => (observation ? [observation] : []));
+  const observations = members.map(({ observation }) => observation!);
   const failed = observations.filter(({ result }) => result === "failed");
   return {
     kind,
@@ -177,11 +178,11 @@ function groupOf(kind: QualityCheckKind, file: { readonly file?: string }, claim
   };
 }
 
+// The unnamed claim's: every Quality Check Reconciliation on it has its evidence.
 export function evidenceGroupsOf({ qualityCheckReconciliations }: ClaimReconciliation): EvidenceGroup[] {
   const groups = new Map<string, QualityCheckReconciliation[]>();
   for (const reconciliation of qualityCheckReconciliations) {
-    const { observation } = reconciliation;
-    if (observation === undefined) continue;
+    const observation = reconciliation.observation!;
     const code = sharedCodeOf(observation);
     const key = JSON.stringify([observation.kind, fileOf(observation).file, code && written(code)]);
     const members = groups.get(key);
