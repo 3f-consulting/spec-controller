@@ -118,3 +118,7 @@ export interface ShellAnswers {
   readonly invokesAnywhere: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
 }
+
+export function evidenceObservationsOf(_results: readonly ResultsByFileAsWritten[]): EvidenceObservation[] {
+  return [];
+}
