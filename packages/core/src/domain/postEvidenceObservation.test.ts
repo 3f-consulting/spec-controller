@@ -329,6 +329,7 @@ describe("balance posts what could not run as never ran, from a report kept by e
       "\nAn error occurred while loading ./spec/unloadable_spec.rb.\nFailure/Error: __send__(method, file)\n\nSyntaxError:\n  Unmatched `{', missing `}' ?\n",
       "./spec/unloadable_spec.rb",
     ],
+    ["CLM-OBS-049", "\nAn error occurred while loading ./spec/unloadable_spec.rb\nSyntaxError:\n  Unmatched `{', missing `}' ?\n", "./spec/unloadable_spec.rb"],
     ["CLM-OBS-099", "\nAn error occurred in a `before(:suite)` hook.\nFailure/Error: raise \"the database could not be reached\"\n", ""],
   ])("[%s] RSpec's evidence report saying %j is posted as never-ran, citing no claim code, naming where and the error", (_clm, error, place) => {
     const posted = postedByExample(reportByExample([], [error]));
