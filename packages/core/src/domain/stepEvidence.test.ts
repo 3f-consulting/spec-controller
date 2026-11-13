@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { scriptsFrom } from "../inputs/manifest.js";
 import { shellAnswers } from "../inputs/shell.js";
 import { stepRecordFrom } from "../inputs/stepRecord.js";
 import shellVariants from "../inputs/shell.variants.json" with { type: "json" };
@@ -184,7 +185,7 @@ describe("a runner is recognised only as the command a step runs", () => {
   });
 
   it("[CLM-OBS-114] a step running pnpm test, whose script runs another script, whose script runs vitest, will be counted as a runner, and nothing will be posted", () => {
-    expect(countedAndPosted("pnpm test", "vitest", { test: "pnpm unit", unit: "vitest run" })).toEqual({ countedAs: "runner", posted: 0 });
+    expect(countedAndPosted("pnpm test", "vitest", scriptsFrom({ scripts: { test: "pnpm unit", unit: "vitest run" } }))).toEqual({ countedAs: "runner", posted: 0 });
   });
 
   it("[CLM-OBS-115] a step running pnpm loop, whose script runs itself, will be counted as a fitness function, and a fitness Evidence Observation will be posted", () => {
