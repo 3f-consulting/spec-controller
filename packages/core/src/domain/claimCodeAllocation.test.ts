@@ -219,6 +219,19 @@ describe("allocate takes only a feature code a feature file has", () => {
     });
   });
 
+  it("[CLM-STG-077] the features folder held files tagged @ONE and @TWO, and one with no feature code, where no file mentions ZZZ: a request for ZZZ stops as an unknown feature code, listing ONE and TWO", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    repository.write("features/two.feature", featureFile("TWO", "CLM-TWO-001"));
+    repository.write("features/plain.feature", "Feature: plain\n");
+    repository.commit("first");
+
+    expect(allocate({ featureCode: "ZZZ", asNewFeatureCode: false }, repository.top)).toEqual({
+      stop: "unknown-feature-code",
+      refusal: { key: "unknown-feature-code", values: { featureCode: "ZZZ", featureCodes: "ONE, TWO" } },
+    });
+  });
+
   it("[CLM-STG-079] a feature file tagged @ZZZ was deleted by a later commit: a request for ZZZ stops as an unknown feature code, listing ONE and TWO", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
@@ -388,6 +401,15 @@ describe("allocate names what it could not read, and gives no code", () => {
     chmodSync(`${copy.top}/locked`, 0o000);
 
     expect(allocate(ONE, copy.top)).toEqual(stoppedOn("unreadable-in-tree", { path: "locked/", said: expect.stringContaining("Permission denied") }));
+  });
+
+  it("[CLM-STG-085] a folder in the features folder it cannot read stops it as a usage error, naming what it could not read", () => {
+    const copy = folderForTest();
+    copy.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    copy.write("features/locked/two.feature", featureFile("TWO", "CLM-TWO-001"));
+    chmodSync(`${copy.top}/features/locked`, 0o000);
+
+    expect(allocate(ONE, copy.top)).toEqual(stoppedOn("unreadable-in-tree", { path: "features/locked", said: expect.stringContaining("permission denied") }));
   });
 
   it("[CLM-STG-093] a file in the tree it cannot read stops it as a usage error, naming what it could not read", () => {
