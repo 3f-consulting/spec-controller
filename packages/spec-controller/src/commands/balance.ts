@@ -29,7 +29,8 @@ import { runIdentityIn } from "../runIdentity/runIdentity.js";
 import { writeReports } from "../output/writer.js";
 import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/runRequest.js";
 
-const pathOf = (inputs: readonly InputRequest[], kind: InputRequest["kind"]): string | undefined => inputs.find((input) => input.kind === kind)?.path;
+// Only an input the command line named is read.
+const pathOf = (inputs: readonly InputRequest[], kind: InputRequest["kind"]): string | undefined => inputs.find((input) => input.kind === kind && !input.byDefault)?.path;
 
 // An input the command line did not give reads as nothing.
 const readEach = <Read>(path: string | undefined, read: (path: string) => readonly Read[]): readonly Read[] => (path === undefined ? [] : read(path));

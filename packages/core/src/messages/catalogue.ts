@@ -15,8 +15,8 @@ export function textFor(catalogue: Catalogue, code: string, values: MessageValue
   const text = catalogue[code];
   if (text === undefined || text.trim() === "" || Object.values(values).includes(null)) return codeAndValues(code, values);
   try {
-    // Each value is filled in as written: a number is not grouped by the locale.
-    const filled = new IntlMessageFormat(text, "en").format(Object.fromEntries(Object.entries(values).map(([name, value]) => [name, String(value)])));
+    // Each value is filled in as written: a number is not grouped by the locale, and <angle brackets> are text.
+    const filled = new IntlMessageFormat(text, "en", undefined, { ignoreTag: true }).format(Object.fromEntries(Object.entries(values).map(([name, value]) => [name, String(value)])));
     return String(filled);
   } catch {
     return codeAndValues(code, values);

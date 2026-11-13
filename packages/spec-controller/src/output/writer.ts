@@ -12,7 +12,7 @@ import { writeFileSync } from "node:fs";
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import { pathIdentity, streamIdentity } from "./identity.js";
 import type { StandardStream, StandardStreams } from "./streams.js";
-import { refusalText } from "./allocateNotes.js";
+import { refusalText } from "../runEnding/refusal.js";
 import { whyUnwritable } from "./writable.js";
 import { exitCodeOf, USAGE_ERROR } from "../runEnding/exitCode.js";
 import type { ExitCode, Refusal } from "../runEnding/runEnding.js";
