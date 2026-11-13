@@ -46,8 +46,8 @@ describe("balance posts a fitness Evidence Observation only for a step that is a
   const notCheckingCiInstall: TargetConfiguration = { runners: {}, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install" }], deferralTags: [] };
 
   it.each([
-    ["CLM-OBS-126", "named Install in job test of ci.yml, whose job ci had a step named Install", () => installIn("ci.yml", "test")],
-    ["CLM-OBS-127", "named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci", () => installIn("nightly.yml", "ci")],
+    ["CLM-OBS-139", "named Install in job test of ci.yml, whose job ci had a step named Install", () => installIn("ci.yml", "test")],
+    ["CLM-OBS-140", "named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci", () => installIn("nightly.yml", "ci")],
   ] as const)("[%s] a step %s, with ci.yml:ci:Install in notChecks, is counted as a fitness function and posted", (_clm, _step, step) => {
     const steps = [...installIn("ci.yml", "ci"), ...step()];
     const counted = steps.slice(1).map((one) => stepDispositionOf(one, notCheckingCiInstall, {}, shellAnswers));
@@ -55,7 +55,7 @@ describe("balance posts a fitness Evidence Observation only for a step that is a
     expect({ counted, posted: fitnessObservationsOf(steps, [], notCheckingCiInstall, {}, shellAnswers).length }).toEqual({ counted: ["candidate"], posted: 1 });
   });
 
-  it("[CLM-OBS-128] a step using actions/dependency-review-action, with vitest as its unit runner, is counted as a fitness function and posted", () => {
+  it("[CLM-OBS-141] a step using actions/dependency-review-action, with vitest as its unit runner, is counted as a fitness function and posted", () => {
     const steps = stepsOf({ uses: "actions/dependency-review-action@v4" });
     const configuration: TargetConfiguration = { runners: { unit: "vitest" }, nonChecks: [], deferralTags: [] };
 
@@ -102,7 +102,7 @@ describe("balance posts a result as passed or failed", () => {
     ["CLM-OBS-033", "CLM-ONE-001", "pnpm lint", "it succeeded", { outcome: "success", conclusion: "success" }, false, "passed", [ONE_001]],
     ["CLM-OBS-034", "CLM-ONE-001", "pnpm lint", "it failed", { outcome: "failure", conclusion: "failure" }, false, "failed", [ONE_001]],
     ["CLM-OBS-035", "CLM-ONE-001", "pnpm lint", "it failed, and continue-on-error hid it", { outcome: "failure", conclusion: "success" }, true, "failed", [ONE_001]],
-    ["CLM-OBS-122", "audit", "pnpm audit-the-tree", "it succeeded", { outcome: "success", conclusion: "success" }, false, "passed", []],
+    ["CLM-OBS-136", "audit", "pnpm audit-the-tree", "it succeeded", { outcome: "success", conclusion: "success" }, false, "passed", []],
     ["CLM-OBS-123", "audit", "pnpm audit-the-tree", "it failed", { outcome: "failure", conclusion: "failure" }, false, "failed", []],
   ] as const)("[%s] the step record had a result with the id %s, on a step running %s, and %s: it is posted as its result, citing the code it has", (_clm, id, run, _how, entry, continueOnError, result, cites) => {
     const steps = workflowOf({ ci: { steps: [{ id, run, "continue-on-error": continueOnError }] } });
@@ -112,7 +112,7 @@ describe("balance posts a result as passed or failed", () => {
     ]);
   });
 
-  it("[CLM-OBS-130] the step record had results with the ids CLM-ONE-001 and CLM-ONE-002, on two steps in ci.yml, each succeeded: each is posted as passed, citing its own code", () => {
+  it("[CLM-OBS-143] the step record had results with the ids CLM-ONE-001 and CLM-ONE-002, on two steps in ci.yml, each succeeded: each is posted as passed, citing its own code", () => {
     const steps = workflowOf({ ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }, { id: "CLM-ONE-002", run: "pnpm audit-the-tree" }] } });
     const record = recordOf({ "CLM-ONE-001": { outcome: "success", conclusion: "success" }, "CLM-ONE-002": { outcome: "success", conclusion: "success" } });
 
@@ -127,7 +127,7 @@ describe("balance posts what could not run as never ran", () => {
   it.each([
     ["CLM-OBS-053", "CLM-ONE-001", "was skipped", { name: "Lint", run: "pnpm lint" }, "skipped", [ONE_001], "ci.yml:ci:Lint"],
     ["CLM-OBS-054", "CLM-ONE-001", "had a status balance does not know", { name: "Lint", run: "pnpm lint" }, "neutral", [ONE_001], "ci.yml:ci:Lint"],
-    ["CLM-OBS-124", "audit", "was skipped", { run: "pnpm audit-the-tree" }, "skipped", [], "ci.yml:ci:pnpm audit-the-tree"],
+    ["CLM-OBS-137", "audit", "was skipped", { run: "pnpm audit-the-tree" }, "skipped", [], "ci.yml:ci:pnpm audit-the-tree"],
   ] as const)("[%s] the step record said a fitness function's step with the id %s %s: it is posted as never-ran, citing the code it has and naming that step", (_clm, id, _what, step, outcome, cites, place) => {
     const steps = workflowOf({ ci: { steps: [{ id, ...step }] } });
 
@@ -186,7 +186,7 @@ describe("an Evidence Observation says where to look", () => {
     ["CLM-OBS-103", "the step with no name, running a blank line then pnpm lint, in job build", { build: { steps: [{ id: "CLM-ONE-001", run: "  \n  pnpm lint" }] } }, "ci.yml:build:pnpm lint"],
     ["CLM-OBS-104", "the step Lint in jobs build and test", { build: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] }, test: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] } }, "CLM-ONE-001"],
     [
-      "CLM-OBS-129",
+      "CLM-OBS-142",
       "the step Lint in job build, while job test had the fitness function pnpm audit-the-tree,",
       { build: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] }, test: { steps: [{ run: "pnpm audit-the-tree" }] } },
       "ci.yml:build:Lint",

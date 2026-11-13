@@ -37,9 +37,9 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-006 | a step running eslint vitest.config.ts                                                  | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
         | CLM-OBS-007 | a step running vitest run \| tee out.txt                                                | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
         | CLM-OBS-008 | a step running pnpm test                                                                | no unit runner                 | a fitness function | a fitness Evidence Observation will be posted                                             |
-        | CLM-OBS-126 | a step named Install in job test of ci.yml, whose job ci had a step named Install       | ci.yml:ci:Install in notChecks | a fitness function | a fitness Evidence Observation will be posted                                             |
-        | CLM-OBS-127 | a step named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci   | ci.yml:ci:Install in notChecks | a fitness function | a fitness Evidence Observation will be posted                                             |
-        | CLM-OBS-128 | a step using actions/dependency-review-action                                           | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-139 | a step named Install in job test of ci.yml, whose job ci had a step named Install       | ci.yml:ci:Install in notChecks | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-140 | a step named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci   | ci.yml:ci:Install in notChecks | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-141 | a step using actions/dependency-review-action                                           | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
         | CLM-OBS-009 | a step running pnpm test, whose script runs vitest                                      | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
         | CLM-OBS-114 | a step running pnpm test, whose script runs another script, whose script runs vitest    | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
         | CLM-OBS-131 | a step running pnpm run //, whose scripts entry is a list, not a string                 | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
@@ -95,9 +95,9 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-033 | the step record                     | the id CLM-ONE-001                                            | it succeeded                                                 | passed           | CLM-ONE-001   |
         | CLM-OBS-034 | the step record                     | the id CLM-ONE-001                                            | it failed                                                    | failed           | CLM-ONE-001   |
         | CLM-OBS-035 | the step record                     | the id CLM-ONE-001                                            | it failed, and continue-on-error hid it                      | failed           | CLM-ONE-001   |
-        | CLM-OBS-122 | the step record                     | the id audit, on a step in ci.yml running pnpm audit-the-tree | it succeeded                                                 | passed           | no claim code |
+        | CLM-OBS-136 | the step record                     | the id audit, on a step in ci.yml running pnpm audit-the-tree | it succeeded                                                 | passed           | no claim code |
         | CLM-OBS-123 | the step record                     | the id audit, on a step in ci.yml running pnpm audit-the-tree | it failed                                                    | failed           | no claim code |
-        | CLM-OBS-130 | the step record                     | the ids CLM-ONE-001 and CLM-ONE-002, on two steps in ci.yml   | each succeeded                                               | passed, for each | its own code  |
+        | CLM-OBS-143 | the step record                     | the ids CLM-ONE-001 and CLM-ONE-002, on two steps in ci.yml   | each succeeded                                               | passed, for each | its own code  |
 
     @unit
     Scenario Outline: balance posts nothing for a test that was skipped
@@ -151,7 +151,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-052 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched no definition                               | CLM-ONE-001   | that step as written, "Given one adds one" |
         | CLM-OBS-110 | Cucumber's evidence report        | a scenario tagged @CLM-ONE-001 had a step that failed, and the step "one adds one" that matched no definition | CLM-ONE-001   | that step as written, "Given one adds one" |
         | CLM-OBS-053 | the step record                   | a fitness function's step with the id CLM-ONE-001 was skipped                                                 | CLM-ONE-001   | that step                                  |
-        | CLM-OBS-124 | the step record                   | a fitness function's step with the id audit, in ci.yml running pnpm audit-the-tree, was skipped               | no claim code | that step                                  |
+        | CLM-OBS-137 | the step record                   | a fitness function's step with the id audit, in ci.yml running pnpm audit-the-tree, was skipped               | no claim code | that step                                  |
         | CLM-OBS-054 | the step record                   | a fitness function's step with the id CLM-ONE-001 had a status balance does not know                          | CLM-ONE-001   | that step                                  |
 
     @unit @CLM-OBS-055
@@ -259,7 +259,7 @@ Feature: Evidence Observations are posted, each to its claim
       Examples:
         | clm         | its file        | its code    |
         | CLM-OBS-107 | two.feature     | CLM-TWO-001 |
-        | CLM-OBS-125 | sub/one.feature | CLM-SUB-001 |
+        | CLM-OBS-138 | sub/one.feature | CLM-SUB-001 |
 
   Rule: an Evidence Observation says where to look
 
@@ -279,7 +279,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-102 | the step record            | fitness               | the step with no name and an empty command, in job build of ci.yml                                                                  | ci.yml:build:                   |
         | CLM-OBS-103 | the step record            | fitness               | the step with no name, running a blank line then pnpm lint, in job build of ci.yml                                                  | ci.yml:build:pnpm lint          |
         | CLM-OBS-104 | the step record            | fitness               | the step Lint in jobs build and test of ci.yml                                                                                      | CLM-ONE-001                     |
-        | CLM-OBS-129 | the step record            | fitness               | the step Lint with the id CLM-ONE-001 in job build of ci.yml, recorded, while job test had the fitness function pnpm audit-the-tree | ci.yml:build:Lint               |
+        | CLM-OBS-142 | the step record            | fitness               | the step Lint with the id CLM-ONE-001 in job build of ci.yml, recorded, while job test had the fitness function pnpm audit-the-tree | ci.yml:build:Lint               |
 
     @unit @CLM-OBS-098
     Scenario: a test file outside the target's folder will be placed at the absolute path its evidence report recorded
@@ -319,7 +319,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-087 | the step record                   | no id                                                                     | no claim code               |
         | CLM-OBS-105 | pytest's evidence report          | the clm property CLM-A-001, which is not a claim code                     | no claim code               |
         | CLM-OBS-128 | pytest's evidence report          | the ticket property CLM-ONE-002, not a clm property                       | no claim code               |
-        | CLM-OBS-131 | Cucumber's evidence report        | a scenario of a feature file balance did not read, with no claim-code tag | no claim code               |
+        | CLM-OBS-144 | Cucumber's evidence report        | a scenario of a feature file balance did not read, with no claim-code tag | no claim code               |
         | CLM-OBS-088 | Vitest's evidence report          | [CLM-ONE-001] in its title, a code two claims share                       | CLM-ONE-001                 |
         | CLM-OBS-089 | Vitest's evidence report          | [CLM-ONE-001] and [CLM-ONE-002] in its title                              | CLM-ONE-001 and CLM-ONE-002 |
         | CLM-OBS-090 | Jest's evidence report            | [CLM-ONE-001] and [CLM-ONE-002] in its title                              | CLM-ONE-001 and CLM-ONE-002 |

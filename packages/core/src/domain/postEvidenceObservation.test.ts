@@ -458,7 +458,7 @@ describe("balance posts each row of an Outline citing its own claim code", () =>
 
   it.each([
     ["CLM-OBS-107", "two.feature", "TWO"],
-    ["CLM-OBS-125", "sub/one.feature", "SUB"],
+    ["CLM-OBS-138", "sub/one.feature", "SUB"],
   ] as const)("[%s] a result for the row at line 10 of %s, when one.feature also has a row at line 10, is posted citing that file's row", (_clm, file, featureCode) => {
     const features = [featureAsWrittenFrom("one.feature", outlineIn("ONE")), featureAsWrittenFrom(file, outlineIn(featureCode))];
     const report = reportByScenario(`features/${file}`, [{ title: "adds 1", line: 10, tags: ["integration"], steps: [["Given ", "one adds 1", "passed"]] }]);
@@ -637,7 +637,7 @@ describe("balance posts a failed test with the message its report gave", () => {
 });
 
 describe("balance posts a result from a feature file it did not read to the unnamed claim", () => {
-  it("[CLM-OBS-131] a passing scenario of a feature file balance did not read, with no claim-code tag, is posted to the unnamed claim, naming no claim code", () => {
+  it("[CLM-OBS-144] a passing scenario of a feature file balance did not read, with no claim-code tag, is posted to the unnamed claim, naming no claim code", () => {
     const posted = postedByScenario(reportByScenario("features/unread.feature", [{ tags: ["integration"], steps: [PASSED] }]), [featureAsWrittenFrom("one.feature", outlineIn("ONE"))]);
 
     expect(filed(claimReconciliationsOf([], posted))).toEqual([{ claim: "the unnamed claim", cites: [[]] }]);
