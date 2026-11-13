@@ -278,12 +278,11 @@ Feature: the command line reads what you give it, and says where each kind of ou
       and it will complain about the error, with <facts>
 
       Examples:
-        | clm         | error                                          | facts     |
-        | CLM-CLI-176 | an error nothing else handles                  | the error |
-        | CLM-CLI-177 | an error that cannot be formatted              | the error |
-        | CLM-CLI-178 | an error before the run reached its verdict    | the error |
-        | CLM-CLI-179 | an error while the program loads               | the error |
-        | CLM-CLI-180 | an error in reading a file the parser accepted | the error |
+        | clm         | error                                       | facts     |
+        | CLM-CLI-176 | an error nothing else handles               | the error |
+        | CLM-CLI-177 | an error that cannot be formatted           | the error |
+        | CLM-CLI-178 | an error before the run reached its verdict | the error |
+        | CLM-CLI-179 | an error while the program loads            | the error |
 
     @unit @CLM-CLI-181
     Scenario: an unexpected error after the run verdict will leave its exit code alone

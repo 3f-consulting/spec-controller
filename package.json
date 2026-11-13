@@ -33,14 +33,11 @@
       "performance": null
     },
     "notChecks": [
-      "ci.yml:ci:Check out the repository",
-      "ci.yml:ci:Set up Node",
       "ci.yml:ci:Enable corepack",
       "ci.yml:ci:Resolve the evidence root",
       "ci.yml:ci:Install dependencies",
       "ci.yml:ci:Read the Python Semgrep runs on",
-      "ci.yml:ci:Install Semgrep",
-      "ci.yml:ci:Hand the built packages to the release"
+      "ci.yml:ci:Install Semgrep"
     ]
   },
   "devDependencies": {

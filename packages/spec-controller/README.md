@@ -65,7 +65,7 @@ A scenario tagged `@unit` names an obligation: a unit test must exist and pass. 
 | `0` | balanced — every obligation has evidence, and that evidence holds |
 | `1` | out-of-balance — the scenarios and the evidence disagree, and the report says where |
 | `2` | usage — the invocation was wrong, or an input could not be read |
-| `3` | not reconciled — the run could not be relied on. Its run verdict says why: `unsound`, when some evidence never ran; `claim-code-errors`, when a claim code is misfiled (the report lists it under `### Claim code errors`); or `nothing-to-reconcile`, when there is no Claim Reconciliation at all |
+| `3` | not reconciled — the run could not be relied on. Its run verdict says why: `unsound`, when some evidence never ran; `claim-code-errors`, when a claim code is misfiled (the report lists it under `## Errors in the inputs`); or `nothing-to-reconcile`, when there is no Claim Reconciliation at all |
 | `4` | unexpected error — the run stops on an error that no refusal names, and gives no verdict. One line on stderr names the error |
 
 The tool writes the whole report before it sets the exit code, so a failing run still tells you why.
@@ -83,7 +83,7 @@ The tool writes the whole report before it sets the exit code, so a failing run 
 
 The refusal names the input, the path, and what was wrong with it. A well-formed report with nothing in it, such as a Vitest run that matched no test file, is read, not refused.
 
-**An output location it cannot write is also `2`.** This covers a `--format` path that is read-only, is a directory, is under a regular file, or is in a directory that does not exist. The tool refuses it before it prints any report, and names the location and the operating system's reason.
+**An output location it cannot write is also `2`.** This covers a `--format` path that is read-only, is a directory, is under a regular file, or is in a directory that does not exist. The tool refuses it before it prints any report, and names the location and why.
 
 `--exit-zero` changes `1` to `0` and leaves every other code alone (see *Report first, gate later*).
 

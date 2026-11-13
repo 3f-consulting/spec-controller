@@ -1,8 +1,8 @@
 import { accessSync, constants, statSync } from "node:fs";
 import { dirname } from "node:path";
-import { whereItWillBe } from "./identity.js";
+import { leadsRound, whereItWillBe } from "./identity.js";
 
-export type Unwritable = "may-not-be-written" | "is-a-folder" | "folder-does-not-exist";
+export type Unwritable = "may-not-be-written" | "is-a-folder" | "folder-does-not-exist" | "leads-round-to-itself";
 
 const mayWrite = (path: string): boolean => {
   try {
@@ -15,6 +15,7 @@ const mayWrite = (path: string): boolean => {
 
 // Why a report cannot be written at a path, or nothing when it can: checked before anything is written.
 export function whyUnwritable(path: string): Unwritable | undefined {
+  if (leadsRound(path)) return "leads-round-to-itself";
   const stats = statSync(path, { throwIfNoEntry: false });
   if (stats?.isDirectory()) return "is-a-folder";
   if (stats !== undefined) return mayWrite(path) ? undefined : "may-not-be-written";

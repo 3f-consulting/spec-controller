@@ -40,11 +40,22 @@ function notMadeYet(path: string): FileIdentity {
   return { is: "absent", ...(folder?.isDirectory() ? { folder: { device: folder.dev, inode: folder.ino } } : {}), name: basename(where) };
 }
 
+// A path whose links lead round to themselves names nothing: the system stops following them.
+export function leadsRound(path: string): boolean {
+  try {
+    statSync(path, { throwIfNoEntry: false });
+    return false;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === "ELOOP";
+  }
+}
+
 // What a path names, through any link: one of the run's standard streams, a regular file, something else, or nothing
 // yet. A stream's path reports another device than the stream's own descriptor does, so a stream is known by name first.
 export function pathIdentity(path: string): FileIdentity {
   const stream = streamNamedBy(path);
   if (stream !== undefined) return { is: stream };
+  if (leadsRound(path)) return { is: "not-a-regular-file" };
   const stats = statSync(path, { bigint: true, throwIfNoEntry: false });
   if (stats === undefined) return notMadeYet(path);
   return stats.isFile() ? regularFile(stats) : { is: "not-a-regular-file" };

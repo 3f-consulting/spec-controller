@@ -39,7 +39,7 @@ export interface ResultsByFileAsWritten {
   readonly results: readonly ResultInFileAsWritten[];
 }
 
-export interface ResultInFileAsWritten {
+interface ResultInFileAsWritten {
   readonly ancestorTitles: readonly string[];
   readonly title: string;
   readonly status: string;
@@ -50,25 +50,19 @@ export interface ResultInFileAsWritten {
 export interface ResultsBySuiteAsWritten {
   readonly report: string;
   readonly name: string;
-  readonly file?: string;
   readonly results: readonly ResultInSuiteAsWritten[];
-  // A failure the suite records outside any of its results, such as a package that did not compile.
-  readonly failure?: FailureAsWritten;
 }
 
 export interface ResultInSuiteAsWritten {
   readonly className?: string;
   readonly name: string;
-  readonly file?: string;
   readonly clmProperties: readonly string[];
   readonly outcome: string;
   readonly failure?: FailureAsWritten;
 }
 
 export interface FailureAsWritten {
-  readonly type?: string;
   readonly message?: string;
-  readonly text?: string;
 }
 
 // A report of test results kept by example, each nested in its groups.
@@ -78,7 +72,7 @@ export interface ResultsByExampleAsWritten {
   readonly loadErrors: readonly { readonly file?: string; readonly message: string }[];
 }
 
-export interface ExampleResultAsWritten {
+interface ExampleResultAsWritten {
   readonly file: string;
   readonly groupDescriptions: readonly string[];
   readonly description: string;
@@ -112,6 +106,9 @@ export interface ShellAnswers {
 const nearestCitations = (chain: readonly string[]): ClaimCode[] =>
   chain.reduceRight<ClaimCode[]>((found, title) => (found.length > 0 ? found : claimCodeCitationsIn(title)), []);
 
+// A nested class's name holds its outer classes' display names first, each opening with its citation when it has one.
+const classesIn = (className: string): string[] => className.split(/(?=\[CLM-)/);
+
 const RESULT_BY_STATUS: Readonly<Record<string, Result>> = { passed: "passed", failed: "failed" };
 
 // Results kept by test file: Vitest's and Jest's. A failed file with no results is one that could not run.
@@ -130,10 +127,8 @@ export function observationsByFile(results: readonly ResultsByFileAsWritten[], t
   });
 }
 
-const saidBy = (failure: FailureAsWritten | undefined): { message?: string } => {
-  const message = failure?.message ?? failure?.text;
-  return message === undefined ? {} : { message };
-};
+const saidBy = (failure: FailureAsWritten | undefined): { message?: string } =>
+  failure?.message === undefined ? {} : { message: failure.message };
 
 // The report kept by suite whose errors are written only for a test that never reached its assertions, and which cites a
 // test's claim codes in its properties. Its reader names its reports so; any other report kept by suite writes an error for
@@ -142,25 +137,25 @@ export const ERRORS_BEFORE_ASSERTIONS = "errors-before-assertions";
 
 // An error is a test that never reached its assertions; with no class name, a file that was never collected.
 function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
-  const { className, name, file, clmProperties, outcome, failure } = result;
+  const { className, name, clmProperties, outcome, failure } = result;
   if (outcome === "skipped") return [];
   const collected = (className ?? "") !== "";
   const cites = collected ? clmProperties.flatMap((property) => claimCodeFrom(property) ?? []) : [];
   const resultOf: Result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
-  const place = shownFromTarget(file ?? (collected ? className! : name), targetFolder);
+  const place = shownFromTarget(collected ? className! : name, targetFolder);
   return [{ cites, result: resultOf, kind: "unit", place, ...(collected && { name }), ...saidBy(failure), notes: [] }];
 }
 
 // A case with no class name is its suite's own failure, such as a package that did not build; one with no name is its
 // class's, such as a class whose setup before all its tests failed. Neither reached a test's assertions.
 function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
-  const { className = "", name, file, outcome, failure } = result;
+  const { className = "", name, outcome, failure } = result;
   if (outcome === "skipped") return [];
   if (outcome !== "" && (className === "" || name === "")) {
     return [{ cites: [], result: "never-ran", kind: "unit", place: className || suite.name, ...saidBy(failure), notes: [] }];
   }
-  const cites = nearestCitations([className, ...name.split("/")]);
-  const place = shownFromTarget(file ?? (className || suite.name), targetFolder);
+  const cites = nearestCitations([...classesIn(className), ...name.split("/")]);
+  const place = shownFromTarget(className || suite.name, targetFolder);
   return [{ cites, result: outcome === "" ? "passed" : "failed", kind: "unit", place, name, ...saidBy(failure), notes: [] }];
 }
 
@@ -224,10 +219,9 @@ function rowCodesOf(features: readonly FeatureAsWritten[]): (file: string, line:
     }
     byFile.set(file, byLine);
   }
-  // The longest feature file path the result's path ends with is its file.
-  const longestFirst = [...byFile.keys()].sort((one, other) => other.length - one.length);
+  // The feature file path the result's path ends with is its file.
   return (file, line) => {
-    const featureFile = longestFirst.find((candidate) => file === candidate || file.endsWith(`/${candidate}`));
+    const featureFile = [...byFile.keys()].find((candidate) => file === candidate || file.endsWith(`/${candidate}`));
     const code = featureFile === undefined ? undefined : byFile.get(featureFile)!.get(line);
     return code ? [code] : [];
   };

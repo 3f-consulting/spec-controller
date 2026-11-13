@@ -110,14 +110,12 @@ const written = ({ featureCode, number }: ClaimCode): string => `${featureCode}-
 
 const KIND_ORDER: readonly QualityCheckKind[] = ["unit", "integration", "e2e", "performance", "fitness"];
 
-// What a Quality Check Reconciliation is sorted by: its kind, where its test is, the codes it cites, then the rest it records.
+// What a Quality Check Reconciliation is sorted by: its kind, where its test is, the codes it cites, then its message.
 const sortKey = ({ kind, observation }: QualityCheckReconciliation): readonly (number | string)[] => [
   kind === undefined ? KIND_ORDER.length : KIND_ORDER.indexOf(kind),
   observation?.place ?? "",
   (observation?.cites ?? []).map(written).join(" "),
   observation?.message ?? "",
-  observation?.name ?? "",
-  observation?.result ?? "",
 ];
 
 function inOrder(one: QualityCheckReconciliation, other: QualityCheckReconciliation): number {

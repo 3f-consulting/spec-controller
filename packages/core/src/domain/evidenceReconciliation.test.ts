@@ -272,4 +272,11 @@ describe("balance accounts for every step it reads", () => {
 
     expect(total).toEqual({ stepsRead: 5, runners: 0, reconcilerSteps: 1, nonChecks: 1, plumbing: 1, candidates: 2, accountedFor: 5 });
   });
+
+  it("[CLM-EVR-072] a workflow with a job that calls a reusable workflow, and a job with one step, has the one step read", () => {
+    const steps = workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { call: { uses: "./.github/workflows/other.yml" }, build: { steps: [{ run: "pnpm lint" }] } } }));
+    const { jobs } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
+
+    expect(jobs.map(({ job, stepsRead }) => ({ job, stepsRead }))).toEqual([{ job: "build", stepsRead: 1 }]);
+  });
 });

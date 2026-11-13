@@ -30,6 +30,14 @@ describe("an Outline will be one executable claim for each row only when it has 
   });
 });
 
+describe("a feature file with a Background has its scenarios read as executable claims", () => {
+  it("[CLM-OBL-031] a feature file with a Background, and a scenario tagged @unit @CLM-ONE-001, has one executable claim, CLM-ONE-001", () => {
+    const withABackground = "Feature: one\n\n  Background:\n    Given a thing\n\n  @unit @CLM-ONE-001\n  Scenario: a scenario\n    Given a step\n";
+
+    expect(claimsIn(withABackground).map(({ claimCode }) => written(claimCode))).toEqual(["CLM-ONE-001"]);
+  });
+});
+
 // A scenario tagged @unit, with the deferral tag on it, on its Feature, or on the Rule it sits under.
 const deferredBy = (deferral: string, on: "scenario" | "feature" | "rule"): string => {
   if (on === "feature") return `${deferral}\nFeature: one\n\n  @unit\n  Scenario: a scenario\n    Given a step\n`;
@@ -72,6 +80,10 @@ describe("a strict run will raise the Evidence Obligations a deferral put off", 
     ["CLM-OBL-017", "@wip @unit", ["unit"]],
     ["CLM-OBL-018", "@integrationpending", ["integration"]],
     ["CLM-OBL-019", "@unit @integrationpending", ["integration", "unit"]],
+    ["CLM-OBL-027", "@unitpending", ["unit"]],
+    ["CLM-OBL-028", "@e2epending", ["e2e"]],
+    ["CLM-OBL-029", "@performancepending", ["performance"]],
+    ["CLM-OBL-030", "@fitnesspending", ["fitness"]],
   ])("[%s] in a strict run, a scenario tagged %s raises its Evidence Obligations", (_clm, tags, kinds) => {
     expect(claimsIn(scenario(`@CLM-ONE-001 ${tags}`), { deferralTags: [], strict: true }).map(kindsOf)).toEqual([kinds]);
   });

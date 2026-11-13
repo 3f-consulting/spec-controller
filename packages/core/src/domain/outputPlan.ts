@@ -1,5 +1,5 @@
 // The formats are the request's; the plan only compares where each output goes.
-export type Destination =
+type Destination =
   | { readonly to: "standard-output" }
   | { readonly to: "standard-error" }
   | { readonly to: "file"; readonly path: string };

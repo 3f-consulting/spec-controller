@@ -192,6 +192,17 @@ describe("a place it cannot write will stop the run, and nothing will be written
       (place: string) => statSync(place).isDirectory(),
     ],
     ["CLM-FMT-027", "a file in a folder that doesn't exist", "folder does not exist", (folder: string) => join(folder, "missing", "report.md"), (place: string) => !existsSync(place)],
+    [
+      "CLM-FMT-034",
+      "a link that leads round to itself",
+      "leads round to itself",
+      (folder: string) => {
+        symlinkSync(join(folder, "b"), join(folder, "a"));
+        symlinkSync(join(folder, "a"), join(folder, "b"));
+        return join(folder, "a");
+      },
+      (place: string) => readlinkSync(place).endsWith("b"),
+    ],
   ] as const)("[%s] a report asked for at %s stops the run with exit 2, names the place and why, and writes nothing", (_clm, _destination, why, place, asItWas) => {
     const folder = temporaryDirectory("unwritable-");
     const { output, error, streams } = capturedStreams();

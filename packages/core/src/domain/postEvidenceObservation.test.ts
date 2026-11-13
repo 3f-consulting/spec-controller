@@ -133,6 +133,29 @@ const postedByScenario = (report: unknown, features: readonly FeatureAsWritten[]
 
 const PASSED: StepRun = ["Given ", "one adds one", "passed"];
 
+describe("a Cucumber Background and hook post nothing of their own", () => {
+  it("[CLM-OBS-121] a scenario in Cucumber's evidence report tagged @CLM-ONE-001, every step passed after a Background and a hook that passed, is posted once, as passed, citing CLM-ONE-001", () => {
+    const passed = { status: "passed" };
+    const report = [
+      {
+        uri: "features/one.feature",
+        elements: [
+          { type: "background", name: "", line: 3, steps: [{ keyword: "Given ", name: "a thing", result: passed }] },
+          {
+            type: "scenario",
+            name: "one adds one",
+            line: 6,
+            tags: [{ name: "@integration" }, { name: "@CLM-ONE-001" }],
+            steps: [{ keyword: "Before", result: passed }, { keyword: "Given ", name: "one adds one", result: passed }],
+          },
+        ],
+      },
+    ];
+
+    expect(postedByScenario(report).map(({ result, cites }) => ({ result, cites }))).toEqual([{ result: "passed", cites: [{ featureCode: "ONE", number: "001" }] }]);
+  });
+});
+
 describe("balance posts a result as passed or failed, citing its claim code", () => {
   it.each<[string, "vitest" | "jest", string, string]>([
     ["CLM-OBS-017", "vitest", "passed", "passed"],
@@ -154,6 +177,7 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
     ["CLM-OBS-024", "go", "example.com/adds", "example.com/adds", "TestAdds/[CLM-ONE-001]_adds_one", '<failure message="Failed" type="">=== RUN   TestAdds/[CLM-ONE-001]_adds_one&#xA;    adds_test.go:9: the assertion failed&#xA;</failure>', "failed"],
     ["CLM-OBS-025", "surefire", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", "", "passed"],
     ["CLM-OBS-026", "surefire", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", '<failure message="expected: &lt;2&gt; but was: &lt;1&gt;" type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: expected: <2> but was: <1>]]></failure>', "failed"],
+    ["CLM-OBS-118", "surefire", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", '<error message="the database was not there" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: the database was not there]]></error>', "failed"],
     ["CLM-OBS-027", "gradle", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", "", "passed"],
     ["CLM-OBS-028", "gradle", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", '<failure message="org.opentest4j.AssertionFailedError: expected: &lt;2&gt; but was: &lt;1&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;2&gt; but was: &lt;1&gt;\n</failure>', "failed"],
   ])("[%s] a result in %s's evidence report citing CLM-ONE-001 is posted as it went, citing CLM-ONE-001", (_clm, writer, suite, className, name, inside, result) => {
@@ -335,6 +359,15 @@ describe("balance posts a nested test from a report kept by suite citing its own
     ["CLM-OBS-071", "go", "no claim code, under a subtest with CLM-ONE-002 in brackets", "example.com/adds", "TestAdds/[CLM-ONE-002]_a_group/adds_one", "example.com/adds", [ONE_002]],
     ["CLM-OBS-072", "surefire", "CLM-ONE-001 in brackets in its display name, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "[CLM-ONE-001] adds one", "[CLM-ONE-002] a class", [ONE_001]],
     ["CLM-OBS-073", "surefire", "no claim code, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "adds one", "[CLM-ONE-002] a class", [ONE_002]],
+    [
+      "CLM-OBS-120",
+      "surefire",
+      "no claim code, in a class with CLM-ONE-002 in brackets nested in one with CLM-ONE-001 in brackets",
+      "[CLM-ONE-001] an outer class [CLM-ONE-002] an inner class",
+      "adds one",
+      "[CLM-ONE-001] an outer class [CLM-ONE-002] an inner class",
+      [ONE_002],
+    ],
     ["CLM-OBS-074", "gradle", "no claim code, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "adds one", "example.AddsTest", []],
   ])("[%s] a passing test in %s's evidence report with %s is posted citing its nearest code", (_clm, writer, _named, suite, name, className, cites) => {
     expect(postedBySuite(writer, suite, testCase(className, name)).map(({ cites: cited }) => cited)).toEqual([cites]);

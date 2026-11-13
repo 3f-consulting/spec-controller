@@ -21,7 +21,7 @@ describe("balance posts only the steps that prove something", () => {
     ["CLM-OBS-003", "using someone/checkout", { uses: "someone/checkout@v1" }, undefined, "candidate", 1],
     ["CLM-OBS-008", "running pnpm test, with no unit runner", { run: "pnpm test" }, undefined, "candidate", 1],
     ["CLM-OBS-012", "running spec-controller balance", { run: "spec-controller balance --features features" }, undefined, "reconciler", 0],
-    ["CLM-OBS-013", "writing out the step record", { run: "echo '${{ toJSON(steps) }}' > steps.json" }, undefined, "reconciler", 0],
+    ["CLM-OBS-119", "running spec-controller balance | tee report.md", { run: "spec-controller balance | tee report.md" }, undefined, "reconciler", 0],
     ["CLM-OBS-109", "running spec-controller balance, in notChecks", { name: "Reconcile", run: "spec-controller balance" }, "Reconcile", "reconciler", 0],
     ["CLM-OBS-014", "named Install, in notChecks", { name: "Install", run: "pnpm install" }, "Install", "nonCheck", 0],
     ["CLM-OBS-016", "using actions/checkout, in notChecks", { uses: "actions/checkout@v4" }, "actions/checkout@v4", "nonCheck", 0],
@@ -40,6 +40,23 @@ const NO_SETTING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTa
 const ONE_001 = { featureCode: "ONE", number: "001" };
 const workflowOf = (jobs: object) => workflowStepsFrom("ci.yml", JSON.stringify({ jobs }));
 const recordOf = (record: object) => stepRecordFrom(record);
+
+// A step writing out the step record, in each place a step can hold the expression.
+const writingTheStepRecord: Readonly<Record<string, object>> = {
+  "run:": { run: "echo '${{ toJSON(steps) }}' > steps.json" },
+  "env:": { env: { STEPS_JSON: "${{ toJSON(steps) }}" }, run: 'printf \'%s\' "$STEPS_JSON" > steps.json' },
+};
+
+describe("a step writing out the step record is the reconciler's", () => {
+  it.each(workflowsVariants["CLM-OBS-013"].variants)("[CLM-OBS-013] a step writing out the step record through %s will be counted as the reconciler, and nothing will be posted", (variant) => {
+    const steps = stepsOf(writingTheStepRecord[variant]!);
+
+    expect({
+      countedAs: stepDispositionOf(steps[0]!, NO_SETTING, {}, shellAnswers),
+      posted: fitnessObservationsOf(steps, [], NO_SETTING, {}, shellAnswers).length,
+    }).toEqual({ countedAs: "reconciler", posted: 0 });
+  });
+});
 
 describe("a step using a plumbing action is plumbing", () => {
   it.each(workflowsVariants["CLM-OBS-015"].variants)("[CLM-OBS-015] a step using %s will be counted as plumbing, and nothing will be posted", (action) => {
@@ -129,6 +146,13 @@ describe("an Evidence Observation says where to look", () => {
 const unitRunner = (runner: string): TargetConfiguration => ({ runners: { unit: runner }, nonChecks: [], deferralTags: [] });
 const dispositionOf = (run: string, runner: string, scripts: Readonly<Record<string, string>> = {}) =>
   stepDispositionOf(stepsOf({ run })[0]!, unitRunner(runner), scripts, shellAnswers);
+const countedAndPosted = (run: string, runner: string, scripts: Readonly<Record<string, string>> = {}) => {
+  const steps = stepsOf({ run });
+  return {
+    countedAs: stepDispositionOf(steps[0]!, unitRunner(runner), scripts, shellAnswers),
+    posted: fitnessObservationsOf(steps, [], unitRunner(runner), scripts, shellAnswers).filter(({ kind }) => kind === "fitness").length,
+  };
+};
 
 describe("a runner is recognised only as the command a step runs", () => {
   it.each([
@@ -149,8 +173,8 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(dispositionOf(`CI=1 ${handedOn} run`, "vitest")).toBe("runner");
   });
 
-  it("[CLM-OBS-010] launchers chain, so a runner behind two launchers will be counted as a runner", () => {
-    expect(dispositionOf("uv run python -m pytest -q", "pytest")).toBe("runner");
+  it("[CLM-OBS-116] a step running uv run python -m pytest, a runner behind two launchers, will be counted as a runner, and nothing will be posted", () => {
+    expect(countedAndPosted("uv run python -m pytest", "pytest")).toEqual({ countedAs: "runner", posted: 0 });
   });
 
   it.each(shellVariants["CLM-OBS-009"].variants)("[CLM-OBS-009] a step running a script as %s, whose script runs vitest, will be counted as a runner", (variant) => {
@@ -159,18 +183,26 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(dispositionOf(variant.replace("<script>", script).replace("<name>", "app"), "vitest", { [script]: "vitest run" })).toBe("runner");
   });
 
-  it("[CLM-OBS-009] a script is followed however deep, and a script that runs itself ends as a check", () => {
-    const scripts = { test: "pnpm unit", unit: "pnpm vitest-all", "vitest-all": "vitest run", loop: "pnpm loop" };
-
-    expect({ deep: dispositionOf("pnpm test", "vitest", scripts), loop: dispositionOf("pnpm loop", "vitest", scripts) }).toEqual({ deep: "runner", loop: "candidate" });
+  it("[CLM-OBS-114] a step running pnpm test, whose script runs another script, whose script runs vitest, will be counted as a runner, and nothing will be posted", () => {
+    expect(countedAndPosted("pnpm test", "vitest", { test: "pnpm unit", unit: "vitest run" })).toEqual({ countedAs: "runner", posted: 0 });
   });
+
+  it("[CLM-OBS-115] a step running pnpm loop, whose script runs itself, will be counted as a fitness function, and a fitness Evidence Observation will be posted", () => {
+    expect(countedAndPosted("pnpm loop", "vitest", { loop: "pnpm loop" })).toEqual({ countedAs: "candidate", posted: 1 });
+  });
+
+  // A step running vitest behind each wrapper, past what the wrapper takes.
+  const behindTheWrapper: Readonly<Record<string, string>> = {
+    "xvfb-run": "xvfb-run -a --server-args=-screen vitest run",
+    "timeout <duration>": "timeout 75 vitest run",
+  };
 
   it.each(shellVariants["CLM-OBS-112"].variants)("[CLM-OBS-112] a step running its unit runner behind the wrapper %s, past its options, will be counted as a runner", (wrapper) => {
-    expect(dispositionOf(`${wrapper} -a --server-args=-screen vitest run`, "vitest")).toBe("runner");
+    expect(dispositionOf(behindTheWrapper[wrapper]!, "vitest")).toBe("runner");
   });
 
-  it.each(["-n", "-s", "-e", "-f", "-p", "-w"])("[CLM-OBS-112] a step running its unit runner behind xvfb-run, past its option %s and that option's value, will be counted as a runner", (option) => {
-    expect(dispositionOf(`xvfb-run ${option} 99 vitest run`, "vitest")).toBe("runner");
+  it.each(["-n", "-s", "-e", "-f", "-p", "-w"])("[CLM-OBS-117] a step running xvfb-run %s 99 vitest run, past an option and that option's value, will be counted as a runner, and nothing will be posted", (option) => {
+    expect(countedAndPosted(`xvfb-run ${option} 99 vitest run`, "vitest")).toEqual({ countedAs: "runner", posted: 0 });
   });
 
   it.each(shellVariants["CLM-OBS-113"].variants)("[CLM-OBS-113] a step running %s, a runner named in several words, will be counted as a runner", (runner) => {

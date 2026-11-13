@@ -156,6 +156,12 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       when balance reconciles it
       then the total of each count will be the sum over the jobs
 
+    @unit @CLM-EVR-072
+    Scenario: a job that calls a reusable workflow has no steps of its own to read
+      given a workflow had a job that called a reusable workflow, and a job with one step
+      when balance reconciles it
+      then the step account will read the one step, and nothing for the job that called the reusable workflow
+
   Rule: the provenance says what the run used
 
     @unit
@@ -175,6 +181,7 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-048 | no target given, and the origin file:///srv/git/web.git                                           | the target web                                                                     |
         | CLM-EVR-051 | no target given, and the origin git://example.com/acme/web.git                                    | the target unknown-target                                                          |
         | CLM-EVR-052 | no target given, and the origin https://example.com/web, with no owner and repository in its path | the target unknown-target                                                          |
+        | CLM-EVR-071 | no target given, and the origin foo, which no form of origin reads                                | the target unknown-target                                                          |
         | CLM-EVR-038 | a source SHA given as abc1234, in a git repository at def5678                                     | the source SHA abc1234                                                             |
         | CLM-EVR-040 | the tool running from its own checkout at 9f8e7d6                                                 | the tool SHA 9f8e7d6                                                               |
         | CLM-EVR-041 | the tool installed as a package, version 0.1.256                                                  | no tool SHA, version 0.1.256                                                       |

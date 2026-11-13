@@ -129,5 +129,6 @@
   "claims-dash": "—",
   "claims-dash-key": "under a kind, the row of a phantom claim or the unnamed claim, which asks for nothing; under Reconciling items, none.",
   "claims-unnamed-row": "On the unnamed claim's row",
-  "claims-unnamed-row-key": "each reconciling item is a group of its tests by kind, file and shared claim code, with how many ran, passed and failed, and the name of each that failed."
+  "claims-unnamed-row-key": "each reconciling item is a group of its tests by kind, file and shared claim code, with how many ran, passed and failed, and the name of each that failed.",
+  "configuration-block-not-an-object": "the specController block in the package manifest is not an object, so none of its settings can be read"
 }
