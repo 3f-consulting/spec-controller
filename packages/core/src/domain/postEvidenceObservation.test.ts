@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
-import { resultsByFileFrom } from "../inputs/jestJson.js";
-import { resultsBySuiteFrom } from "../inputs/junitXml.js";
-import { resultsByExampleFrom } from "../inputs/rspecJson.js";
-import { scenarioResultsFrom } from "../inputs/cucumberJson.js";
+import { resultsByFileFrom } from "../inputs/vitest.js";
+import { resultsBySuiteFrom } from "../inputs/junit.js";
+import { resultsByExampleFrom } from "../inputs/rspec.js";
+import { scenarioResultsFrom } from "../inputs/cucumber.js";
 import type { ClaimCode } from "./claimCodes.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureAsWritten } from "./postEvidenceObligation.js";
