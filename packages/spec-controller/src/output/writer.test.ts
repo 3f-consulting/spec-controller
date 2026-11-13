@@ -1,5 +1,5 @@
 import { chmodSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, readlinkSync, statSync, symlinkSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { runRequestOf } from "../runRequest/runRequest.js";
@@ -180,6 +180,20 @@ describe("a place it cannot write will stop the run, and nothing will be written
         return join(folder, "report.md");
       },
       (place: string) => readFileSync(place, "utf8") === "an earlier report",
+    ],
+    [
+      "CLM-FMT-008",
+      "a file in a folder it may not enter",
+      "may not be written",
+      (folder: string) => {
+        mkdirSync(join(folder, "locked"));
+        chmodSync(join(folder, "locked"), 0o000);
+        return join(folder, "locked", "report.md");
+      },
+      (place: string) => {
+        chmodSync(dirname(place), 0o755);
+        return !existsSync(place);
+      },
     ],
     [
       "CLM-FMT-026",
