@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
-import { targetConfigurationFrom } from "../inputs/manifest.js";
+import { targetConfigurationFrom, whereManifestBreaks } from "../inputs/manifest.js";
 import manifestVariants from "../inputs/manifest.variants.json" with { type: "json" };
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
@@ -70,7 +70,8 @@ describe("a configuration setting balance cannot use will be left out", () => {
 
 describe("the run will still reach its run verdict, using the configuration settings it could use", () => {
   it('[CLM-CFG-017] a specController block with "unit": 3 and "integration": "cucumber-js" under runners reaches its run verdict, cucumber-js running the integration layer', () => {
-    const { configuration } = targetConfigurationFrom({ specController: { runners: { unit: 3, integration: "cucumber-js" } } }, []);
+    const manifest = { specController: { runners: { unit: 3, integration: "cucumber-js" } } };
+    const { configuration } = targetConfigurationFrom(manifest, []);
     const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: cucumber-js\n");
     const claims = executableClaimsOf([featureAsWrittenFrom("one.feature", "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: s\n    Given a step\n")], {
       deferralTags: configuration.deferralTags,
@@ -80,7 +81,11 @@ describe("the run will still reach its run verdict, using the configuration sett
 
     const runVerdict = runVerdictOf(claimReconciliationsOf(claims, [passingUnitTest, ...fitnessObservationsOf(steps, [], configuration, {}, shellAnswers)]), []);
 
-    expect({ runVerdict, integrationStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({ runVerdict: { verdict: "balanced" }, integrationStep: "runner" });
+    expect({ manifestBreaksAt: whereManifestBreaks(manifest), runVerdict, integrationStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({
+      manifestBreaksAt: undefined,
+      runVerdict: { verdict: "balanced" },
+      integrationStep: "runner",
+    });
   });
 });
 
