@@ -1,4 +1,4 @@
-import { XMLParser } from "fast-xml-parser";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
 import {
   ERRORS_BEFORE_ASSERTIONS,
   type FailureAsWritten,
@@ -53,6 +53,18 @@ function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {
 
 // Every suite under the element, at any depth.
 const suitesIn = (element: Element): Element[] => elementsIn(element, "testsuite").flatMap((suite) => [suite, ...suitesIn(suite)]);
+
+// What the XML parser says is wrong with the report's text, if anything.
+export function whyXmlDoesNotParse(xml: string): string | undefined {
+  const valid = XMLValidator.validate(xml);
+  return valid === true ? undefined : `${valid.err.msg} (${valid.err.line}:${valid.err.col})`;
+}
+
+// A JUnit report's top is a suite, or the suites element holding them.
+export const whereSuitesBreak = (xml: string): string | undefined => {
+  const document = parser.parse(xml) as Element;
+  return document["testsuites"] === undefined && document["testsuite"] === undefined ? "$" : undefined;
+};
 
 export function resultsBySuiteFrom(xml: string, from: "junit" | "pytest"): ResultsBySuiteAsWritten[] {
   const document = parser.parse(xml) as Element;

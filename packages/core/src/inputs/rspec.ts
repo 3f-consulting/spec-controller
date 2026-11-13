@@ -1,4 +1,5 @@
 import type { ResultsByExampleAsWritten } from "../domain/postEvidenceObservation.js";
+import { whereShapeBreaks, type Shape } from "./shape.js";
 
 // RSpec's JSON evidence report, as far as its reader reads it.
 interface RspecJsonReport {
@@ -12,6 +13,22 @@ interface RspecJsonReport {
   }[];
   readonly summary: { readonly errors_outside_of_examples_count?: number };
 }
+
+const REPORT: Shape = {
+  fields: {
+    messages: { listOf: "string" },
+    examples: {
+      listOf: {
+        fields: { description: "string", full_description: "string", status: "string", file_path: "string", exception: { fields: { message: "string" }, optional: ["message"] } },
+        optional: ["exception"],
+      },
+    },
+    summary: { fields: { errors_outside_of_examples_count: "number" }, optional: ["errors_outside_of_examples_count"] },
+  },
+  optional: ["messages"],
+};
+
+export const whereResultsByExampleBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
 const LOADING = /while loading (\S+?)\.?\s/i;
 

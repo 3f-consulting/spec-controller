@@ -153,7 +153,7 @@ function folderWith(files: Readonly<Record<string, string>>): string {
   return folder;
 }
 
-const VITEST_SHAPED = JSON.stringify({ testResults: [] });
+const VITEST_SHAPED = '{"testResults":[]}';
 
 describe("an input that is not valid will stop the run", () => {
   it.each([
@@ -190,7 +190,7 @@ describe("an input that is not valid will stop the run", () => {
 
 describe("a corpus with several feature files that do not parse will be refused, naming each of them", () => {
   it("[CLM-CLI-185] two feature files that do not parse: no verdict, exit 2, and a complaint about each, with what is wrong in each", () => {
-    const folder = folderWith({ "features/one.feature": "not Gherkin\n", "features/two.feature": "@TWO\nFeature: two\n  Scenario: a\n  Feature: again\n" });
+    const folder = folderWith({ "features/one.feature": "not Gherkin\n", "features/two.feature": "@TWO\nFeature: two\n  Scenario: a\n    Given a table\n      | a | b |\n      | c |\n" });
 
     const { exitCode, output, error } = ran(["balance", "--features", "features"], folder);
     const complaints = error.split("\n").filter((line) => line.includes("[input-does-not-parse]"));

@@ -1,4 +1,5 @@
 import type { ScenarioResultAsWritten } from "../domain/postEvidenceObservation.js";
+import { whereShapeBreaks, type Shape } from "./shape.js";
 
 // A feature of Cucumber's JSON evidence report, as far as its reader reads it. A hook is written as a step with no name.
 interface CucumberJsonFeature {
@@ -15,6 +16,23 @@ interface CucumberJsonFeature {
     }[];
   }[];
 }
+
+const STEP: Shape = {
+  fields: { keyword: "string", name: "string", result: { fields: { status: "string", error_message: "string" }, optional: ["error_message"] } },
+  optional: ["name"],
+};
+
+const REPORT: Shape = {
+  listOf: {
+    fields: {
+      uri: "string",
+      elements: { listOf: { fields: { type: "string", name: "string", line: "number", tags: { listOf: { fields: { name: "string" } } }, steps: { listOf: STEP } }, optional: ["tags", "steps"] } },
+    },
+    optional: ["elements"],
+  },
+};
+
+export const whereScenarioResultsBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
 export function scenarioResultsFrom(report: unknown): ScenarioResultAsWritten[] {
   return (report as readonly CucumberJsonFeature[]).flatMap(({ uri, elements = [] }) =>

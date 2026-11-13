@@ -33,3 +33,15 @@ describe("balance reads a feature file in a subfolder of the feature corpus", ()
     expect(read([{ kind: "features", path: corpus, byDefault }], folder).features.map(({ file }) => file)).toEqual(["area/deeper/one.feature"]);
   });
 });
+
+describe("an input read by default that does not exist will count as none, not as a missing input", () => {
+  it.each([
+    ["CLM-CLI-183", "a workflows folder", "workflows", ".github/workflows", (inputs: InputsRead) => inputs.workflowSteps],
+    ["CLM-CLI-190", "a feature corpus", "features", "features", (inputs: InputsRead) => inputs.features],
+    ["CLM-CLI-192", "a manifest", "manifest", "package.json", (inputs: InputsRead) => inputs.manifest],
+  ] as const)("[%s] %s read by default that does not exist: none is read, and the run does not stop", (_clm, _input, kind, path, readOf) => {
+    const inputs = inputsReadFor([{ kind, path, byDefault: true }], temporaryDirectory("absent-default-"));
+
+    expect("ending" in inputs ? inputs.refusals : readOf(inputs) ?? []).toEqual([]);
+  });
+});

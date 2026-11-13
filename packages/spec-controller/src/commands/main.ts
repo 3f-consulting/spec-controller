@@ -1,5 +1,6 @@
 import { textFor } from "@3f-consulting/spec-controller-core";
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
+import { inputsReadFor } from "../inputs/inputsRead.js";
 import { noteText } from "../output/allocateNotes.js";
 import type { StandardStreams } from "../output/streams.js";
 import { UNEXPECTED_ERROR, USAGE_ERROR } from "../runEnding/exitCode.js";
@@ -23,7 +24,10 @@ function run(args: readonly string[], folder: string, streams: StandardStreams):
     streams.output.write(helpText(request.about));
     return 0;
   }
-  if (request.command === "balance") return balance(request, folder, streams);
+  if (request.command === "balance") {
+    const read = inputsReadFor(request.inputs, folder);
+    return "ending" in read ? refusedWith(read.refusals, streams) : balance(request, read, folder, streams);
+  }
   const outcome = allocate(request, folder);
   if (!("answer" in outcome)) return refusedWith([outcome.refusal], streams);
   streams.output.write(`${outcome.answer}\n`);

@@ -45,7 +45,7 @@ describe("under --exit-zero only an out-of-balance run will exit 0 instead of it
   it.each([
     ["CLM-CLI-174", "a usage error", ["balance", "--exit-zero", "--bogus"], 2, false],
     ["CLM-CLI-175", "an unexpected error", ["balance", "--exit-zero"], 4, true],
-  ] as const)("[%s] a run ending on %s exits %i under --exit-zero", (_clm, _ending, args, exitCode, unexpected) => {
+  ] as const)("[%s] a run ending on %s keeps its exit code under --exit-zero", (_clm, _ending, args, exitCode, unexpected) => {
     const streams = {
       output: {
         fd: 1,

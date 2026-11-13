@@ -3,85 +3,77 @@ import {
   claimReconciliationsOf,
   evidenceReconciliationOf,
   executableClaimsOf,
-  featureAsWrittenFrom,
   fitnessObservationsOf,
+  observationsByExample,
   observationsByFile,
+  observationsBySuite,
+  observationsOfScenarios,
   provenanceOf,
   repositoryOfOrigin,
-  resultsByFileFrom,
   shellAnswers,
   stepAccountOf,
   stepDispositionOf,
   scriptsFrom,
-  stepRecordFrom,
   targetConfigurationFrom,
-  workflowStepsFrom,
+  type EvidenceObservation,
   type ProvenanceInput,
   type StepAccount,
   type TargetConfiguration,
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
-import { join } from "node:path";
-import { featureSourcesIn, jsonAt, workflowSourcesIn } from "../inputs/readFiles.js";
+import type { InputsRead } from "../inputs/inputsRead.js";
 import type { StandardStreams } from "../output/streams.js";
 import type { ExitCode } from "../runEnding/runEnding.js";
 import { runIdentityIn } from "../runIdentity/runIdentity.js";
 import { writeReports } from "../output/writer.js";
 import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/runRequest.js";
 
-// Only an input the command line named is read.
-const pathOf = (inputs: readonly InputRequest[], kind: InputRequest["kind"]): string | undefined => inputs.find((input) => input.kind === kind && !input.byDefault)?.path;
-
-// An input the command line did not give reads as nothing.
-const readEach = <Read>(path: string | undefined, read: (path: string) => readonly Read[]): readonly Read[] => (path === undefined ? [] : read(path));
-
-// The step account is printed only for a run that was given workflows to read.
+// The step account is printed only for a run that read workflows.
 function stepAccountFor(
-  workflows: string | undefined,
-  steps: readonly WorkflowStepAsWritten[],
+  steps: readonly WorkflowStepAsWritten[] | undefined,
   configuration: TargetConfiguration,
   scripts: Readonly<Record<string, string>>,
 ): { readonly stepAccount?: StepAccount } {
-  return workflows === undefined ? {} : { stepAccount: stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers) }))) };
+  return steps === undefined ? {} : { stepAccount: stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers) }))) };
 }
 
 // Every input the run could read, each with its path when it read one.
-const provenanceInputsOf = (inputs: readonly InputRequest[]): ProvenanceInput[] => INPUT_KINDS.map((kind) => ({ name: kind, path: pathOf(inputs, kind) }));
+const provenanceInputsOf = (requested: readonly InputRequest[], read: InputsRead): ProvenanceInput[] =>
+  INPUT_KINDS.map((kind) => ({ name: kind, path: (kind === "features" || kind === "workflows" ? read[kind === "features" ? "features" : "workflowSteps"] : read[kind]) === undefined ? undefined : requested.find((input) => input.kind === kind)?.path }));
 
-export function balance({ inputs, outputs, target, sourceSha, exitZero }: Extract<RunRequest, { command: "balance" }>, folder: string, streams: StandardStreams): ExitCode {
+// Each runner's results posted as Evidence Observations, beside the fitness functions' from the CI steps.
+function observationsOf(read: InputsRead, configuration: TargetConfiguration, scripts: Readonly<Record<string, string>>, targetFolder: string): EvidenceObservation[] {
+  const steps = read.workflowSteps ?? [];
+  return [
+    ...observationsByFile([...(read.vitest ?? []), ...(read.jest ?? [])], targetFolder),
+    ...observationsBySuite([...(read.pytest ?? []), ...(read.junit ?? [])], targetFolder),
+    ...(read.rspec === undefined ? [] : observationsByExample(read.rspec, targetFolder)),
+    ...(read.cucumber === undefined ? [] : observationsOfScenarios(read.cucumber, read.features, targetFolder)),
+    ...fitnessObservationsOf(steps, read.stepRecord ?? [], configuration, scripts, shellAnswers),
+  ];
+}
+
+export function balance(
+  { inputs, outputs, target, sourceSha, strict, exitZero }: Extract<RunRequest, { command: "balance" }>,
+  read: InputsRead,
+  folder: string,
+  streams: StandardStreams,
+): ExitCode {
   // Read first, so the run's time is when it started.
   const identity = runIdentityIn(folder, { target, sourceSha });
-  const workflows = pathOf(inputs, "workflows");
-  const featureFolder = pathOf(inputs, "features");
-  const featureSources = readEach(featureFolder, featureSourcesIn);
-  const workflowSources = readEach(workflows, workflowSourcesIn);
-  const features = featureSources.map(({ file, source }) => featureAsWrittenFrom(file, source));
-  const steps = workflowSources.flatMap(({ workflow, source }) => workflowStepsFrom(workflow, source));
-  const record = readEach(pathOf(inputs, "stepRecord"), (path) => stepRecordFrom(jsonAt(path)));
-  const manifestPath = pathOf(inputs, "manifest");
-  const manifest = manifestPath === undefined ? undefined : jsonAt(manifestPath);
-  const { configuration, errors } = targetConfigurationFrom(manifest, steps);
-  const scripts = scriptsFrom(manifest);
+  const { configuration, errors } = targetConfigurationFrom(read.manifest, read.workflowSteps ?? []);
+  const scripts = scriptsFrom(read.manifest);
   const targetFolder = identity.gitTopLevel ?? folder;
-  const observations = [
-    ...observationsByFile(readEach(pathOf(inputs, "vitest"), (path) => resultsByFileFrom(jsonAt(path), "vitest")), targetFolder),
-    ...fitnessObservationsOf(steps, record, configuration, scripts, shellAnswers),
-  ];
-  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: configuration.deferralTags, strict: false }), observations);
-  const provenance = provenanceOf(identity, provenanceInputsOf(inputs), targetFolder, repositoryOfOrigin);
-  // No report may land on a file the run read: each one it was given, and each it read in a folder it was given.
-  const filesRead = [
-    ...featureSources.map(({ file }) => join(featureFolder ?? "", file)),
-    ...workflowSources.map(({ workflow }) => join(workflows ?? "", workflow)),
-    ...[pathOf(inputs, "vitest"), pathOf(inputs, "stepRecord"), pathOf(inputs, "manifest")].filter((path) => path !== undefined),
-  ];
+  const claims = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
+  const claimReconciliations = claimReconciliationsOf(claims, observationsOf(read, configuration, scripts, targetFolder));
+  const provenance = provenanceOf(identity, provenanceInputsOf(inputs, read), targetFolder, repositoryOfOrigin);
   const reconciliation = evidenceReconciliationOf({
     claimReconciliations,
-    claimCodeErrors: claimCodeErrorsOf(features),
+    claimCodeErrors: claimCodeErrorsOf(read.features),
     configurationErrors: errors,
-    features,
-    ...stepAccountFor(workflows, steps, configuration, scripts),
+    features: read.features,
+    ...stepAccountFor(read.workflowSteps, configuration, scripts),
     provenance,
   });
-  return writeReports(outputs, filesRead, reconciliation, streams, { exitZero });
+  return writeReports(outputs, read.filesRead, reconciliation, streams, { exitZero });
 }
