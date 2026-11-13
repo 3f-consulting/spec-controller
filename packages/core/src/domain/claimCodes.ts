@@ -57,8 +57,6 @@ const CITATION = new RegExp(`\\[CLM-(${FEATURE_CODE_FORM})-(\\d+)\\]`, "g");
 
 const CLAIM_CODE = new RegExp(`^CLM-(${FEATURE_CODE_FORM})-(\\d+)$`);
 
-const RETIRED_SCENARIO_CODE = new RegExp(`^SCN-(${FEATURE_CODE_FORM})-(\\d+)$`);
-
 // A code written under CLM, or under the retired SCN, anywhere in a line.
 const CODE_IN_A_LINE = new RegExp(`(?:CLM|SCN)-(${FEATURE_CODE_FORM})-(\\d+)`, "g");
 
@@ -66,14 +64,10 @@ export function claimCodeCitationsIn(text: string): ClaimCode[] {
   return [...text.matchAll(CITATION)].map(([, featureCode, number]) => ({ featureCode: featureCode!, number: number! }));
 }
 
-function codeIn(form: RegExp, word: string): ClaimCode | undefined {
-  const [, featureCode, number] = form.exec(word) ?? [];
-  return featureCode === undefined || number === undefined ? undefined : { featureCode, number };
+export function claimCodeFrom(word: string): ClaimCode | undefined {
+  const match = CLAIM_CODE.exec(word);
+  return match === null ? undefined : { featureCode: match[1]!, number: match[2]! };
 }
-
-export const claimCodeFrom = (word: string): ClaimCode | undefined => codeIn(CLAIM_CODE, word);
-
-export const retiredScenarioCodeFrom = (word: string): ClaimCode | undefined => codeIn(RETIRED_SCENARIO_CODE, word);
 
 export const isFeatureCode = (word: string): boolean => FEATURE_CODE.test(word);
 
@@ -116,9 +110,12 @@ function filesByFeatureCode(features: readonly FileToCheck[]): ReadonlyMap<strin
   return files;
 }
 
-// The cells of each Examples block's clm column.
+// The cells of each Examples block's clm column: a block with none gives none, as a slice from -1 to 0 is empty.
 const clmCellsIn = ({ examples }: ScenarioToCheck): string[] =>
-  examples.flatMap(({ columns, rows }) => (columns.includes(CLM_COLUMN) ? rows.map(({ cells }) => cells[columns.indexOf(CLM_COLUMN)] ?? "") : []));
+  examples.flatMap(({ columns, rows }) => {
+    const at = columns.indexOf(CLM_COLUMN);
+    return rows.flatMap(({ cells }) => cells.slice(at, at + 1));
+  });
 
 // A claim code is carried by a scenario's tags or its clm cells, and belongs to its file's feature code either way.
 function misfiledCodes(feature: FileToCheck, filesByCode: ReadonlyMap<string, readonly string[]>): ClaimCodeError[] {

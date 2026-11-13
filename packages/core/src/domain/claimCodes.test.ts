@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
-import { claimCodeErrorsOf, claimCodeFrom, featureCodeOfFile, isFeatureCode, retiredScenarioCodeFrom } from "./claimCodes.js";
+import { allocationOf, claimCodeErrorsOf, claimCodeFrom, featureCodeOfFile, isFeatureCode } from "./claimCodes.js";
 
 const is = (found: boolean, what: string): string => `${found ? "be" : "not be"} a ${what}`;
 
@@ -29,15 +29,18 @@ describe("a claim code is CLM, a feature code and a number", () => {
   });
 });
 
+// A retired scenario code counts only where allocation reads it: as the highest code seen under its feature code.
 describe("a retired scenario code is SCN, a feature code and a number", () => {
   it.each([
-    ["CLM-STG-049", "SCN-ONE-001", "be a retired scenario code"],
-    ["CLM-STG-050", "SCN-ONE-7", "be a retired scenario code"],
-    ["CLM-STG-051", "SCN-ONE-1000", "be a retired scenario code"],
-    ["CLM-STG-052", "SCN-A-001", "not be a retired scenario code"],
-    ["CLM-STG-053", "SCN-ONE-", "not be a retired scenario code"],
-  ])("[%s] the id %s will %s", (_clm, id, result) => {
-    expect(is(retiredScenarioCodeFrom(id) !== undefined, "retired scenario code")).toBe(result);
+    ["CLM-STG-049", "SCN-ONE-001", "ONE", "be a retired scenario code"],
+    ["CLM-STG-050", "SCN-ONE-7", "ONE", "be a retired scenario code"],
+    ["CLM-STG-051", "SCN-ONE-1000", "ONE", "be a retired scenario code"],
+    ["CLM-STG-052", "SCN-A-001", "A", "not be a retired scenario code"],
+    ["CLM-STG-053", "SCN-ONE-", "ONE", "not be a retired scenario code"],
+  ])("[%s] the id %s, under the feature code %s, will %s", (_clm, id, featureCode, result) => {
+    const allocation = allocationOf({ featureCode, asNewFeatureCode: true }, [], [{ text: id, path: "notes.txt", line: 1 }]);
+
+    expect(is("highestSeen" in allocation, "retired scenario code")).toBe(result);
   });
 });
 
@@ -72,7 +75,7 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
   it.each([
     [
       "CLM-STG-054",
-      [["one.feature", "@ONE", "@CLM-TWO-001"], ["two.feature", "@TWO", "@unit"]],
+      [["one.feature", "@ONE", "@CLM-ONE-001;@CLM-TWO-001"], ["two.feature", "@TWO", "@unit"]],
       [{ kind: "foreign-claim-code", claimCode: { featureCode: "TWO", number: "001" }, file: "one.feature", filesWithItsFeatureCode: ["two.feature"] }],
     ],
     [
@@ -99,7 +102,7 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
       ],
     ],
   ] as const)("[%s] the scenarios' files have their claim code error", (_clm, files, errors) => {
-    expect(errorsIn(files, ([, , tags]) => scenarioTagged(tags))).toEqual(errors);
+    expect(errorsIn(files, ([, , tags]) => tags.split(";").map(scenarioTagged).join("\n"))).toEqual(errors);
   });
 
   it("[CLM-STG-095] one.feature, tagged @ONE, with CLM-TWO-001 in its Outline's clm column, and two.feature tagged @TWO, has a foreign claim code error", () => {
@@ -118,5 +121,49 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
     expect(errorsIn([["one.feature", "@ONE", ""]], () => outlineWith(outlineTags, examplesTags))).toEqual([
       { kind: "claim-code-beside-clm-column", file: "one.feature", title: "that Outline", claimCode: ONE_009 },
     ]);
+  });
+});
+
+const IN_THE_FILE = { path: "features/one.feature", line: 4 };
+
+describe("the answer is one past the highest code the repository has contained", () => {
+  it.each([
+    ["CLM-STG-061", "@CLM-ONE-001", "# CLM-ONE-005", "006", "CLM-ONE-005"],
+    ["CLM-STG-063", "@CLM-ONE-001", "# SCN-ONE-005", "006", "SCN-ONE-005"],
+    ["CLM-STG-065", "@CLM-ONE-001", "# SCN-ONE-", "002", "CLM-ONE-001"],
+    ["CLM-STG-070", "@CLM-ONE-7", "", "008", "CLM-ONE-7"],
+    ["CLM-STG-071", "@CLM-ONE-999", "", "1000", "CLM-ONE-999"],
+  ] as const)("[%s] a feature file tagged @ONE with a scenario tagged %s, and a tracked file holding %j, gives CLM-ONE-%s, noting %s", (_clm, inTheFile, elsewhere, number, seen) => {
+    const occurrences = [{ text: `  ${inTheFile}`, ...IN_THE_FILE }, { text: elsewhere, path: ".github/workflows/ci.yml", line: 2 }];
+    const allocation = allocationOf({ featureCode: "ONE", asNewFeatureCode: false }, ["ONE"], occurrences);
+
+    expect(allocation).toEqual({
+      kind: "allocated",
+      claimCode: { featureCode: "ONE", number },
+      highestSeen: { ...occurrences.find(({ text }) => text.includes(seen))!, text: seen },
+      featureCodeAlreadyOnAFile: false,
+    });
+  });
+});
+
+describe("a feature code no feature file has stops it, listing those that do", () => {
+  it("[CLM-STG-077] feature files tagged @ONE and @TWO, and no file mentioning ZZZ, stop the request for ZZZ as an unknown feature code listing ONE and TWO", () => {
+    expect(allocationOf({ featureCode: "ZZZ", asNewFeatureCode: false }, ["ONE", "TWO"], [{ text: "  @CLM-ONE-001", ...IN_THE_FILE }])).toEqual({
+      kind: "unknown-feature-code",
+      featureCode: "ZZZ",
+      featureCodes: ["ONE", "TWO"],
+    });
+  });
+});
+
+describe("--new gives the next code for any well-formed feature code", () => {
+  it.each([
+    ["CLM-STG-080", "ZZ", { claimCode: { featureCode: "ZZ", number: "001" }, featureCodeAlreadyOnAFile: false }],
+    ["CLM-STG-081", "ONE", { claimCode: { featureCode: "ONE", number: "004" }, highestSeen: { text: "CLM-ONE-003", ...IN_THE_FILE }, featureCodeAlreadyOnAFile: true }],
+    ["CLM-STG-082", "OLD", { claimCode: { featureCode: "OLD", number: "008" }, highestSeen: { text: "CLM-OLD-007", path: "old.txt", line: 1, commit: "abc1234" }, featureCodeAlreadyOnAFile: false }],
+  ] as const)("[%s] a feature file tagged @ONE with @CLM-ONE-003, and history once holding CLM-OLD-007, give %s as a new feature code its answer", (_clm, featureCode, answer) => {
+    const occurrences = [{ text: "  @CLM-ONE-003", ...IN_THE_FILE }, { text: "CLM-OLD-007", path: "old.txt", line: 1, commit: "abc1234" }];
+
+    expect(allocationOf({ featureCode, asNewFeatureCode: true }, ["ONE"], occurrences)).toEqual({ kind: "allocated", ...answer });
   });
 });
