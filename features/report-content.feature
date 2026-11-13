@@ -95,3 +95,15 @@ Feature: Each report has the right structure, and the Markdown explains it
       given a run had something for every section
       when its Markdown report is written
       then each section will have its heading, each value its label, and each table a line saying what its columns mean
+
+  Rule: the Markdown report opens with a sentence for its run verdict
+
+    @unit
+    Scenario Outline: each run verdict, and each reason a run is not reconciled, has an opening of its own
+      given a run was <run verdict>
+      when the Markdown report is written
+      then the report will have the opening for <run verdict>
+
+      Examples:
+        | clm         | run verdict |
+        | CLM-RPT-111 | balanced    |
