@@ -43,8 +43,14 @@ const toStandardOutput = <Format extends string>({ output, identity }: Identifie
 
 // A regular file by its device and inode, a file not yet made by its folder's and its name; anything else is no file.
 function fileKeyOf(identity: FileIdentity): string | undefined {
-  if (identity.is === "regular-file") return `${identity.device}:${identity.inode}`;
-  return identity.is === "absent" && identity.folder !== undefined ? `${identity.folder.device}:${identity.folder.inode}/${identity.name}` : undefined;
+  switch (identity.is) {
+    case "regular-file":
+      return `${identity.device}:${identity.inode}`;
+    case "absent":
+      return identity.folder && `${identity.folder.device}:${identity.folder.inode}/${identity.name}`;
+    default:
+      return undefined;
+  }
 }
 
 function sameFile(one: FileIdentity, other: FileIdentity): boolean {

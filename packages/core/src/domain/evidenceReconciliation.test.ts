@@ -254,16 +254,23 @@ describe("Total of the claim codes written where no claim reads them", () => {
 });
 
 describe("balance accounts for every step it reads", () => {
-  const twoJobs = () =>
-    workflowStepsFrom(
-      "ci.yml",
-      JSON.stringify({ jobs: { build: { steps: [{ uses: "actions/checkout@v4" }, { run: "pnpm lint" }, { run: "spec-controller balance" }] } } }),
-    )
-      .concat(workflowStepsFrom("nightly.yml", JSON.stringify({ jobs: { build: { steps: [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }] } } })))
-      .map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [{ workflow: "nightly.yml", job: "build", step: "Install" }], deferralTags: [] }, {}, shellAnswers) }));
+  // Two jobs, in one workflow or of one name in two: each a row of its own.
+  const disposed = (steps: ReturnType<typeof workflowStepsFrom>, install: { readonly workflow: string; readonly job: string }) =>
+    steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [{ ...install, step: "Install" }], deferralTags: [] }, {}, shellAnswers) }));
+  const BUILD = [{ uses: "actions/checkout@v4" }, { run: "pnpm lint" }, { run: "spec-controller balance" }];
+  const INSTALL = [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }];
+  const twoJobs = () => disposed(workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: BUILD }, test: { steps: INSTALL } } })), { workflow: "ci.yml", job: "test" });
+  const twoJobsOfOneName = () =>
+    disposed(
+      [...workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: BUILD } } })), ...workflowStepsFrom("nightly.yml", JSON.stringify({ jobs: { build: { steps: INSTALL } } }))],
+      { workflow: "nightly.yml", job: "build" },
+    );
 
-  it("[CLM-EVR-032] each job's counts will add up to the steps read in it", () => {
-    const { jobs } = stepAccountOf(twoJobs());
+  it.each([
+    ["in one workflow", twoJobs],
+    ["of one name, in two workflows", twoJobsOfOneName],
+  ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, read) => {
+    const { jobs } = stepAccountOf(read());
 
     expect(jobs.map(({ stepsRead, runners, reconcilerSteps, nonChecks, plumbing, candidates }) => ({ stepsRead, sum: runners + reconcilerSteps + nonChecks + plumbing + candidates }))).toEqual([
       { stepsRead: 3, sum: 3 },

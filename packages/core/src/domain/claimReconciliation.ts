@@ -111,10 +111,7 @@ const sortKey = ({ kind, observation }: OfAKind): readonly (number | string)[] =
 
 function inOrder(one: OfAKind, other: OfAKind): number {
   const others = sortKey(other);
-  for (const [at, part] of sortKey(one).entries()) {
-    if (part < others[at]!) return -1;
-    if (part > others[at]!) return 1;
-  }
+  for (const [at, part] of sortKey(one).entries()) if (part !== others[at]) return part < others[at]! ? -1 : 1;
   return 0;
 }
 
