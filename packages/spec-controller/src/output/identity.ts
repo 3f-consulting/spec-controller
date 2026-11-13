@@ -4,11 +4,16 @@ import { basename, dirname, resolve } from "node:path";
 
 const regularFile = ({ dev, ino }: BigIntStats): FileIdentity => ({ is: "regular-file", device: dev, inode: ino });
 
+export type NamedStream = Extract<FileIdentity, { readonly is: "standard-output" | "standard-error" }>;
+
 // A standard stream redirected into a regular file is that file; otherwise it is the stream.
-export function streamIdentity(fd: number, is: "standard-output" | "standard-error"): FileIdentity {
+export function streamIdentity(fd: number, stream: NamedStream): FileIdentity {
   const stats = fstatSync(fd, { bigint: true });
-  return stats.isFile() ? regularFile(stats) : { is };
+  return stats.isFile() ? regularFile(stats) : stream;
 }
+
+// How a path is probed: its device and inode as exactly as a stream's descriptor gives them, and nothing there yet an answer.
+const PROBED = { bigint: true, throwIfNoEntry: false } as const;
 
 // Each standard stream's names, as a path or a link may give them.
 const STREAM_NAMES: Readonly<Record<"standard-output" | "standard-error", readonly string[]>> = {
@@ -18,7 +23,6 @@ const STREAM_NAMES: Readonly<Record<"standard-output" | "standard-error", readon
 
 const LINKS_FOLLOWED = 40;
 
-// The stream a path names, itself or through its links.
 function streamNamedBy(path: string): "standard-output" | "standard-error" | undefined {
   let current = resolve(path);
   for (let followed = 0; followed <= LINKS_FOLLOWED; followed++) {
@@ -36,7 +40,7 @@ export const whereItWillBe = (path: string): string =>
 
 function notMadeYet(path: string): FileIdentity {
   const where = whereItWillBe(path);
-  const folder = statSync(dirname(where), { bigint: true, throwIfNoEntry: false });
+  const folder = statSync(dirname(where), PROBED);
   return { is: "absent", ...(folder?.isDirectory() ? { folder: { device: folder.dev, inode: folder.ino } } : {}), name: basename(where) };
 }
 
@@ -46,7 +50,7 @@ export function pathIdentity(path: string): FileIdentity {
   try {
     const stream = streamNamedBy(path);
     if (stream !== undefined) return { is: stream };
-    const stats = statSync(path, { bigint: true, throwIfNoEntry: false });
+    const stats = statSync(path, PROBED);
     if (stats === undefined) return notMadeYet(path);
     if (stats.isFile()) return regularFile(stats);
   } catch {
