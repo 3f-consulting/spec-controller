@@ -18,17 +18,17 @@ const parser = new XMLParser({
   // Attributes keep a prefix so that none is read as a child element of the same name.
   attributeNamePrefix: "@",
   parseTagValue: false,
+  // Every attribute is kept as the text it is written as. JUnit XML writes a suite's and a test case's name, and a property's
+  // value, always.
   parseAttributeValue: false,
   isArray: (name) => ["testsuite", "testcase", "property", ...OUTCOMES].includes(name),
 });
 
 const elementsIn = (element: Element, name: string): Element[] => (element[name] as Element[] | undefined) ?? [];
 
-const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
-
 // An outcome element says what went wrong in its message attribute, if it has one.
 function failureAsWritten(outcome: unknown): FailureAsWritten {
-  const message = text((outcome as Element)["@message"]);
+  const message = (outcome as Element)["@message"] as string | undefined;
   return message ? { message } : {};
 }
 
@@ -36,10 +36,10 @@ function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {
   const outcome = OUTCOMES.find((name) => testCase[name] !== undefined);
   const clmProperties = elementsIn((testCase["properties"] as Element | undefined) ?? {}, "property")
     .filter((property) => property["@name"] === "clm")
-    .map((property) => text(property["@value"]) ?? "");
+    .map((property) => property["@value"] as string);
   return {
-    ...(text(testCase["@classname"]) !== undefined && { className: text(testCase["@classname"]) }),
-    name: text(testCase["@name"]) ?? "",
+    className: testCase["@classname"] as string | undefined,
+    name: testCase["@name"] as string,
     clmProperties,
     // A test case with no outcome element is one that passed; its outcome is written as an empty string.
     outcome: outcome ?? "",
@@ -67,7 +67,7 @@ export function resultsBySuiteFrom(xml: string, from: "junit" | "pytest"): Resul
   return [...suitesIn(document), ...suitesIn((document["testsuites"] as Element | undefined) ?? {})].map((suite) => ({
     // pytest writes an error only for a test that never reached its assertions; JUnit writes one for a test that failed.
     report: from === "pytest" ? ERRORS_BEFORE_ASSERTIONS : from,
-    name: text(suite["@name"]) ?? "",
+    name: suite["@name"] as string,
     results: elementsIn(suite, "testcase").map(resultAsWritten),
   }));
 }
