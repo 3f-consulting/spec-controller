@@ -63,10 +63,55 @@ export interface EvidenceGroup {
   readonly failures: readonly string[];
 }
 
+const hasAKind = (obligation: EvidenceObligation): obligation is ObligationWithAKind => obligation.kind !== undefined;
+
+const isExecutable = (claim: ExecutableClaim | PhantomClaim | UnnamedClaim): claim is ExecutableClaim => "obligations" in claim;
+
+const ran = ({ result }: EvidenceObservation): boolean => result !== "never-ran";
+
+const BOTH_SIDES_OUTCOME: Readonly<Record<Exclude<EvidenceObservation["result"], "never-ran">, BothSides["outcome"]>> = {
+  passed: "satisfied",
+  failed: "failing",
+  "passed-on-error": "cannot-fail",
+};
+
+const neverRan = (observation: EvidenceObservation): QualityCheckReconciliation => ({ outcome: "never-ran", kind: observation.kind, observation });
+
+// An obligation no observation can answer: the claim has no code, or a code another claim shares.
+function unanswerable(obligations: readonly EvidenceObligation[], outcome: ObligationNoObservationCanAnswer["outcome"]): QualityCheckReconciliation[] {
+  return obligations.map((obligation) => ({ outcome, obligation, ...(obligation.kind && { kind: obligation.kind }) }));
+}
+
+function answered(obligation: ObligationWithAKind, observations: readonly EvidenceObservation[]): QualityCheckReconciliation[] {
+  const ofItsKind = observations.filter((observation) => ran(observation) && observation.kind === obligation.kind);
+  if (ofItsKind.length === 0) return [{ outcome: "missing", kind: obligation.kind, obligation }];
+  return ofItsKind.map((observation) => ({ outcome: BOTH_SIDES_OUTCOME[observation.result as keyof typeof BOTH_SIDES_OUTCOME], kind: obligation.kind, obligation, observation }));
+}
+
+function executableReconciliations(claim: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): QualityCheckReconciliation[] {
+  if (codeShared) return unanswerable(claim.obligations, "duplicate-claim-code");
+  if (claim.claimCode === undefined) return unanswerable(claim.obligations, "no-claim-code");
+  const asked = claim.obligations.filter(hasAKind);
+  const unasked = observations
+    .filter((observation) => ran(observation) && !asked.some(({ kind }) => kind === observation.kind))
+    .map((observation): QualityCheckReconciliation => ({ outcome: "not-asked-for", kind: observation.kind, observation }));
+  return [...asked.flatMap((obligation) => answered(obligation, observations)), ...unasked, ...observations.filter((observation) => !ran(observation)).map(neverRan)];
+}
+
+// Evidence on the phantom claim or the unnamed claim cites a claim no executable claim can take.
+function citedOnly(observations: readonly EvidenceObservation[], outcome: "cites-unknown-claim" | "cites-no-claim"): QualityCheckReconciliation[] {
+  return observations.map((observation) => (ran(observation) ? { outcome, kind: observation.kind, observation } : neverRan(observation)));
+}
+
 export function claimReconciliationOf(
   claim: ExecutableClaim | PhantomClaim | UnnamedClaim,
-  _observations: readonly EvidenceObservation[],
-  _codeShared: boolean,
+  observations: readonly EvidenceObservation[],
+  codeShared: boolean,
 ): ClaimReconciliation {
-  return { claim, qualityCheckReconciliations: [], verdict: "out-of-balance" };
+  const reconciled = isExecutable(claim)
+    ? executableReconciliations(claim, observations, codeShared)
+    : citedOnly(observations, claim.claimCode === undefined ? "cites-no-claim" : "cites-unknown-claim");
+  const qualityCheckReconciliations: QualityCheckReconciliation[] = reconciled.length === 0 ? [{ outcome: "no-quality-check" }] : reconciled;
+  const balanced = qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied");
+  return { claim, qualityCheckReconciliations, verdict: balanced ? "balanced" : "out-of-balance" };
 }
