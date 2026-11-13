@@ -2,18 +2,20 @@ import type { FileIdentity } from "@3f-consulting/spec-controller-core";
 import { fstatSync, lstatSync, readlinkSync, statSync, type BigIntStats } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 
+// A device and inode as exactly as a stream's descriptor gives them. PROBED also answers nothing there yet as undefined.
+const EXACT = { bigint: true } as const;
+
 const regularFile = ({ dev, ino }: BigIntStats): FileIdentity => ({ is: "regular-file", device: dev, inode: ino });
 
 export type NamedStream = Extract<FileIdentity, { readonly is: "standard-output" | "standard-error" }>;
 
 // A standard stream redirected into a regular file is that file; otherwise it is the stream.
 export function streamIdentity(fd: number, stream: NamedStream): FileIdentity {
-  const stats = fstatSync(fd, { bigint: true });
+  const stats = fstatSync(fd, EXACT);
   return stats.isFile() ? regularFile(stats) : stream;
 }
 
-// How a path is probed: its device and inode as exactly as a stream's descriptor gives them, and nothing there yet an answer.
-const PROBED = { bigint: true, throwIfNoEntry: false } as const;
+const PROBED = { ...EXACT, throwIfNoEntry: false } as const;
 
 // Each standard stream's names, as a path or a link may give them.
 const STREAM_NAMES: Readonly<Record<"standard-output" | "standard-error", readonly string[]>> = {
@@ -40,8 +42,8 @@ export const whereItWillBe = (path: string): string =>
 
 function notMadeYet(path: string): FileIdentity {
   const where = whereItWillBe(path);
-  const folder = statSync(dirname(where), PROBED);
-  return { is: "absent", ...(folder?.isDirectory() ? { folder: { device: folder.dev, inode: folder.ino } } : {}), name: basename(where) };
+  const folder = statSync(`${dirname(where)}/`, EXACT);
+  return { is: "absent", folder: { device: folder.dev, inode: folder.ino }, name: basename(where) };
 }
 
 // What a path names, through any link: one of the run's standard streams, a regular file, something else, or nothing
@@ -54,7 +56,7 @@ export function pathIdentity(path: string): FileIdentity {
     if (stats === undefined) return notMadeYet(path);
     if (stats.isFile()) return regularFile(stats);
   } catch {
-    // A path the system cannot follow, round links that lead to themselves or into a folder it may not enter, names no file.
+    // Names no file: a path the system cannot follow, or a new file's folder, probed with a trailing /, missing or a file.
   }
   return { is: "not-a-regular-file" };
 }
