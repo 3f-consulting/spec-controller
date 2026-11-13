@@ -156,6 +156,12 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       when balance reconciles it
       then the total of each count will be the sum over the jobs
 
+    @unit @CLM-EVR-072
+    Scenario: a job that calls a reusable workflow has no steps of its own to read
+      given a workflow had a job that called a reusable workflow, and a job with one step
+      when balance reconciles it
+      then the step account will read the one step, and nothing for the job that called the reusable workflow
+
   Rule: the provenance says what the run used
 
     @unit
