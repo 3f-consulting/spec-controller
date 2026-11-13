@@ -175,6 +175,13 @@ describe("an input that is not valid will stop the run", () => {
       ["vitest.json", "$.testResults[1]", "[input-not-in-its-shape]"],
     ],
     ["CLM-CLI-152", "a Cucumber evidence report not in Cucumber's shape", { "cucumber.json": '{"features":[]}' }, ["--cucumber", "cucumber.json"], ["cucumber.json", "Cucumber", "[input-not-in-its-shape]"]],
+    [
+      "CLM-CLI-152",
+      "a Cucumber evidence report with one feature in its shape, and one not",
+      { "cucumber.json": '[{"uri":"features/one.feature","elements":[]},3]' },
+      ["--cucumber", "cucumber.json"],
+      ["cucumber.json", "Cucumber", "$[1]", "[input-not-in-its-shape]"],
+    ],
     ["CLM-CLI-153", "a Jest evidence report not in Jest's shape", { "jest.json": "{}" }, ["--jest", "jest.json"], ["jest.json", "testResults", "[input-not-in-its-shape]"]],
     ["CLM-CLI-154", "a pytest evidence report not in pytest's shape", { "pytest.xml": "<html/>" }, ["--pytest", "pytest.xml"], ["pytest.xml", "pytest", "[input-not-in-its-shape]"]],
     ["CLM-CLI-155", "a JUnit evidence report not in JUnit's shape", { "junit.xml": "<html/>" }, ["--junit", "junit.xml"], ["junit.xml", "JUnit", "[input-not-in-its-shape]"]],
