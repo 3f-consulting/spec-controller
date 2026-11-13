@@ -9,10 +9,7 @@ const ownerAndRepository = (path: string): string | undefined => {
   return repository === undefined ? undefined : `${owner}/${withoutGit(repository)}`;
 };
 
-const lastSegment = (path: string): string | undefined => {
-  const last = segmentsOf(path).at(-1);
-  return last === undefined ? undefined : withoutGit(last);
-};
+const lastSegment = (path: string): string => withoutGit(segmentsOf(path).at(-1)!);
 
 // A URL's scheme, then its path with no user, password, query or fragment.
 const URL_FORM = /^([a-z][a-z0-9+.-]*):\/\/[^/?#]*([^?#]*)/i;
