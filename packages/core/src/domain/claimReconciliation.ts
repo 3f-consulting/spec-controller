@@ -141,6 +141,38 @@ export function claimReconciliationsOf(claims: readonly ExecutableClaim[], obser
   );
 }
 
-export function evidenceGroupsOf(_claimReconciliation: ClaimReconciliation): EvidenceGroup[] {
-  return [];
+// A group's file is where its tests are; a fitness function's place is a CI step, so fitness groups have none.
+const fileOf = ({ kind, place }: EvidenceObservation): string | undefined => (kind === "fitness" ? undefined : place);
+
+// A shared claim code is the one code an observation cites; one citing several is grouped with those citing none.
+const sharedCodeOf = ({ cites }: EvidenceObservation): ClaimCode | undefined => (cites.length === 1 ? cites[0] : undefined);
+
+function groupOf(kind: QualityCheckKind, file: string | undefined, claimCode: ClaimCode | undefined, members: readonly QualityCheckReconciliation[]): EvidenceGroup {
+  const observations = members.flatMap(({ observation }) => (observation ? [observation] : []));
+  const failed = observations.filter(({ result }) => result === "failed");
+  return {
+    kind,
+    ...(file === undefined ? {} : { file }),
+    ...(claimCode && { claimCode }),
+    qualityCheckReconciliations: members,
+    ran: observations.filter(ran).length,
+    passed: observations.filter(({ result }) => result === "passed" || result === "passed-on-error").length,
+    failed: failed.length,
+    failures: failed.map(({ name, place }) => name ?? place),
+  };
+}
+
+export function evidenceGroupsOf({ qualityCheckReconciliations }: ClaimReconciliation): EvidenceGroup[] {
+  const groups = new Map<string, QualityCheckReconciliation[]>();
+  for (const reconciliation of qualityCheckReconciliations) {
+    const { observation } = reconciliation;
+    if (observation === undefined) continue;
+    const code = sharedCodeOf(observation);
+    const key = [observation.kind, fileOf(observation) ?? "", code ? `${code.featureCode}-${code.number}` : ""].join("|");
+    groups.set(key, [...(groups.get(key) ?? []), reconciliation]);
+  }
+  return [...groups.values()].map((members) => {
+    const observation = members[0]!.observation!;
+    return groupOf(observation.kind, fileOf(observation), sharedCodeOf(observation), members);
+  });
 }

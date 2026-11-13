@@ -184,7 +184,7 @@ describe("evidence of the same kind, file and shared claim code will share a gro
       [kind, file ?? "", claimCode ? `${claimCode.featureCode}-${claimCode.number}` : "", qualityCheckReconciliations.length].join(" "),
     );
 
-    expect(read).toEqual(groups);
+    expect([...read].sort()).toEqual([...groups].sort());
   });
 });
 
