@@ -23,7 +23,7 @@ import {
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
 import { readdirSync, readFileSync, statSync, type Stats } from "node:fs";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import type { Refusal, RunEnding } from "../runEnding/runEnding.js";
 import type { InputFault, InputRead } from "./inputRead.js";
@@ -118,7 +118,7 @@ const READERS = {
     read: (files) => each(files, (file) => parsed(file, (text) => ({ features: [featureAsWrittenFrom(file.name, text)] }))),
   },
   workflows: {
-    reads: "folder",
+    reads: "file-or-folder",
     inputIs: "input-workflows",
     fileIs: "input-workflow",
     read: (files) => [{ ok: true, path: "", contents: { workflowSteps: [] } }, ...each(files, (file) => parsed(file, (text) => ({ workflowSteps: workflowStepsFrom(file.name, text) })))],
@@ -174,7 +174,7 @@ function filesOf({ kind, path: shown, byDefault }: InputNamed, folder: string): 
       return { files: [failed(shown, faultOf(error), saidOf(error))] };
     }
   }
-  if (stats.isFile() && reads !== "folder") return { files: [textAt(shown, shown, path)] };
+  if (stats.isFile() && reads !== "folder") return { files: [textAt(basename(shown), shown, path)] };
   return { files: [failed(shown, "wrong-kind-of-path", reads)] };
 }
 

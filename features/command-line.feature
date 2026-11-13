@@ -198,6 +198,12 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads its inputs
       then it will read area/deeper/one.feature
 
+    @unit @CLM-CLI-193
+    Scenario: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
+      given the run named the workflow ci.yml as its CI workflows, and then a folder holding ci.yml and release.yaml
+      when balance reads its inputs
+      then it will read ci.yml alone, and then both workflows
+
     @unit
     Scenario Outline: an input that is not valid will stop the run
       given the run met <error>

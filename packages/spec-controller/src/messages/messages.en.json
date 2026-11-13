@@ -65,7 +65,7 @@
   "path-file-or-folder": "a file or a folder",
   "input-features": "the feature corpus",
   "input-feature-file": "the feature file",
-  "input-workflows": "the CI workflows folder",
+  "input-workflows": "the CI workflows",
   "input-workflow": "the workflow",
   "input-vitest": "the Vitest evidence report",
   "input-jest": "the Jest evidence report",
