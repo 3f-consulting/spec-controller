@@ -1,5 +1,5 @@
 import { parse } from "unbash";
-import type { Command, Statement } from "unbash";
+import type { Command, Statement, Word } from "unbash";
 import type { Scripts, ShellAnswers } from "../domain/postEvidenceObservation.js";
 import shellVariants from "./shell.variants.json" with { type: "json" };
 
@@ -24,17 +24,20 @@ function pipelinesOf(statements: readonly Statement[]): Command[][] {
     .map((node) => (node.type === "Pipeline" ? node.commands : [node]).filter((stage): stage is Command => stage.type === "Command"));
 }
 
-const wordsOf = ({ name, args }: Command): string[] => (name === undefined ? [] : [name.value, ...args.flatMap((arg) => (arg.type === "Word" ? [arg.value] : []))]);
+// A command's name and its arguments, each as the word it is. A command that only sets a variable has no name, and an
+// argument setting one, as export's, is no word.
+const wordsOf = ({ name, args }: Command): string[] => [name, ...args].filter((word): word is Word => word?.type === "Word").map(({ value }) => value);
 
 const opensWith = (words: readonly string[], opening: readonly string[]): boolean => opening.every((word, at) => words[at] === word);
 
-// The script a command runs in one of its package manager's variants, when the target has a script by that name. A
-// variant with no <script> gap, such as npm test, runs the script its last word names.
+// The script a command runs in one of its package manager's variants, when the target has a script by that name. Every
+// variant's last word names its script: its <script> gap, or, as npm test's, the script itself. A command that stops
+// before that word names none, and reads undefined.
 function scriptRun(words: readonly string[], scripts: Scripts): string | undefined {
   for (const variant of SCRIPT_VARIANTS) {
     const named = variant.every((word, at) => word === "<script>" || word === "<name>" || word === words[at]);
-    const script = variant.includes("<script>") ? words[variant.indexOf("<script>")] : variant.at(-1);
-    if (named && script !== undefined && Object.hasOwn(scripts, script)) return script;
+    const script = words[variant.length - 1];
+    if (named && Object.hasOwn(scripts, String(script))) return script;
   }
   return undefined;
 }
