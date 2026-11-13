@@ -73,7 +73,7 @@ export function balance(
   // Read first, so the run's time is when it started.
   const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
   const read = inputsReadFor(inputs, folder);
-  if ("ending" in read) return refusedWith(read.refusals, streams.error.write);
+  if ("refusals" in read) return refusedWith(read.refusals, streams.error.write);
   const { configuration, errors } = targetConfigurationFrom(read.manifest, read.workflowSteps ?? []);
   const scripts = scriptsFrom(read.manifest);
   const targetFolder = targetFolderOf({ workingFolder: folder, ...(corpus === undefined ? {} : { corpus }), ...(identity.gitTopLevel === undefined ? {} : { gitTopLevel: identity.gitTopLevel }) });

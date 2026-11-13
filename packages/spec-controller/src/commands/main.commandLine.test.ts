@@ -1,5 +1,6 @@
 import { chmodSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { textFor } from "@3f-consulting/spec-controller-core";
 import { describe, expect, it } from "vitest";
 import catalogue from "../messages/messages.en.json" with { type: "json" };
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
@@ -166,6 +167,10 @@ function folderWith(files: Readonly<Record<string, string>>): string {
 
 const VITEST_SHAPED = '{"testResults":[]}';
 
+// A fact as the complaint shows it, each {code} in it the catalogue's text for that code.
+const CATALOGUE_CODE = /\{([a-z-]+)\}/g;
+const shown = (fact: string): string => fact.replace(CATALOGUE_CODE, (_code: string, code: string) => textFor(catalogue, code));
+
 describe("a well-formed JUnit evidence report will be read, not refused", () => {
   it.each([
     [
@@ -181,12 +186,36 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
 
     expect({ stopped: exitCode === 2, posted: output.includes("adds one") }).toEqual({ stopped: false, posted: true });
   });
+
+  it("[CLM-CLI-194] JUnit evidence reports written well formed, as Maven Surefire writes them, a suite to a file beside its text summary: each result is posted, and the run does not stop", () => {
+    const suite = (name: string, test: string): string =>
+      `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="example.${name}" tests="1" errors="0" skipped="0" failures="0">\n  <testcase name="${test}" classname="example.${name}" time="0.001"/>\n</testsuite>\n`;
+    const folder = folderWith({
+      "surefire-reports/TEST-example.AddsTest.xml": suite("AddsTest", "[CLM-ONE-001] adds one"),
+      "surefire-reports/TEST-example.SubtractsTest.xml": suite("SubtractsTest", "[CLM-ONE-002] subtracts one"),
+      "surefire-reports/example.AddsTest.txt": "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0\n",
+    });
+
+    const { exitCode, output } = ran(["balance", "--junit", "surefire-reports", "--format", "json"], folder);
+
+    expect({ stopped: exitCode === 2, posted: ["adds one", "subtracts one"].filter((test) => output.includes(test)) }).toEqual({ stopped: false, posted: ["adds one", "subtracts one"] });
+  });
 });
 
 describe("an input that is not valid will stop the run", () => {
   it.each([
     ["CLM-CLI-147", "a named input that does not exist", {}, ["--vitest", "absent.json"], ["absent.json", "Vitest evidence report", "[input-absent]"]],
-    ["CLM-CLI-160", "a named path that is not the kind of path its flag reads", { "one.feature": "@ONE\nFeature: one\n" }, ["--features", "one.feature"], ["one.feature", "feature corpus", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-147", "a named input under a path that runs through a file", { results: "not a folder\n" }, ["--vitest", "results/vitest.json"], ["{input-vitest} results/vitest.json", "[input-absent]"]],
+    ["CLM-CLI-160", "a named path that is not the kind of path its flag reads", { "one.feature": "@ONE\nFeature: one\n" }, ["--features", "one.feature"], ["{input-features} one.feature is not {path-folder}", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-160", "a folder named as the Vitest evidence report", { "vitest/a.json": VITEST_SHAPED }, ["--vitest", "vitest"], ["{input-vitest} vitest is not {path-file}", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-160", "a folder named as the Jest evidence report", { "jest/a.json": VITEST_SHAPED }, ["--jest", "jest"], ["{input-jest} jest is not {path-file}", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-160", "a folder named as the pytest evidence report", { "pytest/a.xml": "<testsuites/>" }, ["--pytest", "pytest"], ["{input-pytest} pytest is not {path-file}", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-160", "a folder named as the RSpec evidence report", { "rspec/a.json": "{}" }, ["--rspec", "rspec"], ["{input-rspec} rspec is not {path-file}", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-160", "a folder named as the Cucumber evidence report", { "cucumber/a.json": "[]" }, ["--cucumber", "cucumber"], ["{input-cucumber} cucumber is not {path-file}", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-160", "a folder named as the CI step record", { "steps/a.json": "{}" }, ["--ci-steps", "steps"], ["{input-step-record} steps is not {path-file}", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-160", "a folder named as the manifest", { "manifest/package.json": "{}" }, ["--package-json", "manifest"], ["{input-manifest} manifest is not {path-file}", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-160", "a device named as the CI workflows", {}, ["--ci", "/dev/null"], ["{input-workflows} /dev/null is not {path-file-or-folder}", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-160", "a device named as the JUnit evidence report", {}, ["--junit", "/dev/null"], ["{input-junit} /dev/null is not {path-file-or-folder}", "[input-wrong-kind-of-path]"]],
     ["CLM-CLI-148", "a JSON evidence report that does not parse", { "vitest.json": "{" }, ["--vitest", "vitest.json"], ["vitest.json", "JSON", "[input-does-not-parse]"]],
     ["CLM-CLI-186", "a JUnit evidence report that does not parse", { "junit.xml": "<testsuite" }, ["--junit", "junit.xml"], ["junit.xml", "JUnit evidence report", "[input-does-not-parse]"]],
     [
@@ -197,7 +226,7 @@ describe("an input that is not valid will stop the run", () => {
       ["junit.xml", "JUnit evidence report", "Unclosed tag 'testsuite'. (2:1)", "[input-does-not-parse]"],
     ],
     ["CLM-CLI-149", "a feature file that does not parse", { "features/bad.feature": "not Gherkin\n" }, ["--features", "features"], ["bad.feature", "feature file", "[input-does-not-parse]"]],
-    ["CLM-CLI-150", "a workflow that does not parse", { "workflows/ci.yml": "jobs: [\n" }, ["--ci", "workflows"], ["ci.yml", "workflow", "[input-does-not-parse]"]],
+    ["CLM-CLI-150", "a workflow that does not parse", { "workflows/ci.yml": "jobs: [\n" }, ["--ci", "workflows"], ["{input-workflow} workflows/ci.yml", "at line 2, column 1: jobs: [ ^\n", "[input-does-not-parse]"]],
     ["CLM-CLI-151", "a Vitest evidence report not in Vitest's shape", { "vitest.json": '{"testResults":"none"}' }, ["--vitest", "vitest.json"], ["vitest.json", "$.testResults", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-151",
@@ -224,7 +253,7 @@ describe("an input that is not valid will stop the run", () => {
       ["--junit", "junit.xml"],
       ["junit.xml", "JUnit", "writes: $ is not", "[input-not-in-its-shape]"],
     ],
-    ["CLM-CLI-156", "a file in a JUnit directory not in JUnit's shape", { "junit/one.xml": "<testsuite/>", "junit/two.xml": "<html/>" }, ["--junit", "junit"], ["two.xml", "JUnit", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-156", "a file in a JUnit directory not in JUnit's shape", { "junit/one.xml": "<testsuite/>", "junit/two.xml": "<html/>" }, ["--junit", "junit"], ["{input-junit-folder-file} junit/two.xml", "JUnit", "[input-not-in-its-shape]"]],
     ["CLM-CLI-157", "an RSpec evidence report not in RSpec's shape", { "rspec.json": '{"examples":3}' }, ["--rspec", "rspec.json"], ["rspec.json", "examples", "[input-not-in-its-shape]"]],
     ["CLM-CLI-157", "an RSpec evidence report whose messages are not all strings", { "rspec.json": '{"messages":["a",3],"examples":[],"summary":{}}' }, ["--rspec", "rspec.json"], ["rspec.json", "$.messages[1]", "[input-not-in-its-shape]"]],
     ["CLM-CLI-158", "a step record not in the shape of a record of step outcomes", { "steps.json": '{"test":"passed"}' }, ["--ci-steps", "steps.json"], ["steps.json", "step outcomes", "$.test", "[input-not-in-its-shape]"]],
@@ -247,7 +276,12 @@ describe("an input that is not valid will stop the run", () => {
   ] as const)("[%s] %s: no verdict, exit 2, and a complaint with its facts", (_clm, _error, files, args, facts) => {
     const { exitCode, output, error } = ran(["balance", ...args], folderWith(files));
 
-    expect({ exitCode, output, facts: facts.filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
+    expect({ exitCode, output, complaints: error.trimEnd().split("\n").length, facts: facts.map(shown).filter((fact) => !error.includes(fact)) }).toEqual({
+      exitCode: 2,
+      output: "",
+      complaints: 1,
+      facts: [],
+    });
   });
 
   it("[CLM-CLI-161] a named input that the tool is not permitted to read: no verdict, exit 2, and a complaint with its facts", () => {
@@ -257,6 +291,15 @@ describe("an input that is not valid will stop the run", () => {
     const { exitCode, output, error } = ran(["balance", "--vitest", "vitest.json"], folder);
 
     expect({ exitCode, output, facts: ["vitest.json", "[input-not-permitted]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
+  });
+
+  it("[CLM-CLI-161] a named feature corpus whose folder the tool is not permitted to read: no verdict, exit 2, and a complaint with its facts", () => {
+    const folder = folderWith({ "features/one.feature": "@ONE\nFeature: one\n" });
+    chmodSync(join(folder, "features"), 0o000);
+
+    const { exitCode, output, error } = ran(["balance", "--features", "features"], folder);
+
+    expect({ exitCode, output, facts: [shown("{input-features} features"), "[input-not-permitted]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
   });
 });
 

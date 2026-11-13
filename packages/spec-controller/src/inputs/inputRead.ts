@@ -1,5 +1,6 @@
 export type InputFault =
   | "absent"
+  | "default-unreadable"
   | "not-permitted"
   | "wrong-kind-of-path"
   | "does-not-parse"
@@ -7,5 +8,5 @@ export type InputFault =
 
 // Each input is read, or refused with what is wrong, before any work starts.
 export type InputRead<Contents> =
-  | { readonly ok: true; readonly path: string; readonly contents: Contents }
+  | { readonly ok: true; readonly contents: Contents }
   | { readonly ok: false; readonly path: string; readonly fault: InputFault; readonly detail: string };
