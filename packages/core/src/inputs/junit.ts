@@ -13,20 +13,22 @@ interface Element {
 
 const OUTCOMES = ["failure", "error", "skipped"] as const;
 
+// Every value, an attribute's or a tag's text, is kept as the text it is written as. JUnit XML writes a suite's and a test
+// case's name, and a property's value, always as text.
+const VALUES_PARSED = false;
+
 const parser = new XMLParser({
   ignoreAttributes: false,
   // Attributes keep a prefix so that none is read as a child element of the same name.
   attributeNamePrefix: "@",
-  parseTagValue: false,
-  // Every attribute is kept as the text it is written as. JUnit XML writes a suite's and a test case's name, and a property's
-  // value, always.
-  parseAttributeValue: false,
+  parseTagValue: VALUES_PARSED,
+  parseAttributeValue: VALUES_PARSED,
   isArray: (name) => ["testsuite", "testcase", "property", ...OUTCOMES].includes(name),
 });
 
 const elementsIn = (element: Element, name: string): Element[] => (element[name] as Element[] | undefined) ?? [];
 
-// An outcome element says what went wrong in its message attribute, if it has one.
+// An outcome element says what went wrong, or why the test was skipped, in its message attribute, if it has one.
 function failureAsWritten(outcome: unknown): FailureAsWritten {
   const message = (outcome as Element)["@message"] as string | undefined;
   return message ? { message } : {};
@@ -43,7 +45,7 @@ function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {
     clmProperties,
     // A test case with no outcome element is one that passed; its outcome is written as an empty string.
     outcome: outcome ?? "",
-    ...(outcome && outcome !== "skipped" && { failure: failureAsWritten((testCase[outcome] as unknown[])[0]) }),
+    ...(outcome && { failure: failureAsWritten((testCase[outcome] as unknown[])[0]) }),
   };
 }
 

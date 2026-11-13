@@ -27,8 +27,8 @@ export interface UnnamedClaim {
   readonly file?: never;
 }
 
-// What each reader reports, as written. Which result each status means is the domain's. report is the evidence
-// report it came from, as its reader names it, since what a status means can differ between them.
+// What each reader reports, as written. Which result each status means is the domain's. report, where kept, is the
+// evidence report it came from, as its reader names it, since what a status means can differ between them.
 
 // A report of test results kept by test file.
 export interface ResultsByFileAsWritten {
@@ -67,26 +67,26 @@ export interface FailureAsWritten {
 
 // A report of test results kept by example, each nested in its groups.
 export interface ResultsByExampleAsWritten {
-  readonly report: string;
   readonly examples: readonly ExampleResultAsWritten[];
   readonly loadErrors: readonly { readonly file?: string; readonly message: string }[];
 }
 
 interface ExampleResultAsWritten {
   readonly file: string;
-  readonly groupDescriptions: readonly string[];
+  // Its groups' descriptions, then its own.
+  readonly fullDescription: string;
   readonly description: string;
   readonly status: string;
   readonly message?: string;
 }
 
-// A report of scenario runs: one entry per scenario or Outline row that ran.
+// A report of scenario runs: one entry per scenario or Outline row that ran. A hook is a step with no text.
 export interface ScenarioResultAsWritten {
   readonly file: string;
   readonly line: number;
   readonly title: string;
   readonly tags: readonly string[];
-  readonly steps: readonly { readonly keyword: string; readonly text: string; readonly status: string; readonly message?: string }[];
+  readonly steps: readonly { readonly keyword: string; readonly text?: string; readonly status: string; readonly message?: string }[];
 }
 
 // An entry of the step record, keyed by the step's id.
@@ -171,10 +171,11 @@ export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], 
 // Results kept by example: RSpec's, each example nested in its groups. An error outside any example kept the examples
 // after it from running: it is placed at the spec file it names, or at none.
 export function observationsByExample({ examples, loadErrors }: ResultsByExampleAsWritten, targetFolder: string): EvidenceObservation[] {
-  const ran = examples.flatMap(({ file, groupDescriptions, description, status, message }): EvidenceObservation[] => {
+  const ran = examples.flatMap(({ file, fullDescription, description, status, message }): EvidenceObservation[] => {
     const result = RESULT_BY_STATUS[status];
     if (result === undefined) return [];
-    const cites = nearestCitations([...groupDescriptions, description]);
+    // Its own description cites first; failing that, its groups' do, in its full description.
+    const cites = nearestCitations([fullDescription, description]);
     return [{ cites, result, kind: "unit", place: shownFromTarget(file, targetFolder), name: description, ...(message === undefined ? {} : { message }), notes: [] }];
   });
   const neverRan = loadErrors.map(({ file, message }): EvidenceObservation => ({
@@ -200,13 +201,14 @@ type StepAsWritten = ScenarioResultAsWritten["steps"][number];
 
 const asWritten = ({ keyword, text }: StepAsWritten): string => `${keyword.trim()} ${text}`;
 
-// A step that matched no definition, or more than one, kept the scenario from running, whatever else its steps did.
+// A step that matched no definition, or more than one, kept the scenario from running, whatever else its steps did. A
+// scenario passed when every step passed, its hooks among them, and it had a step of its own.
 function resultOfSteps(steps: readonly StepAsWritten[]): { readonly result: Result; readonly message?: string } | undefined {
   const unmatched = steps.find(({ status }) => status === "undefined" || status === "ambiguous");
   if (unmatched) return { result: "never-ran", message: asWritten(unmatched) };
   const failed = steps.find(({ status }) => status === "failed");
   if (failed) return { result: "failed", ...(failed.message === undefined ? {} : { message: failed.message }) };
-  return steps.length > 0 && steps.every(({ status }) => status === "passed") ? { result: "passed" } : undefined;
+  return steps.some(({ text }) => text !== undefined) && steps.every(({ status }) => status === "passed") ? { result: "passed" } : undefined;
 }
 
 // An Outline row's code is its clm cell, in the feature file at the end of the result's path, at the row's line.

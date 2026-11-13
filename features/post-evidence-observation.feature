@@ -115,6 +115,13 @@ Feature: Evidence Observations are posted, each to its claim
       when balance posts the evidence
       then nothing will be posted
 
+    @unit @CLM-OBS-130
+    Scenario: balance posts from a Cucumber evidence report that leaves out a feature's or a scenario's empty lists
+      given Cucumber's evidence report left out the scenarios of a feature that had none, the steps of a scenario that had none, and the tags of a scenario that had none
+      and the scenario with no tags had every step pass
+      when balance posts the evidence
+      then an Evidence Observation will be posted for that scenario alone, as passed, citing no claim code
+
     @unit
     Scenario Outline: balance posts what could not run as never ran
       given <source> said <what could not run>
@@ -130,6 +137,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-100 | Go's evidence report              | TestMain failed before any test ran                                                                           | no claim code | the package and its error                  |
         | CLM-OBS-048 | JUnit 5 in Java's evidence report | a class's setup before all its tests failed                                                                   | no claim code | the class and its error                    |
         | CLM-OBS-049 | RSpec's evidence report           | a spec file failed to load                                                                                    | no claim code | the file and its error                     |
+        | CLM-OBS-129 | RSpec's evidence report           | a spec file failed to load, and the run wrote no other message                                                | no claim code | the file and its error                     |
         | CLM-OBS-099 | RSpec's evidence report           | the suite failed to load, naming no spec file                                                                 | no claim code | the error                                  |
         | CLM-OBS-050 | pytest's evidence report          | the setup of a test citing CLM-ONE-001 errored                                                                | CLM-ONE-001   | the test                                   |
         | CLM-OBS-051 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched two definitions                             | CLM-ONE-001   | that step as written, "Given one adds one" |
@@ -283,6 +291,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-086 | Vitest's evidence report          | CLM-ONE-999 in its title, with no brackets            | no claim code               |
         | CLM-OBS-087 | the step record                   | no id                                                 | no claim code               |
         | CLM-OBS-105 | pytest's evidence report          | the clm property CLM-A-001, which is not a claim code | no claim code               |
+        | CLM-OBS-128 | pytest's evidence report          | the ticket property CLM-ONE-002, not a clm property   | no claim code               |
         | CLM-OBS-088 | Vitest's evidence report          | [CLM-ONE-001] in its title, a code two claims share   | CLM-ONE-001                 |
         | CLM-OBS-089 | Vitest's evidence report          | [CLM-ONE-001] and [CLM-ONE-002] in its title          | CLM-ONE-001 and CLM-ONE-002 |
         | CLM-OBS-090 | Jest's evidence report            | [CLM-ONE-001] and [CLM-ONE-002] in its title          | CLM-ONE-001 and CLM-ONE-002 |
