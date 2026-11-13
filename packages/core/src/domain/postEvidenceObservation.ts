@@ -116,11 +116,12 @@ const RESULT_BY_STATUS: Readonly<Record<string, Result>> = { passed: "passed", f
 // A test report's result is unit evidence, whatever its source.
 const unitObservation = (observation: Omit<EvidenceObservation, "kind">): EvidenceObservation => ({ ...observation, kind: "unit" });
 
-// Results kept by test file: Vitest's and Jest's. A failed file with no results is one that could not run.
+// Results kept by test file: Vitest's and Jest's. A file with no results is one that could not run: each writes such a
+// file as failed.
 export function observationsByFile(results: readonly ResultsByFileAsWritten[], targetFolder: string): EvidenceObservation[] {
-  return results.flatMap(({ file, status, message, results: inFile }): EvidenceObservation[] => {
+  return results.flatMap(({ file, message, results: inFile }): EvidenceObservation[] => {
     const place = shownFromTarget(file, targetFolder);
-    if (status === "failed" && inFile.length === 0) {
+    if (inFile.length === 0) {
       return [unitObservation({ cites: [], result: "never-ran", place, message })];
     }
     return inFile.flatMap(({ ancestorTitles, title, status: resultStatus, failureMessages }) => {
