@@ -336,6 +336,15 @@ describe("balance posts a nested test from a report kept by suite citing its own
     ["CLM-OBS-071", "go", "no claim code, under a subtest with CLM-ONE-002 in brackets", "example.com/adds", "TestAdds/[CLM-ONE-002]_a_group/adds_one", "example.com/adds", [ONE_002]],
     ["CLM-OBS-072", "surefire", "CLM-ONE-001 in brackets in its display name, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "[CLM-ONE-001] adds one", "[CLM-ONE-002] a class", [ONE_001]],
     ["CLM-OBS-073", "surefire", "no claim code, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "adds one", "[CLM-ONE-002] a class", [ONE_002]],
+    [
+      "CLM-OBS-120",
+      "surefire",
+      "no claim code, in a class with CLM-ONE-002 in brackets nested in one with CLM-ONE-001 in brackets",
+      "[CLM-ONE-001] an outer class [CLM-ONE-002] an inner class",
+      "adds one",
+      "[CLM-ONE-001] an outer class [CLM-ONE-002] an inner class",
+      [ONE_002],
+    ],
     ["CLM-OBS-074", "gradle", "no claim code, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "adds one", "example.AddsTest", []],
   ])("[%s] a passing test in %s's evidence report with %s is posted citing its nearest code", (_clm, writer, _named, suite, name, className, cites) => {
     expect(postedBySuite(writer, suite, testCase(className, name)).map(({ cites: cited }) => cited)).toEqual([cites]);
