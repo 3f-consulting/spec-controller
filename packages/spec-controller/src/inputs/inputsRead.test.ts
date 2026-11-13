@@ -45,3 +45,18 @@ describe("an input read by default that does not exist will count as none, not a
     expect("ending" in inputs ? inputs.refusals : readOf(inputs) ?? []).toEqual([]);
   });
 });
+
+describe("balance reads the one workflow a CI workflows path names, or every workflow in the folder it names", () => {
+  it("[CLM-CLI-193] the workflow ci.yml, then a folder holding ci.yml and release.yaml: it reads ci.yml alone, then both", () => {
+    const folder = temporaryDirectory("workflows-");
+    mkdirSync(join(folder, "workflows"));
+    writeFileSync(join(folder, "workflows", "ci.yml"), "jobs:\n  ci:\n    steps:\n      - run: echo ci\n");
+    writeFileSync(join(folder, "workflows", "release.yaml"), "jobs:\n  release:\n    steps:\n      - run: echo release\n");
+    const workflowsRead = (path: string): string[] => {
+      const inputs = inputsReadFor([{ kind: "workflows", path, byDefault: false }], folder);
+      return "ending" in inputs ? inputs.refusals.map(({ key }) => key) : [...new Set(inputs.workflowSteps?.map(({ workflow }) => workflow))];
+    };
+
+    expect([workflowsRead("workflows/ci.yml"), workflowsRead("workflows")]).toEqual([["ci.yml"], ["ci.yml", "release.yaml"]]);
+  });
+});
