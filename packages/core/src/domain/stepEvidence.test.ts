@@ -156,8 +156,8 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(dispositionOf(`CI=1 ${handedOn} run`, "vitest")).toBe("runner");
   });
 
-  it("[CLM-OBS-010] launchers chain, so a runner behind two launchers will be counted as a runner", () => {
-    expect(dispositionOf("uv run python -m pytest -q", "pytest")).toBe("runner");
+  it("[CLM-OBS-116] a step running uv run python -m pytest, a runner behind two launchers, will be counted as a runner, and nothing will be posted", () => {
+    expect(countedAndPosted("uv run python -m pytest", "pytest")).toEqual({ countedAs: "runner", posted: 0 });
   });
 
   it.each(shellVariants["CLM-OBS-009"].variants)("[CLM-OBS-009] a step running a script as %s, whose script runs vitest, will be counted as a runner", (variant) => {
