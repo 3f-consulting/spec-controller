@@ -158,6 +158,23 @@ function folderWith(files: Readonly<Record<string, string>>): string {
 
 const VITEST_SHAPED = '{"testResults":[]}';
 
+describe("a well-formed JUnit evidence report will be read, not refused", () => {
+  it.each([
+    [
+      "one suite, as Maven Surefire writes it",
+      '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="example.AddsTest" tests="1" errors="0" skipped="0" failures="0">\n  <testcase name="[CLM-ONE-001] adds one" classname="example.AddsTest" time="0.001"/>\n</testsuite>\n',
+    ],
+    [
+      "a suites element holding a suite, as pytest writes it",
+      '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1"><testcase classname="test_adds" name="[CLM-ONE-001] adds one" time="0.001"><properties><property name="clm" value="CLM-ONE-001" /></properties></testcase></testsuite></testsuites>',
+    ],
+  ] as const)("[CLM-CLI-194] a JUnit evidence report written well formed, as %s: its result is posted, and the run does not stop", (_written, report) => {
+    const { exitCode, output } = ran(["balance", "--junit", "junit.xml", "--format", "json"], folderWith({ "junit.xml": report }));
+
+    expect({ stopped: exitCode === 2, posted: output.includes("adds one") }).toEqual({ stopped: false, posted: true });
+  });
+});
+
 describe("an input that is not valid will stop the run", () => {
   it.each([
     ["CLM-CLI-147", "a named input that does not exist", {}, ["--vitest", "absent.json"], ["absent.json", "Vitest evidence report", "[input-absent]"]],
