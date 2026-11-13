@@ -110,7 +110,7 @@ jobs:
           mkdir -p "$room"
           cd "$room"
           npm install --prefer-offline --no-audit --no-fund --loglevel=error "$RUNNER_TEMP/release"/*.tgz
-          ./node_modules/.bin/spec-controller balance --help
+          npx spec-controller balance --help
 
       - name: Publish core
         run: |
