@@ -21,7 +21,6 @@ describe("balance posts only the steps that prove something", () => {
     ["CLM-OBS-003", "using someone/checkout", { uses: "someone/checkout@v1" }, undefined, "candidate", 1],
     ["CLM-OBS-008", "running pnpm test, with no unit runner", { run: "pnpm test" }, undefined, "candidate", 1],
     ["CLM-OBS-012", "running spec-controller balance", { run: "spec-controller balance --features features" }, undefined, "reconciler", 0],
-    ["CLM-OBS-013", "writing out the step record", { run: "echo '${{ toJSON(steps) }}' > steps.json" }, undefined, "reconciler", 0],
     ["CLM-OBS-109", "running spec-controller balance, in notChecks", { name: "Reconcile", run: "spec-controller balance" }, "Reconcile", "reconciler", 0],
     ["CLM-OBS-014", "named Install, in notChecks", { name: "Install", run: "pnpm install" }, "Install", "nonCheck", 0],
     ["CLM-OBS-016", "using actions/checkout, in notChecks", { uses: "actions/checkout@v4" }, "actions/checkout@v4", "nonCheck", 0],
@@ -40,6 +39,23 @@ const NO_SETTING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTa
 const ONE_001 = { featureCode: "ONE", number: "001" };
 const workflowOf = (jobs: object) => workflowStepsFrom("ci.yml", JSON.stringify({ jobs }));
 const recordOf = (record: object) => stepRecordFrom(record);
+
+// A step writing out the step record, in each place a step can hold the expression.
+const writingTheStepRecord: Readonly<Record<string, object>> = {
+  "run:": { run: "echo '${{ toJSON(steps) }}' > steps.json" },
+  "env:": { env: { STEPS_JSON: "${{ toJSON(steps) }}" }, run: 'printf \'%s\' "$STEPS_JSON" > steps.json' },
+};
+
+describe("a step writing out the step record is the reconciler's", () => {
+  it.each(workflowsVariants["CLM-OBS-013"].variants)("[CLM-OBS-013] a step writing out the step record through %s will be counted as the reconciler, and nothing will be posted", (variant) => {
+    const steps = stepsOf(writingTheStepRecord[variant]!);
+
+    expect({
+      countedAs: stepDispositionOf(steps[0]!, NO_SETTING, {}, shellAnswers),
+      posted: fitnessObservationsOf(steps, [], NO_SETTING, {}, shellAnswers).length,
+    }).toEqual({ countedAs: "reconciler", posted: 0 });
+  });
+});
 
 describe("a step using a plumbing action is plumbing", () => {
   it.each(workflowsVariants["CLM-OBS-015"].variants)("[CLM-OBS-015] a step using %s will be counted as plumbing, and nothing will be posted", (action) => {
