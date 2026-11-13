@@ -8,9 +8,10 @@ const wordsIn = (text: string): string[] => text.split(" ");
 // A launcher's words, up to the command it hands on to. A longer launcher is tried first, so pnpm exec is read before pnpm.
 const LAUNCHERS = shellVariants["CLM-OBS-010"].variants.map((launcher) => wordsIn(launcher).filter((word) => word !== "<bin>")).sort((one, other) => other.length - one.length);
 const SCRIPT_VARIANTS = shellVariants["CLM-OBS-009"].variants.map(wordsIn);
-const WRAPPERS = shellVariants["CLM-OBS-112"].variants;
+// A wrapper's words: its command, then a gap for each value it takes before the command it runs, as timeout's duration.
+const WRAPPERS = shellVariants["CLM-OBS-112"].variants.map(wordsIn);
 // What a wrapper's options take is that wrapper's own: xvfb-run's are read past with their values.
-const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"] };
+const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"], timeout: [] };
 
 // Each element of the line's && and ; lists, as the stages of its pipeline. A comment is no command.
 function pipelinesOf(statements: readonly Statement[]): Command[][] {
@@ -39,10 +40,11 @@ function scriptRun(words: readonly string[], scripts: Scripts): string | undefin
 function handedOn(words: readonly string[]): readonly string[] | undefined {
   const launcher = LAUNCHERS.find((opening) => words.length > opening.length && opensWith(words, opening));
   if (launcher !== undefined) return words.slice(launcher.length);
-  const wrapper = WRAPPERS.find((command) => command === words[0]);
+  const wrapper = WRAPPERS.find(([command]) => command === words[0]);
   if (wrapper === undefined) return undefined;
   let at = 1;
-  while (words[at]?.startsWith("-")) at += OPTIONS_TAKING_A_VALUE[wrapper]!.includes(words[at]!) ? 2 : 1;
+  while (words[at]?.startsWith("-")) at += OPTIONS_TAKING_A_VALUE[wrapper[0]!]!.includes(words[at]!) ? 2 : 1;
+  at += wrapper.length - 1;
   return at < words.length ? words.slice(at) : undefined;
 }
 
