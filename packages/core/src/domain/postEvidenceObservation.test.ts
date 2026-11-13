@@ -502,4 +502,12 @@ describe("balance posts an Evidence Observation no single executable claim can t
       { claim: "the unnamed claim", cites: [named] },
     ]);
   });
+
+  it("[CLM-OBS-128] a passing test in pytest's evidence report whose ticket property, not a clm property, is CLM-ONE-002 is posted to the unnamed claim, naming no claim code", () => {
+    const posted = postedBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", '<properties><property name="ticket" value="CLM-ONE-002" /></properties>'));
+
+    expect(filed(claimReconciliationsOf(claimsTagged("CLM-ONE-001", "CLM-ONE-002"), posted)).filter(({ cites }) => cites.length > 0)).toEqual([
+      { claim: "the unnamed claim", cites: [[]] },
+    ]);
+  });
 });
