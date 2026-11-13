@@ -1,4 +1,4 @@
-import { claimCodeCitationsIn, type ClaimCode } from "./claimCodes.js";
+import { claimCodeCitationsIn, sameCode, type ClaimCode } from "./claimCodes.js";
 import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
 
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
@@ -127,6 +127,6 @@ export function evidenceObservationsOf(results: readonly ResultsByFileAsWritten[
   );
 }
 
-export function observationsFiledUnder(_claim: ExecutableClaim, _observations: readonly EvidenceObservation[]): EvidenceObservation[] {
-  return [];
+export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {
+  return claimCode === undefined ? [] : observations.filter(({ cites }) => cites.some((cited) => sameCode(cited, claimCode)));
 }
