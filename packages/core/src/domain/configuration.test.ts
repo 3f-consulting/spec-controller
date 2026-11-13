@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { coreText } from "../messages/catalogue.js";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { targetConfigurationFrom, whereManifestBreaks } from "../inputs/manifest.js";
 import manifestVariants from "../inputs/manifest.variants.json" with { type: "json" };
@@ -106,6 +107,6 @@ const notAnObject: Readonly<Record<string, unknown>> = { null: null, "a number":
 
 describe("a specController block that is not an object stops the run", () => {
   it.each(manifestVariants["CLM-CFG-021"].variants)("[CLM-CFG-021] a specController block that is %s stops the run as an unexpected error", (variant) => {
-    expect(() => targetConfigurationFrom({ specController: notAnObject[variant] }, [])).toThrow();
+    expect(() => targetConfigurationFrom({ specController: notAnObject[variant] }, [])).toThrow(coreText("configuration-block-not-an-object"));
   });
 });
