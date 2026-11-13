@@ -28,7 +28,6 @@ const opensWith = (words: readonly string[], opening: readonly string[]): boolea
 // variant with no <script> gap, such as npm test, runs the script its last word names.
 function scriptRun(words: readonly string[], scripts: Scripts): string | undefined {
   for (const variant of SCRIPT_VARIANTS) {
-    if (words.length < variant.length) continue;
     const named = variant.every((word, at) => word === "<script>" || word === "<name>" || word === words[at]);
     const script = variant.includes("<script>") ? words[variant.indexOf("<script>")] : variant.at(-1);
     if (named && script !== undefined && Object.hasOwn(scripts, script)) return script;
@@ -38,14 +37,13 @@ function scriptRun(words: readonly string[], scripts: Scripts): string | undefin
 
 // The command a launcher or a wrapper hands on to: the word after a launcher, or the first word past a wrapper's options and their values.
 function handedOn(words: readonly string[]): readonly string[] | undefined {
-  const launcher = LAUNCHERS.find((opening) => words.length > opening.length && opensWith(words, opening));
+  const launcher = LAUNCHERS.find((opening) => opensWith(words, opening));
   if (launcher !== undefined) return words.slice(launcher.length);
   const wrapper = WRAPPERS.find(([command]) => command === words[0]);
   if (wrapper === undefined) return undefined;
   let at = 1;
   while (words[at]?.startsWith("-")) at += OPTIONS_TAKING_A_VALUE[wrapper[0]!]!.includes(words[at]!) ? 2 : 1;
-  at += wrapper.length - 1;
-  return at < words.length ? words.slice(at) : undefined;
+  return words.slice(at + wrapper.length - 1);
 }
 
 function runs(words: readonly string[], program: readonly string[], scripts: Scripts, followed: Set<string>): boolean {
