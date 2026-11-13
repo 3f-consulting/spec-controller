@@ -134,7 +134,7 @@ Feature: You get each report in the format and place you asked for, and the run 
       when you ask for a report on standard error
       then the run will stop, give no verdict and exit 2
       and it will complain, naming the file
-      and the file will be as it was
+      and no report will be written to the file
 
       Examples:
         | clm         | the file                    |

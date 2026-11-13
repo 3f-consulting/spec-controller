@@ -8,5 +8,13 @@
   "unreadable-in-tree": "allocate could not read this, and gives no code",
   "unreadable-history": "allocate could not read the repository's history, and gives no code",
   "damaged-repository": "allocate could not read the repository, and gives no code",
-  "feature-file-does-not-parse": "allocate could not read this feature file, which does not parse, and gives no code"
+  "feature-file-does-not-parse": "allocate could not read this feature file, which does not parse, and gives no code",
+  "report-not-written": "a report could not be written",
+  "may-not-be-written": "it may not be written",
+  "is-a-folder": "it is a folder",
+  "folder-does-not-exist": "its folder does not exist",
+  "more-than-one-to-stdout": "more than one report would go to standard output; at most one may",
+  "outputs-share-file": "two reports would go in one file",
+  "output-overwrites-input": "a report would overwrite a file the run reads",
+  "unexpected-error": "spec-controller hit an unexpected error"
 }

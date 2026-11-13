@@ -4,7 +4,6 @@ import {
   executableClaimsOf,
   featureAsWrittenFrom,
   fitnessObservationsOf,
-  markdownReportOf,
   provenanceOf,
   repositoryOfOrigin,
   resultsByFileFrom,
@@ -19,10 +18,12 @@ import {
   type TargetConfiguration,
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
+import { join } from "node:path";
 import { featureSourcesIn, jsonAt, workflowSourcesIn } from "../inputs/readFiles.js";
-import { writeToStandardOutput } from "../output/standardOutput.js";
-import { endRunOn } from "../runEnding/exitCode.js";
+import type { StandardStreams } from "../output/streams.js";
+import type { ExitCode } from "../runEnding/runEnding.js";
 import { runIdentityIn } from "../runIdentity/runIdentity.js";
+import { writeReports } from "../output/writer.js";
 import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/runRequest.js";
 
 const NO_SETTINGS: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
@@ -40,12 +41,15 @@ function stepAccountFor(workflows: string | undefined, steps: readonly WorkflowS
 // Every input the run could read, each with its path when it read one.
 const provenanceInputsOf = (inputs: readonly InputRequest[]): ProvenanceInput[] => INPUT_KINDS.map((kind) => ({ name: kind, path: pathOf(inputs, kind) }));
 
-export function balance({ inputs, target, sourceSha }: Extract<RunRequest, { command: "balance" }>, folder: string): void {
+export function balance({ inputs, outputs, target, sourceSha }: Extract<RunRequest, { command: "balance" }>, folder: string, streams: StandardStreams): ExitCode {
   // Read first, so the run's time is when it started.
   const identity = runIdentityIn(folder, { target, sourceSha });
   const workflows = pathOf(inputs, "workflows");
-  const features = readEach(pathOf(inputs, "features"), featureSourcesIn).map(({ file, source }) => featureAsWrittenFrom(file, source));
-  const steps = readEach(workflows, workflowSourcesIn).flatMap(({ workflow, source }) => workflowStepsFrom(workflow, source));
+  const featureFolder = pathOf(inputs, "features");
+  const featureSources = readEach(featureFolder, featureSourcesIn);
+  const workflowSources = readEach(workflows, workflowSourcesIn);
+  const features = featureSources.map(({ file, source }) => featureAsWrittenFrom(file, source));
+  const steps = workflowSources.flatMap(({ workflow, source }) => workflowStepsFrom(workflow, source));
   const record = readEach(pathOf(inputs, "stepRecord"), (path) => stepRecordFrom(jsonAt(path)));
   const observations = [
     ...evidenceObservationsOf(readEach(pathOf(inputs, "vitest"), (path) => resultsByFileFrom(jsonAt(path)))),
@@ -54,6 +58,11 @@ export function balance({ inputs, target, sourceSha }: Extract<RunRequest, { com
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observations);
   const runVerdict = runVerdictOf(claimReconciliations);
   const provenance = provenanceOf(identity, provenanceInputsOf(inputs), identity.gitTopLevel ?? folder, repositoryOfOrigin);
-  writeToStandardOutput(markdownReportOf({ runVerdict, provenance, ...stepAccountFor(workflows, steps) }));
-  endRunOn(runVerdict);
+  // No report may land on a file the run read: each one it was given, and each it read in a folder it was given.
+  const filesRead = [
+    ...featureSources.map(({ file }) => join(featureFolder ?? "", file)),
+    ...workflowSources.map(({ workflow }) => join(workflows ?? "", workflow)),
+    ...[pathOf(inputs, "vitest"), pathOf(inputs, "stepRecord")].filter((path) => path !== undefined),
+  ];
+  return writeReports(outputs, filesRead, { runVerdict, provenance, ...stepAccountFor(workflows, steps) }, streams);
 }

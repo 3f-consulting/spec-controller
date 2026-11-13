@@ -42,7 +42,23 @@ function inputsOf(args: readonly string[]): InputRequest[] {
 
 const DEFAULT_OUTPUT: OutputRequest<ReportFormat> = { format: "md", destination: { to: "standard-output" } };
 
+const REPORT_FORMATS: readonly string[] = ["md", "json"] satisfies ReportFormat[];
+
+// Each --format names a format and, after its first colon, the file it goes to; with none, Markdown on standard output.
+function outputsOf(args: readonly string[]): OutputRequest<ReportFormat>[] {
+  const outputs: OutputRequest<ReportFormat>[] = [];
+  for (let at = 0; at < args.length; at += 2) {
+    const value = args[at + 1];
+    if (args[at] !== "--format" || value === undefined) continue;
+    const colon = value.indexOf(":");
+    const format = colon === -1 ? value : value.slice(0, colon);
+    if (REPORT_FORMATS.includes(format))
+      outputs.push({ format: format as ReportFormat, destination: colon === -1 ? { to: "standard-output" } : { to: "file", path: value.slice(colon + 1) } });
+  }
+  return outputs.length === 0 ? [DEFAULT_OUTPUT] : outputs;
+}
+
 export function runRequestOf([command, ...args]: readonly string[]): RunRequest {
   if (command === "allocate") return { command, featureCode: args.find((arg) => !arg.startsWith("--")) ?? "", asNewFeatureCode: args.includes("--new") };
-  return { command: "balance", inputs: inputsOf(args), outputs: [DEFAULT_OUTPUT], strict: false, exitZero: false };
+  return { command: "balance", inputs: inputsOf(args), outputs: outputsOf(args), strict: false, exitZero: false };
 }

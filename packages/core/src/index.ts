@@ -59,6 +59,7 @@ export type {
 export { allocationOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from "./domain/claimCodes.js";
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";
 export { runVerdictOf, stepAccountOf } from "./domain/evidenceReconciliation.js";
+export { outputPlanOf } from "./domain/outputPlan.js";
 export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
 export { provenanceOf } from "./domain/provenance.js";
 export { evidenceObservationsOf, fitnessObservationsOf, stepDispositionOf } from "./domain/postEvidenceObservation.js";
@@ -69,4 +70,5 @@ export { stepRecordFrom } from "./inputs/stepRecord.js";
 export { resultsByFileFrom } from "./inputs/vitest.js";
 export { workflowStepsFrom } from "./inputs/workflows.js";
 export { textFor } from "./messages/catalogue.js";
+export { jsonReportOf } from "./reports/json.js";
 export { markdownReportOf } from "./reports/markdown.js";

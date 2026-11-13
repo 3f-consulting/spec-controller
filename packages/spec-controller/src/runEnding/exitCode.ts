@@ -5,12 +5,10 @@ export function exitCodeOf(_runVerdict: RunVerdict): ExitCode {
   return 0;
 }
 
-export function endRunOn(runVerdict: RunVerdict): void {
-  process.exitCode = exitCodeOf(runVerdict);
-}
+export const USAGE_ERROR: ExitCode = 2;
 
-const USAGE_ERROR: ExitCode = 2;
+export const UNEXPECTED_ERROR: ExitCode = 4;
 
-export function endRunOnUsageError(): void {
-  process.exitCode = USAGE_ERROR;
+export function endRunOn(exitCode: ExitCode): void {
+  process.exitCode = exitCode;
 }

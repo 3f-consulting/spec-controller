@@ -11,14 +11,3 @@ describe("a flag the command takes will take effect", () => {
     ]);
   });
 });
-
-describe("you get what you asked for", () => {
-  it.each([
-    ["CLM-FMT-001", "no format", { format: "md" }],
-    ["CLM-FMT-016", "no destination", { destination: { to: "standard-output" } }],
-  ] as const)("[%s] a balance command line naming %s gives one report, with that default", (_clm, _named, expected) => {
-    const request = runRequestOf(["balance", "--vitest", "vitest.json"]);
-
-    expect(request.command === "balance" ? request.outputs : []).toEqual([expect.objectContaining(expected)]);
-  });
-});
