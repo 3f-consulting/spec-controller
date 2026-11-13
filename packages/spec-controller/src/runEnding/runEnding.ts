@@ -12,4 +12,4 @@ export type RunEnding =
   | { readonly ending: "usage-error"; readonly refusals: readonly Refusal[] }
   | { readonly ending: "unexpected-error"; readonly error: unknown };
 
-export type ExitCode = 0 | 1 | 2 | 3 | 4;
+export type { ExitCode } from "./codes.js";

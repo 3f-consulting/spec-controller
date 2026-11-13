@@ -46,16 +46,13 @@ describe("under --exit-zero only an out-of-balance run will exit 0 instead of it
     ["CLM-CLI-174", "a usage error", ["balance", "--exit-zero", "--bogus"], 2, false],
     ["CLM-CLI-175", "an unexpected error", ["balance", "--exit-zero"], 4, true],
   ] as const)("[%s] a run ending on %s keeps its exit code under --exit-zero", (_clm, _ending, args, exitCode, unexpected) => {
-    const streams = {
-      output: {
-        fd: 1,
-        write: () => {
-          if (unexpected) throw new Error("the report could not be written");
-        },
+    const quiet = { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } };
+    const failing = {
+      balance: () => {
+        throw new Error("an error before the verdict");
       },
-      error: { fd: 2, write: () => {} },
     };
 
-    expect(main(args, temporaryDirectory("exit-zero-"), streams)).toBe(exitCode);
+    expect(main(args, temporaryDirectory("exit-zero-"), quiet, unexpected ? failing : {})).toBe(exitCode);
   });
 });
