@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+import { QUALITY_CHECK_KINDS } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import catalogue from "../messages/messages.en.json" with { type: "json" };
 import { jsonReportOf } from "./json.js";
@@ -29,8 +30,8 @@ describe("the Markdown report's sections will come in a fixed order", () => {
   });
 });
 
-// Each table in the Markdown: its columns, the names its key gives a meaning below the key's own line, and its rows' cells.
-function tablesOf(markdown: string): { readonly columns: string[]; readonly keyed: string[]; readonly rows: string[][] }[] {
+// Each table in the Markdown: the heading above it, its columns, the names its key gives a meaning below the key's own line, and its rows' cells.
+function tablesOf(markdown: string): { readonly heading: string; readonly columns: string[]; readonly keyed: string[]; readonly rows: string[][] }[] {
   const lines = markdown.split("\n");
   const cells = (line: string): string[] => line.slice(2, -2).split(/ (?<!\\)\| /);
   return lines.flatMap((line, at) => {
@@ -40,13 +41,12 @@ function tablesOf(markdown: string): { readonly columns: string[]; readonly keye
     const above = lines.slice(heading + 1, at);
     const keyAt = above.indexOf(`${coreText("key")}:`);
     const keyed = (keyAt < 0 ? [] : above.slice(keyAt + 1)).flatMap((line) => (line.startsWith("- ") ? [line.slice(2, line.indexOf(": "))] : []));
-    return [{ columns: cells(line), keyed, rows: rows.map(cells) }];
+    return [{ heading: lines[heading]!, columns: cells(line), keyed, rows: rows.map(cells) }];
   });
 }
 
-const KINDS: readonly string[] = ["fitness", "unit", "integration", "e2e", "performance"];
 const isWords = (text: string): boolean => (Object.values(catalogue) as string[]).includes(text);
-const inWords = (text: string): boolean => isWords(text) || KINDS.includes(text) || /^`.*`$/.test(text);
+const inWords = (text: string): boolean => isWords(text) || (QUALITY_CHECK_KINDS as readonly string[]).includes(text) || /^`.*`$/.test(text);
 
 // Each line below the opening that is not blank, a heading, a key or a table, a labelled value, or a label over the values
 // under it: a heading, label or key not in the catalogue's words, a label with no value, or a line with no label.
@@ -84,7 +84,9 @@ describe("each section will have its heading, each value its label, and each tab
       unkeyed: tables.flatMap(({ columns, keyed }) => columns.filter((column) => !keyed.includes(column))),
       unworded: tables.flatMap(({ columns }) => columns.filter((column) => !isWords(column))),
       marks: tables.map(({ columns, keyed }) => keyed.filter((name) => !columns.includes(name))),
-      summaryRowLabels: tables.slice(1, 4).flatMap(({ rows }) => rows.map(([label]) => label!).filter((label) => !inWords(label))),
+      summaryRowLabels: tables
+        .filter(({ heading }) => heading.startsWith("### ") && heading !== `### ${coreText("summary-claim-reconciliations")}`)
+        .flatMap(({ rows }) => rows.map(([label]) => label!).filter((label) => !inWords(label))),
     }).toEqual({
       headings: ["Run provenance", "Errors in the inputs", "Run integrity", "Summary", "Step account", "Claim Reconciliations"],
       unlabelled: [],

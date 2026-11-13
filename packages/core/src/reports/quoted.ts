@@ -6,4 +6,7 @@ export function quoted(text: string): string {
   return `${fence}${padding}${text}${padding}${fence}`;
 }
 
+// A message's first line, as a report shortens it.
+export const firstLineOf = (message: string): string => message.split("\n")[0]!;
+
 export const inCell = (text: string): string => quoted(text).replaceAll("|", "\\|");

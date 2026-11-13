@@ -2,7 +2,7 @@ import { writtenClaimCode } from "../domain/claimCodes.js";
 import { evidenceGroupsOf, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
 import { QUALITY_CHECK_KINDS, type QualityCheckKind } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
-import { inCell } from "./quoted.js";
+import { firstLineOf, inCell } from "./quoted.js";
 import { tableOf } from "./table.js";
 
 type Claim = ClaimReconciliation["claim"];
@@ -36,7 +36,7 @@ const whereToLook = ({ observation }: QualityCheckReconciliation): string =>
 
 // What the evidence said: its message's first line, then every note balance added.
 const saidBy = ({ observation }: QualityCheckReconciliation): string => {
-  const said = [...(observation?.message === undefined ? [] : [observation.message.split("\n")[0]!]), ...(observation?.notes ?? [])];
+  const said = [...(observation?.message === undefined ? [] : [firstLineOf(observation.message)]), ...(observation?.notes ?? [])];
   return said.length === 0 ? "" : ` — ${said.map(inCell).join(", ")}`;
 };
 
