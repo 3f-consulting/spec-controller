@@ -11,5 +11,5 @@ function scenarioAsWritten({ tags, name, location }: Scenario): ScenarioAsWritte
 export function featureAsWrittenFrom(file: string, source: string): FeatureAsWritten {
   const document = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher()).parse(source);
   const scenarios = (document.feature?.children ?? []).flatMap(({ scenario }) => (scenario ? [scenarioAsWritten(scenario)] : []));
-  return { file, fileTags: [], scenarios, wordsWrittenAsTags: [] };
+  return { file, fileTags: (document.feature?.tags ?? []).map(withoutAtSign), scenarios, wordsWrittenAsTags: [] };
 }
