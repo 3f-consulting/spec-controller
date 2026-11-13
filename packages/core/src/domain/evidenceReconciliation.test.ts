@@ -195,13 +195,14 @@ describe("Total of every kind, as the All row", () => {
 });
 
 describe("Total of the Evidence Observations, by where they were filed", () => {
-  const filed = (onExecutableClaim: number, onPhantomClaim: number, onUnnamedClaim: number) => ({ total: 1, onExecutableClaim, onPhantomClaim, onUnnamedClaim });
+  const filed = (onExecutableClaim: number, onPhantomClaim: number, onUnnamedClaim: number) => ({ total: onExecutableClaim + onPhantomClaim + onUnnamedClaim, onExecutableClaim, onPhantomClaim, onUnnamedClaim });
 
   it.each([
     ["CLM-EVR-066", "a unit claim, and a passing unit test citing it", ["@unit @CLM-ONE-001"], [["unit", "passed", "ONE-001"]], [1, 0, 0]],
     ["CLM-EVR-067", "a passing unit test citing no code", [], [["unit", "passed"]], [0, 0, 1]],
     ["CLM-EVR-068", "a passing unit test citing a code no claim has", [], [["unit", "passed", "TWO-001"]], [0, 1, 0]],
     ["CLM-EVR-069", "a unit test citing a code no claim has, which never ran", [], [["unit", "never-ran", "TWO-001"]], [0, 1, 0]],
+    ["CLM-EVR-073", "a claim asking for a unit test, and no test citing it", ["@unit @CLM-ONE-001"], [], [0, 0, 0]],
   ] as const)("[%s] a run with %s has its Evidence Observations counted where they were filed", (_clm, _what, scenarios, observed, [executable, phantom, unnamed]) => {
     const totals = totalsOfRun(scenarios.length === 0 ? [] : [scenariosTagged(...scenarios)], observed);
 

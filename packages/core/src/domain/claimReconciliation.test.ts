@@ -179,6 +179,15 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations b
   });
 });
 
+describe("a missing check comes before the evidence of its kind", () => {
+  it("[CLM-LDG-076] a unit and a fitness Evidence Obligation under @CLM-ONE-001, and a unit test in a.test.ts citing it that never ran, sort as the missing unit check, the test that never ran, then the missing fitness check", () => {
+    const neverRan: EvidenceObservation = { cites: [ONE_001], result: "never-ran", kind: "unit", place: "a.test.ts", name: "adds" };
+    const reconciliation = claimReconciliationOf(claimOf("under its code", ["unit", "fitness"]) as ExecutableClaim, [neverRan], false);
+
+    expect(reconciliation.qualityCheckReconciliations.map(({ outcome, kind }) => `${kind} ${outcome}`)).toEqual(["unit missing", "unit never-ran", "fitness missing"]);
+  });
+});
+
 // Evidence on the unnamed claim as a group row writes it: its kind, result, place, the codes it cites, and its name.
 type Unnamed = readonly [kind: QualityCheckKind, result: Result, place: string, cites: readonly ("001" | "002")[], name: string];
 
@@ -229,6 +238,7 @@ describe("a group of tests will count them and name those that failed", () => {
     ["CLM-LDG-071", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "passed", "a.test.ts", [], "b"]], 2, 2, 0, []],
     ["CLM-LDG-072", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "failed", "a.test.ts", [], "b"]], 2, 1, 1, ["b"]],
     ["CLM-LDG-074", [["fitness", "passed-on-error", "ci / Lint", [], "Lint"]], 1, 1, 0, []],
+    ["CLM-LDG-075", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "never-ran", "a.test.ts", [], "b"]], 1, 1, 0, []],
   ])("[%s] a group on the unnamed claim counts what ran, passed and failed, naming the failures", (_clm, evidence, ran, passed, failed, failures) => {
     expect(groupsOn(evidence).map((group) => ({ ran: group.ran, passed: group.passed, failed: group.failed, failures: group.failures }))).toEqual([
       { ran, passed, failed, failures },
