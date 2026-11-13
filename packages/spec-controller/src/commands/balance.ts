@@ -48,7 +48,7 @@ function stepAccountFor(
 // Every input the run could read, each with its path when it read one.
 const provenanceInputsOf = (inputs: readonly InputRequest[]): ProvenanceInput[] => INPUT_KINDS.map((kind) => ({ name: kind, path: pathOf(inputs, kind) }));
 
-export function balance({ inputs, outputs, target, sourceSha }: Extract<RunRequest, { command: "balance" }>, folder: string, streams: StandardStreams): ExitCode {
+export function balance({ inputs, outputs, target, sourceSha, exitZero }: Extract<RunRequest, { command: "balance" }>, folder: string, streams: StandardStreams): ExitCode {
   // Read first, so the run's time is when it started.
   const identity = runIdentityIn(folder, { target, sourceSha });
   const workflows = pathOf(inputs, "workflows");
@@ -83,5 +83,5 @@ export function balance({ inputs, outputs, target, sourceSha }: Extract<RunReque
     ...stepAccountFor(workflows, steps, configuration, scripts),
     provenance,
   });
-  return writeReports(outputs, filesRead, reconciliation, streams);
+  return writeReports(outputs, filesRead, reconciliation, streams, { exitZero });
 }
