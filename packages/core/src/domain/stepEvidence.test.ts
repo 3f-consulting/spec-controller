@@ -188,6 +188,10 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(countedAndPosted("pnpm test", "vitest", scriptsFrom({ scripts: { test: "pnpm unit", unit: "vitest run" } }))).toEqual({ countedAs: "runner", posted: 0 });
   });
 
+  it("[CLM-OBS-131] a step running pnpm run //, whose scripts entry is a list, not a string, will be counted as a fitness function, and a fitness Evidence Observation will be posted", () => {
+    expect(countedAndPosted("pnpm run //", "vitest", scriptsFrom({ scripts: { "//": ["a comment"] } }))).toEqual({ countedAs: "candidate", posted: 1 });
+  });
+
   it("[CLM-OBS-115] a step running pnpm loop, whose script runs itself, will be counted as a fitness function, and a fitness Evidence Observation will be posted", () => {
     expect(countedAndPosted("pnpm loop", "vitest", { loop: "pnpm loop" })).toEqual({ countedAs: "candidate", posted: 1 });
   });
