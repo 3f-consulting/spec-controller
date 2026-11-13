@@ -39,7 +39,7 @@ export interface ResultsByFileAsWritten {
   readonly results: readonly ResultInFileAsWritten[];
 }
 
-export interface ResultInFileAsWritten {
+interface ResultInFileAsWritten {
   readonly ancestorTitles: readonly string[];
   readonly title: string;
   readonly status: string;
@@ -78,7 +78,7 @@ export interface ResultsByExampleAsWritten {
   readonly loadErrors: readonly { readonly file?: string; readonly message: string }[];
 }
 
-export interface ExampleResultAsWritten {
+interface ExampleResultAsWritten {
   readonly file: string;
   readonly groupDescriptions: readonly string[];
   readonly description: string;

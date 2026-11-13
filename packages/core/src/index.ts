@@ -1,65 +1,14 @@
-export type {
-  Allocation,
-  AllocationAsked,
-  ClaimCode,
-  ClaimCodeError,
-  ClaimCodeOccurrence,
-  HistoryBoundary,
-} from "./domain/claimCodes.js";
-export type {
-  EvidenceObligation,
-  OutlineExamplesAsWritten,
-  ExecutableClaim,
-  FeatureAsWritten,
-  QualityCheckKind,
-  ClaimReadingSettings,
-  ScenarioAsWritten,
-} from "./domain/postEvidenceObligation.js";
-export type {
-  EvidenceObservation,
-  ExampleResultAsWritten,
-  FailureAsWritten,
-  PhantomClaim,
-  Result,
-  ResultInFileAsWritten,
-  ResultInSuiteAsWritten,
-  ResultsByExampleAsWritten,
-  ResultsByFileAsWritten,
-  ResultsBySuiteAsWritten,
-  ScenarioResultAsWritten,
-  ShellAnswers,
-  StepDisposition,
-  StepRecordEntryAsWritten,
-  UnnamedClaim,
-} from "./domain/postEvidenceObservation.js";
+export type { Allocation, AllocationAsked, ClaimCodeOccurrence, HistoryBoundary } from "./domain/claimCodes.js";
+export type { FeatureAsWritten } from "./domain/postEvidenceObligation.js";
+export type { EvidenceObservation, ResultsByExampleAsWritten, ResultsByFileAsWritten, ResultsBySuiteAsWritten, ScenarioResultAsWritten, StepRecordEntryAsWritten } from "./domain/postEvidenceObservation.js";
 export type { WorkflowStepAsWritten } from "./domain/workflowSteps.js";
-export type { ClaimReconciliation, EvidenceGroup, Outcome, QualityCheckReconciliation } from "./domain/claimReconciliation.js";
-export type {
-  ErrorsInTheInputs,
-  EvidenceReconciliation,
-  QualityCheckCounts,
-  RunIntegrity,
-  RunReconciled,
-  RunVerdict,
-  StepAccount,
-  StepCounts,
-  Totals,
-} from "./domain/evidenceReconciliation.js";
-export type { Provenance, RepositoryOfOrigin, RunIdentity, ProvenanceInput } from "./domain/provenance.js";
-export type { ConfigurationError, Layer, StepAddress, TargetConfiguration, TargetSettingsAsWritten } from "./domain/configuration.js";
-export type {
-  Destination,
-  FileIdentity,
-  IdentifiedInput,
-  IdentifiedOutput,
-  OutputPlan,
-  OutputRefusal,
-  OutputRequest,
-} from "./domain/outputPlan.js";
-
+export type { EvidenceReconciliation, RunVerdict, StepAccount } from "./domain/evidenceReconciliation.js";
+export type { RunIdentity, ProvenanceInput } from "./domain/provenance.js";
+export type { TargetConfiguration } from "./domain/configuration.js";
+export type { FileIdentity, OutputRefusal, OutputRequest } from "./domain/outputPlan.js";
 export { allocationOf, claimCodeErrorsOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from "./domain/claimCodes.js";
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";
-export { evidenceReconciliationOf, runVerdictOf, stepAccountOf, totalsOf } from "./domain/evidenceReconciliation.js";
+export { evidenceReconciliationOf, stepAccountOf } from "./domain/evidenceReconciliation.js";
 export { outputPlanOf } from "./domain/outputPlan.js";
 export { targetFolderOf } from "./domain/targetPath.js";
 export { executableClaimsOf } from "./domain/postEvidenceObligation.js";

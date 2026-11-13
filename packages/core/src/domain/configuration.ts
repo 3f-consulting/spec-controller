@@ -1,10 +1,10 @@
 import type { QualityCheckKind } from "./postEvidenceObligation.js";
 import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
 
-export type Layer = Exclude<QualityCheckKind, "fitness">;
+type Layer = Exclude<QualityCheckKind, "fitness">;
 
 // A step named in notChecks: its workflow, job and step name.
-export interface StepAddress {
+interface StepAddress {
   readonly workflow: string;
   readonly job: string;
   readonly step: string;
@@ -26,12 +26,6 @@ export interface ConfigurationError {
     | "not-checks-entry-matches-no-step"
     | "not-checks-entry-not-a-step-name";
   readonly entry: string;
-}
-
-// What the target's settings file holds, as written: its block of settings, absent when there is none, and its scripts.
-export interface TargetSettingsAsWritten {
-  readonly settingsBlock?: unknown;
-  readonly scripts: Readonly<Record<string, string>>;
 }
 
 // The settings reader's answers, handed to the domain: the key each setting is written under, the step a non-check as
