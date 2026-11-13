@@ -1,4 +1,4 @@
-import { claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
+import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
 import type { ExecutableClaim, FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
@@ -199,13 +199,54 @@ export function observationsByExample({ examples, loadErrors }: ResultsByExample
   return [...ran, ...neverRan];
 }
 
+const BEHAVIOURAL_KINDS: readonly QualityCheckKind[] = ["integration", "e2e", "performance"];
+
+// A scenario is evidence of each behavioural kind its tags name, and of integration where they name none.
+function kindsOf(tags: readonly string[]): readonly QualityCheckKind[] {
+  const named = BEHAVIOURAL_KINDS.filter((kind) => tags.includes(kind));
+  return named.length > 0 ? named : ["integration"];
+}
+
+type StepAsWritten = ScenarioResultAsWritten["steps"][number];
+
+const asWritten = ({ keyword, text }: StepAsWritten): string => `${keyword.trim()} ${text}`;
+
+// A step that matched no definition, or more than one, kept the scenario from running, whatever else its steps did.
+function resultOfSteps(steps: readonly StepAsWritten[]): { readonly result: Result; readonly message?: string } | undefined {
+  const unmatched = steps.find(({ status }) => status === "undefined" || status === "ambiguous");
+  if (unmatched) return { result: "never-ran", message: asWritten(unmatched) };
+  const failed = steps.find(({ status }) => status === "failed");
+  if (failed) return { result: "failed", ...(failed.message === undefined ? {} : { message: failed.message }) };
+  return steps.length > 0 && steps.every(({ status }) => status === "passed") ? { result: "passed" } : undefined;
+}
+
+// An Outline row's code is its clm cell, in the feature file at the end of the result's path, at the row's line.
+function rowCodeOf(file: string, line: number, features: readonly FeatureAsWritten[]): ClaimCode[] {
+  const feature = features
+    .filter(({ file: featureFile }) => file === featureFile || file.endsWith(`/${featureFile}`))
+    .sort((one, other) => other.file.length - one.file.length)[0];
+  for (const { columns, rows } of (feature?.scenarios ?? []).flatMap(({ examples }) => examples)) {
+    const row = rows.find((candidate) => candidate.line === line);
+    const code = row && claimCodeFrom(row.cells[columns.indexOf(CLM_COLUMN)] ?? "");
+    if (row) return code ? [code] : [];
+  }
+  return [];
+}
+
 // Results kept by scenario: Cucumber's. features is the corpus as written, where an Outline row's claim code is.
 export function observationsOfScenarios(
-  _results: readonly ScenarioResultAsWritten[],
-  _features: readonly FeatureAsWritten[],
-  _targetFolder: string,
+  results: readonly ScenarioResultAsWritten[],
+  features: readonly FeatureAsWritten[],
+  targetFolder: string,
 ): EvidenceObservation[] {
-  return [];
+  return results.flatMap(({ file, line, title, tags, steps }) => {
+    const outcome = resultOfSteps(steps);
+    if (outcome === undefined) return [];
+    const tagged = tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
+    const cites = tagged.length > 0 ? tagged : rowCodeOf(file, line, features);
+    const place = shownFromTarget(file, targetFolder);
+    return kindsOf(tags).map((kind): EvidenceObservation => ({ cites, ...outcome, kind, place, name: title, notes: [] }));
+  });
 }
 
 export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {
