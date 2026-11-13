@@ -204,6 +204,10 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(countedAndPosted("pnpm loop", "vitest", { loop: "pnpm loop" })).toEqual({ countedAs: "candidate", posted: 1 });
   });
 
+  it("[CLM-OBS-125] a step running go test ./..., in a target whose test script runs vitest, will be counted as a fitness function, and a fitness Evidence Observation will be posted", () => {
+    expect(countedAndPosted("go test ./...", "vitest", { test: "vitest run" })).toEqual({ countedAs: "candidate", posted: 1 });
+  });
+
   // A step running vitest behind each wrapper, past what the wrapper takes.
   const behindTheWrapper: Readonly<Record<string, string>> = {
     "xvfb-run": "xvfb-run -a --server-args=-screen vitest run",
