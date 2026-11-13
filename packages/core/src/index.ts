@@ -31,8 +31,8 @@ export type {
   StepDisposition,
   StepRecordEntryAsWritten,
   UnnamedClaim,
-  WorkflowStepAsWritten,
 } from "./domain/postEvidenceObservation.js";
+export type { WorkflowStepAsWritten } from "./domain/workflowSteps.js";
 export type { ClaimReconciliation, EvidenceGroup, Outcome, QualityCheckReconciliation } from "./domain/claimReconciliation.js";
 export type {
   ErrorsInTheInputs,
@@ -64,6 +64,7 @@ export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
 export { provenanceOf } from "./domain/provenance.js";
 export { fitnessObservationsOf, observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, stepDispositionOf } from "./domain/postEvidenceObservation.js";
 export { featureAsWrittenFrom } from "./inputs/gherkin.js";
+export { scriptsFrom, targetConfigurationFrom } from "./inputs/manifest.js";
 export { repositoryOfOrigin } from "./inputs/origin.js";
 export { shellAnswers } from "./inputs/shell.js";
 export { stepRecordFrom } from "./inputs/stepRecord.js";

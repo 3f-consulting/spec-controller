@@ -17,7 +17,7 @@ import { whyUnwritable } from "./writable.js";
 import { exitCodeOf, USAGE_ERROR } from "../runEnding/exitCode.js";
 import type { ExitCode, Refusal } from "../runEnding/runEnding.js";
 
-export type ReportedReconciliation = Pick<EvidenceReconciliation, "runVerdict" | "provenance" | "stepAccount">;
+export type ReportedReconciliation = Pick<EvidenceReconciliation, "runVerdict" | "provenance" | "stepAccount" | "errorsInTheInputs">;
 
 const reportIn = (format: string, reconciliation: ReportedReconciliation): string =>
   format === "json" ? jsonReportOf(reconciliation) : markdownReportOf(reconciliation);

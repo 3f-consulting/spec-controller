@@ -30,16 +30,25 @@ describe("an Outline will be one executable claim for each row only when it has 
   });
 });
 
+// A scenario tagged @unit, with the deferral tag on it, on its Feature, or on the Rule it sits under.
+const deferredBy = (deferral: string, on: "scenario" | "feature" | "rule"): string => {
+  if (on === "feature") return `${deferral}\nFeature: one\n\n  @unit\n  Scenario: a scenario\n    Given a step\n`;
+  if (on === "rule") return `Feature: one\n\n  ${deferral}\n  Rule: a rule\n\n    @unit\n    Scenario: a scenario\n      Given a step\n`;
+  return scenario(`@unit ${deferral}`);
+};
+
 describe("each deferral tag, built in or configured, will remove the claim", () => {
   it.each([
-    ["CLM-OBL-003", "@wip", []],
-    ["CLM-OBL-004", "@ignore", []],
-    ["CLM-OBL-005", "@skip", []],
-    ["CLM-OBL-006", "@todo", []],
-    ["CLM-OBL-007", "@pending", []],
-    ["CLM-OBL-008", "@blocked", ["blocked"]],
-  ])("[%s] a scenario tagged @unit and %s is no executable claim", (_clm, deferral, configured) => {
-    expect(claimsIn(scenario(`@unit ${deferral}`), { deferralTags: configured, strict: false })).toEqual([]);
+    ["CLM-OBL-003", "@wip", "scenario", []],
+    ["CLM-OBL-004", "@ignore", "scenario", []],
+    ["CLM-OBL-005", "@skip", "scenario", []],
+    ["CLM-OBL-006", "@todo", "scenario", []],
+    ["CLM-OBL-007", "@pending", "scenario", []],
+    ["CLM-OBL-008", "@blocked", "scenario", ["blocked"]],
+    ["CLM-OBL-025", "@wip", "feature", []],
+    ["CLM-OBL-026", "@wip", "rule", []],
+  ] as const)("[%s] a scenario tagged @unit, with %s on its %s, is no executable claim", (_clm, deferral, on, configured) => {
+    expect(claimsIn(deferredBy(deferral, on), { deferralTags: configured, strict: false })).toEqual([]);
   });
 });
 

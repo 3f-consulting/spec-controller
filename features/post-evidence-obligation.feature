@@ -45,6 +45,8 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
         | CLM-OBL-006 | @todo                                  |
         | CLM-OBL-007 | @pending                               |
         | CLM-OBL-008 | @blocked, configured as a deferral tag |
+        | CLM-OBL-025 | @wip, on the Feature                   |
+        | CLM-OBL-026 | @wip, on the Rule it sits under        |
 
   Rule: an executable claim raises one Evidence Obligation for each kind-of-check tag that applies to it, and none without one
 

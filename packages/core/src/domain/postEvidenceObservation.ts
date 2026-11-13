@@ -2,6 +2,7 @@ import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from 
 import type { TargetConfiguration } from "./configuration.js";
 import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
+import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
 
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
 
@@ -92,20 +93,6 @@ export interface ScenarioResultAsWritten {
   readonly title: string;
   readonly tags: readonly string[];
   readonly steps: readonly { readonly keyword: string; readonly text: string; readonly status: string; readonly message?: string }[];
-}
-
-// A step of a CI workflow, continue-on-error as the YAML gave it. plumbing and writesStepRecord are the reader's to say.
-export interface WorkflowStepAsWritten {
-  readonly workflow: string;
-  readonly job: string;
-  readonly jobContinueOnError?: unknown;
-  readonly name?: string;
-  readonly uses?: string;
-  readonly run?: string;
-  readonly id?: string;
-  readonly continueOnError?: unknown;
-  readonly plumbing: boolean;
-  readonly writesStepRecord: boolean;
 }
 
 // An entry of the step record, keyed by the step's id.
@@ -267,11 +254,6 @@ export function observationsOfScenarios(
 export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "candidate";
 
 const RECONCILER = "spec-controller balance";
-
-// A step is known by its name, else the action it uses, else the first line of its command.
-function stepIdentityOf({ name, uses, run }: WorkflowStepAsWritten): string {
-  return name ?? uses ?? run?.split("\n").find((line) => line.trim() !== "")?.trim() ?? "";
-}
 
 const isNamedIn = (step: WorkflowStepAsWritten, { nonChecks }: TargetConfiguration): boolean =>
   nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === stepIdentityOf(step));

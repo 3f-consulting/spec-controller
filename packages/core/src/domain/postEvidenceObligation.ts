@@ -21,8 +21,10 @@ export interface OutlineExamplesAsWritten {
   readonly rows: readonly { readonly line: number; readonly cells: readonly string[] }[];
 }
 
+// ruleTags: the tags of the Rule it sits under, none under no Rule.
 export interface ScenarioAsWritten {
   readonly tags: readonly string[];
+  readonly ruleTags: readonly string[];
   readonly title: string;
   readonly line: number;
   readonly examples: readonly OutlineExamplesAsWritten[];
@@ -58,8 +60,9 @@ function clmCellsOf({ examples }: ScenarioAsWritten): (string | undefined)[] | u
   return examples.flatMap(({ columns, rows }) => rows.map(({ cells }) => cells[columns.indexOf(CLM_COLUMN)]));
 }
 
-function claimsOf(file: string, scenario: ScenarioAsWritten, settings: ClaimReadingSettings): ExecutableClaim[] {
-  if (isDeferred(scenario.tags, settings)) return [];
+// A deferral tag on the scenario, its Rule or its file defers it; only its own tags raise obligations.
+function claimsOf({ file, fileTags }: FeatureAsWritten, scenario: ScenarioAsWritten, settings: ClaimReadingSettings): ExecutableClaim[] {
+  if (isDeferred([...scenario.tags, ...scenario.ruleTags, ...fileTags], settings)) return [];
   const obligations = obligationsOf(scenario.tags, settings.strict);
   const tagged = scenario.tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
   const claim = (claimCode: ClaimCode | undefined): ExecutableClaim => ({ file, title: scenario.title, obligations, ...(claimCode && { claimCode }) });
@@ -69,5 +72,5 @@ function claimsOf(file: string, scenario: ScenarioAsWritten, settings: ClaimRead
 }
 
 export function executableClaimsOf(features: readonly FeatureAsWritten[], settings: ClaimReadingSettings): ExecutableClaim[] {
-  return features.flatMap(({ file, scenarios }) => scenarios.flatMap((scenario) => claimsOf(file, scenario, settings)));
+  return features.flatMap((feature) => feature.scenarios.flatMap((scenario) => claimsOf(feature, scenario, settings)));
 }

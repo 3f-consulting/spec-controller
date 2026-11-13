@@ -2,7 +2,8 @@ import type { ClaimCodeError } from "./claimCodes.js";
 import type { ClaimReconciliation, Outcome } from "./claimReconciliation.js";
 import type { ConfigurationError } from "./configuration.js";
 import type { QualityCheckKind } from "./postEvidenceObligation.js";
-import type { EvidenceObservation, StepDisposition, WorkflowStepAsWritten } from "./postEvidenceObservation.js";
+import type { EvidenceObservation, StepDisposition } from "./postEvidenceObservation.js";
+import type { WorkflowStepAsWritten } from "./workflowSteps.js";
 import type { Provenance } from "./provenance.js";
 
 export type RunVerdict =

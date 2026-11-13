@@ -27,7 +27,13 @@ export type RunRequest =
     }
   | { readonly command: "allocate"; readonly featureCode: string; readonly asNewFeatureCode: boolean };
 
-const INPUT_FLAGS: Readonly<Record<string, InputKind>> = { "--features": "features", "--vitest": "vitest", "--ci": "workflows", "--ci-steps": "stepRecord" };
+const INPUT_FLAGS: Readonly<Record<string, InputKind>> = {
+  "--features": "features",
+  "--vitest": "vitest",
+  "--ci": "workflows",
+  "--ci-steps": "stepRecord",
+  "--package-json": "manifest",
+};
 
 // Each flag takes the argument after it as its value.
 function inputsOf(args: readonly string[]): InputRequest[] {

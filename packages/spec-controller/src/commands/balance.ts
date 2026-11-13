@@ -11,7 +11,9 @@ import {
   shellAnswers,
   stepAccountOf,
   stepDispositionOf,
+  scriptsFrom,
   stepRecordFrom,
+  targetConfigurationFrom,
   workflowStepsFrom,
   type ProvenanceInput,
   type StepAccount,
@@ -26,16 +28,19 @@ import { runIdentityIn } from "../runIdentity/runIdentity.js";
 import { writeReports } from "../output/writer.js";
 import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/runRequest.js";
 
-const NO_SETTINGS: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
-
 const pathOf = (inputs: readonly InputRequest[], kind: InputRequest["kind"]): string | undefined => inputs.find((input) => input.kind === kind)?.path;
 
 // An input the command line did not give reads as nothing.
 const readEach = <Read>(path: string | undefined, read: (path: string) => readonly Read[]): readonly Read[] => (path === undefined ? [] : read(path));
 
 // The step account is printed only for a run that was given workflows to read.
-function stepAccountFor(workflows: string | undefined, steps: readonly WorkflowStepAsWritten[]): { readonly stepAccount?: StepAccount } {
-  return workflows === undefined ? {} : { stepAccount: stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, NO_SETTINGS, {}, shellAnswers) }))) };
+function stepAccountFor(
+  workflows: string | undefined,
+  steps: readonly WorkflowStepAsWritten[],
+  configuration: TargetConfiguration,
+  scripts: Readonly<Record<string, string>>,
+): { readonly stepAccount?: StepAccount } {
+  return workflows === undefined ? {} : { stepAccount: stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers) }))) };
 }
 
 // Every input the run could read, each with its path when it read one.
@@ -51,19 +56,24 @@ export function balance({ inputs, outputs, target, sourceSha }: Extract<RunReque
   const features = featureSources.map(({ file, source }) => featureAsWrittenFrom(file, source));
   const steps = workflowSources.flatMap(({ workflow, source }) => workflowStepsFrom(workflow, source));
   const record = readEach(pathOf(inputs, "stepRecord"), (path) => stepRecordFrom(jsonAt(path)));
+  const manifestPath = pathOf(inputs, "manifest");
+  const manifest = manifestPath === undefined ? undefined : jsonAt(manifestPath);
+  const { configuration, errors } = targetConfigurationFrom(manifest, steps);
+  const scripts = scriptsFrom(manifest);
   const targetFolder = identity.gitTopLevel ?? folder;
   const observations = [
     ...observationsByFile(readEach(pathOf(inputs, "vitest"), (path) => resultsByFileFrom(jsonAt(path), "vitest")), targetFolder),
-    ...fitnessObservationsOf(steps, record, NO_SETTINGS, {}, shellAnswers),
+    ...fitnessObservationsOf(steps, record, configuration, scripts, shellAnswers),
   ];
-  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observations);
+  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: configuration.deferralTags, strict: false }), observations);
   const runVerdict = runVerdictOf(claimReconciliations);
   const provenance = provenanceOf(identity, provenanceInputsOf(inputs), targetFolder, repositoryOfOrigin);
   // No report may land on a file the run read: each one it was given, and each it read in a folder it was given.
   const filesRead = [
     ...featureSources.map(({ file }) => join(featureFolder ?? "", file)),
     ...workflowSources.map(({ workflow }) => join(workflows ?? "", workflow)),
-    ...[pathOf(inputs, "vitest"), pathOf(inputs, "stepRecord")].filter((path) => path !== undefined),
+    ...[pathOf(inputs, "vitest"), pathOf(inputs, "stepRecord"), pathOf(inputs, "manifest")].filter((path) => path !== undefined),
   ];
-  return writeReports(outputs, filesRead, { runVerdict, provenance, ...stepAccountFor(workflows, steps) }, streams);
+  const errorsInTheInputs = errors.length === 0 ? {} : { errorsInTheInputs: { configurationErrors: errors } };
+  return writeReports(outputs, filesRead, { runVerdict, provenance, ...stepAccountFor(workflows, steps, configuration, scripts), ...errorsInTheInputs }, streams);
 }

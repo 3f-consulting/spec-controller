@@ -1,5 +1,5 @@
 import { parse } from "yaml";
-import type { WorkflowStepAsWritten } from "../domain/postEvidenceObservation.js";
+import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
 import plumbingActions from "./plumbingActions.json" with { type: "json" };
 
 // Which steps only set the job up is the reader's to say, from its list of the actions that do.
