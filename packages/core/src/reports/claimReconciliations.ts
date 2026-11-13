@@ -1,13 +1,9 @@
 import { writtenClaimCode } from "../domain/claimCodes.js";
-import { evidenceGroupsOf, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
+import { evidenceGroupsOf, isExecutable, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
 import { QUALITY_CHECK_KINDS, type QualityCheckKind } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import { firstLineOf, inCell } from "./quoted.js";
 import { tableOf } from "./table.js";
-
-type Claim = ClaimReconciliation["claim"];
-
-const isExecutable = (claim: Claim): claim is Extract<Claim, { readonly obligations: unknown }> => "obligations" in claim;
 
 // A column for each kind some claim raises or some evidence answers: each gives a Quality Check Reconciliation of its kind.
 const kindsIn = (claimReconciliations: readonly ClaimReconciliation[]): QualityCheckKind[] =>
