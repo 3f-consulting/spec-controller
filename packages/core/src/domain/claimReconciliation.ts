@@ -31,9 +31,9 @@ interface ObservationOnly {
   readonly observation: EvidenceObservation;
 }
 
-// A claim that asks for nothing: with no code, no evidence can cite it; with one, it asks for no check.
+// A claim that asks for nothing: with no code, or a shared one, no evidence can cite it; with its own, it asks for no check.
 interface NeitherSide {
-  readonly outcome: "no-claim-code" | "no-quality-check";
+  readonly outcome: "no-claim-code" | "duplicate-claim-code" | "no-quality-check";
   readonly kind?: never;
   readonly obligation?: never;
   readonly observation?: never;
@@ -116,21 +116,25 @@ function inOrder(one: OfAKind, other: OfAKind): number {
   return 0;
 }
 
-function reconciliationOf(claim: ExecutableClaim | PhantomClaim | UnnamedClaim, reconciled: readonly OfAKind[]): ClaimReconciliation {
+const verdictOf = (qualityCheckReconciliations: readonly QualityCheckReconciliation[]): ClaimReconciliation["verdict"] =>
+  qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied") ? "balanced" : "out-of-balance";
+
+// A claim that asks for nothing says why no evidence can answer it: a shared code, no code, or no check asked for.
+export function claimReconciliationOf(claim: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): ClaimReconciliation {
+  const reconciled = executableReconciliations(claim, observations, codeShared);
   const qualityCheckReconciliations: QualityCheckReconciliation[] =
-    reconciled.length === 0 ? [{ outcome: isExecutable(claim) && claim.claimCode === undefined ? "no-claim-code" : "no-quality-check" }] : [...reconciled].sort(inOrder);
-  const balanced = qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied");
-  return { claim, qualityCheckReconciliations, verdict: balanced ? "balanced" : "out-of-balance" };
+    reconciled.length > 0
+      ? [...reconciled].sort(inOrder)
+      : [{ outcome: codeShared ? "duplicate-claim-code" : claim.claimCode === undefined ? "no-claim-code" : "no-quality-check" }];
+  return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
 }
 
-export const claimReconciliationOf = (claim: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): ClaimReconciliation =>
-  reconciliationOf(claim, executableReconciliations(claim, observations, codeShared));
-
 // Evidence on the phantom claim or the unnamed claim cites a claim no executable claim can take.
-export const citedClaimReconciliationOf = (claim: PhantomClaim | UnnamedClaim, observations: readonly EvidenceObservation[]): ClaimReconciliation => {
+export function citedClaimReconciliationOf(claim: PhantomClaim | UnnamedClaim, observations: readonly EvidenceObservation[]): ClaimReconciliation {
   const outcome = claim.claimCode === undefined ? "cites-no-claim" : "cites-unknown-claim";
-  return reconciliationOf(claim, observations.map((observation): ObservationOnly => (ran(observation) ? { outcome, kind: observation.kind, observation } : neverRan(observation))));
-};
+  const qualityCheckReconciliations = observations.map((observation): ObservationOnly => (ran(observation) ? { outcome, kind: observation.kind, observation } : neverRan(observation))).sort(inOrder);
+  return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
+}
 
 // Each Evidence Observation goes to the one executable claim with the code it cites; to that code's phantom claim when no
 // executable claim has it; and to the unnamed claim when it cites none, several, or a code several claims share.
