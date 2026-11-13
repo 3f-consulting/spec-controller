@@ -15,6 +15,14 @@ type Mapping = Readonly<Record<string, unknown>>;
 
 const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null && !Array.isArray(value);
 const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
+
+// What a step holds in each place it can write the step record from: its command, or its env: values.
+const HELD_IN: Readonly<Record<string, (step: Mapping) => readonly unknown[]>> = {
+  "run:": (step) => [step["run"]],
+  "env:": (step) => (isMapping(step["env"]) ? Object.values(step["env"]) : []),
+};
+const writesStepRecord = (step: Mapping): boolean =>
+  workflowsVariants["CLM-OBS-013"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
 const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value.filter(isMapping) : []);
 
 function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping): WorkflowStepAsWritten {
@@ -30,7 +38,7 @@ function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknow
     ...(text(step["id"]) === undefined ? {} : { id: text(step["id"]) }),
     continueOnError: step["continue-on-error"],
     plumbing: uses !== undefined && isPlumbing(uses),
-    writesStepRecord: run?.includes(WRITES_STEP_RECORD) ?? false,
+    writesStepRecord: writesStepRecord(step),
   };
 }
 
