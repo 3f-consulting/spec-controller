@@ -103,6 +103,24 @@ function citedOnly(observations: readonly EvidenceObservation[], outcome: "cites
   return observations.map((observation) => (ran(observation) ? { outcome, kind: observation.kind, observation } : neverRan(observation)));
 }
 
+const KIND_ORDER: readonly QualityCheckKind[] = ["unit", "integration", "e2e", "performance", "fitness"];
+
+// What a Quality Check Reconciliation is sorted by: its kind, where its test is, the codes it cites, then the rest it records.
+const sortKey = ({ kind, observation }: QualityCheckReconciliation): readonly (number | string)[] => [
+  kind === undefined ? KIND_ORDER.length : KIND_ORDER.indexOf(kind),
+  observation?.place ?? "",
+  (observation?.cites ?? []).map(({ featureCode, number }) => `${featureCode}-${number}`).join(" "),
+  observation?.message ?? "",
+  observation?.name ?? "",
+  observation?.result ?? "",
+];
+
+function inOrder(one: QualityCheckReconciliation, other: QualityCheckReconciliation): number {
+  const [ones, others] = [sortKey(one), sortKey(other)];
+  const at = ones.findIndex((part, index) => part !== others[index]);
+  return at < 0 ? 0 : ones[at]! < others[at]! ? -1 : 1;
+}
+
 export function claimReconciliationOf(
   claim: ExecutableClaim | PhantomClaim | UnnamedClaim,
   observations: readonly EvidenceObservation[],
@@ -111,7 +129,7 @@ export function claimReconciliationOf(
   const reconciled = isExecutable(claim)
     ? executableReconciliations(claim, observations, codeShared)
     : citedOnly(observations, claim.claimCode === undefined ? "cites-no-claim" : "cites-unknown-claim");
-  const qualityCheckReconciliations: QualityCheckReconciliation[] = reconciled.length === 0 ? [{ outcome: "no-quality-check" }] : reconciled;
+  const qualityCheckReconciliations: QualityCheckReconciliation[] = reconciled.length === 0 ? [{ outcome: "no-quality-check" }] : [...reconciled].sort(inOrder);
   const balanced = qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied");
   return { claim, qualityCheckReconciliations, verdict: balanced ? "balanced" : "out-of-balance" };
 }
