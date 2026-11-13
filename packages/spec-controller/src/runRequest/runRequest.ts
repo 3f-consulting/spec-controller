@@ -2,17 +2,10 @@ import type { OutputRequest } from "@3f-consulting/spec-controller-core";
 
 export type ReportFormat = "md" | "json";
 
-export type InputKind =
-  | "features"
-  | "vitest"
-  | "jest"
-  | "pytest"
-  | "junit"
-  | "rspec"
-  | "cucumber"
-  | "workflows"
-  | "stepRecord"
-  | "manifest";
+// Every input a run can read, in the order the provenance names them.
+export const INPUT_KINDS = ["features", "vitest", "jest", "pytest", "junit", "rspec", "cucumber", "workflows", "stepRecord", "manifest"] as const;
+
+export type InputKind = (typeof INPUT_KINDS)[number];
 
 // byDefault: the command line did not name it, so its default path was filled in.
 export interface InputRequest {

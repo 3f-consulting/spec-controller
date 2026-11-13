@@ -8,7 +8,7 @@ import { allocate } from "./allocate.js";
 import { balance } from "./balance.js";
 
 const request = runRequestOf(process.argv.slice(2));
-if (request.command === "balance") balance(request.inputs);
+if (request.command === "balance") balance(request, process.cwd());
 if (request.command === "allocate") {
   const outcome = allocate(request, process.cwd());
   if ("answer" in outcome) {

@@ -9,6 +9,7 @@ Feature: Each report has the right structure, and the Markdown explains it
   - Odd characters in what a report quotes break nothing.
   - The Markdown report shows the unnamed claim's evidence in groups, by kind of quality check, file and shared claim code.
   - The Markdown adds the words a person needs to read it.
+  - The provenance shows each input the run read on its own line.
   - The step account totals its jobs only when it has more than one.
 
   Whether an answer or a count is right is proved where it is worked out, not here.
@@ -108,6 +109,19 @@ Feature: Each report has the right structure, and the Markdown explains it
       Examples:
         | clm         | run verdict |
         | CLM-RPT-111 | balanced    |
+
+  Rule: the provenance shows each input the run read on its own line
+
+    @unit
+    Scenario Outline: an input the run did not read has no line, and one it read by default has one
+      given a run read <inputs read>
+      when the Markdown report is written
+      then the provenance will have <lines>
+
+      Examples:
+        | clm         | inputs read                                                 | lines                                         |
+        | CLM-RPT-114 | a Vitest report and a Cucumber report, and no pytest report | one line for each report, and none for pytest |
+        | CLM-RPT-115 | the CI workflows by default                                 | a line for the CI workflows                   |
 
   Rule: the step account totals its jobs only when it has more than one
 

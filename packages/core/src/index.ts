@@ -44,7 +44,7 @@ export type {
   StepCounts,
   Totals,
 } from "./domain/evidenceReconciliation.js";
-export type { Provenance, RunIdentity, ProvenanceInput } from "./domain/provenance.js";
+export type { Provenance, RepositoryOfOrigin, RunIdentity, ProvenanceInput } from "./domain/provenance.js";
 export type { ConfigurationError, Layer, StepAddress, TargetConfiguration, TargetSettingsAsWritten } from "./domain/configuration.js";
 export type {
   Destination,
@@ -60,8 +60,10 @@ export { allocationOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";
 export { runVerdictOf, stepAccountOf } from "./domain/evidenceReconciliation.js";
 export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
+export { provenanceOf } from "./domain/provenance.js";
 export { evidenceObservationsOf, fitnessObservationsOf, stepDispositionOf } from "./domain/postEvidenceObservation.js";
 export { featureAsWrittenFrom } from "./inputs/gherkin.js";
+export { repositoryOfOrigin } from "./inputs/origin.js";
 export { shellAnswers } from "./inputs/shell.js";
 export { stepRecordFrom } from "./inputs/stepRecord.js";
 export { resultsByFileFrom } from "./inputs/vitest.js";

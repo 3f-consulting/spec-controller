@@ -5,6 +5,8 @@ import {
   featureAsWrittenFrom,
   fitnessObservationsOf,
   markdownReportOf,
+  provenanceOf,
+  repositoryOfOrigin,
   resultsByFileFrom,
   runVerdictOf,
   shellAnswers,
@@ -12,6 +14,7 @@ import {
   stepDispositionOf,
   stepRecordFrom,
   workflowStepsFrom,
+  type ProvenanceInput,
   type StepAccount,
   type TargetConfiguration,
   type WorkflowStepAsWritten,
@@ -19,7 +22,8 @@ import {
 import { featureSourcesIn, jsonAt, workflowSourcesIn } from "../inputs/readFiles.js";
 import { writeToStandardOutput } from "../output/standardOutput.js";
 import { endRunOn } from "../runEnding/exitCode.js";
-import type { InputRequest } from "../runRequest/runRequest.js";
+import { runIdentityIn } from "../runIdentity/runIdentity.js";
+import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/runRequest.js";
 
 const NO_SETTINGS: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
 
@@ -33,7 +37,12 @@ function stepAccountFor(workflows: string | undefined, steps: readonly WorkflowS
   return workflows === undefined ? {} : { stepAccount: stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, NO_SETTINGS, {}, shellAnswers) }))) };
 }
 
-export function balance(inputs: readonly InputRequest[]): void {
+// Every input the run could read, each with its path when it read one.
+const provenanceInputsOf = (inputs: readonly InputRequest[]): ProvenanceInput[] => INPUT_KINDS.map((kind) => ({ name: kind, path: pathOf(inputs, kind) }));
+
+export function balance({ inputs, target, sourceSha }: Extract<RunRequest, { command: "balance" }>, folder: string): void {
+  // Read first, so the run's time is when it started.
+  const identity = runIdentityIn(folder, { target, sourceSha });
   const workflows = pathOf(inputs, "workflows");
   const features = readEach(pathOf(inputs, "features"), featureSourcesIn).map(({ file, source }) => featureAsWrittenFrom(file, source));
   const steps = readEach(workflows, workflowSourcesIn).flatMap(({ workflow, source }) => workflowStepsFrom(workflow, source));
@@ -44,6 +53,7 @@ export function balance(inputs: readonly InputRequest[]): void {
   ];
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observations);
   const runVerdict = runVerdictOf(claimReconciliations);
-  writeToStandardOutput(markdownReportOf({ runVerdict, ...stepAccountFor(workflows, steps) }));
+  const provenance = provenanceOf(identity, provenanceInputsOf(inputs), identity.gitTopLevel ?? folder, repositoryOfOrigin);
+  writeToStandardOutput(markdownReportOf({ runVerdict, provenance, ...stepAccountFor(workflows, steps) }));
   endRunOn(runVerdict);
 }

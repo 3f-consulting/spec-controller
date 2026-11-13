@@ -174,3 +174,4 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-042 | a Cucumber evidence report given                                                                  | that report, among the inputs                                                      |
         | CLM-EVR-043 | no Cucumber evidence report given                                                                 | that report, named as absent                                                       |
         | CLM-EVR-044 | an input at /work/acme/a.json, for a target at /work/acme                                         | that input as a.json                                                               |
+        | CLM-EVR-053 | a run that started at 2026-11-12T07:08:14Z                                                        | the run's time 2026-11-12T07:08:14Z                                                |
