@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { targetConfigurationFrom } from "../inputs/manifest.js";
+import manifestVariants from "../inputs/manifest.variants.json" with { type: "json" };
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
@@ -80,5 +81,14 @@ describe("the run will still reach its run verdict, using the configuration sett
     const runVerdict = runVerdictOf(claimReconciliationsOf(claims, [passingUnitTest, ...fitnessObservationsOf(steps, [], configuration, {}, shellAnswers)]), []);
 
     expect({ runVerdict, integrationStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({ runVerdict: { verdict: "balanced" }, integrationStep: "runner" });
+  });
+});
+
+// Each way a specController block can be other than an object, as a value.
+const notAnObject: Readonly<Record<string, unknown>> = { null: null, "a number": 5, "a string": "vitest", "a list": ["vitest"] };
+
+describe("a specController block that is not an object stops the run", () => {
+  it.each(manifestVariants["CLM-CFG-021"].variants)("[CLM-CFG-021] a specController block that is %s stops the run as an unexpected error", (variant) => {
+    expect(() => targetConfigurationFrom({ specController: notAnObject[variant] }, [])).toThrow();
   });
 });

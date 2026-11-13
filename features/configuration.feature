@@ -52,3 +52,11 @@ Feature: balance reads and validates the configuration settings in the specContr
       when balance reconciles the target
       then the run will reach its run verdict
       and cucumber-js will be what runs the integration layer
+
+  Rule: a specController block that is not an object stops the run
+
+    @unit @CLM-CFG-021
+    Scenario: a specController block that is not an object stops the run as an unexpected error
+      given the specController block was 5
+      when balance reads it
+      then the run will stop as an unexpected error
