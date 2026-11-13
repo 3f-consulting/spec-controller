@@ -18,6 +18,8 @@ describe("the provenance describes the run", () => {
     ["CLM-EVR-071", "no target given, and an origin no form of origin reads", { origin: "foo" }, [], { target: "unknown-target" }],
     ["CLM-EVR-071", "no target given, and the origin /, a local path with no segment", { origin: "/" }, [], { target: "unknown-target" }],
     ["CLM-EVR-071", "no target given, and the origin file:///, a file URL with no segment", { origin: "file:///" }, [], { target: "unknown-target" }],
+    ["CLM-EVR-071", "no target given, and an https origin with a colon before it", { origin: ":https://github.com/acme/web.git" }, [], { target: "unknown-target" }],
+    ["CLM-EVR-071", "no target given, and an scp-form origin with a line break after it", { origin: "github.com:acme/web.git\n" }, [], { target: "unknown-target" }],
     ["CLM-EVR-038", "a source SHA given, in a git repository at another commit", { givenSourceSha: "abc1234", head: "def5678" }, [], { sourceSha: "abc1234" }],
     ["CLM-EVR-040", "the tool running from its own checkout", { toolSha: "9f8e7d6", toolVersion: "0.0.0" }, [], { toolSha: "9f8e7d6" }],
     ["CLM-EVR-041", "the tool installed as a package", { toolSha: "1a2b3c4", toolInstalledAsPackage: true, toolVersion: "0.1.256" }, [], { toolSha: undefined, toolVersion: "0.1.256" }],
