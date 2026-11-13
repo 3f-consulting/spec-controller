@@ -18,7 +18,7 @@ const program = await loadGuarded(
   complain,
   endRunOn,
 );
-// A working directory that was removed cannot be read; the shell's record of it names where the run started.
+// A working directory that does not exist cannot be read; the shell's record of it names where the run started.
 function workingFolder(): string {
   try {
     return process.cwd();

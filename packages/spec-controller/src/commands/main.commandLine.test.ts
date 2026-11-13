@@ -39,6 +39,9 @@ const BALANCE_FLAGS = [
   "--help",
 ];
 
+// A line holding the flag, then at least two spaces, then its description.
+const FLAG_BESIDE_ITS_DESCRIPTION = { "--strict": /^\s+--strict\s{2,}\S/, "--exit-zero": /^\s+--exit-zero\s{2,}\S/ };
+
 // The flags help lists, each at the start of a line of its own.
 const flagsListed = (help: string): string[] => help.split("\n").flatMap((line) => /^\s+(-h, )?(--[a-z-]+)/.exec(line)?.[2] ?? []);
 
@@ -80,7 +83,7 @@ describe("a command's help gives each flag it takes beside what the flag does", 
   it("[CLM-CLI-189] --strict and --exit-zero are each on a line of their own, followed by its description", () => {
     const lines = ran(["balance", "--help"]).output.split("\n");
 
-    expect(["--strict", "--exit-zero"].map((flag) => lines.filter((line) => new RegExp(`^\\s+${flag}\\s{2,}\\S`).test(line)).length)).toEqual([1, 1]);
+    expect(Object.values(FLAG_BESIDE_ITS_DESCRIPTION).map((flagLine) => lines.filter((line) => flagLine.test(line)).length)).toEqual([1, 1]);
   });
 });
 
