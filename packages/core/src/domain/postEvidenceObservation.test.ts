@@ -456,11 +456,14 @@ describe("balance posts each row of an Outline citing its own claim code", () =>
     expect(postedByScenario(report, [featureAsWrittenFrom("one.feature", outlineIn("ONE"))]).map(({ cites }) => cites)).toEqual([[ONE_001], [ONE_002]]);
   });
 
-  it("[CLM-OBS-107] a result for the row at line 10 of two.feature, when one.feature also has a row at line 10, is posted citing CLM-TWO-001", () => {
-    const features = [featureAsWrittenFrom("one.feature", outlineIn("ONE")), featureAsWrittenFrom("two.feature", outlineIn("TWO"))];
-    const report = reportByScenario("features/two.feature", [{ title: "adds 1", line: 10, tags: ["integration"], steps: [["Given ", "one adds 1", "passed"]] }]);
+  it.each([
+    ["CLM-OBS-107", "two.feature", "TWO"],
+    ["CLM-OBS-125", "sub/one.feature", "SUB"],
+  ] as const)("[%s] a result for the row at line 10 of %s, when one.feature also has a row at line 10, is posted citing that file's row", (_clm, file, featureCode) => {
+    const features = [featureAsWrittenFrom("one.feature", outlineIn("ONE")), featureAsWrittenFrom(file, outlineIn(featureCode))];
+    const report = reportByScenario(`features/${file}`, [{ title: "adds 1", line: 10, tags: ["integration"], steps: [["Given ", "one adds 1", "passed"]] }]);
 
-    expect(postedByScenario(report, features).map(({ cites }) => cites)).toEqual([[{ featureCode: "TWO", number: "001" }]]);
+    expect(postedByScenario(report, features).map(({ cites }) => cites)).toEqual([[{ featureCode, number: "001" }]]);
   });
 });
 
