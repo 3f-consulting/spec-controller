@@ -1,6 +1,6 @@
-import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
+import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
-import type { ExecutableClaim, FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
+import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
 
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
@@ -247,10 +247,6 @@ export function observationsOfScenarios(
     const place = shownFromTarget(file, targetFolder);
     return kindsOf(tags).map((kind): EvidenceObservation => ({ cites, ...outcome, kind, place, name: title, notes: [] }));
   });
-}
-
-export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {
-  return claimCode === undefined ? [] : observations.filter(({ cites }) => cites.some((cited) => sameCode(cited, claimCode)));
 }
 
 // What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a candidate fitness function.
