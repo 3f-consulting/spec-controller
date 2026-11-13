@@ -27,8 +27,8 @@ export interface UnnamedClaim {
   readonly file?: never;
 }
 
-// What each reader reports, as written. Which result each status means is the domain's. report is the evidence
-// report it came from, as its reader names it, since what a status means can differ between them.
+// What each reader reports, as written. Which result each status means is the domain's. report, where kept, is the
+// evidence report it came from, as its reader names it, since what a status means can differ between them.
 
 // A report of test results kept by test file.
 export interface ResultsByFileAsWritten {
@@ -67,14 +67,14 @@ export interface FailureAsWritten {
 
 // A report of test results kept by example, each nested in its groups.
 export interface ResultsByExampleAsWritten {
-  readonly report: string;
   readonly examples: readonly ExampleResultAsWritten[];
   readonly loadErrors: readonly { readonly file?: string; readonly message: string }[];
 }
 
 interface ExampleResultAsWritten {
   readonly file: string;
-  readonly groupDescriptions: readonly string[];
+  // Its groups' descriptions, then its own.
+  readonly fullDescription: string;
   readonly description: string;
   readonly status: string;
   readonly message?: string;
@@ -171,10 +171,11 @@ export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], 
 // Results kept by example: RSpec's, each example nested in its groups. An error outside any example kept the examples
 // after it from running: it is placed at the spec file it names, or at none.
 export function observationsByExample({ examples, loadErrors }: ResultsByExampleAsWritten, targetFolder: string): EvidenceObservation[] {
-  const ran = examples.flatMap(({ file, groupDescriptions, description, status, message }): EvidenceObservation[] => {
+  const ran = examples.flatMap(({ file, fullDescription, description, status, message }): EvidenceObservation[] => {
     const result = RESULT_BY_STATUS[status];
     if (result === undefined) return [];
-    const cites = nearestCitations([...groupDescriptions, description]);
+    // Its own description cites first; failing that, its groups' do, in its full description.
+    const cites = nearestCitations([fullDescription, description]);
     return [{ cites, result, kind: "unit", place: shownFromTarget(file, targetFolder), name: description, ...(message === undefined ? {} : { message }), notes: [] }];
   });
   const neverRan = loadErrors.map(({ file, message }): EvidenceObservation => ({
