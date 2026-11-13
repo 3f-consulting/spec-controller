@@ -191,8 +191,14 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(countedAndPosted("pnpm loop", "vitest", { loop: "pnpm loop" })).toEqual({ countedAs: "candidate", posted: 1 });
   });
 
+  // A step running vitest behind each wrapper, past what the wrapper takes.
+  const behindTheWrapper: Readonly<Record<string, string>> = {
+    "xvfb-run": "xvfb-run -a --server-args=-screen vitest run",
+    "timeout <duration>": "timeout 75 vitest run",
+  };
+
   it.each(shellVariants["CLM-OBS-112"].variants)("[CLM-OBS-112] a step running its unit runner behind the wrapper %s, past its options, will be counted as a runner", (wrapper) => {
-    expect(dispositionOf(`${wrapper} -a --server-args=-screen vitest run`, "vitest")).toBe("runner");
+    expect(dispositionOf(behindTheWrapper[wrapper]!, "vitest")).toBe("runner");
   });
 
   it.each(["-n", "-s", "-e", "-f", "-p", "-w"])("[CLM-OBS-117] a step running xvfb-run %s 99 vitest run, past an option and that option's value, will be counted as a runner, and nothing will be posted", (option) => {

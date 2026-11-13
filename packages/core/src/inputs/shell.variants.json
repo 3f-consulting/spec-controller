@@ -23,7 +23,7 @@
   },
   "CLM-OBS-112": {
     "class": "a wrapper that runs the command after it",
-    "variants": ["xvfb-run"]
+    "variants": ["xvfb-run", "timeout <duration>"]
   },
   "CLM-OBS-113": {
     "class": "a runner named in several words",
