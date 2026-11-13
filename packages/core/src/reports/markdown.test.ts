@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { totalsOf, type EvidenceReconciliation, type StepCounts } from "../domain/evidenceReconciliation.js";
 import type { Provenance } from "../domain/provenance.js";
+import { coreText } from "../messages/catalogue.js";
 import { markdownReportOf } from "./markdown.js";
 
 // A run with nothing reconciled, and the parts given.
@@ -14,23 +15,42 @@ const PROVENANCE: Provenance = { target: "acme/web", sourceSha: "abc1234", toolV
 
 describe("each run verdict, and each reason a run is not reconciled, has an opening of its own", () => {
   it.each([
-    ["CLM-RPT-111", "balanced", { verdict: "balanced" }, "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention."],
-    ["CLM-RPT-116", "out of balance", { verdict: "out-of-balance" }, "Some claims lack the evidence they ask for, so the run is out of balance: the Claim Reconciliations below say what each needs."],
-    ["CLM-RPT-117", "not reconciled, as unsound", { verdict: "not-reconciled", why: "unsound" }, "Some evidence never ran, so the run cannot be relied on and is not reconciled: Run integrity names it."],
+    ["CLM-RPT-111", "balanced", { verdict: "balanced" }, "verdict-balanced", "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention."],
+    [
+      "CLM-RPT-116",
+      "out of balance",
+      { verdict: "out-of-balance" },
+      "verdict-out-of-balance",
+      "Some claims lack the evidence they ask for, so the run is out of balance: the Claim Reconciliations below say what each needs.",
+    ],
+    [
+      "CLM-RPT-117",
+      "not reconciled, as unsound",
+      { verdict: "not-reconciled", why: "unsound" },
+      "verdict-unsound",
+      "Some evidence never ran, so the run cannot be relied on and is not reconciled: Run integrity names it.",
+    ],
     [
       "CLM-RPT-118",
       "not reconciled, for claim code errors",
       { verdict: "not-reconciled", why: "claim-code-errors" },
+      "verdict-claim-code-errors",
       "Some claim codes are written where they do not belong, so the run is not reconciled: Errors in the inputs names them.",
     ],
     [
       "CLM-RPT-119",
       "not reconciled, with nothing to reconcile",
       { verdict: "not-reconciled", why: "nothing-to-reconcile" },
+      "verdict-nothing-to-reconcile",
       "No claim and no evidence were read, so there was nothing to reconcile and the run is not reconciled.",
     ],
-  ] as const)("[%s] a run that was %s opens with its sentence", (_clm, _verdict, runVerdict, opening) => {
-    expect(markdownReportOf(runWith({ runVerdict, provenance: PROVENANCE })).split("\n")[2]).toBe(opening);
+  ] as const)("[%s] a run that was %s opens with its sentence, and its Summary names that run verdict", (_clm, _verdict, runVerdict, words, opening) => {
+    const lines = markdownReportOf(runWith({ runVerdict, provenance: PROVENANCE })).split("\n");
+
+    expect({ opening: lines[2], verdict: lines.filter((line) => line.startsWith(`- ${coreText("summary-run-verdict")}:`)) }).toEqual({
+      opening,
+      verdict: [`- ${coreText("summary-run-verdict")}: ${coreText(words)}`],
+    });
   });
 });
 
@@ -40,14 +60,14 @@ describe("an input the run did not read has no line, and one it read by default 
       "CLM-RPT-114",
       "a Vitest report and a Cucumber report, and no pytest report",
       [{ name: "vitest", path: "vitest.json" }, { name: "pytest" }, { name: "cucumber", path: "cucumber.json" }],
-      ["Vitest report: `vitest.json`", "Cucumber report: `cucumber.json`"],
+      ["  - Vitest report: `vitest.json`", "  - Cucumber report: `cucumber.json`"],
     ],
-    ["CLM-RPT-115", "the CI workflows by default", [{ name: "workflows", path: ".github/workflows" }], ["CI workflows: `.github/workflows`"]],
+    ["CLM-RPT-115", "the CI workflows by default", [{ name: "workflows", path: ".github/workflows" }], ["  - CI workflows: `.github/workflows`"]],
   ] as const)("[%s] a run that read %s has a provenance line for each input it read", (_clm, _read, inputs, lines) => {
     const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, inputs } }));
-    const provenance = report.slice(report.indexOf("## Run provenance")).split("\n## ")[0]!;
+    const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
 
-    expect(provenance.split("\n").filter((line) => line.startsWith("  - ")).map((line) => line.slice("  - ".length))).toEqual(lines);
+    expect(provenance.slice(provenance.indexOf(`- ${coreText("provenance-inputs")}:`))).toEqual([`- ${coreText("provenance-inputs")}:`, ...lines]);
   });
 });
 
