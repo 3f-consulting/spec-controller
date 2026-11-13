@@ -5,8 +5,9 @@ import { resultsBySuiteFrom } from "../inputs/junitXml.js";
 import { resultsByExampleFrom } from "../inputs/rspecJson.js";
 import { scenarioResultsFrom } from "../inputs/cucumberJson.js";
 import type { ClaimCode } from "./claimCodes.js";
+import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureAsWritten } from "./postEvidenceObligation.js";
-import { observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, observationsFiledUnder, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, type EvidenceObservation } from "./postEvidenceObservation.js";
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
 const ONE_002: ClaimCode = { featureCode: "ONE", number: "002" };
@@ -401,19 +402,71 @@ describe("a test file outside the target's folder will be placed at the absolute
   });
 });
 
+// A corpus of two scenarios, tagged with the codes given, each raising a unit Evidence Obligation.
+const claimsTagged = (first: string, second: string) =>
+  executableClaimsOf([
+    featureAsWrittenFrom("one.feature", `@ONE\nFeature: one\n\n  @unit @${first}\n  Scenario: first\n    Given a step\n\n  @unit @${second}\n  Scenario: second\n    Given a step\n`),
+  ], { deferralTags: [], strict: false });
+
+const written = ({ featureCode, number }: ClaimCode): string => `CLM-${featureCode}-${number}`;
+
+// Each Claim Reconciliation as the claim it is for, and the codes each of its Evidence Observations cites.
+const filed = (reconciliations: readonly ClaimReconciliation[]): { claim: string; cites: string[][] }[] =>
+  reconciliations.map(({ claim, qualityCheckReconciliations }) => ({
+    claim: "obligations" in claim ? `the claim of ${written(claim.claimCode!)}` : claim.claimCode ? `the phantom claim of ${written(claim.claimCode)}` : "the unnamed claim",
+    cites: qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.cites.map(written)] : [])),
+  }));
+
+// A passing quality check in the source named, with the citation as that source writes it.
+function postedFrom(source: string, citation: string): EvidenceObservation[] {
+  if (source === "vitest" || source === "jest") return postedByFile(source, reportByFile("/work/one.test.ts", [{ title: `${citation} it holds`, status: "passed" }]));
+  if (source === "pytest") {
+    const properties = citation.split(" ").map((value) => `<property name="clm" value="${value}" />`).join("");
+    return postedBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", `<properties>${properties}</properties>`));
+  }
+  if (source === "go") return postedBySuite("go", "example.com/adds", testCase("example.com/adds", `TestAdds/${citation.replaceAll(" ", "_")}_adds_one`));
+  if (source === "surefire") return postedBySuite("surefire", "example.AddsTest", testCase("example.AddsTest", `${citation} adds one`));
+  if (source === "rspec") return postedByExample(reportByExample([{ description: `${citation} adds one`, status: "passed" }]));
+  return postedByScenario(reportByScenario("features/one.feature", [{ tags: ["integration", ...citation.split(" ")], steps: [PASSED] }]));
+}
+
 describe("balance files each Evidence Observation under the claim it cites, or else on a phantom claim or the unnamed claim", () => {
   it("[CLM-OBS-082] balance posts an Evidence Observation to the executable claim whose code it cites", () => {
-    const claims = executableClaimsOf([
-      featureAsWrittenFrom(
-        "one.feature",
-        "Feature: one\n\n  @unit @CLM-ONE-001\n  Scenario: first\n    Given a step\n\n  @unit @CLM-ONE-002\n  Scenario: second\n    Given a step\n",
-      ),
-    ], { deferralTags: [], strict: false });
-    const observations = postedByFile("vitest", reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }]));
+    const reconciliations = claimReconciliationsOf(claimsTagged("CLM-ONE-001", "CLM-ONE-002"), postedFrom("vitest", "[CLM-ONE-001]"));
 
-    expect(claims.map((claim) => ({ claimCode: claim.claimCode, posted: observationsFiledUnder(claim, observations).length }))).toEqual([
-      { claimCode: ONE_001, posted: 1 },
-      { claimCode: ONE_002, posted: 0 },
+    expect(filed(reconciliations)).toEqual([
+      { claim: "the claim of CLM-ONE-001", cites: [["CLM-ONE-001"]] },
+      { claim: "the claim of CLM-ONE-002", cites: [] },
+    ]);
+  });
+
+  it("[CLM-OBS-083] balance posts an Evidence Observation citing a code no executable claim has to its phantom claim", () => {
+    const reconciliations = claimReconciliationsOf(claimsTagged("CLM-ONE-001", "CLM-ONE-002"), postedFrom("vitest", "[CLM-ONE-999]"));
+
+    expect(filed(reconciliations).filter(({ cites }) => cites.length > 0)).toEqual([{ claim: "the phantom claim of CLM-ONE-999", cites: [["CLM-ONE-999"]] }]);
+  });
+});
+
+describe("balance posts an Evidence Observation no single executable claim can take to the unnamed claim", () => {
+  it.each<[string, string, string, readonly string[]]>([
+    ["CLM-OBS-084", "vitest", "", []],
+    ["CLM-OBS-085", "vitest", "[CLM-ABCDEF-001]", []],
+    ["CLM-OBS-086", "vitest", "CLM-ONE-999", []],
+    ["CLM-OBS-105", "pytest", "CLM-A-001", []],
+    ["CLM-OBS-088", "vitest", "[CLM-ONE-001]", ["CLM-ONE-001"]],
+    ["CLM-OBS-089", "vitest", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
+    ["CLM-OBS-090", "jest", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
+    ["CLM-OBS-091", "pytest", "CLM-ONE-001 CLM-ONE-002", ["CLM-ONE-001", "CLM-ONE-002"]],
+    ["CLM-OBS-092", "go", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
+    ["CLM-OBS-093", "surefire", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
+    ["CLM-OBS-094", "rspec", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
+    ["CLM-OBS-095", "cucumber", "CLM-ONE-001 CLM-ONE-002", ["CLM-ONE-001", "CLM-ONE-002"]],
+  ])("[%s] a passing quality check in %s's evidence report citing %j is posted to the unnamed claim, naming %j", (clm, source, citation, named) => {
+    // The shared code's row reads a corpus where two claims share CLM-ONE-001.
+    const claims = clm === "CLM-OBS-088" ? claimsTagged("CLM-ONE-001", "CLM-ONE-001") : claimsTagged("CLM-ONE-001", "CLM-ONE-002");
+
+    expect(filed(claimReconciliationsOf(claims, postedFrom(source, citation))).filter(({ cites }) => cites.length > 0)).toEqual([
+      { claim: "the unnamed claim", cites: [named] },
     ]);
   });
 });
