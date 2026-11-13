@@ -240,6 +240,26 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
   ])("[%s] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 that skipped a step and failed none, or had no steps, posts nothing", (_clm, steps) => {
     expect(postedByScenario(reportByScenario("features/one.feature", [{ tags: ["integration", "CLM-ONE-001"], steps }]))).toEqual([]);
   });
+
+  it("[CLM-OBS-106] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 whose only steps were its Before and After hooks, as cucumber-js writes a scenario with no steps, posts nothing", () => {
+    const passed = { status: "passed", duration: 1000 };
+    const report = [
+      {
+        uri: "features/one.feature",
+        elements: [
+          {
+            type: "scenario",
+            name: "one adds one",
+            line: 6,
+            tags: [{ name: "@integration" }, { name: "@CLM-ONE-001" }],
+            steps: [{ keyword: "Before", hidden: true, result: passed }, { keyword: "After", hidden: true, result: passed }],
+          },
+        ],
+      },
+    ];
+
+    expect(postedByScenario(report)).toEqual([]);
+  });
 });
 
 describe("balance posts nothing for a test that was skipped", () => {
