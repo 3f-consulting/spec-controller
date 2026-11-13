@@ -58,7 +58,7 @@ const tokensOf = (flags: readonly Flag[], args: readonly string[]) =>
   parseArgs({
     args: [...args],
     options: Object.fromEntries(
-      flags.map((flag) => [flag.name, { type: flag.value === undefined ? ("boolean" as const) : ("string" as const) }]),
+      flags.map((flag) => [flag.name, { type: flag.value === undefined ? ("boolean" as const) : ("string" as const), ...(flag.short === undefined ? {} : { short: flag.short }) }]),
     ),
     strict: false,
     allowPositionals: true,
