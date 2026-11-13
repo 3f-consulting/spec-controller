@@ -160,6 +160,12 @@ describe("a recorded step no workflow holds, and a step whose id is not a claim 
     ]);
   });
 
+  it("[CLM-OBS-148] balance posts nothing for a recorded step that no workflow holds, when its id is not a claim code", () => {
+    const steps = workflowOf({ ci: { steps: [{ id: "lint", uses: "actions/checkout@v4" }] } });
+
+    expect(fitnessObservationsOf(steps, recordOf({ audit: { outcome: "skipped", conclusion: "skipped" } }), NO_SETTING, {}, shellAnswers)).toEqual([]);
+  });
+
   it("[CLM-OBS-097] a fitness function whose id is not a claim code will be posted once, citing no claim code", () => {
     const steps = workflowOf({ ci: { steps: [{ id: "audit", run: "pnpm audit-the-tree" }] } });
     const observations = fitnessObservationsOf(steps, recordOf({ audit: { outcome: "success", conclusion: "success" } }), NO_SETTING, {}, shellAnswers);
