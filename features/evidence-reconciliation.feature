@@ -162,6 +162,12 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       when balance reconciles it
       then the step account will read the one step, and nothing for the job that called the reusable workflow
 
+    @unit @CLM-EVR-073
+    Scenario: a workflow whose every line is commented out has no steps to read
+      given a workflow had every line commented out
+      when balance reconciles it
+      then the step account will read no steps
+
   Rule: the provenance says what the run used
 
     @unit

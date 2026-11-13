@@ -20,7 +20,7 @@ const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value 
 // What a step holds in each place it can write the step record from: its command, or its env: values.
 const HELD_IN: Readonly<Record<string, (step: Mapping) => readonly unknown[]>> = {
   "run:": (step) => [step["run"]],
-  "env:": (step) => (isMapping(step["env"]) ? Object.values(step["env"]) : []),
+  "env:": (step) => Object.values(isMapping(step["env"]) ? step["env"] : {}),
 };
 const writesStepRecord = (step: Mapping): boolean =>
   workflowsVariants["CLM-OBS-013"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));

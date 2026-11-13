@@ -277,4 +277,11 @@ describe("balance accounts for every step it reads", () => {
 
     expect(jobs.map(({ job, stepsRead }) => ({ job, stepsRead }))).toEqual([{ job: "build", stepsRead: 1 }]);
   });
+
+  it("[CLM-EVR-073] a workflow whose every line is commented out has no steps read", () => {
+    const steps = workflowStepsFrom("ci.yml", "# on: push\n# jobs:\n#   build:\n#     steps:\n#       - run: pnpm lint\n");
+    const { jobs, total } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
+
+    expect({ jobs, stepsRead: total.stepsRead }).toEqual({ jobs: [], stepsRead: 0 });
+  });
 });

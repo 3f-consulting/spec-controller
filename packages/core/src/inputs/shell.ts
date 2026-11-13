@@ -1,17 +1,21 @@
 import { parse } from "unbash";
-import type { Command, Statement } from "unbash";
+import type { Command, Statement, Word } from "unbash";
 import type { Scripts, ShellAnswers } from "../domain/postEvidenceObservation.js";
 import shellVariants from "./shell.variants.json" with { type: "json" };
 
+const { "CLM-OBS-009": scriptRuns, "CLM-OBS-010": launchers, "CLM-OBS-112": wrappers } = shellVariants;
+
 const wordsIn = (text: string): string[] => text.split(" ");
 
-// A launcher's words, up to the command it hands on to. A longer launcher is tried first, so pnpm exec is read before pnpm.
-const LAUNCHERS = shellVariants["CLM-OBS-010"].variants.map((launcher) => wordsIn(launcher).filter((word) => word !== "<bin>")).sort((one, other) => other.length - one.length);
-const SCRIPT_VARIANTS = shellVariants["CLM-OBS-009"].variants.map(wordsIn);
+// A launcher's words, up to the command it hands on to. The list names a longer launcher before a shorter one it opens
+// with, so pnpm exec is read before pnpm.
+const LAUNCHERS = launchers.variants.map((launcher) => launcher.split(" ").filter((word) => word !== "<bin>"));
+const SCRIPT_VARIANTS = scriptRuns.variants.map((variant) => variant.split(" "));
 // A wrapper's words: its command, then a gap for each value it takes before the command it runs, as timeout's duration.
-const WRAPPERS = shellVariants["CLM-OBS-112"].variants.map(wordsIn);
-// What a wrapper's options take is that wrapper's own: xvfb-run's are read past with their values.
-const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"], timeout: [] };
+const WRAPPERS = wrappers.variants.map((wrapper) => wrapper.split(" "));
+// What a wrapper's options take is that wrapper's own: xvfb-run's are read past with their values, and a wrapper not
+// named here takes none.
+const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"] };
 
 // Each element of the line's && and ; lists, as the stages of its pipeline. A comment is no command.
 function pipelinesOf(statements: readonly Statement[]): Command[][] {
@@ -20,17 +24,20 @@ function pipelinesOf(statements: readonly Statement[]): Command[][] {
     .map((node) => (node.type === "Pipeline" ? node.commands : [node]).filter((stage): stage is Command => stage.type === "Command"));
 }
 
-const wordsOf = ({ name, args }: Command): string[] => (name === undefined ? [] : [name.value, ...args.flatMap((arg) => (arg.type === "Word" ? [arg.value] : []))]);
+// A command's name and its arguments, each as the word it is. A command that only sets a variable has no name, and an
+// argument setting one, as export's, is no word.
+const wordsOf = ({ name, args }: Command): string[] => [name, ...args].filter((word): word is Word => word?.type === "Word").map(({ value }) => value);
 
 const opensWith = (words: readonly string[], opening: readonly string[]): boolean => opening.every((word, at) => words[at] === word);
 
-// The script a command runs in one of its package manager's variants, when the target has a script by that name. A
-// variant with no <script> gap, such as npm test, runs the script its last word names.
+// The script a command runs in one of its package manager's variants, when the target has a script by that name. Every
+// variant's last word names its script: its <script> gap, or, as npm test's, the script itself. A command that stops
+// before that word names none, and reads undefined.
 function scriptRun(words: readonly string[], scripts: Scripts): string | undefined {
   for (const variant of SCRIPT_VARIANTS) {
     const named = variant.every((word, at) => word === "<script>" || word === "<name>" || word === words[at]);
-    const script = variant.includes("<script>") ? words[variant.indexOf("<script>")] : variant.at(-1);
-    if (named && script !== undefined && Object.hasOwn(scripts, script)) return script;
+    const script = words[variant.length - 1];
+    if (named && Object.hasOwn(scripts, String(script))) return script;
   }
   return undefined;
 }
@@ -42,7 +49,7 @@ function handedOn(words: readonly string[]): readonly string[] | undefined {
   const wrapper = WRAPPERS.find(([command]) => command === words[0]);
   if (wrapper === undefined) return undefined;
   let at = 1;
-  while (words[at]?.startsWith("-")) at += OPTIONS_TAKING_A_VALUE[wrapper[0]!]!.includes(words[at]!) ? 2 : 1;
+  while (words[at]?.startsWith("-")) at += OPTIONS_TAKING_A_VALUE[wrapper[0]!]?.includes(words[at]!) ? 2 : 1;
   return words.slice(at + wrapper.length - 1);
 }
 
