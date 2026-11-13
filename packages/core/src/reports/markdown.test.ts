@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { totalsOf, type EvidenceReconciliation, type StepCounts } from "../domain/evidenceReconciliation.js";
+import { stepAccountOf, totalsOf, type EvidenceReconciliation, type StepCounts } from "../domain/evidenceReconciliation.js";
 import type { Provenance } from "../domain/provenance.js";
 import { coreText } from "../messages/catalogue.js";
 import { markdownReportOf } from "./markdown.js";
@@ -88,5 +88,36 @@ describe("the step account totals its jobs only when it has more than one", () =
     const stepAccount = report.slice(report.indexOf("## Step account"));
 
     expect(stepAccount.split("\n").filter((line) => line.startsWith("| ") && !line.startsWith("| Workflow") && !line.startsWith("| ---")).map((line) => line.split(" | ")[0]!.slice(2))).toEqual(rows);
+  });
+});
+
+describe("the step account shows each job's counts, and the Total row their sums", () => {
+  const step = (workflow: string, job: string, run: string) => ({ workflow, job, plumbing: false, writesStepRecord: false, run });
+
+  it.each([
+    ["CLM-RPT-165", "row for build", "build", ["2", "1", "0", "0", "0", "1"]],
+    ["CLM-RPT-166", "Total row", "", ["3", "1", "0", "0", "1", "1"]],
+  ] as const)("[%s] steps read in job build of ci.yml, 1 a test runner, and in job sweep of nightly.yml, 1 only setting the job up, show the step account's %s with its counts", (_clm, _row, job, counts) => {
+    const stepAccount = stepAccountOf([
+      { step: step("ci.yml", "build", "pnpm test"), disposition: "runner" },
+      { step: step("ci.yml", "build", "pnpm lint"), disposition: "candidate" },
+      { step: step("nightly.yml", "sweep", "actions/checkout"), disposition: "plumbing" },
+    ]);
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: PROVENANCE, stepAccount }));
+    const rows = report.slice(report.indexOf("## Step account")).split("\n").filter((line) => line.startsWith("| ")).map((line) => line.slice(2, -2).split(" | "));
+
+    expect(rows.find((cells) => cells[1] === job)?.slice(2)).toEqual(counts);
+  });
+});
+
+describe("the provenance shows the tool's commit only when there is one", () => {
+  it.each([
+    ["CLM-RPT-167", "the tool commit 9f8e7d6", { toolSha: "9f8e7d6" }, ["9f8e7d6"]],
+    ["CLM-RPT-168", "no tool commit", {}, []],
+  ] as const)("[%s] a run whose provenance had %s shows it in the provenance, or no line for it", (_clm, _commit, toolCommit, shown) => {
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, ...toolCommit } }));
+    const label = `- ${coreText("provenance-tool-sha")}: `;
+
+    expect(report.split("\n").filter((line) => line.startsWith(label))).toEqual(shown.map((commit) => `${label}\`${commit}\``));
   });
 });

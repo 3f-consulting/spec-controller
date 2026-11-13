@@ -13,6 +13,7 @@ Feature: Each report has the right structure, and the Markdown explains it
   - The report names the files, codes or setting each error in the inputs involves.
   - Run integrity says where each Evidence Observation that never ran is.
   - The Markdown summary leaves out a row or column whose counts are all zero.
+  - The report shows each count the run has in its cell.
   - The JSON report keeps every count, zero or not.
   - The Markdown shows the Claim Reconciliations as one table, a row per claim.
   - The step account totals its jobs only when it has more than one.
@@ -147,6 +148,17 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-114 | a Vitest report and a Cucumber report, and no pytest report | one line for each report, and none for pytest |
         | CLM-RPT-115 | the CI workflows by default                                 | a line for the CI workflows                   |
 
+    @unit
+    Scenario Outline: the provenance shows the tool's commit only when there is one
+      given a run's provenance had <tool commit>
+      when its Markdown report is written
+      then the provenance will show <shown>
+
+      Examples:
+        | clm         | tool commit             | shown                     |
+        | CLM-RPT-167 | the tool commit 9f8e7d6 | the tool's commit 9f8e7d6 |
+        | CLM-RPT-168 | no tool commit          | no line for a tool commit |
+
   Rule: the report names the files, codes or setting each error in the inputs involves
 
     @unit
@@ -215,6 +227,31 @@ Feature: Each report has the right structure, and the Markdown explains it
         | clm         | count | show     |
         | CLM-RPT-127 | 0     | not have |
         | CLM-RPT-145 | 1     | have     |
+
+  Rule: the report shows each count the run has in its cell
+
+    @unit @CLM-RPT-163
+    Scenario: the Summary shows the run's Claim Reconciliations, balanced and out of balance
+      given a run had a claim with a passing unit test and a claim with a failing unit test
+      when its Markdown report is written
+      then the Summary will show 2 Claim Reconciliations, 1 balanced and 1 out of balance
+
+    @unit @CLM-RPT-164
+    Scenario: the table by kind shows a kind's Evidence Obligations, Evidence Observations and outcomes
+      given a run had a claim asking for a unit test with a passing unit test, and a claim asking for a unit test with a failing unit test
+      when its Markdown report is written
+      then the unit row will show 2 Evidence Obligations, 2 Evidence Observations, 1 satisfied and 1 failing
+
+    @unit
+    Scenario Outline: the step account shows each job's counts, and the Total row their sums
+      given a run read the steps of job build in ci.yml, 2 steps of which 1 ran a test runner, and the steps of job sweep in nightly.yml, 1 step that only set the job up
+      when its Markdown report is written
+      then the step account's <row> will show <counts>
+
+      Examples:
+        | clm         | row           | counts                                                                               |
+        | CLM-RPT-165 | row for build | 2 steps read, 1 runner, 0 reconciler steps, 0 non-checks, 0 plumbing and 1 candidate |
+        | CLM-RPT-166 | Total row     | 3 steps read, 1 runner, 0 reconciler steps, 0 non-checks, 1 plumbing and 1 candidate |
 
   Rule: the JSON report keeps every count, zero or not
 
