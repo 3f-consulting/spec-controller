@@ -64,7 +64,6 @@ export interface ResultInSuiteAsWritten {
 }
 
 export interface FailureAsWritten {
-  readonly type?: string;
   readonly message?: string;
   readonly text?: string;
 }

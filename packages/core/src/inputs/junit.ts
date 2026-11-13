@@ -29,8 +29,8 @@ const text = (value: unknown): string | undefined => (typeof value === "string" 
 // An outcome element is text alone, attributes alone, or both.
 function failureAsWritten(outcome: unknown): FailureAsWritten {
   if (typeof outcome === "string") return { text: outcome };
-  const { "@type": type, "@message": message, "#text": body } = outcome as Element;
-  return { ...(text(type) && { type: text(type) }), ...(text(message) && { message: text(message) }), ...(text(body) && { text: text(body) }) };
+  const { "@message": message, "#text": body } = outcome as Element;
+  return { ...(text(message) && { message: text(message) }), ...(text(body) && { text: text(body) }) };
 }
 
 function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {
