@@ -19,4 +19,4 @@ const program = await loadGuarded(
   complain,
   endRunOn,
 );
-if (program !== undefined) endRunOn(program.main(process.argv.slice(2), workingFolderOf(() => process.cwd(), process.env["PWD"]), program.processStreams, { complain }));
+if (program !== undefined) endRunOn(program.main(process.argv.slice(2), workingFolderOf(), program.processStreams, { complain }));
