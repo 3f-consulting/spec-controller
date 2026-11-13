@@ -32,7 +32,7 @@ describe("balance files each Evidence Observation under the claim it cites, or e
         "one.feature",
         "Feature: one\n\n  @unit @CLM-ONE-001\n  Scenario: first\n    Given a step\n\n  @unit @CLM-ONE-002\n  Scenario: second\n    Given a step\n",
       ),
-    ]);
+    ], { deferralTags: [], strict: false });
     const observations = evidenceObservationsOf(resultsByFileFrom(passingVitestReport("[CLM-ONE-001] it holds")));
 
     expect(claims.map((claim) => ({ claimCode: claim.claimCode, posted: observationsFiledUnder(claim, observations).length }))).toEqual([
