@@ -1,0 +1,12 @@
+{
+  "highest-seen": "the highest code seen",
+  "no-history-read": "no history was read: this is not a git repository",
+  "history-before": "history was not read before the clone's first commit",
+  "feature-code-on-a-file": "a feature file already has the feature code",
+  "not-a-feature-code": "this is not a feature code, two to five uppercase letters or digits",
+  "unknown-feature-code": "no feature file has the feature code asked for, named first; the feature files have the ones after it",
+  "unreadable-in-tree": "allocate could not read this, and gives no code",
+  "unreadable-history": "allocate could not read the repository's history, and gives no code",
+  "damaged-repository": "allocate could not read the repository, and gives no code",
+  "feature-file-does-not-parse": "allocate could not read this feature file, which does not parse, and gives no code"
+}

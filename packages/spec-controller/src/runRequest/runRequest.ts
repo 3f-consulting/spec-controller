@@ -49,6 +49,7 @@ function inputsOf(args: readonly string[]): InputRequest[] {
 
 const DEFAULT_OUTPUT: OutputRequest<ReportFormat> = { format: "md", destination: { to: "standard-output" } };
 
-export function runRequestOf([, ...args]: readonly string[]): RunRequest {
+export function runRequestOf([command, ...args]: readonly string[]): RunRequest {
+  if (command === "allocate") return { command, featureCode: args.find((arg) => !arg.startsWith("--")) ?? "", asNewFeatureCode: args.includes("--new") };
   return { command: "balance", inputs: inputsOf(args), outputs: [DEFAULT_OUTPUT], strict: false, exitZero: false };
 }

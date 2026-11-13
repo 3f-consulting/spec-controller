@@ -8,3 +8,9 @@ export function exitCodeOf(_runVerdict: RunVerdict): ExitCode {
 export function endRunOn(runVerdict: RunVerdict): void {
   process.exitCode = exitCodeOf(runVerdict);
 }
+
+const USAGE_ERROR: ExitCode = 2;
+
+export function endRunOnUsageError(): void {
+  process.exitCode = USAGE_ERROR;
+}

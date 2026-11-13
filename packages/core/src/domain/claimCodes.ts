@@ -59,6 +59,9 @@ const CLAIM_CODE = new RegExp(`^CLM-(${FEATURE_CODE_FORM})-(\\d+)$`);
 
 const RETIRED_SCENARIO_CODE = new RegExp(`^SCN-(${FEATURE_CODE_FORM})-(\\d+)$`);
 
+// A code written under CLM, or under the retired SCN, anywhere in a line.
+const CODE_IN_A_LINE = new RegExp(`(?:CLM|SCN)-(${FEATURE_CODE_FORM})-(\\d+)`, "g");
+
 export function claimCodeCitationsIn(text: string): ClaimCode[] {
   return [...text.matchAll(CITATION)].map(([, featureCode, number]) => ({ featureCode: featureCode!, number: number! }));
 }
@@ -133,4 +136,41 @@ export function claimCodeErrorsOf(features: readonly FileToCheck[]): ClaimCodeEr
     ...features.flatMap((feature) => misfiledCodes(feature, filesByCode)),
     ...features.flatMap(({ file, scenarios }) => scenarios.flatMap((scenario) => codesOnOneScenario(file, scenario))),
   ];
+}
+
+export const writtenClaimCode = ({ featureCode, number }: ClaimCode): string => `CLM-${featureCode}-${number}`;
+
+// A number is written at least three digits wide.
+const NUMBER_WIDTH = 3;
+
+interface Seen {
+  readonly number: number;
+  readonly occurrence: ClaimCodeOccurrence;
+}
+
+// The highest number written under the feature code, CLM or SCN, and where; the occurrence's text becomes the code.
+function highestSeen(featureCode: string, occurrences: readonly ClaimCodeOccurrence[]): Seen | undefined {
+  let highest: Seen | undefined;
+  for (const occurrence of occurrences) {
+    for (const [code, codeFeature, number] of occurrence.text.matchAll(CODE_IN_A_LINE)) {
+      if (codeFeature === featureCode && (highest === undefined || Number(number) > highest.number)) {
+        highest = { number: Number(number), occurrence: { ...occurrence, text: code } };
+      }
+    }
+  }
+  return highest;
+}
+
+// One past the highest number the feature code has ever had, for a code a feature file has, or one asked for as new.
+export function allocationOf({ featureCode, asNewFeatureCode }: AllocationAsked, featureCodes: readonly string[], occurrences: readonly ClaimCodeOccurrence[]): Allocation {
+  const onAFile = featureCodes.includes(featureCode);
+  if (!onAFile && !asNewFeatureCode) return { kind: "unknown-feature-code", featureCode, featureCodes: [...new Set(featureCodes)].sort() };
+  const highest = highestSeen(featureCode, occurrences);
+  const number = String((highest?.number ?? 0) + 1).padStart(NUMBER_WIDTH, "0");
+  return {
+    kind: "allocated",
+    claimCode: { featureCode, number },
+    ...(highest === undefined ? {} : { highestSeen: highest.occurrence }),
+    featureCodeAlreadyOnAFile: asNewFeatureCode && onAFile,
+  };
 }
