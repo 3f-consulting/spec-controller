@@ -175,6 +175,7 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-048 | no target given, and the origin file:///srv/git/web.git                                           | the target web                                                                     |
         | CLM-EVR-051 | no target given, and the origin git://example.com/acme/web.git                                    | the target unknown-target                                                          |
         | CLM-EVR-052 | no target given, and the origin https://example.com/web, with no owner and repository in its path | the target unknown-target                                                          |
+        | CLM-EVR-071 | no target given, and the origin foo, which no form of origin reads                                | the target unknown-target                                                          |
         | CLM-EVR-038 | a source SHA given as abc1234, in a git repository at def5678                                     | the source SHA abc1234                                                             |
         | CLM-EVR-040 | the tool running from its own checkout at 9f8e7d6                                                 | the tool SHA 9f8e7d6                                                               |
         | CLM-EVR-041 | the tool installed as a package, version 0.1.256                                                  | no tool SHA, version 0.1.256                                                       |
