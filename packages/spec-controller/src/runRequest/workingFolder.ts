@@ -2,8 +2,7 @@ import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-// A working directory that does not exist cannot be read. The shell's record names it only while that folder does not
-// exist either; otherwise the run is given a folder that does not exist, so no other folder is read in its place.
+// With the working directory removed, the run never reads another folder in its place: the shell's record names it only while it is gone too.
 export function workingFolderOf(workingDirectory: () => string, recorded: string | undefined): string {
   try {
     return workingDirectory();
