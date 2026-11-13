@@ -10,7 +10,7 @@ export const test = {
     "tests/**/*.mts",
     "tests/**/*.mjs",
   ],
-  exclude: ["tests/fixtures/**"],
+  exclude: [],
 };
 
 export const production = {

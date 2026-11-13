@@ -158,7 +158,7 @@ jobs:
         if: always()
         shell: bash
         # jscpd, pinned in package.json, reads its settings from .jscpd.json, named so that one it cannot parse stops the run rather than falling back to defaults; the file takes no comments, so their reasons are here.
-        # It scans both packages' src as TypeScript, with tests, shared test helpers and fixtures ignored: production code only.
+        # It scans both packages' src as TypeScript, with tests and shared test helpers ignored: production code only.
         # minTokens 50 and minLines 5 are jscpd's own default definition of a clone, stated in full so a copier inherits it.
         # The step reds on jscpd's own exit code, so a clone anywhere in that population reds it, whichever files the change touches.
         # --fail-on-empty reds an analysis of no file. jscpd does not count seven files under the 50-token clone size, so none can hold a clone:
@@ -295,7 +295,7 @@ jobs:
         shell: bash
         # Alternative: cloc counts each file's comment and code lines but applies no ceiling, so this awk is the ceiling.
         run: |
-          node_modules/.bin/cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, -v max="${COMMENT_SHARE_MAX:?}" 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > max { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
+          node_modules/.bin/cloc --vcs=git --fullpath --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, -v max="${COMMENT_SHARE_MAX:?}" 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > max { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
 
       # Each probe pipes one line that breaks one rule into Vale and reds the step unless Vale names that rule, so a dead
       # rule fails before the tree is read. The probe's tokens are built at run time, so this file holds none of them.

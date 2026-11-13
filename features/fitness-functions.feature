@@ -102,14 +102,14 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
   Rule: the words around the code are few and stay true
 
     @fitness @CLM-FIT-023
-    Scenario: no source, script, configuration or Gherkin file is over the comment-share limit, outside the test fixtures, the lockfile, git's ignore list and knip's configuration
+    Scenario: no source, script, configuration or Gherkin file is over the comment-share limit, outside the lockfile, git's ignore list and knip's configuration
       given the repository had a comment-share limit
-      when CI runs the fitness function over its source, script, configuration and Gherkin files, leaving out the test fixtures, the lockfile, git's ignore list and knip's configuration
+      when CI runs the fitness function over its source, script, configuration and Gherkin files, leaving out the lockfile, git's ignore list and knip's configuration
       then none will be over the limit
 
     @fitness @CLM-FIT-075
-    Scenario: outside the test fixtures, no comment, Feature, Rule or Scenario description or current-state document names a ticket or a claim code, or narrates how the product used to be
-      given the repository had comments, descriptions and current-state documents outside the test fixtures
+    Scenario: no comment, Feature, Rule or Scenario description or current-state document names a ticket or a claim code, or narrates how the product used to be
+      given the repository had comments, descriptions and current-state documents
       when CI runs the fitness function over them
       then none will name a ticket or a claim code
       and none will narrate how the product used to be
