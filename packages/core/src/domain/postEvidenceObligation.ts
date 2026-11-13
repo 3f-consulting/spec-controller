@@ -40,3 +40,7 @@ export interface ClaimReadingSettings {
   readonly deferralTags: readonly string[];
   readonly strict: boolean;
 }
+
+export function executableClaimsOf(_features: readonly FeatureAsWritten[]): ExecutableClaim[] {
+  return [];
+}
