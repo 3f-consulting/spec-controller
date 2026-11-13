@@ -1,6 +1,7 @@
-import { claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
+import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
-import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
+import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
+import { shownFromTarget } from "./targetPath.js";
 
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
 
@@ -120,16 +121,146 @@ export interface ShellAnswers {
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
 }
 
-export function evidenceObservationsOf(results: readonly ResultsByFileAsWritten[]): EvidenceObservation[] {
-  return results.flatMap(({ file, results: inFile }) =>
-    inFile
-      .filter(({ status }) => status === "passed")
-      .map(({ title }) => ({ cites: claimCodeCitationsIn(title), result: "passed" as const, kind: "unit" as const, place: file, name: title, notes: [] })),
+// The codes a test cites: its own, or else those of its nearest parent that cites any. The chain runs outermost first.
+const nearestCitations = (chain: readonly string[]): ClaimCode[] =>
+  chain.reduceRight<ClaimCode[]>((found, title) => (found.length > 0 ? found : claimCodeCitationsIn(title)), []);
+
+const RESULT_BY_STATUS: Readonly<Record<string, Result>> = { passed: "passed", failed: "failed" };
+
+// Results kept by test file: Vitest's and Jest's. A failed file with no results is one that could not run.
+export function observationsByFile(results: readonly ResultsByFileAsWritten[], targetFolder: string): EvidenceObservation[] {
+  return results.flatMap(({ file, status, message, results: inFile }): EvidenceObservation[] => {
+    const place = shownFromTarget(file, targetFolder);
+    if (status === "failed" && inFile.length === 0) {
+      return [{ cites: [], result: "never-ran", kind: "unit", place, ...(message === undefined ? {} : { message }), notes: [] }];
+    }
+    return inFile.flatMap(({ ancestorTitles, title, status: resultStatus, failureMessages }) => {
+      const result = RESULT_BY_STATUS[resultStatus];
+      if (result === undefined) return [];
+      const failure = failureMessages.join("\n");
+      return [{ cites: nearestCitations([...ancestorTitles, title]), result, kind: "unit", place, name: title, ...(failure && { message: failure }), notes: [] }];
+    });
+  });
+}
+
+const saidBy = (failure: FailureAsWritten | undefined): { message?: string } => {
+  const message = failure?.message ?? failure?.text;
+  return message === undefined ? {} : { message };
+};
+
+// The report kept by suite whose errors are written only for a test that never reached its assertions, and which cites a
+// test's claim codes in its properties. Its reader names its reports so; any other report kept by suite writes an error for
+// a test that failed, and cites in its names.
+export const ERRORS_BEFORE_ASSERTIONS = "errors-before-assertions";
+
+// An error is a test that never reached its assertions; with no class name, a file that was never collected.
+function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
+  const { className, name, file, clmProperties, outcome, failure } = result;
+  if (outcome === "skipped") return [];
+  const collected = (className ?? "") !== "";
+  const cites = collected ? clmProperties.flatMap((property) => claimCodeFrom(property) ?? []) : [];
+  const resultOf: Result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
+  const place = shownFromTarget(file ?? (collected ? className! : name), targetFolder);
+  return [{ cites, result: resultOf, kind: "unit", place, ...(collected && { name }), ...saidBy(failure), notes: [] }];
+}
+
+// A case with no class name is its suite's own failure, such as a package that did not build; one with no name is its
+// class's, such as a class whose setup before all its tests failed. Neither reached a test's assertions.
+function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
+  const { className = "", name, file, outcome, failure } = result;
+  if (outcome === "skipped") return [];
+  if (outcome !== "" && (className === "" || name === "")) {
+    return [{ cites: [], result: "never-ran", kind: "unit", place: className || suite.name, ...saidBy(failure), notes: [] }];
+  }
+  const cites = nearestCitations([className, ...name.split("/")]);
+  const place = shownFromTarget(file ?? (className || suite.name), targetFolder);
+  return [{ cites, result: outcome === "" ? "passed" : "failed", kind: "unit", place, name, ...saidBy(failure), notes: [] }];
+}
+
+// Results kept by suite, each case in its suite.
+export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], targetFolder: string): EvidenceObservation[] {
+  return suites.flatMap((suite) =>
+    suite.results.flatMap((result) => 
+      suite.report === ERRORS_BEFORE_ASSERTIONS ? observationWhereErrorsNeverRan(result, targetFolder) : observationWhereErrorsFailed(suite, result, targetFolder),
+    ),
   );
 }
 
-export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {
-  return claimCode === undefined ? [] : observations.filter(({ cites }) => cites.some((cited) => sameCode(cited, claimCode)));
+// Results kept by example: RSpec's, each example nested in its groups. An error outside any example kept the examples
+// after it from running: it is placed at the spec file it names, or at none.
+export function observationsByExample({ examples, loadErrors }: ResultsByExampleAsWritten, targetFolder: string): EvidenceObservation[] {
+  const ran = examples.flatMap(({ file, groupDescriptions, description, status, message }): EvidenceObservation[] => {
+    const result = RESULT_BY_STATUS[status];
+    if (result === undefined) return [];
+    const cites = nearestCitations([...groupDescriptions, description]);
+    return [{ cites, result, kind: "unit", place: shownFromTarget(file, targetFolder), name: description, ...(message === undefined ? {} : { message }), notes: [] }];
+  });
+  const neverRan = loadErrors.map(({ file, message }): EvidenceObservation => ({
+    cites: [],
+    result: "never-ran",
+    kind: "unit",
+    place: file === undefined ? "" : shownFromTarget(file, targetFolder),
+    message,
+    notes: [],
+  }));
+  return [...ran, ...neverRan];
+}
+
+const BEHAVIOURAL_KINDS: readonly QualityCheckKind[] = ["integration", "e2e", "performance"];
+
+// A scenario is evidence of each behavioural kind its tags name, and of integration where they name none.
+function kindsOf(tags: readonly string[]): readonly QualityCheckKind[] {
+  const named = BEHAVIOURAL_KINDS.filter((kind) => tags.includes(kind));
+  return named.length > 0 ? named : ["integration"];
+}
+
+type StepAsWritten = ScenarioResultAsWritten["steps"][number];
+
+const asWritten = ({ keyword, text }: StepAsWritten): string => `${keyword.trim()} ${text}`;
+
+// A step that matched no definition, or more than one, kept the scenario from running, whatever else its steps did.
+function resultOfSteps(steps: readonly StepAsWritten[]): { readonly result: Result; readonly message?: string } | undefined {
+  const unmatched = steps.find(({ status }) => status === "undefined" || status === "ambiguous");
+  if (unmatched) return { result: "never-ran", message: asWritten(unmatched) };
+  const failed = steps.find(({ status }) => status === "failed");
+  if (failed) return { result: "failed", ...(failed.message === undefined ? {} : { message: failed.message }) };
+  return steps.length > 0 && steps.every(({ status }) => status === "passed") ? { result: "passed" } : undefined;
+}
+
+// An Outline row's code is its clm cell, in the feature file at the end of the result's path, at the row's line.
+function rowCodesOf(features: readonly FeatureAsWritten[]): (file: string, line: number) => ClaimCode[] {
+  const byFile = new Map<string, ReadonlyMap<number, ClaimCode | undefined>>();
+  for (const { file, scenarios } of features) {
+    const byLine = new Map<number, ClaimCode | undefined>();
+    for (const { columns, rows } of scenarios.flatMap(({ examples }) => examples)) {
+      for (const { line, cells } of rows) byLine.set(line, claimCodeFrom(cells[columns.indexOf(CLM_COLUMN)] ?? ""));
+    }
+    byFile.set(file, byLine);
+  }
+  // The longest feature file path the result's path ends with is its file.
+  const longestFirst = [...byFile.keys()].sort((one, other) => other.length - one.length);
+  return (file, line) => {
+    const featureFile = longestFirst.find((candidate) => file === candidate || file.endsWith(`/${candidate}`));
+    const code = featureFile === undefined ? undefined : byFile.get(featureFile)!.get(line);
+    return code ? [code] : [];
+  };
+}
+
+// Results kept by scenario: Cucumber's. features is the corpus as written, where an Outline row's claim code is.
+export function observationsOfScenarios(
+  results: readonly ScenarioResultAsWritten[],
+  features: readonly FeatureAsWritten[],
+  targetFolder: string,
+): EvidenceObservation[] {
+  const rowCodeOf = rowCodesOf(features);
+  return results.flatMap(({ file, line, title, tags, steps }) => {
+    const outcome = resultOfSteps(steps);
+    if (outcome === undefined) return [];
+    const tagged = tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
+    const cites = tagged.length > 0 ? tagged : rowCodeOf(file, line);
+    const place = shownFromTarget(file, targetFolder);
+    return kindsOf(tags).map((kind): EvidenceObservation => ({ cites, ...outcome, kind, place, name: title, notes: [] }));
+  });
 }
 
 // What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a candidate fitness function.

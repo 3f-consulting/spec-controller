@@ -1,6 +1,6 @@
 import type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
 import type { ClaimCode } from "./claimCodes.js";
-import { observationsFiledUnder, type EvidenceObservation, type PhantomClaim, type UnnamedClaim } from "./postEvidenceObservation.js";
+import type { EvidenceObservation, PhantomClaim, UnnamedClaim } from "./postEvidenceObservation.js";
 
 type ObligationWithAKind = EvidenceObligation & { readonly kind: QualityCheckKind };
 
@@ -105,13 +105,16 @@ function citedOnly(observations: readonly EvidenceObservation[], outcome: "cites
   return observations.map((observation) => (ran(observation) ? { outcome, kind: observation.kind, observation } : neverRan(observation)));
 }
 
+// A claim code as one key, for sorting, grouping and filing alike.
+const written = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
+
 const KIND_ORDER: readonly QualityCheckKind[] = ["unit", "integration", "e2e", "performance", "fitness"];
 
 // What a Quality Check Reconciliation is sorted by: its kind, where its test is, the codes it cites, then the rest it records.
 const sortKey = ({ kind, observation }: QualityCheckReconciliation): readonly (number | string)[] => [
   kind === undefined ? KIND_ORDER.length : KIND_ORDER.indexOf(kind),
   observation?.place ?? "",
-  (observation?.cites ?? []).map(({ featureCode, number }) => `${featureCode}-${number}`).join(" "),
+  (observation?.cites ?? []).map(written).join(" "),
   observation?.message ?? "",
   observation?.name ?? "",
   observation?.result ?? "",
@@ -136,13 +139,29 @@ export function claimReconciliationOf(
   return { claim, qualityCheckReconciliations, verdict: balanced ? "balanced" : "out-of-balance" };
 }
 
+// Each Evidence Observation goes to the one executable claim with the code it cites; to that code's phantom claim when no
+// executable claim has it; and to the unnamed claim when it cites none, several, or a code several claims share.
 export function claimReconciliationsOf(claims: readonly ExecutableClaim[], observations: readonly EvidenceObservation[]): ClaimReconciliation[] {
-  const written = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
   const claimsWith = new Map<string, number>();
   for (const { claimCode } of claims) if (claimCode) claimsWith.set(written(claimCode), (claimsWith.get(written(claimCode)) ?? 0) + 1);
-  return claims.map((claim) =>
-    claimReconciliationOf(claim, observationsFiledUnder(claim, observations), claim.claimCode !== undefined && claimsWith.get(written(claim.claimCode))! > 1),
-  );
+  const citing = new Map<string, { readonly claimCode: ClaimCode; readonly observations: EvidenceObservation[] }>();
+  const unnamed: EvidenceObservation[] = [];
+  for (const observation of observations) {
+    const only = observation.cites.length === 1 ? observation.cites[0] : undefined;
+    const entry = only && citing.get(written(only));
+    if (only === undefined || (claimsWith.get(written(only)) ?? 0) > 1) unnamed.push(observation);
+    else if (entry) entry.observations.push(observation);
+    else citing.set(written(only), { claimCode: only, observations: [observation] });
+  }
+  const executable = claims.map((claim) => {
+    const code = claim.claimCode && written(claim.claimCode);
+    const shared = code !== undefined && claimsWith.get(code)! > 1;
+    return claimReconciliationOf(claim, code === undefined || shared ? [] : (citing.get(code)?.observations ?? []), shared);
+  });
+  const phantom = [...citing.values()]
+    .filter(({ claimCode }) => !claimsWith.has(written(claimCode)))
+    .map(({ claimCode, observations: filed }) => claimReconciliationOf({ claimCode }, filed, false));
+  return [...executable, ...phantom, ...(unnamed.length > 0 ? [claimReconciliationOf({}, unnamed, false)] : [])];
 }
 
 // A group's file is where its tests are; a fitness function's place is a CI step, so fitness groups have none.
@@ -172,7 +191,7 @@ export function evidenceGroupsOf({ qualityCheckReconciliations }: ClaimReconcili
     const { observation } = reconciliation;
     if (observation === undefined) continue;
     const code = sharedCodeOf(observation);
-    const key = [observation.kind, fileOf(observation) ?? "", code ? `${code.featureCode}-${code.number}` : ""].join("|");
+    const key = [observation.kind, fileOf(observation) ?? "", code ? written(code) : ""].join("|");
     const members = groups.get(key);
     if (members) members.push(reconciliation);
     else groups.set(key, [reconciliation]);

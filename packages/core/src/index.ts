@@ -62,7 +62,7 @@ export { runVerdictOf, stepAccountOf } from "./domain/evidenceReconciliation.js"
 export { outputPlanOf } from "./domain/outputPlan.js";
 export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
 export { provenanceOf } from "./domain/provenance.js";
-export { evidenceObservationsOf, fitnessObservationsOf, stepDispositionOf } from "./domain/postEvidenceObservation.js";
+export { fitnessObservationsOf, observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, stepDispositionOf } from "./domain/postEvidenceObservation.js";
 export { featureAsWrittenFrom } from "./inputs/gherkin.js";
 export { repositoryOfOrigin } from "./inputs/origin.js";
 export { shellAnswers } from "./inputs/shell.js";
@@ -71,4 +71,7 @@ export { resultsByFileFrom } from "./inputs/vitest.js";
 export { workflowStepsFrom } from "./inputs/workflows.js";
 export { textFor } from "./messages/catalogue.js";
 export { jsonReportOf } from "./reports/json.js";
+export { resultsBySuiteFrom } from "./inputs/junit.js";
+export { resultsByExampleFrom } from "./inputs/rspec.js";
+export { scenarioResultsFrom } from "./inputs/cucumber.js";
 export { markdownReportOf } from "./reports/markdown.js";
