@@ -299,16 +299,18 @@ export function fitnessObservationsOf(
   scripts: Scripts,
   shell: ShellAnswers,
 ): EvidenceObservation[] {
-  const byClaimCode = record.filter(({ key }) => claimCodeFrom(key) !== undefined);
-  const entryFor = ({ id }: WorkflowStepAsWritten) => byClaimCode.find(({ key }) => key === id);
+  const entryFor = ({ id }: WorkflowStepAsWritten) => record.find(({ key }) => key === id);
   // A runner posts nothing of its own, unless its id is a claim code the step record holds.
   const posting = steps.filter((step) => {
     const disposition = stepDispositionOf(step, configuration, scripts, shell);
-    return disposition === "candidate" || (disposition === "runner" && entryFor(step) !== undefined);
+    return disposition === "candidate" || (disposition === "runner" && claimCodeFrom(step.id) !== undefined && entryFor(step) !== undefined);
   });
   const postedOnce = posting.filter((step, at) => entryFor(step) === undefined || posting.findIndex(({ id }) => id === step.id) === at);
   return [
     ...postedOnce.map((step) => observationOf(step, posting, entryFor(step))),
-    ...byClaimCode.flatMap((entry) => (steps.some(({ id }) => id === entry.key) ? [] : [unheldObservationOf(entry, claimCodeFrom(entry.key)!)])),
+    ...record.flatMap((entry) => {
+      const claimCode = claimCodeFrom(entry.key);
+      return claimCode === undefined || steps.some(({ id }) => id === entry.key) ? [] : [unheldObservationOf(entry, claimCode)];
+    }),
   ];
 }
