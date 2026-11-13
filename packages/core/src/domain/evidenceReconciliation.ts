@@ -187,8 +187,9 @@ function outOfBalanceByFeatureOf(claimReconciliations: readonly ClaimReconciliat
 }
 
 // A claim code written as a tag anywhere but on a scenario is read by no claim: in a title, a step, a description or a comment.
+// Punctuation stuck to its end, as in a list, leaves it a claim code.
 function excludedClaimCodeOccurrencesOf(features: readonly FeatureAsWritten[]): number {
-  const claimCodesIn = (words: readonly string[]): number => words.filter((word) => claimCodeFrom(word) !== undefined).length;
+  const claimCodesIn = (words: readonly string[]): number => words.filter((word) => claimCodeFrom(word.replace(/\p{P}+$/u, "")) !== undefined).length;
   return features.reduce((sum, { wordsWrittenAsTags, scenarios }) => sum + claimCodesIn(wordsWrittenAsTags) - claimCodesIn(scenarios.flatMap(({ tags }) => tags)), 0);
 }
 
