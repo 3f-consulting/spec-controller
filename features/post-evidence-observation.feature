@@ -110,6 +110,13 @@ Feature: Evidence Observations are posted, each to its claim
       when balance posts the evidence
       then nothing will be posted
 
+    @unit @CLM-OBS-130
+    Scenario: balance posts from a Cucumber evidence report that leaves out a feature's or a scenario's empty lists
+      given Cucumber's evidence report left out the scenarios of a feature that had none, the steps of a scenario that had none, and the tags of a scenario that had none
+      and the scenario with no tags had every step pass
+      when balance posts the evidence
+      then an Evidence Observation will be posted for that scenario alone, as passed, citing no claim code
+
     @unit
     Scenario Outline: balance posts what could not run as never ran
       given <source> said <what could not run>

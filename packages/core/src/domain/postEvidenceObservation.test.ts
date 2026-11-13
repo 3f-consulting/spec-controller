@@ -260,6 +260,26 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
 
     expect(postedByScenario(report)).toEqual([]);
   });
+
+  it("[CLM-OBS-130] Cucumber's evidence report leaving out a feature's empty elements, and a scenario's empty steps and another's empty tags, as Cucumber for Ruby and the JVM write it, posts the scenario with no tags alone, as passed, citing no claim code", () => {
+    const passed = { status: "passed", duration: 1000 };
+    const report = [
+      { uri: "features/empty.feature", id: "empty", keyword: "Feature", name: "empty", line: 1, description: "" },
+      {
+        uri: "features/one.feature",
+        id: "one",
+        keyword: "Feature",
+        name: "one",
+        line: 1,
+        elements: [
+          { id: "one;stepless", keyword: "Scenario", type: "scenario", name: "stepless", line: 4, tags: [{ name: "@CLM-ONE-001", line: 3 }] },
+          { id: "one;untagged", keyword: "Scenario", type: "scenario", name: "untagged", line: 6, steps: [{ keyword: "Given ", name: "one adds one", line: 7, result: passed }] },
+        ],
+      },
+    ];
+
+    expect(postedByScenario(report).map(({ name, result, cites }) => ({ name, result, cites }))).toEqual([{ name: "untagged", result: "passed", cites: [] }]);
+  });
 });
 
 describe("balance posts nothing for a test that was skipped", () => {
