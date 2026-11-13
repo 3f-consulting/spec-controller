@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ClaimCode } from "./claimCodes.js";
-import { claimReconciliationOf, claimReconciliationsOf } from "./claimReconciliation.js";
+import { claimReconciliationOf, claimReconciliationsOf, evidenceGroupsOf } from "./claimReconciliation.js";
 import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
 import type { EvidenceObservation, PhantomClaim, Result, UnnamedClaim } from "./postEvidenceObservation.js";
 
@@ -152,5 +152,50 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations b
     const reconciliation = claimReconciliationOf(claimOf(read, kinds), observations.map(placedObservation), false);
 
     expect(reconciliation.qualityCheckReconciliations.map(sortedAs)).toEqual(sorted);
+  });
+});
+
+// Evidence on the unnamed claim as a group row writes it: its kind, result, place, the codes it cites, and its name.
+type Unnamed = readonly [kind: QualityCheckKind, result: Result, place: string, cites: readonly ("001" | "002")[], name: string];
+
+const unnamedObservation = ([kind, result, place, cites, name]: Unnamed): EvidenceObservation => ({
+  cites: cites.map((number) => ({ featureCode: "ONE", number })),
+  result,
+  kind,
+  place,
+  name,
+  notes: [],
+});
+
+const groupsOn = (evidence: readonly Unnamed[]): ReturnType<typeof evidenceGroupsOf> =>
+  evidenceGroupsOf(claimReconciliationOf({}, evidence.map(unnamedObservation), false));
+
+describe("evidence of the same kind, file and shared claim code will share a group", () => {
+  it.each<[string, readonly Unnamed[], readonly string[]]>([
+    ["CLM-LDG-065", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "a.test.ts", [], "y"]], ["unit a.test.ts  2"]],
+    ["CLM-LDG-066", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "b.test.ts", [], "y"]], ["unit a.test.ts  1", "unit b.test.ts  1"]],
+    ["CLM-LDG-067", [["unit", "passed", "a.test.ts", [], "x"], ["integration", "passed", "a.test.ts", [], "y"]], ["unit a.test.ts  1", "integration a.test.ts  1"]],
+    ["CLM-LDG-068", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "a.test.ts", ["001"], "y"]], ["unit a.test.ts  1", "unit a.test.ts ONE-001 1"]],
+    ["CLM-LDG-073", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "a.test.ts", ["001", "002"], "y"]], ["unit a.test.ts  2"]],
+    ["CLM-LDG-069", [["fitness", "passed", "ci / Lint", [], "Lint"], ["fitness", "passed", "ci / Audit", [], "Audit"]], ["fitness   2"]],
+    ["CLM-LDG-070", [["fitness", "passed", "ci / Lint", [], "Lint"], ["fitness", "passed", "ci / Audit", ["001"], "Audit"]], ["fitness   1", "fitness  ONE-001 1"]],
+  ])("[%s] the unnamed claim's evidence falls into its groups", (_clm, evidence, groups) => {
+    const read = groupsOn(evidence).map(({ kind, file, claimCode, qualityCheckReconciliations }) =>
+      [kind, file ?? "", claimCode ? `${claimCode.featureCode}-${claimCode.number}` : "", qualityCheckReconciliations.length].join(" "),
+    );
+
+    expect(read).toEqual(groups);
+  });
+});
+
+describe("a group of tests will count them and name those that failed", () => {
+  it.each<[string, readonly Unnamed[], number, number, number, readonly string[]]>([
+    ["CLM-LDG-071", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "passed", "a.test.ts", [], "b"]], 2, 2, 0, []],
+    ["CLM-LDG-072", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "failed", "a.test.ts", [], "b"]], 2, 1, 1, ["b"]],
+    ["CLM-LDG-074", [["fitness", "passed-on-error", "ci / Lint", [], "Lint"]], 1, 1, 0, []],
+  ])("[%s] a group on the unnamed claim counts what ran, passed and failed, naming the failures", (_clm, evidence, ran, passed, failed, failures) => {
+    expect(groupsOn(evidence).map((group) => ({ ran: group.ran, passed: group.passed, failed: group.failed, failures: group.failures }))).toEqual([
+      { ran, passed, failed, failures },
+    ]);
   });
 });

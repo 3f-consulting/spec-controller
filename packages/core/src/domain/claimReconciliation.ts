@@ -140,3 +140,7 @@ export function claimReconciliationsOf(claims: readonly ExecutableClaim[], obser
     claimReconciliationOf(claim, observationsFiledUnder(claim, observations), claim.claimCode !== undefined && shared(claim.claimCode)),
   );
 }
+
+export function evidenceGroupsOf(_claimReconciliation: ClaimReconciliation): EvidenceGroup[] {
+  return [];
+}
