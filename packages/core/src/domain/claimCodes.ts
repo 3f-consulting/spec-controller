@@ -48,3 +48,18 @@ export type Allocation =
       readonly featureCodeAlreadyOnAFile: boolean;
     }
   | { readonly kind: "unknown-feature-code"; readonly featureCode: string; readonly featureCodes: readonly string[] };
+
+const CITATION = /\[CLM-([A-Z0-9]{2,5})-(\d+)\]/g;
+
+export function claimCodeCitationsIn(text: string): ClaimCode[] {
+  return [...text.matchAll(CITATION)].map(([, featureCode, number]) => ({ featureCode: featureCode!, number: number! }));
+}
+
+const CLAIM_CODE = /^CLM-([A-Z0-9]{2,5})-(\d+)$/;
+
+export function claimCodeFrom(word: string): ClaimCode | undefined {
+  const [, featureCode, number] = CLAIM_CODE.exec(word) ?? [];
+  return featureCode === undefined || number === undefined ? undefined : { featureCode, number };
+}
+
+export const sameCode = (one: ClaimCode, other: ClaimCode): boolean => one.featureCode === other.featureCode && one.number === other.number;

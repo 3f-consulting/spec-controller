@@ -1,5 +1,5 @@
-import type { ClaimCode } from "./claimCodes.js";
-import type { QualityCheckKind } from "./postEvidenceObligation.js";
+import { claimCodeCitationsIn, sameCode, type ClaimCode } from "./claimCodes.js";
+import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
 
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
 
@@ -117,4 +117,16 @@ export interface StepRecordEntryAsWritten {
 export interface ShellAnswers {
   readonly invokesAnywhere: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
+}
+
+export function evidenceObservationsOf(results: readonly ResultsByFileAsWritten[]): EvidenceObservation[] {
+  return results.flatMap(({ file, results: inFile }) =>
+    inFile
+      .filter(({ status }) => status === "passed")
+      .map(({ title }) => ({ cites: claimCodeCitationsIn(title), result: "passed" as const, kind: "unit" as const, place: file, name: title, notes: [] })),
+  );
+}
+
+export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {
+  return claimCode === undefined ? [] : observations.filter(({ cites }) => cites.some((cited) => sameCode(cited, claimCode)));
 }

@@ -33,3 +33,22 @@ export type RunRequest =
       readonly exitZero: boolean;
     }
   | { readonly command: "allocate"; readonly featureCode: string; readonly asNewFeatureCode: boolean };
+
+const INPUT_FLAGS: Readonly<Record<string, InputKind>> = { "--features": "features", "--vitest": "vitest" };
+
+// Each flag takes the argument after it as its value.
+function inputsOf(args: readonly string[]): InputRequest[] {
+  const inputs: InputRequest[] = [];
+  for (let at = 0; at < args.length; at += 2) {
+    const kind = INPUT_FLAGS[args[at]!];
+    const path = args[at + 1];
+    if (kind !== undefined && path !== undefined) inputs.push({ kind, path, byDefault: false });
+  }
+  return inputs;
+}
+
+const DEFAULT_OUTPUT: OutputRequest<ReportFormat> = { format: "md", destination: { to: "standard-output" } };
+
+export function runRequestOf([, ...args]: readonly string[]): RunRequest {
+  return { command: "balance", inputs: inputsOf(args), outputs: [DEFAULT_OUTPUT], strict: false, exitZero: false };
+}

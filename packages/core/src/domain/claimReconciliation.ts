@@ -62,3 +62,15 @@ export interface EvidenceGroup {
   readonly failed: number;
   readonly failures: readonly string[];
 }
+
+const hasAKind = (obligation: EvidenceObligation): obligation is ObligationWithAKind => obligation.kind !== undefined;
+
+export function claimReconciliationOf(claim: ExecutableClaim, observations: readonly EvidenceObservation[]): ClaimReconciliation {
+  const qualityCheckReconciliations = claim.obligations.filter(hasAKind).flatMap((obligation) =>
+    observations
+      .filter(({ kind, result }) => kind === obligation.kind && result === "passed")
+      .map((observation) => ({ outcome: "satisfied" as const, kind: obligation.kind, obligation, observation })),
+  );
+  const balanced = qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied");
+  return { claim, qualityCheckReconciliations, verdict: balanced ? "balanced" : "out-of-balance" };
+}

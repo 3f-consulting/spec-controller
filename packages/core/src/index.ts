@@ -54,3 +54,11 @@ export type {
   OutputRefusal,
   OutputRequest,
 } from "./domain/outputPlan.js";
+
+export { claimReconciliationOf } from "./domain/claimReconciliation.js";
+export { runVerdictOf } from "./domain/evidenceReconciliation.js";
+export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
+export { evidenceObservationsOf, observationsFiledUnder } from "./domain/postEvidenceObservation.js";
+export { featureAsWrittenFrom } from "./inputs/gherkin.js";
+export { resultsByFileFrom } from "./inputs/vitest.js";
+export { markdownReportOf } from "./reports/markdown.js";

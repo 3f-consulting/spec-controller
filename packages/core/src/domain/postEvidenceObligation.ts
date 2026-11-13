@@ -1,4 +1,4 @@
-import type { ClaimCode } from "./claimCodes.js";
+import { claimCodeFrom, type ClaimCode } from "./claimCodes.js";
 
 export type QualityCheckKind = "fitness" | "unit" | "integration" | "e2e" | "performance";
 
@@ -39,4 +39,13 @@ export interface FeatureAsWritten {
 export interface ClaimReadingSettings {
   readonly deferralTags: readonly string[];
   readonly strict: boolean;
+}
+
+export function executableClaimsOf(features: readonly FeatureAsWritten[]): ExecutableClaim[] {
+  return features.flatMap(({ file, scenarios }) =>
+    scenarios.map(({ tags, title }) => {
+      const [claimCode] = tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
+      return { file, title, obligations: tags.includes("unit") ? [{ kind: "unit" as const }] : [], ...(claimCode && { claimCode }) };
+    }),
+  );
 }
