@@ -41,11 +41,35 @@ export interface ClaimReadingSettings {
   readonly strict: boolean;
 }
 
-export function executableClaimsOf(features: readonly FeatureAsWritten[], _settings: ClaimReadingSettings): ExecutableClaim[] {
-  return features.flatMap(({ file, scenarios }) =>
-    scenarios.map(({ tags, title }) => {
-      const [claimCode] = tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
-      return { file, title, obligations: tags.includes("unit") ? [{ kind: "unit" as const }] : [], ...(claimCode && { claimCode }) };
-    }),
-  );
+const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
+
+const QUALITY_CHECK_KINDS: readonly QualityCheckKind[] = ["fitness", "unit", "integration", "e2e", "performance"];
+
+const CLM_COLUMN = "clm";
+
+const isDeferred = (tags: readonly string[], { deferralTags, strict }: ClaimReadingSettings): boolean =>
+  !strict && tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));
+
+// A strict run reads a pending kind of check, such as @integrationpending, as that kind.
+const obligationsOf = (tags: readonly string[], strict: boolean): EvidenceObligation[] =>
+  QUALITY_CHECK_KINDS.filter((kind) => tags.includes(kind) || (strict && tags.includes(`${kind}pending`))).map((kind) => ({ kind }));
+
+// Each row's clm cell, across every Examples block, when any block has a clm column; a block without one gives no cell.
+function clmCellsOf({ examples }: ScenarioAsWritten): (string | undefined)[] | undefined {
+  if (!examples.some(({ columns }) => columns.includes(CLM_COLUMN))) return undefined;
+  return examples.flatMap(({ columns, rows }) => rows.map(({ cells }) => cells[columns.indexOf(CLM_COLUMN)]));
+}
+
+function claimsOf(file: string, scenario: ScenarioAsWritten, settings: ClaimReadingSettings): ExecutableClaim[] {
+  if (isDeferred(scenario.tags, settings)) return [];
+  const obligations = obligationsOf(scenario.tags, settings.strict);
+  const tagged = scenario.tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
+  const claim = (claimCode: ClaimCode | undefined): ExecutableClaim => ({ file, title: scenario.title, obligations, ...(claimCode && { claimCode }) });
+  const cells = clmCellsOf(scenario);
+  if (cells === undefined) return [claim(tagged.length === 1 ? tagged[0] : undefined)];
+  return cells.map((cell) => claim(tagged.length === 0 ? claimCodeFrom(cell ?? "") : undefined));
+}
+
+export function executableClaimsOf(features: readonly FeatureAsWritten[], settings: ClaimReadingSettings): ExecutableClaim[] {
+  return features.flatMap(({ file, scenarios }) => scenarios.flatMap((scenario) => claimsOf(file, scenario, settings)));
 }
