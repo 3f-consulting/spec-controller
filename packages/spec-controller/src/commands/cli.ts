@@ -18,4 +18,13 @@ const program = await loadGuarded(
   complain,
   endRunOn,
 );
-if (program !== undefined) endRunOn(program.main(process.argv.slice(2), process.cwd(), program.processStreams, { complain }));
+// A working directory that was removed cannot be read; the shell's record of it names where the run started.
+function workingFolder(): string {
+  try {
+    return process.cwd();
+  } catch {
+    return process.env["PWD"] ?? "";
+  }
+}
+
+if (program !== undefined) endRunOn(program.main(process.argv.slice(2), workingFolder(), program.processStreams, { complain }));

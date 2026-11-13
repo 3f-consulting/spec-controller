@@ -54,6 +54,8 @@
   "flag-help": "show this help",
   "flag-new": "the feature code is new: give its first claim code",
   "input-absent": "{input} {path} does not exist",
+  "input-default-unreadable": "{input} {path}, read by default, cannot be read: {detail}",
+  "working-folder-removed": "the working directory the run started in has been removed",
   "input-not-permitted": "spec-controller may not read {input} {path}: {detail}",
   "input-wrong-kind-of-path": "{input} {path} is not {detail}",
   "input-does-not-parse": "{input} {path} does not parse: {detail}",

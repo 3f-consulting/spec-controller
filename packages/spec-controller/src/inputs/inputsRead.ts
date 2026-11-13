@@ -164,7 +164,8 @@ function filesOf({ kind, path: shown, byDefault }: InputNamed, folder: string): 
   const path = resolve(folder, shown);
   const reads = READERS[kind].reads;
   const stats = statAt(path);
-  if (stats === "absent" && byDefault) return { none: true };
+  // A default that does not exist is none, unless the folder the run started in is gone too.
+  if (stats === "absent" && byDefault) return statAt(folder) === "absent" ? { files: [failed(shown, "absent", "working-folder-removed")] } : { none: true };
   if (typeof stats === "string") return { files: [failed(shown, stats, "")] };
   if (stats.isDirectory() && reads !== "file") {
     try {
@@ -183,6 +184,7 @@ function refusalOf(request: InputNamed, read: Extract<InputRead<unknown>, { ok: 
   const reader = READERS[request.kind];
   const inFolder = read.path !== request.path;
   const input = text(inFolder ? reader.fileIs : reader.inputIs);
+  if (request.byDefault && read.fault === "absent") return { key: "input-default-unreadable", values: { input, path: read.path, detail: text(read.detail) } };
   const detail = read.fault === "wrong-kind-of-path" ? text(`path-${read.detail}`) : read.detail;
   return { key: `input-${read.fault}`, values: { input, path: read.path, detail, shape: text(`shape-${request.kind}`) } };
 }
