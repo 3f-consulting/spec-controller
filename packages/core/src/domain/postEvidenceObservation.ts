@@ -143,9 +143,40 @@ export function observationsByFile(results: readonly ResultsByFileAsWritten[], t
   });
 }
 
+const saidBy = (failure: FailureAsWritten | undefined): { message?: string } => {
+  const message = failure?.message ?? failure?.text;
+  return message === undefined ? {} : { message };
+};
+
+// A pytest error is a test that never reached its assertions; with no class name, a file that did not collect.
+function pytestObservation(result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
+  const { className, name, file, clmProperties, outcome, failure } = result;
+  if (outcome === "skipped") return [];
+  const collected = className !== "";
+  const cites = collected ? clmProperties.flatMap((property) => claimCodeFrom(property) ?? []) : [];
+  const resultOf: Result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
+  const place = shownFromTarget(file ?? (collected ? className ?? name : name), targetFolder);
+  return [{ cites, result: resultOf, kind: "unit", place, ...(collected && { name }), ...saidBy(failure), notes: [] }];
+}
+
+// A JUnit case with no class name is its suite's own failure, such as a Go package that did not build; one with no name
+// is its class's, such as a Java class whose setup before all its tests failed. Neither reached a test's assertions.
+function junitObservation(suite: ResultsBySuiteAsWritten, result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
+  const { className = "", name, file, outcome, failure } = result;
+  if (outcome === "skipped") return [];
+  if (outcome !== "" && (className === "" || name === "")) {
+    return [{ cites: [], result: "never-ran", kind: "unit", place: className || suite.name, ...saidBy(failure), notes: [] }];
+  }
+  const cites = nearestCitations([className, ...name.split("/")]);
+  const place = shownFromTarget(file ?? (className || suite.name), targetFolder);
+  return [{ cites, result: outcome === "" ? "passed" : "failed", kind: "unit", place, name, ...saidBy(failure), notes: [] }];
+}
+
 // Results kept by suite: JUnit's, from Go, Java and Kotlin, and pytest's.
-export function observationsBySuite(_suites: readonly ResultsBySuiteAsWritten[], _targetFolder: string): EvidenceObservation[] {
-  return [];
+export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], targetFolder: string): EvidenceObservation[] {
+  return suites.flatMap((suite) =>
+    suite.results.flatMap((result) => (suite.report === "pytest" ? pytestObservation(result, targetFolder) : junitObservation(suite, result, targetFolder))),
+  );
 }
 
 export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {
