@@ -43,8 +43,8 @@ function featureCodesUnder(top: string): Read<string[]> {
 
 // A boundary that left history unread is noted with every answer.
 function boundaryNotes(boundary: HistoryBoundary): AllocateNote[] {
-  if (boundary.kind === "not-a-repository") return [{ note: "no-history-read" }];
-  return boundary.kind === "shallow" ? [{ note: "history-before", commit: boundary.before }] : [];
+  if (boundary.kind === "complete") return [];
+  return [boundary.kind === "shallow" ? { note: "history-before", commit: boundary.before } : { note: "no-history-read" }];
 }
 
 // A new feature code's answer says nothing of what was seen; it notes only a feature file that already has the code.
