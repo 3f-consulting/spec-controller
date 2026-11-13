@@ -76,6 +76,12 @@ export const isFeatureCode = (word: string): boolean => FEATURE_CODE.test(word);
 
 export const featureCodeOfFile = ({ fileTags }: { readonly fileTags: readonly string[] }): string | undefined => fileTags.find(isFeatureCode);
 
+// An Outline whose Examples have a clm column is one claim for each row, named by its clm cell.
+export const CLM_COLUMN = "clm";
+
+export const hasClmColumn = (examples: readonly { readonly columns: readonly string[] }[]): boolean =>
+  examples.some(({ columns }) => columns.includes(CLM_COLUMN));
+
 export const sameCode = (one: ClaimCode, other: ClaimCode): boolean => one.featureCode === other.featureCode && one.number === other.number;
 
 // A feature file as the claim code check reads it: its tags above Feature:, and each scenario's tags, title and Examples blocks.
@@ -113,7 +119,7 @@ function misfiledCodes(feature: FileToCheck, filesByCode: ReadonlyMap<string, re
 }
 
 function codesOnOneScenario(file: string, { tags, title, examples }: ScenarioToCheck): ClaimCodeError[] {
-  if (examples.some(({ columns }) => columns.includes("clm"))) {
+  if (hasClmColumn(examples)) {
     return codesIn([...tags, ...examples.flatMap((block) => block.tags)]).map((claimCode) => ({ kind: "claim-code-beside-clm-column", file, title, claimCode }));
   }
   const claimCodes = codesIn(tags);

@@ -1,4 +1,4 @@
-import { claimCodeFrom, type ClaimCode } from "./claimCodes.js";
+import { CLM_COLUMN, claimCodeFrom, hasClmColumn, type ClaimCode } from "./claimCodes.js";
 
 export type QualityCheckKind = "fitness" | "unit" | "integration" | "e2e" | "performance";
 
@@ -45,8 +45,6 @@ const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "tod
 
 const QUALITY_CHECK_KINDS: readonly QualityCheckKind[] = ["fitness", "unit", "integration", "e2e", "performance"];
 
-const CLM_COLUMN = "clm";
-
 const isDeferred = (tags: readonly string[], { deferralTags, strict }: ClaimReadingSettings): boolean =>
   !strict && tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));
 
@@ -56,7 +54,7 @@ const obligationsOf = (tags: readonly string[], strict: boolean): EvidenceObliga
 
 // Each row's clm cell, across every Examples block, when any block has a clm column; a block without one gives no cell.
 function clmCellsOf({ examples }: ScenarioAsWritten): (string | undefined)[] | undefined {
-  if (!examples.some(({ columns }) => columns.includes(CLM_COLUMN))) return undefined;
+  if (!hasClmColumn(examples)) return undefined;
   return examples.flatMap(({ columns, rows }) => rows.map(({ cells }) => cells[columns.indexOf(CLM_COLUMN)]));
 }
 
