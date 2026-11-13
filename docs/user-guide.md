@@ -538,7 +538,7 @@ To convert a fitness function you write two artefacts and no third. Neither is a
 - A step stating a claim code that no scenario carries posts to a **phantom claim**.
 - A step stating no claim code posts to the **unnamed claim**.
 
-**`specController.fitnessChecks` is not read.** Like any other key this tool does not read, it is named in the report under `### Configuration errors` as `configuration-unknown-key`, as a misspelling is (see [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped)).
+**`specController.fitnessChecks` is not read.** Like any other key this tool does not read, it is named in the report in `## Errors in the inputs` as `configuration-unknown-key`, as a misspelling is (see [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped)).
 
 **One `toJSON(steps)` dump step per job** lets the reconciler read what each step did, and `--ci-steps` points `balance` at it. That is wiring, not part of the evidence obligation. [Wiring into CI](#wiring-into-ci) covers it, with the `if: always()` rule that goes with it.
 
@@ -579,7 +579,7 @@ Discovery is not Node-shaped: it does not match `package.json` script names agai
 
 - **`runners` is keyed by the four layers and nothing else:** `unit`, `integration`, `e2e`, `performance`.
 - **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this layer*. An omitted key says nothing about the layer.
-- **A key outside the four** is named under `### Configuration errors` as `runner-key-not-a-layer`, excludes nothing, and does not abort the run.
+- **A key outside the four** is named in `## Errors in the inputs` as `runner-key-not-a-layer`, excludes nothing, and does not abort the run.
 - **No `runners` block at all is not an error.** Every step that is not a reconciler step, a non-check or plumbing becomes a candidate. That is the zero-annotation report.
 - **A runner is recognised only as the command a step runs.** That is the command a step's line opens with, or a command after `&&` or `;` in it, past any `NAME=value` settings. A runner named anywhere else, as an argument or a path, leaves the step a check, and so does a step that pipes the runner's output into another command.
 - **A runner may be handed on to.** The launchers are `npx`, `pnpm exec`, `pnpm <bin>`, `yarn <bin>`, `bunx`, `python -m`, `python3 -m`, `uv run`, `poetry run`, `pipenv run`, `coverage run -m` and `bundle exec`, and launchers chain, so `uv run python -m pytest` reaches `pytest`. The wrapper `xvfb-run` hands on too, past its options and their values.
@@ -587,7 +587,7 @@ Discovery is not Node-shaped: it does not match `package.json` script names agai
 - **A runner named in several words is recognised where a command opens with all of them**, such as `mvn test`, `./mvnw test`, `./gradlew test`, `./gradlew check` or `./gradlew :app:test`. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: `"rspec"` covers `bundle exec rspec`.
 - **Any other variant is a check.** A launcher, script runner or wrapper not listed here leaves the step a check that runs the runner. Add such a step to `notChecks`, or run the runner in one of the variants above.
 
-These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The plumbing actions, which are neither checks nor runners, are listed there too: `actions/checkout`, `actions/cache`, `actions/setup-*`, `actions/upload-artifact` and `actions/download-artifact`.
+These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json): `actions/checkout`, `actions/cache`, `actions/setup-*`, `actions/upload-artifact` and `actions/download-artifact`.
 
 ### Naming your non-checks — `notChecks`
 
@@ -596,10 +596,10 @@ These variants are the only ones `balance` reads, one list per claim, in [`packa
 - **Each entry is `<workflow file>:<job id>:<step name>`**, matched **exactly**: no prefix form, no glob, no bare name.
 - **To take a whole workflow out, narrow `--ci`** rather than listing its steps.
 - **A non-check is counted on the report**, not dropped. The report's **Step account** counts it under *Non-checks*, in the row of its workflow and job.
-- **An entry that matches no step of a workflow the run read is named** under `### Configuration errors`, as `not-checks-entry-matches-no-step`. An entry naming a workflow the run did not read is not judged.
+- **An entry that matches no step of a workflow the run read is named** in `## Errors in the inputs`, as `not-checks-entry-matches-no-step`. An entry naming a workflow the run did not read is not judged.
 - **Never list `balance` itself or its `toJSON(steps)` dump.** They are excluded by construction.
 
-**GitHub plumbing is excluded by construction too.** A step whose only work is one of these actions is excluded: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/upload-artifact` and `actions/download-artifact`. They are matched on owner and repository, whatever ref or sub-path follows. Such a step moves code, tools and files and judges nothing, so the report counts it under *Plumbing* in the **Step account**, never as a check. The list is closed: every other action stays a candidate, including `actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks` is a non-check, as you named it.
+**GitHub plumbing is excluded by construction too.** A step whose only work is one of these actions is excluded: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/upload-artifact` and `actions/download-artifact`. They are matched on owner and repository, whatever ref follows. Such a step moves code, tools and files and judges nothing, so the report counts it under *Plumbing* in the **Step account**, never as a check. The list is closed: every other action stays a candidate, including `actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks` is a non-check, as you named it.
 
 ### Deferring a scenario — `deferralTags`
 
@@ -607,7 +607,7 @@ A scenario you have written but deliberately not yet evidenced is deferred with 
 
 - **A scenario carrying a recognised deferral tag is not an executable claim.** It raises no evidence obligation and has no Claim Reconciliation, so it posts nothing and does not affect the verdict.
 - **Evidence that still cites a deferred scenario's code lands on a phantom claim**, as `cites-unknown-claim`, because no executable claim carries the code.
-- **The tag counts only on the scenario itself**, written on the scenario's own tag line.
+- **The tag defers the scenario it is on, every scenario of the Rule it is on, or every scenario of the Feature it is on.**
 
 The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your own:
 
@@ -619,14 +619,12 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 
 - **Your list extends the built-in set and never replaces it.** `@wip` defers whatever you configure.
 - **An entry may be written bare or with its `@`.** Surrounding whitespace is ignored.
-- **A value that is not an array, or an entry that is not a string,** is read as absent rather than refused, and is named under `### Configuration errors` as `configuration-wrong-kind`.
+- **A value that is not an array, or an entry that is not a string,** is read as absent rather than refused, and is named in `## Errors in the inputs` as `configuration-wrong-kind`.
 - **A tag in neither list never defers the scenario**, however much it looks like a deferral tag.
 
 **A deferral tag is scenario scope. `@<quality-check-kind>pending` is not.** `@integrationpending` is ignored: it raises no integration obligation, so a passing `@unit` beside it still reconciles `satisfied`, and an integration test citing the scenario reads `not-asked-for`. A deferral tag puts off the whole scenario.
 
 **`--strict` reads every claim as if nothing were put off.** A deferral tag is ignored, so the scenario is an executable claim again, and `@<quality-check-kind>pending` is read as `@<quality-check-kind>`, raising that obligation. It changes no exit code.
-
-`balance --help` prints the key and the built-in set.
 
 ### Configuration the run cannot use is named, never dropped
 
@@ -640,7 +638,7 @@ A run names each configuration entry it cannot use with one of these codes:
 | `not-checks-entry-matches-no-step` | a `notChecks` entry that matches no step of a workflow the run read makes no step a non-check |
 | `not-checks-entry-not-a-step-name` | a `notChecks` entry that does not name a step as `<workflow file>:<job id>:<step name>` makes no step a non-check |
 
-None of them refuses the run. Each is a row of the table under `### Configuration errors`, in `## Errors in the inputs` right after the run provenance, so the rest of the report is the one you would get without that entry. The row gives its code under *Kind*, and the entry as written under *Setting*. The JSON carries them under `errorsInTheInputs.configurationErrors`.
+None of them refuses the run. Each is a line in `## Errors in the inputs`, right after the run provenance, so the rest of the report is the one you would get without that entry. The line gives its code, then the entry as written. The JSON carries them under `errorsInTheInputs.configurationErrors`.
 
 ### Limits
 
@@ -775,17 +773,17 @@ Two limits:
 
 The output is the **Evidence Reconciliation**, the whole reconciliation, in two renderings of the same model:
 
-- **Markdown**, for people. Its sections come in a fixed order: `## Run provenance`; `## Errors in the inputs`, when there are any; `## Run integrity`, when some evidence never ran; `## Summary`, with the run verdict and the totals; and `## Claim Reconciliations`. There is one **Claim Reconciliation** per claim, headed by its claim code, or by its title when it has none. Each carries a **verdict**, **balanced** or **out-of-balance**, and a table of its **Quality Check Reconciliations**, one row each, with its **outcome** (`satisfied`, `missing`, `failing`, `cannot-fail`, …), its kind of quality check, where to look, and what was said. The rows whose outcome is not `satisfied` are the **reconciling items**. Every table has a line above it saying what its columns mean, and a section the run had nothing for is left out, except `## Claim Reconciliations`, which reads *None.* when there are none.
-- **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. Its top-level keys are `claimReconciliations`, `runVerdict`, `totals`, `provenance`, and, when the run had them, `stepAccount`, `errorsInTheInputs` and `runIntegrity`. `runVerdict.verdict` is the run verdict (`balanced`, `out-of-balance` or `not-reconciled`), and a `not-reconciled` verdict carries `runVerdict.why` (`unsound`, `claim-code-errors` or `nothing-to-reconcile`), so automation reads it instead of working it out from the Claim Reconciliations.
+- **Markdown**, for people. It opens with its title, `# Evidence Reconciliation`, and one sentence that says what the run verdict is and what it asks of you. Its sections then come in a fixed order: `## Run provenance`; `## Errors in the inputs`, when there are any; `## Run integrity`, when some evidence never ran; `## Summary`, with the run verdict and the totals; `## Step account`, when the run read CI workflows; and `## Claim Reconciliations`. Every table has a key above it saying what each column means. A section the run had nothing for is left out, except `## Claim Reconciliations`, which reads *None.* when there are none.
+- **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. Its top-level keys are `claimReconciliations`, `runVerdict`, `totals`, `provenance`, and, when the run had them, `stepAccount`, `errorsInTheInputs` and `runIntegrity`. `runVerdict.verdict` is the run verdict (`balanced`, `out-of-balance` or `not-reconciled`), and a `not-reconciled` verdict carries `runVerdict.why` (`unsound`, `claim-code-errors` or `nothing-to-reconcile`), so automation reads it instead of working it out from the Claim Reconciliations. The JSON keeps every count, zero included.
 
-Both carry a **provenance** header recording what was reconciled (target, source SHA, tool version, input paths), so a reconciliation is reproducible and attributable.
+Both carry a **provenance** recording what was reconciled: the target, the source SHA, the tool's commit when it runs from its own checkout, the tool version, the time the run started, and each input the run read with its path. So a reconciliation is reproducible and attributable. The Markdown gives each input the run read a line of its own, one read by default included, and leaves out an input it did not read. The JSON lists every input, with a `path` only for one the run read.
 
 The JSON's structure is stated by a JSON Schema the package ships, as `dist/spec-reconciliation.schema.json` inside the installed `spec-controller` package (in a local install, `node_modules/spec-controller/dist/`). It names every key the JSON may carry and refuses any other. So validate a report you are handed against the schema of the version that wrote it, which the report's provenance names, and read a change to the JSON's structure as a change to the schema.
 
 ### How a run works
 
-1. It parses your Gherkin scenarios and their `@`-tags into **evidence obligations**: the debit, what is specified.
-2. It parses the evidence reports you passed (Vitest, Cucumber and your other test reports, and the fitness functions in CI and `package.json`) into **evidence observations**: the credit, what actually ran.
+1. It reads your Gherkin scenarios and their `@`-tags into **evidence obligations**: the debit, what is specified.
+2. It reads the evidence reports you passed and the steps of your CI workflows, with the step record when you pass one, into **evidence observations**: the credit, what actually ran.
 3. It reconciles evidence obligations against evidence observations, per claim, one kind of quality check at a time.
 4. It assembles the **Evidence Reconciliation** and renders it.
 
@@ -793,17 +791,37 @@ The JSON's structure is stated by a JSON Schema the package ships, as `dist/spec
 
 `## Summary` opens with the **run verdict**:
 
-| Run verdict | Exit | What it says |
-| --- | --- | --- |
-| `balanced` | `0` | every Claim Reconciliation balances |
-| `out-of-balance` | `1` | at least one Claim Reconciliation is out of balance |
-| `not-reconciled (unsound)` | `3` | some evidence never ran, so the run cannot be relied on to show a disagreement |
-| `not-reconciled (claim-code-errors)` | `3` | a claim code is misfiled (see [Claim code errors](#claim-code-errors)) |
-| `not-reconciled (nothing-to-reconcile)` | `3` | there is no Claim Reconciliation at all, so the run has no basis for a verdict |
+| Run verdict, in the Markdown | In the JSON | Exit | What it says |
+| --- | --- | --- | --- |
+| balanced | `balanced` | `0` | every Claim Reconciliation balances |
+| out of balance | `out-of-balance` | `1` | at least one Claim Reconciliation is out of balance |
+| not reconciled, as unsound | `not-reconciled`, `unsound` | `3` | some evidence never ran, so the run cannot be relied on to show a disagreement |
+| not reconciled, for claim code errors | `not-reconciled`, `claim-code-errors` | `3` | a claim code is misfiled (see [Claim code errors](#claim-code-errors)) |
+| not reconciled, with nothing to reconcile | `not-reconciled`, `nothing-to-reconcile` | `3` | there is no Claim Reconciliation at all, so the run has no basis for a verdict |
 
-Then a table of totals: the Claim Reconciliations, balanced and out of balance; the Quality Check Reconciliations, with a count for each outcome out of balance and for each kind of quality check reading `missing`; the Evidence Observations, by kind of quality check and by whether they landed on an executable claim, a phantom claim or the unnamed claim; the fitness functions that ran; and the claim codes written outside a tag, which mark no scenario.
+Then come the totals, in groups:
 
-`### Out of balance by feature` counts the out-of-balance claims of each feature file. `### Step account` has a row for each workflow and job the run read, counting its steps read, runners, reconciler steps, non-checks, plumbing and candidates, a total over the rows, and how many steps are accounted for.
+- **`### Claim Reconciliations`**: the total, balanced and out of balance. When some claim codes are written in a title, a step or a comment, where no claim reads them, a line under the table counts them.
+- **`### Quality Check Reconciliations, by kind`**: a row for each kind of quality check, with its Evidence Obligations, its Evidence Observations, and a column for each outcome. A row with no kind holds what a scenario asking for no kind of check gives, and the *All* row sums every row. The columns of a row do not add up: one Evidence Obligation answered by two passing tests is 1 Evidence Obligation, 2 Evidence Observations and 2 *Satisfied*.
+- **`### Evidence Observations, by where they were filed`**: how many landed on an executable claim, on a phantom claim and on the unnamed claim, and their total.
+- **`### Out of balance by feature`**, when any claim is: each feature file with an out-of-balance claim, and how many. A phantom claim and the unnamed claim are counted in the totals, on no feature's row.
+
+The Markdown leaves out a kind no claim asks for and no evidence answers, an outcome no row has, the row with no kind when it is empty, and a place nothing was filed on. The JSON's `totals` keeps every kind, the row with no kind under `noKind`, the *All* row under `all`, and every outcome under each, at `0` where there is none.
+
+**`## Step account`** follows the Summary when the run read CI workflows. It has a row for each workflow and job the run read, counting its steps read, then its runners, reconciler steps, non-checks, plumbing and candidates. Each step read is counted once, so a row's last five counts add up to its steps read. A *Total* row sums the jobs when there is more than one. In the JSON, `stepAccount.total` also carries `accountedFor`, the steps the five dispositions count.
+
+### The Claim Reconciliations
+
+`## Claim Reconciliations` is one table, with a row per **Claim Reconciliation**: the executable claims in the order they were read, then the phantom claims, then the unnamed claim.
+
+- **The claim** is named by its claim code; by its code and feature file when another claim shares the code; by its feature file and title when it has no code. A phantom claim is named by the code its evidence cites, and the unnamed claim reads *(unnamed claim)*.
+- **A column for each kind of quality check** some claim asks for or some evidence answers. A cell gives the kind's letter when the claim asks for it and `-` when it does not, then how many of its checks of that kind ran, or `-` for none: `U/2` is a unit test asked for and two that ran, and `-/1` is one unit test that ran for a claim that asked for none. A cell is blank when the claim asks for no check of that kind and none ran for it. A phantom claim's and the unnamed claim's cells read `—`.
+- **The verdict**: **balanced** or **out-of-balance**.
+- **The reconciling items**: each **Quality Check Reconciliation** whose **outcome** is not `satisfied`, as its kind of quality check and outcome, then where to look and what it said, or `—` for none. Where to look is the file or CI step the evidence came from, and the test's name where it has one. What it said is the first line of its message, and every note `balance` added.
+
+On the unnamed claim's row, each reconciling item is a group of its evidence, by kind of quality check, file and shared claim code, with how many ran, passed and failed, and the name of each that failed. So you can tell which file to fix.
+
+Text the inputs gave, such as a title or a path, is quoted as written in a code span, so an odd character breaks no table.
 
 ### Report rows to know
 
@@ -823,19 +841,19 @@ Both reports name each outcome by its handle.
 | `cites-unknown-claim` | the evidence cites a code no executable claim carries: a **phantom claim** | |
 | `cites-no-claim` | the evidence cites no single claim: the **unnamed claim** | this includes evidence citing no code, several codes, or a code several scenarios share |
 
-A phantom claim is headed by the code its evidence cites, and reads *Claim: a code no executable claim has*. The unnamed claim is headed *The unnamed claim*. Evidence that never ran and names no claim, or a code several scenarios share, lands on the unnamed claim; evidence that never ran and names one scenario's code lands on that scenario's Claim Reconciliation.
+Evidence that never ran and names no claim, or a code several scenarios share, lands on the unnamed claim. Evidence that never ran and names one scenario's code lands on that scenario's Claim Reconciliation. There it reads `never-ran`, and the obligation it would have answered reads `missing` unless other evidence of its kind ran.
 
 ### Passes that cannot fail
 
-The outcome to watch for is **cannot-fail**: a fitness function that is green, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run. That makes a green CI lie. A pass that cannot fail is what the workflow file shows on its own. Given the run's step record (`--ci-steps`), the step's own outcome answers the row instead, and a swallowed red reads `failing`.
+The outcome to watch for is **cannot-fail**: a fitness function that is green, but whose CI step or job sets `continue-on-error: true`, so its red might not fail the CI run. That makes a green CI lie. A `continue-on-error` written as an expression is read as not set. Given the run's step record (`--ci-steps`), the step's own outcome answers the row: a swallowed red reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
 
 ### What counts as a claim code
 
-A claim code has the form `CLM-<FFF>-<NNN>`: the prefix `CLM`, a feature code of two to five uppercase letters or digits, then a number of any width. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[CLM-…]` citation in a Vitest title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
+A claim code has the form `CLM-<FFF>-<NNN>`: the prefix `CLM`, a feature code of two to five uppercase letters or digits, then a number of any width. `balance` reads every id with this one grammar, wherever it finds one: a scenario tag, a `[CLM-…]` citation in a test's title, a Cucumber scenario's tag, a CI step's `id:`, or a mention in prose.
 
 So an id such as `@CLM-TOOLONGCODE-001` is not a claim code. It opens no account and cites nothing. A scenario tagged only with it has no claim code, and reconciles as `no-claim-code`.
 
-The tool judges claim code errors only over the corpus that `--features` names.
+The tool judges claim code errors only over the corpus it reads.
 
 **An Outline can make each of its rows a claim of its own.** Give its Examples table a column named `clm`, and put each row's claim code in it. Each row is then a claim under its own code, raising the Evidence Obligations its Outline's tags name, and evidence cites the row's code as it would a scenario's. Such an Outline carries no code of its own. A row whose `clm` cell is empty, or not a claim code, has no claim code, and two rows with one code are duplicates, as two scenarios would be. An Outline with no `clm` column is one claim, under the code its tags carry.
 
@@ -845,28 +863,28 @@ When Cucumber runs an Outline with a `clm` column, each row is credited by Cucum
 
 **A claim code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry arises from the same id written twice:
 
-- Each scenario reconciles as a Claim Reconciliation of its own, headed by the code and naming its own title and file, and every Quality Check Reconciliation on it reads `duplicate-claim-code`.
-- No evidence citing that code can be attributed to either scenario, so both claims are out of balance whatever the evidence says. An evidence observation citing the code credits neither and posts to the unnamed claim, naming the code.
+- Each scenario has a Claim Reconciliation of its own, and every Quality Check Reconciliation on it reads `duplicate-claim-code`. The Markdown names each row by the code and its feature file; the JSON gives each claim its file and title.
+- No evidence citing that code can be attributed to either scenario, so both claims are out of balance whatever the evidence says. An evidence observation citing the code credits neither and posts to the unnamed claim.
 - The rest of the report is unaffected. Every other account reconciles exactly as it would without the duplicate.
 - The run exits `1`, the out-of-balance verdict, and the report is printed.
 
 ### Claim code errors
 
-**A feature file's feature code is the class its scenarios' codes are filed under, and a misfiled code is a claim code error.** Every `balance` run judges the corpus it read. When the corpus holds an error, the run lists it in the table under `### Claim code errors` (`errorsInTheInputs.claimCodeErrors` in the JSON), in `## Errors in the inputs` right after the run provenance. Each row gives its code under *Kind*, and the files, feature codes, scenario and claim codes it is about under *About*. There are five errors:
+**A feature file's feature code is the class its scenarios' codes are filed under, and a misfiled code is a claim code error.** Every `balance` run judges the corpus it read. When the corpus holds an error, the run lists it in `## Errors in the inputs`, right after the run provenance (`errorsInTheInputs.claimCodeErrors` in the JSON). Each line gives the error's code, then the files, feature codes, scenario and claim codes it is about. There are five errors:
 
 | Handle | The fault | The fix |
 | --- | --- | --- |
-| `foreign-claim-code` | a scenario's code names a feature its file does not carry, e.g. `@CLM-<FFF>-<NNN>` in a file headed with a code other than `@<FFF>` | re-code the scenario for its file, or move it to the file whose header carries the code its id names, when exactly one does; the row names the files with that feature code, or none |
+| `foreign-claim-code` | a scenario's code names a feature its file does not carry, e.g. `@CLM-<FFF>-<NNN>` in a file headed with a code other than `@<FFF>` | re-code the scenario for its file, or move it to the file whose header carries the code its id names, when exactly one does; the line names the files with that feature code, or none |
 | `no-feature-code` | a feature file carries no header code while its scenarios carry claim codes (a header longer than five characters is no header code) | give the file a header code, and code its scenarios for it |
 | `duplicate-feature-code` | two feature files carry one header code | give one of them a code of its own |
 | `several-claim-codes` | one scenario carries more than one distinct claim code, so it opens no account under any of them, and a test citing one of them cites a code no scenario carries | give the scenario one code |
 | `claim-code-beside-clm-column` | an Outline carries a claim code, on its own tag line or an Examples block's, and has a `clm` column, so it opens no account under its code or any row's | take the code off the Outline, or drop its `clm` column |
 
 - The first three misfile a code without making any posting ambiguous, so every account still reconciles exactly as it would if the code were filed correctly.
-- What a misfiled code falsifies is the count of out-of-balance claims by feature, which groups on the code. So **any claim code error leaves the run not reconciled**: its run verdict is `not-reconciled (claim-code-errors)`, and it exits `3`, even under `--exit-zero`.
+- **Any claim code error leaves the run not reconciled**: its run verdict is *not reconciled, for claim code errors*, and it exits `3`, even under `--exit-zero`.
 - A run carrying both a claim code error and an out-of-balance account is not reconciled too, because of the claim code errors. A run where some evidence never ran is `unsound` first.
 - A duplicated claim code is reported on its accounts' Claim Reconciliations, never in this section.
-- When the codes are clean, no section prints.
+- When the corpus holds no claim code error and the configuration none either, `## Errors in the inputs` is left out.
 
 ### Exit codes
 
@@ -878,46 +896,66 @@ When Cucumber runs an Outline with a `clm` column, each row is credited by Cucum
 | `3` | not reconciled: `unsound`, `claim-code-errors` or `nothing-to-reconcile` |
 | `4` | unexpected error: the run stops before a verdict, and one line on stderr names the error |
 
-When several reasons apply, this order decides: unsound, then claim code errors, then nothing to reconcile, all before out of balance. An unexpected error (`4`) is not in the order. A run exits `4` only when it does not finish, a run already refused as a usage error included. `--exit-zero` moves only `1`, to `0`.
+When several reasons apply, this order decides: unsound, then claim code errors, then nothing to reconcile, all before out of balance. An unexpected error (`4`) is not in the order. A run exits `4` only when it meets the error before it has an exit code. `--exit-zero` moves only `1`, to `0`.
 
-An error after the run reaches its verdict does not change the exit code. One line goes to stderr, `spec-controller hit an unexpected error [unexpected-error]: <name>: <message>`, and the run exits with the verdict's code: the report stands as written. A run writes at most one such line.
+An error after the run has its exit code does not change it. One line goes to stderr, `spec-controller hit an unexpected error: <name>: <message>`, and the run keeps its code: after a verdict, the report stands as written. A run writes at most one such line.
 
 ### Error codes
 
-**A refusal of a flag, a command, an argument or an input carries its error code in square brackets**, as in `spec-controller balance: usage error [unknown-flag] — …`. The code names what went wrong and does not change when the words do, so quote it and look it up here. A pointer line after the error, such as the one naming `--help`, carries no code, and nothing that is not an error carries one.
+**A refusal of a flag, a command, an argument, an input or an output carries its error code in square brackets**, at the start of its line on stderr, as in `[unknown-flag] balance does not take the flag --nope; see spec-controller balance --help`. The code names what went wrong and does not change when the words do, so quote it and look it up here.
 
-Every error below except the unexpected error refuses the command as given. That is a usage error, and the run exits `2`. An unexpected error's line carries its code too, as in `spec-controller hit an unexpected error [unexpected-error]: …`.
+Every error below refuses the command as given. That is a usage error, and the run exits `2`. A refusal of the command line ends by pointing to the help that lists what was allowed.
 
-An error in the inputs is not a refusal. Its row in the report's `## Errors in the inputs` gives its code, and those codes are listed under [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped) and [Claim code errors](#claim-code-errors).
+An error in the inputs is not a refusal. Its line in the report's `## Errors in the inputs` gives its code, and those codes are listed under [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped) and [Claim code errors](#claim-code-errors).
+
+**The command line:**
 
 | Code | Meaning |
 |---|---|
-| `unknown-flag` | the command does not take the flag given |
 | `unknown-command` | the tool has no command of the name given |
+| `unknown-flag` | the command does not take the flag given |
 | `missing-value` | a flag that takes a value was given none |
-| `given-twice` | a flag that is read once was given more than once |
+| `unwanted-value` | a flag that takes no value was given one |
+| `stray-argument` | an argument is neither a flag nor the value of the flag before it |
+| `repeated-flag` | a flag that is read once was given more than once |
 | `equals-form` | a flag and its value were joined by `=`; give them as two arguments |
-| `takes-no-value` | a flag that takes no value was given one |
-| `extra-argument` | an argument is more than the command takes |
-| `not-a-flag` | an argument is neither a flag nor the value of the flag before it |
 | `flag-before-command` | a command's own flag was given before the command; it goes after it |
 | `unknown-format` | `--format` was given a format the tool does not write |
-| `more-than-one-to-stdout` | more than one output routes to stdout; at most one may |
-| `outputs-share-file` | two outputs name the same file |
-| `output-overwrites-input` | an output names a file the run reads |
-| `unknown-feature-code-refused` | `allocate` was given a feature code no feature file's header carries |
-| `feature-code-not-given` | `allocate` was given no feature code |
-| `not-a-feature-code` | `allocate` was given a feature code not in its form: two to five characters, each `A`–`Z` or `0`–`9` |
-| `could-not-be-read` | an input could not be read: a file, a directory or a report the run reads, or the repository `allocate` reads |
-| `working-directory-unreadable` | `allocate` could not read the working directory it was run in |
-| `input-path-missing` | the path given to an input flag does not exist |
-| `not-valid-json` | a report read as JSON is not valid JSON |
-| `not-valid-xml` | a report read as JUnit XML is not valid XML |
-| `not-in-shape` | a report parses, but is not in the shape its tool writes |
-| `corpus-file-unparseable` | a feature file in the corpus could not be parsed as Gherkin; each such file has its own coded line, with the parser's words beneath it |
-| `workflow-not-yaml` | a CI workflow is not valid YAML |
+| `no-feature-code` | `allocate` was given no feature code |
+| `extra-argument` | `allocate` was given an argument past its one feature code |
+
+**`balance`'s inputs.** Each names the input, its path and what is wrong:
+
+| Code | Meaning |
+|---|---|
+| `input-absent` | a named input does not exist |
+| `input-not-permitted` | the tool may not read a named input |
+| `input-wrong-kind-of-path` | a named path is a file where its flag reads a folder, or the reverse |
+| `input-does-not-parse` | an input does not parse: a JSON or JUnit XML report, a feature file or a workflow; each feature file that does not parse has a line of its own |
+| `input-not-in-its-shape` | a report parses, but is not in the shape its tool writes; the line says where it first breaks |
+| `input-default-unreadable` | an input read by default cannot be read, such as the corpus, when the working directory the run started in is gone |
+
+**`balance`'s reports:**
+
+| Code | Meaning |
+|---|---|
+| `more-than-one-to-stdout` | more than one report would go to stdout; at most one may |
+| `outputs-share-file` | two reports would go in one file |
+| `output-overwrites-input` | a report would overwrite a file the run reads |
 | `report-not-written` | a report could not be written to the path its `--format` names |
-| `unexpected-error` | the run met an unexpected error; before its verdict it exits `4`, even if it was already refused as a usage error, and after its verdict it exits with the verdict's code |
+
+**`allocate`:**
+
+| Code | Meaning |
+|---|---|
+| `not-a-feature-code` | `allocate` was given a feature code not in its form: two to five characters, each `A`–`Z` or `0`–`9` |
+| `unknown-feature-code` | `allocate` was given a feature code no feature file's header carries, without `--new`; the line lists the feature codes the feature files carry |
+| `feature-file-does-not-parse` | a feature file `allocate` reads does not parse |
+| `unreadable-in-tree` | `allocate` could not read a file or folder in the tree |
+| `unreadable-history` | `allocate` could not read the repository's history |
+| `damaged-repository` | `allocate` could not read the repository |
+
+An unexpected error is not a refusal, and its line carries no code: `spec-controller hit an unexpected error: <name>: <message>`.
 
 ---
 
@@ -939,10 +977,10 @@ Run `spec-controller --help` for the top-level summary of the commands. Run `spe
 | `--vitest <report.json>` | A Vitest JSON report: runtime test evidence. |
 | `--pytest <report.xml>` | A pytest JUnit XML report (`pytest --junitxml`): runtime unit test evidence. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from pytest](#citing-a-scenario-from-pytest). |
 | `--jest <report.json>` | A Jest JSON report (`jest --json --outputFile=<path>`): runtime unit test evidence. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from Jest](#citing-a-scenario-from-jest). |
-| `--junit <report.xml>` | A JUnit XML report, or a directory of them, from any runner that writes one: runtime unit test evidence. For example, for Go, `gotestsum --junitfile <path>` writes one; Maven Surefire writes the `target/surefire-reports` directory for a Java suite; Gradle writes `build/test-results/test` for a Kotlin one. A test cites its scenario with the code in square brackets in its name. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from Go](#citing-a-scenario-from-go), [Citing a scenario from Java](#citing-a-scenario-from-java) and [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin). |
+| `--junit <report.xml\|dir>` | A JUnit XML report, or a directory of them, from any runner that writes one: runtime unit test evidence. For example, for Go, `gotestsum --junitfile <path>` writes one; Maven Surefire writes the `target/surefire-reports` directory for a Java suite; Gradle writes `build/test-results/test` for a Kotlin one. A test cites its scenario with the code in square brackets in its name. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from Go](#citing-a-scenario-from-go), [Citing a scenario from Java](#citing-a-scenario-from-java) and [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin). |
 | `--rspec <report.json>` | An RSpec JSON report (`rspec --format json --out <path>`): runtime unit test evidence. An example cites its scenario with the code in square brackets in its description. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from RSpec](#citing-a-scenario-from-rspec). |
 | `--cucumber <report.json>` | A Cucumber JSON report: runtime test evidence. |
-| `--ci <ci.yml>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where the tool finds an UNCONVERTED fitness function running over the real source, and where a check step's `id:` supplies the claim code that its result cites. |
+| `--ci <workflow.yml\|dir>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where the tool finds an UNCONVERTED fitness function running over the real source, and where a check step's `id:` supplies the claim code that its result cites. |
 | `--package-json <path>` | The target's `package.json`: its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see [Configuration](#configuration--the-speccontroller-block)). A fitness function is named by its `@fitness` scenario and by the CI step whose `id:` is that scenario's claim code; no manifest key names one. Defaults to `package.json` in the working directory. |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did: the `toJSON(steps)` dump, which is the evidence for converted fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance: the project this run reconciled. |
@@ -975,7 +1013,7 @@ The rules below are all checked before anything is emitted. A run that breaks on
 
 The file is recognised by its identity, as above. So a link, a hard link, or another spelling of an input counts, and so does stdout appended (`>>`) into one. The refusal names the output and the input. A file the run does not read, beside an input or inside one of its folders, is written as asked.
 
-**A path is written as given.** The directory it names must already exist, since `--format` creates none. A path that is a symbolic link to a file that does not exist yet is written through the link, creating the file it points to. A path that cannot be written (read-only, an existing directory, under a regular file, or in a directory that does not exist) is refused, naming the path and the operating system's reason.
+**A path is written as given.** The directory it names must already exist, since `--format` creates none. A path that is a symbolic link to a file that does not exist yet is written through the link, creating the file it points to. A path that cannot be written (read-only, an existing directory, under a regular file, or in a directory that does not exist) is refused, naming the path and why.
 
 ---
 
@@ -1001,26 +1039,25 @@ The code is written under `CLM`, one past the highest number a claim code in the
 - **`--new`** starts a feature code no feature file's header carries yet, such as a first code in a tree with no feature files. Its first code is `001`, or one past any number the repository already carries for the feature code. Given for a feature code a header already carries, it answers as usual and says so on stderr.
 - **stdout** carries the code and nothing else, so a script or an agent can consume it.
 - **stderr** says what the answer rests on:
-  - `highest seen: <claim code>, features/<file>.feature:40`, the code as written, with ` in <commit>` when only history carries it;
-  - `highest seen: none` for a first code;
-  - when history is short, `history: not a git repository — none read` or `history: shallow clone — history before <commit> unread`, each followed by what that risks.
+  - `the highest code seen: <claim code>, <file>:<line>`, the code as written, with `@<commit>` after the line when it was read from history; nothing, for a first code;
+  - with `--new` for a feature code a header already carries, `a feature file already has the feature code: <FFF>` instead;
+  - when history is short, `no history was read: this is not a git repository` or `history was not read before the clone's first commit: <commit>`.
 - **Exit codes:**
   - `0` when it answers.
-  - `2` for a usage error (no feature code given, a feature code not in the claim-code form, a second feature code, or a flag it does not take) or an unknown feature code. The message says which of the two it was. An unknown feature code's refusal lists the feature codes the feature files carry.
+  - `2` for a usage error (no feature code given, a feature code not in the claim-code form, a second feature code, a flag it does not take, or a file, folder or history it cannot read) or an unknown feature code. The error code says which it was (see [Error codes](#error-codes)), and it gives no code. An unknown feature code's refusal lists the feature codes the feature files carry.
   - It never refuses because history is short.
   - `--help` or `-h` anywhere among its arguments answers its help at `0`.
 
 **What it reads.**
 
 - Every text file in the repository, wherever you run it from: tracked files, and untracked files the repository does not ignore, since you allocate because you have just written a scenario.
-- The added and removed lines of every reachable commit. Never commit messages: a code that only ever appeared in a message was never a scenario, and a message cannot be unwritten.
-- Outside a git repository, it walks the working tree, skipping `node_modules` and hidden directories, whose packages carry codes of their own.
+- The lines every commit on any branch or tag added. A merge is read against its first parent, so a code written in a conflict's resolution counts. Never commit messages: a code that only ever appeared in a message was never a scenario, and a message cannot be unwritten.
+- Outside a git repository, every text file under the folder it is run in.
 
 **Limits.**
 
 - **Prose counts.** A code cited in a document or a comment retires its number. It does so visibly, because stderr names where the highest code was seen.
 - **Only reachable history is read.** A code that only ever lived outside it, on a branch you never fetched or before a shallow clone's edge, is not seen. stderr says so where it can.
-- **Merge resolutions are not read.** `git log -p` shows no diff for a merge commit, so a code that existed only in a merge's conflict resolution is invisible to the history read.
 
 ---
 
@@ -1030,7 +1067,7 @@ The code is written under `CLM`, one past the highest number a claim code in the
 
 **A `@unit` scenario reads `missing` while its test passes.** Check the square brackets around the code in the test title first. See [Only these four forms are read](#only-these-four-forms-are-read).
 
-**A fitness function shows `missing` or `cannot-fail` when you didn't expect it.** `missing` means no CI step carries that scenario's claim code as its `id:`; `package.json` scripts play no part in it. `cannot-fail` means the step that cites it runs under `continue-on-error`, and no `--ci-steps` record answered it. Both are real findings, not tool errors.
+**A fitness function shows `missing` or `cannot-fail` when you didn't expect it.** `missing` means no CI step carries that scenario's claim code as its `id:`; `package.json` scripts play no part in it. `cannot-fail` means the step that cites it, or its job, runs under `continue-on-error: true`, and the step passed. Both are real findings, not tool errors.
 
 **My first run fails with a wall of checks that cite nothing.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise. A candidate that cites no claim posts to the unnamed claim, so `balance` exits `1`.
 
@@ -1038,11 +1075,11 @@ The code is written under `CLM`, one past the highest number a claim code in the
 2. Name your runners, name your non-checks, or narrow `--ci`. See [Configuration](#configuration--the-speccontroller-block).
 3. To keep the report while you work it down without failing the build, add `--exit-zero`. Delete it when you are ready to gate.
 
-**A step I know is my test suite is reported as a check.** Runner recognition did not reach it. It recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. These are not reached: a suite run through a `uses:` action, one started by a launcher not on the list (`tox`, `nox`), one run as a project script (`hatch run test`), one with an option between a launcher and the runner (`uv run --frozen pytest`), one passed as an argument to a wrapper, or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
+**A step I know is my test suite is reported as a check.** Runner recognition did not reach it. It recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. These are not reached: a suite run through a `uses:` action, one started by a launcher not on the list (`tox`, `nox`), one run as a project script (`hatch run test`), one with an option between a launcher and the runner (`uv run --frozen pytest`), one behind a wrapper not on the list (`nice`, `timeout`), or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
 
-**The run verdict reads `not-reconciled (claim-code-errors)`.** The corpus files a claim code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one claim code, or an Outline carries a claim code beside a `clm` column. `### Claim code errors` names each by its handle and the files it is about. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes, or an Outline carrying a code beside a `clm` column, has no account raised for it under any of them. The run exits `3` until the codes are filed correctly. See [Claim code errors](#claim-code-errors).
+**The run verdict reads *not reconciled, for claim code errors*.** The corpus files a claim code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one claim code, or an Outline carries a claim code beside a `clm` column. `## Errors in the inputs` names each by its handle and the files it is about. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes, or an Outline carrying a code beside a `clm` column, has no account raised for it under any of them. The run exits `3` until the codes are filed correctly. See [Claim code errors](#claim-code-errors).
 
-**A row reads `duplicate-claim-code`.** Two scenarios carry that claim code, and each has a Claim Reconciliation of its own naming its title and file. Give one of them a code of its own. While two scenarios share it, the run exits `1`.
+**A row reads `duplicate-claim-code`.** Two scenarios carry that claim code, and each has a Claim Reconciliation of its own, its row named by the code and its feature file. Give one of them a code of its own. While two scenarios share it, the run exits `1`.
 
 ---
 
