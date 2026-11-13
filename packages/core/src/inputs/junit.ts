@@ -17,8 +17,6 @@ const parser = new XMLParser({
   ignoreAttributes: false,
   // Attributes keep a prefix so that none is read as a child element of the same name.
   attributeNamePrefix: "@",
-  // Go and Surefire write newlines, tabs and quotes as numeric character references.
-  htmlEntities: true,
   parseTagValue: false,
   parseAttributeValue: false,
   isArray: (name) => ["testsuite", "testcase", "property", ...OUTCOMES].includes(name),
@@ -28,11 +26,10 @@ const elementsIn = (element: Element, name: string): Element[] => (element[name]
 
 const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
 
-// An outcome element is text alone, attributes alone, or both.
+// An outcome element says what went wrong in its message attribute, if it has one.
 function failureAsWritten(outcome: unknown): FailureAsWritten {
-  if (typeof outcome === "string") return { text: outcome };
-  const { "@type": type, "@message": message, "#text": body } = outcome as Element;
-  return { ...(text(type) && { type: text(type) }), ...(text(message) && { message: text(message) }), ...(text(body) && { text: text(body) }) };
+  const message = text((outcome as Element)["@message"]);
+  return message ? { message } : {};
 }
 
 function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {
@@ -43,7 +40,6 @@ function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {
   return {
     ...(text(testCase["@classname"]) !== undefined && { className: text(testCase["@classname"]) }),
     name: text(testCase["@name"]) ?? "",
-    ...(text(testCase["@file"]) !== undefined && { file: text(testCase["@file"]) }),
     clmProperties,
     // A test case with no outcome element is one that passed; its outcome is written as an empty string.
     outcome: outcome ?? "",
@@ -72,7 +68,6 @@ export function resultsBySuiteFrom(xml: string, from: "junit" | "pytest"): Resul
     // pytest writes an error only for a test that never reached its assertions; JUnit writes one for a test that failed.
     report: from === "pytest" ? ERRORS_BEFORE_ASSERTIONS : from,
     name: text(suite["@name"]) ?? "",
-    ...(text(suite["@file"]) !== undefined && { file: text(suite["@file"]) }),
     results: elementsIn(suite, "testcase").map(resultAsWritten),
   }));
 }

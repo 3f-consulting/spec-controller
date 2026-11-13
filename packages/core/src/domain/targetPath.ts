@@ -1,5 +1,5 @@
 export const shownFromTarget = (path: string, targetFolder: string): string => {
-  const inside = targetFolder.endsWith("/") ? targetFolder : `${targetFolder}/`;
+  const inside = `${targetFolder}/`;
   return path.startsWith(inside) ? path.slice(inside.length) : path;
 };
 
@@ -10,11 +10,7 @@ export interface TargetFolderAsked {
   readonly gitTopLevel?: string;
 }
 
-const parentOf = (path: string): string => {
-  const trimmed = path.replace(/\/+$/, "");
-  const at = trimmed.lastIndexOf("/");
-  return at <= 0 ? "/" : trimmed.slice(0, at);
-};
+const parentOf = (path: string): string => path.slice(0, path.lastIndexOf("/"));
 
 // The git repository's top level; outside git, the named corpus's parent, or with none named, where the run started.
 export const targetFolderOf = ({ workingFolder, corpus, gitTopLevel }: TargetFolderAsked): string =>

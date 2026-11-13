@@ -68,7 +68,7 @@ export function historyLines(top: string, featureCode: string): Read<ClaimCodeOc
   for (const text of stdout.split("\n")) {
     if (text.startsWith("commit:")) commit = text.slice("commit:".length);
     else if (text.startsWith("diff ")) inHeader = true;
-    else if (inHeader && text.startsWith("+++ ")) path = text.slice("+++ ".length).replace(/\t$/, "");
+    else if (inHeader && text.startsWith("+++ ")) path = text.slice("+++ ".length);
     else if (HUNK.test(text)) {
       inHeader = false;
       line = Number(HUNK.exec(text)![1]);

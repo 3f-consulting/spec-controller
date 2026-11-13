@@ -14,17 +14,9 @@ interface RspecJsonReport {
   readonly summary: { readonly errors_outside_of_examples_count?: number };
 }
 
+// A record of its messages, if any, its examples, each a record, and its summary.
 const REPORT: Shape = {
-  fields: {
-    messages: { listOf: "string" },
-    examples: {
-      listOf: {
-        fields: { description: "string", full_description: "string", status: "string", file_path: "string", exception: { fields: { message: "string" }, optional: ["message"] } },
-        optional: ["exception"],
-      },
-    },
-    summary: { fields: { errors_outside_of_examples_count: "number" }, optional: ["errors_outside_of_examples_count"] },
-  },
+  fields: { messages: { listOf: "string" }, examples: { listOf: { fields: {} } }, summary: { fields: {} } },
   optional: ["messages"],
 };
 

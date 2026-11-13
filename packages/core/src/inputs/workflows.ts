@@ -23,7 +23,6 @@ const HELD_IN: Readonly<Record<string, (step: Mapping) => readonly unknown[]>> =
 };
 const writesStepRecord = (step: Mapping): boolean =>
   workflowsVariants["CLM-OBS-013"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
-const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value.filter(isMapping) : []);
 
 function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping): WorkflowStepAsWritten {
   const uses = text(step["uses"]);
@@ -43,11 +42,8 @@ function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknow
 }
 
 export function workflowStepsFrom(workflow: string, source: string): WorkflowStepAsWritten[] {
-  const document: unknown = parse(source);
-  const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
+  const { jobs } = parse(source) as { readonly jobs: Readonly<Record<string, Mapping>> };
   return Object.entries(jobs).flatMap(([job, definition]) =>
-    isMapping(definition)
-      ? mappingsIn(definition["steps"]).map((step) => stepAsWritten(workflow, job, definition["continue-on-error"], step))
-      : [],
+    (definition["steps"] as readonly unknown[]).filter(isMapping).map((step) => stepAsWritten(workflow, job, definition["continue-on-error"], step)),
   );
 }
