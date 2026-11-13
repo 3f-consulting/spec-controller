@@ -211,7 +211,7 @@ describe("a runner is recognised only as the command a step runs", () => {
   // A step running vitest behind each wrapper, past what the wrapper takes.
   const behindTheWrapper: Readonly<Record<string, string>> = {
     "xvfb-run": "xvfb-run -a --server-args=-screen vitest run",
-    "timeout <duration>": "timeout 75 vitest run",
+    "timeout <duration>": "timeout --preserve-status 75 vitest run",
   };
 
   it.each(shellVariants["CLM-OBS-112"].variants)("[CLM-OBS-112] a step running its unit runner behind the wrapper %s, past its options, will be counted as a runner", (wrapper) => {
