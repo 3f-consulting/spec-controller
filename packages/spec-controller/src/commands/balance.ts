@@ -33,13 +33,16 @@ import { runIdentityIn } from "../runIdentity/runIdentity.js";
 import { writeReports } from "../output/writer.js";
 import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/runRequest.js";
 
-// The step account is printed only for a run that read workflows.
+// A run has no step and no step record of an input it did not read.
+const NONE: readonly never[] = [];
+
+// The step account is printed only for a run that read a workflow step.
 function stepAccountFor(
-  steps: readonly WorkflowStepAsWritten[] | undefined,
+  steps: readonly WorkflowStepAsWritten[],
   configuration: TargetConfiguration,
   scripts: Readonly<Record<string, string>>,
 ): { readonly stepAccount?: StepAccount } {
-  return steps === undefined ? {} : { stepAccount: stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers) }))) };
+  return steps.length === 0 ? {} : { stepAccount: stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers) }))) };
 }
 
 // Every input the run could read, each with its path when it read one.
@@ -52,14 +55,19 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
 };
 
 // Each runner's results posted as Evidence Observations, beside the fitness functions' from the CI steps.
-function observationsOf(read: InputsRead, configuration: TargetConfiguration, scripts: Readonly<Record<string, string>>, targetFolder: string): EvidenceObservation[] {
-  const steps = read.workflowSteps ?? [];
+function observationsOf(
+  read: InputsRead,
+  steps: readonly WorkflowStepAsWritten[],
+  configuration: TargetConfiguration,
+  scripts: Readonly<Record<string, string>>,
+  targetFolder: string,
+): EvidenceObservation[] {
   return [
     ...observationsByFile([...(read.vitest ?? []), ...(read.jest ?? [])], targetFolder),
     ...observationsBySuite([...(read.pytest ?? []), ...(read.junit ?? [])], targetFolder),
     ...(read.rspec === undefined ? [] : observationsByExample(read.rspec, targetFolder)),
     ...(read.cucumber === undefined ? [] : observationsOfScenarios(read.cucumber, read.features, targetFolder)),
-    ...fitnessObservationsOf(steps, read.stepRecord ?? [], configuration, scripts, shellAnswers),
+    ...fitnessObservationsOf(steps, read.stepRecord ?? NONE, configuration, scripts, shellAnswers),
   ];
 }
 
@@ -74,18 +82,19 @@ export function balance(
   const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
   const read = inputsReadFor(inputs, folder);
   if ("refusals" in read) return refusedWith(read.refusals, streams.error.write);
-  const { configuration, errors } = targetConfigurationFrom(read.manifest, read.workflowSteps ?? []);
+  const steps = read.workflowSteps ?? NONE;
+  const { configuration, errors } = targetConfigurationFrom(read.manifest, steps);
   const scripts = scriptsFrom(read.manifest);
-  const targetFolder = targetFolderOf({ workingFolder: folder, ...(corpus === undefined ? {} : { corpus }), ...(identity.gitTopLevel === undefined ? {} : { gitTopLevel: identity.gitTopLevel }) });
+  const targetFolder = targetFolderOf({ workingFolder: folder, corpus, gitTopLevel: identity.gitTopLevel });
   const claims = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
-  const claimReconciliations = claimReconciliationsOf(claims, observationsOf(read, configuration, scripts, targetFolder));
+  const claimReconciliations = claimReconciliationsOf(claims, observationsOf(read, steps, configuration, scripts, targetFolder));
   const provenance = provenanceOf(identity, provenanceInputsOf(read), targetFolder, repositoryOfOrigin);
   const reconciliation = evidenceReconciliationOf({
     claimReconciliations,
     claimCodeErrors: claimCodeErrorsOf(read.features),
     configurationErrors: errors,
     features: read.features,
-    ...stepAccountFor(read.workflowSteps, configuration, scripts),
+    ...stepAccountFor(steps, configuration, scripts),
     provenance,
   });
   try {

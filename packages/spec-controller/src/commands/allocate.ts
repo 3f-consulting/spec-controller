@@ -23,7 +23,7 @@ const FEATURES = "features";
 // The feature codes the repository's feature files are tagged with; one that does not parse stops allocate, named.
 function featureCodesUnder(top: string): Read<string[]> {
   const featureCodes: string[] = [];
-  let sources: ReturnType<typeof featureSourcesUnder> = [];
+  let sources: ReturnType<typeof featureSourcesUnder>;
   try {
     sources = featureSourcesUnder(join(top, FEATURES));
   } catch (error) {
@@ -51,7 +51,7 @@ function boundaryNotes(boundary: HistoryBoundary): AllocateNote[] {
 function notesOf(asked: AllocationAsked, allocation: Extract<Allocation, { kind: "allocated" }>): AllocateNote[] {
   if (asked.asNewFeatureCode) return allocation.featureCodeAlreadyOnAFile ? [{ note: "feature-code-on-a-file", featureCode: asked.featureCode }] : [];
   const seen = allocation.highestSeen;
-  return seen === undefined ? [] : [{ note: "highest-seen", code: seen.text, path: seen.path, line: seen.line, ...(seen.commit === undefined ? {} : { commit: seen.commit }) }];
+  return seen === undefined ? [] : [{ note: "highest-seen", code: seen.text, path: seen.path, line: seen.line, commit: seen.commit }];
 }
 
 const stopped = (refusal: Refusal): AllocateOutcome => ({ stop: "usage-error", refusal });

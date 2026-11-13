@@ -773,7 +773,7 @@ Two limits:
 
 The output is the **Evidence Reconciliation**, the whole reconciliation, in two renderings of the same model:
 
-- **Markdown**, for people. It opens with its title, `# Evidence Reconciliation`, and one sentence that says what the run verdict is and what it asks of you. Its sections then come in a fixed order: `## Run provenance`; `## Errors in the inputs`, when there are any; `## Run integrity`, when some evidence never ran; `## Summary`, with the run verdict and the totals; `## Step account`, when the run read CI workflows; and `## Claim Reconciliations`. Every table has a key above it saying what each column means. A section the run had nothing for is left out, except `## Claim Reconciliations`, which reads *None.* when there are none.
+- **Markdown**, for people. It opens with its title, `# Evidence Reconciliation`, and one sentence that says what the run verdict is and what it asks of you. Its sections then come in a fixed order: `## Run provenance`; `## Errors in the inputs`, when there are any; `## Run integrity`, when some evidence never ran; `## Summary`, with the run verdict and the totals; `## Step account`, when the run read a step from its CI workflows; and `## Claim Reconciliations`. Every table has a key above it saying what each column means. A section the run had nothing for is left out, except `## Claim Reconciliations`, which reads *None.* when there are none.
 - **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. Its top-level keys are `claimReconciliations`, `runVerdict`, `totals`, `provenance`, and, when the run had them, `stepAccount`, `errorsInTheInputs` and `runIntegrity`. `runVerdict.verdict` is the run verdict (`balanced`, `out-of-balance` or `not-reconciled`), and a `not-reconciled` verdict carries `runVerdict.why` (`unsound`, `claim-code-errors` or `nothing-to-reconcile`), so automation reads it instead of working it out from the Claim Reconciliations. The JSON keeps every count, zero included.
 
 Both carry a **provenance** recording what was reconciled: the target, the source SHA, the tool's commit when it runs from its own checkout, the tool version, the time the run started, and each input the run read with its path. So a reconciliation is reproducible and attributable. The Markdown gives each input the run read a line of its own, one read by default included, and leaves out an input it did not read. The JSON lists every input, with a `path` only for one the run read.
@@ -808,7 +808,7 @@ Then come the totals, in groups:
 
 The Markdown leaves out a kind no claim asks for and no evidence answers, an outcome no row has, the row with no kind when it is empty, and a place nothing was filed on. The JSON's `totals` keeps every kind, the row with no kind under `noKind`, the *All* row under `all`, and every outcome under each, at `0` where there is none.
 
-**`## Step account`** follows the Summary when the run read CI workflows. It has a row for each workflow and job the run read, counting its steps read, then its runners, reconciler steps, non-checks, plumbing and candidates. Each step read is counted once, so a row's last five counts add up to its steps read. A *Total* row sums the jobs when there is more than one. In the JSON, `stepAccount.total` also carries `accountedFor`, the steps the five dispositions count.
+**`## Step account`** follows the Summary when the run read a step from its CI workflows. It has a row for each workflow and job the run read, counting its steps read, then its runners, reconciler steps, non-checks, plumbing and candidates. Each step read is counted once, so a row's last five counts add up to its steps read. A *Total* row sums the jobs when there is more than one. In the JSON, `stepAccount.total` also carries `accountedFor`, the steps the five dispositions count.
 
 ### The Claim Reconciliations
 
@@ -898,7 +898,7 @@ When Cucumber runs an Outline with a `clm` column, each row is credited by Cucum
 
 When several reasons apply, this order decides: unsound, then claim code errors, then nothing to reconcile, all before out of balance. An unexpected error (`4`) is not in the order. A run exits `4` only when it meets the error before it has an exit code. `--exit-zero` moves only `1`, to `0`.
 
-An error after the run has its exit code does not change it. One line goes to stderr, `spec-controller hit an unexpected error: <name>: <message>`, and the run keeps its code: after a verdict, the report stands as written. A run writes at most one such line.
+An error after the run has its exit code does not change it. One line goes to stderr, `[unexpected-error] spec-controller hit an unexpected error: <name>: <message>`, and the run keeps its code: after a verdict, the report stands as written. A run writes at most one such line.
 
 ### Error codes
 
@@ -955,7 +955,7 @@ An error in the inputs is not a refusal. Its line in the report's `## Errors in 
 | `unreadable-history` | `allocate` could not read the repository's history |
 | `damaged-repository` | `allocate` could not read the repository |
 
-An unexpected error is not a refusal, and its line carries no code: `spec-controller hit an unexpected error: <name>: <message>`.
+An unexpected error is not a refusal, but its line carries the code `unexpected-error` all the same: `[unexpected-error] spec-controller hit an unexpected error: <name>: <message>`.
 
 ---
 

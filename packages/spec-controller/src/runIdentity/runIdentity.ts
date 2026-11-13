@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 // What git answers, or nothing when it cannot.
 function gitAnswer(folder: string, args: readonly string[]): string | undefined {
   const { status, stdout } = spawnSync("git", args, { cwd: folder, encoding: "utf8" });
-  return status === 0 && stdout.trim() !== "" ? stdout.trim() : undefined;
+  return status === 0 ? stdout.trim() : undefined;
 }
 
 // The tool's own checkout holds it under packages/spec-controller; a copy inside another repository is not one.
@@ -26,19 +26,27 @@ function versionAbove(folder: string): string | undefined {
   return dirname(folder) === folder ? undefined : versionAbove(dirname(folder));
 }
 
-// HEAD, the origin and the top level of the repository balance runs in; the tool's own checkout and version; the clock.
+type ToolIdentity = Pick<RunIdentity, "toolSha" | "toolInstalledAsPackage" | "toolVersion">;
+
+// The tool's own checkout and version, read from the folder it runs from.
+export function toolIdentityIn(toolFolder: string): ToolIdentity {
+  return {
+    toolSha: ownCheckoutHead(toolFolder),
+    toolInstalledAsPackage: toolFolder.split(sep).includes("node_modules"),
+    toolVersion: versionAbove(toolFolder),
+  };
+}
+
+// HEAD, the origin and the top level of the repository balance runs in; the tool's own checkout and version; the clock to the second.
 // As read: which of them wins is the domain's.
 export function runIdentityIn(folder: string, given: { readonly target?: string; readonly sourceSha?: string }): RunIdentity {
-  const toolFolder = dirname(fileURLToPath(import.meta.url));
   return {
     givenTarget: given.target,
     givenSourceSha: given.sourceSha,
     head: gitAnswer(folder, ["rev-parse", "HEAD"]),
     origin: gitAnswer(folder, ["remote", "get-url", "origin"]),
     gitTopLevel: gitAnswer(folder, ["rev-parse", "--show-toplevel"]),
-    toolSha: ownCheckoutHead(toolFolder),
-    toolInstalledAsPackage: toolFolder.split(sep).includes("node_modules"),
-    toolVersion: versionAbove(toolFolder),
-    runTime: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+    ...toolIdentityIn(dirname(fileURLToPath(import.meta.url))),
+    runTime: `${new Date().toISOString().slice(0, 19)}Z`,
   };
 }
