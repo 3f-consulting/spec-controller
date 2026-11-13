@@ -1,6 +1,7 @@
 import { claimCodeCitationsIn, claimCodeFrom, sameCode, type ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
 import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
+import { shownFromTarget } from "./targetPath.js";
 
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
 
@@ -120,13 +121,26 @@ export interface ShellAnswers {
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
 }
 
-// Results kept by test file: Vitest's and Jest's. targetFolder is where the target sits, so a place inside it is relative.
-export function observationsByFile(results: readonly ResultsByFileAsWritten[], _targetFolder: string): EvidenceObservation[] {
-  return results.flatMap(({ file, results: inFile }) =>
-    inFile
-      .filter(({ status }) => status === "passed")
-      .map(({ title }) => ({ cites: claimCodeCitationsIn(title), result: "passed" as const, kind: "unit" as const, place: file, name: title, notes: [] })),
-  );
+// The codes a test cites: its own, or else those of its nearest parent that cites any. The chain runs outermost first.
+const nearestCitations = (chain: readonly string[]): ClaimCode[] =>
+  chain.reduceRight<ClaimCode[]>((found, title) => (found.length > 0 ? found : claimCodeCitationsIn(title)), []);
+
+const RESULT_BY_FILE: Readonly<Record<string, Result>> = { passed: "passed", failed: "failed" };
+
+// Results kept by test file: Vitest's and Jest's. A failed file with no results is one that could not run.
+export function observationsByFile(results: readonly ResultsByFileAsWritten[], targetFolder: string): EvidenceObservation[] {
+  return results.flatMap(({ file, status, message, results: inFile }): EvidenceObservation[] => {
+    const place = shownFromTarget(file, targetFolder);
+    if (status === "failed" && inFile.length === 0) {
+      return [{ cites: [], result: "never-ran", kind: "unit", place, ...(message === undefined ? {} : { message }), notes: [] }];
+    }
+    return inFile.flatMap(({ ancestorTitles, title, status: resultStatus, failureMessages }) => {
+      const result = RESULT_BY_FILE[resultStatus];
+      if (result === undefined) return [];
+      const failure = failureMessages.join("\n");
+      return [{ cites: nearestCitations([...ancestorTitles, title]), result, kind: "unit", place, name: title, ...(failure && { message: failure }), notes: [] }];
+    });
+  });
 }
 
 export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {
