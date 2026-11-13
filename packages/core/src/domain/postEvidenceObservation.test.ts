@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { resultsByFileFrom } from "../inputs/jestJson.js";
+import { resultsBySuiteFrom } from "../inputs/junitXml.js";
 import type { ClaimCode } from "./claimCodes.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
-import { observationsByFile, observationsFiledUnder, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { observationsByFile, observationsBySuite, observationsFiledUnder, type EvidenceObservation } from "./postEvidenceObservation.js";
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
 const ONE_002: ClaimCode = { featureCode: "ONE", number: "002" };
@@ -34,6 +35,33 @@ const reportByFile = (file: string, tests: readonly TestByFile[], fileStatus = "
 const postedByFile = (from: "vitest" | "jest", report: unknown, targetFolder = "/work"): EvidenceObservation[] =>
   observationsByFile(resultsByFileFrom(report, from), targetFolder);
 
+// Who wrote a JUnit XML report: Maven Surefire for JUnit 5 in Java, Gradle for JUnit 5 in Kotlin, go-junit-report for Go, and pytest.
+type SuiteWriter = "surefire" | "gradle" | "go" | "pytest";
+
+// Each writer's envelope around one suite, as it writes it.
+function reportBySuite(writer: SuiteWriter, suite: string, testCases: string): string {
+  if (writer === "surefire") {
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="3.0.2" name="${suite}" time="0.042" tests="1" errors="0" skipped="0" failures="0">\n  <properties>\n  </properties>\n${testCases}\n</testsuite>`;
+  }
+  if (writer === "gradle") {
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="${suite}" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-15T20:00:06.809Z" hostname="runner" time="0.034">\n  <properties/>\n${testCases}\n  <system-out><![CDATA[]]></system-out>\n  <system-err><![CDATA[]]></system-err>\n</testsuite>`;
+  }
+  if (writer === "go") {
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<testsuites tests="1" failures="0" errors="0" time="0.005">\n\t<testsuite tests="1" failures="0" time="0.005" name="${suite}" timestamp="2026-10-14T22:35:27Z">\n\t\t<properties>\n\t\t\t<property name="go.version" value="go1.27.2 linux/amd64"></property>\n\t\t</properties>\n${testCases}\n\t</testsuite>\n</testsuites>`;
+  }
+  return `<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="${suite}" errors="0" failures="0" skipped="0" tests="1" time="0.039">${testCases}</testsuite></testsuites>`;
+}
+
+const testCase = (className: string, name: string, inside = ""): string => `<testcase classname="${className}" name="${name}" time="0.001">${inside}</testcase>`;
+
+const CLM_PROPERTY = '<properties><property name="clm" value="CLM-ONE-001" /></properties>';
+
+const postedBySuite = (writer: SuiteWriter, suite: string, testCases: string): EvidenceObservation[] =>
+  observationsBySuite(resultsBySuiteFrom(reportBySuite(writer, suite, testCases), writer === "pytest" ? "pytest" : "junit"), "/work");
+
+// What a row checks of each Evidence Observation posted.
+const resultAndCitations = ({ result, cites }: EvidenceObservation): { result: string; cites: readonly ClaimCode[] } => ({ result, cites });
+
 describe("balance posts a result as passed or failed, citing its claim code", () => {
   it.each<[string, "vitest" | "jest", string, string]>([
     ["CLM-OBS-017", "vitest", "passed", "passed"],
@@ -44,6 +72,43 @@ describe("balance posts a result as passed or failed, citing its claim code", ()
     const posted = postedByFile(from, reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status }], status));
 
     expect(posted.map(({ result: postedResult, cites }) => ({ result: postedResult, cites }))).toEqual([{ result, cites: [ONE_001] }]);
+  });
+});
+
+describe("balance posts a result as passed or failed, citing its claim code, from a report kept by suite", () => {
+  it.each<[string, SuiteWriter, string, string, string, string, string]>([
+    ["CLM-OBS-021", "pytest", "pytest", "test_adds", "test_adds_one", CLM_PROPERTY, "passed"],
+    ["CLM-OBS-022", "pytest", "pytest", "test_adds", "test_adds_one", `${CLM_PROPERTY}<failure message="assert 1 == 2">def test_adds_one():\n&gt;       assert 1 == 2</failure>`, "failed"],
+    ["CLM-OBS-023", "go", "example.com/adds", "example.com/adds", "TestAdds/[CLM-ONE-001]_adds_one", "", "passed"],
+    ["CLM-OBS-024", "go", "example.com/adds", "example.com/adds", "TestAdds/[CLM-ONE-001]_adds_one", '<failure message="Failed" type="">=== RUN   TestAdds/[CLM-ONE-001]_adds_one&#xA;    adds_test.go:9: the assertion failed&#xA;</failure>', "failed"],
+    ["CLM-OBS-025", "surefire", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", "", "passed"],
+    ["CLM-OBS-026", "surefire", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", '<failure message="expected: &lt;2&gt; but was: &lt;1&gt;" type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: expected: <2> but was: <1>]]></failure>', "failed"],
+    ["CLM-OBS-027", "gradle", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", "", "passed"],
+    ["CLM-OBS-028", "gradle", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", '<failure message="org.opentest4j.AssertionFailedError: expected: &lt;2&gt; but was: &lt;1&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;2&gt; but was: &lt;1&gt;\n</failure>', "failed"],
+  ])("[%s] a result in %s's evidence report citing CLM-ONE-001 is posted as it went, citing CLM-ONE-001", (_clm, writer, suite, className, name, inside, result) => {
+    const posted = postedBySuite(writer, suite, testCase(className, name, inside));
+
+    expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
+  });
+
+  it("[CLM-OBS-055] a Kotlin class whose setup failed will be posted as one failing result citing no claim code", () => {
+    const failure = '<failure message="java.lang.IllegalStateException: the shared resource could not be set up" type="java.lang.IllegalStateException">java.lang.IllegalStateException: the shared resource could not be set up\n</failure>';
+    const posted = postedBySuite("gradle", "[CLM-ONE-001] a class", testCase("example.SetupFailsTest", "initializationError", failure));
+
+    expect(posted.map(resultAndCitations)).toEqual([{ result: "failed", cites: [] }]);
+  });
+});
+
+describe("balance posts nothing for a test that was skipped, from a report kept by suite", () => {
+  it.each<[string, SuiteWriter, string, string, string, string]>([
+    ["CLM-OBS-038", "pytest", "pytest", "test_adds", "test_adds_one", `${CLM_PROPERTY}<skipped type="pytest.skip" message="the behaviour is not built yet">test_adds.py:4: the behaviour is not built yet</skipped>`],
+    ["CLM-OBS-039", "go", "example.com/adds", "example.com/adds", "TestAdds/[CLM-ONE-001]_adds_one", '<skipped message="=== RUN   TestAdds/[CLM-ONE-001]_adds_one&#xA;    adds_test.go:20: not yet&#xA;"></skipped>'],
+    ["CLM-OBS-040", "surefire", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", '<skipped message="not yet written"/>'],
+    ["CLM-OBS-040", "surefire", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", '<skipped type="org.opentest4j.TestAbortedException"><![CDATA[org.opentest4j.TestAbortedException: Assumption failed: the environment is not ready]]></skipped>'],
+    ["CLM-OBS-041", "gradle", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", "<skipped/>"],
+    ["CLM-OBS-041", "gradle", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", '<skipped><![CDATA[org.opentest4j.TestAbortedException: Assumption failed: the environment is not ready]]></skipped>'],
+  ])("[%s] a test in %s's evidence report citing CLM-ONE-001 that was skipped, disabled or whose assumption failed posts nothing", (_clm, writer, suite, className, name, inside) => {
+    expect(postedBySuite(writer, suite, testCase(className, name, inside))).toEqual([]);
   });
 });
 
@@ -71,11 +136,33 @@ describe("balance posts what could not run as never ran", () => {
   });
 });
 
+describe("balance posts what could not run as never ran, from a report kept by suite", () => {
+  it.each<[string, SuiteWriter, string, string, string, string, readonly ClaimCode[], string, string]>([
+    ["CLM-OBS-046", "pytest", "pytest", "", "test_uncollectable", '<error message="collection failure">test_uncollectable.py:1: in &lt;module&gt;\n    import module_that_does_not_exist\nE   ModuleNotFoundError: No module named \'module_that_does_not_exist\'</error>', [], "test_uncollectable", "collection failure"],
+    ["CLM-OBS-047", "go", "example.com/broken", "", "TestMain", '<failure message="Failed" type="">FAIL&#x9;example.com/broken [build failed]&#xA;</failure>', [], "example.com/broken", "Failed"],
+    ["CLM-OBS-100", "go", "example.com/setup", "", "TestMain", '<failure message="Failed" type="">main_test.go:12: the database could not be reached&#xA;FAIL&#x9;example.com/setup&#x9;0.004s&#xA;</failure>', [], "example.com/setup", "Failed"],
+    ["CLM-OBS-048", "surefire", "example.SetupFailsTest", "example.SetupFailsTest", "", '<error message="the shared resource could not be set up" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: the shared resource could not be set up]]></error>', [], "example.SetupFailsTest", "the shared resource could not be set up"],
+    ["CLM-OBS-050", "pytest", "pytest", "test_adds", "test_adds_one", `${CLM_PROPERTY}<error message="failed on setup with &quot;RuntimeError: the resource could not be set up&quot;">@pytest.fixture\ndef broken_resource():\n&gt;       raise RuntimeError("the resource could not be set up")</error>`, [ONE_001], "test_adds", 'failed on setup with "RuntimeError: the resource could not be set up"'],
+  ])("[%s] what could not run in %s's evidence report is posted as never-ran, citing what it cites and naming where and its error", (_clm, writer, suite, className, name, inside, cites, place, message) => {
+    const posted = postedBySuite(writer, suite, testCase(className, name, inside));
+
+    expect(posted.map(({ result, cites: cited, place: placed, message: said }) => ({ result, cites: cited, place: placed, message: said }))).toEqual([
+      { result: "never-ran", cites, place, message },
+    ]);
+  });
+});
+
 describe("a test report's result will be unit evidence, and a Cucumber result will take the kind its tags name", () => {
   it("[CLM-OBS-059] a result in Vitest's evidence report is posted as unit evidence", () => {
     const posted = postedByFile("vitest", reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "failed" }], "failed"));
 
     expect(posted.map(({ kind }) => kind)).toEqual(["unit"]);
+  });
+});
+
+describe("a test report kept by suite gives unit evidence", () => {
+  it("[CLM-OBS-060] a result in pytest's evidence report is posted as unit evidence", () => {
+    expect(postedBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)).map(({ kind }) => kind)).toEqual(["unit"]);
   });
 });
 
@@ -90,6 +177,18 @@ describe("balance posts a nested test citing its own code, or its parent's code 
     const posted = postedByFile(from, reportByFile("/work/one.test.ts", [{ ancestorTitles: ["[CLM-ONE-002] a group"], title, status: "passed" }]));
 
     expect(posted.map(({ cites: cited }) => cited)).toEqual([cites]);
+  });
+});
+
+describe("balance posts a nested test from a report kept by suite citing its own code, or its parent's code when the report gives one", () => {
+  it.each<[string, SuiteWriter, string, string, string, readonly ClaimCode[]]>([
+    ["CLM-OBS-070", "go", "example.com/adds", "TestAdds/[CLM-ONE-002]_a_group/[CLM-ONE-001]_adds_one", "example.com/adds", [ONE_001]],
+    ["CLM-OBS-071", "go", "example.com/adds", "TestAdds/[CLM-ONE-002]_a_group/adds_one", "example.com/adds", [ONE_002]],
+    ["CLM-OBS-072", "surefire", "[CLM-ONE-002] a class", "[CLM-ONE-001] adds one", "[CLM-ONE-002] a class", [ONE_001]],
+    ["CLM-OBS-073", "surefire", "[CLM-ONE-002] a class", "adds one", "[CLM-ONE-002] a class", [ONE_002]],
+    ["CLM-OBS-074", "gradle", "[CLM-ONE-002] a class", "adds one", "example.AddsTest", []],
+  ])("[%s] a passing test in %s's evidence report, in suite %s and named %s, is posted citing its nearest code", (_clm, writer, suite, name, className, cites) => {
+    expect(postedBySuite(writer, suite, testCase(className, name)).map(({ cites: cited }) => cited)).toEqual([cites]);
   });
 });
 

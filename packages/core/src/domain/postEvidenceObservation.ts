@@ -143,6 +143,11 @@ export function observationsByFile(results: readonly ResultsByFileAsWritten[], t
   });
 }
 
+// Results kept by suite: JUnit's, from Go, Java and Kotlin, and pytest's.
+export function observationsBySuite(_suites: readonly ResultsBySuiteAsWritten[], _targetFolder: string): EvidenceObservation[] {
+  return [];
+}
+
 export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {
   return claimCode === undefined ? [] : observations.filter(({ cites }) => cites.some((cited) => sameCode(cited, claimCode)));
 }
