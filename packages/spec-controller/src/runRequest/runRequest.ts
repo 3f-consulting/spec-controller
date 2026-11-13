@@ -5,7 +5,7 @@ import { COMMANDS, isCommand, isHelp, type Command, type Flag, type InputKind } 
 
 export { INPUT_KINDS } from "./flags.js";
 
-export type ReportFormat = "md" | "json";
+type ReportFormat = "md" | "json";
 
 // byDefault: the command line did not name it, so its default path was filled in.
 export interface InputRequest {
