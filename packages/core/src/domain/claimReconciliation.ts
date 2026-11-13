@@ -101,13 +101,12 @@ function executableReconciliations({ claimCode, obligations }: ExecutableClaim, 
 // A claim code as one key, for sorting, grouping and filing alike.
 const written = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
 
-// What a Quality Check Reconciliation is sorted by: its kind, where its test is, the codes it cites, then its message.
-const sortKey = ({ kind, observation }: OfAKind): readonly (number | string)[] => [
-  QUALITY_CHECK_KINDS.indexOf(kind),
-  observation?.place ?? "",
-  (observation?.cites ?? []).map(written).join(" "),
-  observation?.message ?? "",
-];
+// What a Quality Check Reconciliation is sorted by: its kind; then a missing check before any evidence; then where its
+// test is, the codes it cites, and its message, which a test with none leaves last.
+const sortKey = ({ kind, observation }: OfAKind): readonly (number | string | undefined)[] =>
+  observation === undefined
+    ? [QUALITY_CHECK_KINDS.indexOf(kind), 0]
+    : [QUALITY_CHECK_KINDS.indexOf(kind), 1, observation.place, observation.cites.map(written).join(), observation.message];
 
 // At the first part that differs, the lower of the two as text comes first; a kind's rank is one digit.
 function inOrder(one: OfAKind, other: OfAKind): number {
