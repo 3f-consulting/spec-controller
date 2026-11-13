@@ -115,3 +115,7 @@ export function claimReconciliationOf(
   const balanced = qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied");
   return { claim, qualityCheckReconciliations, verdict: balanced ? "balanced" : "out-of-balance" };
 }
+
+export function claimReconciliationsOf(_claims: readonly ExecutableClaim[], _observations: readonly EvidenceObservation[]): ClaimReconciliation[] {
+  return [];
+}

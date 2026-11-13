@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ClaimCode } from "./claimCodes.js";
-import { claimReconciliationOf } from "./claimReconciliation.js";
+import { claimReconciliationOf, claimReconciliationsOf } from "./claimReconciliation.js";
 import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
 import type { EvidenceObservation, PhantomClaim, Result, UnnamedClaim } from "./postEvidenceObservation.js";
 
@@ -67,5 +67,16 @@ describe("balance works out each Quality Check Reconciliation's outcome, and fro
       verdict,
       outcomes,
     });
+  });
+});
+
+describe("each executable claim sharing a claim code will have its own Claim Reconciliation, naming its feature file and title", () => {
+  it("[CLM-LDG-046] scenarios \"a\" in one.feature and \"b\" in two.feature, both tagged @CLM-ONE-001, each have their own Claim Reconciliation", () => {
+    const claims: ExecutableClaim[] = [
+      { claimCode: ONE_001, file: "one.feature", title: "a", obligations: [{ kind: "unit" }] },
+      { claimCode: ONE_001, file: "two.feature", title: "b", obligations: [{ kind: "unit" }] },
+    ];
+
+    expect(claimReconciliationsOf(claims, []).map(({ claim }) => claim)).toEqual(claims);
   });
 });
