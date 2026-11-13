@@ -51,14 +51,11 @@ export type FileHas = readonly [string, string, readonly (readonly [string, stri
 // balance added, when given.
 export type EvidenceHas = readonly [EvidenceObservation["kind"], Result, string?, string?, string?, string?, ...string[]];
 
-const evidenceOf = ([kind, result, code, place = "one.test.ts", name = "a test", message, ...notes]: EvidenceHas): EvidenceObservation => ({
-  ...unitTestOf([result, code]),
-  kind,
-  place,
-  name,
-  ...(message === undefined ? {} : { message }),
-  notes,
-});
+// A fitness function is a CI step, which has no name.
+const evidenceOf = ([kind, result, code, place = "one.test.ts", name = "a test", message, ...notes]: EvidenceHas): EvidenceObservation => {
+  const { name: _testName, ...unitTest } = unitTestOf([result, code]);
+  return { ...unitTest, kind, place, ...(kind === "fitness" ? {} : { name }), ...(message === undefined ? {} : { message }), notes };
+};
 
 // A run of the feature files and evidence given, read and reconciled as balance does.
 export function reconciledFrom(files: readonly FileHas[], evidence: readonly EvidenceHas[]): EvidenceReconciliation {
@@ -67,4 +64,11 @@ export function reconciledFrom(files: readonly FileHas[], evidence: readonly Evi
   );
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), evidence.map(evidenceOf));
   return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: [], configurationErrors: [], features, provenance: PROVENANCE });
+}
+
+// A run of the feature files given as written, and the configuration errors given, with no evidence.
+export function reconciledFromSources(sources: readonly (readonly [string, string])[], configurationErrors: readonly ConfigurationError[] = []): EvidenceReconciliation {
+  const features = sources.map(([file, source]) => featureAsWrittenFrom(file, source));
+  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), []);
+  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: claimCodeErrorsOf(features), configurationErrors, features, provenance: PROVENANCE });
 }

@@ -10,6 +10,8 @@ Feature: Each report has the right structure, and the Markdown explains it
   - The Markdown report shows the unnamed claim's evidence in groups, by kind of quality check, file and shared claim code.
   - The Markdown adds the words a person needs to read it.
   - The provenance shows each input the run read on its own line.
+  - The report names the files, codes or setting each error in the inputs involves.
+  - Run integrity says where each Evidence Observation that never ran is.
   - The Markdown summary leaves out a row or column whose counts are all zero.
   - The JSON report keeps every count, zero or not.
   - The Markdown shows the Claim Reconciliations as one table, a row per claim.
@@ -96,6 +98,12 @@ Feature: Each report has the right structure, and the Markdown explains it
       when its Markdown report is written
       then the unnamed claim will show one group for each file, with how many of its tests ran, passed and failed, and the name of the test that failed
 
+    @unit @CLM-RPT-159
+    Scenario: the unnamed claim's fitness evidence shows as one group with no file
+      given a run had the step ci.yml:build:Lint passing, citing no claim
+      when its Markdown report is written
+      then the unnamed claim will show one fitness group, with no file, 1 ran, 1 passed and 0 failed
+
   Rule: the Markdown adds the words a person needs to read the data
 
     @unit @CLM-RPT-109
@@ -132,6 +140,37 @@ Feature: Each report has the right structure, and the Markdown explains it
         | clm         | inputs read                                                 | lines                                         |
         | CLM-RPT-114 | a Vitest report and a Cucumber report, and no pytest report | one line for each report, and none for pytest |
         | CLM-RPT-115 | the CI workflows by default                                 | a line for the CI workflows                   |
+
+  Rule: the report names the files, codes or setting each error in the inputs involves
+
+    @unit
+    Scenario Outline: an error in the inputs is listed under its kind with the files, codes or setting it involves
+      given a run had <the inputs>
+      when its Markdown report is written
+      then Errors in the inputs will list <kind> with <involved>
+
+      Examples:
+        | clm         | the inputs                                                                                 | kind                         | involved                                       |
+        | CLM-RPT-147 | one.feature, tagged @ONE, with a scenario tagged @CLM-TWO-001, and two.feature tagged @TWO | foreign-claim-code           | one.feature, CLM-TWO-001 and two.feature       |
+        | CLM-RPT-148 | one.feature, tagged @ONE, with a scenario tagged @CLM-ZZZ-001, and no file tagged @ZZZ     | foreign-claim-code           | one.feature and CLM-ZZZ-001                    |
+        | CLM-RPT-149 | three.feature, with no feature code, with a scenario tagged @CLM-ONE-002                   | no-feature-code              | three.feature                                  |
+        | CLM-RPT-150 | one.feature and uno.feature, both tagged @ONE                                              | duplicate-feature-code       | ONE, one.feature and uno.feature               |
+        | CLM-RPT-151 | the scenario adds in one.feature, tagged both @CLM-ONE-001 and @CLM-ONE-002                | several-claim-codes          | one.feature, adds, CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-RPT-152 | the Outline adds in one.feature, tagged @CLM-ONE-009, with a clm column                    | claim-code-beside-clm-column | one.feature, adds and CLM-ONE-009              |
+        | CLM-RPT-153 | a configuration setting runer, which balance does not know                                 | configuration-unknown-key    | runer                                          |
+
+  Rule: run integrity says where each Evidence Observation that never ran is
+
+    @unit
+    Scenario Outline: run integrity lists a never-ran Evidence Observation by its kind, where it is and any name it has
+      given a run had <evidence>, which never ran, with no message
+      when its Markdown report is written
+      then run integrity will list <listed>
+
+      Examples:
+        | clm         | evidence                          | listed                        |
+        | CLM-RPT-160 | the unit test adds in one.test.ts | unit, at one.test.ts, "adds"  |
+        | CLM-RPT-161 | the step ci.yml:build:Lint        | fitness, at ci.yml:build:Lint |
 
   Rule: the Markdown summary leaves out a row or column whose counts are all zero
 
@@ -195,6 +234,7 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-132 | asked for a unit test, and no unit test citing it                 | U/-   |
         | CLM-RPT-133 | asked for no unit test, and one passing unit test citing it       | -/1   |
         | CLM-RPT-134 | asked for no unit test, and no unit test citing it                | empty |
+        | CLM-RPT-158 | asked for a unit and an e2e test, and no test citing it           | U/-   |
 
     @unit
     Scenario Outline: each row is named so a reader can find its claim
@@ -227,6 +267,10 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-141 | asked for a unit test, and a passing unit test citing it                                                  | none                                                                    |
         | CLM-RPT-142 | asked for a unit test, and the unit test "[CLM-CHK-002] charges the card" in src/checkout.test.ts failing | unit failing, at src/checkout.test.ts, "[CLM-CHK-002] charges the card" |
         | CLM-RPT-143 | asked for a unit and an e2e test, and neither citing it                                                   | unit missing, then e2e missing                                          |
+        | CLM-RPT-154 | asked for a fitness function, and its step ci.yml:build:Lint failing                                      | fitness failing, at ci.yml:build:Lint                                   |
+        | CLM-RPT-155 | a code and no kind-of-check tag                                                                           | no-quality-check                                                        |
+        | CLM-RPT-156 | no scenario, and a passing unit test charges in a.test.ts citing it                                       | unit cites-unknown-claim, at a.test.ts, "charges"                       |
+        | CLM-RPT-157 | no code, and asked for a unit test                                                                        | unit no-claim-code                                                      |
 
     @unit @CLM-RPT-144
     Scenario: the table has a column only for a kind some claim raises or answers
