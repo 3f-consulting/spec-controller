@@ -74,6 +74,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-024 | Go's evidence report                | [CLM-ONE-001] in its subtest's name | it failed                                | failed  |
         | CLM-OBS-025 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it passed                                | passed  |
         | CLM-OBS-026 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it failed                                | failed  |
+        | CLM-OBS-118 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it raised an error                       | failed  |
         | CLM-OBS-027 | JUnit 5 in Kotlin's evidence report | [CLM-ONE-001] in its display name   | it passed                                | passed  |
         | CLM-OBS-028 | JUnit 5 in Kotlin's evidence report | [CLM-ONE-001] in its display name   | it failed                                | failed  |
         | CLM-OBS-029 | RSpec's evidence report             | [CLM-ONE-001] in its description    | it passed                                | passed  |
