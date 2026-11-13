@@ -203,6 +203,16 @@ describe("each of two reports will be where you asked", () => {
   });
 });
 
+describe("two reports asked for at one device will both be written, as a device is not a file they share", () => {
+  it("[CLM-FMT-035] --format md:/dev/null --format json:/dev/null: both are written, and the run does not stop", () => {
+    const { output, error, streams } = capturedStreams();
+
+    const exitCode = writeReports(outputsAskedFor(["--format", "md:/dev/null", "--format", "json:/dev/null"]), [], RECONCILIATION, streams, AS_ASKED);
+
+    expect({ exitCode, output: output.join(""), error: error.join("") }).toEqual({ exitCode: 0, output: "", error: "" });
+  });
+});
+
 describe("a place it cannot write will stop the run, and nothing will be written", () => {
   it.each([
     [
