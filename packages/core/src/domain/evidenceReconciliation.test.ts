@@ -235,6 +235,12 @@ describe("Total of the claim codes written where no claim reads them", () => {
       "@ONE\nFeature: one\n\n  @unit\n  Scenario Outline: adds <x>\n    Given <x>\n\n    Examples:\n      | clm         | x   |\n      | CLM-ONE-001 | one |\n",
       0,
     ],
+    [
+      "CLM-EVR-070",
+      "@CLM-ONE-001, with a comma, in an Examples cell",
+      "@ONE\nFeature: one\n\n  @unit\n  Scenario Outline: adds <x>\n    Given <x>\n\n    Examples:\n      | x                 |\n      | @CLM-ONE-001, one |\n",
+      1,
+    ],
   ] as const)("[%s] a feature file with %s has its excluded claim code occurrences counted", (_clm, _written, source, excluded) => {
     expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)]).excludedClaimCodeOccurrences).toBe(excluded);
   });

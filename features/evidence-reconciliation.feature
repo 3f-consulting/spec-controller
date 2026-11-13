@@ -133,12 +133,13 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       then the totals will have <excluded> excluded claim code occurrences
 
       Examples:
-        | clm         | claim code                                   | excluded |
-        | CLM-EVR-027 | @CLM-ONE-001 as a scenario's tag             | 0        |
-        | CLM-EVR-028 | @CLM-ONE-001 in a scenario's title           | 1        |
-        | CLM-EVR-029 | @CLM-ONE-001 in a comment                    | 1        |
-        | CLM-EVR-030 | @CLM-ONE-001 as a tag and again in a comment | 1        |
-        | CLM-EVR-031 | CLM-ONE-001 in a clm column                  | 0        |
+        | clm         | claim code                                      | excluded |
+        | CLM-EVR-027 | @CLM-ONE-001 as a scenario's tag                | 0        |
+        | CLM-EVR-028 | @CLM-ONE-001 in a scenario's title              | 1        |
+        | CLM-EVR-029 | @CLM-ONE-001 in a comment                       | 1        |
+        | CLM-EVR-030 | @CLM-ONE-001 as a tag and again in a comment    | 1        |
+        | CLM-EVR-031 | CLM-ONE-001 in a clm column                     | 0        |
+        | CLM-EVR-070 | @CLM-ONE-001, with a comma, in an Examples cell | 1        |
 
   Rule: balance accounts for every step it reads
 
