@@ -93,14 +93,22 @@ describe("the table has a column only for a kind some claim raises or answers", 
 });
 
 describe("a section showing a never-ran test's message quotes its first line", () => {
-  const markdown = (): string =>
-    markdownReportOf(reconciledFrom([["one.feature", "ONE", [["@unit @CLM-ONE-001", "adds one"]]]], [["unit", "never-ran", "ONE-001", "one.test.ts", "adds", "first line\nsecond line\nthird line", "one note", "another note"]]));
+  const markdown = (message: string): string =>
+    markdownReportOf(reconciledFrom([["one.feature", "ONE", [["@unit @CLM-ONE-001", "adds one"]]]], [["unit", "never-ran", "ONE-001", "one.test.ts", "adds", message, "one note", "another note"]]));
 
   it.each([
-    ["CLM-RPT-085", "the Claim Reconciliations", "## Claim Reconciliations", "| CLM-ONE-001 | U/- | out-of-balance | unit: missing; unit: never-ran (`one.test.ts`: `adds`) — `first line`, `one note`, `another note` |"],
-    ["CLM-RPT-146", "run integrity", "## Run integrity", "- unit: `one.test.ts`, `adds` — `first line`"],
-  ] as const)("[%s] a test that never ran with a message of three lines, and two notes balance added, has %s quote what it shows of them", (_clm, _where, heading, line) => {
-    const section = markdown().split("\n\n## ").find((part) => `## ${part}`.startsWith(heading))!;
+    ["CLM-RPT-085", "a message of three lines", "first line\nsecond line\nthird line", "the Claim Reconciliations", "## Claim Reconciliations", "| CLM-ONE-001 | U/- | out-of-balance | unit: missing; unit: never-ran (`one.test.ts`: `adds`) — `first line`, `one note`, `another note` |"],
+    ["CLM-RPT-146", "a message of three lines", "first line\nsecond line\nthird line", "run integrity", "## Run integrity", "- unit: `one.test.ts`, `adds` — `first line`"],
+    [
+      "CLM-RPT-169",
+      "a message whose first line is blank, then two lines",
+      "\nfirst line\nsecond line",
+      "the Claim Reconciliations",
+      "## Claim Reconciliations",
+      "| CLM-ONE-001 | U/- | out-of-balance | unit: missing; unit: never-ran (`one.test.ts`: `adds`) — `first line`, `one note`, `another note` |",
+    ],
+  ] as const)("[%s] a test that never ran with %s, and two notes balance added, has %s quote what it shows of them", (_clm, _described, message, _where, heading, line) => {
+    const section = markdown(message).split("\n\n## ").find((part) => `## ${part}`.startsWith(heading))!;
 
     expect(section.split("\n").filter((each) => each.includes("first line") || each.includes("second line"))).toEqual([line]);
   });
