@@ -15,8 +15,8 @@ interface JestJsonReport {
   }[];
 }
 
-// A record whose testResults is a list of records.
-const REPORT: Shape = { fields: { testResults: { listOf: { fields: {} } } } };
+// A record whose testResults is a list of records, each test in them with its list of failure messages.
+const REPORT: Shape = { fields: { testResults: { listOf: { fields: { assertionResults: { listOf: { fields: { failureMessages: { listOf: "string" } } } } } } } } };
 
 export const whereResultsByFileBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
