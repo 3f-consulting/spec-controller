@@ -62,3 +62,7 @@ export interface EvidenceGroup {
   readonly failed: number;
   readonly failures: readonly string[];
 }
+
+export function claimReconciliationOf(claim: ExecutableClaim, _observations: readonly EvidenceObservation[]): ClaimReconciliation {
+  return { claim, qualityCheckReconciliations: [], verdict: "out-of-balance" };
+}
