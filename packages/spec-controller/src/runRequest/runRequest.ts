@@ -70,11 +70,7 @@ type Token = ReturnType<typeof tokensOf>[number];
 function flagRefusal(command: Command, flag: Flag, token: Extract<Token, { kind: "option" }>): UsageError | undefined {
   const help = helpFor(command);
   const value = token.value ?? "";
-  if (token.inlineValue === true) {
-    return flag.value === undefined
-      ? refused("unwanted-value", { flag: token.rawName, value, help })
-      : refused("equals-form", { given: `${token.rawName}=${value}`, spelling: `${token.rawName} ${value}`, help });
-  }
+  if (token.inlineValue === true) return refused("equals-form", { given: `${token.rawName}=${value}`, spelling: `${token.rawName} ${value}`, help });
   // The next argument is another flag, not this one's value.
   if (flag.value !== undefined && (token.value === undefined || token.value.startsWith("-"))) return refused("missing-value", { flag: token.rawName, help });
   return undefined;
@@ -87,7 +83,8 @@ function flagsRead(command: Command, args: readonly string[]): FlagsRead | Usage
   const positionals: string[] = [];
   const tokens = tokensOf(flags, args);
   for (const [at, token] of tokens.entries()) {
-    if (token.kind === "option-terminator") continue;
+    // -- is no flag any command takes.
+    if (token.kind === "option-terminator") return refused("unknown-flag", { command, flag: "--", help: helpFor(command) });
     if (token.kind === "positional") {
       const refusal = positionalRefusal(command, flags, tokens[at - 1], token.index, token.value, positionals.length);
       if (refusal !== undefined) return refusal;
