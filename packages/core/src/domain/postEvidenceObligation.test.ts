@@ -30,6 +30,14 @@ describe("an Outline will be one executable claim for each row only when it has 
   });
 });
 
+describe("a feature file with a Background has its scenarios read as executable claims", () => {
+  it("[CLM-OBL-031] a feature file with a Background, and a scenario tagged @unit @CLM-ONE-001, has one executable claim, CLM-ONE-001", () => {
+    const withABackground = "Feature: one\n\n  Background:\n    Given a thing\n\n  @unit @CLM-ONE-001\n  Scenario: a scenario\n    Given a step\n";
+
+    expect(claimsIn(withABackground).map(({ claimCode }) => written(claimCode))).toEqual(["CLM-ONE-001"]);
+  });
+});
+
 // A scenario tagged @unit, with the deferral tag on it, on its Feature, or on the Rule it sits under.
 const deferredBy = (deferral: string, on: "scenario" | "feature" | "rule"): string => {
   if (on === "feature") return `${deferral}\nFeature: one\n\n  @unit\n  Scenario: a scenario\n    Given a step\n`;
