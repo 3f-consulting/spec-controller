@@ -11,7 +11,7 @@ const group = (heading: string, lines: readonly string[]): string[] => ["", `###
 function claimReconciliationsGroup({ claimReconciliations: { total, balanced, outOfBalance }, excludedClaimCodeOccurrences }: Totals): string[] {
   return group("summary-claim-reconciliations", [
     ...tableOf(["summary-total", "summary-balanced", "summary-out-of-balance"], [[total, balanced, outOfBalance]]),
-    ...(excludedClaimCodeOccurrences === 0 ? [] : ["", coreText("summary-excluded").replace("{count}", String(excludedClaimCodeOccurrences))]),
+    ...(excludedClaimCodeOccurrences === 0 ? [] : ["", coreText("summary-excluded", { count: excludedClaimCodeOccurrences })]),
   ]);
 }
 

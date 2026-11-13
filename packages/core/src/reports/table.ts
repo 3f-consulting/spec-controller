@@ -7,7 +7,7 @@ export const tableOf = (columns: readonly string[], rows: readonly (readonly (st
   `${coreText("key")}:`,
   ...[...columns, ...notes].map((code) => `- ${coreText(code)}: ${coreText(`${code}-key`)}`),
   "",
-  row(columns.map(coreText)),
+  row(columns.map((column) => coreText(column))),
   row(columns.map(() => "---")),
   ...rows.map(row),
 ];

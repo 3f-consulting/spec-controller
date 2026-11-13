@@ -23,4 +23,4 @@ export function textFor(catalogue: Catalogue, code: string, values: MessageValue
   }
 }
 
-export const coreText = (code: string): string => textFor(coreCatalogue, code);
+export const coreText = (code: string, values: MessageValues = {}): string => textFor(coreCatalogue, code, values);
