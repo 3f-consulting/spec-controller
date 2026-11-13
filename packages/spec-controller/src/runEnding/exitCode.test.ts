@@ -18,7 +18,7 @@ describe("each run verdict will have its exit code", () => {
     ["CLM-CLI-169", "not reconciled, because claim code errors", 3, { verdict: "not-reconciled", why: "claim-code-errors" }],
     ["CLM-CLI-170", "not reconciled, because nothing to reconcile", 3, { verdict: "not-reconciled", why: "nothing-to-reconcile" }],
   ] as const)("[%s] a run that reached the run verdict %s exits %i", (_clm, _verdict, exitCode, runVerdict) => {
-    expect(exitCodeOf(runVerdict)).toBe(exitCode);
+    expect(exitCodeOf(runVerdict, { exitZero: false })).toBe(exitCode);
   });
 });
 
