@@ -6,7 +6,6 @@ export function quoted(text: string): string {
   return `${fence}${padding}${text}${padding}${fence}`;
 }
 
-// A message's first line that is not blank: the blank lines it opens with are passed over.
 export const firstLineOf = (message: string): string => message.replace(/^\s*\n/, "").split("\n")[0]!;
 
 export const inCell = (text: string): string => quoted(text).replaceAll("|", "\\|");

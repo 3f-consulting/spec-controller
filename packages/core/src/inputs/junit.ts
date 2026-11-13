@@ -44,10 +44,8 @@ function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {
   };
 }
 
-// Every suite under the element, at any depth.
 const suitesIn = (element: Element): Element[] => elementsIn(element, "testsuite").flatMap((suite) => [suite, ...suitesIn(suite)]);
 
-// What the XML parser says is wrong with the report's text, if anything.
 export function whyXmlDoesNotParse(xml: string): string | undefined {
   const valid = XMLValidator.validate(xml);
   return valid === true ? undefined : `${valid.err.msg} (${valid.err.line}:${valid.err.col})`;

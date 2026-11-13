@@ -7,14 +7,12 @@ const { "CLM-OBS-009": scriptRuns, "CLM-OBS-010": launchers, "CLM-OBS-112": wrap
 
 const wordsIn = (text: string): string[] => text.split(" ");
 
-// A launcher's words, up to the command it hands on to. The list names a longer launcher before a shorter one it opens
-// with, so pnpm exec is read before pnpm.
+// A launcher's words, up to the command it hands on to; the list names pnpm exec before pnpm, so it is read first.
 const LAUNCHERS = launchers.variants.map((launcher) => launcher.split(" ").filter((word) => word !== "<bin>"));
 const SCRIPT_VARIANTS = scriptRuns.variants.map((variant) => variant.split(" "));
 // A wrapper's words: its command, then a gap for each value it takes before the command it runs, as timeout's duration.
 const WRAPPERS = wrappers.variants.map((wrapper) => wrapper.split(" "));
-// What a wrapper's options take is that wrapper's own: xvfb-run's are read past with their values, and a wrapper not
-// named here takes none.
+// xvfb-run's options that take a value are read past with it; a wrapper not named here takes no option values.
 const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"] };
 
 // Each element of the line's && and ; lists, as the stages of its pipeline. A comment is no command.
@@ -24,15 +22,13 @@ function pipelinesOf(statements: readonly Statement[]): Command[][] {
     .map((node) => (node.type === "Pipeline" ? node.commands : [node]).filter((stage): stage is Command => stage.type === "Command"));
 }
 
-// A command's name and its arguments, each as the word it is. A command that only sets a variable has no name, and an
-// argument setting one, as export's, is no word.
+// A command's name and arguments that are words; a command that only sets a variable has no name.
 const wordsOf = ({ name, args }: Command): string[] => [name, ...args].filter((word): word is Word => word?.type === "Word").map(({ value }) => value);
 
 const opensWith = (words: readonly string[], opening: readonly string[]): boolean => opening.every((word, at) => words[at] === word);
 
-// The script a command runs in one of its package manager's variants, when the target has a script by that name. Every
-// variant's last word names its script: its <script> gap, or, as npm test's, the script itself. A command that stops
-// before that word names none, and reads undefined.
+// The script a command runs in one of its package manager's variants, when the target has one by that name. Every
+// variant's last word names its script: its <script> gap, or, as npm test's, the script itself.
 function scriptRun(words: readonly string[], scripts: Scripts): string | undefined {
   for (const variant of SCRIPT_VARIANTS) {
     const named = variant.every((word, at) => word === "<script>" || word === "<name>" || word === words[at]);
@@ -42,7 +38,6 @@ function scriptRun(words: readonly string[], scripts: Scripts): string | undefin
   return undefined;
 }
 
-// The command a launcher or a wrapper hands on to: the word after a launcher, or the first word past a wrapper's options and their values.
 function handedOn(words: readonly string[]): readonly string[] | undefined {
   const launcher = LAUNCHERS.find((opening) => opensWith(words, opening));
   if (launcher !== undefined) return words.slice(launcher.length);
