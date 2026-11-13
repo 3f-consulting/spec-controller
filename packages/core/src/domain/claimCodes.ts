@@ -63,3 +63,15 @@ export function claimCodeFrom(word: string): ClaimCode | undefined {
 }
 
 export const sameCode = (one: ClaimCode, other: ClaimCode): boolean => one.featureCode === other.featureCode && one.number === other.number;
+
+export function isFeatureCode(_word: string): boolean {
+  return false;
+}
+
+export function retiredScenarioCodeFrom(_word: string): ClaimCode | undefined {
+  return undefined;
+}
+
+export function featureCodeOfFile(_feature: { readonly fileTags: readonly string[] }): string | undefined {
+  return undefined;
+}
