@@ -3,6 +3,9 @@ import { UNEXPECTED_ERROR, type ExitCode } from "./codes.js";
 
 export type Complain = (error: unknown) => void;
 
+// The complaint's error code, shown before it as a refusal shows its own.
+const UNEXPECTED = "unexpected-error";
+
 // An error is shown by its name and message; one that cannot be shown says so.
 function shown(error: unknown): string {
   try {
@@ -18,7 +21,7 @@ export function complainerTo(write: (text: string) => void): Complain {
   return (error) => {
     if (complained) return;
     complained = true;
-    write(`${appCatalogue["unexpected-error"]}: ${shown(error)}\n`);
+    write(`[${UNEXPECTED}] ${appCatalogue[UNEXPECTED]}: ${shown(error)}\n`);
   };
 }
 

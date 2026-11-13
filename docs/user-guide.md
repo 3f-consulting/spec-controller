@@ -898,7 +898,7 @@ When Cucumber runs an Outline with a `clm` column, each row is credited by Cucum
 
 When several reasons apply, this order decides: unsound, then claim code errors, then nothing to reconcile, all before out of balance. An unexpected error (`4`) is not in the order. A run exits `4` only when it meets the error before it has an exit code. `--exit-zero` moves only `1`, to `0`.
 
-An error after the run has its exit code does not change it. One line goes to stderr, `spec-controller hit an unexpected error: <name>: <message>`, and the run keeps its code: after a verdict, the report stands as written. A run writes at most one such line.
+An error after the run has its exit code does not change it. One line goes to stderr, `[unexpected-error] spec-controller hit an unexpected error: <name>: <message>`, and the run keeps its code: after a verdict, the report stands as written. A run writes at most one such line.
 
 ### Error codes
 
@@ -955,7 +955,7 @@ An error in the inputs is not a refusal. Its line in the report's `## Errors in 
 | `unreadable-history` | `allocate` could not read the repository's history |
 | `damaged-repository` | `allocate` could not read the repository |
 
-An unexpected error is not a refusal, and its line carries no code: `spec-controller hit an unexpected error: <name>: <message>`.
+An unexpected error is not a refusal, but its line carries the code `unexpected-error` all the same: `[unexpected-error] spec-controller hit an unexpected error: <name>: <message>`.
 
 ---
 
