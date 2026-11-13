@@ -211,6 +211,12 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads its inputs
       then it will read ci.yml alone, and then both workflows
 
+    @unit @CLM-CLI-195
+    Scenario: balance counts the steps of the CI workflows it reads
+      given the run named a CI workflows folder whose one workflow had two steps
+      when balance writes its report
+      then the report's step account will count two steps
+
     @unit
     Scenario Outline: an input that is not valid will stop the run
       given the run met <error>
