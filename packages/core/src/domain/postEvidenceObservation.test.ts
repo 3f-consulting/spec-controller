@@ -409,6 +409,7 @@ describe("balance posts a nested test from a report kept by suite citing its own
     ["CLM-OBS-071", "go", "no claim code, under a subtest with CLM-ONE-002 in brackets", "example.com/adds", "TestAdds/[CLM-ONE-002]_a_group/adds_one", "example.com/adds", [ONE_002]],
     ["CLM-OBS-072", "surefire", "CLM-ONE-001 in brackets in its display name, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "[CLM-ONE-001] adds one", "[CLM-ONE-002] a class", [ONE_001]],
     ["CLM-OBS-073", "surefire", "no claim code, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "adds one", "[CLM-ONE-002] a class", [ONE_002]],
+    ["CLM-OBS-073", "surefire", "no claim code, its display name 007, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "007", "[CLM-ONE-002] a class", [ONE_002]],
     [
       "CLM-OBS-120",
       "surefire",
