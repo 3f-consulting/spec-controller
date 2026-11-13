@@ -113,18 +113,21 @@ const classesIn = (className: string): string[] => className.split(/(?=\[CLM-)/)
 
 const RESULT_BY_STATUS: Readonly<Record<string, Result>> = { passed: "passed", failed: "failed" };
 
+// A test report's result is unit evidence, whatever its source.
+const unitObservation = (observation: Omit<EvidenceObservation, "kind">): EvidenceObservation => ({ ...observation, kind: "unit" });
+
 // Results kept by test file: Vitest's and Jest's. A failed file with no results is one that could not run.
 export function observationsByFile(results: readonly ResultsByFileAsWritten[], targetFolder: string): EvidenceObservation[] {
   return results.flatMap(({ file, status, message, results: inFile }): EvidenceObservation[] => {
     const place = shownFromTarget(file, targetFolder);
     if (status === "failed" && inFile.length === 0) {
-      return [{ cites: [], result: "never-ran", kind: "unit", place, message }];
+      return [unitObservation({ cites: [], result: "never-ran", place, message })];
     }
     return inFile.flatMap(({ ancestorTitles, title, status: resultStatus, failureMessages }) => {
       const result = RESULT_BY_STATUS[resultStatus];
       if (result === undefined) return [];
       const failure = failureMessages.join("\n");
-      return [{ cites: nearestCitations([...ancestorTitles, title]), result, kind: "unit", place, name: title, ...(failure && { message: failure }) }];
+      return [unitObservation({ cites: nearestCitations([...ancestorTitles, title]), result, place, name: title, ...(failure && { message: failure }) })];
     });
   });
 }
@@ -140,7 +143,7 @@ function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFo
   const cites = collected ? clmProperties.flatMap((property) => claimCodeFrom(property) ?? []) : [];
   const resultOf: Result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
   const place = shownFromTarget(collected ? className! : name, targetFolder);
-  return [{ cites, result: resultOf, kind: "unit", place, ...(collected && { name }), ...saidBy(failure) }];
+  return [unitObservation({ cites, result: resultOf, place, ...(collected && { name }), ...saidBy(failure) })];
 }
 
 // A case with no class name is its suite's own failure, such as a package that did not build; one with no name is its
@@ -149,11 +152,11 @@ function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: Re
   const { className = "", name, outcome, failure } = result;
   if (outcome === "skipped") return [];
   if (outcome !== "" && (className === "" || name === "")) {
-    return [{ cites: [], result: "never-ran", kind: "unit", place: className || suite.name, ...saidBy(failure) }];
+    return [unitObservation({ cites: [], result: "never-ran", place: className || suite.name, ...saidBy(failure) })];
   }
   const cites = nearestCitations([...classesIn(className), ...name.split("/")]);
   const place = shownFromTarget(className || suite.name, targetFolder);
-  return [{ cites, result: outcome === "" ? "passed" : "failed", kind: "unit", place, name, ...saidBy(failure) }];
+  return [unitObservation({ cites, result: outcome === "" ? "passed" : "failed", place, name, ...saidBy(failure) })];
 }
 
 // Results kept by suite, each case in its suite.
@@ -173,15 +176,11 @@ export function observationsByExample({ examples, loadErrors }: ResultsByExample
     if (result === undefined) return [];
     // Its own description cites first; failing that, its groups' do, in its full description.
     const cites = nearestCitations([fullDescription, description]);
-    return [{ cites, result, kind: "unit", place: shownFromTarget(file, targetFolder), name: description, message }];
+    return [unitObservation({ cites, result, place: shownFromTarget(file, targetFolder), name: description, message })];
   });
-  const neverRan = loadErrors.map(({ file, message }): EvidenceObservation => ({
-    cites: [],
-    result: "never-ran",
-    kind: "unit",
-    place: file === undefined ? "" : shownFromTarget(file, targetFolder),
-    message
-  }));
+  const neverRan = loadErrors.map(({ file, message }) =>
+    unitObservation({ cites: [], result: "never-ran", place: file === undefined ? "" : shownFromTarget(file, targetFolder), message }),
+  );
   return [...ran, ...neverRan];
 }
 
@@ -219,7 +218,7 @@ function rowCodesOf(features: readonly FeatureAsWritten[]): (file: string, line:
   }
   // The feature file path the result's path ends with is its file.
   return (file, line) => {
-    const featureFile = [...byFile.keys()].find((candidate) => file === candidate || file.endsWith(`/${candidate}`));
+    const featureFile = [...byFile.keys()].find((candidate) => `/${file}`.endsWith(`/${candidate}`));
     const code = featureFile === undefined ? undefined : byFile.get(featureFile)!.get(line);
     return code ? [code] : [];
   };
