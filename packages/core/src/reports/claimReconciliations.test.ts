@@ -87,14 +87,17 @@ describe("the table has a column only for a kind some claim raises or answers", 
   });
 });
 
-describe("the report quotes an Evidence Observation's first line and every note", () => {
-  it("[CLM-RPT-085] a test that never ran with a message of three lines, and two notes balance added, has its first line and both notes quoted", () => {
-    const items = cellUnder(
-      "Reconciling items",
-      claimTable([["one.feature", "ONE", [["@unit @CLM-ONE-001", "adds one"]]]], [["unit", "never-ran", "ONE-001", "one.test.ts", "adds", "first line\nsecond line\nthird line", "one note", "another note"]]),
-    );
+describe("a section showing a never-ran test's message quotes its first line", () => {
+  const markdown = (): string =>
+    markdownReportOf(reconciledFrom([["one.feature", "ONE", [["@unit @CLM-ONE-001", "adds one"]]]], [["unit", "never-ran", "ONE-001", "one.test.ts", "adds", "first line\nsecond line\nthird line", "one note", "another note"]]));
 
-    expect({ first: items?.includes("first line"), rest: items?.includes("second line"), notes: items?.includes("one note") && items.includes("another note") }).toEqual({ first: true, rest: false, notes: true });
+  it.each([
+    ["CLM-RPT-085", "the Claim Reconciliations", "## Claim Reconciliations", "| CLM-ONE-001 | U/- | out-of-balance | unit: missing; unit: never-ran (`one.test.ts`: `adds`) — `first line`, `one note`, `another note` |"],
+    ["CLM-RPT-146", "run integrity", "## Run integrity", "- unit: `one.test.ts`, `adds` — `first line`"],
+  ] as const)("[%s] a test that never ran with a message of three lines, and two notes balance added, has %s quote what it shows of them", (_clm, _where, heading, line) => {
+    const section = markdown().split("\n\n## ").find((part) => `## ${part}`.startsWith(heading))!;
+
+    expect(section.split("\n").filter((each) => each.includes("first line") || each.includes("second line"))).toEqual([line]);
   });
 });
 

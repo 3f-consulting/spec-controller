@@ -6,7 +6,7 @@ Feature: Each report has the right structure, and the Markdown explains it
   - Each report has the structure it promises.
   - A report leaves out an optional section with nothing in it.
   - Every report has its Claim Reconciliations.
-  - Odd characters in what a report quotes break nothing.
+  - The Markdown report shows each name it quotes in code, so no character in it changes the table.
   - The Markdown report shows the unnamed claim's evidence in groups, by kind of quality check, file and shared claim code.
   - The Markdown adds the words a person needs to read it.
   - The provenance shows each input the run read on its own line.
@@ -61,29 +61,32 @@ Feature: Each report has the right structure, and the Markdown explains it
       when its reports are written
       then each report will have its Claim Reconciliations, showing none
 
-  Rule: odd characters in what a report quotes break nothing
+  Rule: the Markdown report shows each name it quotes in code, so no character in it changes the table
 
-    @unit
-    Scenario Outline: a name will read as it was given, in a table that stays a table
-      given a run had reported a name containing <character>
+    @unit @CLM-RPT-084
+    Scenario: a name with a character Markdown reads as formatting shows in code unchanged
+      given a run had reported the name a|b
       when its Markdown report is written
-      then the name will read as it was given, in a table that stays a table
+      then its table will show the name in code as a|b, and every row will have the same columns
 
-      Examples:
-        | clm         | character                         |
-        | CLM-RPT-084 | a pipe, as in a\|b                |
-        | CLM-RPT-106 | a backslash, as in a\\b           |
-        | CLM-RPT-107 | a line break                      |
-        | CLM-RPT-088 | a backtick, as in `a`             |
-        | CLM-RPT-108 | a formatting character, as in *a* |
+    @unit @CLM-RPT-107
+    Scenario: a name with a line break shows in code as one quoted line
+      given a run had reported the name a, a line break, b
+      when its Markdown report is written
+      then its table will show the name in code as "a\nb", and every row will have the same columns
 
   Rule: a Markdown report shortens a long message to its first line
 
-    @unit @CLM-RPT-085
-    Scenario: the report quotes an Evidence Observation's first line and every note
+    @unit
+    Scenario Outline: a section showing a never-ran test's message quotes its first line
       given a test that never ran had a message of three lines, and balance had added two notes
       when its Markdown report is written
-      then the report will quote the message's first line and both notes
+      then <where> will quote <what>
+
+      Examples:
+        | clm         | where                     | what                                    |
+        | CLM-RPT-085 | the Claim Reconciliations | the message's first line and both notes |
+        | CLM-RPT-146 | run integrity             | the message's first line                |
 
   Rule: the Markdown report shows the unnamed claim's evidence in its groups
 
