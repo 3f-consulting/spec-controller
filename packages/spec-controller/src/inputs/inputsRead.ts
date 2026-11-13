@@ -23,7 +23,7 @@ import {
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
 import { readdirSync, readFileSync, statSync, type Stats } from "node:fs";
-import { basename, join, resolve } from "node:path";
+import { basename, join, relative, resolve } from "node:path";
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import type { Refusal, RunEnding } from "../runEnding/runEnding.js";
 import type { InputFault, InputRead } from "./inputRead.js";
@@ -59,7 +59,8 @@ const failed = <Contents>(path: string, fault: InputFault, detail: string): Inpu
 // What a reader said is wrong, on one line, so each complaint is one line.
 const saidOf = (error: unknown): string => (error instanceof Error ? error.message : String(error)).trim().replace(/\s*\n\s*/g, " ");
 
-const faultOf = (error: unknown): InputFault => ((error as NodeJS.ErrnoException).code === "ENOENT" ? "absent" : "not-permitted");
+// A path that names nothing, or runs through a file, does not exist; any other failure to reach it is the tool's not to read it.
+const faultOf = (error: unknown): InputFault => (["ENOENT", "ENOTDIR"].includes(String((error as NodeJS.ErrnoException).code)) ? "absent" : "not-permitted");
 
 function textAt(name: string, shown: string, path: string): InputRead<FileText> {
   try {
@@ -70,8 +71,11 @@ function textAt(name: string, shown: string, path: string): InputRead<FileText> 
 }
 
 // Each file under the folder whose name ends as asked, at any depth or only at its top, by its path within the folder.
+// A folder whose name ends so is not a file of it.
 function filesIn(shown: string, path: string, endings: readonly string[], atAnyDepth: boolean): InputRead<FileText>[] {
-  const names = readdirSync(path, { recursive: atAnyDepth, encoding: "utf8" }).filter((name) => endings.some((ending) => name.endsWith(ending)));
+  const names = readdirSync(path, { recursive: atAnyDepth, withFileTypes: true })
+    .filter((entry) => !entry.isDirectory() && endings.some((ending) => entry.name.endsWith(ending)))
+    .map((entry) => relative(path, join(entry.parentPath, entry.name)));
   return names.sort().map((name) => textAt(name, join(shown, name), join(path, name)));
 }
 
@@ -151,13 +155,15 @@ function withKey(read: InputRead<ResultsBySuiteAsWritten[]>, key: "junit" | "pyt
 
 const ENDINGS: Readonly<Record<string, readonly string[]>> = { features: [".feature"], workflows: [".yml", ".yaml"], junit: [".xml"] };
 
-function statAt(path: string): Stats | InputFault {
+function statAt(path: string): Stats | { readonly fault: InputFault; readonly said: string } {
   try {
     return statSync(path);
   } catch (error) {
-    return faultOf(error);
+    return { fault: faultOf(error), said: saidOf(error) };
   }
 }
+
+const isAbsent = (stats: ReturnType<typeof statAt>): boolean => "fault" in stats && stats.fault === "absent";
 
 // The files an input names, or why it cannot be read; a default that does not exist names none.
 function filesOf({ kind, path: shown, byDefault }: InputNamed, folder: string): { readonly files: InputRead<FileText>[] } | { readonly none: true } {
@@ -165,8 +171,8 @@ function filesOf({ kind, path: shown, byDefault }: InputNamed, folder: string): 
   const reads = READERS[kind].reads;
   const stats = statAt(path);
   // A default that does not exist is none, unless the folder the run started in is gone too.
-  if (stats === "absent" && byDefault) return statAt(folder) === "absent" ? { files: [failed(shown, "absent", "working-folder-removed")] } : { none: true };
-  if (typeof stats === "string") return { files: [failed(shown, stats, "")] };
+  if (isAbsent(stats) && byDefault) return isAbsent(statAt(folder)) ? { files: [failed(shown, "absent", "working-folder-removed")] } : { none: true };
+  if ("fault" in stats) return { files: [failed(shown, stats.fault, stats.said)] };
   if (stats.isDirectory() && reads !== "file") {
     try {
       return { files: filesIn(shown, path, ENDINGS[kind] ?? [], kind === "features") };

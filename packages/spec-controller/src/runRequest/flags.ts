@@ -25,7 +25,7 @@ const BALANCE_FLAGS: readonly Flag[] = [
   { name: "junit", value: "<report.xml|dir>", input: "junit" },
   { name: "rspec", value: "<report.json>", input: "rspec" },
   { name: "cucumber", value: "<report.json>", input: "cucumber" },
-  { name: "ci", value: "<dir>", input: "workflows", byDefault: ".github/workflows" },
+  { name: "ci", value: "<workflow.yml|dir>", input: "workflows", byDefault: ".github/workflows" },
   { name: "ci-steps", value: "<record.json>", input: "stepRecord" },
   { name: "package-json", value: "<path>", input: "manifest", byDefault: "package.json" },
   { name: "target", value: "<name>" },

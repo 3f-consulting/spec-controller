@@ -13,3 +13,8 @@ export function exitCodeOf(runVerdict: RunVerdict, under: { readonly exitZero: b
 export function endRunOn(exitCode: ExitCode): void {
   process.exitCode = exitCode;
 }
+
+// An unexpected error ends the run on its code only when the run has no code yet: after the verdict, the verdict's stays.
+export function endRunUnlessEnded(exitCode: ExitCode): void {
+  if (process.exitCode === undefined) process.exitCode = exitCode;
+}

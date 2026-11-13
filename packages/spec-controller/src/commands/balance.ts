@@ -23,10 +23,11 @@ import {
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
 import { resolve } from "node:path";
-import type { InputsRead } from "../inputs/inputsRead.js";
+import { inputsReadFor, type InputsRead } from "../inputs/inputsRead.js";
 import type { StandardStreams } from "../output/streams.js";
 import type { Complain } from "../runEnding/crashGuards.js";
 import { exitCodeOf } from "../runEnding/exitCode.js";
+import { refusedWith } from "../runEnding/refusal.js";
 import type { ExitCode } from "../runEnding/runEnding.js";
 import { runIdentityIn } from "../runIdentity/runIdentity.js";
 import { writeReports } from "../output/writer.js";
@@ -64,7 +65,6 @@ function observationsOf(read: InputsRead, configuration: TargetConfiguration, sc
 
 export function balance(
   { inputs, outputs, target, sourceSha, strict, exitZero }: Extract<RunRequest, { command: "balance" }>,
-  read: InputsRead,
   folder: string,
   streams: StandardStreams,
   complain: Complain,
@@ -72,6 +72,8 @@ export function balance(
   const corpus = corpusNamed(inputs, folder);
   // Read first, so the run's time is when it started.
   const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
+  const read = inputsReadFor(inputs, folder);
+  if ("ending" in read) return refusedWith(read.refusals, streams.error.write);
   const { configuration, errors } = targetConfigurationFrom(read.manifest, read.workflowSteps ?? []);
   const scripts = scriptsFrom(read.manifest);
   const targetFolder = targetFolderOf({ workingFolder: folder, ...(corpus === undefined ? {} : { corpus }), ...(identity.gitTopLevel === undefined ? {} : { gitTopLevel: identity.gitTopLevel }) });
