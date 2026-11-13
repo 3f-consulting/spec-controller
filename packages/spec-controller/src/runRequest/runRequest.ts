@@ -47,6 +47,8 @@ function inputsOf(args: readonly string[]): InputRequest[] {
   return inputs;
 }
 
+const DEFAULT_OUTPUT: OutputRequest<ReportFormat> = { format: "md", destination: { to: "standard-output" } };
+
 export function runRequestOf([, ...args]: readonly string[]): RunRequest {
-  return { command: "balance", inputs: inputsOf(args), outputs: [], strict: false, exitZero: false };
+  return { command: "balance", inputs: inputsOf(args), outputs: [DEFAULT_OUTPUT], strict: false, exitZero: false };
 }
