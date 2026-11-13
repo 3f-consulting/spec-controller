@@ -178,8 +178,8 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(dispositionOf(`${wrapper} -a --server-args=-screen vitest run`, "vitest")).toBe("runner");
   });
 
-  it.each(["-n", "-s", "-e", "-f", "-p", "-w"])("[CLM-OBS-112] a step running its unit runner behind xvfb-run, past its option %s and that option's value, will be counted as a runner", (option) => {
-    expect(dispositionOf(`xvfb-run ${option} 99 vitest run`, "vitest")).toBe("runner");
+  it.each(["-n", "-s", "-e", "-f", "-p", "-w"])("[CLM-OBS-117] a step running xvfb-run %s 99 vitest run, past an option and that option's value, will be counted as a runner, and nothing will be posted", (option) => {
+    expect(countedAndPosted(`xvfb-run ${option} 99 vitest run`, "vitest")).toEqual({ countedAs: "runner", posted: 0 });
   });
 
   it.each(shellVariants["CLM-OBS-113"].variants)("[CLM-OBS-113] a step running %s, a runner named in several words, will be counted as a runner", (runner) => {
