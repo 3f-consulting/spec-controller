@@ -26,27 +26,19 @@ function versionAbove(folder: string): string | undefined {
   return dirname(folder) === folder ? undefined : versionAbove(dirname(folder));
 }
 
-type ToolIdentity = Pick<RunIdentity, "toolSha" | "toolInstalledAsPackage" | "toolVersion">;
-
-// The tool's own checkout and version, read from the folder it runs from.
-export function toolIdentityIn(toolFolder: string): ToolIdentity {
-  return {
-    toolSha: ownCheckoutHead(toolFolder),
-    toolInstalledAsPackage: toolFolder.split(sep).includes("node_modules"),
-    toolVersion: versionAbove(toolFolder),
-  };
-}
-
 // HEAD, the origin and the top level of the repository balance runs in; the tool's own checkout and version; the clock to the second.
 // As read: which of them wins is the domain's.
 export function runIdentityIn(folder: string, given: { readonly target?: string; readonly sourceSha?: string }): RunIdentity {
+  const toolFolder = dirname(fileURLToPath(import.meta.url));
   return {
     givenTarget: given.target,
     givenSourceSha: given.sourceSha,
     head: gitAnswer(folder, ["rev-parse", "HEAD"]),
     origin: gitAnswer(folder, ["remote", "get-url", "origin"]),
     gitTopLevel: gitAnswer(folder, ["rev-parse", "--show-toplevel"]),
-    ...toolIdentityIn(dirname(fileURLToPath(import.meta.url))),
+    toolSha: ownCheckoutHead(toolFolder),
+    toolInstalledAsPackage: toolFolder.split(sep).includes("node_modules"),
+    toolVersion: versionAbove(toolFolder),
     runTime: `${new Date().toISOString().slice(0, 19)}Z`,
   };
 }
