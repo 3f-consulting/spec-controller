@@ -77,3 +77,7 @@ export const isFeatureCode = (word: string): boolean => FEATURE_CODE.test(word);
 export const featureCodeOfFile = ({ fileTags }: { readonly fileTags: readonly string[] }): string | undefined => fileTags.find(isFeatureCode);
 
 export const sameCode = (one: ClaimCode, other: ClaimCode): boolean => one.featureCode === other.featureCode && one.number === other.number;
+
+export function claimCodeErrorsOf(_features: readonly { readonly file: string }[]): ClaimCodeError[] {
+  return [];
+}
