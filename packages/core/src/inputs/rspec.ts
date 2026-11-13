@@ -24,26 +24,18 @@ export const whereResultsByExampleBreak = (report: unknown): string | undefined 
 
 const LOADING = /while loading (\S+?)\.?\s/i;
 
-// An example's groups are written only as the start of its full description.
-const groupsOf = (description: string, fullDescription: string): string[] =>
-  fullDescription.endsWith(` ${description}`) ? [fullDescription.slice(0, -description.length - 1)] : [];
-
 export function resultsByExampleFrom(report: unknown): ResultsByExampleAsWritten {
-  const { messages = [], examples, summary } = report as RspecJsonReport;
-  // The errors outside any example are the last of its messages, one each.
+  const { messages, examples, summary } = report as RspecJsonReport;
+  // The errors outside any example are the last of its messages, one each. RSpec writes messages only when it has some.
   const errors = summary.errors_outside_of_examples_count ?? 0;
   return {
-    report: "rspec",
     examples: examples.map(({ description, full_description, status, file_path, exception }) => ({
       file: file_path,
-      groupDescriptions: groupsOf(description, full_description),
+      fullDescription: full_description,
       description,
       status,
-      ...(exception?.message === undefined ? {} : { message: exception.message }),
+      message: exception?.message,
     })),
-    loadErrors: (errors === 0 ? [] : messages.slice(-errors)).map((message) => {
-      const file = LOADING.exec(message)?.[1];
-      return { ...(file === undefined ? {} : { file }), message };
-    }),
+    loadErrors: (messages?.slice(messages.length - errors) ?? []).map((message) => ({ file: LOADING.exec(message)?.[1], message })),
   };
 }

@@ -1,3 +1,5 @@
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { repositoryForTest } from "../repository/repository.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
@@ -34,5 +36,28 @@ describe("balance works out the target's folder", () => {
     const head = repository.commit("one");
 
     expect(provenanceIn(temporaryDirectory("elsewhere-"), "--features", `${repository.top}/docs/features`).sourceSha).toBe(head);
+  });
+});
+
+describe("the run will be not reconciled, naming why", () => {
+  // The run verdict of the JSON report balance writes, run in the folder with nothing named but the format.
+  function runVerdictIn(folder: string): unknown {
+    let report = "";
+    main(["balance", "--format", "json"], folder, { output: { fd: 1, write: (text) => (report += text) }, error: { fd: 2, write: () => {} } });
+    return (JSON.parse(report) as { runVerdict: unknown }).runVerdict;
+  }
+
+  it.each([
+    ["CLM-EVR-006", "no corpus directory", (folder: string) => folder],
+    [
+      "CLM-EVR-007",
+      "an empty corpus directory",
+      (folder: string) => {
+        mkdirSync(join(folder, "features"));
+        return folder;
+      },
+    ],
+  ] as const)("[%s] a run with %s, and no Evidence Observation, is not reconciled, naming why", (_clm, _what, made) => {
+    expect(runVerdictIn(made(temporaryDirectory("corpus-")))).toEqual({ verdict: "not-reconciled", why: "nothing-to-reconcile" });
   });
 });

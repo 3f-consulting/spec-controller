@@ -27,8 +27,8 @@ export interface UnnamedClaim {
   readonly file?: never;
 }
 
-// What each reader reports, as written. Which result each status means is the domain's. report is the evidence
-// report it came from, as its reader names it, since what a status means can differ between them.
+// What each reader reports, as written. Which result each status means is the domain's. report, where kept, is the
+// evidence report it came from, as its reader names it, since what a status means can differ between them.
 
 // A report of test results kept by test file.
 export interface ResultsByFileAsWritten {
@@ -46,9 +46,10 @@ interface ResultInFileAsWritten {
   readonly failureMessages: readonly string[];
 }
 
-// A report of test results kept by suite, each result with its properties.
+// A report of test results kept by suite, each result with its properties. errorMeansNeverRan is the reader's to say: a
+// report that writes an error only for a test that never reached its assertions, and cites in its properties.
 export interface ResultsBySuiteAsWritten {
-  readonly report: string;
+  readonly errorMeansNeverRan: boolean;
   readonly name: string;
   readonly results: readonly ResultInSuiteAsWritten[];
 }
@@ -67,26 +68,26 @@ export interface FailureAsWritten {
 
 // A report of test results kept by example, each nested in its groups.
 export interface ResultsByExampleAsWritten {
-  readonly report: string;
   readonly examples: readonly ExampleResultAsWritten[];
   readonly loadErrors: readonly { readonly file?: string; readonly message: string }[];
 }
 
 interface ExampleResultAsWritten {
   readonly file: string;
-  readonly groupDescriptions: readonly string[];
+  // Its groups' descriptions, then its own.
+  readonly fullDescription: string;
   readonly description: string;
   readonly status: string;
   readonly message?: string;
 }
 
-// A report of scenario runs: one entry per scenario or Outline row that ran.
+// A report of scenario runs: one entry per scenario or Outline row that ran. A hook is a step with no text.
 export interface ScenarioResultAsWritten {
   readonly file: string;
   readonly line: number;
   readonly title: string;
   readonly tags: readonly string[];
-  readonly steps: readonly { readonly keyword: string; readonly text: string; readonly status: string; readonly message?: string }[];
+  readonly steps: readonly { readonly keyword: string; readonly text?: string; readonly status: string; readonly message?: string }[];
 }
 
 // An entry of the step record, keyed by the step's id.
@@ -130,11 +131,6 @@ export function observationsByFile(results: readonly ResultsByFileAsWritten[], t
 const saidBy = (failure: FailureAsWritten | undefined): { message?: string } =>
   failure?.message === undefined ? {} : { message: failure.message };
 
-// The report kept by suite whose errors are written only for a test that never reached its assertions, and which cites a
-// test's claim codes in its properties. Its reader names its reports so; any other report kept by suite writes an error for
-// a test that failed, and cites in its names.
-export const ERRORS_BEFORE_ASSERTIONS = "errors-before-assertions";
-
 // An error is a test that never reached its assertions; with no class name, a file that was never collected.
 function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
   const { className, name, clmProperties, outcome, failure } = result;
@@ -163,7 +159,7 @@ function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: Re
 export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], targetFolder: string): EvidenceObservation[] {
   return suites.flatMap((suite) =>
     suite.results.flatMap((result) => 
-      suite.report === ERRORS_BEFORE_ASSERTIONS ? observationWhereErrorsNeverRan(result, targetFolder) : observationWhereErrorsFailed(suite, result, targetFolder),
+      suite.errorMeansNeverRan ? observationWhereErrorsNeverRan(result, targetFolder) : observationWhereErrorsFailed(suite, result, targetFolder),
     ),
   );
 }
@@ -171,10 +167,11 @@ export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], 
 // Results kept by example: RSpec's, each example nested in its groups. An error outside any example kept the examples
 // after it from running: it is placed at the spec file it names, or at none.
 export function observationsByExample({ examples, loadErrors }: ResultsByExampleAsWritten, targetFolder: string): EvidenceObservation[] {
-  const ran = examples.flatMap(({ file, groupDescriptions, description, status, message }): EvidenceObservation[] => {
+  const ran = examples.flatMap(({ file, fullDescription, description, status, message }): EvidenceObservation[] => {
     const result = RESULT_BY_STATUS[status];
     if (result === undefined) return [];
-    const cites = nearestCitations([...groupDescriptions, description]);
+    // Its own description cites first; failing that, its groups' do, in its full description.
+    const cites = nearestCitations([fullDescription, description]);
     return [{ cites, result, kind: "unit", place: shownFromTarget(file, targetFolder), name: description, ...(message === undefined ? {} : { message }), notes: [] }];
   });
   const neverRan = loadErrors.map(({ file, message }): EvidenceObservation => ({
@@ -200,13 +197,14 @@ type StepAsWritten = ScenarioResultAsWritten["steps"][number];
 
 const asWritten = ({ keyword, text }: StepAsWritten): string => `${keyword.trim()} ${text}`;
 
-// A step that matched no definition, or more than one, kept the scenario from running, whatever else its steps did.
+// A step that matched no definition, or more than one, kept the scenario from running, whatever else its steps did. A
+// scenario passed when every step passed, its hooks among them, and it had a step of its own.
 function resultOfSteps(steps: readonly StepAsWritten[]): { readonly result: Result; readonly message?: string } | undefined {
   const unmatched = steps.find(({ status }) => status === "undefined" || status === "ambiguous");
   if (unmatched) return { result: "never-ran", message: asWritten(unmatched) };
   const failed = steps.find(({ status }) => status === "failed");
   if (failed) return { result: "failed", ...(failed.message === undefined ? {} : { message: failed.message }) };
-  return steps.length > 0 && steps.every(({ status }) => status === "passed") ? { result: "passed" } : undefined;
+  return steps.some(({ text }) => text !== undefined) && steps.every(({ status }) => status === "passed") ? { result: "passed" } : undefined;
 }
 
 // An Outline row's code is its clm cell, in the feature file at the end of the result's path, at the row's line.

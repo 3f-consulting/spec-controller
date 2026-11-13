@@ -1,7 +1,7 @@
 import { targetConfigurationOf, type ConfigurationError, type SettingSpellings, type TargetConfiguration } from "../domain/configuration.js";
 import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
 import { coreText } from "../messages/catalogue.js";
-import { whereShapeBreaks } from "./shape.js";
+import { isRecord, whereShapeBreaks } from "./shape.js";
 
 // A step as notChecks writes it: its workflow, which ends .yml and may hold a colon, its job, and its step.
 const STEP_AS_WRITTEN = /^(.+?\.yml):([^:]+):(.+)$/;
@@ -12,10 +12,11 @@ const settingSpellings: SettingSpellings = {
     const step = STEP_AS_WRITTEN.exec(entry);
     return step === null ? undefined : { workflow: step[1]!, job: step[2]!, step: step[3]! };
   },
-  tagOf: (entry) => entry.trim().replace(/^@/, ""),
+  tagOf: (entry) => {
+    const tag = entry.trim();
+    return tag.startsWith("@") ? tag.slice(1) : tag;
+  },
 };
-
-const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> => typeof value === "object" && value !== null && !Array.isArray(value);
 
 // A manifest is a record of fields; what each holds is its own reader's to say.
 export const whereManifestBreaks = (manifest: unknown): string | undefined => whereShapeBreaks(manifest, { fields: {} });

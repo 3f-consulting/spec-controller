@@ -72,23 +72,28 @@ interface Example {
   readonly status: string;
 }
 
-const reportByExample = (examples: readonly Example[], errorsOutsideExamples: readonly string[] = []): unknown => ({
-  version: "3.13.0",
-  messages: ["Run options: include {:focus=>true}", ...errorsOutsideExamples],
-  examples: examples.map(({ group = "Adding", description, status }, at) => ({
-    id: `./spec/adds_spec.rb[1:${at + 1}]`,
-    description,
-    full_description: `${group} ${description}`,
-    status,
-    file_path: "./spec/adds_spec.rb",
-    line_number: 2 + at * 2,
-    run_time: 0.000378728,
-    pending_message: status === "pending" ? "not yet" : null,
-    ...(status === "failed" && { exception: { class: "RSpec::Expectations::ExpectationNotMetError", message: "\nexpected: 2\n     got: 1\n" } }),
-  })),
-  summary: { duration: 0.014, example_count: examples.length, failure_count: 0, pending_count: 0, errors_outside_of_examples_count: errorsOutsideExamples.length },
-  summary_line: `${examples.length} examples, 0 failures`,
-});
+// RSpec writes its messages only when it has some: a filtered run's Run options message, then each error outside its
+// examples.
+const reportByExample = (examples: readonly Example[], errorsOutsideExamples: readonly string[] = [], filtered = false): unknown => {
+  const messages = [...(filtered ? ["Run options: include {:focus=>true}"] : []), ...errorsOutsideExamples];
+  return {
+    version: "3.13.0",
+    ...(messages.length > 0 && { messages }),
+    examples: examples.map(({ group = "Adding", description, status }, at) => ({
+      id: `./spec/adds_spec.rb[1:${at + 1}]`,
+      description,
+      full_description: `${group} ${description}`,
+      status,
+      file_path: "./spec/adds_spec.rb",
+      line_number: 2 + at * 2,
+      run_time: 0.000378728,
+      pending_message: status === "pending" ? "not yet" : null,
+      ...(status === "failed" && { exception: { class: "RSpec::Expectations::ExpectationNotMetError", message: "\nexpected: 2\n     got: 1\n" } }),
+    })),
+    summary: { duration: 0.014, example_count: examples.length, failure_count: 0, pending_count: 0, errors_outside_of_examples_count: errorsOutsideExamples.length },
+    summary_line: `${examples.length} examples, 0 failures`,
+  };
+};
 
 const postedByExample = (report: unknown): EvidenceObservation[] => observationsByExample(resultsByExampleFrom(report), "/work");
 
@@ -212,7 +217,7 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
     ["CLM-OBS-029", "passed", "passed"],
     ["CLM-OBS-030", "failed", "failed"],
   ])("[%s] a result in RSpec's evidence report, CLM-ONE-001 in brackets in its description, that %s, is posted as %s, citing CLM-ONE-001", (_clm, status, result) => {
-    const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status }]));
+    const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status }], [], true));
 
     expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
   });
@@ -239,6 +244,46 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
     ["CLM-OBS-106", []],
   ])("[%s] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 that skipped a step and failed none, or had no steps, posts nothing", (_clm, steps) => {
     expect(postedByScenario(reportByScenario("features/one.feature", [{ tags: ["integration", "CLM-ONE-001"], steps }]))).toEqual([]);
+  });
+
+  it("[CLM-OBS-106] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 whose only steps were its Before and After hooks, as cucumber-js writes a scenario with no steps, posts nothing", () => {
+    const passed = { status: "passed", duration: 1000 };
+    const report = [
+      {
+        uri: "features/one.feature",
+        elements: [
+          {
+            type: "scenario",
+            name: "one adds one",
+            line: 6,
+            tags: [{ name: "@integration" }, { name: "@CLM-ONE-001" }],
+            steps: [{ keyword: "Before", hidden: true, result: passed }, { keyword: "After", hidden: true, result: passed }],
+          },
+        ],
+      },
+    ];
+
+    expect(postedByScenario(report)).toEqual([]);
+  });
+
+  it("[CLM-OBS-130] Cucumber's evidence report leaving out a feature's empty elements, and a scenario's empty steps and another's empty tags, as Cucumber for Ruby and the JVM write it, posts the scenario with no tags alone, as passed, citing no claim code", () => {
+    const passed = { status: "passed", duration: 1000 };
+    const report = [
+      { uri: "features/empty.feature", id: "empty", keyword: "Feature", name: "empty", line: 1, description: "" },
+      {
+        uri: "features/one.feature",
+        id: "one",
+        keyword: "Feature",
+        name: "one",
+        line: 1,
+        elements: [
+          { id: "one;stepless", keyword: "Scenario", type: "scenario", name: "stepless", line: 4, tags: [{ name: "@CLM-ONE-001", line: 3 }] },
+          { id: "one;untagged", keyword: "Scenario", type: "scenario", name: "untagged", line: 6, steps: [{ keyword: "Given ", name: "one adds one", line: 7, result: passed }] },
+        ],
+      },
+    ];
+
+    expect(postedByScenario(report).map(({ name, result, cites }) => ({ name, result, cites }))).toEqual([{ name: "untagged", result: "passed", cites: [] }]);
   });
 });
 
@@ -289,12 +334,23 @@ describe("balance posts what could not run as never ran, from a report kept by e
       "\nAn error occurred while loading ./spec/unloadable_spec.rb.\nFailure/Error: __send__(method, file)\n\nSyntaxError:\n  Unmatched `{', missing `}' ?\n",
       "./spec/unloadable_spec.rb",
     ],
+    ["CLM-OBS-049", "\nAn error occurred while loading ./spec/unloadable_spec.rb\nSyntaxError:\n  Unmatched `{', missing `}' ?\n", "./spec/unloadable_spec.rb"],
     ["CLM-OBS-099", "\nAn error occurred in a `before(:suite)` hook.\nFailure/Error: raise \"the database could not be reached\"\n", ""],
   ])("[%s] RSpec's evidence report saying %j is posted as never-ran, citing no claim code, naming where and the error", (_clm, error, place) => {
-    const posted = postedByExample(reportByExample([], [error]));
+    const posted = postedByExample(reportByExample([], [error], true));
 
     expect(posted.map(({ result, cites, place: placed, message }) => ({ result, cites, place: placed, message }))).toEqual([
       { result: "never-ran", cites: [], place, message: error },
+    ]);
+  });
+
+  it("[CLM-OBS-129] RSpec's evidence report whose only message is a spec file's load error is posted as never-ran, citing no claim code, naming the file and its error", () => {
+    const error = "\nAn error occurred while loading ./spec/unloadable_spec.rb.\nFailure/Error: __send__(method, file)\n\nSyntaxError:\n  Unmatched `{', missing `}' ?\n";
+    // A run with no filter writes no Run options message, so its messages are its load errors alone.
+    const posted = postedByExample(reportByExample([], [error]));
+
+    expect(posted.map(({ result, cites, place, message }) => ({ result, cites, place, message }))).toEqual([
+      { result: "never-ran", cites: [], place: "./spec/unloadable_spec.rb", message: error },
     ]);
   });
 });
@@ -359,6 +415,7 @@ describe("balance posts a nested test from a report kept by suite citing its own
     ["CLM-OBS-071", "go", "no claim code, under a subtest with CLM-ONE-002 in brackets", "example.com/adds", "TestAdds/[CLM-ONE-002]_a_group/adds_one", "example.com/adds", [ONE_002]],
     ["CLM-OBS-072", "surefire", "CLM-ONE-001 in brackets in its display name, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "[CLM-ONE-001] adds one", "[CLM-ONE-002] a class", [ONE_001]],
     ["CLM-OBS-073", "surefire", "no claim code, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "adds one", "[CLM-ONE-002] a class", [ONE_002]],
+    ["CLM-OBS-073", "surefire", "no claim code, its display name 007, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "007", "[CLM-ONE-002] a class", [ONE_002]],
     [
       "CLM-OBS-120",
       "surefire",
@@ -500,6 +557,14 @@ describe("balance posts an Evidence Observation no single executable claim can t
 
     expect(filed(claimReconciliationsOf(claims, postedFrom(source, citation))).filter(({ cites }) => cites.length > 0)).toEqual([
       { claim: "the unnamed claim", cites: [named] },
+    ]);
+  });
+
+  it("[CLM-OBS-128] a passing test in pytest's evidence report whose ticket property, not a clm property, is CLM-ONE-002 is posted to the unnamed claim, naming no claim code", () => {
+    const posted = postedBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", '<properties><property name="ticket" value="CLM-ONE-002" /></properties>'));
+
+    expect(filed(claimReconciliationsOf(claimsTagged("CLM-ONE-001", "CLM-ONE-002"), posted)).filter(({ cites }) => cites.length > 0)).toEqual([
+      { claim: "the unnamed claim", cites: [[]] },
     ]);
   });
 });

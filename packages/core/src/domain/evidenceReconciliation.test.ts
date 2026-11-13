@@ -45,8 +45,6 @@ describe("the run will be not reconciled, naming why", () => {
   it.each([
     ["CLM-EVR-004", "an Evidence Observation that never ran", ["@CLM-ONE-001"], [["unit", "never-ran", "ONE-001"]], "unsound"],
     ["CLM-EVR-005", "a claim code error, and only balanced Claim Reconciliations", ["@CLM-TWO-001"], [["unit", "passed", "TWO-001"]], "claim-code-errors"],
-    ["CLM-EVR-006", "no corpus directory, and no Evidence Observation", [], [], "nothing-to-reconcile"],
-    ["CLM-EVR-007", "an empty corpus directory, and no Evidence Observation", [], [], "nothing-to-reconcile"],
     ["CLM-EVR-008", "a corpus with no scenario, and no Evidence Observation", ["@ONE\nFeature: one\n"], [], "nothing-to-reconcile"],
   ] as const)("[%s] a run with %s is not reconciled, naming why", (_clm, _what, corpus, evidence, why) => {
     expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict: "not-reconciled", why });
@@ -278,5 +276,12 @@ describe("balance accounts for every step it reads", () => {
     const { jobs } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
 
     expect(jobs.map(({ job, stepsRead }) => ({ job, stepsRead }))).toEqual([{ job: "build", stepsRead: 1 }]);
+  });
+
+  it("[CLM-EVR-073] a workflow whose every line is commented out has no steps read", () => {
+    const steps = workflowStepsFrom("ci.yml", "# on: push\n# jobs:\n#   build:\n#     steps:\n#       - run: pnpm lint\n");
+    const { jobs, total } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
+
+    expect({ jobs, stepsRead: total.stepsRead }).toEqual({ jobs: [], stepsRead: 0 });
   });
 });

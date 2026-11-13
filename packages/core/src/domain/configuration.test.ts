@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { coreText } from "../messages/catalogue.js";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
-import { targetConfigurationFrom } from "../inputs/manifest.js";
+import { targetConfigurationFrom, whereManifestBreaks } from "../inputs/manifest.js";
 import manifestVariants from "../inputs/manifest.variants.json" with { type: "json" };
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
@@ -59,6 +60,18 @@ describe("a configuration setting balance cannot use will be left out", () => {
       { kind: "not-checks-entry-matches-no-step", entry: "ci.yml:ci:No such step" },
     ],
     ["CLM-CFG-016", '"Install dependencies" in notChecks', { notChecks: ["Install dependencies"] }, { kind: "not-checks-entry-not-a-step-name", entry: "Install dependencies" }],
+    [
+      "CLM-CFG-016",
+      '"ci.yml:ci:Install dependencies", after a line break, in notChecks',
+      { notChecks: ["\nci.yml:ci:Install dependencies"] },
+      { kind: "not-checks-entry-not-a-step-name", entry: "\nci.yml:ci:Install dependencies" },
+    ],
+    [
+      "CLM-CFG-016",
+      '"ci.yml:ci:Install dependencies", before a line break, in notChecks',
+      { notChecks: ["ci.yml:ci:Install dependencies\n"] },
+      { kind: "not-checks-entry-not-a-step-name", entry: "ci.yml:ci:Install dependencies\n" },
+    ],
     ["CLM-CFG-019", '"notChecks": "Install"', { notChecks: "Install" }, { kind: "configuration-wrong-kind", entry: "notChecks" }],
     ["CLM-CFG-020", "3 in deferralTags", { deferralTags: [3] }, { kind: "configuration-wrong-kind", entry: "deferralTags[0]" }],
   ] as const)("[%s] a specController block with %s leaves it out, with its error", (_clm, _setting, block, error) => {
@@ -70,7 +83,8 @@ describe("a configuration setting balance cannot use will be left out", () => {
 
 describe("the run will still reach its run verdict, using the configuration settings it could use", () => {
   it('[CLM-CFG-017] a specController block with "unit": 3 and "integration": "cucumber-js" under runners reaches its run verdict, cucumber-js running the integration layer', () => {
-    const { configuration } = targetConfigurationFrom({ specController: { runners: { unit: 3, integration: "cucumber-js" } } }, []);
+    const manifest = { specController: { runners: { unit: 3, integration: "cucumber-js" } } };
+    const { configuration } = targetConfigurationFrom(manifest, []);
     const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: cucumber-js\n");
     const claims = executableClaimsOf([featureAsWrittenFrom("one.feature", "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: s\n    Given a step\n")], {
       deferralTags: configuration.deferralTags,
@@ -80,7 +94,11 @@ describe("the run will still reach its run verdict, using the configuration sett
 
     const runVerdict = runVerdictOf(claimReconciliationsOf(claims, [passingUnitTest, ...fitnessObservationsOf(steps, [], configuration, {}, shellAnswers)]), []);
 
-    expect({ runVerdict, integrationStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({ runVerdict: { verdict: "balanced" }, integrationStep: "runner" });
+    expect({ manifestBreaksAt: whereManifestBreaks(manifest), runVerdict, integrationStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({
+      manifestBreaksAt: undefined,
+      runVerdict: { verdict: "balanced" },
+      integrationStep: "runner",
+    });
   });
 });
 
@@ -89,6 +107,6 @@ const notAnObject: Readonly<Record<string, unknown>> = { null: null, "a number":
 
 describe("a specController block that is not an object stops the run", () => {
   it.each(manifestVariants["CLM-CFG-021"].variants)("[CLM-CFG-021] a specController block that is %s stops the run as an unexpected error", (variant) => {
-    expect(() => targetConfigurationFrom({ specController: notAnObject[variant] }, [])).toThrow();
+    expect(() => targetConfigurationFrom({ specController: notAnObject[variant] }, [])).toThrow(coreText("configuration-block-not-an-object"));
   });
 });

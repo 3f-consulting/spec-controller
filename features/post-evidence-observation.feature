@@ -39,12 +39,18 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-008 | a step running pnpm test                                                                | no unit runner                 | a fitness function | a fitness Evidence Observation will be posted                                             |
         | CLM-OBS-009 | a step running pnpm test, whose script runs vitest                                      | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
         | CLM-OBS-114 | a step running pnpm test, whose script runs another script, whose script runs vitest    | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
+        | CLM-OBS-131 | a step running pnpm run //, whose scripts entry is a list, not a string                 | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
         | CLM-OBS-115 | a step running pnpm loop, whose script runs itself                                      | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
+        | CLM-OBS-125 | a step running go test ./..., in a target whose test script runs vitest                 | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
         | CLM-OBS-010 | a step running CI=1 npx vitest run                                                      | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
         | CLM-OBS-116 | a step running uv run python -m pytest                                                  | pytest as its unit runner      | a runner           | nothing will be posted                                                                    |
         | CLM-OBS-011 | a step running pnpm lint && vitest run                                                  | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
+        | CLM-OBS-122 | a step defining a shell function, then running vitest run                               | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
+        | CLM-OBS-124 | a step setting start=$SECONDS on one line, then running vitest run                      | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
+        | CLM-OBS-127 | a step running an if … fi block, then vitest run                                        | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
         | CLM-OBS-112 | a step running its unit runner behind a wrapper that runs the command after it          | that runner as its unit runner | a runner           | nothing will be posted                                                                    |
         | CLM-OBS-117 | a step running xvfb-run -s 99 vitest run                                                | vitest as its unit runner      | a runner           | nothing will be posted                                                                    |
+        | CLM-OBS-126 | a step running xvfb-run --help, a wrapper given only options                            | vitest as its unit runner      | a fitness function | a fitness Evidence Observation will be posted                                             |
         | CLM-OBS-113 | a step running a runner named in several words                                          | that runner as its unit runner | a runner           | nothing will be posted                                                                    |
         | CLM-OBS-012 | a step running spec-controller balance                                                  | no setting for it              | the reconciler     | nothing will be posted                                                                    |
         | CLM-OBS-119 | a step running spec-controller balance \| tee report.md                                 | no setting for it              | the reconciler     | nothing will be posted                                                                    |
@@ -110,6 +116,13 @@ Feature: Evidence Observations are posted, each to its claim
       when balance posts the evidence
       then nothing will be posted
 
+    @unit @CLM-OBS-130
+    Scenario: balance posts from a Cucumber evidence report that leaves out a feature's or a scenario's empty lists
+      given Cucumber's evidence report left out the scenarios of a feature that had none, the steps of a scenario that had none, and the tags of a scenario that had none
+      and the scenario with no tags had every step pass
+      when balance posts the evidence
+      then an Evidence Observation will be posted for that scenario alone, as passed, citing no claim code
+
     @unit
     Scenario Outline: balance posts what could not run as never ran
       given <source> said <what could not run>
@@ -125,6 +138,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-100 | Go's evidence report              | TestMain failed before any test ran                                                                           | no claim code | the package and its error                  |
         | CLM-OBS-048 | JUnit 5 in Java's evidence report | a class's setup before all its tests failed                                                                   | no claim code | the class and its error                    |
         | CLM-OBS-049 | RSpec's evidence report           | a spec file failed to load                                                                                    | no claim code | the file and its error                     |
+        | CLM-OBS-129 | RSpec's evidence report           | a spec file failed to load, and the run wrote no other message                                                | no claim code | the file and its error                     |
         | CLM-OBS-099 | RSpec's evidence report           | the suite failed to load, naming no spec file                                                                 | no claim code | the error                                  |
         | CLM-OBS-050 | pytest's evidence report          | the setup of a test citing CLM-ONE-001 errored                                                                | CLM-ONE-001   | the test                                   |
         | CLM-OBS-051 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched two definitions                             | CLM-ONE-001   | that step as written, "Given one adds one" |
@@ -278,6 +292,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-086 | Vitest's evidence report          | CLM-ONE-999 in its title, with no brackets            | no claim code               |
         | CLM-OBS-087 | the step record                   | no id                                                 | no claim code               |
         | CLM-OBS-105 | pytest's evidence report          | the clm property CLM-A-001, which is not a claim code | no claim code               |
+        | CLM-OBS-128 | pytest's evidence report          | the ticket property CLM-ONE-002, not a clm property   | no claim code               |
         | CLM-OBS-088 | Vitest's evidence report          | [CLM-ONE-001] in its title, a code two claims share   | CLM-ONE-001                 |
         | CLM-OBS-089 | Vitest's evidence report          | [CLM-ONE-001] and [CLM-ONE-002] in its title          | CLM-ONE-001 and CLM-ONE-002 |
         | CLM-OBS-090 | Jest's evidence report            | [CLM-ONE-001] and [CLM-ONE-002] in its title          | CLM-ONE-001 and CLM-ONE-002 |

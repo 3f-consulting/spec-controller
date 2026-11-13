@@ -171,6 +171,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then nothing will be posted from it
       and the run will not stop
 
+    @unit @CLM-CLI-194
+    Scenario: a well-formed JUnit evidence report will be read, not refused
+      given a JUnit evidence report was written well formed, as one suite or as a suites element holding suites
+      when balance reads it
+      then it will post its results
+      and the run will not stop
+
     @unit @CLM-CLI-183
     Scenario: a workflows folder read by default that does not exist will count as no workflows, not as a missing input
       given the run named no CI workflows, and the folder .github/workflows did not exist

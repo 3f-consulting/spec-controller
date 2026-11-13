@@ -82,14 +82,15 @@ Feature: Each report has the right structure, and the Markdown explains it
 
     @unit
     Scenario Outline: a section showing a never-ran test's message quotes its first line
-      given a test that never ran had a message of three lines, and balance had added two notes
+      given a test that never ran had <message>, and balance had added two notes
       when its Markdown report is written
       then <where> will quote <what>
 
       Examples:
-        | clm         | where                     | what                                    |
-        | CLM-RPT-085 | the Claim Reconciliations | the message's first line and both notes |
-        | CLM-RPT-146 | run integrity             | the message's first line                |
+        | clm         | message                                             | where                     | what                                                       |
+        | CLM-RPT-085 | a message of three lines                            | the Claim Reconciliations | the message's first line and both notes                    |
+        | CLM-RPT-146 | a message of three lines                            | run integrity             | the message's first line                                   |
+        | CLM-RPT-169 | a message whose first line is blank, then two lines | the Claim Reconciliations | the message's first line that is not blank, and both notes |
 
   Rule: the Markdown report shows the unnamed claim's evidence in its groups
 

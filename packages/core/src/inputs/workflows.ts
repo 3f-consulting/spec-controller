@@ -13,29 +13,28 @@ const WRITES_STEP_RECORD = "toJSON(steps)";
 
 type Mapping = Readonly<Record<string, unknown>>;
 
-const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null && !Array.isArray(value);
+const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null;
 const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
-const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value.filter(isMapping) : []);
+const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value : []);
 
 // What a step holds in each place it can write the step record from: its command, or its env: values.
 const HELD_IN: Readonly<Record<string, (step: Mapping) => readonly unknown[]>> = {
   "run:": (step) => [step["run"]],
-  "env:": (step) => (isMapping(step["env"]) ? Object.values(step["env"]) : []),
+  "env:": (step) => Object.values(isMapping(step["env"]) ? step["env"] : {}),
 };
 const writesStepRecord = (step: Mapping): boolean =>
   workflowsVariants["CLM-OBS-013"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
 
 function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping): WorkflowStepAsWritten {
   const uses = text(step["uses"]);
-  const run = text(step["run"]);
   return {
     workflow,
     job,
     jobContinueOnError,
-    ...(text(step["name"]) === undefined ? {} : { name: text(step["name"]) }),
-    ...(uses === undefined ? {} : { uses }),
-    ...(run === undefined ? {} : { run }),
-    ...(text(step["id"]) === undefined ? {} : { id: text(step["id"]) }),
+    name: text(step["name"]),
+    uses,
+    run: text(step["run"]),
+    id: text(step["id"]),
     continueOnError: step["continue-on-error"],
     plumbing: uses !== undefined && isPlumbing(uses),
     writesStepRecord: writesStepRecord(step),
@@ -45,9 +44,8 @@ function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknow
 export function workflowStepsFrom(workflow: string, source: string): WorkflowStepAsWritten[] {
   const document: unknown = parse(source);
   const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
-  return Object.entries(jobs).flatMap(([job, definition]) =>
-    isMapping(definition)
-      ? mappingsIn(definition["steps"]).map((step) => stepAsWritten(workflow, job, definition["continue-on-error"], step))
-      : [],
+  // GitHub runs no workflow whose job or step is not a mapping.
+  return Object.entries(jobs as Readonly<Record<string, Mapping>>).flatMap(([job, definition]) =>
+    mappingsIn(definition["steps"]).map((step) => stepAsWritten(workflow, job, definition["continue-on-error"], step)),
   );
 }

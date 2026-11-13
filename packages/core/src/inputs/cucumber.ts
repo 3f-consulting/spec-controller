@@ -22,21 +22,23 @@ const REPORT: Shape = { listOf: { fields: {} } };
 
 export const whereScenarioResultsBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
+// A feature with no elements written has no scenarios.
 export function scenarioResultsFrom(report: unknown): ScenarioResultAsWritten[] {
-  return (report as readonly CucumberJsonFeature[]).flatMap(({ uri, elements = [] }) =>
-    elements
-      .filter(({ type }) => type === "scenario")
-      .map(({ name, line, tags = [], steps = [] }) => ({
-        file: uri,
-        line,
-        title: name,
-        tags: tags.map(({ name: tag }) => tag.slice(1)),
-        steps: steps.map(({ keyword, name: text = "", result: { status, error_message } }) => ({
-          keyword,
-          text,
-          status,
-          ...(error_message === undefined ? {} : { message: error_message }),
-        })),
-      })),
+  return (report as readonly CucumberJsonFeature[]).flatMap(
+    ({ uri, elements }) =>
+      elements
+        ?.filter(({ type }) => type === "scenario")
+        .map(({ name, line, tags = [], steps = [] }) => ({
+          file: uri,
+          line,
+          title: name,
+          tags: tags.map(({ name: tag }) => tag.slice(1)),
+          steps: steps.map(({ keyword, name: text, result: { status, error_message } }) => ({
+            keyword,
+            text,
+            status,
+            message: error_message,
+          })),
+        })) ?? [],
   );
 }
