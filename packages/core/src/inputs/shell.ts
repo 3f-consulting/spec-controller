@@ -12,8 +12,8 @@ const LAUNCHERS = launchers.variants.map((launcher) => launcher.split(" ").filte
 const SCRIPT_VARIANTS = scriptRuns.variants.map((variant) => variant.split(" "));
 // A wrapper's words: its command, then a gap for each value it takes before the command it runs, as timeout's duration.
 const WRAPPERS = wrappers.variants.map((wrapper) => wrapper.split(" "));
-// xvfb-run's options that take a value are read past with it; a wrapper not named here takes no option values.
-const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"] };
+// A wrapper's options that take a value are read past with it.
+const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"], timeout: ["-k", "-s"] };
 
 // Each element of the line's && and ; lists, as the stages of its pipeline. A comment is no command.
 function pipelinesOf(statements: readonly Statement[]): Command[][] {
@@ -44,7 +44,7 @@ function handedOn(words: readonly string[]): readonly string[] | undefined {
   const wrapper = WRAPPERS.find(([command]) => command === words[0]);
   if (wrapper === undefined) return undefined;
   let at = 1;
-  while (words[at]?.startsWith("-")) at += OPTIONS_TAKING_A_VALUE[wrapper[0]!]?.includes(words[at]!) ? 2 : 1;
+  while (words[at]?.startsWith("-")) at += OPTIONS_TAKING_A_VALUE[wrapper[0]!]!.includes(words[at]!) ? 2 : 1;
   return words.slice(at + wrapper.length - 1);
 }
 
