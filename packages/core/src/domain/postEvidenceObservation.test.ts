@@ -297,6 +297,16 @@ describe("balance posts what could not run as never ran, from a report kept by e
       { result: "never-ran", cites: [], place, message: error },
     ]);
   });
+
+  it("[CLM-OBS-129] RSpec's evidence report whose only message is a spec file's load error is posted as never-ran, citing no claim code, naming the file and its error", () => {
+    const error = "\nAn error occurred while loading ./spec/unloadable_spec.rb.\nFailure/Error: __send__(method, file)\n\nSyntaxError:\n  Unmatched `{', missing `}' ?\n";
+    // A run with no filter writes no Run options message, so its messages are its load errors alone.
+    const posted = postedByExample({ ...(reportByExample([], [error]) as object), messages: [error] });
+
+    expect(posted.map(({ result, cites, place, message }) => ({ result, cites, place, message }))).toEqual([
+      { result: "never-ran", cites: [], place: "./spec/unloadable_spec.rb", message: error },
+    ]);
+  });
 });
 
 describe("balance posts what could not run as never ran, from a report kept by scenario", () => {
