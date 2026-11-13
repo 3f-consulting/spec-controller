@@ -303,4 +303,32 @@ describe("a runner is recognised only as the command a step runs", () => {
       posted: fitnessObservationsOf(steps, record, unitRunner("vitest"), {}, shellAnswers).map(({ kind, result, cites }) => ({ kind, result, cites })),
     }).toEqual({ countedAs: "runner", posted: [{ kind: "fitness", result: "failed", cites: [ONE_001] }] });
   });
+
+  it.each([
+    ["CLM-OBS-145", "running vitest run, with the id unit, whose outcome the step record holds", { id: "unit", run: "vitest run" }, [{ unit: { outcome: "success", conclusion: "success" } }], "runner"],
+    [
+      "CLM-OBS-146",
+      "running vitest run, with the id CLM-ONE-001, whose outcome a step record, given, does not hold",
+      { id: "CLM-ONE-001", run: "vitest run" },
+      [{ build: { outcome: "success", conclusion: "success" } }, undefined],
+      "runner",
+    ],
+    [
+      "CLM-OBS-147",
+      "using actions/checkout, with the id CLM-ONE-001, whose outcome the step record holds",
+      { id: "CLM-ONE-001", uses: "actions/checkout@v4" },
+      [{ "CLM-ONE-001": { outcome: "success", conclusion: "success" } }],
+      "plumbing",
+    ],
+  ] as const)("[%s] a step %s will be counted as the step it is, and nothing will be posted", (_clm, _described, step, records, countedAs) => {
+    const steps = workflowOf({ ci: { steps: [step, { id: "build", uses: "actions/setup-node@v4" }] } });
+    const configuration = countedAs === "plumbing" ? NO_SETTING : unitRunner("vitest");
+
+    for (const record of records) {
+      expect({
+        countedAs: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers),
+        posted: fitnessObservationsOf(steps, record === undefined ? [] : recordOf(record), configuration, {}, shellAnswers),
+      }).toEqual({ countedAs, posted: [] });
+    }
+  });
 });
