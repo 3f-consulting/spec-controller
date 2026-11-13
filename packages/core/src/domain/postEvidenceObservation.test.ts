@@ -462,7 +462,7 @@ describe("balance posts an Evidence Observation no single executable claim can t
     ["CLM-OBS-094", "rspec", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
     ["CLM-OBS-095", "cucumber", "CLM-ONE-001 CLM-ONE-002", ["CLM-ONE-001", "CLM-ONE-002"]],
   ])("[%s] a passing quality check in %s's evidence report citing %j is posted to the unnamed claim, naming %j", (clm, source, citation, named) => {
-    // The shared code's row reads a corpus where two claims share CLM-ONE-001.
+    // The shared code's row reads a corpus where both claims carry the code it cites.
     const claims = clm === "CLM-OBS-088" ? claimsTagged("CLM-ONE-001", "CLM-ONE-001") : claimsTagged("CLM-ONE-001", "CLM-ONE-002");
 
     expect(filed(claimReconciliationsOf(claims, postedFrom(source, citation))).filter(({ cites }) => cites.length > 0)).toEqual([

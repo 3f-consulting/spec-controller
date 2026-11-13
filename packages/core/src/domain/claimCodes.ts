@@ -85,7 +85,7 @@ export const CLM_COLUMN = "clm";
 export const hasClmColumn = (examples: readonly { readonly columns: readonly string[] }[]): boolean =>
   examples.some(({ columns }) => columns.includes(CLM_COLUMN));
 
-export const sameCode = (one: ClaimCode, other: ClaimCode): boolean => one.featureCode === other.featureCode && one.number === other.number;
+const sameCode = (one: ClaimCode, other: ClaimCode): boolean => one.featureCode === other.featureCode && one.number === other.number;
 
 // A feature file as the claim code check reads it: its tags above Feature:, and each scenario's tags, title and Examples blocks.
 interface FileToCheck {
