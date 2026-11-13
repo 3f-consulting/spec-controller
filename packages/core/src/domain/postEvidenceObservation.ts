@@ -179,6 +179,11 @@ export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], 
   );
 }
 
+// Results kept by example: RSpec's, each example nested in its groups.
+export function observationsByExample(_report: ResultsByExampleAsWritten, _targetFolder: string): EvidenceObservation[] {
+  return [];
+}
+
 export function observationsFiledUnder({ claimCode }: ExecutableClaim, observations: readonly EvidenceObservation[]): EvidenceObservation[] {
   return claimCode === undefined ? [] : observations.filter(({ cites }) => cites.some((cited) => sameCode(cited, claimCode)));
 }

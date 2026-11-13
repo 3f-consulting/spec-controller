@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { resultsByFileFrom } from "../inputs/jestJson.js";
 import { resultsBySuiteFrom } from "../inputs/junitXml.js";
+import { resultsByExampleFrom } from "../inputs/rspecJson.js";
 import type { ClaimCode } from "./claimCodes.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
-import { observationsByFile, observationsBySuite, observationsFiledUnder, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { observationsByExample, observationsByFile, observationsBySuite, observationsFiledUnder, type EvidenceObservation } from "./postEvidenceObservation.js";
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
 const ONE_002: ClaimCode = { featureCode: "ONE", number: "002" };
@@ -62,6 +63,33 @@ const postedBySuite = (writer: SuiteWriter, suite: string, testCases: string): E
 // What a row checks of each Evidence Observation posted.
 const resultAndCitations = ({ result, cites }: EvidenceObservation): { result: string; cites: readonly ClaimCode[] } => ({ result, cites });
 
+// An example as RSpec's JSON evidence report records it, in its group.
+interface Example {
+  readonly group?: string;
+  readonly description: string;
+  readonly status: string;
+}
+
+const reportByExample = (examples: readonly Example[], errorsOutsideExamples: readonly string[] = []): unknown => ({
+  version: "3.13.0",
+  messages: ["Run options: include {:focus=>true}", ...errorsOutsideExamples],
+  examples: examples.map(({ group = "Adding", description, status }, at) => ({
+    id: `./spec/adds_spec.rb[1:${at + 1}]`,
+    description,
+    full_description: `${group} ${description}`,
+    status,
+    file_path: "./spec/adds_spec.rb",
+    line_number: 2 + at * 2,
+    run_time: 0.000378728,
+    pending_message: status === "pending" ? "not yet" : null,
+    ...(status === "failed" && { exception: { class: "RSpec::Expectations::ExpectationNotMetError", message: "\nexpected: 2\n     got: 1\n" } }),
+  })),
+  summary: { duration: 0.014, example_count: examples.length, failure_count: 0, pending_count: 0, errors_outside_of_examples_count: errorsOutsideExamples.length },
+  summary_line: `${examples.length} examples, 0 failures`,
+});
+
+const postedByExample = (report: unknown): EvidenceObservation[] => observationsByExample(resultsByExampleFrom(report), "/work");
+
 describe("balance posts a result as passed or failed, citing its claim code", () => {
   it.each<[string, "vitest" | "jest", string, string]>([
     ["CLM-OBS-017", "vitest", "passed", "passed"],
@@ -112,6 +140,23 @@ describe("balance posts nothing for a test that was skipped, from a report kept 
   });
 });
 
+describe("balance posts a result as passed or failed, citing its claim code, from a report kept by example", () => {
+  it.each<[string, string, string]>([
+    ["CLM-OBS-029", "passed", "passed"],
+    ["CLM-OBS-030", "failed", "failed"],
+  ])("[%s] a result in RSpec's evidence report, [CLM-ONE-001] in its description, that %s, is posted as %s, citing CLM-ONE-001", (_clm, status, result) => {
+    const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status }]));
+
+    expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
+  });
+
+  it("[CLM-OBS-042] an example in RSpec's evidence report citing CLM-ONE-001 that was skipped or pending posts nothing", () => {
+    const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status: "pending" }]));
+
+    expect(posted).toEqual([]);
+  });
+});
+
 describe("balance posts nothing for a test that was skipped", () => {
   it.each<[string, "vitest" | "jest", readonly string[]]>([
     ["CLM-OBS-036", "vitest", ["skipped", "todo"]],
@@ -148,6 +193,23 @@ describe("balance posts what could not run as never ran, from a report kept by s
 
     expect(posted.map(({ result, cites: cited, place: placed, message: said }) => ({ result, cites: cited, place: placed, message: said }))).toEqual([
       { result: "never-ran", cites, place, message },
+    ]);
+  });
+});
+
+describe("balance posts what could not run as never ran, from a report kept by example", () => {
+  it.each<[string, string, string]>([
+    [
+      "CLM-OBS-049",
+      "\nAn error occurred while loading ./spec/unloadable_spec.rb.\nFailure/Error: __send__(method, file)\n\nSyntaxError:\n  Unmatched `{', missing `}' ?\n",
+      "./spec/unloadable_spec.rb",
+    ],
+    ["CLM-OBS-099", "\nAn error occurred in a `before(:suite)` hook.\nFailure/Error: raise \"the database could not be reached\"\n", ""],
+  ])("[%s] RSpec's evidence report saying %j is posted as never-ran, citing no claim code, naming where and the error", (_clm, error, place) => {
+    const posted = postedByExample(reportByExample([], [error]));
+
+    expect(posted.map(({ result, cites, place: placed, message }) => ({ result, cites, place: placed, message }))).toEqual([
+      { result: "never-ran", cites: [], place, message: error },
     ]);
   });
 });
@@ -189,6 +251,17 @@ describe("balance posts a nested test from a report kept by suite citing its own
     ["CLM-OBS-074", "gradle", "[CLM-ONE-002] a class", "adds one", "example.AddsTest", []],
   ])("[%s] a passing test in %s's evidence report, in suite %s and named %s, is posted citing its nearest code", (_clm, writer, suite, name, className, cites) => {
     expect(postedBySuite(writer, suite, testCase(className, name)).map(({ cites: cited }) => cited)).toEqual([cites]);
+  });
+});
+
+describe("balance posts a nested example citing its own code, or its group's code", () => {
+  it.each<[string, string, readonly ClaimCode[]]>([
+    ["CLM-OBS-075", "[CLM-ONE-001] adds one", [ONE_001]],
+    ["CLM-OBS-076", "adds one", [ONE_002]],
+  ])("[%s] a passing example in RSpec's evidence report described %s, in a group with [CLM-ONE-002] in its description, is posted citing its nearest code", (_clm, description, cites) => {
+    const posted = postedByExample(reportByExample([{ group: "[CLM-ONE-002] Adding", description, status: "passed" }]));
+
+    expect(posted.map(({ cites: cited }) => cited)).toEqual([cites]);
   });
 });
 
