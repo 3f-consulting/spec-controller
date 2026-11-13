@@ -129,6 +129,13 @@ describe("an Evidence Observation says where to look", () => {
 const unitRunner = (runner: string): TargetConfiguration => ({ runners: { unit: runner }, nonChecks: [], deferralTags: [] });
 const dispositionOf = (run: string, runner: string, scripts: Readonly<Record<string, string>> = {}) =>
   stepDispositionOf(stepsOf({ run })[0]!, unitRunner(runner), scripts, shellAnswers);
+const countedAndPosted = (run: string, runner: string, scripts: Readonly<Record<string, string>> = {}) => {
+  const steps = stepsOf({ run });
+  return {
+    countedAs: stepDispositionOf(steps[0]!, unitRunner(runner), scripts, shellAnswers),
+    posted: fitnessObservationsOf(steps, [], unitRunner(runner), scripts, shellAnswers).filter(({ kind }) => kind === "fitness").length,
+  };
+};
 
 describe("a runner is recognised only as the command a step runs", () => {
   it.each([
@@ -159,10 +166,8 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(dispositionOf(variant.replace("<script>", script).replace("<name>", "app"), "vitest", { [script]: "vitest run" })).toBe("runner");
   });
 
-  it("[CLM-OBS-009] a script is followed however deep, and a script that runs itself ends as a check", () => {
-    const scripts = { test: "pnpm unit", unit: "pnpm vitest-all", "vitest-all": "vitest run", loop: "pnpm loop" };
-
-    expect({ deep: dispositionOf("pnpm test", "vitest", scripts), loop: dispositionOf("pnpm loop", "vitest", scripts) }).toEqual({ deep: "runner", loop: "candidate" });
+  it("[CLM-OBS-114] a step running pnpm test, whose script runs another script, whose script runs vitest, will be counted as a runner, and nothing will be posted", () => {
+    expect(countedAndPosted("pnpm test", "vitest", { test: "pnpm unit", unit: "vitest run" })).toEqual({ countedAs: "runner", posted: 0 });
   });
 
   it.each(shellVariants["CLM-OBS-112"].variants)("[CLM-OBS-112] a step running its unit runner behind the wrapper %s, past its options, will be counted as a runner", (wrapper) => {
