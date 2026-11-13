@@ -94,7 +94,11 @@ interface FileToCheck {
   readonly scenarios: readonly {
     readonly tags: readonly string[];
     readonly title: string;
-    readonly examples: readonly { readonly tags: readonly string[]; readonly columns: readonly string[] }[];
+    readonly examples: readonly {
+      readonly tags: readonly string[];
+      readonly columns: readonly string[];
+      readonly rows: readonly { readonly cells: readonly string[] }[];
+    }[];
   }[];
 }
 
@@ -112,8 +116,13 @@ function filesByFeatureCode(features: readonly FileToCheck[]): ReadonlyMap<strin
   return files;
 }
 
+// The cells of each Examples block's clm column.
+const clmCellsIn = ({ examples }: ScenarioToCheck): string[] =>
+  examples.flatMap(({ columns, rows }) => (columns.includes(CLM_COLUMN) ? rows.map(({ cells }) => cells[columns.indexOf(CLM_COLUMN)] ?? "") : []));
+
+// A claim code is carried by a scenario's tags or its clm cells, and belongs to its file's feature code either way.
 function misfiledCodes(feature: FileToCheck, filesByCode: ReadonlyMap<string, readonly string[]>): ClaimCodeError[] {
-  const carried = codesIn(feature.scenarios.flatMap(({ tags }) => tags));
+  const carried = codesIn(feature.scenarios.flatMap((scenario) => [...scenario.tags, ...clmCellsIn(scenario)]));
   const featureCode = featureCodeOfFile(feature);
   if (featureCode === undefined) return carried.length === 0 ? [] : [{ kind: "no-feature-code", file: feature.file }];
   return carried

@@ -71,9 +71,13 @@ describe("the run will still reach its run verdict, using the configuration sett
   it('[CLM-CFG-017] a specController block with "unit": 3 and "integration": "cucumber-js" under runners reaches its run verdict, cucumber-js running the integration layer', () => {
     const { configuration } = targetConfigurationFrom({ specController: { runners: { unit: 3, integration: "cucumber-js" } } }, []);
     const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: cucumber-js\n");
-    const claims = executableClaimsOf([featureAsWrittenFrom("one.feature", "Feature: one\n")], { deferralTags: configuration.deferralTags, strict: false });
+    const claims = executableClaimsOf([featureAsWrittenFrom("one.feature", "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: s\n    Given a step\n")], {
+      deferralTags: configuration.deferralTags,
+      strict: false,
+    });
+    const passingUnitTest = { cites: [{ featureCode: "ONE", number: "001" }], result: "passed", kind: "unit", place: "one.test.ts", notes: [] } as const;
 
-    const runVerdict = runVerdictOf(claimReconciliationsOf(claims, fitnessObservationsOf(steps, [], configuration, {}, shellAnswers)));
+    const runVerdict = runVerdictOf(claimReconciliationsOf(claims, [passingUnitTest, ...fitnessObservationsOf(steps, [], configuration, {}, shellAnswers)]), []);
 
     expect({ runVerdict, integrationStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({ runVerdict: { verdict: "balanced" }, integrationStep: "runner" });
   });

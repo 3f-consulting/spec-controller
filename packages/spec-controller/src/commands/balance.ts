@@ -1,5 +1,7 @@
 import {
+  claimCodeErrorsOf,
   claimReconciliationsOf,
+  evidenceReconciliationOf,
   executableClaimsOf,
   featureAsWrittenFrom,
   fitnessObservationsOf,
@@ -7,7 +9,6 @@ import {
   provenanceOf,
   repositoryOfOrigin,
   resultsByFileFrom,
-  runVerdictOf,
   shellAnswers,
   stepAccountOf,
   stepDispositionOf,
@@ -66,7 +67,6 @@ export function balance({ inputs, outputs, target, sourceSha }: Extract<RunReque
     ...fitnessObservationsOf(steps, record, configuration, scripts, shellAnswers),
   ];
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: configuration.deferralTags, strict: false }), observations);
-  const runVerdict = runVerdictOf(claimReconciliations);
   const provenance = provenanceOf(identity, provenanceInputsOf(inputs), targetFolder, repositoryOfOrigin);
   // No report may land on a file the run read: each one it was given, and each it read in a folder it was given.
   const filesRead = [
@@ -74,6 +74,13 @@ export function balance({ inputs, outputs, target, sourceSha }: Extract<RunReque
     ...workflowSources.map(({ workflow }) => join(workflows ?? "", workflow)),
     ...[pathOf(inputs, "vitest"), pathOf(inputs, "stepRecord"), pathOf(inputs, "manifest")].filter((path) => path !== undefined),
   ];
-  const errorsInTheInputs = errors.length === 0 ? {} : { errorsInTheInputs: { configurationErrors: errors } };
-  return writeReports(outputs, filesRead, { runVerdict, provenance, ...stepAccountFor(workflows, steps, configuration, scripts), ...errorsInTheInputs }, streams);
+  const reconciliation = evidenceReconciliationOf({
+    claimReconciliations,
+    claimCodeErrors: claimCodeErrorsOf(features),
+    configurationErrors: errors,
+    features,
+    ...stepAccountFor(workflows, steps, configuration, scripts),
+    provenance,
+  });
+  return writeReports(outputs, filesRead, reconciliation, streams);
 }

@@ -39,6 +39,7 @@ export type {
   EvidenceReconciliation,
   QualityCheckCounts,
   RunIntegrity,
+  RunReconciled,
   RunVerdict,
   StepAccount,
   StepCounts,
@@ -56,9 +57,9 @@ export type {
   OutputRequest,
 } from "./domain/outputPlan.js";
 
-export { allocationOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from "./domain/claimCodes.js";
+export { allocationOf, claimCodeErrorsOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from "./domain/claimCodes.js";
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";
-export { runVerdictOf, stepAccountOf } from "./domain/evidenceReconciliation.js";
+export { evidenceReconciliationOf, runVerdictOf, stepAccountOf, totalsOf } from "./domain/evidenceReconciliation.js";
 export { outputPlanOf } from "./domain/outputPlan.js";
 export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
 export { provenanceOf } from "./domain/provenance.js";

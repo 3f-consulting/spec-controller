@@ -102,6 +102,14 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
     expect(errorsIn(files, ([, , tags]) => scenarioTagged(tags))).toEqual(errors);
   });
 
+  it("[CLM-STG-054] one.feature, tagged @ONE, with CLM-TWO-001 in a clm cell, and two.feature tagged @TWO, has a foreign claim code error", () => {
+    const outlineCiting = "  @unit\n  Scenario Outline: that Outline\n    Given <x>\n\n    Examples:\n      | clm         | x |\n      | CLM-TWO-001 | a |\n";
+
+    expect(errorsIn([["one.feature", "@ONE", ""], ["two.feature", "@TWO", "@unit"]], ([file, , tags]) => (file === "one.feature" ? outlineCiting : scenarioTagged(tags)))).toEqual([
+      { kind: "foreign-claim-code", claimCode: { featureCode: "TWO", number: "001" }, file: "one.feature", filesWithItsFeatureCode: ["two.feature"] },
+    ]);
+  });
+
   it.each([
     ["CLM-STG-059", "the Outline", "@CLM-ONE-009", ""],
     ["CLM-STG-060", "its Examples block", "@unit", "@CLM-ONE-009"],

@@ -7,7 +7,7 @@ import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
 const CLI = resolve("packages/spec-controller/dist/cli.js");
 
-const MARKDOWN_OPENING = "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention.";
+const MARKDOWN_TITLE = "# Evidence Reconciliation";
 
 const EARLIER_REPORT = "an earlier report";
 
@@ -67,22 +67,22 @@ When(/^you ask for them at (.+)$/, function (this: ReportRun, destination: strin
 });
 
 Then("one will be on standard output, and the other in the file", function (this: ReportRun) {
-  assert.ok(this.output.startsWith(MARKDOWN_OPENING), this.output);
+  assert.ok(this.output.startsWith(MARKDOWN_TITLE), this.output);
   assert.ok(isJsonReport(readFileSync(this.file, "utf8")));
 });
 
 Then("one will be on standard output, and the other on standard error", function (this: ReportRun) {
-  assert.ok(this.output.startsWith(MARKDOWN_OPENING), this.output);
+  assert.ok(this.output.startsWith(MARKDOWN_TITLE), this.output);
   assert.ok(isJsonReport(this.error), this.error);
 });
 
 Then("each file will contain its own report", function (this: ReportRun) {
-  assert.ok(readFileSync(this.file, "utf8").startsWith(MARKDOWN_OPENING));
+  assert.ok(readFileSync(this.file, "utf8").startsWith(MARKDOWN_TITLE));
   assert.ok(isJsonReport(readFileSync(`${this.file}.json`, "utf8")));
 });
 
 Then("both reports will be on standard error, one after the other", function (this: ReportRun) {
-  assert.ok(this.error.startsWith(MARKDOWN_OPENING), this.error);
+  assert.ok(this.error.startsWith(MARKDOWN_TITLE), this.error);
   assert.ok(isJsonReport(this.error.slice(this.error.indexOf("\n{") + 1)), this.error);
 });
 

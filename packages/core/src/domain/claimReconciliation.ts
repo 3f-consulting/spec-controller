@@ -126,6 +126,10 @@ function inOrder(one: QualityCheckReconciliation, other: QualityCheckReconciliat
   return at < 0 ? 0 : ones[at]! < others[at]! ? -1 : 1;
 }
 
+// A claim that asks for nothing: with no code it is still a claim no evidence can cite; with one, it asks for no check.
+const nothingAskedOf = (claim: ExecutableClaim | PhantomClaim | UnnamedClaim): QualityCheckReconciliation =>
+  isExecutable(claim) && claim.claimCode === undefined ? { outcome: "no-claim-code", obligation: {} } : { outcome: "no-quality-check" };
+
 export function claimReconciliationOf(
   claim: ExecutableClaim | PhantomClaim | UnnamedClaim,
   observations: readonly EvidenceObservation[],
@@ -134,7 +138,7 @@ export function claimReconciliationOf(
   const reconciled = isExecutable(claim)
     ? executableReconciliations(claim, observations, codeShared)
     : citedOnly(observations, claim.claimCode === undefined ? "cites-no-claim" : "cites-unknown-claim");
-  const qualityCheckReconciliations: QualityCheckReconciliation[] = reconciled.length === 0 ? [{ outcome: "no-quality-check" }] : [...reconciled].sort(inOrder);
+  const qualityCheckReconciliations: QualityCheckReconciliation[] = reconciled.length === 0 ? [nothingAskedOf(claim)] : [...reconciled].sort(inOrder);
   const balanced = qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied");
   return { claim, qualityCheckReconciliations, verdict: balanced ? "balanced" : "out-of-balance" };
 }

@@ -5,8 +5,11 @@ import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { runRequestOf } from "../runRequest/runRequest.js";
 import { writeReports, type ReportedReconciliation } from "./writer.js";
 
+// A run with nothing reconciled, its totals all zero.
 const RECONCILIATION: ReportedReconciliation = {
+  claimReconciliations: [],
   runVerdict: { verdict: "balanced" },
+  totals: { claimReconciliations: { total: 0, balanced: 0, outOfBalance: 0 }, qualityCheckReconciliations: { byKind: [{ kind: "unit", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "integration", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "e2e", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "performance", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "fitness", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }], noKind: { evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, all: { evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } } }, evidenceObservations: { total: 0, onExecutableClaim: 0, onPhantomClaim: 0, onUnnamedClaim: 0 }, excludedClaimCodeOccurrences: 0 },
   provenance: { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] },
 };
 
@@ -19,7 +22,7 @@ function capturedStreams(): { readonly output: string[]; readonly error: string[
 
 const MARKDOWN_OPENING = "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention.";
 
-const opensAsMarkdown = (text: string): boolean => text.startsWith(MARKDOWN_OPENING);
+const opensAsMarkdown = (text: string): boolean => text.startsWith(`# Evidence Reconciliation\n\n${MARKDOWN_OPENING}`);
 
 // Text that is not JSON is not the JSON report, rather than an error.
 function isJsonReport(text: string): boolean {
@@ -55,7 +58,7 @@ describe("you will get the report format you named", () => {
     writeReports(outputsAskedFor(args), [], RECONCILIATION, streams);
 
     const written = output.join("");
-    expect(report === "JSON" ? JSON.parse(written) : written.split("\n")[0]).toEqual(
+    expect(report === "JSON" ? JSON.parse(written) : written.split("\n")[2]).toEqual(
       report === "JSON" ? RECONCILIATION : "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention.",
     );
   });

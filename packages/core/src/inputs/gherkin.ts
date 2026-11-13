@@ -23,8 +23,13 @@ function scenariosOf({ scenario, rule }: FeatureChild): ScenarioAsWritten[] {
   return (rule?.children ?? []).flatMap((child) => (child.scenario ? [scenarioAsWritten(child.scenario, ruleTags)] : []));
 }
 
+// Every word written with an at-sign, anywhere in the file: a tag, or in a title, a step, a description or a comment.
+const WORD_AS_TAG = /@([^\s@]+)/g;
+
+const wordsWrittenAsTagsIn = (source: string): string[] => [...source.matchAll(WORD_AS_TAG)].map((word) => word[1]!);
+
 export function featureAsWrittenFrom(file: string, source: string): FeatureAsWritten {
   const document = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher()).parse(source);
   const scenarios = (document.feature?.children ?? []).flatMap(scenariosOf);
-  return { file, fileTags: (document.feature?.tags ?? []).map(withoutAtSign), scenarios, wordsWrittenAsTags: [] };
+  return { file, fileTags: (document.feature?.tags ?? []).map(withoutAtSign), scenarios, wordsWrittenAsTags: wordsWrittenAsTagsIn(source) };
 }

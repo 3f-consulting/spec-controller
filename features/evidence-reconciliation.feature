@@ -69,28 +69,49 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-016 | a unit test citing no code                                         | 1     | 0        | 1              |
 
     @unit
-    Scenario Outline: Total of the Quality Check Reconciliations, by outcome
+    Scenario Outline: Total of the Quality Check Reconciliations, by kind of quality check and outcome
       given a run had <what the run had>
       when balance reconciles it
-      then the totals will have <total> Quality Check Reconciliations, <out of balance> out of balance, <by reconciling outcome>
+      then the totals will have, for <kind>, <obligations> Evidence Obligations, <observations> Evidence Observations and <by outcome>
 
       Examples:
-        | clm         | what the run had                                                | total | out of balance | by reconciling outcome              |
-        | CLM-EVR-017 | a claim with a passing unit test                                | 1     | 0              | none                                |
-        | CLM-EVR-018 | a claim with a failing unit test and no integration test        | 2     | 2              | 1 failing and 1 missing integration |
-        | CLM-EVR-019 | a scenario with no code                                         | 1     | 1              | 1 no-claim-code                     |
-        | CLM-EVR-020 | two scenarios sharing @CLM-ONE-001, each asking for a unit test | 2     | 2              | 2 duplicate-claim-code              |
+        | clm         | what the run had                                                                                | kind        | obligations | observations | by outcome                  |
+        | CLM-EVR-017 | a claim asking for a unit test, and a passing unit test citing it                               | unit        | 1           | 1            | 1 satisfied                 |
+        | CLM-EVR-054 | a claim asking for a unit test, and two passing unit tests citing it                            | unit        | 1           | 2            | 2 satisfied                 |
+        | CLM-EVR-018 | a claim asking for a unit test, and a failing unit test citing it                               | unit        | 1           | 1            | 1 failing                   |
+        | CLM-EVR-055 | a claim asking for an integration test, and no integration test citing it                       | integration | 1           | 0            | 1 missing                   |
+        | CLM-EVR-056 | a claim asking for a unit test, and a unit test citing it that never ran                        | unit        | 1           | 1            | 1 missing and 1 never-ran   |
+        | CLM-EVR-057 | a claim asking for a unit test, a passing unit test citing it, and one citing it that never ran | unit        | 1           | 2            | 1 satisfied and 1 never-ran |
+        | CLM-EVR-058 | a claim asking for a fitness function, and its step passing                                     | fitness     | 1           | 1            | 1 satisfied                 |
+        | CLM-EVR-059 | a claim asking for a fitness function, and its step passing where its failure is allowed        | fitness     | 1           | 1            | 1 cannot-fail               |
+        | CLM-EVR-060 | a claim asking for a fitness function, and its step skipped                                     | fitness     | 1           | 1            | 1 missing and 1 never-ran   |
+        | CLM-EVR-061 | a claim asking for a fitness function, and no step for it                                       | fitness     | 1           | 0            | 1 missing                   |
+        | CLM-EVR-019 | a scenario with no code, asking for a unit test                                                 | unit        | 1           | 0            | 1 no-claim-code             |
+        | CLM-EVR-020 | two scenarios sharing @CLM-ONE-001, each asking for a unit test                                 | unit        | 2           | 0            | 2 duplicate-claim-code      |
+        | CLM-EVR-021 | a claim asking only for an e2e test, and a passing unit test citing it                          | unit        | 0           | 1            | 1 not-asked-for             |
+        | CLM-EVR-022 | a passing fitness function citing a code no claim has                                           | fitness     | 0           | 1            | 1 cites-unknown-claim       |
+        | CLM-EVR-062 | a passing unit test citing no code                                                              | unit        | 0           | 1            | 1 cites-no-claim            |
+        | CLM-EVR-063 | a scenario with a code and no kind-of-check tag                                                 | no kind     | 0           | 0            | 1 no-quality-check          |
+        | CLM-EVR-064 | a scenario with no code and no kind-of-check tag                                                | no kind     | 0           | 0            | 1 no-claim-code             |
+
+    @unit @CLM-EVR-065
+    Scenario: Total of every kind, as the All row
+      given a run had a claim asking for a unit test with a passing unit test citing it, and a scenario with a code and no kind-of-check tag
+      when balance reconciles it
+      then the totals will have, for all kinds, 1 Evidence Obligation, 1 Evidence Observation, 1 satisfied and 1 no-quality-check
 
     @unit
-    Scenario Outline: Total of the Evidence Observations, by kind of quality check and by kind of claim
+    Scenario Outline: Total of the Evidence Observations, by where they were filed
       given a run had <what the run had>
       when balance reconciles it
-      then the totals will have <total> Evidence Observations, <by kind>, <by kind of claim>
+      then the totals will have <total> Evidence Observations, <by where filed>
 
       Examples:
-        | clm         | what the run had                                                                        | total | by kind              | by kind of claim                                |
-        | CLM-EVR-021 | a passing unit test citing a claim                                                      | 1     | 1 unit               | 1 on an executable claim                        |
-        | CLM-EVR-022 | a unit test citing no code, and a fitness function citing a code on no executable claim | 2     | 1 unit and 1 fitness | 1 on the unnamed claim and 1 on a phantom claim |
+        | clm         | what the run had                                                  | total | by where filed           |
+        | CLM-EVR-066 | a claim asking for a unit test, and a passing unit test citing it | 1     | 1 on an executable claim |
+        | CLM-EVR-067 | a passing unit test citing no code                                | 1     | 1 on the unnamed claim   |
+        | CLM-EVR-068 | a passing unit test citing a code no claim has                    | 1     | 1 on a phantom claim     |
+        | CLM-EVR-069 | a unit test citing a code no claim has, which never ran           | 1     | 1 on a phantom claim     |
 
     @unit
     Scenario Outline: Total of the out-of-balance Claim Reconciliations, by feature
@@ -133,20 +154,6 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       given a run had read the steps of two jobs
       when balance reconciles it
       then the total of each count will be the sum over the jobs
-
-  Rule: only a fitness function that ran counts as run
-
-    @unit
-    Scenario Outline: balance counts a fitness function as run only when its Evidence Observation ran
-      given a pipeline had <fitness function>
-      when balance reconciles it
-      then it will <counted> among the fitness functions that ran
-
-      Examples:
-        | clm         | fitness function                                        | counted   |
-        | CLM-EVR-034 | a fitness function that ran, whose failure does not fail its job | count     |
-        | CLM-EVR-035 | a fitness function whose Evidence Observation never ran | not count |
-        | CLM-EVR-036 | no step for a fitness function a claim asks for         | not count |
 
   Rule: the provenance says what the run used
 

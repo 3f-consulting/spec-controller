@@ -10,6 +10,9 @@ Feature: Each report has the right structure, and the Markdown explains it
   - The Markdown report shows the unnamed claim's evidence in groups, by kind of quality check, file and shared claim code.
   - The Markdown adds the words a person needs to read it.
   - The provenance shows each input the run read on its own line.
+  - The Markdown summary leaves out a row or column whose counts are all zero.
+  - The JSON report keeps every count, zero or not.
+  - The Markdown shows the Claim Reconciliations as one table, a row per claim.
   - The step account totals its jobs only when it has more than one.
 
   Whether an answer or a count is right is proved where it is worked out, not here.
@@ -33,7 +36,7 @@ Feature: Each report has the right structure, and the Markdown explains it
     Scenario: the Markdown report's sections will come in a fixed order
       given a run had something for every section
       when its Markdown report is written
-      then its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
+      then the opening sentence will come first, under the title, and its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
 
   Rule: a report leaves out any optional section that would be empty
 
@@ -107,8 +110,12 @@ Feature: Each report has the right structure, and the Markdown explains it
       then the report will have the opening for <run verdict>
 
       Examples:
-        | clm         | run verdict |
-        | CLM-RPT-111 | balanced    |
+        | clm         | run verdict                               |
+        | CLM-RPT-111 | balanced                                  |
+        | CLM-RPT-116 | out of balance                            |
+        | CLM-RPT-117 | not reconciled, as unsound                |
+        | CLM-RPT-118 | not reconciled, for claim code errors     |
+        | CLM-RPT-119 | not reconciled, with nothing to reconcile |
 
   Rule: the provenance shows each input the run read on its own line
 
@@ -122,6 +129,102 @@ Feature: Each report has the right structure, and the Markdown explains it
         | clm         | inputs read                                                 | lines                                         |
         | CLM-RPT-114 | a Vitest report and a Cucumber report, and no pytest report | one line for each report, and none for pytest |
         | CLM-RPT-115 | the CI workflows by default                                 | a line for the CI workflows                   |
+
+  Rule: the Markdown summary leaves out a row or column whose counts are all zero
+
+    @unit
+    Scenario Outline: the Failing column, the row with no kind and the performance row each appear only above zero
+      given the totals had <counts>
+      when the Markdown report is written
+      then the table by kind will <show> the <row or column>
+
+      Examples:
+        | clm         | counts                                            | show     | row or column    |
+        | CLM-RPT-120 | no failing Quality Check Reconciliation           | not have | Failing column   |
+        | CLM-RPT-121 | one failing Quality Check Reconciliation          | have     | Failing column   |
+        | CLM-RPT-122 | no Quality Check Reconciliation with no kind      | not have | row with no kind |
+        | CLM-RPT-123 | one no-quality-check Quality Check Reconciliation | have     | row with no kind |
+        | CLM-RPT-124 | no performance Evidence Obligation or Observation | not have | performance row  |
+
+    @unit
+    Scenario Outline: the Markdown where-filed table leaves out a place nothing was filed on
+      given the totals had <filed>
+      when the Markdown report is written
+      then the where-filed table will <show> a row for the phantom claims
+
+      Examples:
+        | clm         | filed                                       | show     |
+        | CLM-RPT-125 | no Evidence Observation on a phantom claim  | not have |
+        | CLM-RPT-126 | one Evidence Observation on a phantom claim | have     |
+
+    @unit @CLM-RPT-127
+    Scenario: the line of claim codes no claim reads is left out when there are none
+      given the totals had 0 claim codes written where no claim reads them
+      when the Markdown report is written
+      then the Claim Reconciliations will have no line about claim codes no claim reads
+
+  Rule: the JSON report keeps every count, zero or not
+
+    @unit @CLM-RPT-128
+    Scenario: a run of passing unit tests alone still has the JSON count failing and performance, at 0
+      given a run had only passing unit tests, each cited by a claim asking for one
+      when the JSON report is written
+      then its totals will have every kind, the row with no kind, and every outcome under each, the ones with nothing at 0
+
+  Rule: the Markdown shows the Claim Reconciliations as one table, a row per claim
+
+    @unit
+    Scenario Outline: a claim's cell for a kind shows whether it asked and how many ran
+      given a claim had <evidence>
+      when the Markdown report is written
+      then its row will read <cell> under Unit
+
+      Examples:
+        | clm         | evidence                                                          | cell  |
+        | CLM-RPT-129 | asked for a unit test, and two passing unit tests citing it       | U/2   |
+        | CLM-RPT-130 | asked for a unit test, and one failing unit test citing it        | U/1   |
+        | CLM-RPT-131 | asked for a unit test, and one unit test citing it that never ran | U/-   |
+        | CLM-RPT-132 | asked for a unit test, and no unit test citing it                 | U/-   |
+        | CLM-RPT-133 | asked for no unit test, and one passing unit test citing it       | -/1   |
+        | CLM-RPT-134 | asked for no unit test, and no unit test citing it                | empty |
+
+    @unit
+    Scenario Outline: each row is named so a reader can find its claim
+      given the run had <claim>
+      when the Markdown report is written
+      then the Claim Reconciliations will have a row named <name>
+
+      Examples:
+        | clm         | claim                                                              | name                                                    |
+        | CLM-RPT-135 | a scenario tagged @CLM-ONE-001 in one.feature                      | CLM-ONE-001                                             |
+        | CLM-RPT-136 | a scenario titled "adds one" with no code, in one.feature          | one.feature : adds one                                  |
+        | CLM-RPT-137 | two scenarios sharing @CLM-ONE-001, in one.feature and two.feature | CLM-ONE-001 (one.feature) and CLM-ONE-001 (two.feature) |
+        | CLM-RPT-138 | a unit test citing @CLM-ONE-009, which no scenario has             | CLM-ONE-009, with — under every kind                    |
+        | CLM-RPT-139 | a unit test citing no code                                         | (unnamed claim), with — under every kind                |
+
+    @unit @CLM-RPT-140
+    Scenario: the rows come in the order the claims were read, then the phantom claims, then the unnamed claim
+      given a run had claims in one.feature then two.feature, a phantom claim and evidence on the unnamed claim
+      when the Markdown report is written
+      then the rows will be one.feature's claims in the order written, then two.feature's, then the phantom claim, then the unnamed claim
+
+    @unit
+    Scenario Outline: a row lists its reconciling items, each with where to look
+      given a claim had <evidence>
+      when the Markdown report is written
+      then its row's reconciling items will be <items>
+
+      Examples:
+        | clm         | evidence                                                                                                  | items                                                                   |
+        | CLM-RPT-141 | asked for a unit test, and a passing unit test citing it                                                  | none                                                                    |
+        | CLM-RPT-142 | asked for a unit test, and the unit test "[CLM-CHK-002] charges the card" in src/checkout.test.ts failing | unit failing, at src/checkout.test.ts, "[CLM-CHK-002] charges the card" |
+        | CLM-RPT-143 | asked for a unit and an e2e test, and neither citing it                                                   | unit missing, then e2e missing                                          |
+
+    @unit @CLM-RPT-144
+    Scenario: the table has a column only for a kind some claim raises or answers
+      given a run had only unit and fitness Evidence Obligations and Evidence Observations
+      when the Markdown report is written
+      then the Claim Reconciliations table will have a Fitness and a Unit column, and no other kind's column
 
   Rule: the step account totals its jobs only when it has more than one
 
