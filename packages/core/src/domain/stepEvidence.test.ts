@@ -172,6 +172,10 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(countedAndPosted('retry() { "$@" || "$@"; }\nvitest run', "vitest")).toEqual({ countedAs: "runner", posted: 0 });
   });
 
+  it("[CLM-OBS-124] a step setting start=$SECONDS on one line, then running vitest run, will be counted as a runner, and nothing will be posted", () => {
+    expect(countedAndPosted("start=$SECONDS\nvitest run", "vitest")).toEqual({ countedAs: "runner", posted: 0 });
+  });
+
   it.each(shellVariants["CLM-OBS-010"].variants)("[CLM-OBS-010] a step running vitest after a NAME=value setting, through the launcher %s, will be counted as a runner", (launcher) => {
     const handedOn = launcher.includes("<bin>") ? launcher.replace("<bin>", "vitest") : `${launcher} vitest`;
 
