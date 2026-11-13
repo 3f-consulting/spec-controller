@@ -215,6 +215,32 @@ describe("balance reads the feature corpus in path order", () => {
   });
 });
 
+// One passing result citing CLM-ONE-001, as each runner writes it.
+const BY_FILE_PASSING = '{"testResults":[{"name":"/work/one.test.ts","status":"passed","message":"","assertionResults":[{"title":"[CLM-ONE-001] one","fullName":"[CLM-ONE-001] one","status":"passed","ancestorTitles":[],"failureMessages":[]}]}]}';
+const RSPEC_PASSING = '{"examples":[{"id":"./spec/one_spec.rb[1:1]","description":"[CLM-ONE-001] one","full_description":"[CLM-ONE-001] one","status":"passed","file_path":"./spec/one_spec.rb","line_number":1}],"summary":{}}';
+const CUCUMBER_PASSING =
+  '[{"uri":"features/one.feature","name":"one","elements":[{"keyword":"Scenario","name":"one","type":"scenario","line":5,"tags":[{"name":"@unit"},{"name":"@CLM-ONE-001"}],"steps":[{"keyword":"Given ","name":"one","result":{"status":"passed"}}]}]}]';
+
+interface ClaimsReported {
+  readonly claimReconciliations: readonly { readonly qualityCheckReconciliations: readonly { readonly observation?: { readonly result: string } }[] }[];
+}
+
+describe("balance posts the result in the evidence report each runner's flag names", () => {
+  it.each([
+    ["CLM-CLI-196", "--vitest", BY_FILE_PASSING],
+    ["CLM-CLI-199", "--jest", BY_FILE_PASSING],
+    ["CLM-CLI-200", "--rspec", RSPEC_PASSING],
+    ["CLM-CLI-201", "--cucumber", CUCUMBER_PASSING],
+  ] as const)("[%s] %s naming a report of one passing result citing CLM-ONE-001: that result is posted", (_clm, flag, report) => {
+    const folder = folderWith({ "features/one.feature": "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n", "report.json": report });
+
+    const { output } = ran(["balance", flag, "report.json", "--format", "json"], folder);
+
+    const { claimReconciliations } = JSON.parse(output) as ClaimsReported;
+    expect(claimReconciliations.flatMap(({ qualityCheckReconciliations }) => qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.result] : [])))).toEqual(["passed"]);
+  });
+});
+
 describe("an input that is not valid will stop the run", () => {
   it.each([
     ["CLM-CLI-147", "a named input that does not exist", {}, ["--vitest", "absent.json"], ["absent.json", "Vitest evidence report", "[input-absent]"]],

@@ -178,6 +178,19 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then it will post its results
       and the run will not stop
 
+    @unit
+    Scenario Outline: balance posts the result in the evidence report each runner's flag names
+      given the run named <flag> with an evidence report of one passing result that cites a claim
+      when balance reads its inputs
+      then it will post that result
+
+      Examples:
+        | clm         | flag       |
+        | CLM-CLI-196 | --vitest   |
+        | CLM-CLI-199 | --jest     |
+        | CLM-CLI-200 | --rspec    |
+        | CLM-CLI-201 | --cucumber |
+
     @unit @CLM-CLI-183
     Scenario: a workflows folder read by default that does not exist will count as no workflows, not as a missing input
       given the run named no CI workflows, and the folder .github/workflows did not exist
