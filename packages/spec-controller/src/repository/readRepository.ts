@@ -59,12 +59,12 @@ export function historyLines(top: string, featureCode: string): Read<ClaimCodeOc
   const occurrences: ClaimCodeOccurrence[] = [];
   let commit!: string;
   let path!: string;
-  // Until a file's first hunk, it is in its header, where +++ starts its new name. An added line keeps its +, no code's part.
+  // Before a file's first hunk is its header: +++ starts its name, which a tab ends if it holds a space. Added lines keep +.
   let line: number | undefined;
   for (const text of stdout.split("\n")) {
     if (text.startsWith("commit:")) commit = text.slice("commit:".length);
     else if (text.startsWith("diff ")) line = undefined;
-    else if (line === undefined && text.startsWith("+++ ")) path = text.slice("+++ ".length);
+    else if (line === undefined && text.startsWith("+++ ")) path = text.slice("+++ ".length).split("\t")[0]!;
     else if (HUNK.test(text)) line = Number(HUNK.exec(text)![1]);
     else if (line !== undefined && text.startsWith("+")) occurrences.push({ text, path, line: line++, commit });
   }
