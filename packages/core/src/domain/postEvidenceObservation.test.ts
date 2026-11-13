@@ -139,7 +139,7 @@ describe("balance posts a result as passed or failed, citing its claim code", ()
     ["CLM-OBS-018", "vitest", "failed", "failed"],
     ["CLM-OBS-019", "jest", "passed", "passed"],
     ["CLM-OBS-020", "jest", "failed", "failed"],
-  ])("[%s] a result in %s's evidence report, [CLM-ONE-001] in its title, that %s, is posted as %s, citing CLM-ONE-001", (_clm, from, status, result) => {
+  ])("[%s] a result in %s's evidence report, CLM-ONE-001 in brackets in its title, that %s, is posted as %s, citing CLM-ONE-001", (_clm, from, status, result) => {
     const posted = postedByFile(from, reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status }], status));
 
     expect(posted.map(({ result: postedResult, cites }) => ({ result: postedResult, cites }))).toEqual([{ result, cites: [ONE_001] }]);
@@ -187,7 +187,7 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
   it.each<[string, string, string]>([
     ["CLM-OBS-029", "passed", "passed"],
     ["CLM-OBS-030", "failed", "failed"],
-  ])("[%s] a result in RSpec's evidence report, [CLM-ONE-001] in its description, that %s, is posted as %s, citing CLM-ONE-001", (_clm, status, result) => {
+  ])("[%s] a result in RSpec's evidence report, CLM-ONE-001 in brackets in its description, that %s, is posted as %s, citing CLM-ONE-001", (_clm, status, result) => {
     const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status }]));
 
     expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
@@ -316,13 +316,13 @@ describe("a Cucumber result will take the kind its tags name", () => {
 });
 
 describe("balance posts a nested test citing its own code, or its parent's code when the report gives one", () => {
-  it.each<[string, "vitest" | "jest", string, readonly ClaimCode[]]>([
-    ["CLM-OBS-065", "vitest", "[CLM-ONE-001] it holds", [ONE_001]],
-    ["CLM-OBS-066", "vitest", "it holds", [ONE_002]],
-    ["CLM-OBS-067", "vitest", "CLM-ONE-001 it holds", [ONE_002]],
-    ["CLM-OBS-068", "jest", "[CLM-ONE-001] it holds", [ONE_001]],
-    ["CLM-OBS-069", "jest", "it holds", [ONE_002]],
-  ])("[%s] a passing test in %s's evidence report titled %s, nested in a describe with [CLM-ONE-002] in its title, is posted citing its nearest code", (_clm, from, title, cites) => {
+  it.each<[string, "vitest" | "jest", string, string, readonly ClaimCode[]]>([
+    ["CLM-OBS-065", "vitest", "CLM-ONE-001 in brackets in its title", "[CLM-ONE-001] it holds", [ONE_001]],
+    ["CLM-OBS-066", "vitest", "no claim code", "it holds", [ONE_002]],
+    ["CLM-OBS-067", "vitest", "CLM-ONE-001 in its title, with no brackets", "CLM-ONE-001 it holds", [ONE_002]],
+    ["CLM-OBS-068", "jest", "CLM-ONE-001 in brackets in its title", "[CLM-ONE-001] it holds", [ONE_001]],
+    ["CLM-OBS-069", "jest", "no claim code", "it holds", [ONE_002]],
+  ])("[%s] a passing test in %s's evidence report with %s, nested in a describe with CLM-ONE-002 in brackets in its title, is posted citing its nearest code", (_clm, from, _titled, title, cites) => {
     const posted = postedByFile(from, reportByFile("/work/one.test.ts", [{ ancestorTitles: ["[CLM-ONE-002] a group"], title, status: "passed" }]));
 
     expect(posted.map(({ cites: cited }) => cited)).toEqual([cites]);
@@ -330,22 +330,22 @@ describe("balance posts a nested test citing its own code, or its parent's code 
 });
 
 describe("balance posts a nested test from a report kept by suite citing its own code, or its parent's code when the report gives one", () => {
-  it.each<[string, SuiteWriter, string, string, string, readonly ClaimCode[]]>([
-    ["CLM-OBS-070", "go", "example.com/adds", "TestAdds/[CLM-ONE-002]_a_group/[CLM-ONE-001]_adds_one", "example.com/adds", [ONE_001]],
-    ["CLM-OBS-071", "go", "example.com/adds", "TestAdds/[CLM-ONE-002]_a_group/adds_one", "example.com/adds", [ONE_002]],
-    ["CLM-OBS-072", "surefire", "[CLM-ONE-002] a class", "[CLM-ONE-001] adds one", "[CLM-ONE-002] a class", [ONE_001]],
-    ["CLM-OBS-073", "surefire", "[CLM-ONE-002] a class", "adds one", "[CLM-ONE-002] a class", [ONE_002]],
-    ["CLM-OBS-074", "gradle", "[CLM-ONE-002] a class", "adds one", "example.AddsTest", []],
-  ])("[%s] a passing test in %s's evidence report, in suite %s and named %s, is posted citing its nearest code", (_clm, writer, suite, name, className, cites) => {
+  it.each<[string, SuiteWriter, string, string, string, string, readonly ClaimCode[]]>([
+    ["CLM-OBS-070", "go", "CLM-ONE-001 in brackets in its subtest's name, under a subtest with CLM-ONE-002 in brackets", "example.com/adds", "TestAdds/[CLM-ONE-002]_a_group/[CLM-ONE-001]_adds_one", "example.com/adds", [ONE_001]],
+    ["CLM-OBS-071", "go", "no claim code, under a subtest with CLM-ONE-002 in brackets", "example.com/adds", "TestAdds/[CLM-ONE-002]_a_group/adds_one", "example.com/adds", [ONE_002]],
+    ["CLM-OBS-072", "surefire", "CLM-ONE-001 in brackets in its display name, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "[CLM-ONE-001] adds one", "[CLM-ONE-002] a class", [ONE_001]],
+    ["CLM-OBS-073", "surefire", "no claim code, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "adds one", "[CLM-ONE-002] a class", [ONE_002]],
+    ["CLM-OBS-074", "gradle", "no claim code, in a class with CLM-ONE-002 in brackets", "[CLM-ONE-002] a class", "adds one", "example.AddsTest", []],
+  ])("[%s] a passing test in %s's evidence report with %s is posted citing its nearest code", (_clm, writer, _named, suite, name, className, cites) => {
     expect(postedBySuite(writer, suite, testCase(className, name)).map(({ cites: cited }) => cited)).toEqual([cites]);
   });
 });
 
 describe("balance posts a nested example citing its own code, or its group's code", () => {
-  it.each<[string, string, readonly ClaimCode[]]>([
-    ["CLM-OBS-075", "[CLM-ONE-001] adds one", [ONE_001]],
-    ["CLM-OBS-076", "adds one", [ONE_002]],
-  ])("[%s] a passing example in RSpec's evidence report described %s, in a group with [CLM-ONE-002] in its description, is posted citing its nearest code", (_clm, description, cites) => {
+  it.each<[string, string, string, readonly ClaimCode[]]>([
+    ["CLM-OBS-075", "CLM-ONE-001 in brackets in its description", "[CLM-ONE-001] adds one", [ONE_001]],
+    ["CLM-OBS-076", "no claim code", "adds one", [ONE_002]],
+  ])("[%s] a passing example in RSpec's evidence report with %s, in a group with CLM-ONE-002 in brackets in its description, is posted citing its nearest code", (_clm, _described, description, cites) => {
     const posted = postedByExample(reportByExample([{ group: "[CLM-ONE-002] Adding", description, status: "passed" }]));
 
     expect(posted.map(({ cites: cited }) => cited)).toEqual([cites]);
@@ -448,20 +448,20 @@ describe("balance files each Evidence Observation under the claim it cites, or e
 });
 
 describe("balance posts an Evidence Observation no single executable claim can take to the unnamed claim", () => {
-  it.each<[string, string, string, readonly string[]]>([
-    ["CLM-OBS-084", "vitest", "", []],
-    ["CLM-OBS-085", "vitest", "[CLM-ABCDEF-001]", []],
-    ["CLM-OBS-086", "vitest", "CLM-ONE-999", []],
-    ["CLM-OBS-105", "pytest", "CLM-A-001", []],
-    ["CLM-OBS-088", "vitest", "[CLM-ONE-001]", ["CLM-ONE-001"]],
-    ["CLM-OBS-089", "vitest", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
-    ["CLM-OBS-090", "jest", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
-    ["CLM-OBS-091", "pytest", "CLM-ONE-001 CLM-ONE-002", ["CLM-ONE-001", "CLM-ONE-002"]],
-    ["CLM-OBS-092", "go", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
-    ["CLM-OBS-093", "surefire", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
-    ["CLM-OBS-094", "rspec", "[CLM-ONE-001] [CLM-ONE-002]", ["CLM-ONE-001", "CLM-ONE-002"]],
-    ["CLM-OBS-095", "cucumber", "CLM-ONE-001 CLM-ONE-002", ["CLM-ONE-001", "CLM-ONE-002"]],
-  ])("[%s] a passing quality check in %s's evidence report citing %j is posted to the unnamed claim, naming %j", (clm, source, citation, named) => {
+  it.each<[string, string, string, readonly string[], string]>([
+    ["CLM-OBS-084", "vitest", "no claim code", [], ""],
+    ["CLM-OBS-085", "vitest", "CLM-ABCDEF-001 in brackets", [], "[CLM-ABCDEF-001]"],
+    ["CLM-OBS-086", "vitest", "CLM-ONE-999 with no brackets", [], "CLM-ONE-999"],
+    ["CLM-OBS-105", "pytest", "the clm property CLM-A-001", [], "CLM-A-001"],
+    ["CLM-OBS-088", "vitest", "CLM-ONE-001 in brackets, a code two claims share", ["CLM-ONE-001"], "[CLM-ONE-001]"],
+    ["CLM-OBS-089", "vitest", "CLM-ONE-001 and CLM-ONE-002, each in brackets", ["CLM-ONE-001", "CLM-ONE-002"], "[CLM-ONE-001] [CLM-ONE-002]"],
+    ["CLM-OBS-090", "jest", "CLM-ONE-001 and CLM-ONE-002, each in brackets", ["CLM-ONE-001", "CLM-ONE-002"], "[CLM-ONE-001] [CLM-ONE-002]"],
+    ["CLM-OBS-091", "pytest", "the clm properties CLM-ONE-001 and CLM-ONE-002", ["CLM-ONE-001", "CLM-ONE-002"], "CLM-ONE-001 CLM-ONE-002"],
+    ["CLM-OBS-092", "go", "CLM-ONE-001 and CLM-ONE-002, each in brackets", ["CLM-ONE-001", "CLM-ONE-002"], "[CLM-ONE-001] [CLM-ONE-002]"],
+    ["CLM-OBS-093", "surefire", "CLM-ONE-001 and CLM-ONE-002, each in brackets", ["CLM-ONE-001", "CLM-ONE-002"], "[CLM-ONE-001] [CLM-ONE-002]"],
+    ["CLM-OBS-094", "rspec", "CLM-ONE-001 and CLM-ONE-002, each in brackets", ["CLM-ONE-001", "CLM-ONE-002"], "[CLM-ONE-001] [CLM-ONE-002]"],
+    ["CLM-OBS-095", "cucumber", "the tags CLM-ONE-001 and CLM-ONE-002", ["CLM-ONE-001", "CLM-ONE-002"], "CLM-ONE-001 CLM-ONE-002"],
+  ])("[%s] a passing quality check in %s's evidence report citing %s is posted to the unnamed claim, naming %j", (clm, source, _cited, named, citation) => {
     // The shared code's row reads a corpus where both claims carry the code it cites.
     const claims = clm === "CLM-OBS-088" ? claimsTagged("CLM-ONE-001", "CLM-ONE-001") : claimsTagged("CLM-ONE-001", "CLM-ONE-002");
 
