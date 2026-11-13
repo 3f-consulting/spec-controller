@@ -33,9 +33,7 @@ export interface UnnamedClaim {
 
 // A report of test results kept by test file.
 export interface ResultsByFileAsWritten {
-  readonly report: string;
   readonly file: string;
-  readonly status: string;
   readonly message?: string;
   readonly results: readonly ResultInFileAsWritten[];
 }

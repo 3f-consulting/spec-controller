@@ -35,8 +35,7 @@ const reportByFile = (file: string, tests: readonly TestByFile[], fileStatus = "
   ],
 });
 
-const postedByFile = (from: "vitest" | "jest", report: unknown, targetFolder = "/work"): EvidenceObservation[] =>
-  observationsByFile(resultsByFileFrom(report, from), targetFolder);
+const postedByFile = (report: unknown, targetFolder = "/work"): EvidenceObservation[] => observationsByFile(resultsByFileFrom(report), targetFolder);
 
 // Who wrote a JUnit XML report: Maven Surefire for JUnit 5 in Java, Gradle for JUnit 5 in Kotlin, go-junit-report for Go, and pytest.
 type SuiteWriter = "surefire" | "gradle" | "go" | "pytest";
@@ -167,8 +166,8 @@ describe("balance posts a result as passed or failed, citing its claim code", ()
     ["CLM-OBS-018", "vitest", "failed", "failed"],
     ["CLM-OBS-019", "jest", "passed", "passed"],
     ["CLM-OBS-020", "jest", "failed", "failed"],
-  ])("[%s] a result in %s's evidence report, CLM-ONE-001 in brackets in its title, that %s, is posted as %s, citing CLM-ONE-001", (_clm, from, status, result) => {
-    const posted = postedByFile(from, reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status }], status));
+  ])("[%s] a result in %s's evidence report, CLM-ONE-001 in brackets in its title, that %s, is posted as %s, citing CLM-ONE-001", (_clm, _from, status, result) => {
+    const posted = postedByFile(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status }], status));
 
     expect(posted.map(({ result: postedResult, cites }) => ({ result: postedResult, cites }))).toEqual([{ result, cites: [ONE_001] }]);
   });
@@ -291,10 +290,10 @@ describe("balance posts nothing for a test that was skipped", () => {
   it.each<[string, "vitest" | "jest", readonly string[]]>([
     ["CLM-OBS-036", "vitest", ["skipped", "todo"]],
     ["CLM-OBS-037", "jest", ["pending", "todo"]],
-  ])("[%s] a test in %s's evidence report citing CLM-ONE-001, skipped or marked todo, posts nothing", (_clm, from, statuses) => {
+  ])("[%s] a test in %s's evidence report citing CLM-ONE-001, skipped or marked todo, posts nothing", (_clm, _from, statuses) => {
     const tests = statuses.map((status) => ({ title: "[CLM-ONE-001] it holds", status }));
 
-    expect(postedByFile(from, reportByFile("/work/one.test.ts", tests))).toEqual([]);
+    expect(postedByFile(reportByFile("/work/one.test.ts", tests))).toEqual([]);
   });
 });
 
@@ -302,8 +301,8 @@ describe("balance posts what could not run as never ran", () => {
   it.each<[string, "vitest" | "jest", string]>([
     ["CLM-OBS-044", "vitest", "Error: Cannot find module './adds.js'"],
     ["CLM-OBS-045", "jest", "Test suite failed to run\n\nthe test file could not be loaded"],
-  ])("[%s] a test file in %s's evidence report that could not run is posted as never-ran, citing no claim code, naming the file and its error", (_clm, from, error) => {
-    const posted = postedByFile(from, reportByFile("/work/a.test.ts", [], "failed", error));
+  ])("[%s] a test file in %s's evidence report that could not run is posted as never-ran, citing no claim code, naming the file and its error", (_clm, _from, error) => {
+    const posted = postedByFile(reportByFile("/work/a.test.ts", [], "failed", error));
 
     expect(posted.map(({ result, cites, place, message }) => ({ result, cites, place, message }))).toEqual([
       { result: "never-ran", cites: [], place: "a.test.ts", message: error },
@@ -369,7 +368,7 @@ describe("balance posts what could not run as never ran, from a report kept by s
 
 describe("a test report's result will be unit evidence, and a Cucumber result will take the kind its tags name", () => {
   it("[CLM-OBS-059] a result in Vitest's evidence report is posted as unit evidence", () => {
-    const posted = postedByFile("vitest", reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "failed" }], "failed"));
+    const posted = postedByFile(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "failed" }], "failed"));
 
     expect(posted.map(({ kind }) => kind)).toEqual(["unit"]);
   });
@@ -402,8 +401,8 @@ describe("balance posts a nested test citing its own code, or its parent's code 
     ["CLM-OBS-067", "vitest", "CLM-ONE-001 in its title, with no brackets", "CLM-ONE-001 it holds", [ONE_002]],
     ["CLM-OBS-068", "jest", "CLM-ONE-001 in brackets in its title", "[CLM-ONE-001] it holds", [ONE_001]],
     ["CLM-OBS-069", "jest", "no claim code", "it holds", [ONE_002]],
-  ])("[%s] a passing test in %s's evidence report with %s, nested in a describe with CLM-ONE-002 in brackets in its title, is posted citing its nearest code", (_clm, from, _titled, title, cites) => {
-    const posted = postedByFile(from, reportByFile("/work/one.test.ts", [{ ancestorTitles: ["[CLM-ONE-002] a group"], title, status: "passed" }]));
+  ])("[%s] a passing test in %s's evidence report with %s, nested in a describe with CLM-ONE-002 in brackets in its title, is posted citing its nearest code", (_clm, _from, _titled, title, cites) => {
+    const posted = postedByFile(reportByFile("/work/one.test.ts", [{ ancestorTitles: ["[CLM-ONE-002] a group"], title, status: "passed" }]));
 
     expect(posted.map(({ cites: cited }) => cited)).toEqual([cites]);
   });
@@ -472,7 +471,7 @@ describe("balance posts an Evidence Observation saying where to look", () => {
     ["CLM-OBS-078", "a.test.ts", "/work/acme"],
     ["CLM-OBS-079", "/work/acme/a.test.ts", "/work/acme"],
   ])("[%s] the test \"adds two numbers\" in %s, for a target at %s, is posted saying where to look: \"adds two numbers\" in a.test.ts", (_clm, file, targetFolder) => {
-    const posted = postedByFile("vitest", reportByFile(file, [{ title: "[CLM-ONE-001] adds two numbers", status: "passed" }]), targetFolder);
+    const posted = postedByFile(reportByFile(file, [{ title: "[CLM-ONE-001] adds two numbers", status: "passed" }]), targetFolder);
 
     expect(posted.map(({ place, name }) => ({ place, name }))).toEqual([{ place: "a.test.ts", name: "[CLM-ONE-001] adds two numbers" }]);
   });
@@ -489,7 +488,7 @@ describe("balance posts a Cucumber result saying where to look", () => {
 describe("a test file outside the target's folder will be placed at the absolute path its evidence report recorded", () => {
   it("[CLM-OBS-098] a Jest test file at /home/runner/work/app/src/a.test.ts, for a target at /work/app, is placed at that path", () => {
     const file = "/home/runner/work/app/src/a.test.ts";
-    const posted = postedByFile("jest", reportByFile(file, [{ title: "[CLM-ONE-001] it holds", status: "passed" }]), "/work/app");
+    const posted = postedByFile(reportByFile(file, [{ title: "[CLM-ONE-001] it holds", status: "passed" }]), "/work/app");
 
     expect(posted.map(({ place }) => place)).toEqual([file]);
   });
@@ -512,7 +511,7 @@ const filed = (reconciliations: readonly ClaimReconciliation[]): { claim: string
 
 // A passing quality check in the source named, with the citation as that source writes it.
 function postedFrom(source: string, citation: string): EvidenceObservation[] {
-  if (source === "vitest" || source === "jest") return postedByFile(source, reportByFile("/work/one.test.ts", [{ title: `${citation} it holds`, status: "passed" }]));
+  if (source === "vitest" || source === "jest") return postedByFile(reportByFile("/work/one.test.ts", [{ title: `${citation} it holds`, status: "passed" }]));
   if (source === "pytest") {
     const properties = citation.split(" ").map((value) => `<property name="clm" value="${value}" />`).join("");
     return postedBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", `<properties>${properties}</properties>`));
@@ -621,12 +620,12 @@ describe("balance posts a failed test with the message its report gave", () => {
   ];
 
   it.each([
-    ["CLM-OBS-132", "Vitest's evidence report", "the failure message \"expected 2\"", () => observationsByFile(resultsByFileFrom(vitestFailing(["expected 2"]), "vitest"), "/work"), "expected 2"],
+    ["CLM-OBS-132", "Vitest's evidence report", "the failure message \"expected 2\"", () => observationsByFile(resultsByFileFrom(vitestFailing(["expected 2"])), "/work"), "expected 2"],
     [
       "CLM-OBS-133",
       "Vitest's evidence report",
       "the failure messages \"first\" and \"second\"",
-      () => observationsByFile(resultsByFileFrom(vitestFailing(["first", "second"]), "vitest"), "/work"),
+      () => observationsByFile(resultsByFileFrom(vitestFailing(["first", "second"])), "/work"),
       "first\nsecond",
     ],
     ["CLM-OBS-134", "RSpec's evidence report", "the message \"expected 2\"", () => observationsByExample(resultsByExampleFrom(rspecFailing("expected 2")), "/work"), "expected 2"],
