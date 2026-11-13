@@ -1,6 +1,6 @@
 import type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
-import type { ClaimCode } from "./claimCodes.js";
-import type { EvidenceObservation, PhantomClaim, UnnamedClaim } from "./postEvidenceObservation.js";
+import { sameCode, type ClaimCode } from "./claimCodes.js";
+import { observationsFiledUnder, type EvidenceObservation, type PhantomClaim, type UnnamedClaim } from "./postEvidenceObservation.js";
 
 type ObligationWithAKind = EvidenceObligation & { readonly kind: QualityCheckKind };
 
@@ -116,6 +116,9 @@ export function claimReconciliationOf(
   return { claim, qualityCheckReconciliations, verdict: balanced ? "balanced" : "out-of-balance" };
 }
 
-export function claimReconciliationsOf(_claims: readonly ExecutableClaim[], _observations: readonly EvidenceObservation[]): ClaimReconciliation[] {
-  return [];
+export function claimReconciliationsOf(claims: readonly ExecutableClaim[], observations: readonly EvidenceObservation[]): ClaimReconciliation[] {
+  const shared = (code: ClaimCode): boolean => claims.filter(({ claimCode }) => claimCode !== undefined && sameCode(claimCode, code)).length > 1;
+  return claims.map((claim) =>
+    claimReconciliationOf(claim, observationsFiledUnder(claim, observations), claim.claimCode !== undefined && shared(claim.claimCode)),
+  );
 }

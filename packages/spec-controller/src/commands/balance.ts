@@ -1,10 +1,9 @@
 import {
-  claimReconciliationOf,
+  claimReconciliationsOf,
   evidenceObservationsOf,
   executableClaimsOf,
   featureAsWrittenFrom,
   markdownReportOf,
-  observationsFiledUnder,
   resultsByFileFrom,
   runVerdictOf,
 } from "@3f-consulting/spec-controller-core";
@@ -20,7 +19,7 @@ export function balance(inputs: readonly InputRequest[]): void {
   const vitest = pathOf(inputs, "vitest");
   const features = corpus === undefined ? [] : featureSourcesIn(corpus).map(({ file, source }) => featureAsWrittenFrom(file, source));
   const observations = evidenceObservationsOf(vitest === undefined ? [] : resultsByFileFrom(jsonAt(vitest)));
-  const claimReconciliations = executableClaimsOf(features, { deferralTags: [], strict: false }).map((claim) => claimReconciliationOf(claim, observationsFiledUnder(claim, observations), false));
+  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observations);
   const runVerdict = runVerdictOf(claimReconciliations);
   writeToStandardOutput(markdownReportOf(runVerdict));
   endRunOn(runVerdict);
