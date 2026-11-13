@@ -41,6 +41,8 @@ export interface ClaimReadingSettings {
   readonly strict: boolean;
 }
 
-export function executableClaimsOf(_features: readonly FeatureAsWritten[]): ExecutableClaim[] {
-  return [];
+export function executableClaimsOf(features: readonly FeatureAsWritten[]): ExecutableClaim[] {
+  return features.flatMap(({ file, scenarios }) =>
+    scenarios.map(({ tags, title }) => ({ file, title, obligations: tags.includes("unit") ? [{ kind: "unit" as const }] : [] })),
+  );
 }
