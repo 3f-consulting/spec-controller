@@ -205,6 +205,12 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads its inputs
       then it will read area/deeper/one.feature
 
+    @unit @CLM-CLI-197
+    Scenario: balance reads the feature corpus in path order
+      given the feature corpus held b.feature and a/x.feature
+      when balance writes its report
+      then the report will list the claims of a/x.feature before those of b.feature
+
     @unit @CLM-CLI-193
     Scenario: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
       given the run named the workflow ci.yml as its CI workflows, and then a folder holding ci.yml and release.yaml

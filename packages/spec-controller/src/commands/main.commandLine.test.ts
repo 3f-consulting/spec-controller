@@ -202,6 +202,19 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
   });
 });
 
+describe("balance reads the feature corpus in path order", () => {
+  it("[CLM-CLI-197] a corpus holding b.feature and a/x.feature: the report lists the claims of a/x.feature before those of b.feature", () => {
+    const folder = folderWith({
+      "features/b.feature": "@BBB\nFeature: b\n\n  @unit @CLM-BBB-001\n  Scenario: b\n",
+      "features/a/x.feature": "@AAA\nFeature: x\n\n  @unit @CLM-AAA-001\n  Scenario: x\n",
+    });
+
+    const { output } = ran(["balance", "--format", "json"], folder);
+
+    expect((JSON.parse(output) as { claimReconciliations: { claim: { file: string } }[] }).claimReconciliations.map(({ claim }) => claim.file)).toEqual(["a/x.feature", "b.feature"]);
+  });
+});
+
 describe("an input that is not valid will stop the run", () => {
   it.each([
     ["CLM-CLI-147", "a named input that does not exist", {}, ["--vitest", "absent.json"], ["absent.json", "Vitest evidence report", "[input-absent]"]],
