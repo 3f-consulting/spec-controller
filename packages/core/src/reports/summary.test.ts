@@ -35,11 +35,20 @@ describe("the Markdown where-filed table leaves out a place nothing was filed on
   });
 });
 
-describe("the line of claim codes no claim reads is left out when there are none", () => {
-  it("[CLM-RPT-127] totals with no claim code written where no claim reads it leave out the line about them", () => {
-    const markdown = markdownReportOf(reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]] }));
+describe("the Markdown has a line of claim codes no claim reads only when there are some", () => {
+  it.each([
+    ["CLM-RPT-127", 0, "not have", false],
+    ["CLM-RPT-145", 1, "have", true],
+  ] as const)("[%s] totals with %i claim codes written where no claim reads them will %s the line about them", (_clm, count, _show, shown) => {
+    const run = reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]] });
+    const markdown = markdownReportOf({ ...run, totals: { ...run.totals, excludedClaimCodeOccurrences: count } });
     const group = markdown.slice(markdown.indexOf("### Claim Reconciliations"), markdown.indexOf("### Quality Check Reconciliations"));
+    const line = `${count} claim codes are written in a title, a step or a comment, where no claim reads them.`;
 
-    expect({ group: group.startsWith("### Claim Reconciliations"), line: group.includes("where no claim reads them") }).toEqual({ group: true, line: false });
+    expect({ group: group.startsWith("### Claim Reconciliations"), line: group.includes(line), anyLine: group.includes("where no claim reads them") }).toEqual({
+      group: true,
+      line: shown,
+      anyLine: shown,
+    });
   });
 });

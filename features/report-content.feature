@@ -157,11 +157,16 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-125 | no Evidence Observation on a phantom claim  | not have |
         | CLM-RPT-126 | one Evidence Observation on a phantom claim | have     |
 
-    @unit @CLM-RPT-127
-    Scenario: the line of claim codes no claim reads is left out when there are none
-      given the totals had 0 claim codes written where no claim reads them
+    @unit
+    Scenario Outline: the Markdown has a line of claim codes no claim reads only when there are some
+      given the totals had <count> claim codes written where no claim reads them
       when the Markdown report is written
-      then the Claim Reconciliations will have no line about claim codes no claim reads
+      then the Claim Reconciliations will <show> a line about claim codes no claim reads
+
+      Examples:
+        | clm         | count | show     |
+        | CLM-RPT-127 | 0     | not have |
+        | CLM-RPT-145 | 1     | have     |
 
   Rule: the JSON report keeps every count, zero or not
 

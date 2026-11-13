@@ -1,6 +1,6 @@
 import { parse } from "yaml";
 import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
-import plumbingActions from "./plumbingActions.json" with { type: "json" };
+import workflowsVariants from "./workflows.variants.json" with { type: "json" };
 
 // Which steps only set the job up is the reader's to say, from its list of the actions that do.
 // An entry ending in * names a family of actions, such as every setup action.
@@ -8,7 +8,7 @@ const usesAction = (uses: string, action: string): boolean => {
   const name = uses.split("@")[0]!;
   return action.endsWith("*") ? name.startsWith(action.slice(0, -1)) : name === action;
 };
-const isPlumbing = (uses: string): boolean => plumbingActions.some((action) => usesAction(uses, action));
+const isPlumbing = (uses: string): boolean => workflowsVariants["CLM-OBS-015"].variants.some((action) => usesAction(uses, action));
 const WRITES_STEP_RECORD = "toJSON(steps)";
 
 type Mapping = Readonly<Record<string, unknown>>;

@@ -1,0 +1,32 @@
+{
+  "CLM-OBS-009": {
+    "class": "a package manager running a script whose script runs the unit runner",
+    "variants": [
+      "npm test",
+      "npm run <script>",
+      "pnpm <script>",
+      "pnpm run <script>",
+      "pnpm -r <script>",
+      "pnpm --filter <name> <script>",
+      "yarn <script>",
+      "yarn run <script>",
+      "yarn workspace <name> <script>"
+    ]
+  },
+  "CLM-OBS-010": {
+    "class": "a launcher handing on to the unit runner",
+    "variants": ["npx", "pnpm exec", "pnpm <bin>", "yarn <bin>", "bunx", "python -m", "python3 -m", "uv run", "poetry run", "pipenv run", "coverage run -m", "bundle exec"]
+  },
+  "CLM-OBS-011": {
+    "class": "a list of commands with the unit runner among them",
+    "variants": ["&&", ";"]
+  },
+  "CLM-OBS-112": {
+    "class": "a wrapper that runs the command after it",
+    "variants": ["xvfb-run"]
+  },
+  "CLM-OBS-113": {
+    "class": "a runner named in several words",
+    "variants": ["mvn test", "./mvnw test", "./gradlew test", "./gradlew check", "./gradlew :app:test", "gotestsum"]
+  }
+}

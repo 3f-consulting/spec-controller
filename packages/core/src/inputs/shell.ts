@@ -1,14 +1,16 @@
 import { parse } from "unbash";
 import type { Command, Statement } from "unbash";
 import type { Scripts, ShellAnswers } from "../domain/postEvidenceObservation.js";
-import shellForms from "./shellForms.json" with { type: "json" };
-
+import shellVariants from "./shell.variants.json" with { type: "json" };
 
 const wordsIn = (text: string): string[] => text.split(" ");
 
-// A longer launcher is tried first, so pnpm exec is read before pnpm.
-const LAUNCHERS = shellForms.launchers.map(wordsIn).sort((one, other) => other.length - one.length);
-const SCRIPT_FORMS = shellForms.scripts.map(({ form, script }: { readonly form: string; readonly script?: string }) => ({ words: wordsIn(form), script }));
+// A launcher's words, up to the command it hands on to. A longer launcher is tried first, so pnpm exec is read before pnpm.
+const LAUNCHERS = shellVariants["CLM-OBS-010"].variants.map((launcher) => wordsIn(launcher).filter((word) => word !== "<bin>")).sort((one, other) => other.length - one.length);
+const SCRIPT_VARIANTS = shellVariants["CLM-OBS-009"].variants.map(wordsIn);
+const WRAPPERS = shellVariants["CLM-OBS-112"].variants;
+// What a wrapper's options take is that wrapper's own: xvfb-run's are read past with their values.
+const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"] };
 
 // Each element of the line's && and ; lists, as the stages of its pipeline. A comment is no command.
 function pipelinesOf(statements: readonly Statement[]): Command[][] {
@@ -21,12 +23,13 @@ const wordsOf = ({ name, args }: Command): string[] => (name === undefined ? [] 
 
 const opensWith = (words: readonly string[], opening: readonly string[]): boolean => opening.every((word, at) => words[at] === word);
 
-// The script a command runs in one of its package manager's forms, when the target has a script by that name.
+// The script a command runs in one of its package manager's variants, when the target has a script by that name. A
+// variant with no <script> gap, such as npm test, runs the script its last word names.
 function scriptRun(words: readonly string[], scripts: Scripts): string | undefined {
-  for (const form of SCRIPT_FORMS) {
-    if (words.length < form.words.length) continue;
-    const named = form.words.every((word, at) => word === "<script>" || word === "<name>" || word === words[at]);
-    const script = form.script ?? words[form.words.indexOf("<script>")];
+  for (const variant of SCRIPT_VARIANTS) {
+    if (words.length < variant.length) continue;
+    const named = variant.every((word, at) => word === "<script>" || word === "<name>" || word === words[at]);
+    const script = variant.includes("<script>") ? words[variant.indexOf("<script>")] : variant.at(-1);
     if (named && script !== undefined && Object.hasOwn(scripts, script)) return script;
   }
   return undefined;
@@ -36,10 +39,10 @@ function scriptRun(words: readonly string[], scripts: Scripts): string | undefin
 function handedOn(words: readonly string[]): readonly string[] | undefined {
   const launcher = LAUNCHERS.find((opening) => words.length > opening.length && opensWith(words, opening));
   if (launcher !== undefined) return words.slice(launcher.length);
-  const wrapper = shellForms.wrappers.find(({ command }) => command === words[0]);
+  const wrapper = WRAPPERS.find((command) => command === words[0]);
   if (wrapper === undefined) return undefined;
   let at = 1;
-  while (words[at]?.startsWith("-")) at += wrapper.optionsTakingAValue.includes(words[at]!) ? 2 : 1;
+  while (words[at]?.startsWith("-")) at += OPTIONS_TAKING_A_VALUE[wrapper]!.includes(words[at]!) ? 2 : 1;
   return at < words.length ? words.slice(at) : undefined;
 }
 
