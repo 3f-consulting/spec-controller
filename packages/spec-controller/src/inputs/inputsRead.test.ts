@@ -8,7 +8,7 @@ const ONE_FEATURE = "@ONE\nFeature: one\n";
 
 const read = (...args: Parameters<typeof inputsReadFor>): InputsRead => {
   const inputs = inputsReadFor(...args);
-  if ("ending" in inputs) throw new Error(`the inputs were refused: ${JSON.stringify(inputs.refusals)}`);
+  if ("refusals" in inputs) throw new Error(`the inputs were refused: ${JSON.stringify(inputs.refusals)}`);
   return inputs;
 };
 
@@ -42,7 +42,7 @@ describe("an input read by default that does not exist will count as none, not a
   ] as const)("[%s] %s read by default that does not exist: none is read, and the run does not stop", (_clm, _input, kind, path, readOf) => {
     const inputs = inputsReadFor([{ kind, path, byDefault: true }], temporaryDirectory("absent-default-"));
 
-    expect("ending" in inputs ? inputs.refusals : readOf(inputs) ?? []).toEqual([]);
+    expect("refusals" in inputs ? inputs.refusals : readOf(inputs) ?? []).toEqual([]);
   });
 });
 
@@ -54,7 +54,7 @@ describe("balance reads the one workflow a CI workflows path names, or every wor
     writeFileSync(join(folder, "workflows", "release.yaml"), "jobs:\n  release:\n    steps:\n      - run: echo release\n");
     const workflowsRead = (path: string): string[] => {
       const inputs = inputsReadFor([{ kind: "workflows", path, byDefault: false }], folder);
-      return "ending" in inputs ? inputs.refusals.map(({ key }) => key) : [...new Set(inputs.workflowSteps?.map(({ workflow }) => workflow))];
+      return "refusals" in inputs ? inputs.refusals.map(({ key }) => key) : [...new Set(inputs.workflowSteps?.map(({ workflow }) => workflow))];
     };
 
     expect([workflowsRead("workflows/ci.yml"), workflowsRead("workflows")]).toEqual([["ci.yml"], ["ci.yml", "release.yaml"]]);
