@@ -7,7 +7,7 @@ const withoutAtSign = ({ name }: { readonly name: string }): string => name.slic
 function examplesAsWritten({ tags, tableHeader, tableBody }: Examples): OutlineExamplesAsWritten {
   return {
     tags: tags.map(withoutAtSign),
-    columns: (tableHeader?.cells ?? []).map(({ value }) => value),
+    columns: tableHeader!.cells.map(({ value }) => value),
     rows: tableBody.map(({ location, cells }) => ({ line: location.line, cells: cells.map(({ value }) => value) })),
   };
 }
@@ -19,8 +19,8 @@ function scenarioAsWritten({ tags, name, location, examples }: Scenario, ruleTag
 // A scenario sits under the Feature, or under one of its Rules, whose tags it carries.
 function scenariosOf({ scenario, rule }: FeatureChild): ScenarioAsWritten[] {
   if (scenario) return [scenarioAsWritten(scenario, [])];
-  const ruleTags = (rule?.tags ?? []).map(withoutAtSign);
-  return (rule?.children ?? []).flatMap((child) => (child.scenario ? [scenarioAsWritten(child.scenario, ruleTags)] : []));
+  const ruleTags = rule!.tags.map(withoutAtSign);
+  return rule!.children.flatMap((child) => (child.scenario ? [scenarioAsWritten(child.scenario, ruleTags)] : []));
 }
 
 // Every word written with an at-sign, anywhere in the file: a tag, or in a title, a step, a description or a comment.
@@ -30,6 +30,6 @@ const wordsWrittenAsTagsIn = (source: string): string[] => [...source.matchAll(W
 
 export function featureAsWrittenFrom(file: string, source: string): FeatureAsWritten {
   const document = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher()).parse(source);
-  const scenarios = (document.feature?.children ?? []).flatMap(scenariosOf);
-  return { file, fileTags: (document.feature?.tags ?? []).map(withoutAtSign), scenarios, wordsWrittenAsTags: wordsWrittenAsTagsIn(source) };
+  const { children, tags } = document.feature!;
+  return { file, fileTags: tags.map(withoutAtSign), scenarios: children.flatMap(scenariosOf), wordsWrittenAsTags: wordsWrittenAsTagsIn(source) };
 }
