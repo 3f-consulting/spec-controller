@@ -52,6 +52,13 @@ function endingOf(write: () => number): unknown {
   }
 }
 
+// The last of forty links in a chain to a place, as many as the system follows: link-40 to link-39, … link-1 to the place.
+function chainOfLinksTo(place: string, folder: string): string {
+  symlinkSync(place, join(folder, "link-1"));
+  Array.from({ length: 39 }, (_, at) => at + 2).forEach((link) => symlinkSync(join(folder, `link-${link - 1}`), join(folder, `link-${link}`)));
+  return join(folder, "link-40");
+}
+
 const outputsAskedFor = (args: readonly string[]) => {
   const request = runRequestOf(["balance", ...args]);
   return "command" in request && request.command === "balance" ? request.outputs : [];
@@ -142,6 +149,24 @@ describe("each of two reports will be where you asked", () => {
       "CLM-FMT-020",
       "no destination for one, standard error for the other",
       (_folder: string) => ["--format", "md", "--format", "json:/dev/stderr"],
+      (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
+    ],
+    [
+      "CLM-FMT-020",
+      "no destination for one, standard error by its descriptor for the other",
+      (_folder: string) => ["--format", "md", "--format", "json:/dev/fd/2"],
+      (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
+    ],
+    [
+      "CLM-FMT-020",
+      "no destination for one, standard error by the process's descriptor for the other",
+      (_folder: string) => ["--format", "md", "--format", "json:/proc/self/fd/2"],
+      (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
+    ],
+    [
+      "CLM-FMT-020",
+      "no destination for one, standard error by the last of forty links in a chain to it for the other",
+      (folder: string) => ["--format", "md", "--format", `json:${chainOfLinksTo("/dev/stderr", folder)}`],
       (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
     ],
     [
@@ -291,6 +316,8 @@ describe("two reports will not both go to standard output", () => {
   it.each([
     ["CLM-FMT-005", "no destination", (_folder: string): string => "json"],
     ["CLM-FMT-011", "a path that names standard output", (_folder: string): string => "json:/dev/stdout"],
+    ["CLM-FMT-011", "a path that names standard output by its descriptor", (_folder: string): string => "json:/dev/fd/1"],
+    ["CLM-FMT-011", "a path that names standard output by the process's descriptor", (_folder: string): string => "json:/proc/self/fd/1"],
     [
       "CLM-FMT-023",
       "a link to standard output",
@@ -302,11 +329,7 @@ describe("two reports will not both go to standard output", () => {
     [
       "CLM-FMT-023",
       "the last of forty links in a chain to standard output",
-      (folder: string): string => {
-        symlinkSync("/dev/stdout", join(folder, "link-1"));
-        Array.from({ length: 39 }, (_, at) => at + 2).forEach((link) => symlinkSync(join(folder, `link-${link - 1}`), join(folder, `link-${link}`)));
-        return `json:${join(folder, "link-40")}`;
-      },
+      (folder: string): string => `json:${chainOfLinksTo("/dev/stdout", folder)}`,
     ],
   ] as const)("[%s] one report with no destination and the other at %s: the run stops with exit 2, naming both, and nothing is on standard output", (_clm, _other, other) => {
     const folder = temporaryDirectory("both-to-standard-output-");

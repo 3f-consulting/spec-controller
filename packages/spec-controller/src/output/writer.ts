@@ -38,8 +38,9 @@ function placed(output: OutputRequest<string>, streams: StandardStreams): Placed
   const { destination } = output;
   if (destination.to !== "file") return onStream(output, { is: destination.to }, streams);
   const named = pathIdentity(destination.path);
-  if (named.is === "standard-output" || named.is === "standard-error") return onStream(output, named, streams);
-  return { output, identity: named, file: destination.path, write: (report) => writeFileSync(destination.path, report) };
+  if (named.is === "regular-file" || named.is === "absent" || named.is === "not-a-regular-file")
+    return { output, identity: named, file: destination.path, write: (report) => writeFileSync(destination.path, report) };
+  return onStream(output, named, streams);
 }
 
 // The first file a report cannot be written to, with why.
