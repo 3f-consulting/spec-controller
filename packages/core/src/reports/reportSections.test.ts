@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+import { coreText } from "../messages/catalogue.js";
+import catalogue from "../messages/messages.en.json" with { type: "json" };
 import { jsonReportOf } from "./json.js";
 import { markdownReportOf } from "./markdown.js";
 import { reconciled } from "./reconciledRun.test-utils.js";
@@ -27,13 +29,39 @@ describe("the Markdown report's sections will come in a fixed order", () => {
   });
 });
 
-// Each table in the Markdown, with its columns and the lines between it and the heading above it.
-function tablesOf(markdown: string): { readonly columns: string[]; readonly above: string[] }[] {
+// Each table in the Markdown: its columns, the names its key gives a meaning below the key's own line, and its rows' cells.
+function tablesOf(markdown: string): { readonly columns: string[]; readonly keyed: string[]; readonly rows: string[][] }[] {
   const lines = markdown.split("\n");
+  const cells = (line: string): string[] => line.slice(2, -2).split(/ (?<!\\)\| /);
   return lines.flatMap((line, at) => {
     if (!line.startsWith("| ") || lines[at - 1]?.startsWith("| ")) return [];
     const heading = at - 1 - lines.slice(0, at).reverse().findIndex((before) => before.startsWith("#"));
-    return [{ columns: line.slice(2, -2).split(" | "), above: lines.slice(heading + 1, at) }];
+    const rows = lines.slice(at + 2).filter((_row, after, all) => all.slice(0, after + 1).every((each) => each.startsWith("| ")));
+    const above = lines.slice(heading + 1, at);
+    const keyAt = above.indexOf(`${coreText("key")}:`);
+    const keyed = (keyAt < 0 ? [] : above.slice(keyAt + 1)).flatMap((line) => (line.startsWith("- ") ? [line.slice(2, line.indexOf(": "))] : []));
+    return [{ columns: cells(line), keyed, rows: rows.map(cells) }];
+  });
+}
+
+const KINDS: readonly string[] = ["fitness", "unit", "integration", "e2e", "performance"];
+const isWords = (text: string): boolean => (Object.values(catalogue) as string[]).includes(text);
+const inWords = (text: string): boolean => isWords(text) || KINDS.includes(text) || /^`.*`$/.test(text);
+
+// Each line below the opening that is not blank, a heading, a key or a table, a labelled value, or a label over the values
+// under it: a heading, label or key not in the catalogue's words, a label with no value, or a line with no label.
+function unlabelledOf(markdown: string): string[] {
+  const lines = markdown.split("\n").slice(3);
+  return lines.filter((line, at) => {
+    if (line === "" || line.startsWith("| ") || line === `${coreText("key")}:`) return false;
+    const heading = /^#{2,3} (.+)$/.exec(line);
+    if (heading) return !isWords(heading[1]!);
+    const item = /^(\s*)- (.+?):(?: (.+))?$/.exec(line);
+    if (!item) return true;
+    const [, indent, label, value] = item;
+    const inKey = lines.slice(0, at).reverse().find((before) => !before.startsWith("- ")) === `${coreText("key")}:`;
+    if (inKey) return !isWords(label!) || !isWords(value!);
+    return !inWords(label!) || (value === undefined && !(lines[at + 1] ?? "").startsWith(`${indent!}  - `));
   });
 }
 
@@ -45,18 +73,26 @@ describe("each section will have its heading, each value its label, and each tab
         unitTests: [["never-ran", "ONE-001"], ["passed", "ONE-009"], ["failed"]],
         configurationErrors: [{ kind: "configuration-unknown-key", entry: "runer" }],
         stepsRead: true,
+        provenance: { toolSha: "9f8e7d6", inputs: [{ name: "vitest", path: "vitest.json" }] },
       }),
     );
     const tables = tablesOf(markdown);
 
     expect({
       headings: headingsOf(markdown),
-      unlabelled: markdown.split("\n").filter((line) => /^\s*- /.test(line) && !/^\s*- [^:]+:( |$)/.test(line)),
-      unkeyed: tables.flatMap(({ columns, above }) =>
-        above.includes("Key:") ? columns.filter((column) => !above.some((line) => line.startsWith(`- ${column}: `))) : [`no key above ${columns[0]}`],
-      ),
-      tables: tables.length,
-    }).toEqual({ headings: ["Run provenance", "Errors in the inputs", "Run integrity", "Summary", "Step account", "Claim Reconciliations"], unlabelled: [], unkeyed: [], tables: 6 });
+      unlabelled: unlabelledOf(markdown),
+      unkeyed: tables.flatMap(({ columns, keyed }) => columns.filter((column) => !keyed.includes(column))),
+      unworded: tables.flatMap(({ columns }) => columns.filter((column) => !isWords(column))),
+      marks: tables.map(({ columns, keyed }) => keyed.filter((name) => !columns.includes(name))),
+      summaryRowLabels: tables.slice(1, 4).flatMap(({ rows }) => rows.map(([label]) => label!).filter((label) => !inWords(label))),
+    }).toEqual({
+      headings: ["Run provenance", "Errors in the inputs", "Run integrity", "Summary", "Step account", "Claim Reconciliations"],
+      unlabelled: [],
+      unkeyed: [],
+      unworded: [],
+      marks: [[], [coreText("summary-across-a-row")], [], [], [], [coreText("claims-blank-cell"), coreText("claims-dash"), coreText("claims-unnamed-row")]],
+      summaryRowLabels: [],
+    });
   });
 });
 
