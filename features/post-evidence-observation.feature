@@ -64,27 +64,28 @@ Feature: Evidence Observations are posted, each to its claim
       then an Evidence Observation will be posted, as <result>, citing CLM-ONE-001
 
       Examples:
-        | clm         | source                              | citation                            | outcome of it                            | result |
-        | CLM-OBS-017 | Vitest's evidence report            | [CLM-ONE-001] in its title          | it passed                                | passed |
-        | CLM-OBS-018 | Vitest's evidence report            | [CLM-ONE-001] in its title          | it failed                                | failed |
-        | CLM-OBS-019 | Jest's evidence report              | [CLM-ONE-001] in its title          | it passed                                | passed |
-        | CLM-OBS-020 | Jest's evidence report              | [CLM-ONE-001] in its title          | it failed                                | failed |
-        | CLM-OBS-021 | pytest's evidence report            | the clm property CLM-ONE-001        | it passed                                | passed |
-        | CLM-OBS-022 | pytest's evidence report            | the clm property CLM-ONE-001        | it failed                                | failed |
-        | CLM-OBS-023 | Go's evidence report                | [CLM-ONE-001] in its subtest's name | it passed                                | passed |
-        | CLM-OBS-024 | Go's evidence report                | [CLM-ONE-001] in its subtest's name | it failed                                | failed |
-        | CLM-OBS-025 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it passed                                | passed |
-        | CLM-OBS-026 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it failed                                | failed |
-        | CLM-OBS-118 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it raised an error                       | failed |
-        | CLM-OBS-027 | JUnit 5 in Kotlin's evidence report | [CLM-ONE-001] in its display name   | it passed                                | passed |
-        | CLM-OBS-028 | JUnit 5 in Kotlin's evidence report | [CLM-ONE-001] in its display name   | it failed                                | failed |
-        | CLM-OBS-029 | RSpec's evidence report             | [CLM-ONE-001] in its description    | it passed                                | passed |
-        | CLM-OBS-030 | RSpec's evidence report             | [CLM-ONE-001] in its description    | it failed                                | failed |
-        | CLM-OBS-031 | Cucumber's evidence report          | the tag @CLM-ONE-001                | every step passed                        | passed |
-        | CLM-OBS-032 | Cucumber's evidence report          | the tag @CLM-ONE-001                | one step failed and the next was skipped | failed |
-        | CLM-OBS-033 | the step record                     | the id CLM-ONE-001                  | it succeeded                             | passed |
-        | CLM-OBS-034 | the step record                     | the id CLM-ONE-001                  | it failed                                | failed |
-        | CLM-OBS-035 | the step record                     | the id CLM-ONE-001                  | it failed, and continue-on-error hid it  | failed |
+        | clm         | source                              | citation                            | outcome of it                                                | result |
+        | CLM-OBS-017 | Vitest's evidence report            | [CLM-ONE-001] in its title          | it passed                                                    | passed |
+        | CLM-OBS-018 | Vitest's evidence report            | [CLM-ONE-001] in its title          | it failed                                                    | failed |
+        | CLM-OBS-019 | Jest's evidence report              | [CLM-ONE-001] in its title          | it passed                                                    | passed |
+        | CLM-OBS-020 | Jest's evidence report              | [CLM-ONE-001] in its title          | it failed                                                    | failed |
+        | CLM-OBS-021 | pytest's evidence report            | the clm property CLM-ONE-001        | it passed                                                    | passed |
+        | CLM-OBS-022 | pytest's evidence report            | the clm property CLM-ONE-001        | it failed                                                    | failed |
+        | CLM-OBS-023 | Go's evidence report                | [CLM-ONE-001] in its subtest's name | it passed                                                    | passed |
+        | CLM-OBS-024 | Go's evidence report                | [CLM-ONE-001] in its subtest's name | it failed                                                    | failed |
+        | CLM-OBS-025 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it passed                                                    | passed |
+        | CLM-OBS-026 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it failed                                                    | failed |
+        | CLM-OBS-118 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name   | it raised an error                                           | failed |
+        | CLM-OBS-027 | JUnit 5 in Kotlin's evidence report | [CLM-ONE-001] in its display name   | it passed                                                    | passed |
+        | CLM-OBS-028 | JUnit 5 in Kotlin's evidence report | [CLM-ONE-001] in its display name   | it failed                                                    | failed |
+        | CLM-OBS-029 | RSpec's evidence report             | [CLM-ONE-001] in its description    | it passed                                                    | passed |
+        | CLM-OBS-030 | RSpec's evidence report             | [CLM-ONE-001] in its description    | it failed                                                    | failed |
+        | CLM-OBS-031 | Cucumber's evidence report          | the tag @CLM-ONE-001                | every step passed                                            | passed |
+        | CLM-OBS-032 | Cucumber's evidence report          | the tag @CLM-ONE-001                | one step failed and the next was skipped                     | failed |
+        | CLM-OBS-121 | Cucumber's evidence report          | the tag @CLM-ONE-001                | every step passed, after a Background and a hook that passed | passed |
+        | CLM-OBS-033 | the step record                     | the id CLM-ONE-001                  | it succeeded                                                 | passed |
+        | CLM-OBS-034 | the step record                     | the id CLM-ONE-001                  | it failed                                                    | failed |
+        | CLM-OBS-035 | the step record                     | the id CLM-ONE-001                  | it failed, and continue-on-error hid it                      | failed |
 
     @unit
     Scenario Outline: balance posts nothing for a test that was skipped

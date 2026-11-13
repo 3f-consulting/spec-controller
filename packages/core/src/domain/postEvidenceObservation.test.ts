@@ -133,6 +133,29 @@ const postedByScenario = (report: unknown, features: readonly FeatureAsWritten[]
 
 const PASSED: StepRun = ["Given ", "one adds one", "passed"];
 
+describe("a Cucumber Background and hook post nothing of their own", () => {
+  it("[CLM-OBS-121] a scenario in Cucumber's evidence report tagged @CLM-ONE-001, every step passed after a Background and a hook that passed, is posted once, as passed, citing CLM-ONE-001", () => {
+    const passed = { status: "passed" };
+    const report = [
+      {
+        uri: "features/one.feature",
+        elements: [
+          { type: "background", name: "", line: 3, steps: [{ keyword: "Given ", name: "a thing", result: passed }] },
+          {
+            type: "scenario",
+            name: "one adds one",
+            line: 6,
+            tags: [{ name: "@integration" }, { name: "@CLM-ONE-001" }],
+            steps: [{ keyword: "Before", result: passed }, { keyword: "Given ", name: "one adds one", result: passed }],
+          },
+        ],
+      },
+    ];
+
+    expect(postedByScenario(report).map(({ result, cites }) => ({ result, cites }))).toEqual([{ result: "passed", cites: [{ featureCode: "ONE", number: "001" }] }]);
+  });
+});
+
 describe("balance posts a result as passed or failed, citing its claim code", () => {
   it.each<[string, "vitest" | "jest", string, string]>([
     ["CLM-OBS-017", "vitest", "passed", "passed"],
