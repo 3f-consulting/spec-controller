@@ -20,6 +20,7 @@ describe("a claim's cell for a kind shows whether it asked and how many ran", ()
     ["CLM-RPT-132", "asked for a unit test, and no unit test citing it", "@unit @CLM-ONE-001", [], "U/-"],
     ["CLM-RPT-133", "asked for no unit test, and one passing unit test citing it", "@e2e @CLM-ONE-001", [["unit", "passed", "ONE-001"]], "-/1"],
     ["CLM-RPT-134", "asked for no unit test, and no unit test citing it", "@e2e @CLM-ONE-001", [["unit", "passed", "ONE-002"]], ""],
+    ["CLM-RPT-158", "asked for a unit and an e2e test, and no test citing it", "@unit @e2e @CLM-ONE-001", [], "U/-"],
   ] as const)("[%s] a claim that %s reads its cell under Unit", (_clm, _evidence, tags, evidence, cell) => {
     const table = claimTable([["one.feature", "ONE", [[tags, "adds one"]]]], evidence);
 
@@ -74,8 +75,12 @@ describe("a row lists its reconciling items, each with where to look", () => {
       "unit: failing (src/checkout.test.ts: [CLM-CHK-002] charges the card)",
     ],
     ["CLM-RPT-143", "asked for a unit and an e2e test, and neither citing it", "@unit @e2e @CLM-CHK-003", [], "unit: missing; e2e: missing"],
+    ["CLM-RPT-154", "asked for a fitness function, and its step ci.yml:build:Lint failing", "@fitness @CLM-CHK-004", [["fitness", "failed", "CHK-004", "ci.yml:build:Lint"]], "fitness: failing (ci.yml:build:Lint)"],
+    ["CLM-RPT-155", "had a code and no kind-of-check tag", "@CLM-CHK-005", [], "no-quality-check"],
+    ["CLM-RPT-156", "had no scenario, and a passing unit test charges in a.test.ts citing it", undefined, [["unit", "passed", "CHK-009", "a.test.ts", "charges"]], "unit: cites-unknown-claim (a.test.ts: charges)"],
+    ["CLM-RPT-157", "had no code, and asked for a unit test", "@unit", [], "unit: no-claim-code"],
   ] as const)("[%s] a claim that %s lists its reconciling items", (_clm, _evidence, tags, evidence, items) => {
-    expect(cellUnder("Reconciling items", claimTable([["checkout.feature", "CHK", [[tags, "checks out"]]]], evidence))).toBe(items);
+    expect(cellUnder("Reconciling items", claimTable([["checkout.feature", "CHK", tags === undefined ? [] : [[tags, "checks out"]]]], evidence))).toBe(items);
   });
 });
 
@@ -87,14 +92,17 @@ describe("the table has a column only for a kind some claim raises or answers", 
   });
 });
 
-describe("the report quotes an Evidence Observation's first line and every note", () => {
-  it("[CLM-RPT-085] a test that never ran with a message of three lines, and two notes balance added, has its first line and both notes quoted", () => {
-    const items = cellUnder(
-      "Reconciling items",
-      claimTable([["one.feature", "ONE", [["@unit @CLM-ONE-001", "adds one"]]]], [["unit", "never-ran", "ONE-001", "one.test.ts", "adds", "first line\nsecond line\nthird line", "one note", "another note"]]),
-    );
+describe("a section showing a never-ran test's message quotes its first line", () => {
+  const markdown = (): string =>
+    markdownReportOf(reconciledFrom([["one.feature", "ONE", [["@unit @CLM-ONE-001", "adds one"]]]], [["unit", "never-ran", "ONE-001", "one.test.ts", "adds", "first line\nsecond line\nthird line", "one note", "another note"]]));
 
-    expect({ first: items?.includes("first line"), rest: items?.includes("second line"), notes: items?.includes("one note") && items.includes("another note") }).toEqual({ first: true, rest: false, notes: true });
+  it.each([
+    ["CLM-RPT-085", "the Claim Reconciliations", "## Claim Reconciliations", "| CLM-ONE-001 | U/- | out-of-balance | unit: missing; unit: never-ran (`one.test.ts`: `adds`) — `first line`, `one note`, `another note` |"],
+    ["CLM-RPT-146", "run integrity", "## Run integrity", "- unit: `one.test.ts`, `adds` — `first line`"],
+  ] as const)("[%s] a test that never ran with a message of three lines, and two notes balance added, has %s quote what it shows of them", (_clm, _where, heading, line) => {
+    const section = markdown().split("\n\n## ").find((part) => `## ${part}`.startsWith(heading))!;
+
+    expect(section.split("\n").filter((each) => each.includes("first line") || each.includes("second line"))).toEqual([line]);
   });
 });
 
@@ -106,5 +114,19 @@ describe("the report shows the unnamed claim's evidence one group per file", () 
     );
 
     expect(items).toBe("unit: cites-no-claim (a.test.ts) — 2 ran, 2 passed, 0 failed; unit: cites-no-claim (b.test.ts) — 2 ran, 1 passed, 1 failed: refunds");
+  });
+});
+
+describe("a group of the unnamed claim's evidence with a shared claim code shows that code", () => {
+  it("[CLM-RPT-162] a passing unit test in a.test.ts citing no code, and one citing CLM-ONE-001, which two scenarios share, show two unit groups for a.test.ts, one showing CLM-ONE-001", () => {
+    const table = claimTable([["one.feature", "ONE", [["@unit @CLM-ONE-001", "adds"], ["@unit @CLM-ONE-001", "adds again"]]]], [["unit", "passed", undefined, "a.test.ts", "subtracts"], ["unit", "passed", "ONE-001", "a.test.ts", "adds"]]);
+
+    expect(cellUnder("Reconciling items", table, 2)).toBe("unit: cites-no-claim (a.test.ts) — 1 ran, 1 passed, 0 failed; unit: cites-no-claim (a.test.ts, CLM-ONE-001) — 1 ran, 1 passed, 0 failed");
+  });
+});
+
+describe("the unnamed claim's fitness evidence shows as one group with no file", () => {
+  it("[CLM-RPT-159] the step ci.yml:build:Lint passing, citing no claim, shows as one fitness group with no file, 1 ran, 1 passed and 0 failed", () => {
+    expect(cellUnder("Reconciling items", claimTable([], [["fitness", "passed", undefined, "ci.yml:build:Lint"]]))).toBe("fitness: cites-no-claim — 1 ran, 1 passed, 0 failed");
   });
 });

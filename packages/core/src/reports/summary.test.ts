@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { coreText } from "../messages/catalogue.js";
 import { markdownReportOf } from "./markdown.js";
 import { reconciled, type RunHas } from "./reconciledRun.test-utils.js";
 
@@ -49,6 +50,34 @@ describe("the Markdown has a line of claim codes no claim reads only when there 
       group: true,
       line: shown,
       anyLine: shown,
+    });
+  });
+});
+
+// A Summary group's table as rows of cells, each row keyed by the header's columns.
+function rowsUnder(heading: string, markdown: string): Record<string, string>[] {
+  const lines = markdown.slice(markdown.indexOf(`### ${heading}`)).split("\n");
+  const table = lines.slice(lines.findIndex((line) => line.startsWith("| "))).filter((_line, at, all) => all.slice(0, at + 1).every((each) => each.startsWith("| ")));
+  const cells = (line: string): string[] => line.slice(2, -2).split(" | ");
+  return table.slice(2).map((line) => Object.fromEntries(cells(line).map((cell, at) => [cells(table[0]!)[at]!, cell])));
+}
+
+describe("the report shows each count the run has in its cell", () => {
+  const run = (): string => markdownReportOf(reconciled({ scenarios: ["@unit @CLM-ONE-001", "@unit @CLM-ONE-002"], unitTests: [["passed", "ONE-001"], ["failed", "ONE-002"]] }));
+
+  it("[CLM-RPT-163] a claim with a passing unit test and a claim with a failing one show 2 Claim Reconciliations, 1 balanced and 1 out of balance", () => {
+    expect(rowsUnder(coreText("summary-claim-reconciliations"), run())).toEqual([
+      { [coreText("summary-total")]: "2", [coreText("summary-balanced")]: "1", [coreText("summary-out-of-balance")]: "1" },
+    ]);
+  });
+
+  it("[CLM-RPT-164] a claim asking for a unit test with a passing one, and one with a failing one, show 2 Evidence Obligations, 2 Evidence Observations, 1 satisfied and 1 failing on the unit row", () => {
+    expect(rowsUnder(coreText("summary-by-kind"), run()).find((row) => row[coreText("summary-kind")] === "unit")).toEqual({
+      [coreText("summary-kind")]: "unit",
+      [coreText("summary-evidence-obligations")]: "2",
+      [coreText("summary-evidence-observations")]: "2",
+      [coreText("outcome-satisfied")]: "1",
+      [coreText("outcome-failing")]: "1",
     });
   });
 });

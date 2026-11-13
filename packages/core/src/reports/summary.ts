@@ -15,8 +15,8 @@ function claimReconciliationsGroup({ claimReconciliations: { total, balanced, ou
   ]);
 }
 
-const counted = ({ evidenceObligations, evidenceObservations, byOutcome }: QualityCheckCounts): boolean =>
-  evidenceObligations + evidenceObservations + Object.values(byOutcome).reduce((sum, count) => sum + count, 0) > 0;
+// Every Evidence Obligation and Evidence Observation gives a Quality Check Reconciliation, so a row with none has nothing.
+const counted = ({ byOutcome }: QualityCheckCounts): boolean => Object.values(byOutcome).some((count) => count > 0);
 
 // A kind no claim raises or answers, an outcome nothing has, and the row with no kind when it is empty are left out.
 function byKindGroup({ qualityCheckReconciliations: { byKind, noKind, all } }: Totals): string[] {
