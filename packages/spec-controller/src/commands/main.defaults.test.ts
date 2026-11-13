@@ -1,4 +1,4 @@
-import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
+import { mkdirSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { repositoryForTest } from "../repository/repository.test-utils.js";
@@ -39,12 +39,22 @@ describe("balance will use the default when an input is not named", () => {
 });
 
 describe("balance works out the target's folder", () => {
-  it("[CLM-CLI-184] a corpus named in a git repository's subfolder, run from elsewhere: the target is that repository", () => {
+  it.each([
+    ["by its own path", (top: string) => top],
+    [
+      "through a link to it",
+      (top: string) => {
+        const link = join(temporaryDirectory("link-"), "linked");
+        symlinkSync(top, link);
+        return link;
+      },
+    ],
+  ])("[CLM-CLI-184] a corpus named in a git repository's subfolder, reached %s, run from elsewhere: the target is that repository", (_reached, named) => {
     const repository = repositoryForTest();
     repository.write("docs/features/one.feature", "@ONE\nFeature: one\n");
     const head = repository.commit("one");
 
-    const provenance = provenanceIn(temporaryDirectory("elsewhere-"), "--features", `${realpathSync(repository.top)}/docs/features`);
+    const provenance = provenanceIn(temporaryDirectory("elsewhere-"), "--features", `${named(repository.top)}/docs/features`);
 
     expect({ sourceSha: provenance.sourceSha, corpus: inputPath(provenance, "features") }).toEqual({ sourceSha: head, corpus: "docs/features" });
   });
