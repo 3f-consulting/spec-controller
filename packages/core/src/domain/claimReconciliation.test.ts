@@ -7,7 +7,7 @@ import type { EvidenceObservation, PhantomClaim, Result, UnnamedClaim } from "./
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
 const ONE_999: ClaimCode = { featureCode: "ONE", number: "999" };
 
-// The claim as the row names it: under @CLM-ONE-001, with no code, sharing its code, on no executable claim, or the unnamed claim.
+// The claim as the row names it: under its own code, with no code, sharing its code, on no executable claim, or the unnamed claim.
 type ClaimRead = "under its code" | "with no code" | "sharing its code" | "phantom" | "unnamed";
 
 type ObservationRead = readonly [kind: QualityCheckKind, result: Result];
