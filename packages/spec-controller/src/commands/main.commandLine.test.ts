@@ -1,6 +1,7 @@
 import { chmodSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
+import catalogue from "../messages/messages.en.json" with { type: "json" };
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { main } from "./main.js";
 
@@ -21,29 +22,29 @@ function ran(args: readonly string[], folder = temporaryDirectory("command-line-
 }
 
 const BALANCE_FLAGS = [
-  "--features",
-  "--vitest",
-  "--jest",
-  "--pytest",
-  "--junit",
-  "--rspec",
-  "--cucumber",
-  "--ci",
-  "--ci-steps",
-  "--package-json",
-  "--target",
-  "--source-sha",
-  "--format",
+  "--features <dir>",
+  "--vitest <report.json>",
+  "--jest <report.json>",
+  "--pytest <report.xml>",
+  "--junit <report.xml|dir>",
+  "--rspec <report.json>",
+  "--cucumber <report.json>",
+  "--ci <workflow.yml|dir>",
+  "--ci-steps <record.json>",
+  "--package-json <path>",
+  "--target <name>",
+  "--source-sha <sha>",
+  "--format <fmt>[:<path>]",
   "--strict",
   "--exit-zero",
-  "--help",
+  "-h, --help",
 ];
 
 // A line holding the flag, then at least two spaces, then its description.
 const FLAG_BESIDE_ITS_DESCRIPTION = { "--strict": /^\s+--strict\s{2,}\S/, "--exit-zero": /^\s+--exit-zero\s{2,}\S/ };
 
-// The flags help lists, each at the start of a line of its own.
-const flagsListed = (help: string): string[] => help.split("\n").flatMap((line) => /^\s+(-h, )?(--[a-z-]+)/.exec(line)?.[2] ?? []);
+// The flags help lists, each at the start of a line of its own with what its value is.
+const flagsListed = (help: string): string[] => help.split("\n").flatMap((line) => /^\s+((?:-h, )?--[a-z-]+(?: \S+)?)/.exec(line)?.[1] ?? []);
 
 describe("help will list what you can ask for", () => {
   it.each([
@@ -52,7 +53,11 @@ describe("help will list what you can ask for", () => {
   ] as const)("[%s] %j lists balance's flags, and the run succeeds", (_clm, args) => {
     const { exitCode, output } = ran(args);
 
-    expect({ exitCode, flags: flagsListed(output) }).toEqual({ exitCode: 0, flags: BALANCE_FLAGS });
+    expect({ exitCode, heading: output.split("\n").slice(0, 3), flags: flagsListed(output) }).toEqual({
+      exitCode: 0,
+      heading: [catalogue["help-balance-usage"], "", catalogue["help-flags"]],
+      flags: BALANCE_FLAGS,
+    });
   });
 
   it("[CLM-CLI-117] allocate --help lists the feature code it takes and its flags, and the run succeeds", () => {
@@ -61,7 +66,7 @@ describe("help will list what you can ask for", () => {
     expect({ exitCode, takesAFeatureCode: output.includes("allocate <feature code>"), flags: flagsListed(output) }).toEqual({
       exitCode: 0,
       takesAFeatureCode: true,
-      flags: ["--new", "--help"],
+      flags: ["--new", "-h, --help"],
     });
   });
 
@@ -72,9 +77,12 @@ describe("help will list what you can ask for", () => {
   ] as const)("[%s] %j lists the commands, and the run succeeds", (_clm, args) => {
     const { exitCode, output } = ran(args);
 
-    expect({ exitCode, commands: output.split("\n").flatMap((line) => /^\s+(balance|allocate)\s/.exec(line)?.[1] ?? []) }).toEqual({
+    const lines = output.split("\n");
+
+    expect({ exitCode, heading: lines.slice(0, 3), commands: lines.flatMap((line) => /^\s+(balance|allocate)\s{2,}(\S.*)$/.exec(line)?.slice(1) ?? []) }).toEqual({
       exitCode: 0,
-      commands: ["balance", "allocate"],
+      heading: [catalogue["help-usage"], "", catalogue["help-commands"]],
+      commands: ["balance", catalogue["command-balance"], "allocate", catalogue["command-allocate"]],
     });
   });
 });
@@ -89,7 +97,7 @@ describe("a command's help gives each flag it takes beside what the flag does", 
 
 describe("help will answer, and nothing will run", () => {
   it.each([
-    ["CLM-CLI-112", "a request for help beside an argument that fails validation", ["balance", "--features", "absent", "--bogus", "--help"], "--features"],
+    ["CLM-CLI-112", "a request for help beside an argument that fails validation", ["balance", "--features", "absent", "--bogus", "--help"], "--features <dir>"],
     ["CLM-CLI-113", "allocate's help beside a flag allocate does not take", ["allocate", "ABC", "--vitest", "--help"], "--new"],
   ] as const)("[%s] %s: help answers, it exits 0, and nothing runs or is written", (_clm, _given, args, aFlagListed) => {
     const folder = temporaryDirectory("help-first-");
