@@ -21,10 +21,6 @@
     "class": "a list of commands with the unit runner among them",
     "variants": ["&&", ";"]
   },
-  "CLM-OBS-015": {
-    "class": "an action that only sets the job up",
-    "variants": ["actions/checkout", "actions/cache", "actions/setup-*", "actions/upload-artifact", "actions/download-artifact"]
-  },
   "CLM-OBS-112": {
     "class": "a wrapper that runs the command after it",
     "variants": ["xvfb-run"]

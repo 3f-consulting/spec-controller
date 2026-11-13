@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { shellAnswers } from "../inputs/shell.js";
 import { stepRecordFrom } from "../inputs/stepRecord.js";
 import shellVariants from "../inputs/shell.variants.json" with { type: "json" };
+import workflowsVariants from "../inputs/workflows.variants.json" with { type: "json" };
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
@@ -41,7 +42,7 @@ const workflowOf = (jobs: object) => workflowStepsFrom("ci.yml", JSON.stringify(
 const recordOf = (record: object) => stepRecordFrom(record);
 
 describe("a step using a plumbing action is plumbing", () => {
-  it.each(shellVariants["CLM-OBS-015"].variants)("[CLM-OBS-015] a step using %s will be counted as plumbing, and nothing will be posted", (action) => {
+  it.each(workflowsVariants["CLM-OBS-015"].variants)("[CLM-OBS-015] a step using %s will be counted as plumbing, and nothing will be posted", (action) => {
     const steps = stepsOf({ uses: `${action.replace("*", "node")}@v4` });
 
     expect({
