@@ -18,9 +18,8 @@ export function standingOf(folder: string): Read<Standing> {
 }
 
 // git names a file or folder it could not read on its error stream, whatever its exit status says.
-const UNREADABLE = /^(?:error: failed to stat '(.+)'|warning: could not open directory '(.+)'):.*$/m;
+const UNREADABLE = /(?:error: failed to stat '(.+)'|warning: could not open directory '(.+)'):.*/;
 
-// The lines that can hold one of the feature code's codes, under CLM or the retired SCN.
 const codesOf = (featureCode: string): string => `(CLM|SCN)-${featureCode}-[0-9]`;
 
 // Every line in the tree that may write one of the feature code's codes, from git: tracked and new files, ignored ones left out.
@@ -28,15 +27,13 @@ export function treeLines({ in: where, top }: Standing, featureCode: string): Re
   const { status, stdout, stderr } = gitIn(top, ["grep", "-n", "-z", "-I", where === "repository" ? "--untracked" : "--no-index", "-E", codesOf(featureCode)]);
   const unreadable = UNREADABLE.exec(stderr);
   if (unreadable !== null) return { refusal: { key: "unreadable-in-tree", values: { path: unreadable[1] ?? unreadable[2]!, said: unreadable[0] } } };
-  // git grep exits 1 for no line found; anything past that is a failure to read.
-  if (status === null || status > 1) return { refusal: { key: "unreadable-in-tree", values: { path: top, said: stderr.trim() } } };
-  const lines = stdout
-    .split("\n")
-    .filter((record) => record !== "")
-    .map((record) => {
-      const [path = "", line = "", ...text] = record.split("\0");
-      return { text: text.join("\0"), path, line: Number(line) };
-    });
+  // git grep exits 1 for no line found; anything else is a failure to read.
+  if (status !== 0 && status !== 1) return { refusal: { key: "unreadable-in-tree", values: { path: top, said: stderr.trim() } } };
+  // git ends each line found with a newline and parts it with NULs; it reads no file it takes for binary, so no text has one.
+  const lines = stdout.split("\n").slice(0, -1).map((record) => {
+    const [path, line, text] = record.split("\0") as [string, string, string];
+    return { text, path, line: Number(line) };
+  });
   return { read: lines };
 }
 
@@ -60,19 +57,16 @@ export function historyLines(top: string, featureCode: string): Read<ClaimCodeOc
   ]);
   if (status !== 0) return { refusal: { key: "unreadable-history", values: { said: stderr.trim() } } };
   const occurrences: ClaimCodeOccurrence[] = [];
-  let commit = "";
-  let path = "";
-  let line = 0;
-  // A file's header runs from its diff line to its first hunk; only there is a line beginning +++ its new name.
-  let inHeader = false;
+  let commit!: string;
+  let path!: string;
+  // Until a file's first hunk, it is in its header, where +++ starts its new name. An added line keeps its +, no code's part.
+  let line: number | undefined;
   for (const text of stdout.split("\n")) {
     if (text.startsWith("commit:")) commit = text.slice("commit:".length);
-    else if (text.startsWith("diff ")) inHeader = true;
-    else if (inHeader && text.startsWith("+++ ")) path = text.slice("+++ ".length);
-    else if (HUNK.test(text)) {
-      inHeader = false;
-      line = Number(HUNK.exec(text)![1]);
-    } else if (!inHeader && text.startsWith("+")) occurrences.push({ text: text.slice(1), path, line: line++, commit });
+    else if (text.startsWith("diff ")) line = undefined;
+    else if (line === undefined && text.startsWith("+++ ")) path = text.slice("+++ ".length);
+    else if (HUNK.test(text)) line = Number(HUNK.exec(text)![1]);
+    else if (line !== undefined && text.startsWith("+")) occurrences.push({ text, path, line: line++, commit });
   }
   return { read: occurrences };
 }
