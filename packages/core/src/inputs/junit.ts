@@ -26,11 +26,10 @@ const elementsIn = (element: Element, name: string): Element[] => (element[name]
 
 const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
 
-// An outcome element is text alone, attributes alone, or both.
+// An outcome element says what went wrong in its message attribute, if it has one.
 function failureAsWritten(outcome: unknown): FailureAsWritten {
-  if (typeof outcome === "string") return { text: outcome };
-  const { "@message": message, "#text": body } = outcome as Element;
-  return { ...(text(message) && { message: text(message) }), ...(text(body) && { text: text(body) }) };
+  const message = text((outcome as Element)["@message"]);
+  return message ? { message } : {};
 }
 
 function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {

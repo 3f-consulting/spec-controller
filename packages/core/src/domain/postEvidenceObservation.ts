@@ -65,7 +65,6 @@ export interface ResultInSuiteAsWritten {
 
 export interface FailureAsWritten {
   readonly message?: string;
-  readonly text?: string;
 }
 
 // A report of test results kept by example, each nested in its groups.
@@ -127,10 +126,8 @@ export function observationsByFile(results: readonly ResultsByFileAsWritten[], t
   });
 }
 
-const saidBy = (failure: FailureAsWritten | undefined): { message?: string } => {
-  const message = failure?.message ?? failure?.text;
-  return message === undefined ? {} : { message };
-};
+const saidBy = (failure: FailureAsWritten | undefined): { message?: string } =>
+  failure?.message === undefined ? {} : { message: failure.message };
 
 // The report kept by suite whose errors are written only for a test that never reached its assertions, and which cites a
 // test's claim codes in its properties. Its reader names its reports so; any other report kept by suite writes an error for
