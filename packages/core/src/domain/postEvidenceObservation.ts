@@ -1,5 +1,5 @@
 import { claimCodeCitationsIn, type ClaimCode } from "./claimCodes.js";
-import type { QualityCheckKind } from "./postEvidenceObligation.js";
+import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
 
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
 
@@ -125,4 +125,8 @@ export function evidenceObservationsOf(results: readonly ResultsByFileAsWritten[
       .filter(({ status }) => status === "passed")
       .map(({ title }) => ({ cites: claimCodeCitationsIn(title), result: "passed" as const, kind: "unit" as const, place: file, name: title, notes: [] })),
   );
+}
+
+export function observationsFiledUnder(_claim: ExecutableClaim, _observations: readonly EvidenceObservation[]): EvidenceObservation[] {
+  return [];
 }
