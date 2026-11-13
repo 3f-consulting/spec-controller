@@ -13,8 +13,8 @@ interface Ended {
   readonly complaints: readonly string[];
 }
 
-// balance run over a corpus of one claim with no evidence, so its run verdict is out of balance.
-function balanceRun(throwing: { readonly inBalance?: unknown; readonly onOutput?: unknown }): Ended {
+// balance run, with the flags given, over a corpus of one claim with no evidence, so its run verdict is out of balance.
+function balanceRun(throwing: { readonly inBalance?: unknown; readonly onOutput?: unknown }, flags: readonly string[] = []): Ended {
   const folder = temporaryDirectory("unexpected-");
   mkdirSync(join(folder, "features"));
   writeFileSync(join(folder, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n");
@@ -22,7 +22,7 @@ function balanceRun(throwing: { readonly inBalance?: unknown; readonly onOutput?
   let error = "";
   const run = (): ExitCode =>
     main(
-    ["balance"],
+    ["balance", ...flags],
     folder,
     {
       output: {
@@ -87,6 +87,12 @@ describe("an unexpected error after the run verdict will leave its exit code alo
     const { exitCode, complaints } = balanceRun({ onOutput: new Error("the report could not be written") });
 
     expect({ exitCode, complaints: complaints.length }).toEqual({ exitCode: 1, complaints: 1 });
+  });
+
+  it("[CLM-CLI-181] a run out of balance under --exit-zero whose report cannot be written exits 0, its verdict's code", () => {
+    const { exitCode, complaints } = balanceRun({ onOutput: new Error("the report could not be written") }, ["--exit-zero"]);
+
+    expect({ exitCode, complaints: complaints.length }).toEqual({ exitCode: 0, complaints: 1 });
   });
 });
 

@@ -33,6 +33,9 @@ import { runIdentityIn } from "../runIdentity/runIdentity.js";
 import { writeReports } from "../output/writer.js";
 import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/runRequest.js";
 
+// A run has no step and no step record of an input it did not read.
+const NONE: readonly never[] = [];
+
 // The step account is printed only for a run that read a workflow step.
 function stepAccountFor(
   steps: readonly WorkflowStepAsWritten[],
@@ -64,7 +67,7 @@ function observationsOf(
     ...observationsBySuite([...(read.pytest ?? []), ...(read.junit ?? [])], targetFolder),
     ...(read.rspec === undefined ? [] : observationsByExample(read.rspec, targetFolder)),
     ...(read.cucumber === undefined ? [] : observationsOfScenarios(read.cucumber, read.features, targetFolder)),
-    ...fitnessObservationsOf(steps, read.stepRecord ?? [], configuration, scripts, shellAnswers),
+    ...fitnessObservationsOf(steps, read.stepRecord ?? NONE, configuration, scripts, shellAnswers),
   ];
 }
 
@@ -79,7 +82,7 @@ export function balance(
   const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
   const read = inputsReadFor(inputs, folder);
   if ("ending" in read) return refusedWith(read.refusals, streams.error.write);
-  const steps = read.workflowSteps ?? [];
+  const steps = read.workflowSteps ?? NONE;
   const { configuration, errors } = targetConfigurationFrom(read.manifest, steps);
   const scripts = scriptsFrom(read.manifest);
   const targetFolder = targetFolderOf({ workingFolder: folder, corpus, gitTopLevel: identity.gitTopLevel });
