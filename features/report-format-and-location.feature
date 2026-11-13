@@ -49,11 +49,11 @@ Feature: You get each report in the format and place you asked for, and the run 
       Then <where it will be>
 
       Examples:
-        | clm         | destination                                            | where it will be                                                                 |
-        | CLM-FMT-004 | no destination for one, a file for the other           | one will be on standard output, and the other in the file                        |
-        | CLM-FMT-020 | no destination for one, standard error for the other   | one will be on standard output, and the other on standard error                  |
-        | CLM-FMT-021 | two different files                                    | each file will contain its own report                                            |
-        | CLM-FMT-022 | standard error for both                                | both reports will be on standard error, one after the other                      |
+        | clm         | destination                                          | where it will be                                                |
+        | CLM-FMT-004 | no destination for one, a file for the other         | one will be on standard output, and the other in the file       |
+        | CLM-FMT-020 | no destination for one, standard error for the other | one will be on standard output, and the other on standard error |
+        | CLM-FMT-021 | two different files                                  | each file will contain its own report                           |
+        | CLM-FMT-022 | standard error for both                              | both reports will be on standard error, one after the other     |
 
   Rule: it stops before it damages anything
 
@@ -70,6 +70,7 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-008 | a file it may not write               |
         | CLM-FMT-026 | an existing folder                    |
         | CLM-FMT-027 | a file in a folder that doesn't exist |
+        | CLM-FMT-034 | a link that leads round to itself     |
 
     @unit
     Scenario Outline: if one report cannot be written, neither will be
