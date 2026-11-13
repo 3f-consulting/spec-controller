@@ -42,6 +42,8 @@ export interface InputsRead {
   readonly manifest?: unknown;
   // Every file read, so no report lands on one.
   readonly filesRead: readonly string[];
+  // Each input read, at its path as given.
+  readonly pathsRead: Readonly<Partial<Record<string, string>>>;
 }
 
 // One file the run read: its path within the folder named, where it is as given and on disk, and its text.
@@ -196,14 +198,16 @@ export function inputsReadFor(inputs: readonly InputNamed[], folder: string): In
   const refusals: Refusal[] = [];
   const reads: Partial<InputsRead>[] = [];
   const filesRead: string[] = [];
+  const pathsRead: Record<string, string> = {};
   for (const request of inputs) {
     const named = filesOf(request, folder);
     if ("none" in named) continue;
+    pathsRead[request.kind] = request.path;
     const texts = named.files.flatMap((file) => (file.ok ? [file.contents] : []));
     filesRead.push(...texts.map(({ path }) => path));
     const read = [...named.files.filter((file) => !file.ok), ...READERS[request.kind].read(texts)];
     read.forEach((each) => (each.ok ? reads.push(each.contents) : refusals.push(refusalOf(request, each))));
   }
   if (refusals.length > 0) return { ending: "usage-error", refusals };
-  return { features: [], ...merged(reads), filesRead };
+  return { features: [], ...merged(reads), filesRead, pathsRead };
 }

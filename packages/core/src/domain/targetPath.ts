@@ -10,4 +10,12 @@ export interface TargetFolderAsked {
   readonly gitTopLevel?: string;
 }
 
-export const targetFolderOf = ({ workingFolder, gitTopLevel }: TargetFolderAsked): string => gitTopLevel ?? workingFolder;
+const parentOf = (path: string): string => {
+  const trimmed = path.replace(/\/+$/, "");
+  const at = trimmed.lastIndexOf("/");
+  return at <= 0 ? "/" : trimmed.slice(0, at);
+};
+
+// The git repository's top level; outside git, the named corpus's parent, or with none named, where the run started.
+export const targetFolderOf = ({ workingFolder, corpus, gitTopLevel }: TargetFolderAsked): string =>
+  gitTopLevel ?? (corpus === undefined ? workingFolder : parentOf(corpus));

@@ -61,6 +61,7 @@ export { allocationOf, claimCodeErrorsOf, featureCodeOfFile, isFeatureCode, writ
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";
 export { evidenceReconciliationOf, runVerdictOf, stepAccountOf, totalsOf } from "./domain/evidenceReconciliation.js";
 export { outputPlanOf } from "./domain/outputPlan.js";
+export { targetFolderOf } from "./domain/targetPath.js";
 export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
 export { provenanceOf } from "./domain/provenance.js";
 export { fitnessObservationsOf, observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, stepDispositionOf } from "./domain/postEvidenceObservation.js";

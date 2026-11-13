@@ -12,6 +12,7 @@ import {
   repositoryOfOrigin,
   shellAnswers,
   stepAccountOf,
+  targetFolderOf,
   stepDispositionOf,
   scriptsFrom,
   targetConfigurationFrom,
@@ -21,6 +22,7 @@ import {
   type TargetConfiguration,
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
+import { resolve } from "node:path";
 import type { InputsRead } from "../inputs/inputsRead.js";
 import type { StandardStreams } from "../output/streams.js";
 import type { ExitCode } from "../runEnding/runEnding.js";
@@ -38,8 +40,13 @@ function stepAccountFor(
 }
 
 // Every input the run could read, each with its path when it read one.
-const provenanceInputsOf = (requested: readonly InputRequest[], read: InputsRead): ProvenanceInput[] =>
-  INPUT_KINDS.map((kind) => ({ name: kind, path: (kind === "features" || kind === "workflows" ? read[kind === "features" ? "features" : "workflowSteps"] : read[kind]) === undefined ? undefined : requested.find((input) => input.kind === kind)?.path }));
+const provenanceInputsOf = ({ pathsRead }: InputsRead): ProvenanceInput[] => INPUT_KINDS.map((kind) => ({ name: kind, path: pathsRead[kind] }));
+
+// A corpus the command line named is where the target is; with none named, it is where the run started.
+const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | undefined => {
+  const corpus = inputs.find((input) => input.kind === "features" && !input.byDefault);
+  return corpus === undefined ? undefined : resolve(folder, corpus.path);
+};
 
 // Each runner's results posted as Evidence Observations, beside the fitness functions' from the CI steps.
 function observationsOf(read: InputsRead, configuration: TargetConfiguration, scripts: Readonly<Record<string, string>>, targetFolder: string): EvidenceObservation[] {
@@ -59,14 +66,15 @@ export function balance(
   folder: string,
   streams: StandardStreams,
 ): ExitCode {
+  const corpus = corpusNamed(inputs, folder);
   // Read first, so the run's time is when it started.
-  const identity = runIdentityIn(folder, { target, sourceSha });
+  const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
   const { configuration, errors } = targetConfigurationFrom(read.manifest, read.workflowSteps ?? []);
   const scripts = scriptsFrom(read.manifest);
-  const targetFolder = identity.gitTopLevel ?? folder;
+  const targetFolder = targetFolderOf({ workingFolder: folder, ...(corpus === undefined ? {} : { corpus }), ...(identity.gitTopLevel === undefined ? {} : { gitTopLevel: identity.gitTopLevel }) });
   const claims = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
   const claimReconciliations = claimReconciliationsOf(claims, observationsOf(read, configuration, scripts, targetFolder));
-  const provenance = provenanceOf(identity, provenanceInputsOf(inputs, read), targetFolder, repositoryOfOrigin);
+  const provenance = provenanceOf(identity, provenanceInputsOf(read), targetFolder, repositoryOfOrigin);
   const reconciliation = evidenceReconciliationOf({
     claimReconciliations,
     claimCodeErrors: claimCodeErrorsOf(read.features),

@@ -3,10 +3,10 @@ import { repositoryForTest } from "../repository/repository.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { main } from "./main.js";
 
-// The provenance of the JSON report balance writes, run in the folder with nothing named but the format.
-function provenanceIn(folder: string): { readonly target: string; readonly sourceSha: string } {
+// The provenance of the JSON report balance writes, run in the folder with nothing named but the format and what is given.
+function provenanceIn(folder: string, ...args: string[]): { readonly target: string; readonly sourceSha: string } {
   let report = "";
-  main(["balance", "--format", "json"], folder, { output: { fd: 1, write: (text) => (report += text) }, error: { fd: 2, write: () => {} } });
+  main(["balance", "--format", "json", ...args], folder, { output: { fd: 1, write: (text) => (report += text) }, error: { fd: 2, write: () => {} } });
   return (JSON.parse(report) as { provenance: { target: string; sourceSha: string } }).provenance;
 }
 
@@ -24,5 +24,15 @@ describe("balance will use the default when an input is not named", () => {
 
   it("[CLM-CLI-141] no source commit named, in no git repository: balance uses unknown", () => {
     expect(provenanceIn(temporaryDirectory("no-git-")).sourceSha).toBe("unknown");
+  });
+});
+
+describe("balance works out the target's folder", () => {
+  it("[CLM-CLI-184] a corpus named in a git repository's subfolder, run from elsewhere: the target is that repository", () => {
+    const repository = repositoryForTest();
+    repository.write("docs/features/one.feature", "@ONE\nFeature: one\n");
+    const head = repository.commit("one");
+
+    expect(provenanceIn(temporaryDirectory("elsewhere-"), "--features", `${repository.top}/docs/features`).sourceSha).toBe(head);
   });
 });
