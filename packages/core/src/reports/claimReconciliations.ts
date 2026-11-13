@@ -1,25 +1,17 @@
 import { writtenClaimCode } from "../domain/claimCodes.js";
 import { evidenceGroupsOf, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
-import type { QualityCheckKind } from "../domain/postEvidenceObligation.js";
+import { QUALITY_CHECK_KINDS, type QualityCheckKind } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import { inCell } from "./quoted.js";
 import { tableOf } from "./table.js";
-
-const KINDS: readonly QualityCheckKind[] = ["fitness", "unit", "integration", "e2e", "performance"];
 
 type Claim = ClaimReconciliation["claim"];
 
 const isExecutable = (claim: Claim): claim is Extract<Claim, { readonly obligations: unknown }> => "obligations" in claim;
 
-// A column for each kind some claim raises or some evidence answers.
+// A column for each kind some claim raises or some evidence answers: each gives a Quality Check Reconciliation of its kind.
 const kindsIn = (claimReconciliations: readonly ClaimReconciliation[]): QualityCheckKind[] =>
-  KINDS.filter((kind) =>
-    claimReconciliations.some(
-      ({ claim, qualityCheckReconciliations }) =>
-        (isExecutable(claim) && claim.obligations.some((obligation) => obligation.kind === kind)) ||
-        qualityCheckReconciliations.some((reconciliation) => reconciliation.kind === kind && reconciliation.observation !== undefined),
-    ),
-  );
+  QUALITY_CHECK_KINDS.filter((kind) => claimReconciliations.some(({ qualityCheckReconciliations }) => qualityCheckReconciliations.some((reconciliation) => reconciliation.kind === kind)));
 
 // Whether the claim asks for the kind, by its letter or -, then how many of its tests of that kind ran, or -.
 function cellOf({ claim, qualityCheckReconciliations }: ClaimReconciliation, kind: QualityCheckKind): string {
@@ -71,7 +63,7 @@ export function claimReconciliationsSection(claimReconciliations: readonly Claim
   const kinds = kindsIn(claimReconciliations);
   const claimsWith = new Map<string, number>();
   for (const { claim } of claimReconciliations) if (isExecutable(claim) && claim.claimCode !== undefined) claimsWith.set(writtenClaimCode(claim.claimCode), (claimsWith.get(writtenClaimCode(claim.claimCode)) ?? 0) + 1);
-  const sharedCodes = new Set([...claimsWith].flatMap(([code, count]) => (count > 1 ? [code] : [])));
+  const sharedCodes = new Set([...claimsWith].filter(([, count]) => count > 1).map(([code]) => code));
   return [
     ...heading,
     ...tableOf(
