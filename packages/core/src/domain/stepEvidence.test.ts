@@ -21,6 +21,7 @@ describe("balance posts only the steps that prove something", () => {
     ["CLM-OBS-003", "using someone/checkout", { uses: "someone/checkout@v1" }, undefined, "candidate", 1],
     ["CLM-OBS-008", "running pnpm test, with no unit runner", { run: "pnpm test" }, undefined, "candidate", 1],
     ["CLM-OBS-012", "running spec-controller balance", { run: "spec-controller balance --features features" }, undefined, "reconciler", 0],
+    ["CLM-OBS-119", "running spec-controller balance | tee report.md", { run: "spec-controller balance | tee report.md" }, undefined, "reconciler", 0],
     ["CLM-OBS-013", "writing out the step record", { run: "echo '${{ toJSON(steps) }}' > steps.json" }, undefined, "reconciler", 0],
     ["CLM-OBS-109", "running spec-controller balance, in notChecks", { name: "Reconcile", run: "spec-controller balance" }, "Reconcile", "reconciler", 0],
     ["CLM-OBS-014", "named Install, in notChecks", { name: "Install", run: "pnpm install" }, "Install", "nonCheck", 0],
