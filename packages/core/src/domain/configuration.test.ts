@@ -51,7 +51,6 @@ describe("a configuration setting balance cannot use will be left out", () => {
   it.each([
     ["CLM-CFG-004", '"unit": 3 under runners', { runners: { unit: 3 } }, { kind: "configuration-wrong-kind", entry: "runners.unit" }],
     ["CLM-CFG-003", '"unittest": "vitest" under runners', { runners: { unittest: "vitest" } }, { kind: "runner-key-not-a-layer", entry: "runners.unittest" }],
-    ["CLM-CFG-018", '"runners": null', { runners: null }, { kind: "configuration-wrong-kind", entry: "runners" }],
     ["CLM-CFG-005", '"runer": {} beside runners', { runners: {}, runer: {} }, { kind: "configuration-unknown-key", entry: "runer" }],
     [
       "CLM-CFG-015",
@@ -110,6 +109,12 @@ describe("the run will still reach its run verdict, using the configuration sett
 
 // Each way a specController block can be other than an object, as a value.
 const notAnObject: Readonly<Record<string, unknown>> = { null: null, "a number": 5, "a string": "vitest", "a list": ["vitest"] };
+
+describe("a runners setting that is not an object is left out", () => {
+  it.each(manifestVariants["CLM-CFG-018"].variants)("[CLM-CFG-018] a specController block whose runners is %s leaves runners out, as the wrong kind", (variant) => {
+    expect(targetConfigurationFrom({ specController: { runners: notAnObject[variant] } }, [])).toEqual({ configuration: NONE, errors: [{ kind: "configuration-wrong-kind", entry: "runners" }] });
+  });
+});
 
 describe("a specController block that is not an object stops the run", () => {
   it.each(manifestVariants["CLM-CFG-021"].variants)("[CLM-CFG-021] a specController block that is %s stops the run as an unexpected error", (variant) => {

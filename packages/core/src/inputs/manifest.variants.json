@@ -2,5 +2,9 @@
   "CLM-CFG-021": {
     "class": "a specController block that is not an object",
     "variants": ["null", "a number", "a string", "a list"]
+  },
+  "CLM-CFG-018": {
+    "class": "a runners setting that is not an object",
+    "variants": ["null", "a number", "a string", "a list"]
   }
 }

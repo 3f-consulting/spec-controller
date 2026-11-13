@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import evidenceReconciliationVariants from "./evidenceReconciliation.variants.json" with { type: "json" };
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
@@ -251,6 +252,14 @@ describe("Total of the claim codes written where no claim reads them", () => {
     ],
   ] as const)("[%s] a feature file with %s has its excluded claim code occurrences counted", (_clm, _written, source, excluded) => {
     expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)]).excludedClaimCodeOccurrences).toBe(excluded);
+  });
+});
+
+describe("a claim code in a comment, with punctuation stuck to its end, is counted where no claim reads it", () => {
+  it.each(evidenceReconciliationVariants["CLM-EVR-029"].variants)("[CLM-EVR-029] a feature file with @CLM-ONE-001%s in a comment has one excluded claim code occurrence", (punctuation) => {
+    const source = `@ONE\nFeature: one\n\n  # as @CLM-ONE-001${punctuation} says\n  @unit\n  Scenario: adds one\n    Given a step\n`;
+
+    expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)]).excludedClaimCodeOccurrences).toBe(1);
   });
 });
 

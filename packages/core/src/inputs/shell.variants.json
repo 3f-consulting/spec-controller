@@ -28,5 +28,9 @@
   "CLM-OBS-113": {
     "class": "a runner named in several words",
     "variants": ["mvn test", "./mvnw test", "./gradlew test", "./gradlew check", "./gradlew :app:test", "gotestsum"]
+  },
+  "CLM-OBS-117": {
+    "class": "an option xvfb-run takes, with its value",
+    "variants": ["-n 99", "-s 99", "-e file", "-f file", "-p MIT-MAGIC", "-w 1"]
   }
 }

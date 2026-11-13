@@ -282,8 +282,8 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(dispositionOf(`timeout ${option} 75 vitest run`, "vitest")).toBe("runner");
   });
 
-  it.each(["-n", "-s", "-e", "-f", "-p", "-w"])("[CLM-OBS-117] a step running xvfb-run %s 99 vitest run, past an option and that option's value, will be counted as a runner, and nothing will be posted", (option) => {
-    expect(countedAndPosted(`xvfb-run ${option} 99 vitest run`, "vitest")).toEqual({ countedAs: "runner", posted: 0 });
+  it.each(shellVariants["CLM-OBS-117"].variants)("[CLM-OBS-117] a step running xvfb-run %s vitest run, past an option and that option's value, will be counted as a runner, and nothing will be posted", (option) => {
+    expect(countedAndPosted(`xvfb-run ${option} vitest run`, "vitest")).toEqual({ countedAs: "runner", posted: 0 });
   });
 
   it("[CLM-OBS-126] a step running xvfb-run --help, a wrapper given only options, will be counted as a fitness function, and a fitness Evidence Observation will be posted", () => {
