@@ -41,7 +41,7 @@ export interface ClaimReadingSettings {
   readonly strict: boolean;
 }
 
-export function executableClaimsOf(features: readonly FeatureAsWritten[]): ExecutableClaim[] {
+export function executableClaimsOf(features: readonly FeatureAsWritten[], _settings: ClaimReadingSettings): ExecutableClaim[] {
   return features.flatMap(({ file, scenarios }) =>
     scenarios.map(({ tags, title }) => {
       const [claimCode] = tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
