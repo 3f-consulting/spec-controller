@@ -82,7 +82,7 @@ export function balance(
   const steps = read.workflowSteps ?? [];
   const { configuration, errors } = targetConfigurationFrom(read.manifest, steps);
   const scripts = scriptsFrom(read.manifest);
-  const targetFolder = targetFolderOf({ workingFolder: folder, ...(corpus === undefined ? {} : { corpus }), ...(identity.gitTopLevel === undefined ? {} : { gitTopLevel: identity.gitTopLevel }) });
+  const targetFolder = targetFolderOf({ workingFolder: folder, corpus, gitTopLevel: identity.gitTopLevel });
   const claims = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
   const claimReconciliations = claimReconciliationsOf(claims, observationsOf(read, steps, configuration, scripts, targetFolder));
   const provenance = provenanceOf(identity, provenanceInputsOf(read), targetFolder, repositoryOfOrigin);

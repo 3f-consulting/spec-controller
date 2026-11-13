@@ -1,16 +1,25 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { repositoryForTest } from "../repository/repository.test-utils.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { main } from "./main.js";
 
+interface ProvenanceRead {
+  readonly target: string;
+  readonly sourceSha: string;
+  readonly inputs: readonly { readonly name: string; readonly path?: string }[];
+}
+
 // The provenance of the JSON report balance writes, run in the folder with nothing named but the format and what is given.
-function provenanceIn(folder: string, ...args: string[]): { readonly target: string; readonly sourceSha: string } {
+function provenanceIn(folder: string, ...args: string[]): ProvenanceRead {
   let report = "";
   main(["balance", "--format", "json", ...args], folder, { output: { fd: 1, write: (text) => (report += text) }, error: { fd: 2, write: () => {} } });
-  return (JSON.parse(report) as { provenance: { target: string; sourceSha: string } }).provenance;
+  return (JSON.parse(report) as { provenance: ProvenanceRead }).provenance;
 }
+
+// The path the provenance shows for the input of that name.
+const inputPath = ({ inputs }: ProvenanceRead, name: string): string | undefined => inputs.find((input) => input.name === name)?.path;
 
 describe("balance will use the default when an input is not named", () => {
   it("[CLM-CLI-139] no target name named: balance uses unknown-target", () => {
@@ -35,7 +44,24 @@ describe("balance works out the target's folder", () => {
     repository.write("docs/features/one.feature", "@ONE\nFeature: one\n");
     const head = repository.commit("one");
 
-    expect(provenanceIn(temporaryDirectory("elsewhere-"), "--features", `${repository.top}/docs/features`).sourceSha).toBe(head);
+    const provenance = provenanceIn(temporaryDirectory("elsewhere-"), "--features", `${realpathSync(repository.top)}/docs/features`);
+
+    expect({ sourceSha: provenance.sourceSha, corpus: inputPath(provenance, "features") }).toEqual({ sourceSha: head, corpus: "docs/features" });
+  });
+
+  it("[CLM-CLI-144] a corpus named in no git repository, run from elsewhere: the target is the corpus's folder", () => {
+    const folder = temporaryDirectory("no-git-");
+    mkdirSync(join(folder, "features"));
+
+    expect(inputPath(provenanceIn(temporaryDirectory("elsewhere-"), "--features", join(folder, "features")), "features")).toBe("features");
+  });
+
+  it("[CLM-CLI-142] no feature corpus named, run from a folder: the target is that folder", () => {
+    const folder = temporaryDirectory("no-corpus-");
+    mkdirSync(join(folder, "reports"));
+    writeFileSync(join(folder, "reports", "vitest.json"), '{"testResults":[]}');
+
+    expect(inputPath(provenanceIn(folder, "--vitest", join(folder, "reports", "vitest.json")), "vitest")).toBe("reports/vitest.json");
   });
 });
 
