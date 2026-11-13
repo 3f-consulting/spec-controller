@@ -1,7 +1,7 @@
 import type { ResultsByFileAsWritten } from "../domain/postEvidenceObservation.js";
 
-// Vitest's JSON evidence report, as far as its reader reads it.
-interface VitestReport {
+// Jest's JSON evidence report, which Vitest also writes, as far as its reader reads it.
+interface JestJsonReport {
   readonly testResults: readonly {
     readonly name: string;
     readonly status: string;
@@ -15,9 +15,9 @@ interface VitestReport {
   }[];
 }
 
-export function resultsByFileFrom(report: unknown): ResultsByFileAsWritten[] {
-  return (report as VitestReport).testResults.map(({ name, status, message, assertionResults }) => ({
-    report: "vitest",
+export function resultsByFileFrom(report: unknown, from: "vitest" | "jest"): ResultsByFileAsWritten[] {
+  return (report as JestJsonReport).testResults.map(({ name, status, message, assertionResults }) => ({
+    report: from,
     file: name,
     status,
     ...(message === undefined ? {} : { message }),

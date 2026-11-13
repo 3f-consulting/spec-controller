@@ -120,7 +120,8 @@ export interface ShellAnswers {
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
 }
 
-export function evidenceObservationsOf(results: readonly ResultsByFileAsWritten[]): EvidenceObservation[] {
+// Results kept by test file: Vitest's and Jest's. targetFolder is where the target sits, so a place inside it is relative.
+export function observationsByFile(results: readonly ResultsByFileAsWritten[], _targetFolder: string): EvidenceObservation[] {
   return results.flatMap(({ file, results: inFile }) =>
     inFile
       .filter(({ status }) => status === "passed")
