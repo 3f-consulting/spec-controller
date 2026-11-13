@@ -222,6 +222,10 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(countedAndPosted(`xvfb-run ${option} 99 vitest run`, "vitest")).toEqual({ countedAs: "runner", posted: 0 });
   });
 
+  it("[CLM-OBS-126] a step running xvfb-run --help, a wrapper given only options, will be counted as a fitness function, and a fitness Evidence Observation will be posted", () => {
+    expect(countedAndPosted("xvfb-run --help", "vitest")).toEqual({ countedAs: "candidate", posted: 1 });
+  });
+
   it.each(shellVariants["CLM-OBS-113"].variants)("[CLM-OBS-113] a step running %s, a runner named in several words, will be counted as a runner", (runner) => {
     expect(dispositionOf(`${runner} --verbose`, runner)).toBe("runner");
   });
