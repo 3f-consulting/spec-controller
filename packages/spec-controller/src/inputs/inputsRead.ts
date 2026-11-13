@@ -132,7 +132,7 @@ const READERS = {
     endings: [".yml", ".yaml"],
     inputIs: "input-workflows",
     fileIs: "input-workflow",
-    read: (files) => [{ ok: true, contents: { workflowSteps: [] } }, ...each(files, (file) => parsed(file, (text) => ({ workflowSteps: workflowStepsFrom(file.name, text) })))],
+    read: (files) => each(files, (file) => parsed(file, (text) => ({ workflowSteps: workflowStepsFrom(file.name, text) }))),
   },
   vitest: { reads: "file", inputIs: "input-vitest", read: (files) => each(files, (file) => jsonRead(file, whereResultsByFileBreak, (report) => ({ vitest: resultsByFileFrom(report, "vitest") }))) },
   jest: { reads: "file", inputIs: "input-jest", read: (files) => each(files, (file) => jsonRead(file, whereResultsByFileBreak, (report) => ({ jest: resultsByFileFrom(report, "jest") }))) },
