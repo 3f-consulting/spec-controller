@@ -59,6 +59,18 @@ describe("a configuration setting balance cannot use will be left out", () => {
       { kind: "not-checks-entry-matches-no-step", entry: "ci.yml:ci:No such step" },
     ],
     ["CLM-CFG-016", '"Install dependencies" in notChecks', { notChecks: ["Install dependencies"] }, { kind: "not-checks-entry-not-a-step-name", entry: "Install dependencies" }],
+    [
+      "CLM-CFG-016",
+      '"ci.yml:ci:Install dependencies", after a line break, in notChecks',
+      { notChecks: ["\nci.yml:ci:Install dependencies"] },
+      { kind: "not-checks-entry-not-a-step-name", entry: "\nci.yml:ci:Install dependencies" },
+    ],
+    [
+      "CLM-CFG-016",
+      '"ci.yml:ci:Install dependencies", before a line break, in notChecks',
+      { notChecks: ["ci.yml:ci:Install dependencies\n"] },
+      { kind: "not-checks-entry-not-a-step-name", entry: "ci.yml:ci:Install dependencies\n" },
+    ],
     ["CLM-CFG-019", '"notChecks": "Install"', { notChecks: "Install" }, { kind: "configuration-wrong-kind", entry: "notChecks" }],
     ["CLM-CFG-020", "3 in deferralTags", { deferralTags: [3] }, { kind: "configuration-wrong-kind", entry: "deferralTags[0]" }],
   ] as const)("[%s] a specController block with %s leaves it out, with its error", (_clm, _setting, block, error) => {

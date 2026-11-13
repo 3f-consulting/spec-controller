@@ -183,6 +183,8 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-045 | no target given, and the origin git@github.com:acme/web.git                                       | the target acme/web                                                                |
         | CLM-EVR-049 | no target given, and the origin ssh://git@github.com/acme/web.git                                 | the target acme/web                                                                |
         | CLM-EVR-050 | no target given, and the origin github.com:acme/web.git                                           | the target acme/web                                                                |
+        | CLM-EVR-074 | no target given, and the origin git@github.com:acme/acme.github.io.git                            | the target acme/acme.github.io                                                     |
+        | CLM-EVR-075 | no target given, and the origin https://gitlab.com/group/sub/web.git                              | the target sub/web                                                                 |
         | CLM-EVR-047 | no target given, and the origin /srv/git/web.git                                                  | the target web                                                                     |
         | CLM-EVR-048 | no target given, and the origin file:///srv/git/web.git                                           | the target web                                                                     |
         | CLM-EVR-051 | no target given, and the origin git://example.com/acme/web.git                                    | the target unknown-target                                                          |

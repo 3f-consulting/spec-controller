@@ -25,15 +25,22 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
       then there will be <executable claims>
 
       Examples:
-        | clm         | shape                                                     | executable claims                                  |
-        | CLM-OBL-001 | two rows with the claim codes CLM-ONE-001 and CLM-ONE-002 | two executable claims, CLM-ONE-001 and CLM-ONE-002 |
-        | CLM-OBL-002 | the tag @CLM-ONE-001 and no clm column                    | one executable claim, CLM-ONE-001                  |
+        | clm         | shape                                                                                         | executable claims                                  |
+        | CLM-OBL-001 | two rows with the claim codes CLM-ONE-001 and CLM-ONE-002                                     | two executable claims, CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-OBL-002 | the tag @CLM-ONE-001 and no clm column                                                        | one executable claim, CLM-ONE-001                  |
+        | CLM-OBL-033 | an Examples block with CLM-ONE-001 in its clm column, and an Examples block with no table yet | one executable claim, CLM-ONE-001                  |
 
     @unit @CLM-OBL-031
     Scenario: a feature file with a Background has its scenarios read as executable claims
       given a feature file had a Background, and a scenario tagged @unit @CLM-ONE-001
       when balance reads the corpus
       then there will be one executable claim, CLM-ONE-001
+
+    @unit @CLM-OBL-032
+    Scenario: a feature file with no Feature has no executable claims
+      given a feature file was empty, or had only a comment
+      when balance reads the corpus
+      then there will be no executable claim
 
   Rule: a scenario with a deferral tag is not an executable claim
 

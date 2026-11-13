@@ -25,6 +25,12 @@ describe("an Outline will be one executable claim for each row only when it has 
   it.each([
     ["CLM-OBL-001", "two rows with the claim codes CLM-ONE-001 and CLM-ONE-002", ["outline", "@unit", "      | clm         | x |\n      | CLM-ONE-001 | a |\n      | CLM-ONE-002 | b |\n"] as const, ["CLM-ONE-001", "CLM-ONE-002"]],
     ["CLM-OBL-002", "the tag @CLM-ONE-001 and no clm column", ["outline", "@unit @CLM-ONE-001", "      | x |\n      | a |\n      | b |\n"] as const, ["CLM-ONE-001"]],
+    [
+      "CLM-OBL-033",
+      "an Examples block with CLM-ONE-001 in its clm column, and an Examples block with no table yet",
+      ["outline", "@unit", "      | clm         | x |\n      | CLM-ONE-001 | a |\n\n      Examples:\n"] as const,
+      ["CLM-ONE-001"],
+    ],
   ])("[%s] a Scenario Outline with %s has its executable claims", (_clm, _shape, feature, codes) => {
     expect(claimsIn(featureOf(feature)).map(({ claimCode }) => written(claimCode))).toEqual(codes);
   });
@@ -37,6 +43,15 @@ describe("a feature file with a Background has its scenarios read as executable 
       "Feature: one\n\n  Background:\n    Given a thing\n\n  Rule: a rule\n\n    Background:\n      Given another thing\n\n    @unit @CLM-ONE-001\n    Scenario: a scenario\n      Given a step\n";
 
     expect(claimsIn(withABackground).map(({ claimCode }) => written(claimCode))).toEqual(["CLM-ONE-001"]);
+  });
+});
+
+describe("a feature file with no Feature has no executable claims", () => {
+  it.each([
+    ["empty", ""],
+    ["only a comment", "# a comment\n"],
+  ])("[CLM-OBL-032] a feature file that was %s has no executable claim", (_was, source) => {
+    expect(claimsIn(source)).toEqual([]);
   });
 });
 
