@@ -40,6 +40,15 @@ describe("a feature file with a Background has its scenarios read as executable 
   });
 });
 
+describe("a feature file with no Feature has no executable claims", () => {
+  it.each([
+    ["empty", ""],
+    ["only a comment", "# a comment\n"],
+  ])("[CLM-OBL-032] a feature file that was %s has no executable claim", (_was, source) => {
+    expect(claimsIn(source)).toEqual([]);
+  });
+});
+
 // A scenario tagged @unit, with the deferral tag on it, on its Feature, or on the Rule it sits under.
 const deferredBy = (deferral: string, on: "scenario" | "feature" | "rule"): string => {
   if (on === "feature") return `${deferral}\nFeature: one\n\n  @unit\n  Scenario: a scenario\n    Given a step\n`;

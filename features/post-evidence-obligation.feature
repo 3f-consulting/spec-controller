@@ -35,6 +35,12 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
       when balance reads the corpus
       then there will be one executable claim, CLM-ONE-001
 
+    @unit @CLM-OBL-032
+    Scenario: a feature file with no Feature has no executable claims
+      given a feature file was empty, or had only a comment
+      when balance reads the corpus
+      then there will be no executable claim
+
   Rule: a scenario with a deferral tag is not an executable claim
 
     @unit
