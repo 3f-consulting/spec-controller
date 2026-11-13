@@ -31,7 +31,7 @@ export function scenarioResultsFrom(report: unknown): ScenarioResultAsWritten[] 
         line,
         title: name,
         tags: tags.map(({ name: tag }) => tag.slice(1)),
-        steps: steps.map(({ keyword, name: text = "", result: { status, error_message } }) => ({
+        steps: steps.map(({ keyword, name: text, result: { status, error_message } }) => ({
           keyword,
           text,
           status,
