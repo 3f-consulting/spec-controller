@@ -160,6 +160,22 @@ describe("the answer is one past the highest code the repository has contained, 
     });
   });
 
+  it("[CLM-STG-062] a line in git history, since deleted, had CLM-ONE-005 in the second of two files one commit changed: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    repository.write("a.txt", "CLM-ONE-003\n");
+    repository.write("b.txt", "kept\nCLM-ONE-005\n");
+    const commit = repository.commit("first");
+    repository.write("a.txt", "gone\n");
+    repository.write("b.txt", "kept\n");
+    repository.commit("second");
+
+    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
+      answer: "CLM-ONE-006",
+      highest: { note: "highest-seen", code: "CLM-ONE-005", path: "b.txt", line: 2, commit },
+    });
+  });
+
   it("[CLM-STG-062] a line in git history, since deleted, that read @@ -1 +1 @@ CLM-ONE-005 on line 12: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));

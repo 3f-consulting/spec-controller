@@ -66,7 +66,7 @@ export function historyLines(top: string, featureCode: string): Read<ClaimCodeOc
     else if (text.startsWith("diff ")) line = undefined;
     else if (line === undefined && text.startsWith("+++ ")) path = text.slice("+++ ".length).split("\t")[0]!;
     else if (HUNK.test(text)) line = Number(HUNK.exec(text)![1]);
-    else if (line !== undefined && text.startsWith("+")) occurrences.push({ text, path, line: line++, commit });
+    else if (text.startsWith("+")) occurrences.push({ text, path, line: line!++, commit });
   }
   return { read: occurrences };
 }
