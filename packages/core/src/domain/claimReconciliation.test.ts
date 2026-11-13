@@ -57,6 +57,7 @@ describe("balance works out each Quality Check Reconciliation's outcome, and fro
     ["CLM-LDG-053", "under its code", ["fitness"], [["fitness", "passed-on-error"]], "out-of-balance", ["cannot-fail"]],
     ["CLM-LDG-021", "with no code", ["unit"], [], "out-of-balance", ["no-claim-code"]],
     ["CLM-LDG-054", "sharing its code", ["unit"], [], "out-of-balance", ["duplicate-claim-code"]],
+    ["CLM-LDG-077", "sharing its code", [], [], "out-of-balance", ["duplicate-claim-code"]],
     ["CLM-LDG-006", "phantom", [], [["unit", "passed"]], "out-of-balance", ["cites-unknown-claim"]],
     ["CLM-LDG-056", "phantom", [], [["unit", "passed"], ["unit", "passed"]], "out-of-balance", ["cites-unknown-claim", "cites-unknown-claim"]],
     ["CLM-LDG-007", "unnamed", [], [["unit", "passed"]], "out-of-balance", ["cites-no-claim"]],
