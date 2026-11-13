@@ -34,7 +34,16 @@ function runVerdictOfRun(corpus: readonly string[], observed: readonly Observed[
 describe("the run will be balanced or out of balance, as its Claim Reconciliations call for", () => {
   it.each([
     ["CLM-EVR-001", "only balanced Claim Reconciliations", ["@CLM-ONE-001"], [["unit", "passed", "ONE-001"]], "balanced"],
-    ["CLM-EVR-002", "a Claim Reconciliation out of balance", ["@CLM-ONE-001"], [["unit", "failed", "ONE-001"]], "out-of-balance"],
+    [
+      "CLM-EVR-002",
+      "a Claim Reconciliation out of balance, beside a balanced one",
+      ["@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: adds\n    Given a step\n\n  @unit @CLM-ONE-002\n  Scenario: subtracts\n    Given a step\n"],
+      [
+        ["unit", "failed", "ONE-001"],
+        ["unit", "passed", "ONE-002"],
+      ],
+      "out-of-balance",
+    ],
     ["CLM-EVR-003", "no corpus, and Evidence Observations citing no claim code", [], [["unit", "passed"]], "out-of-balance"],
   ] as const)("[%s] a run with %s has its run verdict", (_clm, _what, corpus, evidence, verdict) => {
     expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict });
@@ -248,13 +257,10 @@ describe("balance accounts for every step it reads", () => {
   const twoJobs = () =>
     workflowStepsFrom(
       "ci.yml",
-      JSON.stringify({
-        jobs: {
-          build: { steps: [{ uses: "actions/checkout@v4" }, { run: "pnpm lint" }, { run: "spec-controller balance" }] },
-          test: { steps: [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }] },
-        },
-      }),
-    ).map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [{ workflow: "ci.yml", job: "test", step: "Install" }], deferralTags: [] }, {}, shellAnswers) }));
+      JSON.stringify({ jobs: { build: { steps: [{ uses: "actions/checkout@v4" }, { run: "pnpm lint" }, { run: "spec-controller balance" }] } } }),
+    )
+      .concat(workflowStepsFrom("nightly.yml", JSON.stringify({ jobs: { build: { steps: [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }] } } })))
+      .map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [{ workflow: "nightly.yml", job: "build", step: "Install" }], deferralTags: [] }, {}, shellAnswers) }));
 
   it("[CLM-EVR-032] each job's counts will add up to the steps read in it", () => {
     const { jobs } = stepAccountOf(twoJobs());
@@ -268,7 +274,7 @@ describe("balance accounts for every step it reads", () => {
   it("[CLM-EVR-033] the total will be the sum of the jobs", () => {
     const { total } = stepAccountOf(twoJobs());
 
-    expect(total).toEqual({ stepsRead: 5, runners: 0, reconcilerSteps: 1, nonChecks: 1, plumbing: 1, candidates: 2, accountedFor: 5 });
+    expect(total).toEqual({ stepsRead: 5, runners: 0, reconcilerSteps: 1, nonChecks: 1, plumbing: 1, candidates: 2 });
   });
 
   it("[CLM-EVR-072] a workflow with a job that calls a reusable workflow, and a job with one step, has the one step read", () => {

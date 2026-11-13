@@ -14,5 +14,5 @@ export interface WorkflowStepAsWritten {
 
 // A step is known by its name, else the action it uses, else the first line of its command.
 export function stepIdentityOf({ name, uses, run }: WorkflowStepAsWritten): string {
-  return name ?? uses ?? run?.split("\n").find((line) => line.trim() !== "")?.trim() ?? "";
+  return name ?? uses ?? run?.split("\n").map((line) => line.trim()).find((line) => line !== "") ?? "";
 }

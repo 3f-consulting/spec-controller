@@ -82,7 +82,7 @@ describe("the step account totals its jobs only when it has more than one", () =
       runWith({
         runVerdict: { verdict: "balanced" },
         provenance: PROVENANCE,
-        stepAccount: { jobs: jobs.map((job) => ({ ...job, ...counts })), total: { ...counts, accountedFor: 2 } },
+        stepAccount: { jobs: jobs.map((job) => ({ ...job, ...counts })), total: counts },
       }),
     );
     const stepAccount = report.slice(report.indexOf("## Step account"));
