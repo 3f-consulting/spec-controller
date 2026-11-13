@@ -48,3 +48,9 @@ export type Allocation =
       readonly featureCodeAlreadyOnAFile: boolean;
     }
   | { readonly kind: "unknown-feature-code"; readonly featureCode: string; readonly featureCodes: readonly string[] };
+
+const CITATION = /\[CLM-([A-Z0-9]{2,5})-(\d+)\]/g;
+
+export function claimCodeCitationsIn(text: string): ClaimCode[] {
+  return [...text.matchAll(CITATION)].map(([, featureCode, number]) => ({ featureCode: featureCode!, number: number! }));
+}

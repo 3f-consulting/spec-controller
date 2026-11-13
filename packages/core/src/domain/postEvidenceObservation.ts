@@ -1,4 +1,4 @@
-import type { ClaimCode } from "./claimCodes.js";
+import { claimCodeCitationsIn, type ClaimCode } from "./claimCodes.js";
 import type { QualityCheckKind } from "./postEvidenceObligation.js";
 
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
@@ -119,6 +119,10 @@ export interface ShellAnswers {
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
 }
 
-export function evidenceObservationsOf(_results: readonly ResultsByFileAsWritten[]): EvidenceObservation[] {
-  return [];
+export function evidenceObservationsOf(results: readonly ResultsByFileAsWritten[]): EvidenceObservation[] {
+  return results.flatMap(({ file, results: inFile }) =>
+    inFile
+      .filter(({ status }) => status === "passed")
+      .map(({ title }) => ({ cites: claimCodeCitationsIn(title), result: "passed" as const, kind: "unit" as const, place: file, name: title, notes: [] })),
+  );
 }
