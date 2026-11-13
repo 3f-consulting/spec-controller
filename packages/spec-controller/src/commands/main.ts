@@ -32,7 +32,7 @@ function run(args: readonly string[], folder: string, streams: StandardStreams, 
   }
   if (request.command === "balance") {
     const read = inputsReadFor(request.inputs, folder);
-    return "ending" in read ? refusedWith(read.refusals, streams) : runs.balance(request, read, folder, streams);
+    return "ending" in read ? refusedWith(read.refusals, streams) : runs.balance(request, read, folder, streams, runs.complain);
   }
   const outcome = runs.allocate(request, folder);
   if (!("answer" in outcome)) return refusedWith([outcome.refusal], streams);

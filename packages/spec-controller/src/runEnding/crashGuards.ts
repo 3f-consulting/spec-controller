@@ -1,12 +1,34 @@
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
-import type { ExitCode } from "./codes.js";
+import { UNEXPECTED_ERROR, type ExitCode } from "./codes.js";
 
 export type Complain = (error: unknown) => void;
 
-export function complainerTo(write: (text: string) => void): Complain {
-  return (error) => write(`${appCatalogue["unexpected-error"]}: ${error instanceof Error ? `${error.name}: ${error.message}` : String(error)}\n`);
+// An error is shown by its name and message; one that cannot be shown says so.
+function shown(error: unknown): string {
+  try {
+    return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  } catch {
+    return appCatalogue["error-not-shown"];
+  }
 }
 
-export async function loadGuarded<Program>(load: () => Promise<Program>, _complain: Complain, _end: (exitCode: ExitCode) => void): Promise<Program | undefined> {
-  return load();
+// A run complains of its first unexpected error only, however many it meets.
+export function complainerTo(write: (text: string) => void): Complain {
+  let complained = false;
+  return (error) => {
+    if (complained) return;
+    complained = true;
+    write(`${appCatalogue["unexpected-error"]}: ${shown(error)}\n`);
+  };
+}
+
+// The program is loaded under the guards, so an error while it loads ends the run at 4 with a complaint.
+export async function loadGuarded<Program>(load: () => Promise<Program>, complain: Complain, end: (exitCode: ExitCode) => void): Promise<Program | undefined> {
+  try {
+    return await load();
+  } catch (error) {
+    complain(error);
+    end(UNEXPECTED_ERROR);
+    return undefined;
+  }
 }

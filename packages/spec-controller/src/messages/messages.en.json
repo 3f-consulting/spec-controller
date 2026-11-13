@@ -17,6 +17,7 @@
   "outputs-share-file": "two reports would go in one file: {reports}",
   "output-overwrites-input": "a report would overwrite {file}, a file the run reads",
   "unexpected-error": "spec-controller hit an unexpected error",
+  "error-not-shown": "an error that could not be shown",
   "unknown-command": "spec-controller has no command {command}; see {help}",
   "unknown-flag": "{command} does not take the flag {flag}; see {help}",
   "missing-value": "the flag {flag} is missing its value; see {help}",

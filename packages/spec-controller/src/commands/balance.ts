@@ -25,6 +25,8 @@ import {
 import { resolve } from "node:path";
 import type { InputsRead } from "../inputs/inputsRead.js";
 import type { StandardStreams } from "../output/streams.js";
+import type { Complain } from "../runEnding/crashGuards.js";
+import { exitCodeOf } from "../runEnding/exitCode.js";
 import type { ExitCode } from "../runEnding/runEnding.js";
 import { runIdentityIn } from "../runIdentity/runIdentity.js";
 import { writeReports } from "../output/writer.js";
@@ -65,6 +67,7 @@ export function balance(
   read: InputsRead,
   folder: string,
   streams: StandardStreams,
+  complain: Complain,
 ): ExitCode {
   const corpus = corpusNamed(inputs, folder);
   // Read first, so the run's time is when it started.
@@ -83,5 +86,11 @@ export function balance(
     ...stepAccountFor(read.workflowSteps, configuration, scripts),
     provenance,
   });
-  return writeReports(outputs, read.filesRead, reconciliation, streams, { exitZero });
+  try {
+    return writeReports(outputs, read.filesRead, reconciliation, streams, { exitZero });
+  } catch (error) {
+    // The run has its verdict, so an error in writing it out leaves the verdict's exit code alone.
+    complain(error);
+    return exitCodeOf(reconciliation.runVerdict, { exitZero });
+  }
 }
