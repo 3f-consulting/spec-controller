@@ -55,6 +55,15 @@ export default {
     },
 
     {
+      name: "variants-list-read-by-another-module",
+      severity: "error",
+      comment:
+        "a variants list is read by the module of its name, beside it, and by no other production module; any test may import a list to run every variant",
+      from: { path: "^(packages/.+/)([^/]+)\\.ts$", pathNot: "\\.(test|test-utils)\\.ts$" },
+      to: { path: "\\.variants\\.json$", pathNot: "^$1$2\\.variants\\.json$" },
+    },
+
+    {
       name: "app-adapter-imports-another-adapter",
       severity: "error",
       comment:
