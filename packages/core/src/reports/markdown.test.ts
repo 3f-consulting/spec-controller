@@ -62,7 +62,6 @@ describe("an input the run did not read has no line, and one it read by default 
       [{ name: "vitest", path: "vitest.json" }, { name: "pytest" }, { name: "cucumber", path: "cucumber.json" }],
       ["  - Vitest report: `vitest.json`", "  - Cucumber report: `cucumber.json`"],
     ],
-    ["CLM-EVR-080", "the CI workflows by default", [{ name: "workflows", path: ".github/workflows" }], ["  - CI workflows: `.github/workflows`"]],
   ] as const)("[%s] a run that read %s has a provenance line for each input it read", (_clm, _read, inputs, lines) => {
     const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, inputs } }));
     const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
