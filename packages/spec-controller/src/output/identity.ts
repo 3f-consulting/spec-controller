@@ -40,10 +40,17 @@ function streamNamedBy(path: string): "standard-output" | "standard-error" | und
 export const whereItWillBe = (path: string): string =>
   lstatSync(path, { throwIfNoEntry: false })?.isSymbolicLink() ? resolve(dirname(path), readlinkSync(path)) : resolve(path);
 
+// A volume folds case when the folder, named in capitals, is the same folder.
+function foldsCase(path: string, folder: BigIntStats): boolean {
+  const named = statSync(path.toUpperCase(), PROBED);
+  return named?.dev === folder.dev && named.ino === folder.ino;
+}
+
 function notMadeYet(path: string): FileIdentity {
   const where = whereItWillBe(path);
   const folder = statSync(`${dirname(where)}/`, EXACT);
-  return { is: "absent", folder: { device: folder.dev, inode: folder.ino }, name: basename(where) };
+  const name = basename(where);
+  return { is: "absent", folder: { device: folder.dev, inode: folder.ino }, name: foldsCase(dirname(where), folder) ? name.toLowerCase() : name };
 }
 
 // What a path names, through any link: one of the run's standard streams, a regular file, something else, or nothing
