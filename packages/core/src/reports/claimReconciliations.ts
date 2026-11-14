@@ -22,8 +22,7 @@ function cellOf({ claim, qualityCheckReconciliations }: ClaimReconciliation, kin
 // A claim is named by its code; by its code and file when another claim shares it; by its file and title when it has none.
 // A shared code makes every one of the claim's Quality Check Reconciliations duplicate-claim-code.
 function nameOf({ claim, qualityCheckReconciliations }: ClaimReconciliation): string {
-  if (isUnnamed(claim)) return coreText("unnamed-claim");
-  if (!isExecutable(claim)) return writtenClaimCode(claim.claimCode);
+  if (!isExecutable(claim)) return isUnnamed(claim) ? coreText("unnamed-claim") : writtenClaimCode(claim.claimCode);
   if (claim.claimCode === undefined) return `${inCell(claim.file)} : ${inCell(claim.title)}`;
   const code = writtenClaimCode(claim.claimCode);
   return qualityCheckReconciliations[0]!.outcome === "duplicate-claim-code" ? `${code} (${inCell(claim.file)})` : code;
