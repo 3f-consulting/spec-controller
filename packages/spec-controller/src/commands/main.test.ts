@@ -14,8 +14,8 @@ function folderWithAFeature(): string {
 
 describe("an answer will be on standard output, and anything about it on standard error", () => {
   it.each([
-    ["CLM-CLI-162", "allocate's answer", "output", ["allocate", "ABC"], "CLM-ABC-001", false],
-    ["CLM-CLI-163", "allocate's note", "error", ["allocate", "ABC"], "no history was read", false],
+    ["CLM-FMT-036", "allocate's answer", "output", ["allocate", "ABC"], "CLM-ABC-001", false],
+    ["CLM-FMT-037", "allocate's note", "error", ["allocate", "ABC"], "no history was read", false],
     ["CLM-CLI-164", "a validation failure", "error", ["allocate", "ab"], "this is not a feature code", false],
     ["CLM-CLI-165", "an unexpected error", "error", ["allocate", "ABC"], "unexpected error", true],
   ] as const)("[%s] %s is on standard %s", (_clm, _output, place, args, text, answerCannotBeWritten) => {

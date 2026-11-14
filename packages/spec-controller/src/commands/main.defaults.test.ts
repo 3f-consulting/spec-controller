@@ -22,18 +22,18 @@ function provenanceIn(folder: string, ...args: string[]): ProvenanceRead {
 const inputPath = ({ inputs }: ProvenanceRead, name: string): string | undefined => inputs.find((input) => input.name === name)?.path;
 
 describe("balance will use the default when an input is not named", () => {
-  it("[CLM-CLI-139] no target name named: balance uses unknown-target", () => {
+  it("[CLM-EVR-077] no target name named: balance uses unknown-target", () => {
     expect(provenanceIn(temporaryDirectory("no-target-")).target).toBe("unknown-target");
   });
 
-  it("[CLM-CLI-140] no source commit named: balance uses the target's HEAD", () => {
+  it("[CLM-EVR-078] no source commit named: balance uses the target's HEAD", () => {
     const repository = repositoryForTest();
     const head = repository.commit("one");
 
     expect(provenanceIn(repository.top).sourceSha).toBe(head);
   });
 
-  it("[CLM-CLI-141] no source commit named, in no git repository: balance uses unknown", () => {
+  it("[CLM-EVR-079] no source commit named, in no git repository: balance uses unknown", () => {
     expect(provenanceIn(temporaryDirectory("no-git-")).sourceSha).toBe("unknown");
   });
 });

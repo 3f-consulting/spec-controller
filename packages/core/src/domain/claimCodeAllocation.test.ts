@@ -257,7 +257,7 @@ describe("allocate takes only a feature code a feature file has", () => {
     });
   });
 
-  it("[CLM-STG-084] a request that is not a feature code stops as a usage error, and gives no code", () => {
+  it("[CLM-CLI-202] a request that is not a feature code stops as a usage error, and gives no code", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
     repository.commit("first");

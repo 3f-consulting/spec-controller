@@ -26,15 +26,15 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
     @fitness @CLM-FIT-022
     Scenario: every function in a file the push touches is under the CRAP limit for its complexity and coverage
       given a push changed some source files in the packages
-      and the unit suite had measured each function's coverage
+      and the unit suite measured each function's coverage
       when CI runs the fitness function over those files
       then every function in them will be under the CRAP limit
 
     @fitness @CLM-FIT-009
-    Scenario: the packages, core's adapters and its domain import each other only where this repository's boundaries allow, with no list of tolerated breaks
-      given the repository had drawn boundaries between its packages, core's adapters and its domain
+    Scenario: the packages, core's adapters and its domain import each other only where this repository's boundaries allow
+      given the repository drew boundaries between its packages, core's adapters and its domain
       when CI runs the fitness function over every import in the packages
-      then no import will break a boundary, and there will be no list of tolerated breaks
+      then no import will break a boundary
 
     @fitness @CLM-FIT-011
     Scenario: each package's source, its unit tests and the behavioural suite's code type-check
@@ -43,7 +43,7 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       then there will be no type error
 
     @fitness @CLM-FIT-074
-    Scenario: the packages have no child process started through a shell, no code built from a string, no regular expression built from an argument, and no file written outside the modules that check its location
+    Scenario: the packages use no unsafe way to start a process, build code or a pattern, or write a file
       given the repository had its packages' code
       when CI runs the fitness function over that code
       then no child process will be started through a shell
@@ -52,10 +52,10 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       and no file will be written outside the modules that check its location
 
     @fitness @CLM-FIT-076
-    Scenario: only the printer shows an error, with its error code
+    Scenario: every error the tool shows a reader is shown from one place
       given the repository had its packages' code
       when CI runs the fitness function over that code
-      then only the printer will show an error
+      then only one module will show an error
 
   Rule: production code is only what the product needs
 
@@ -66,10 +66,10 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       then no file, export or dependency off that list will be unused
 
     @fitness @CLM-FIT-032
-    Scenario: no clone exists in the production code
+    Scenario: no production code is a copy of other production code
       given the repository had its production code
       when CI runs the fitness function over that code
-      then there will be no clone in it
+      then none of it will be a copy of other code in it
 
   Rule: the tests stay fast and in proportion to the code
 
@@ -87,11 +87,11 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
 
     @fitness @CLM-FIT-043
     Scenario: test code is within the declared ceiling ratio to production code
-      given the repository had declared a ceiling for the ratio of test lines to production lines
+      given the repository declared a ceiling for the ratio of test lines to production lines
       when CI runs the fitness function over its tracked test and production lines
       then the ratio will be within the ceiling
 
-  Rule: no production code misses mutation testing unannounced
+  Rule: every production file is mutation-tested, or listed as not
 
     @fitness @CLM-FIT-040
     Scenario: every production source file in the packages is in a mutation scope or on the recorded list of files no scope mutates
@@ -108,7 +108,7 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       then none will be over the limit
 
     @fitness @CLM-FIT-075
-    Scenario: no comment, Feature, Rule or Scenario description or current-state document names a ticket or a claim code, or narrates how the product used to be
+    Scenario: no comment, description or current-state document points to the product's history
       given the repository had comments, descriptions and current-state documents
       when CI runs the fitness function over them
       then none will name a ticket or a claim code
@@ -129,10 +129,10 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       then none will name a code identifier or a source file
 
     @fitness @CLM-FIT-030
-    Scenario: no given, when, then, and or but line in the corpus outside the files whose subject is where output goes, capitalised or lowercase, names an output channel, an exit code, a flag, a file name or the binary
+    Scenario: no step in the corpus names an interface mechanic, outside the files whose subject is where output goes
       given the corpus had given, when, then, and and but lines, capitalised and lowercase
       when CI runs the fitness function over those lines
-      then none will name an interface mechanic
+      then none will name an output channel, an exit code, a flag, a file name or the binary
 
   Rule: every step in the corpus is one Cucumber runs
 

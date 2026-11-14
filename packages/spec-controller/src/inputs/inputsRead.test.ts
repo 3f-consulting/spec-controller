@@ -21,7 +21,7 @@ describe("an empty evidence report will count as no evidence, not as a broken fi
     ["an RSpec evidence report", "rspec", "rspec.json", '{"examples":[],"summary":{}}', { examples: [], loadErrors: [] }],
     ["a Cucumber evidence report", "cucumber", "cucumber.json", "[]", []],
     ["a CI step record", "stepRecord", "steps.json", "{}", []],
-  ] as const)("[CLM-CLI-146] %s listing nothing posts nothing, and the run does not stop", (_report, kind, file, report, nothing) => {
+  ] as const)("[CLM-OBS-149] %s listing nothing posts nothing, and the run does not stop", (_report, kind, file, report, nothing) => {
     const folder = temporaryDirectory("empty-report-");
     writeFileSync(join(folder, file), report);
 
@@ -42,7 +42,7 @@ describe("balance reads a feature file in a subfolder of the feature corpus", ()
   it.each([
     ["named", "corpus", false],
     ["read by default", "features", true],
-  ] as const)("[CLM-CLI-191] a corpus %s, beside its README: it reads area/deeper/one.feature", (_how, corpus, byDefault) => {
+  ] as const)("[CLM-OBL-034] a corpus %s, beside its README: it reads area/deeper/one.feature", (_how, corpus, byDefault) => {
     const folder = temporaryDirectory("corpus-depth-");
     mkdirSync(join(folder, corpus, "area", "deeper"), { recursive: true });
     writeFileSync(join(folder, corpus, "area", "deeper", "one.feature"), ONE_FEATURE);
