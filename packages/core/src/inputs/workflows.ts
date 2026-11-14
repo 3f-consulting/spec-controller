@@ -3,11 +3,12 @@ import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
 import { coreText } from "../messages/catalogue.js";
 import workflowsVariants from "./workflows.variants.json" with { type: "json" };
 
-// Which steps only set the job up is the reader's to say, from its list of the actions that do.
-// An entry ending in * names a family of actions, such as every setup action.
+// Which steps only set the job up is the reader's to say, from its list of the actions that do, by owner and
+// repository: an action in a repository on the list is one of them. An entry ending in * names a family of
+// repositories, such as every setup action.
 const usesAction = (uses: string, action: string): boolean => {
-  const name = uses.split("@")[0]!;
-  return action.endsWith("*") ? name.startsWith(action.slice(0, -1)) : name === action;
+  const repository = uses.split("@")[0]!.split("/").slice(0, 2).join("/");
+  return action.endsWith("*") ? repository.startsWith(action.slice(0, -1)) : repository === action;
 };
 const isPlumbing = (uses: string): boolean => workflowsVariants["CLM-OBS-015"].variants.some((action) => usesAction(uses, action));
 const WRITES_STEP_RECORD = "toJSON(steps)";
