@@ -729,7 +729,10 @@ describe("balance posts a failed test with the message its report gave", () => {
 
   // A failed test citing a claim code, as each report writes it with the message given.
   const failingIn: Readonly<Record<string, (messages: readonly string[]) => EvidenceObservation[]>> = {
-    Vitest: (messages) => observationsByFile(resultsByFileFrom(vitestFailing(messages)), "/work"),
+    Vitest: (messages) => {
+      const report = vitestFailing(messages);
+      return whereResultsByFileBreak(report) === undefined ? observationsByFile(resultsByFileFrom(report), "/work") : [];
+    },
     RSpec: (messages) => observationsByExample(resultsByExampleFrom(rspecFailing(messages.join("\n"))), "/work"),
     Cucumber: (messages) => postedByScenario(cucumberFailing(messages.join("\n"))),
   };
