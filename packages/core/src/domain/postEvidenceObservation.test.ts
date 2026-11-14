@@ -169,13 +169,13 @@ const byFileWriters: Readonly<Record<string, { readonly skipped: readonly string
 };
 
 describe("balance posts a result as passed or failed", () => {
-  it.each(observationVariants["CLM-OBS-017"].variants)("[CLM-OBS-017] %s's evidence report had a result with [CLM-ONE-001] in its title, and it passed: an Evidence Observation will be posted, as passed, citing CLM-ONE-001", () => {
+  it.each(observationVariants["CLM-OBS-017"].variants)("[CLM-OBS-017] %s's evidence report had a result with CLM-ONE-001, in brackets, in its title, and it passed: an Evidence Observation will be posted, as passed, citing CLM-ONE-001", () => {
     const posted = postedByFile(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }]));
 
     expect(posted.map(resultAndCitations)).toEqual([{ result: "passed", cites: [ONE_001] }]);
   });
 
-  it.each(observationVariants["CLM-OBS-018"].variants)("[CLM-OBS-018] %s's evidence report had a result with [CLM-ONE-001] in its title, and it failed: an Evidence Observation will be posted, as failed, citing CLM-ONE-001", () => {
+  it.each(observationVariants["CLM-OBS-018"].variants)("[CLM-OBS-018] %s's evidence report had a result with CLM-ONE-001, in brackets, in its title, and it failed: an Evidence Observation will be posted, as failed, citing CLM-ONE-001", () => {
     const posted = postedByFile(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "failed" }], "failed"));
 
     expect(posted.map(resultAndCitations)).toEqual([{ result: "failed", cites: [ONE_001] }]);
@@ -236,17 +236,17 @@ const junitWriters: Readonly<Record<string, SuiteCase>> = {
 const postedByWriter = ({ writer, suite, className, name, citation }: SuiteCase, inside = ""): EvidenceObservation[] => postedBySuite(writer, suite, testCase(className, name, `${citation}${inside}`));
 
 describe("balance posts a result as passed or failed, from a report kept by suite", () => {
-  it.each(observationVariants["CLM-OBS-025"].variants)("[CLM-OBS-025] %s's evidence report had a result with [CLM-ONE-001] in its display name, and it passed: an Evidence Observation will be posted, as passed, citing CLM-ONE-001", (variant) => {
+  it.each(observationVariants["CLM-OBS-025"].variants)("[CLM-OBS-025] %s's evidence report had a result with CLM-ONE-001, in brackets, in its display name, and it passed: an Evidence Observation will be posted, as passed, citing CLM-ONE-001", (variant) => {
     expect(postedByWriter(junitWriters[variant]!).map(resultAndCitations)).toEqual([{ result: "passed", cites: [ONE_001] }]);
   });
 
-  it.each(observationVariants["CLM-OBS-026"].variants)("[CLM-OBS-026] %s's evidence report had a result with [CLM-ONE-001] in its display name, and it failed: an Evidence Observation will be posted, as failed, citing CLM-ONE-001", (variant) => {
+  it.each(observationVariants["CLM-OBS-026"].variants)("[CLM-OBS-026] %s's evidence report had a result with CLM-ONE-001, in brackets, in its display name, and it failed: an Evidence Observation will be posted, as failed, citing CLM-ONE-001", (variant) => {
     const writer = junitWriters[variant]!;
 
     expect(postedByWriter(writer, writer.failure).map(resultAndCitations)).toEqual([{ result: "failed", cites: [ONE_001] }]);
   });
 
-  it("[CLM-OBS-118] JUnit 5 in Java's evidence report had a result with [CLM-ONE-001] in its display name, and it raised an error: an Evidence Observation will be posted, as failed, citing CLM-ONE-001", () => {
+  it("[CLM-OBS-118] JUnit 5 in Java's evidence report had a result with CLM-ONE-001, in brackets, in its display name, and it raised an error: an Evidence Observation will be posted, as failed, citing CLM-ONE-001", () => {
     const error = '<error message="the database was not there" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: the database was not there]]></error>';
 
     expect(postedByWriter(junitWriters["JUnit 5 in Java"]!, error).map(resultAndCitations)).toEqual([{ result: "failed", cites: [ONE_001] }]);
@@ -272,7 +272,7 @@ describe("balance posts a result as passed or failed, from a report kept by exam
   it.each<[string, string, string]>([
     ["CLM-OBS-029", "passed", "passed"],
     ["CLM-OBS-030", "failed", "failed"],
-  ])("[%s] RSpec's evidence report had a result with [CLM-ONE-001] in its description, and it %s: an Evidence Observation will be posted, as %s, citing CLM-ONE-001", (_clm, status, result) => {
+  ])("[%s] RSpec's evidence report had a result with CLM-ONE-001, in brackets, in its description, and it %s: an Evidence Observation will be posted, as %s, citing CLM-ONE-001", (_clm, status, result) => {
     const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status }], [], true));
 
     expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
@@ -468,15 +468,15 @@ describe("balance posts each result at the kind of quality check its source and 
 describe("balance posts a nested test citing its own code, or its parent's code when the report gives one", () => {
   const citedFrom = (title: string) => postedByFile(reportByFile("/work/one.test.ts", [{ ancestorTitles: ["[CLM-ONE-002] a group"], title, status: "passed" }])).map(({ cites }) => cites);
 
-  it.each(observationVariants["CLM-OBS-065"].variants)("[CLM-OBS-065] %s's evidence report had a passing test whose own citation was [CLM-ONE-001] in its title, nested in a describe with [CLM-ONE-002] in its title: an Evidence Observation will be posted, citing CLM-ONE-001", () => {
+  it.each(observationVariants["CLM-OBS-065"].variants)("[CLM-OBS-065] %s's evidence report had a passing test whose own citation was CLM-ONE-001, in brackets, in its title, nested in a describe with CLM-ONE-002, in brackets, in its title: an Evidence Observation will be posted, citing CLM-ONE-001", () => {
     expect(citedFrom("[CLM-ONE-001] it holds")).toEqual([[ONE_001]]);
   });
 
-  it.each(observationVariants["CLM-OBS-066"].variants)("[CLM-OBS-066] %s's evidence report had a passing test whose own citation was no claim code, nested in a describe with [CLM-ONE-002] in its title: an Evidence Observation will be posted, citing CLM-ONE-002", () => {
+  it.each(observationVariants["CLM-OBS-066"].variants)("[CLM-OBS-066] %s's evidence report had a passing test whose own citation was no claim code, nested in a describe with CLM-ONE-002, in brackets, in its title: an Evidence Observation will be posted, citing CLM-ONE-002", () => {
     expect(citedFrom("it holds")).toEqual([[ONE_002]]);
   });
 
-  it("[CLM-OBS-067] Vitest's evidence report had a passing test whose own citation was CLM-ONE-001 in its title, with no brackets, nested in a describe with [CLM-ONE-002] in its title: an Evidence Observation will be posted, citing CLM-ONE-002", () => {
+  it("[CLM-OBS-067] Vitest's evidence report had a passing test whose own citation was CLM-ONE-001 in its title, with no brackets, nested in a describe with CLM-ONE-002, in brackets, in its title: an Evidence Observation will be posted, citing CLM-ONE-002", () => {
     expect(citedFrom("CLM-ONE-001 it holds")).toEqual([[ONE_002]]);
   });
 });
@@ -491,31 +491,38 @@ describe("balance posts a nested test from a report kept by suite citing its own
   const citedFrom = (writer: SuiteWriter, suite: string, className: string, name: string) => postedBySuite(writer, suite, testCase(className, name)).map(({ cites }) => cites);
   const writerOf: Readonly<Record<string, SuiteWriter>> = { "JUnit 5 in Java": "surefire", "Go subtests via gotestsum": "go" };
 
-  it.each(observationVariants["CLM-OBS-072"].variants)("[CLM-OBS-072] %s's evidence report had a passing test whose own citation was [CLM-ONE-001] in its display name, nested in a class with [CLM-ONE-002] in its display name: an Evidence Observation will be posted, citing CLM-ONE-001", (variant) => {
+  it.each(observationVariants["CLM-OBS-072"].variants)("[CLM-OBS-072] %s's evidence report had a passing test whose own citation was CLM-ONE-001, in brackets, in its display name, nested in a class with CLM-ONE-002, in brackets, in its display name: an Evidence Observation will be posted, citing CLM-ONE-001", (variant) => {
     expect(citedFrom(writerOf[variant]!, ...nestedIn[variant]!("[CLM-ONE-001]"))).toEqual([[ONE_001]]);
   });
 
-  it.each(observationVariants["CLM-OBS-073"].variants)("[CLM-OBS-073] %s's evidence report had a passing test whose own citation was no claim code, nested in a class with [CLM-ONE-002] in its display name: an Evidence Observation will be posted, citing CLM-ONE-002", (variant) => {
+  it.each(observationVariants["CLM-OBS-073"].variants)("[CLM-OBS-073] %s's evidence report had a passing test whose own citation was no claim code, nested in a class with CLM-ONE-002, in brackets, in its display name: an Evidence Observation will be posted, citing CLM-ONE-002", (variant) => {
     expect(citedFrom(writerOf[variant]!, ...nestedIn[variant]!(""))).toEqual([[ONE_002]]);
   });
 
-  it.each<[string, string, string, string, string, SuiteWriter, readonly ClaimCode[]]>([
-    ["CLM-OBS-073", "JUnit 5 in Java", "no claim code, its display name 007", "[CLM-ONE-002] a class", "007", "surefire", [ONE_002]],
-    ["CLM-OBS-120", "JUnit 5 in Java", "no claim code", "[CLM-ONE-001] an outer class [CLM-ONE-002] an inner class", "adds one", "surefire", [ONE_002]],
-  ])("[%s] %s's evidence report had a passing test whose own citation was %s, nested in %s: an Evidence Observation will be posted, citing its nearest code", (_clm, _source, _own, suite, name, writer, cites) => {
-    expect(citedFrom(writer, suite, suite, name)).toEqual([cites]);
+  it.each<[string, string, string, string, string, readonly ClaimCode[]]>([
+    ["CLM-OBS-073", "no claim code, its display name 007", "a class with CLM-ONE-002, in brackets, in its display name", "[CLM-ONE-002] a class", "007", [ONE_002]],
+    [
+      "CLM-OBS-120",
+      "no claim code",
+      "a class with CLM-ONE-002, in brackets, in its display name, nested in one with CLM-ONE-001, in brackets, in its display name",
+      "[CLM-ONE-001] an outer class [CLM-ONE-002] an inner class",
+      "adds one",
+      [ONE_002],
+    ],
+  ])("[%s] JUnit 5 in Java's evidence report had a passing test whose own citation was %s, nested in %s: an Evidence Observation will be posted, citing CLM-ONE-002", (_clm, _own, _parent, suite, name, cites) => {
+    expect(citedFrom("surefire", suite, suite, name)).toEqual([cites]);
   });
 
-  it("[CLM-OBS-074] JUnit 5 in Kotlin's evidence report had a passing test whose own citation was no claim code, nested in a class with [CLM-ONE-002] in its display name: an Evidence Observation will be posted, citing no claim code", () => {
+  it("[CLM-OBS-074] JUnit 5 in Kotlin's evidence report had a passing test whose own citation was no claim code, nested in a class with CLM-ONE-002, in brackets, in its display name: an Evidence Observation will be posted, citing no claim code", () => {
     expect(citedFrom("gradle", "[CLM-ONE-002] a class", "example.AddsTest", "adds one")).toEqual([[]]);
   });
 });
 
 describe("balance posts a nested example citing its own code, or its group's code", () => {
   it.each<[string, string, string, readonly ClaimCode[]]>([
-    ["CLM-OBS-075", "[CLM-ONE-001] in its description", "[CLM-ONE-001] adds one", [ONE_001]],
+    ["CLM-OBS-075", "CLM-ONE-001, in brackets, in its description", "[CLM-ONE-001] adds one", [ONE_001]],
     ["CLM-OBS-076", "no claim code", "adds one", [ONE_002]],
-  ])("[%s] RSpec's evidence report had a passing test whose own citation was %s, nested in a group with [CLM-ONE-002] in its description: an Evidence Observation will be posted, citing its nearest code", (_clm, _described, description, cites) => {
+  ])("[%s] RSpec's evidence report had a passing test whose own citation was %s, nested in a group with CLM-ONE-002, in brackets, in its description: an Evidence Observation will be posted, citing its nearest code", (_clm, _described, description, cites) => {
     const posted = postedByExample(reportByExample([{ group: "[CLM-ONE-002] Adding", description, status: "passed" }]));
 
     expect(posted.map(({ cites: cited }) => cited)).toEqual([cites]);
@@ -659,7 +666,7 @@ describe("balance posts an Evidence Observation no single executable claim can t
     expect(unnamedFrom(posted)).toEqual([{ claim: "the unnamed claim", cites: [[]] }]);
   });
 
-  it("[CLM-OBS-088] Vitest's evidence report had a passing quality check with [CLM-ONE-001] in its title, a code two claims share: an Evidence Observation will be posted to the unnamed claim, naming CLM-ONE-001", () => {
+  it("[CLM-OBS-088] Vitest's evidence report had a passing quality check with CLM-ONE-001, in brackets, in its title, a code two claims share: an Evidence Observation will be posted to the unnamed claim, naming CLM-ONE-001", () => {
     expect(unnamedFrom(postedFrom("vitest", "[CLM-ONE-001]"), claimsTagged("CLM-ONE-001", "CLM-ONE-001"))).toEqual([{ claim: "the unnamed claim", cites: [["CLM-ONE-001"]] }]);
   });
 
