@@ -19,7 +19,11 @@ export interface MainRuns {
 // Help and an answer go to standard output; a note, a refusal and an unexpected error go to standard error.
 function run(args: readonly string[], folder: string, streams: StandardStreams, runs: MainRuns): ExitCode {
   const request = runRequestOf(args);
-  if ("refusals" in request) return refusedWith(request.refusals, streams.error.write);
+  if ("refusals" in request) {
+    const exitCode = refusedWith(request.refusals, streams.error.write);
+    streams.error.write(helpText(request.about));
+    return exitCode;
+  }
   if (request.command === "help") {
     streams.output.write(helpText(request.about));
     return 0;

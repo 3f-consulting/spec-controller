@@ -6,6 +6,7 @@ import catalogue from "../messages/messages.en.json" with { type: "json" };
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import flagsVariants from "../runRequest/flags.variants.json" with { type: "json" };
 import runRequestVariants from "../runRequest/runRequest.variants.json" with { type: "json" };
+import { helpText } from "../runRequest/help.js";
 import { main } from "./main.js";
 
 interface Ran {
@@ -99,14 +100,6 @@ describe("asking for help shows what can be asked for", () => {
   });
 });
 
-describe("help will answer, and nothing will run", () => {
-  it("[CLM-CLI-114] help after a command the tool does not have will not answer: it exits 2", () => {
-    const { exitCode, output, error } = ran(["frobnicate", "--help"]);
-
-    expect({ exitCode, output, unknownCommand: error.includes("[unknown-command]") }).toEqual({ exitCode: 2, output: "", unknownCommand: true });
-  });
-});
-
 describe("a command reads each argument as what it is, or refuses it", () => {
   it.each([
     ["CLM-CLI-125", "a command the tool does not have", ["frobnicate"], ["frobnicate", "[unknown-command]"]],
@@ -127,12 +120,20 @@ describe("a command reads each argument as what it is, or refuses it", () => {
   });
 });
 
-describe("a refusal points to the help that lists what was allowed", () => {
+describe("a usage error shows the help for what was asked for, whether or not help was asked for", () => {
   it.each([
-    ["CLM-CLI-187", "a flag balance does not take", ["balance", "--bogus"], "spec-controller balance --help"],
-    ["CLM-CLI-188", "a flag before the command", ["--features", "specs", "balance"], "spec-controller --help"],
-  ] as const)("[%s] %s: the complaint ends by pointing to its help", (_clm, _given, args, help) => {
-    expect(ran(args).error.trimEnd().endsWith(help)).toBe(true);
+    ["CLM-CLI-187", "a flag the command does not take, given to balance", "balance's help", ["balance", "--bogus"], "[unknown-flag]", "balance"],
+    ["CLM-CLI-187", "a flag the command does not take, given to balance, and a request for help", "balance's help", ["balance", "--bogus", "--help"], "[unknown-flag]", "balance"],
+    ["CLM-CLI-188", "a flag before the command", "the commands", ["--features", "specs", "balance"], "[flag-before-command]", undefined],
+    ["CLM-CLI-114", "a command the tool does not have, and a request for help after it", "the commands", ["frobnicate", "--help"], "[unknown-command]", undefined],
+  ] as const)("[%s] a command line had %s: when it is read, the complaint will be followed by %s, and it will exit 2", (_clm, _given, _help, args, refusal, about) => {
+    const { exitCode, output, error } = ran(args);
+
+    expect({ exitCode, output, complaintThenHelp: error.indexOf(refusal) >= 0 && error.endsWith(helpText(about)) && error.indexOf(refusal) < error.indexOf(helpText(about)) }).toEqual({
+      exitCode: 2,
+      output: "",
+      complaintThenHelp: true,
+    });
   });
 });
 

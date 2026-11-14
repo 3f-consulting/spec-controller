@@ -73,6 +73,8 @@ describe("an argument the tool does not accept will stop the run", () => {
     ["CLM-CLI-133", ["balance", "--format", "html"], "unknown-format", { format: "html", formats: "md, json", help: BALANCE_HELP }],
     ["CLM-CLI-134", ["allocate"], "no-feature-code", { help: ALLOCATE_HELP }],
   ] as const)("[%s] a command line had %j: when it is read, the run will stop, refused as %s, naming its facts", (_clm, args, key, values) => {
-    expect(runRequestOf(args)).toEqual({ refusals: [{ key, values }] });
+    const request = runRequestOf(args);
+
+    expect("refusals" in request && request.refusals).toEqual([{ key, values }]);
   });
 });
