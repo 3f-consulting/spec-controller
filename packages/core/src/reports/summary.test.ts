@@ -44,13 +44,13 @@ describe("the Markdown has a line of claim codes no claim reads only when there 
   it.each([
     ["CLM-RPT-127", 0, "not have", false],
     ["CLM-RPT-145", 1, "have", true],
-  ] as const)("[%s] totals with %i claim codes written where no claim reads them will %s the line about them", (_clm, count, _show, shown) => {
+  ] as const)("[%s] totals with %i claim codes written where no claim reads them will %s the line about them, apart from the table above it", (_clm, count, _show, shown) => {
     const run = reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]] });
     const markdown = markdownReportOf({ ...run, totals: { ...run.totals, excludedClaimCodeOccurrences: count } });
     const group = markdown.slice(markdown.indexOf("### Claim Reconciliations"), markdown.indexOf("### Quality Check Reconciliations"));
     const line = `${count} claim codes are written in a title, a step or a comment, where no claim reads them.`;
 
-    expect({ group: group.startsWith("### Claim Reconciliations"), line: group.includes(line), anyLine: group.includes("where no claim reads them") }).toEqual({
+    expect({ group: group.startsWith("### Claim Reconciliations"), line: group.includes(`\n\n${line}`), anyLine: group.includes("where no claim reads them") }).toEqual({
       group: true,
       line: shown,
       anyLine: shown,

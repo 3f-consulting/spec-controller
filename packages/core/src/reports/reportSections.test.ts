@@ -105,10 +105,12 @@ describe("the Markdown report leaves out any part the run had nothing for", () =
     ["CLM-RPT-021", "run integrity", "Run integrity"],
     ["CLM-RPT-052", "step account", "Step account"],
     ["CLM-RPT-006", "out of balance by feature", "Out of balance by feature"],
-  ] as const)("[%s] a run had nothing for %s: when its Markdown report is written, it will not have that part", (_clm, _part, heading) => {
-    const markdown = markdownReportOf(reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]] }));
+  ] as const)("[%s] a run had nothing for %s: when its Markdown report is written, it will not have that part, nor any line in its place", (_clm, _part, heading) => {
+    const markdown = markdownReportOf(
+      reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]], provenance: { inputs: [{ name: "features", path: "features" }] } }),
+    );
 
-    expect(markdown.includes(`## ${heading}`) || markdown.includes(`### ${heading}`)).toBe(false);
+    expect({ part: markdown.includes(`## ${heading}`) || markdown.includes(`### ${heading}`), inItsPlace: unlabelledOf(markdown) }).toEqual({ part: false, inItsPlace: [] });
   });
 });
 
