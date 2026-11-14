@@ -1,4 +1,4 @@
-import { parse } from "yaml";
+import { isScalar, parseDocument } from "yaml";
 import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
 import { coreText } from "../messages/catalogue.js";
 import workflowsVariants from "./workflows.variants.json" with { type: "json" };
@@ -17,8 +17,9 @@ type Mapping = Readonly<Record<string, unknown>>;
 
 const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null;
 const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
-// A step named by a number is named by that number, as GitHub shows it.
-const nameOf = (value: unknown): string | undefined => (typeof value === "number" ? String(value) : text(value));
+// A step named by a number is named by that number as the workflow writes it, as GitHub shows it: 1.10, not 1.1.
+const nameOf = (written: unknown): string | undefined =>
+  isScalar(written) && (typeof written.value === "string" || typeof written.value === "number") ? written.source : undefined;
 const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value : []);
 
 // What a step holds in each place it can write the step record from: its command, or its env: values.
@@ -29,13 +30,13 @@ const HELD_IN: Readonly<Record<string, (step: Mapping) => readonly unknown[]>> =
 const writesStepRecord = (step: Mapping): boolean =>
   workflowsVariants["CLM-OBS-013"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
 
-function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping): WorkflowStepAsWritten {
+function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping, nameAsWritten: unknown): WorkflowStepAsWritten {
   const uses = text(step["uses"]);
   return {
     workflow,
     job,
     jobContinueOnError,
-    name: nameOf(step["name"]),
+    name: nameOf(nameAsWritten),
     uses,
     run: text(step["run"]),
     id: text(step["id"]),
@@ -46,7 +47,9 @@ function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknow
 }
 
 export function workflowStepsFrom(workflow: string, source: string): WorkflowStepAsWritten[] {
-  const document: unknown = parse(source);
+  const parsed = parseDocument(source);
+  if (parsed.errors[0] !== undefined) throw parsed.errors[0];
+  const document: unknown = parsed.toJS();
   const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
   // GitHub runs no workflow whose job is not a mapping, or whose step names neither an action nor a command.
   return Object.entries(jobs as Readonly<Record<string, Mapping>>).flatMap(([job, definition]) =>
@@ -54,7 +57,7 @@ export function workflowStepsFrom(workflow: string, source: string): WorkflowSte
       if (!isMapping(step) || (text(step["uses"]) === undefined && text(step["run"]) === undefined)) {
         throw new TypeError(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
       }
-      return stepAsWritten(workflow, job, definition["continue-on-error"], step);
+      return stepAsWritten(workflow, job, definition["continue-on-error"], step, parsed.getIn(["jobs", job, "steps", at, "name"], true));
     }),
   );
 }
