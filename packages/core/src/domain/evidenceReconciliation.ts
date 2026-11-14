@@ -1,5 +1,5 @@
 import type { ClaimCodeError } from "./claimCodes.js";
-import { isExecutable, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
+import { isExecutable, isUnnamed, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import type { ConfigurationError } from "./configuration.js";
 import { QUALITY_CHECK_KINDS, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import type { EvidenceObservation, StepDisposition } from "./postEvidenceObservation.js";
@@ -169,7 +169,7 @@ function qualityCheckCountsOf(claimReconciliations: readonly ClaimReconciliation
 }
 
 const filedOn = (claim: ClaimReconciliation["claim"]): "onExecutableClaim" | "onPhantomClaim" | "onUnnamedClaim" =>
-  isExecutable(claim) ? "onExecutableClaim" : claim.claimCode === undefined ? "onUnnamedClaim" : "onPhantomClaim";
+  isExecutable(claim) ? "onExecutableClaim" : isUnnamed(claim) ? "onUnnamedClaim" : "onPhantomClaim";
 
 // Each Evidence Observation counts once, on the claim it was filed on: an executable claim, a phantom claim or the unnamed claim.
 function whereFiledOf(claimReconciliations: readonly ClaimReconciliation[]): Totals["evidenceObservations"] {
