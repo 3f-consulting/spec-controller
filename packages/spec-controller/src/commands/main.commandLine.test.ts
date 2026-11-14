@@ -137,8 +137,8 @@ describe("a refusal points to the help that lists what was allowed", () => {
 });
 
 describe("an error will be shown with its error code", () => {
-  it("[CLM-ERC-001] a flag the command does not take is shown with the error code unknown-flag, once", () => {
-    expect(ran(["balance", "--bogus"]).error.split("[unknown-flag]").length - 1).toBe(1);
+  it("[CLM-ERC-001] balance did not take --colour: when a command line with --colour is read, it will show the error code unknown-flag, once", () => {
+    expect(ran(["balance", "--colour"]).error.split("[unknown-flag]").length - 1).toBe(1);
   });
 });
 
