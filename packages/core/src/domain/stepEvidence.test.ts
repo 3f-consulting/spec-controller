@@ -231,6 +231,9 @@ describe("a runner is recognised only as the command a step runs", () => {
     ["CLM-OBS-005", "gradle lint", "gradle test", "candidate"],
     ["CLM-OBS-006", "eslint vitest.config.ts", "vitest", "candidate"],
     ["CLM-OBS-007", "vitest run | tee out.txt", "vitest", "candidate"],
+    ["CLM-OBS-007", 'vitest run | while read -r line; do echo "$line"; done', "vitest", "candidate"],
+    ["CLM-OBS-007", "vitest run | if true; then cat; fi", "vitest", "candidate"],
+    ["CLM-OBS-007", "vitest run | (cat)", "vitest", "candidate"],
   ] as const)("[%s] a step running %s, with %s as its unit runner, will be counted as a %s", (_clm, run, runner, countedAs) => {
     expect(dispositionOf(run, runner)).toBe(countedAs);
   });
