@@ -1,0 +1,14 @@
+{
+  "CLM-LDG-001": {
+    "class": "a passing check of each kind citing its claim",
+    "variants": ["unit", "integration", "e2e", "performance", "fitness"]
+  },
+  "CLM-LDG-047": {
+    "class": "one passing and one failing check citing the claim",
+    "variants": ["unit tests", "fitness functions"]
+  },
+  "CLM-LDG-054": {
+    "class": "a claim code shared with another claim",
+    "variants": ["with a kind-of-check tag", "without a kind-of-check tag"]
+  }
+}
