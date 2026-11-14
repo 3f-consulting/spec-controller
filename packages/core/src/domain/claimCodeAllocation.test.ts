@@ -1,10 +1,19 @@
-import { appendFileSync, chmodSync, rmSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { appendFileSync, chmodSync, realpathSync, rmSync } from "node:fs";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { allocate, type AllocateOutcome } from "../../../spec-controller/src/commands/allocate.js";
+import appCatalogue from "../../../spec-controller/src/messages/messages.en.json" with { type: "json" };
+import { noteText } from "../../../spec-controller/src/output/allocateNotes.js";
 import { featureFile, folderForTest, nestedCheckoutIn, repositoryForTest, shallowCloneOf } from "../../../spec-controller/src/repository/repository.test-utils.js";
+import { textFor } from "../messages/catalogue.js";
 
 const answerAndHighest = (outcome: AllocateOutcome) =>
   "answer" in outcome ? { answer: outcome.answer, highest: outcome.notes.find(({ note }) => note === "highest-seen") } : outcome;
+
+// The notes as the developer reads them beside the answer.
+const notesWritten = (outcome: AllocateOutcome): readonly string[] => ("notes" in outcome ? outcome.notes.map(noteText) : []);
+
+// A note's words, as the catalogue gives them, followed by what it is about.
+const noted = (note: string, about?: string): string => (about === undefined ? textFor(appCatalogue, note) : `${textFor(appCatalogue, note)}: ${about}`);
 
 const ONE = { featureCode: "ONE", asNewFeatureCode: false };
 
@@ -15,9 +24,12 @@ describe("the answer is one past the highest code the repository has contained",
     repository.write(".github/workflows/ci.yml", "jobs: {}\n# CLM-ONE-005\n");
     repository.commit("first");
 
-    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
+    const outcome = allocate(ONE, repository.top);
+
+    expect({ ...answerAndHighest(outcome), written: notesWritten(outcome) }).toEqual({
       answer: "CLM-ONE-006",
       highest: { note: "highest-seen", code: "CLM-ONE-005", path: ".github/workflows/ci.yml", line: 2 },
+      written: [noted("highest-seen", "CLM-ONE-005, .github/workflows/ci.yml:2")],
     });
   });
 
@@ -57,9 +69,12 @@ describe("the answer is one past the highest code the repository has contained",
     repository.write("old.txt", "kept\n");
     repository.commit("second");
 
-    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
+    const outcome = allocate(ONE, repository.top);
+
+    expect({ ...answerAndHighest(outcome), written: notesWritten(outcome) }).toEqual({
       answer: "CLM-ONE-006",
       highest: { note: "highest-seen", code, path: "old.txt", line: 2, commit },
+      written: [noted("highest-seen", `${code}, old.txt:2@${commit}`)],
     });
   });
 
@@ -106,6 +121,88 @@ describe("the answer is one past the highest code the repository has contained",
   });
 });
 
+// Environment variables set for one test, as they stood again when it finishes.
+function environmentForTest(variables: Readonly<Record<string, string>>): void {
+  Object.entries(variables).forEach(([name, value]) => vi.stubEnv(name, value));
+  onTestFinished(() => {
+    vi.unstubAllEnvs();
+  });
+}
+
+describe("with no code seen, the answer is the feature code's first claim code", () => {
+  it("[CLM-STG-098] a feature file tagged @ONE with no claim code, and nothing else with a ONE code: the answer is CLM-ONE-001, with no note", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", "@ONE\nFeature: one\n");
+    repository.commit("first");
+
+    expect(allocate(ONE, repository.top)).toEqual({ answer: "CLM-ONE-001", notes: [] });
+  });
+});
+
+describe("the answer is one past the highest code the repository has contained, by what git reads", () => {
+  it("[CLM-STG-069] only a file the developer's own git configuration ignores contained CLM-ONE-900: the answer is CLM-ONE-002, noting the feature file and line", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    repository.commit("first");
+    repository.write("ignored.txt", "CLM-ONE-900\n");
+    const own = folderForTest();
+    own.write("ignore", "ignored.txt\n");
+    own.write("config", `[core]\n\texcludesFile = ${own.top}/ignore\n`);
+    environmentForTest({ GIT_CONFIG_GLOBAL: `${own.top}/config` });
+
+    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
+      answer: "CLM-ONE-002",
+      highest: { note: "highest-seen", code: "CLM-ONE-001", path: "features/one.feature", line: 4 },
+    });
+  });
+
+  it("[CLM-STG-062] a line in git history, since deleted, had CLM-ONE-005 in a file whose name holds a space: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    repository.write("old notes.txt", "kept\nCLM-ONE-005\n");
+    const commit = repository.commit("first");
+    repository.write("old notes.txt", "kept\n");
+    repository.commit("second");
+
+    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
+      answer: "CLM-ONE-006",
+      highest: { note: "highest-seen", code: "CLM-ONE-005", path: "old notes.txt", line: 2, commit },
+    });
+  });
+
+  it("[CLM-STG-062] a line in git history, since deleted, had CLM-ONE-005 in the second of two files one commit changed: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    repository.write("a.txt", "CLM-ONE-003\n");
+    repository.write("b.txt", "kept\nCLM-ONE-005\n");
+    const commit = repository.commit("first");
+    repository.write("a.txt", "gone\n");
+    repository.write("b.txt", "kept\n");
+    repository.commit("second");
+
+    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
+      answer: "CLM-ONE-006",
+      highest: { note: "highest-seen", code: "CLM-ONE-005", path: "b.txt", line: 2, commit },
+    });
+  });
+
+  it("[CLM-STG-062] a line in git history, since deleted, that read @@ -1 +1 @@ CLM-ONE-005 on line 12: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    repository.write("old.txt", "kept\n".repeat(11));
+    repository.commit("first");
+    repository.write("old.txt", `${"kept\n".repeat(11)}@@ -1 +1 @@ CLM-ONE-005\n`);
+    const commit = repository.commit("second");
+    repository.write("old.txt", "kept\n".repeat(11));
+    repository.commit("third");
+
+    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
+      answer: "CLM-ONE-006",
+      highest: { note: "highest-seen", code: "CLM-ONE-005", path: "old.txt", line: 12, commit },
+    });
+  });
+});
+
 describe("allocate takes only a feature code a feature file has", () => {
   it("[CLM-STG-083] a feature code on a feature file in a subdirectory is found", () => {
     const repository = repositoryForTest();
@@ -124,6 +221,19 @@ describe("allocate takes only a feature code a feature file has", () => {
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
     repository.write("features/two.feature", featureFile("TWO", "CLM-TWO-001"));
     if (withFixture) repository.write("tests/fixtures/zzz.feature", featureFile("ZZZ", "CLM-ZZZ-001"));
+    repository.commit("first");
+
+    expect(allocate({ featureCode: "ZZZ", asNewFeatureCode: false }, repository.top)).toEqual({
+      stop: "unknown-feature-code",
+      refusal: { key: "unknown-feature-code", values: { featureCode: "ZZZ", featureCodes: "ONE, TWO" } },
+    });
+  });
+
+  it("[CLM-STG-077] the features folder held files tagged @ONE and @TWO, and one with no feature code, where no file mentions ZZZ: a request for ZZZ stops as an unknown feature code, listing ONE and TWO", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    repository.write("features/two.feature", featureFile("TWO", "CLM-TWO-001"));
+    repository.write("features/plain.feature", "Feature: plain\n");
     repository.commit("first");
 
     expect(allocate({ featureCode: "ZZZ", asNewFeatureCode: false }, repository.top)).toEqual({
@@ -170,7 +280,9 @@ describe("allocate takes only a feature code a feature file has", () => {
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-003"));
     repository.commit("first");
 
-    expect(allocate({ featureCode, asNewFeatureCode: true }, repository.top)).toEqual({ answer, notes });
+    const outcome = allocate({ featureCode, asNewFeatureCode: true }, repository.top);
+
+    expect({ outcome, written: notesWritten(outcome) }).toEqual({ outcome: { answer, notes }, written: notes.map(({ note, featureCode: about }) => noted(note, about)) });
   });
 
   it("[CLM-STG-086] --new in a repository with no features folder gives the feature code's first claim code", () => {
@@ -206,6 +318,13 @@ describe("allocate says what history it did not read", () => {
 
     expect(outcome).toMatchObject({ answer: "CLM-ONE-002" });
     expect("notes" in outcome ? outcome.notes : []).toContainEqual({ note: "no-history-read" });
+    expect(notesWritten(outcome)).toContain(noted("no-history-read"));
+  });
+
+  it("[CLM-STG-075] the developer's copy is not a git repository, and the developer's git speaks German: the answer is CLM-ONE-002, noting that no history was read", () => {
+    environmentForTest({ LANG: "en_US.UTF-8", LANGUAGE: "de" });
+
+    expect(allocate(ONE, copyWithNoGit())).toEqual({ answer: "CLM-ONE-002", notes: [{ note: "highest-seen", code: "CLM-ONE-001", path: "features/one.feature", line: 4 }, { note: "no-history-read" }] });
   });
 
   it("[CLM-STG-076] the developer's copy is a shallow clone from after that line: the answer is CLM-ONE-002, noting that history before the clone's first commit was not read", () => {
@@ -214,6 +333,7 @@ describe("allocate says what history it did not read", () => {
 
     expect(outcome).toMatchObject({ answer: "CLM-ONE-002" });
     expect("notes" in outcome ? outcome.notes : []).toContainEqual({ note: "history-before", commit: firstCommit });
+    expect(notesWritten(outcome)).toContain(noted("history-before", firstCommit));
   });
 
   it("[CLM-STG-087] with no git repository and no code seen, --new ZZ answers CLM-ZZ-001, noting that no history was read", () => {
@@ -237,6 +357,12 @@ function repositoryOfOne() {
 
 const stoppedOn = (key: string, values: Readonly<Record<string, unknown>>) => ({ stop: "usage-error", refusal: { key, values } });
 
+// What git said, as a refusal names it, and whether that is git's words without the newline git ends them with.
+function whatGitSaid(outcome: AllocateOutcome): { readonly said: unknown; readonly asWords: boolean } {
+  const said = "refusal" in outcome ? outcome.refusal.values["said"] : undefined;
+  return { said, asWords: typeof said === "string" && said === said.trim() };
+}
+
 describe("allocate names what it could not read, and gives no code", () => {
   it("[CLM-STG-072] a file git cannot read stops it as a usage error, naming what it could not read, and what git said", () => {
     const repository = repositoryOfOne();
@@ -252,14 +378,30 @@ describe("allocate names what it could not read, and gives no code", () => {
     const blob = repository.git("rev-parse", "HEAD:features/one.feature");
     rmSync(`${repository.top}/.git/objects/${blob.slice(0, 2)}/${blob.slice(2)}`);
 
-    expect(allocate(ONE, repository.top)).toEqual(stoppedOn("unreadable-history", { said: expect.stringContaining(blob) }));
+    const outcome = allocate(ONE, repository.top);
+
+    expect({ outcome, asWords: whatGitSaid(outcome).asWords }).toEqual({ outcome: stoppedOn("unreadable-history", { said: expect.stringContaining(blob) }), asWords: true });
   });
 
   it("[CLM-STG-074] a damaged repository stops it as a usage error, naming what it could not read, and what git said", () => {
     const repository = repositoryOfOne();
     appendFileSync(`${repository.top}/.git/config`, "[[[\n");
 
-    expect(allocate(ONE, repository.top)).toEqual(stoppedOn("damaged-repository", { said: expect.stringContaining("config") }));
+    const outcome = allocate(ONE, repository.top);
+
+    expect({ outcome, asWords: whatGitSaid(outcome).asWords }).toEqual({ outcome: stoppedOn("damaged-repository", { said: expect.stringContaining("config") }), asWords: true });
+  });
+
+  it("[CLM-STG-074] a repository whose configuration gives searching a value git cannot read stops it as a usage error, naming what it could not read, and what git said", () => {
+    const repository = repositoryOfOne();
+    repository.git("config", "grep.lineNumber", "not-a-boolean");
+
+    const outcome = allocate(ONE, repository.top);
+
+    expect({ outcome, asWords: whatGitSaid(outcome).asWords }).toEqual({
+      outcome: stoppedOn("unreadable-in-tree", { path: realpathSync(repository.top), said: expect.stringContaining("grep.linenumber") }),
+      asWords: true,
+    });
   });
 
   it("[CLM-STG-085] a folder in the tree it cannot read stops it as a usage error, naming what it could not read", () => {
@@ -269,6 +411,15 @@ describe("allocate names what it could not read, and gives no code", () => {
     chmodSync(`${copy.top}/locked`, 0o000);
 
     expect(allocate(ONE, copy.top)).toEqual(stoppedOn("unreadable-in-tree", { path: "locked/", said: expect.stringContaining("Permission denied") }));
+  });
+
+  it("[CLM-STG-085] a folder in the features folder it cannot read stops it as a usage error, naming what it could not read", () => {
+    const copy = folderForTest();
+    copy.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    copy.write("features/locked/two.feature", featureFile("TWO", "CLM-TWO-001"));
+    chmodSync(`${copy.top}/features/locked`, 0o000);
+
+    expect(allocate(ONE, copy.top)).toEqual(stoppedOn("unreadable-in-tree", { path: "features/locked", said: expect.stringContaining("permission denied") }));
   });
 
   it("[CLM-STG-093] a file in the tree it cannot read stops it as a usage error, naming what it could not read", () => {

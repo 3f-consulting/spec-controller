@@ -1,17 +1,24 @@
 import { chmodSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, readlinkSync, statSync, symlinkSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { describe, expect, it, onTestFinished } from "vitest";
+import { dirname, join } from "node:path";
+import { textFor, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import appCatalogue from "../messages/messages.en.json" with { type: "json" };
+import { refusalText } from "../runEnding/refusal.js";
 import { runRequestOf } from "../runRequest/runRequest.js";
-import { writeReports, type ReportedReconciliation } from "./writer.js";
+import { processStreams } from "./streams.js";
+import { writeReports } from "./writer.js";
 
 // A run with nothing reconciled, its totals all zero.
-const RECONCILIATION: ReportedReconciliation = {
+const RECONCILIATION: EvidenceReconciliation = {
   claimReconciliations: [],
   runVerdict: { verdict: "balanced" },
   totals: { claimReconciliations: { total: 0, balanced: 0, outOfBalance: 0 }, qualityCheckReconciliations: { byKind: [{ kind: "unit", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "integration", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "e2e", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "performance", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "fitness", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }], noKind: { evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, all: { evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } } }, evidenceObservations: { total: 0, onExecutableClaim: 0, onPhantomClaim: 0, onUnnamedClaim: 0 }, excludedClaimCodeOccurrences: 0 },
   provenance: { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] },
 };
+
+// A run asked for no --exit-zero.
+const AS_ASKED = { exitZero: false };
 
 // Standard output and standard error as the test's own descriptors, each writing into a list the test reads.
 function capturedStreams(): { readonly output: string[]; readonly error: string[]; readonly streams: Parameters<typeof writeReports>[3] } {
@@ -19,6 +26,9 @@ function capturedStreams(): { readonly output: string[]; readonly error: string[
   const error: string[] = [];
   return { output, error, streams: { output: { fd: 1, write: (text) => output.push(text) }, error: { fd: 2, write: (text) => error.push(text) } } };
 }
+
+// What the run says on standard error when it refuses, as the catalogue words it.
+const refused = (key: string, values: Readonly<Record<string, string>>): string => `${refusalText({ key, values })}\n`;
 
 const MARKDOWN_OPENING = "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention.";
 
@@ -42,6 +52,13 @@ function endingOf(write: () => number): unknown {
   }
 }
 
+// The last of forty links in a chain to a place, as many as the system follows: link-40 to link-39, … link-1 to the place.
+function chainOfLinksTo(place: string, folder: string): string {
+  symlinkSync(place, join(folder, "link-1"));
+  Array.from({ length: 39 }, (_, at) => at + 2).forEach((link) => symlinkSync(join(folder, `link-${link - 1}`), join(folder, `link-${link}`)));
+  return join(folder, "link-40");
+}
+
 const outputsAskedFor = (args: readonly string[]) => {
   const request = runRequestOf(["balance", ...args]);
   return "command" in request && request.command === "balance" ? request.outputs : [];
@@ -55,7 +72,7 @@ describe("you will get the report format you named", () => {
   ] as const)("[%s] asking for %s gives the %s report", (_clm, _format, report, args) => {
     const { output, streams } = capturedStreams();
 
-    writeReports(outputsAskedFor(args), [], RECONCILIATION, streams);
+    writeReports(outputsAskedFor(args), [], RECONCILIATION, streams, AS_ASKED);
 
     const written = output.join("");
     expect(report === "JSON" ? JSON.parse(written) : written.split("\n")[2]).toEqual(
@@ -66,7 +83,6 @@ describe("you will get the report format you named", () => {
 
 describe("a report will be where you asked", () => {
   it.each([
-    ["CLM-FMT-016", "no destination", (_folder: string) => [], (_folder: string, output: string) => opensAsMarkdown(output)],
     [
       "CLM-FMT-003",
       "a file",
@@ -114,7 +130,7 @@ describe("a report will be where you asked", () => {
     const args = ask(folder);
     const inputsRead = existsSync(join(folder, "features")) ? [join(folder, "features", "one.feature")] : [];
 
-    writeReports(outputsAskedFor(args), inputsRead, RECONCILIATION, streams);
+    writeReports(outputsAskedFor(args), inputsRead, RECONCILIATION, streams, AS_ASKED);
 
     expect(isThere(folder, output.join(""))).toBe(true);
   });
@@ -132,6 +148,24 @@ describe("each of two reports will be where you asked", () => {
       "CLM-FMT-020",
       "no destination for one, standard error for the other",
       (_folder: string) => ["--format", "md", "--format", "json:/dev/stderr"],
+      (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
+    ],
+    [
+      "CLM-FMT-020",
+      "no destination for one, standard error by its descriptor for the other",
+      (_folder: string) => ["--format", "md", "--format", "json:/dev/fd/2"],
+      (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
+    ],
+    [
+      "CLM-FMT-020",
+      "no destination for one, standard error by the process's descriptor for the other",
+      (_folder: string) => ["--format", "md", "--format", "json:/proc/self/fd/2"],
+      (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
+    ],
+    [
+      "CLM-FMT-020",
+      "no destination for one, standard error by the last of forty links in a chain to it for the other",
+      (folder: string) => ["--format", "md", "--format", `json:${chainOfLinksTo("/dev/stderr", folder)}`],
       (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
     ],
     [
@@ -162,7 +196,7 @@ describe("each of two reports will be where you asked", () => {
     const folder = temporaryDirectory("report-destinations-");
     const { output, error, streams } = capturedStreams();
 
-    writeReports(outputsAskedFor(ask(folder)), [], RECONCILIATION, streams);
+    writeReports(outputsAskedFor(ask(folder)), [], RECONCILIATION, streams, AS_ASKED);
 
     expect(areThere(folder, output.join(""), error.join(""))).toBe(true);
   });
@@ -174,7 +208,7 @@ describe("each of two reports will be where you asked", () => {
     onTestFinished(() => closeSync(redirected));
 
     const ending = endingOf(() =>
-      writeReports(outputsAskedFor(["--format", "md:/dev/stderr", "--format", "json:/dev/stderr"]), [], RECONCILIATION, { ...streams, error: { ...streams.error, fd: redirected } }),
+      writeReports(outputsAskedFor(["--format", "md:/dev/stderr", "--format", "json:/dev/stderr"]), [], RECONCILIATION, { ...streams, error: { ...streams.error, fd: redirected } }, AS_ASKED),
     );
 
     const onStandardError = error.join("");
@@ -186,12 +220,22 @@ describe("each of two reports will be where you asked", () => {
   });
 });
 
+describe("two reports asked for at one device will both be written, as a device is not a file they share", () => {
+  it("[CLM-FMT-035] --format md:/dev/null --format json:/dev/null: both are written, and the run does not stop", () => {
+    const { output, error, streams } = capturedStreams();
+
+    const exitCode = writeReports(outputsAskedFor(["--format", "md:/dev/null", "--format", "json:/dev/null"]), [], RECONCILIATION, streams, AS_ASKED);
+
+    expect({ exitCode, output: output.join(""), error: error.join("") }).toEqual({ exitCode: 0, output: "", error: "" });
+  });
+});
+
 describe("a place it cannot write will stop the run, and nothing will be written", () => {
   it.each([
     [
       "CLM-FMT-008",
       "a file it may not write",
-      "may not be written",
+      "may-not-be-written",
       (folder: string) => {
         writeFileSync(join(folder, "report.md"), "an earlier report");
         chmodSync(join(folder, "report.md"), 0o444);
@@ -200,20 +244,45 @@ describe("a place it cannot write will stop the run, and nothing will be written
       (place: string) => readFileSync(place, "utf8") === "an earlier report",
     ],
     [
+      "CLM-FMT-008",
+      "a file in a folder it may not enter",
+      "may-not-be-written",
+      (folder: string) => {
+        mkdirSync(join(folder, "locked"));
+        chmodSync(join(folder, "locked"), 0o000);
+        return join(folder, "locked", "report.md");
+      },
+      (place: string) => {
+        chmodSync(dirname(place), 0o755);
+        return !existsSync(place);
+      },
+    ],
+    [
+      "CLM-FMT-008",
+      "a new file in a folder it may not write",
+      "may-not-be-written",
+      (folder: string) => {
+        mkdirSync(join(folder, "read-only"));
+        chmodSync(join(folder, "read-only"), 0o555);
+        return join(folder, "read-only", "report.md");
+      },
+      (place: string) => !existsSync(place),
+    ],
+    [
       "CLM-FMT-026",
       "an existing folder",
-      "is a folder",
+      "is-a-folder",
       (folder: string) => {
         mkdirSync(join(folder, "reports"));
         return join(folder, "reports");
       },
       (place: string) => statSync(place).isDirectory(),
     ],
-    ["CLM-FMT-027", "a file in a folder that doesn't exist", "folder does not exist", (folder: string) => join(folder, "missing", "report.md"), (place: string) => !existsSync(place)],
+    ["CLM-FMT-027", "a file in a folder that doesn't exist", "folder-does-not-exist", (folder: string) => join(folder, "missing", "report.md"), (place: string) => !existsSync(place)],
     [
       "CLM-FMT-034",
       "a link that leads round to itself",
-      "leads round to itself",
+      "leads-round-to-itself",
       (folder: string) => {
         symlinkSync(join(folder, "b"), join(folder, "a"));
         symlinkSync(join(folder, "a"), join(folder, "b"));
@@ -226,11 +295,11 @@ describe("a place it cannot write will stop the run, and nothing will be written
     const { output, error, streams } = capturedStreams();
     const destination = place(folder);
 
-    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${destination}`]), [], RECONCILIATION, streams));
+    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${destination}`]), [], RECONCILIATION, streams, AS_ASKED));
 
-    expect({ ending, complaint: error.join("").includes(destination) && error.join("").includes(why), output: output.join(""), asItWas: asItWas(destination) }).toEqual({
+    expect({ ending, complaint: error.join(""), output: output.join(""), asItWas: asItWas(destination) }).toEqual({
       ending: 2,
-      complaint: true,
+      complaint: refused("report-not-written", { place: destination, why: textFor(appCatalogue, why) }),
       output: "",
       asItWas: true,
     });
@@ -271,9 +340,13 @@ describe("if one report cannot be written, neither will be", () => {
     const args = [...other(folder), "--format", `md:${unwritable}`];
     const outputs = outputsAskedFor(args.length === 2 ? ["--format", "json", ...args] : args);
 
-    const ending = endingOf(() => writeReports(outputs, [], RECONCILIATION, streams));
+    const ending = endingOf(() => writeReports(outputs, [], RECONCILIATION, streams, AS_ASKED));
 
-    expect({ ending, complaint: error.join("").includes(unwritable), asItWas: asItWas(folder, output.join("")) }).toEqual({ ending: 2, complaint: true, asItWas: true });
+    expect({ ending, complaint: error.join(""), asItWas: asItWas(folder, output.join("")) }).toEqual({
+      ending: 2,
+      complaint: refused("report-not-written", { place: unwritable, why: textFor(appCatalogue, "folder-does-not-exist") }),
+      asItWas: true,
+    });
   });
 });
 
@@ -281,6 +354,8 @@ describe("two reports will not both go to standard output", () => {
   it.each([
     ["CLM-FMT-005", "no destination", (_folder: string): string => "json"],
     ["CLM-FMT-011", "a path that names standard output", (_folder: string): string => "json:/dev/stdout"],
+    ["CLM-FMT-011", "a path that names standard output by its descriptor", (_folder: string): string => "json:/dev/fd/1"],
+    ["CLM-FMT-011", "a path that names standard output by the process's descriptor", (_folder: string): string => "json:/proc/self/fd/1"],
     [
       "CLM-FMT-023",
       "a link to standard output",
@@ -289,20 +364,25 @@ describe("two reports will not both go to standard output", () => {
         return `json:${join(folder, "out")}`;
       },
     ],
+    [
+      "CLM-FMT-023",
+      "the last of forty links in a chain to standard output",
+      (folder: string): string => `json:${chainOfLinksTo("/dev/stdout", folder)}`,
+    ],
   ] as const)("[%s] one report with no destination and the other at %s: the run stops with exit 2, naming both, and nothing is on standard output", (_clm, _other, other) => {
     const folder = temporaryDirectory("both-to-standard-output-");
     const { output, error, streams } = capturedStreams();
     const asked = other(folder);
 
-    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", "md", "--format", asked]), [], RECONCILIATION, streams));
+    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", "md", "--format", asked]), [], RECONCILIATION, streams, AS_ASKED));
 
-    expect({ ending, complaint: error.join("").includes("md") && error.join("").includes(asked), output: output.join("") }).toEqual({ ending: 2, complaint: true, output: "" });
+    expect({ ending, complaint: error.join(""), output: output.join("") }).toEqual({ ending: 2, complaint: refused("more-than-one-to-stdout", { reports: `md, ${asked}` }), output: "" });
   });
 });
 
 describe("two reports will not go in one file", () => {
   it.each([
-    ["CLM-FMT-010", "the same path", (file: string): readonly string[] => ["--format", `json:${file}`]],
+    ["CLM-FMT-010", "the same path", (file: string): readonly string[] => ["--format", `json:${file}`], (file: string): string => `json:${file}`],
     [
       "CLM-FMT-024",
       "a link to it",
@@ -310,9 +390,10 @@ describe("two reports will not go in one file", () => {
         symlinkSync(file, `${file}.link`);
         return ["--format", `json:${file}.link`];
       },
+      (file: string): string => `json:${file}.link`,
     ],
-    ["CLM-FMT-025", "standard output, redirected to the file", (_file: string): readonly string[] => ["--format", "json"]],
-  ] as const)("[%s] one report at a file and the other at %s: the run stops with exit 2, naming the file and both, and the file is as it was", (clm, _other, other) => {
+    ["CLM-FMT-025", "standard output, redirected to the file", (_file: string): readonly string[] => ["--format", "json"], (_file: string): string => "json"],
+  ] as const)("[%s] one report at a file and the other at %s: the run stops with exit 2, naming the file and both, and the file is as it was", (clm, _other, other, otherAsGiven) => {
     const file = join(temporaryDirectory("one-file-"), "report.md");
     writeFileSync(file, "an earlier report");
     const { error, streams } = capturedStreams();
@@ -321,12 +402,12 @@ describe("two reports will not go in one file", () => {
     const asked = ["--format", `md:${file}`, ...other(file)];
 
     const ending = endingOf(() =>
-      writeReports(outputsAskedFor(asked), [], RECONCILIATION, redirected === undefined ? streams : { ...streams, output: { ...streams.output, fd: redirected } }),
+      writeReports(outputsAskedFor(asked), [], RECONCILIATION, redirected === undefined ? streams : { ...streams, output: { ...streams.output, fd: redirected } }, AS_ASKED),
     );
 
-    expect({ ending, complaint: error.join("").includes(file) && error.join("").includes("md") && error.join("").includes("json"), file: readFileSync(file, "utf8") }).toEqual({
+    expect({ ending, complaint: error.join(""), file: readFileSync(file, "utf8") }).toEqual({
       ending: 2,
-      complaint: true,
+      complaint: refused("outputs-share-file", { reports: `md:${file}, ${otherAsGiven(file)}` }),
       file: "an earlier report",
     });
   });
@@ -335,9 +416,9 @@ describe("two reports will not go in one file", () => {
     const file = join(temporaryDirectory("one-new-file-"), "report.md");
     const { error, streams } = capturedStreams();
 
-    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${file}`, "--format", `json:${file}`]), [], RECONCILIATION, streams));
+    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${file}`, "--format", `json:${file}`]), [], RECONCILIATION, streams, AS_ASKED));
 
-    expect({ ending, complaint: error.join("").includes(file), made: existsSync(file) }).toEqual({ ending: 2, complaint: true, made: false });
+    expect({ ending, complaint: error.join(""), made: existsSync(file) }).toEqual({ ending: 2, complaint: refused("outputs-share-file", { reports: `md:${file}, json:${file}` }), made: false });
   });
 });
 
@@ -348,7 +429,7 @@ describe("a report will be written to a file the run does not read, even on the 
     writeFileSync(join(folder, "report.md"), "an earlier report");
     const { streams } = capturedStreams();
 
-    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${join(folder, "report.md")}`]), [join(folder, "results.json")], RECONCILIATION, streams));
+    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${join(folder, "report.md")}`]), [join(folder, "results.json")], RECONCILIATION, streams, AS_ASKED));
 
     expect({ ending, written: opensAsMarkdown(readFileSync(join(folder, "report.md"), "utf8")) }).toEqual({ ending: 0, written: true });
   });
@@ -360,17 +441,29 @@ describe("a report will not be written over a file the run reads", () => {
     writeFileSync(results, "test results");
     const { error, streams } = capturedStreams();
 
-    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${results}`]), [results], RECONCILIATION, streams));
+    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${results}`]), [results], RECONCILIATION, streams, AS_ASKED));
 
-    expect({ ending, complaint: error.join("").includes(results), file: readFileSync(results, "utf8") }).toEqual({ ending: 2, complaint: true, file: "test results" });
+    expect({ ending, complaint: error.join(""), file: readFileSync(results, "utf8") }).toEqual({ ending: 2, complaint: refused("output-overwrites-input", { file: results }), file: "test results" });
   });
 });
 
 describe("a report on standard error will not go in a file another report names or the run reads", () => {
   it.each([
-    ["CLM-FMT-031", "a file another report names", (file: string): readonly string[] => ["--format", `json:${file}`], (_file: string): readonly string[] => []],
-    ["CLM-FMT-032", "a file the run reads", (_file: string): readonly string[] => [], (file: string): readonly string[] => [file]],
-  ] as const)("[%s] standard error redirected to %s: a report asked for on standard error stops the run with exit 2, naming the file, and no report is written to it", (_clm, _file, others, inputsRead) => {
+    [
+      "CLM-FMT-031",
+      "a file another report names",
+      (file: string): readonly string[] => ["--format", `json:${file}`],
+      (_file: string): readonly string[] => [],
+      (file: string) => refused("outputs-share-file", { reports: `md:/dev/stderr, json:${file}` }),
+    ],
+    [
+      "CLM-FMT-032",
+      "a file the run reads",
+      (_file: string): readonly string[] => [],
+      (file: string): readonly string[] => [file],
+      (file: string) => refused("output-overwrites-input", { file }),
+    ],
+  ] as const)("[%s] standard error redirected to %s: a report asked for on standard error stops the run with exit 2, naming the file, and no report is written to it", (_clm, _file, others, inputsRead, complaint) => {
     const file = join(temporaryDirectory("standard-error-redirected-"), "results.json");
     writeFileSync(file, "an earlier file");
     const { error, streams } = capturedStreams();
@@ -378,15 +471,37 @@ describe("a report on standard error will not go in a file another report names 
     onTestFinished(() => closeSync(redirected));
 
     const ending = endingOf(() =>
-      writeReports(outputsAskedFor(["--format", "md:/dev/stderr", ...others(file)]), inputsRead(file), RECONCILIATION, { ...streams, error: { ...streams.error, fd: redirected } }),
+      writeReports(outputsAskedFor(["--format", "md:/dev/stderr", ...others(file)]), inputsRead(file), RECONCILIATION, { ...streams, error: { ...streams.error, fd: redirected } }, AS_ASKED),
     );
 
     // Standard error is the file, so what reached the stream reached the file.
-    const inTheFile = error.join("") + readFileSync(file, "utf8");
-    expect({ ending, complaint: inTheFile.includes(file), report: inTheFile.includes(MARKDOWN_OPENING) || inTheFile.includes('"runVerdict"') }).toEqual({
-      ending: 2,
-      complaint: true,
-      report: false,
-    });
+    expect({ ending, inTheFile: error.join("") + readFileSync(file, "utf8") }).toEqual({ ending: 2, inTheFile: `${complaint(file)}an earlier file` });
+  });
+});
+
+// What the run writes on one of its own standard streams while the test runs, kept from the test's own output.
+function writtenOn(stream: NodeJS.WriteStream): string[] {
+  const written: string[] = [];
+  const spy = vi.spyOn(stream, "write").mockImplementation((text: string | Uint8Array) => written.push(String(text)) > 0);
+  onTestFinished(() => spy.mockRestore());
+  return written;
+}
+
+describe("a report and a refusal will be on the run's own standard streams", () => {
+  it("[CLM-FMT-016] a report asked for at no destination is on the run's standard output", () => {
+    const output = writtenOn(process.stdout);
+
+    writeReports(outputsAskedFor([]), [], RECONCILIATION, processStreams, AS_ASKED);
+
+    expect(opensAsMarkdown(output.join(""))).toBe(true);
+  });
+
+  it("[CLM-FMT-027] a report asked for at a file in a folder that doesn't exist stops the run with exit 2, naming the place and why on the run's standard error", () => {
+    const place = join(temporaryDirectory("own-standard-error-"), "missing", "report.md");
+    const error = writtenOn(process.stderr);
+
+    const ending = writeReports(outputsAskedFor(["--format", `md:${place}`]), [], RECONCILIATION, processStreams, AS_ASKED);
+
+    expect({ ending, complaint: error.join("") }).toEqual({ ending: 2, complaint: refused("report-not-written", { place, why: textFor(appCatalogue, "folder-does-not-exist") }) });
   });
 });

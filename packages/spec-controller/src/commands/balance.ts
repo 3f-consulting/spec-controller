@@ -22,6 +22,7 @@ import {
   type TargetConfiguration,
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
+import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { inputsReadFor, type InputsRead } from "../inputs/inputsRead.js";
 import type { StandardStreams } from "../output/streams.js";
@@ -33,17 +34,21 @@ import { runIdentityIn } from "../runIdentity/runIdentity.js";
 import { writeReports } from "../output/writer.js";
 import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/runRequest.js";
 
-// The step account is printed only for a run that read workflows.
+// A run has no step and no step record of an input it did not read.
+const NONE: readonly never[] = [];
+
+// The step account is printed only for a run that read a workflow step.
 function stepAccountFor(
-  steps: readonly WorkflowStepAsWritten[] | undefined,
+  steps: readonly WorkflowStepAsWritten[],
   configuration: TargetConfiguration,
   scripts: Readonly<Record<string, string>>,
 ): { readonly stepAccount?: StepAccount } {
-  return steps === undefined ? {} : { stepAccount: stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers) }))) };
+  return steps.length === 0 ? {} : { stepAccount: stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers) }))) };
 }
 
-// Every input the run could read, each with its path when it read one.
-const provenanceInputsOf = ({ pathsRead }: InputsRead): ProvenanceInput[] => INPUT_KINDS.map((kind) => ({ name: kind, path: pathsRead[kind] }));
+// Every input the run could read, each with the path it read, its links followed, when it read one.
+const provenanceInputsOf = ({ pathsRead }: InputsRead, folder: string): ProvenanceInput[] =>
+  INPUT_KINDS.map((kind) => ({ name: kind, path: pathsRead[kind] && realpathSync(resolve(folder, pathsRead[kind])) }));
 
 // A corpus the command line named is where the target is; with none named, it is where the run started.
 const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | undefined => {
@@ -52,14 +57,19 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
 };
 
 // Each runner's results posted as Evidence Observations, beside the fitness functions' from the CI steps.
-function observationsOf(read: InputsRead, configuration: TargetConfiguration, scripts: Readonly<Record<string, string>>, targetFolder: string): EvidenceObservation[] {
-  const steps = read.workflowSteps ?? [];
+function observationsOf(
+  read: InputsRead,
+  steps: readonly WorkflowStepAsWritten[],
+  configuration: TargetConfiguration,
+  scripts: Readonly<Record<string, string>>,
+  targetFolder: string,
+): EvidenceObservation[] {
   return [
     ...observationsByFile([...(read.vitest ?? []), ...(read.jest ?? [])], targetFolder),
     ...observationsBySuite([...(read.pytest ?? []), ...(read.junit ?? [])], targetFolder),
     ...(read.rspec === undefined ? [] : observationsByExample(read.rspec, targetFolder)),
     ...(read.cucumber === undefined ? [] : observationsOfScenarios(read.cucumber, read.features, targetFolder)),
-    ...fitnessObservationsOf(steps, read.stepRecord ?? [], configuration, scripts, shellAnswers),
+    ...fitnessObservationsOf(steps, read.stepRecord ?? NONE, configuration, scripts, shellAnswers),
   ];
 }
 
@@ -73,19 +83,21 @@ export function balance(
   // Read first, so the run's time is when it started.
   const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
   const read = inputsReadFor(inputs, folder);
-  if ("ending" in read) return refusedWith(read.refusals, streams.error.write);
-  const { configuration, errors } = targetConfigurationFrom(read.manifest, read.workflowSteps ?? []);
+  if ("refusals" in read) return refusedWith(read.refusals, streams.error.write);
+  const steps = read.workflowSteps ?? NONE;
+  const { configuration, errors } = targetConfigurationFrom(read.manifest, steps);
   const scripts = scriptsFrom(read.manifest);
-  const targetFolder = targetFolderOf({ workingFolder: folder, ...(corpus === undefined ? {} : { corpus }), ...(identity.gitTopLevel === undefined ? {} : { gitTopLevel: identity.gitTopLevel }) });
+  // git gives its top level with every link followed, so the folders and paths it is compared with follow theirs too.
+  const targetFolder = realpathSync(targetFolderOf({ workingFolder: folder, corpus: corpus && realpathSync(corpus), gitTopLevel: identity.gitTopLevel }));
   const claims = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
-  const claimReconciliations = claimReconciliationsOf(claims, observationsOf(read, configuration, scripts, targetFolder));
-  const provenance = provenanceOf(identity, provenanceInputsOf(read), targetFolder, repositoryOfOrigin);
+  const claimReconciliations = claimReconciliationsOf(claims, observationsOf(read, steps, configuration, scripts, targetFolder));
+  const provenance = provenanceOf(identity, provenanceInputsOf(read, folder), targetFolder, repositoryOfOrigin);
   const reconciliation = evidenceReconciliationOf({
     claimReconciliations,
     claimCodeErrors: claimCodeErrorsOf(read.features),
     configurationErrors: errors,
     features: read.features,
-    ...stepAccountFor(read.workflowSteps, configuration, scripts),
+    ...stepAccountFor(steps, configuration, scripts),
     provenance,
   });
   try {

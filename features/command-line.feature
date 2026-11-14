@@ -141,7 +141,7 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-184 | /work/acme/docs/features | in a git repository at /work/acme | /work/acme |
         | CLM-CLI-144 | /tmp/x/features          | in no git repository              | /tmp/x     |
 
-    @e2e
+    @unit @e2e
     Scenario Outline: a default that cannot be read will stop the run
       Given the run met <error>
       When it stops
@@ -178,6 +178,19 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then it will post its results
       and the run will not stop
 
+    @unit
+    Scenario Outline: balance posts the result in the evidence report each runner's flag names
+      given the run named <flag> with an evidence report of one passing result that cites a claim
+      when balance reads its inputs
+      then it will post that result
+
+      Examples:
+        | clm         | flag       |
+        | CLM-CLI-196 | --vitest   |
+        | CLM-CLI-199 | --jest     |
+        | CLM-CLI-200 | --rspec    |
+        | CLM-CLI-201 | --cucumber |
+
     @unit @CLM-CLI-183
     Scenario: a workflows folder read by default that does not exist will count as no workflows, not as a missing input
       given the run named no CI workflows, and the folder .github/workflows did not exist
@@ -199,17 +212,36 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then it will read no manifest
       and the run will not stop
 
+    @unit @CLM-CLI-198
+    Scenario: an input read by default that the tool is not permitted to read will stop the run, not count as none
+      given the run named no CI workflows, and the tool was not permitted to read the folder .github/workflows
+      when balance reads its inputs
+      then it will give no verdict, and will exit 2
+      and it will complain that it is not permitted to read .github/workflows
+
     @unit @CLM-CLI-191
     Scenario: balance reads a feature file in a subfolder of the feature corpus
       given the feature corpus's one feature file was two folders down, at area/deeper/one.feature
       when balance reads its inputs
       then it will read area/deeper/one.feature
 
+    @unit @CLM-CLI-197
+    Scenario: balance reads the feature corpus in path order
+      given the feature corpus held b.feature and a/x.feature
+      when balance writes its report
+      then the report will list the claims of a/x.feature before those of b.feature
+
     @unit @CLM-CLI-193
     Scenario: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
       given the run named the workflow ci.yml as its CI workflows, and then a folder holding ci.yml and release.yaml
       when balance reads its inputs
       then it will read ci.yml alone, and then both workflows
+
+    @unit @CLM-CLI-195
+    Scenario: balance counts the steps of the CI workflows it reads
+      given the run named a CI workflows folder whose one workflow had two steps
+      when balance writes its report
+      then the report's step account will count two steps
 
     @unit
     Scenario Outline: an input that is not valid will stop the run

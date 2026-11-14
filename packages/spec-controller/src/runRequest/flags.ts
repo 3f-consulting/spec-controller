@@ -42,6 +42,6 @@ export const COMMANDS = { balance: BALANCE_FLAGS, allocate: ALLOCATE_FLAGS } as 
 
 export type Command = keyof typeof COMMANDS;
 
-export const isCommand = (word: string | undefined): word is Command => word !== undefined && Object.hasOwn(COMMANDS, word);
+export const isCommand = (word: string): word is Command => Object.hasOwn(COMMANDS, word);
 
 export const isHelp = (arg: string): boolean => arg === "--help" || arg === "-h";

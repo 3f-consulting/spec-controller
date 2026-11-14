@@ -12,7 +12,7 @@ export function gitIn(folder: string, args: readonly string[]): GitAnswer {
     cwd: folder,
     encoding: "utf8",
     maxBuffer: 1 << 30,
-    env: { ...process.env, LC_ALL: "C", LANG: "C" },
+    env: { ...process.env, LC_ALL: "C" },
   });
-  return { status: answer.status, stdout: answer.stdout ?? "", stderr: answer.error === undefined ? (answer.stderr ?? "") : answer.error.message };
+  return { status: answer.status, stdout: answer.stdout, stderr: answer.error?.message ?? answer.stderr };
 }

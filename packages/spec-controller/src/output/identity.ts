@@ -2,13 +2,20 @@ import type { FileIdentity } from "@3f-consulting/spec-controller-core";
 import { fstatSync, lstatSync, readlinkSync, statSync, type BigIntStats } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 
+// A device and inode as exactly as a stream's descriptor gives them. PROBED also answers nothing there yet as undefined.
+const EXACT = { bigint: true } as const;
+
 const regularFile = ({ dev, ino }: BigIntStats): FileIdentity => ({ is: "regular-file", device: dev, inode: ino });
 
+export type NamedStream = Extract<FileIdentity, { readonly is: "standard-output" | "standard-error" }>;
+
 // A standard stream redirected into a regular file is that file; otherwise it is the stream.
-export function streamIdentity(fd: number, is: "standard-output" | "standard-error"): FileIdentity {
-  const stats = fstatSync(fd, { bigint: true });
-  return stats.isFile() ? regularFile(stats) : { is };
+export function streamIdentity(fd: number, stream: NamedStream): FileIdentity {
+  const stats = fstatSync(fd, EXACT);
+  return stats.isFile() ? regularFile(stats) : stream;
 }
+
+const PROBED = { ...EXACT, throwIfNoEntry: false } as const;
 
 // Each standard stream's names, as a path or a link may give them.
 const STREAM_NAMES: Readonly<Record<"standard-output" | "standard-error", readonly string[]>> = {
@@ -18,7 +25,6 @@ const STREAM_NAMES: Readonly<Record<"standard-output" | "standard-error", readon
 
 const LINKS_FOLLOWED = 40;
 
-// The stream a path names, itself or through its links.
 function streamNamedBy(path: string): "standard-output" | "standard-error" | undefined {
   let current = resolve(path);
   for (let followed = 0; followed <= LINKS_FOLLOWED; followed++) {
@@ -36,27 +42,21 @@ export const whereItWillBe = (path: string): string =>
 
 function notMadeYet(path: string): FileIdentity {
   const where = whereItWillBe(path);
-  const folder = statSync(dirname(where), { bigint: true, throwIfNoEntry: false });
-  return { is: "absent", ...(folder?.isDirectory() ? { folder: { device: folder.dev, inode: folder.ino } } : {}), name: basename(where) };
-}
-
-// A path whose links lead round to themselves names nothing: the system stops following them.
-export function leadsRound(path: string): boolean {
-  try {
-    statSync(path, { throwIfNoEntry: false });
-    return false;
-  } catch (error) {
-    return (error as NodeJS.ErrnoException).code === "ELOOP";
-  }
+  const folder = statSync(`${dirname(where)}/`, EXACT);
+  return { is: "absent", folder: { device: folder.dev, inode: folder.ino }, name: basename(where) };
 }
 
 // What a path names, through any link: one of the run's standard streams, a regular file, something else, or nothing
 // yet. A stream's path reports another device than the stream's own descriptor does, so a stream is known by name first.
 export function pathIdentity(path: string): FileIdentity {
-  const stream = streamNamedBy(path);
-  if (stream !== undefined) return { is: stream };
-  if (leadsRound(path)) return { is: "not-a-regular-file" };
-  const stats = statSync(path, { bigint: true, throwIfNoEntry: false });
-  if (stats === undefined) return notMadeYet(path);
-  return stats.isFile() ? regularFile(stats) : { is: "not-a-regular-file" };
+  try {
+    const stream = streamNamedBy(path);
+    if (stream !== undefined) return { is: stream };
+    const stats = statSync(path, PROBED);
+    if (stats === undefined) return notMadeYet(path);
+    if (stats.isFile()) return regularFile(stats);
+  } catch {
+    // Names no file: a path the system cannot follow, or a new file's folder, probed with a trailing /, missing or a file.
+  }
+  return { is: "not-a-regular-file" };
 }

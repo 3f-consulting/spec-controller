@@ -55,6 +55,12 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-021 | two different files                                  | each file will contain its own report                           |
         | CLM-FMT-022 | standard error for both                              | both reports will be on standard error, one after the other     |
 
+    @unit @CLM-FMT-035
+    Scenario: two reports asked for at one device will both be written, as a device is not a file they share
+      given a run had two reports to write
+      when you ask for both at /dev/null
+      then both will be written, and the run will not stop
+
   Rule: it stops before it damages anything
 
     @unit
