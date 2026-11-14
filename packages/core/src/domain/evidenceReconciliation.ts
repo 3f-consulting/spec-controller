@@ -116,23 +116,27 @@ export function stepAccountOf(steps: readonly DisposedStep[]): StepAccount {
   return { jobs, total: countsOf(steps) };
 }
 
-const OUTCOMES: readonly Outcome[] = [
-  "satisfied",
-  "failing",
-  "cannot-fail",
-  "missing",
-  "no-claim-code",
-  "duplicate-claim-code",
-  "not-asked-for",
-  "cites-unknown-claim",
-  "cites-no-claim",
-  "never-ran",
-  "no-quality-check",
-];
+// Every outcome once, in the order they are counted: the keys of a record the type holds whole.
+const OUTCOMES = Object.keys({
+  satisfied: null,
+  failing: null,
+  "cannot-fail": null,
+  missing: null,
+  "no-claim-code": null,
+  "duplicate-claim-code": null,
+  "not-asked-for": null,
+  "cites-unknown-claim": null,
+  "cites-no-claim": null,
+  "never-ran": null,
+  "no-quality-check": null,
+} satisfies Record<Outcome, null>) as Outcome[];
+
+// Each Evidence Observation is counted once, on the Quality Check Reconciliation that holds it.
+const observationsIn = (reconciliations: readonly QualityCheckReconciliation[]): number => reconciliations.filter(({ observation }) => observation !== undefined).length;
 
 const countsOfReconciliations = (reconciliations: readonly QualityCheckReconciliation[], evidenceObligations: number): QualityCheckCounts => ({
   evidenceObligations,
-  evidenceObservations: reconciliations.filter(({ observation }) => observation !== undefined).length,
+  evidenceObservations: observationsIn(reconciliations),
   byOutcome: Object.fromEntries(OUTCOMES.map((outcome) => [outcome, reconciliations.filter((reconciliation) => reconciliation.outcome === outcome).length])) as Record<Outcome, number>,
 });
 
@@ -171,7 +175,7 @@ const filedOn = (claim: ClaimReconciliation["claim"]): "onExecutableClaim" | "on
 function whereFiledOf(claimReconciliations: readonly ClaimReconciliation[]): Totals["evidenceObservations"] {
   const filed = { onExecutableClaim: 0, onPhantomClaim: 0, onUnnamedClaim: 0 };
   for (const { claim, qualityCheckReconciliations } of claimReconciliations) {
-    filed[filedOn(claim)] += qualityCheckReconciliations.filter(({ observation }) => observation !== undefined).length;
+    filed[filedOn(claim)] += observationsIn(qualityCheckReconciliations);
   }
   return { total: filed.onExecutableClaim + filed.onPhantomClaim + filed.onUnnamedClaim, ...filed };
 }
