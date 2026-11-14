@@ -1,5 +1,5 @@
 import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
-import type { TargetConfiguration } from "./configuration.js";
+import { isAt, type TargetConfiguration } from "./configuration.js";
 import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
 import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
@@ -247,8 +247,7 @@ export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" 
 
 const RECONCILER = "spec-controller balance";
 
-const isNamedIn = (step: WorkflowStepAsWritten, { nonChecks }: TargetConfiguration): boolean =>
-  nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === stepIdentityOf(step));
+const isNamedIn = (step: WorkflowStepAsWritten, { nonChecks }: TargetConfiguration): boolean => nonChecks.some((address) => isAt(step, address));
 
 // The reconciler is recognised in any command of the step, a runner only as the command the step runs, through its scripts.
 const runsARunner = (run: string, { runners }: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): boolean =>

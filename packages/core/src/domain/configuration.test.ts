@@ -58,11 +58,17 @@ describe("balance uses each configuration setting it can, and leaves out any it 
   });
 
   it('[CLM-CFG-023] the specController block had "nightly.yml:ci:Install" in notChecks, with only ci.yml read: when balance reads it, the run will use the step Install, in job ci, in nightly.yml, as a non-check', () => {
-    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
+    const ciInstall = { workflow: "ci.yml", job: "ci", name: "Install", plumbing: false, writesStepRecord: false };
+    const nightlyInstall = { ...ciInstall, workflow: "nightly.yml" };
 
-    expect(targetConfigurationFrom({ specController: { notChecks: ["nightly.yml:ci:Install"] } }, ciRead)).toEqual({
+    const { configuration, errors } = targetConfigurationFrom({ specController: { notChecks: ["nightly.yml:ci:Install"] } }, [ciInstall]);
+
+    // ci.yml's step of the same name, in a job of the same name, is not the step the entry names.
+    expect({ configuration, errors, nightly: stepDispositionOf(nightlyInstall, configuration, {}, shellAnswers), ci: stepDispositionOf(ciInstall, configuration, {}, shellAnswers) }).toEqual({
       configuration: { ...NONE, nonChecks: [{ workflow: "nightly.yml", job: "ci", step: "Install" }] },
       errors: [],
+      nightly: "nonCheck",
+      ci: "fitnessFunction",
     });
   });
 
