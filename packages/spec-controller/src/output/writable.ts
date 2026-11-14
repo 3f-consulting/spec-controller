@@ -6,6 +6,7 @@ export type Unwritable = "may-not-be-written" | "is-a-folder" | "folder-does-not
 
 // Why a report cannot be written at a path, or nothing when it can: checked before anything is written.
 export function whyUnwritable(path: string): Unwritable | undefined {
+  if (path === "") return "may-not-be-written";
   try {
     const stats = statSync(path, { throwIfNoEntry: false });
     if (stats === undefined) {
