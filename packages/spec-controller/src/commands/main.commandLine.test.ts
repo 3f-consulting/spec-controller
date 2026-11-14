@@ -181,13 +181,13 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
       "a suites element holding a suite, as pytest writes it",
       '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1"><testcase classname="test_adds" name="[CLM-ONE-001] adds one" time="0.001"><properties><property name="clm" value="CLM-ONE-001" /></properties></testcase></testsuite></testsuites>',
     ],
-  ] as const)("[CLM-OBS-150] a JUnit evidence report written well formed, as %s: its result is posted, and the run does not stop", (_written, report) => {
+  ] as const)("[CLM-OBS-150] a JUnit evidence report was written well formed, as %s: an Evidence Observation will be posted for each of its tests", (_written, report) => {
     const { exitCode, output } = ran(["balance", "--junit", "junit.xml", "--format", "json"], folderWith({ "junit.xml": report }));
 
     expect({ stopped: exitCode === 2, posted: output.includes("adds one") }).toEqual({ stopped: false, posted: true });
   });
 
-  it("[CLM-OBS-150] JUnit evidence reports written well formed, as Maven Surefire writes them, a suite to a file beside its text summary: each result is posted, and the run does not stop", () => {
+  it("[CLM-OBS-150] JUnit evidence reports were written well formed, as Maven Surefire writes them, a suite to a file beside its text summary: an Evidence Observation will be posted for each of their tests", () => {
     const suite = (name: string, test: string): string =>
       `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="example.${name}" tests="1" errors="0" skipped="0" failures="0">\n  <testcase name="${test}" classname="example.${name}" time="0.001"/>\n</testsuite>\n`;
     const folder = folderWith({

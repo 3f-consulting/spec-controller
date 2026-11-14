@@ -21,7 +21,7 @@ describe("an empty evidence report will count as no evidence, not as a broken fi
     ["an RSpec evidence report", "rspec", "rspec.json", '{"examples":[],"summary":{}}', { examples: [], loadErrors: [] }],
     ["a Cucumber evidence report", "cucumber", "cucumber.json", "[]", []],
     ["a CI step record", "stepRecord", "steps.json", "{}", []],
-  ] as const)("[CLM-OBS-149] %s listing nothing posts nothing, and the run does not stop", (_report, kind, file, report, nothing) => {
+  ] as const)("[CLM-OBS-149] %s was written well formed, listing no tests: nothing will be posted, and the run will not stop", (_report, kind, file, report, nothing) => {
     const folder = temporaryDirectory("empty-report-");
     writeFileSync(join(folder, file), report);
 
