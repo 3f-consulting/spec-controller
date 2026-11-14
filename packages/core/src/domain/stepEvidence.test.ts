@@ -217,17 +217,18 @@ describe("an Evidence Observation says where to look", () => {
     expect(citing.map((observation) => observation.place)).toEqual([place]);
   });
 
-  // The name each variant gives the step.
-  const NAMED: Readonly<Record<string, string | number>> = { "in words": "Lint", "a number": 3 };
+  // The name each variant gives the step, as the workflow writes it.
+  const NAMED: Readonly<Record<string, string>> = { "in words": "Lint", "a number": "1.10" };
 
   it.each(workflowsVariants["CLM-OBS-081"].variants)("[CLM-OBS-081] the step record had a passing fitness result, the step named %s in job build of ci.yml, citing CLM-ONE-001: it says where to look by that name", (variant) => {
     const name = NAMED[variant];
     if (name === undefined) throw new Error(`no name for the variant ${variant}`);
     const record = recordOf({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
+    const steps = workflowStepsFrom("ci.yml", `jobs:\n  build:\n    steps:\n      - id: CLM-ONE-001\n        name: ${name}\n        run: pnpm lint\n`);
 
-    const citing = fitnessObservationsOf(workflowOf({ build: { steps: [{ id: "CLM-ONE-001", name, run: "pnpm lint" }] } }), record, NO_SETTING, {}, shellAnswers);
+    const citing = fitnessObservationsOf(steps, record, NO_SETTING, {}, shellAnswers);
 
-    expect(citing.map((observation) => observation.place)).toEqual([`ci.yml:build:${String(name)}`]);
+    expect(citing.map((observation) => observation.place)).toEqual([`ci.yml:build:${name}`]);
   });
 
   // The command each variant's step runs.
