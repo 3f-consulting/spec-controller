@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import evidenceReconciliationVariants from "./evidenceReconciliation.variants.json" with { type: "json" };
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
@@ -34,7 +35,16 @@ function runVerdictOfRun(corpus: readonly string[], observed: readonly Observed[
 describe("the run will be balanced or out of balance, as its Claim Reconciliations call for", () => {
   it.each([
     ["CLM-EVR-001", "only balanced Claim Reconciliations", ["@CLM-ONE-001"], [["unit", "passed", "ONE-001"]], "balanced"],
-    ["CLM-EVR-002", "a Claim Reconciliation out of balance", ["@CLM-ONE-001"], [["unit", "failed", "ONE-001"]], "out-of-balance"],
+    [
+      "CLM-EVR-002",
+      "a Claim Reconciliation out of balance, beside a balanced one",
+      ["@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: adds\n    Given a step\n\n  @unit @CLM-ONE-002\n  Scenario: subtracts\n    Given a step\n"],
+      [
+        ["unit", "failed", "ONE-001"],
+        ["unit", "passed", "ONE-002"],
+      ],
+      "out-of-balance",
+    ],
     ["CLM-EVR-003", "no corpus, and Evidence Observations citing no claim code", [], [["unit", "passed"]], "out-of-balance"],
   ] as const)("[%s] a run with %s has its run verdict", (_clm, _what, corpus, evidence, verdict) => {
     expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict });
@@ -186,13 +196,14 @@ describe("Total of every kind, as the All row", () => {
 });
 
 describe("Total of the Evidence Observations, by where they were filed", () => {
-  const filed = (onExecutableClaim: number, onPhantomClaim: number, onUnnamedClaim: number) => ({ total: 1, onExecutableClaim, onPhantomClaim, onUnnamedClaim });
+  const filed = (onExecutableClaim: number, onPhantomClaim: number, onUnnamedClaim: number) => ({ total: onExecutableClaim + onPhantomClaim + onUnnamedClaim, onExecutableClaim, onPhantomClaim, onUnnamedClaim });
 
   it.each([
     ["CLM-EVR-066", "a unit claim, and a passing unit test citing it", ["@unit @CLM-ONE-001"], [["unit", "passed", "ONE-001"]], [1, 0, 0]],
     ["CLM-EVR-067", "a passing unit test citing no code", [], [["unit", "passed"]], [0, 0, 1]],
     ["CLM-EVR-068", "a passing unit test citing a code no claim has", [], [["unit", "passed", "TWO-001"]], [0, 1, 0]],
     ["CLM-EVR-069", "a unit test citing a code no claim has, which never ran", [], [["unit", "never-ran", "TWO-001"]], [0, 1, 0]],
+    ["CLM-EVR-076", "a claim asking for a unit test, and no test citing it", ["@unit @CLM-ONE-001"], [], [0, 0, 0]],
   ] as const)("[%s] a run with %s has its Evidence Observations counted where they were filed", (_clm, _what, scenarios, observed, [executable, phantom, unnamed]) => {
     const totals = totalsOfRun(scenarios.length === 0 ? [] : [scenariosTagged(...scenarios)], observed);
 
@@ -244,20 +255,32 @@ describe("Total of the claim codes written where no claim reads them", () => {
   });
 });
 
-describe("balance accounts for every step it reads", () => {
-  const twoJobs = () =>
-    workflowStepsFrom(
-      "ci.yml",
-      JSON.stringify({
-        jobs: {
-          build: { steps: [{ uses: "actions/checkout@v4" }, { run: "pnpm lint" }, { run: "spec-controller balance" }] },
-          test: { steps: [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }] },
-        },
-      }),
-    ).map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [{ workflow: "ci.yml", job: "test", step: "Install" }], deferralTags: [] }, {}, shellAnswers) }));
+describe("a claim code in a comment, with punctuation stuck to its end, is counted where no claim reads it", () => {
+  it.each(evidenceReconciliationVariants["CLM-EVR-029"].variants)("[CLM-EVR-029] a feature file with @CLM-ONE-001%s in a comment has one excluded claim code occurrence", (punctuation) => {
+    const source = `@ONE\nFeature: one\n\n  # as @CLM-ONE-001${punctuation} says\n  @unit\n  Scenario: adds one\n    Given a step\n`;
 
-  it("[CLM-EVR-032] each job's counts will add up to the steps read in it", () => {
-    const { jobs } = stepAccountOf(twoJobs());
+    expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)]).excludedClaimCodeOccurrences).toBe(1);
+  });
+});
+
+describe("balance accounts for every step it reads", () => {
+  // Two jobs, in one workflow or of one name in two: each a row of its own.
+  const disposed = (steps: ReturnType<typeof workflowStepsFrom>, install: { readonly workflow: string; readonly job: string }) =>
+    steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [{ ...install, step: "Install" }], deferralTags: [] }, {}, shellAnswers) }));
+  const BUILD = [{ uses: "actions/checkout@v4" }, { run: "pnpm lint" }, { run: "spec-controller balance" }];
+  const INSTALL = [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }];
+  const twoJobs = () => disposed(workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: BUILD }, test: { steps: INSTALL } } })), { workflow: "ci.yml", job: "test" });
+  const twoJobsOfOneName = () =>
+    disposed(
+      [...workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: BUILD } } })), ...workflowStepsFrom("nightly.yml", JSON.stringify({ jobs: { build: { steps: INSTALL } } }))],
+      { workflow: "nightly.yml", job: "build" },
+    );
+
+  it.each([
+    ["in one workflow", twoJobs],
+    ["of one name, in two workflows", twoJobsOfOneName],
+  ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, read) => {
+    const { jobs } = stepAccountOf(read());
 
     expect(jobs.map(({ stepsRead, runners, reconcilerSteps, nonChecks, plumbing, candidates }) => ({ stepsRead, sum: runners + reconcilerSteps + nonChecks + plumbing + candidates }))).toEqual([
       { stepsRead: 3, sum: 3 },
@@ -268,7 +291,7 @@ describe("balance accounts for every step it reads", () => {
   it("[CLM-EVR-033] the total will be the sum of the jobs", () => {
     const { total } = stepAccountOf(twoJobs());
 
-    expect(total).toEqual({ stepsRead: 5, runners: 0, reconcilerSteps: 1, nonChecks: 1, plumbing: 1, candidates: 2, accountedFor: 5 });
+    expect(total).toEqual({ stepsRead: 5, runners: 0, reconcilerSteps: 1, nonChecks: 1, plumbing: 1, candidates: 2 });
   });
 
   it("[CLM-EVR-072] a workflow with a job that calls a reusable workflow, and a job with one step, has the one step read", () => {

@@ -36,7 +36,7 @@ export interface SettingSpellings {
   readonly tagOf: (entry: string) => string;
 }
 
-const LAYERS: readonly string[] = Object.keys({ unit: true, integration: true, e2e: true, performance: true } satisfies Record<Layer, true>);
+const LAYERS: readonly string[] = Object.keys({ unit: null, integration: null, e2e: null, performance: null } satisfies Record<Layer, null>);
 
 const NO_SETTING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
 
@@ -66,7 +66,7 @@ function listRead<Value>(list: unknown, name: string, readEntry: (entry: string)
   if (list === undefined) return { value: [], errors: [] };
   if (!Array.isArray(list)) return { value: [], errors: [wrongKind(name)] };
   const read = list.map((entry: unknown, at) => (typeof entry === "string" ? readEntry(entry) : wrongKind(`${name}[${at}]`)));
-  const isError = (entry: Value | ConfigurationError): entry is ConfigurationError => typeof entry === "object" && entry !== null && "kind" in entry;
+  const isError = (entry: Value | ConfigurationError): entry is ConfigurationError => entry instanceof Object && "kind" in entry;
   return { value: read.filter((entry): entry is Value => !isError(entry)), errors: read.filter(isError) };
 }
 

@@ -88,7 +88,7 @@ describe("the table has a column only for a kind some claim raises or answers", 
   it("[CLM-RPT-144] a run with only unit and fitness Evidence Obligations and Evidence Observations has a Fitness and a Unit column, and no other kind's", () => {
     const { header } = claimTable([["one.feature", "ONE", [["@unit @CLM-ONE-001", "adds one"], ["@fitness @CLM-ONE-002", "lints"]]]], [["unit", "passed", "ONE-001"], ["fitness", "passed", "ONE-002"]]);
 
-    expect(header.slice(1, header.indexOf("Verdict"))).toEqual(["Fitness", "Unit"]);
+    expect(header.slice(1, header.indexOf("Verdict"))).toEqual(["Unit", "Fitness"]);
   });
 });
 

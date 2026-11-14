@@ -23,8 +23,10 @@ const reportIn = (format: string, reconciliation: ReportedReconciliation): strin
   format === "json" ? jsonReportOf(reconciliation) : markdownReportOf(reconciliation);
 
 // Where a report goes, probed once: the standard stream it names, by request or by its path, as that stream stands,
-// redirected into a file or not; otherwise the place its path names.
+// redirected into a file or not; otherwise the place its path names. The plan is given standard error as such, and a
+// refusal names the report as it was asked for.
 interface Placed {
+  readonly asked: OutputRequest<string>;
   readonly output: OutputRequest<string>;
   readonly identity: FileIdentity;
   readonly stream?: StandardStream;
@@ -33,9 +35,12 @@ interface Placed {
 function placed(output: OutputRequest<string>, streams: StandardStreams): Placed {
   const { destination } = output;
   const named = destination.to === "file" ? pathIdentity(destination.path) : { is: destination.to };
-  if (named.is === "standard-output") return { output, identity: streamIdentity(streams.output.fd, "standard-output"), stream: streams.output };
-  if (named.is === "standard-error") return { output, identity: streamIdentity(streams.error.fd, "standard-error"), stream: streams.error };
-  return { output, identity: named };
+  if (named.is === "standard-output") return { asked: output, output, identity: streamIdentity(streams.output.fd, "standard-output"), stream: streams.output };
+  if (named.is === "standard-error") {
+    const onStandardError = { ...output, destination: { to: "standard-error" } } as const;
+    return { asked: output, output: onStandardError, identity: streamIdentity(streams.error.fd, "standard-error"), stream: streams.error };
+  }
+  return { asked: output, output, identity: named };
 }
 
 // The first file a report cannot be written to, with why.
@@ -52,10 +57,11 @@ function unwritableRefusal(outputs: readonly Placed[]): Refusal | undefined {
 const asGiven = ({ format, destination }: OutputRequest<string>): string => (destination.to === "file" ? `${format}:${destination.path}` : format);
 
 // Each refusal names what it is about: the reports as asked for, which name any file they share, or the file the run reads.
-function planRefusal(refusal: OutputRefusal<string>): Refusal {
-  if (refusal.kind === "more-than-one-to-standard-output") return { key: "more-than-one-to-stdout", values: { reports: refusal.outputs.map(asGiven).join(", ") } };
+function planRefusal(refusal: OutputRefusal<string>, outputs: readonly Placed[]): Refusal {
+  const named = (planned: OutputRequest<string>): string => asGiven(outputs.find(({ output }) => output === planned)!.asked);
+  if (refusal.kind === "more-than-one-to-standard-output") return { key: "more-than-one-to-stdout", values: { reports: refusal.outputs.map(named).join(", ") } };
   if (refusal.kind === "outputs-share-a-file")
-    return { key: "outputs-share-file", values: { reports: [refusal.first, refusal.second].map(asGiven).join(", ") } };
+    return { key: "outputs-share-file", values: { reports: [refusal.first, refusal.second].map(named).join(", ") } };
   return { key: "output-overwrites-input", values: { file: refusal.input.path } };
 }
 
@@ -71,7 +77,7 @@ export function writeReports(
     outputsPlaced,
     inputsRead.map((path) => ({ name: path, path, identity: pathIdentity(path) })),
   );
-  const refusal = plan.ok ? unwritableRefusal(outputsPlaced) : planRefusal(plan.refusal);
+  const refusal = plan.ok ? unwritableRefusal(outputsPlaced) : planRefusal(plan.refusal, outputsPlaced);
   if (refusal !== undefined) {
     streams.error.write(`${refusalText(refusal)}\n`);
     return USAGE_ERROR;

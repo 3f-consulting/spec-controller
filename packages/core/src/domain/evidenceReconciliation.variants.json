@@ -1,0 +1,6 @@
+{
+  "CLM-EVR-029": {
+    "class": "a claim code in a comment, with punctuation stuck to its end",
+    "variants": [",", ")", "),", "."]
+  }
+}

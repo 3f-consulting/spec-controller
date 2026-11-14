@@ -18,12 +18,6 @@ describe("balance turns each configuration setting into its internal setting", (
     ["CLM-CFG-008", '"unit": "vitest" under runners', { runners: { unit: "vitest" } }, { ...NONE, runners: { unit: "vitest" } }],
     ["CLM-CFG-009", '"performance": null under runners', { runners: { performance: null } }, { ...NONE, runners: { performance: null } }],
     [
-      "CLM-CFG-010",
-      '"ci.yml:ci:Install dependencies" in notChecks',
-      { notChecks: ["ci.yml:ci:Install dependencies"] },
-      { ...NONE, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }] },
-    ],
-    [
       "CLM-CFG-011",
       '"nightly:build.yml:ci:Install" in notChecks',
       { notChecks: ["nightly:build.yml:ci:Install"] },
@@ -37,11 +31,23 @@ describe("balance turns each configuration setting into its internal setting", (
     expect(targetConfigurationFrom(block === undefined ? {} : { specController: block }, [])).toEqual({ configuration, errors: [] });
   });
 
-  it('[CLM-CFG-010] a specController block with "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, gives that step', () => {
-    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
+  it('[CLM-CFG-010] a specController block with "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies, gives that step', () => {
+    const ciRead = [
+      { workflow: "ci.yml", job: "ci", name: "Build", plumbing: false, writesStepRecord: false },
+      { workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false },
+    ];
 
     expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yml:ci:Install dependencies"] } }, ciRead)).toEqual({
       configuration: { ...NONE, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }] },
+      errors: [],
+    });
+  });
+
+  it('[CLM-CFG-023] a specController block with "nightly.yml:ci:Install" in notChecks, with only ci.yml read, gives that step', () => {
+    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
+
+    expect(targetConfigurationFrom({ specController: { notChecks: ["nightly.yml:ci:Install"] } }, ciRead)).toEqual({
+      configuration: { ...NONE, nonChecks: [{ workflow: "nightly.yml", job: "ci", step: "Install" }] },
       errors: [],
     });
   });
@@ -51,13 +57,18 @@ describe("a configuration setting balance cannot use will be left out", () => {
   it.each([
     ["CLM-CFG-004", '"unit": 3 under runners', { runners: { unit: 3 } }, { kind: "configuration-wrong-kind", entry: "runners.unit" }],
     ["CLM-CFG-003", '"unittest": "vitest" under runners', { runners: { unittest: "vitest" } }, { kind: "runner-key-not-a-layer", entry: "runners.unittest" }],
-    ["CLM-CFG-018", '"runners": null', { runners: null }, { kind: "configuration-wrong-kind", entry: "runners" }],
     ["CLM-CFG-005", '"runer": {} beside runners', { runners: {}, runer: {} }, { kind: "configuration-unknown-key", entry: "runer" }],
     [
       "CLM-CFG-015",
       '"ci.yml:ci:No such step" in notChecks, with ci.yml read',
       { notChecks: ["ci.yml:ci:No such step"] },
       { kind: "not-checks-entry-matches-no-step", entry: "ci.yml:ci:No such step" },
+    ],
+    [
+      "CLM-CFG-022",
+      '"ci.yml:lint:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies and whose job lint had none',
+      { notChecks: ["ci.yml:lint:Install dependencies"] },
+      { kind: "not-checks-entry-matches-no-step", entry: "ci.yml:lint:Install dependencies" },
     ],
     ["CLM-CFG-016", '"Install dependencies" in notChecks', { notChecks: ["Install dependencies"] }, { kind: "not-checks-entry-not-a-step-name", entry: "Install dependencies" }],
     [
@@ -104,6 +115,12 @@ describe("the run will still reach its run verdict, using the configuration sett
 
 // Each way a specController block can be other than an object, as a value.
 const notAnObject: Readonly<Record<string, unknown>> = { null: null, "a number": 5, "a string": "vitest", "a list": ["vitest"] };
+
+describe("a runners setting that is not an object is left out", () => {
+  it.each(manifestVariants["CLM-CFG-018"].variants)("[CLM-CFG-018] a specController block whose runners is %s leaves runners out, as the wrong kind", (variant) => {
+    expect(targetConfigurationFrom({ specController: { runners: notAnObject[variant] } }, [])).toEqual({ configuration: NONE, errors: [{ kind: "configuration-wrong-kind", entry: "runners" }] });
+  });
+});
 
 describe("a specController block that is not an object stops the run", () => {
   it.each(manifestVariants["CLM-CFG-021"].variants)("[CLM-CFG-021] a specController block that is %s stops the run as an unexpected error", (variant) => {

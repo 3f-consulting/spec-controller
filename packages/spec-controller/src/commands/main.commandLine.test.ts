@@ -190,6 +190,12 @@ describe("an input that is not valid will stop the run", () => {
     ],
     ["CLM-CLI-149", "a feature file that does not parse", { "features/bad.feature": "not Gherkin\n" }, ["--features", "features"], ["bad.feature", "feature file", "[input-does-not-parse]"]],
     ["CLM-CLI-150", "a workflow that does not parse", { "workflows/ci.yml": "jobs: [\n" }, ["--ci", "workflows"], ["ci.yml", "workflow", "[input-does-not-parse]"]],
+    ["CLM-CLI-150", "a workflow with a step with only an id", { "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - id: x\n      - run: pnpm lint\n" }, ["--ci", "workflows"], ["ci.yml", "workflow", "jobs.ci.steps[0]", "neither an action nor a command", "[input-does-not-parse]"]],
+    ["CLM-CLI-150", "a workflow with a step whose command is 42, not text", { "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: 42\n      - run: pnpm lint\n" }, ["--ci", "workflows"], ["ci.yml", "workflow", "jobs.ci.steps[0]", "neither an action nor a command", "[input-does-not-parse]"]],
+    ["CLM-CLI-150", "a workflow with a step that is the text lint, not a mapping", { "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - lint\n      - run: pnpm lint\n" }, ["--ci", "workflows"], ["ci.yml", "workflow", "jobs.ci.steps[0]", "neither an action nor a command", "[input-does-not-parse]"]],
+    ["CLM-CLI-150", "a workflow with a step written with nothing, not a mapping", { "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: pnpm lint\n      -\n" }, ["--ci", "workflows"], ["ci.yml", "workflow", "jobs.ci.steps[1]", "neither an action nor a command", "[input-does-not-parse]"]],
+    ["CLM-CLI-150", "a workflow with a step whose command has no value", { "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run:\n" }, ["--ci", "workflows"], ["ci.yml", "workflow", "jobs.ci.steps[0]", "neither an action nor a command", "[input-does-not-parse]"]],
+    ["CLM-CLI-150", "a workflow with a step whose action is 42, not text, and no command", { "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - uses: 42\n" }, ["--ci", "workflows"], ["ci.yml", "workflow", "jobs.ci.steps[0]", "neither an action nor a command", "[input-does-not-parse]"]],
     ["CLM-CLI-151", "a Vitest evidence report not in Vitest's shape", { "vitest.json": '{"testResults":"none"}' }, ["--vitest", "vitest.json"], ["vitest.json", "$.testResults", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-151",
@@ -198,6 +204,7 @@ describe("an input that is not valid will stop the run", () => {
       ["--vitest", "vitest.json"],
       ["vitest.json", "$.testResults[1]", "[input-not-in-its-shape]"],
     ],
+    ["CLM-CLI-151", "a Vitest evidence report with a test that has no failure messages", { "vitest.json": '{"testResults":[{"name":"/work/a.test.ts","status":"passed","message":"","assertionResults":[{"ancestorTitles":[],"title":"[CLM-ONE-001] it holds","status":"passed"}]}]}' }, ["--vitest", "vitest.json"], ["vitest.json", "$.testResults[0].assertionResults[0].failureMessages", "[input-not-in-its-shape]"]],
     ["CLM-CLI-152", "a Cucumber evidence report not in Cucumber's shape", { "cucumber.json": '{"features":[]}' }, ["--cucumber", "cucumber.json"], ["cucumber.json", "Cucumber", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-152",
@@ -207,6 +214,7 @@ describe("an input that is not valid will stop the run", () => {
       ["cucumber.json", "Cucumber", "$[1]", "[input-not-in-its-shape]"],
     ],
     ["CLM-CLI-153", "a Jest evidence report not in Jest's shape", { "jest.json": "{}" }, ["--jest", "jest.json"], ["jest.json", "testResults", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-153", "a Jest evidence report with a test that has no failure messages", { "jest.json": '{"testResults":[{"name":"/work/a.test.js","status":"passed","message":"","assertionResults":[{"ancestorTitles":[],"title":"[CLM-ONE-001] it holds","status":"passed"}]}]}' }, ["--jest", "jest.json"], ["jest.json", "$.testResults[0].assertionResults[0].failureMessages", "[input-not-in-its-shape]"]],
     ["CLM-CLI-154", "a pytest evidence report not in pytest's shape", { "pytest.xml": "<html/>" }, ["--pytest", "pytest.xml"], ["pytest.xml", "pytest", "[input-not-in-its-shape]"]],
     ["CLM-CLI-155", "a JUnit evidence report not in JUnit's shape", { "junit.xml": "<html/>" }, ["--junit", "junit.xml"], ["junit.xml", "JUnit", "[input-not-in-its-shape]"]],
     [

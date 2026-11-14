@@ -2,9 +2,8 @@ import { CLM_COLUMN, claimCodeFrom, hasClmColumn, type ClaimCode } from "./claim
 
 export type QualityCheckKind = "fitness" | "unit" | "integration" | "e2e" | "performance";
 
-// Absent kind: a scenario with no single claim code that names no kind of quality check.
 export interface EvidenceObligation {
-  readonly kind?: QualityCheckKind;
+  readonly kind: QualityCheckKind;
 }
 
 export interface ExecutableClaim {
@@ -45,7 +44,8 @@ export interface ClaimReadingSettings {
 
 const BUILT_IN_DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
-export const QUALITY_CHECK_KINDS: readonly QualityCheckKind[] = ["fitness", "unit", "integration", "e2e", "performance"];
+// The one order of the kinds of quality check, wherever they are listed or sorted.
+export const QUALITY_CHECK_KINDS: readonly QualityCheckKind[] = ["unit", "integration", "e2e", "performance", "fitness"];
 
 const isDeferred = (tags: readonly string[], { deferralTags, strict }: ClaimReadingSettings): boolean =>
   !strict && tags.some((tag) => BUILT_IN_DEFERRAL_TAGS.includes(tag) || deferralTags.includes(tag));
@@ -68,7 +68,7 @@ function claimsOf({ file, fileTags }: FeatureAsWritten, scenario: ScenarioAsWrit
   const claim = (claimCode: ClaimCode | undefined): ExecutableClaim => ({ file, title: scenario.title, obligations, ...(claimCode && { claimCode }) });
   const cells = clmCellsOf(scenario);
   if (cells === undefined) return [claim(tagged.length === 1 ? tagged[0] : undefined)];
-  return cells.map((cell) => claim(tagged.length === 0 ? claimCodeFrom(cell ?? "") : undefined));
+  return cells.map((cell) => claim(tagged.length === 0 ? claimCodeFrom(cell) : undefined));
 }
 
 export function executableClaimsOf(features: readonly FeatureAsWritten[], settings: ClaimReadingSettings): ExecutableClaim[] {
