@@ -80,3 +80,9 @@ describe("the run will be not reconciled, naming why", () => {
     expect(runVerdictIn(made(temporaryDirectory("corpus-")))).toEqual({ verdict: "not-reconciled", why: "nothing-to-reconcile" });
   });
 });
+
+describe("the provenance says what the run used", () => {
+  it("[CLM-EVR-037] the run had a target given as acme/web: when balance reconciles it, the provenance will have the target acme/web", () => {
+    expect(provenanceIn(temporaryDirectory("given-target-"), "--target", "acme/web").target).toBe("acme/web");
+  });
+});
