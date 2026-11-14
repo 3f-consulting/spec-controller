@@ -587,7 +587,7 @@ Discovery is not Node-shaped: it does not match `package.json` script names agai
 - **A runner named in several words is recognised where a command opens with all of them**, such as `mvn test`, `./mvnw test`, `./gradlew test`, `./gradlew check` or `./gradlew :app:test`. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: `"rspec"` covers `bundle exec rspec`.
 - **Any other variant is a check.** A launcher, script runner or wrapper not listed here leaves the step a check that runs the runner. Add such a step to `notChecks`, or run the runner in one of the variants above.
 
-These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json): `actions/checkout`, `actions/cache`, `actions/cache/restore`, `actions/setup-*`, `actions/upload-artifact` and `actions/download-artifact`.
+These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json): `actions/checkout`, `actions/cache`, `actions/setup-*`, `actions/upload-artifact` and `actions/download-artifact`. An action is matched on its owner and repository, so `actions/cache/restore` is plumbing with `actions/cache`.
 
 ### Naming your non-checks — `notChecks`
 
@@ -599,7 +599,7 @@ These variants are the only ones `balance` reads, one list per claim, in [`packa
 - **An entry that matches no step of a workflow the run read is named** in `## Errors in the inputs`, as `not-checks-entry-matches-no-step`. An entry naming a workflow the run did not read is not judged.
 - **Never list `balance` itself or its `toJSON(steps)` dump.** They are excluded by construction.
 
-**GitHub plumbing is excluded by construction too.** A step whose only work is one of these actions is excluded: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/cache/restore`, `actions/upload-artifact` and `actions/download-artifact`. Each is matched on its whole name, whatever ref follows, and `actions/setup-*` on every action whose name begins `actions/setup-`. Such a step moves code, tools and files and judges nothing, so the report counts it under *Plumbing* in the **Step account**, never as a check. The list is closed: every other action stays a fitness function, including `actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks` is a non-check, as you named it.
+**GitHub plumbing is excluded by construction too.** A step whose only work is one of these actions is excluded: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/upload-artifact` and `actions/download-artifact`. Each is matched on its owner and repository, whatever sub-action or ref follows, so `actions/cache/restore` is matched by `actions/cache`. `actions/setup-*` matches every action whose repository begins `actions/setup-`. Such a step moves code, tools and files and judges nothing, so the report counts it under *Plumbing* in the **Step account**, never as a check. The list is closed: every other action stays a fitness function, including `actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks` is a non-check, as you named it.
 
 ### Deferring a scenario — `deferralTags`
 
@@ -774,7 +774,7 @@ Two limits:
 The output is the **Evidence Reconciliation**, the whole reconciliation, in two renderings of the same model:
 
 - **Markdown**, for people. It opens with its title, `# Evidence Reconciliation`, and one sentence that says what the run verdict is and what it asks of you. Its sections then come in a fixed order: `## Run provenance`; `## Errors in the inputs`, when there are any; `## Run integrity`, when some evidence never ran; `## Summary`, with the run verdict and the totals; `## Step account`, when the run read a step from its CI workflows; and `## Claim Reconciliations`. Every table has a key above it saying what each column means. A section the run had nothing for is left out, except `## Claim Reconciliations`, which reads *None.* when there are none.
-- **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. Its top-level keys are `claimReconciliations`, `runVerdict`, `totals`, `provenance`, and, when the run had them, `stepAccount`, `errorsInTheInputs` and `runIntegrity`. `runVerdict.verdict` is the run verdict (`balanced`, `out-of-balance` or `not-reconciled`), and a `not-reconciled` verdict carries `runVerdict.why` (`unsound`, `claim-code-errors` or `nothing-to-reconcile`), so automation reads it instead of working it out from the Claim Reconciliations. The JSON keeps every count, zero included.
+- **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. Its top-level keys are `claimReconciliations`, `runVerdict`, `totals`, `stepAccount`, `provenance`, `errorsInTheInputs` and `runIntegrity`, every one in every report, a part the run had nothing for holding empty lists and zero counts. `runVerdict.verdict` is the run verdict (`balanced`, `out-of-balance` or `not-reconciled`), and a `not-reconciled` verdict carries `runVerdict.why` (`unsound`, `claim-code-errors` or `nothing-to-reconcile`), so automation reads it instead of working it out from the Claim Reconciliations. The JSON keeps every count, zero included.
 
 Both carry a **provenance** recording what was reconciled: the target, the source SHA, the tool's commit when it runs from its own checkout, the tool version, the time the run started, and each input the run read with its path. So a reconciliation is reproducible and attributable. The Markdown gives each input the run read a line of its own, one read by default included, and leaves out an input it did not read. The JSON lists every input, with a `path` only for one the run read.
 
@@ -966,7 +966,7 @@ spec-controller balance --features ./features \
   --cucumber ./cucumber-report.json
 ```
 
-Run `spec-controller --help` for the top-level summary of the commands. Run `spec-controller balance --help` for the full list of `balance`'s flags. A `--help` or `-h` before the command answers the top-level help at exit `0`, whatever else is given there, even a token that would otherwise be refused. After the command, it is that command's own help.
+Run `spec-controller --help` for the top-level summary of the commands. Run `spec-controller balance --help` for the full list of `balance`'s flags. A `--help` or `-h` is read wherever it stands: with a command, it shows that command's help; with none, the top-level help. Help answers at exit `0` only when the rest of the command line is valid. A command line that is a usage error beside a request for help is refused as any usage error is, at exit `2`, followed by the help for what was asked for.
 
 ### Flags
 
@@ -1045,7 +1045,7 @@ The code is written under `CLM`, one past the highest number a claim code in the
   - `0` when it answers.
   - `2` for a usage error (no feature code given, a feature code not in the claim-code form, a second feature code, a flag it does not take, or a file, folder or history it cannot read) or an unknown feature code. The error code says which it was (see [Error codes](#error-codes)), and it gives no code. An unknown feature code's refusal lists the feature codes the feature files carry.
   - It never refuses because history is short.
-  - `--help` or `-h` anywhere among its arguments answers its help at `0`.
+  - `--help` or `-h` among otherwise valid arguments answers its help at `0`. Beside a usage error, the usage error is refused at `2`.
 
 **What it reads.**
 
