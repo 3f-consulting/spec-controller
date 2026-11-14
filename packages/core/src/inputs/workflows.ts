@@ -15,7 +15,7 @@ const WRITES_STEP_RECORD = "toJSON(steps)";
 
 type Mapping = Readonly<Record<string, unknown>>;
 
-const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null;
+const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null && !Array.isArray(value);
 const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
 const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value : []);
 
