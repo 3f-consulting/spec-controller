@@ -30,7 +30,7 @@ export type RunRequest =
 // A usage error is followed by the help for what was asked for: a command's, or the commands'.
 export interface UsageError {
   readonly refusals: readonly Refusal[];
-  readonly about?: Command;
+  readonly about: Command | undefined;
 }
 
 const TOP_HELP = "spec-controller --help";
@@ -39,7 +39,7 @@ const helpFor = (command: Command): string => `spec-controller ${command} --help
 
 const refused = (about: Command | undefined, key: string, values: Readonly<Record<string, string>> = {}): UsageError => ({
   refusals: [{ key, values: { ...values, help: about === undefined ? TOP_HELP : helpFor(about) } }],
-  ...(about === undefined ? {} : { about }),
+  about,
 });
 
 // Each value-taking flag's values in the order given, each other flag given, and the arguments that are no flag's.
