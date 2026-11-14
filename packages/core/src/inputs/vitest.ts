@@ -5,7 +5,6 @@ import { whereShapeBreaks, type Shape } from "./shape.js";
 interface JestJsonReport {
   readonly testResults: readonly {
     readonly name: string;
-    readonly status: string;
     readonly message?: string;
     readonly assertionResults: readonly {
       readonly ancestorTitles: readonly string[];
@@ -16,16 +15,14 @@ interface JestJsonReport {
   }[];
 }
 
-// A record whose testResults is a list of records.
-const REPORT: Shape = { fields: { testResults: { listOf: { fields: {} } } } };
+// A record whose testResults is a list of records, each test in them with its list of failure messages.
+const REPORT: Shape = { fields: { testResults: { listOf: { fields: { assertionResults: { listOf: { fields: { failureMessages: { listOf: "string" } } } } } } } } };
 
 export const whereResultsByFileBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
-export function resultsByFileFrom(report: unknown, from: "vitest" | "jest"): ResultsByFileAsWritten[] {
-  return (report as JestJsonReport).testResults.map(({ name, status, message, assertionResults }) => ({
-    report: from,
+export function resultsByFileFrom(report: unknown): ResultsByFileAsWritten[] {
+  return (report as JestJsonReport).testResults.map(({ name, message, assertionResults }) => ({
     file: name,
-    status,
     message,
     results: assertionResults.map(({ ancestorTitles, title, status: resultStatus, failureMessages }) => ({
       ancestorTitles,

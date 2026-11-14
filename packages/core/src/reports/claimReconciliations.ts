@@ -1,13 +1,9 @@
 import { writtenClaimCode } from "../domain/claimCodes.js";
-import { evidenceGroupsOf, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
+import { evidenceGroupsOf, isExecutable, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
 import { QUALITY_CHECK_KINDS, type QualityCheckKind } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import { firstLineOf, inCell } from "./quoted.js";
 import { tableOf } from "./table.js";
-
-type Claim = ClaimReconciliation["claim"];
-
-const isExecutable = (claim: Claim): claim is Extract<Claim, { readonly obligations: unknown }> => "obligations" in claim;
 
 // A column for each kind some claim raises or some evidence answers: each gives a Quality Check Reconciliation of its kind.
 const kindsIn = (claimReconciliations: readonly ClaimReconciliation[]): QualityCheckKind[] =>
@@ -24,11 +20,11 @@ function cellOf({ claim, qualityCheckReconciliations }: ClaimReconciliation, kin
 }
 
 // A claim is named by its code; by its code and file when another claim shares it; by its file and title when it has none.
-function nameOf(claim: Claim, sharedCodes: ReadonlySet<string>): string {
+function nameOf({ claim, qualityCheckReconciliations }: ClaimReconciliation): string {
   if (!isExecutable(claim)) return claim.claimCode === undefined ? coreText("unnamed-claim") : writtenClaimCode(claim.claimCode);
   if (claim.claimCode === undefined) return `${inCell(claim.file)} : ${inCell(claim.title)}`;
   const code = writtenClaimCode(claim.claimCode);
-  return sharedCodes.has(code) ? `${code} (${inCell(claim.file)})` : code;
+  return qualityCheckReconciliations.some(({ outcome }) => outcome === "duplicate-claim-code") ? `${code} (${inCell(claim.file)})` : code;
 }
 
 const whereToLook = ({ observation }: QualityCheckReconciliation): string =>
@@ -62,15 +58,12 @@ export function claimReconciliationsSection(claimReconciliations: readonly Claim
   const heading = [`## ${coreText("claim-reconciliations-heading")}`, ""];
   if (claimReconciliations.length === 0) return [...heading, coreText("claim-reconciliations-none")];
   const kinds = kindsIn(claimReconciliations);
-  const claimsWith = new Map<string, number>();
-  for (const { claim } of claimReconciliations) if (isExecutable(claim) && claim.claimCode !== undefined) claimsWith.set(writtenClaimCode(claim.claimCode), (claimsWith.get(writtenClaimCode(claim.claimCode)) ?? 0) + 1);
-  const sharedCodes = new Set([...claimsWith].filter(([, count]) => count > 1).map(([code]) => code));
   return [
     ...heading,
     ...tableOf(
       ["claim-column", ...kinds.map((kind) => `kind-column-${kind}`), "verdict-column", "items-column"],
       claimReconciliations.map((claimReconciliation) => [
-        nameOf(claimReconciliation.claim, sharedCodes),
+        nameOf(claimReconciliation),
         ...kinds.map((kind) => cellOf(claimReconciliation, kind)),
         claimReconciliation.verdict,
         itemsOf(claimReconciliation),

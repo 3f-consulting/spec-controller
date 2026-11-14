@@ -33,7 +33,9 @@ describe("the provenance describes the run", () => {
     (_clm, _had, identity, inputs, details) => {
       const provenance = provenanceOf({ toolInstalledAsPackage: false, runTime: "2026-01-01T00:00:00Z", ...identity }, inputs, "/work/acme", repositoryOfOrigin);
 
-      expect(Object.fromEntries(Object.keys(details).map((detail) => [detail, provenance[detail as keyof Provenance]]))).toEqual(details);
+      expect(Object.fromEntries(Object.keys(details).flatMap((detail) => (detail in provenance ? [[detail, provenance[detail as keyof Provenance]]] : [])))).toStrictEqual(
+        Object.fromEntries(Object.entries(details).filter(([, value]) => value !== undefined)),
+      );
     },
   );
 });

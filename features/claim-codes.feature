@@ -64,8 +64,8 @@ Feature: every claim code is well formed, filed under its file's code, and never
   Rule: balance checks where each claim code is written before it reconciles
 
     @unit @CLM-STG-091
-    Scenario: balance finds no claim code error in a feature file with no feature code and no claim code
-      given three.feature had no feature code, and contained a scenario with no claim code
+    Scenario: balance finds no claim code error in feature files with no feature code and no claim code
+      given three.feature and four.feature had no feature code, and each contained a scenario with no claim code
       when balance reads it
       then it will find no claim code error
 
@@ -86,6 +86,12 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-059 | one.feature contains an Outline tagged @CLM-ONE-009 with a clm column                                            | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
         | CLM-STG-060 | one.feature contains an Outline with a clm column and an Examples block tagged @CLM-ONE-009                      | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
         | CLM-STG-094 | one.feature contains an Outline tagged @CLM-ONE-009, with a clm column and an Examples block tagged @CLM-ONE-009 | claim-code-beside-clm-column | one.feature, that Outline, and CLM-ONE-009 once                   |
+
+    @unit @CLM-STG-096
+    Scenario: a claim code in an Examples cell of an Outline with no clm column is no claim code error
+      given one.feature, tagged @ONE, had an Outline with no clm column, and an Examples cell CLM-TWO-001
+      when balance reads it
+      then it will find no claim code error
 
   Rule: allocate's next code is one past the highest code that has ever been in the repository
 
@@ -108,6 +114,7 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-066 | CLM-ONE-001 | a new file git does not ignore contained CLM-ONE-005                                                               | CLM-ONE-006  | that file and line                          |
         | CLM-STG-067 | CLM-ONE-001 | a file at the repository's top contained CLM-ONE-005, and the developer stood in a subdirectory containing no code | CLM-ONE-006  | that file and line                          |
         | CLM-STG-062 | CLM-ONE-001 | a line in git history, since deleted, had CLM-ONE-005                                                              | CLM-ONE-006  | the file and line it was in, and the commit |
+        | CLM-STG-097 | CLM-ONE-001 | a merge's resolution, and neither side, had CLM-ONE-005                                                            | CLM-ONE-006  | the file and line it was in, and the commit |
         | CLM-STG-063 | CLM-ONE-001 | a file git tracks contained SCN-ONE-005                                                                            | CLM-ONE-006  | that file and line                          |
         | CLM-STG-064 | CLM-ONE-001 | a line in git history, since deleted, had SCN-ONE-005                                                              | CLM-ONE-006  | the file and line it was in, and the commit |
         | CLM-STG-065 | CLM-ONE-001 | a file git tracks contained SCN-ONE-                                                                               | CLM-ONE-002  | the feature file and line                   |
@@ -136,7 +143,7 @@ Feature: every claim code is well formed, filed under its file's code, and never
       given the repository's features folder contained feature files tagged @ONE and @TWO, where <where>
       when the developer asks for the next code for ZZZ
       then it will stop as an unknown feature code, and give no code
-      and it will list ONE and TWO
+      and it will list ONE and TWO, in alphabetical order
 
       Examples:
         | clm         | where                                                    |

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { ClaimCode } from "./claimCodes.js";
-import { claimReconciliationOf, claimReconciliationsOf, evidenceGroupsOf } from "./claimReconciliation.js";
-import type { ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
-import type { EvidenceObservation, PhantomClaim, Result, UnnamedClaim } from "./postEvidenceObservation.js";
+import { citedClaimReconciliationOf, claimReconciliationOf, claimReconciliationsOf, evidenceGroupsOf } from "./claimReconciliation.js";
+import { featureAsWrittenFrom } from "../inputs/gherkin.js";
+import { shellAnswers } from "../inputs/shell.js";
+import { workflowStepsFrom } from "../inputs/workflows.js";
+import { executableClaimsOf, type ExecutableClaim, type QualityCheckKind } from "./postEvidenceObligation.js";
+import { fitnessObservationsOf, type EvidenceObservation, type PhantomClaim, type Result, type UnnamedClaim } from "./postEvidenceObservation.js";
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
 const ONE_999: ClaimCode = { featureCode: "ONE", number: "999" };
@@ -18,6 +21,10 @@ function claimOf(read: ClaimRead, kinds: readonly QualityCheckKind[]): Executabl
   if (read === "unnamed") return {};
   return { file: "one.feature", title: "a scenario", obligations, ...(read === "with no code" ? {} : { claimCode: ONE_001 }) };
 }
+
+// A claim reconciled on its own, by what kind of claim it is.
+const reconciledAlone = (claim: ExecutableClaim | PhantomClaim | UnnamedClaim, filed: readonly EvidenceObservation[]) =>
+  "obligations" in claim ? claimReconciliationOf(claim, filed, false) : citedClaimReconciliationOf(claim, filed);
 
 const citing = (read: ClaimRead): ClaimCode[] => (read === "phantom" ? [ONE_999] : read === "unnamed" ? [] : [ONE_001]);
 
@@ -50,8 +57,8 @@ describe("balance works out each Quality Check Reconciliation's outcome, and fro
     ["CLM-LDG-053", "under its code", ["fitness"], [["fitness", "passed-on-error"]], "out-of-balance", ["cannot-fail"]],
     ["CLM-LDG-021", "with no code", ["unit"], [], "out-of-balance", ["no-claim-code"]],
     ["CLM-LDG-054", "sharing its code", ["unit"], [], "out-of-balance", ["duplicate-claim-code"]],
+    ["CLM-LDG-077", "sharing its code", [], [], "out-of-balance", ["duplicate-claim-code"]],
     ["CLM-LDG-006", "phantom", [], [["unit", "passed"]], "out-of-balance", ["cites-unknown-claim"]],
-    ["CLM-LDG-055", "phantom", [], [["unit", "passed"]], "out-of-balance", ["cites-unknown-claim"]],
     ["CLM-LDG-056", "phantom", [], [["unit", "passed"], ["unit", "passed"]], "out-of-balance", ["cites-unknown-claim", "cites-unknown-claim"]],
     ["CLM-LDG-007", "unnamed", [], [["unit", "passed"]], "out-of-balance", ["cites-no-claim"]],
     ["CLM-LDG-057", "unnamed", [], [["unit", "never-ran"]], "out-of-balance", ["never-ran"]],
@@ -63,7 +70,7 @@ describe("balance works out each Quality Check Reconciliation's outcome, and fro
     const reconciliation =
       read === "sharing its code"
         ? claimReconciliationsOf([claim as ExecutableClaim, { ...(claim as ExecutableClaim), title: "another scenario" }], filed)[0]!
-        : claimReconciliationOf(claim, filed, false);
+        : reconciledAlone(claim, filed);
 
     expect({ verdict: reconciliation.verdict, outcomes: reconciliation.qualityCheckReconciliations.map(({ outcome }) => outcome).sort() }).toEqual({
       verdict,
@@ -100,12 +107,27 @@ const placedObservation = ([kind, result, place, cites, message]: Placed): Evide
 const sortedAs = ({ kind, observation }: { kind?: QualityCheckKind; observation?: EvidenceObservation }): string =>
   [kind, observation?.place, observation?.cites.map(({ number }) => number).join(" "), observation?.message].join("|");
 
+describe("a deferred scenario's code is read by no executable claim", () => {
+  it("[CLM-LDG-055] @CLM-ONE-002, on a deferred scenario, with no Evidence Obligation and a unit test citing it, is out of balance with one cites-unknown-claim", () => {
+    const deferred = featureAsWrittenFrom("one.feature", "@ONE\nFeature: one\n\n  @wip @unit @CLM-ONE-002\n  Scenario: a scenario\n    Given a step\n");
+    const [reconciliation] = claimReconciliationsOf(executableClaimsOf([deferred], { deferralTags: [], strict: false }), [
+      { cites: [{ featureCode: "ONE", number: "002" }], result: "passed", kind: "unit", place: "one.test.ts", name: "a test", notes: [] },
+    ]);
+
+    expect({ claim: reconciliation?.claim, verdict: reconciliation?.verdict, outcomes: reconciliation?.qualityCheckReconciliations.map(({ outcome }) => outcome) }).toEqual({
+      claim: { claimCode: { featureCode: "ONE", number: "002" } },
+      verdict: "out-of-balance",
+      outcomes: ["cites-unknown-claim"],
+    });
+  });
+});
+
 describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations by kind of quality check, then where the test is, then the code it cites, then what else it records", () => {
   it.each<[string, "under its code" | "unnamed", readonly QualityCheckKind[], readonly Placed[], readonly string[]]>([
     [
       "CLM-LDG-059",
       "under its code",
-      ["unit", "integration", "e2e", "performance", "fitness"],
+      ["fitness", "performance", "e2e", "integration", "unit"],
       [
         ["fitness", "passed", "a.test.ts", "it", ""],
         ["performance", "passed", "a.test.ts", "it", ""],
@@ -151,26 +173,37 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations b
       ["unit|a.test.ts|001|a", "unit|a.test.ts|001|b"],
     ],
   ])("[%s] a claim %s has its Quality Check Reconciliations sorted", (_clm, read, kinds, observations, sorted) => {
-    const reconciliation = claimReconciliationOf(claimOf(read, kinds), observations.map(placedObservation), false);
+    const reconciliation = reconciledAlone(claimOf(read, kinds), observations.map(placedObservation));
 
     expect(reconciliation.qualityCheckReconciliations.map(sortedAs)).toEqual(sorted);
+  });
+});
+
+describe("a missing check comes before the evidence of its kind", () => {
+  it("[CLM-LDG-076] a unit and a fitness Evidence Obligation under @CLM-ONE-001, and a unit test in a.test.ts citing it that never ran, sort as the missing unit check, the test that never ran, then the missing fitness check", () => {
+    const neverRan: EvidenceObservation = { cites: [ONE_001], result: "never-ran", kind: "unit", place: "a.test.ts", name: "adds" };
+    const reconciliation = claimReconciliationOf(claimOf("under its code", ["unit", "fitness"]) as ExecutableClaim, [neverRan], false);
+
+    expect(reconciliation.qualityCheckReconciliations.map(({ outcome, kind }) => `${kind} ${outcome}`)).toEqual(["unit missing", "unit never-ran", "fitness missing"]);
   });
 });
 
 // Evidence on the unnamed claim as a group row writes it: its kind, result, place, the codes it cites, and its name.
 type Unnamed = readonly [kind: QualityCheckKind, result: Result, place: string, cites: readonly ("001" | "002")[], name: string];
 
+// A fitness function is a CI step, which has no name.
 const unnamedObservation = ([kind, result, place, cites, name]: Unnamed): EvidenceObservation => ({
   cites: cites.map((number) => ({ featureCode: "ONE", number })),
   result,
   kind,
   place,
-  name,
+  ...(kind === "fitness" ? {} : { name }),
   notes: [],
 });
 
-const groupsOn = (evidence: readonly Unnamed[]): ReturnType<typeof evidenceGroupsOf> =>
-  evidenceGroupsOf(claimReconciliationOf({}, evidence.map(unnamedObservation), false));
+const groupsOf = (observations: readonly EvidenceObservation[]): ReturnType<typeof evidenceGroupsOf> => evidenceGroupsOf(citedClaimReconciliationOf({}, observations));
+
+const groupsOn = (evidence: readonly Unnamed[]): ReturnType<typeof evidenceGroupsOf> => groupsOf(evidence.map(unnamedObservation));
 
 describe("evidence of the same kind, file and shared claim code will share a group", () => {
   it.each<[string, readonly Unnamed[], readonly string[]]>([
@@ -179,7 +212,6 @@ describe("evidence of the same kind, file and shared claim code will share a gro
     ["CLM-LDG-067", [["unit", "passed", "a.test.ts", [], "x"], ["integration", "passed", "a.test.ts", [], "y"]], ["unit a.test.ts  1", "integration a.test.ts  1"]],
     ["CLM-LDG-068", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "a.test.ts", ["001"], "y"]], ["unit a.test.ts  1", "unit a.test.ts ONE-001 1"]],
     ["CLM-LDG-073", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "a.test.ts", ["001", "002"], "y"]], ["unit a.test.ts  2"]],
-    ["CLM-LDG-069", [["fitness", "passed", "ci / Lint", [], "Lint"], ["fitness", "passed", "ci / Audit", [], "Audit"]], ["fitness   2"]],
     ["CLM-LDG-070", [["fitness", "passed", "ci / Lint", [], "Lint"], ["fitness", "passed", "ci / Audit", ["001"], "Audit"]], ["fitness   1", "fitness  ONE-001 1"]],
   ])("[%s] the unnamed claim's evidence falls into its groups", (_clm, evidence, groups) => {
     const read = groupsOn(evidence).map(({ kind, file, claimCode, qualityCheckReconciliations }) =>
@@ -190,11 +222,23 @@ describe("evidence of the same kind, file and shared claim code will share a gro
   });
 });
 
+describe("two uncited fitness functions share one group", () => {
+  it("[CLM-LDG-069] two steps with no id, in jobs build and test, posted from an empty step record, are one fitness group naming both", () => {
+    const steps = workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: [{ run: "pnpm lint" }] }, test: { steps: [{ run: "pnpm audit-the-tree" }] } } }));
+    const posted = fitnessObservationsOf(steps, [], { runners: {}, nonChecks: [], deferralTags: [] }, {}, shellAnswers);
+
+    expect(groupsOf(posted).map(({ kind, file, qualityCheckReconciliations }) => ({ kind, file, places: qualityCheckReconciliations.map(({ observation }) => observation?.place) }))).toEqual([
+      { kind: "fitness", file: undefined, places: ["ci.yml:build:pnpm lint", "ci.yml:test:pnpm audit-the-tree"] },
+    ]);
+  });
+});
+
 describe("a group of tests will count them and name those that failed", () => {
   it.each<[string, readonly Unnamed[], number, number, number, readonly string[]]>([
     ["CLM-LDG-071", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "passed", "a.test.ts", [], "b"]], 2, 2, 0, []],
     ["CLM-LDG-072", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "failed", "a.test.ts", [], "b"]], 2, 1, 1, ["b"]],
     ["CLM-LDG-074", [["fitness", "passed-on-error", "ci / Lint", [], "Lint"]], 1, 1, 0, []],
+    ["CLM-LDG-075", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "never-ran", "a.test.ts", [], "b"]], 1, 1, 0, []],
   ])("[%s] a group on the unnamed claim counts what ran, passed and failed, naming the failures", (_clm, evidence, ran, passed, failed, failures) => {
     expect(groupsOn(evidence).map((group) => ({ ran: group.ran, passed: group.passed, failed: group.failed, failures: group.failures }))).toEqual([
       { ran, passed, failed, failures },

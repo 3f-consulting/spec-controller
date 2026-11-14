@@ -112,6 +112,7 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-067 | a passing unit test citing no code                                | 1     | 1 on the unnamed claim   |
         | CLM-EVR-068 | a passing unit test citing a code no claim has                    | 1     | 1 on a phantom claim     |
         | CLM-EVR-069 | a unit test citing a code no claim has, which never ran           | 1     | 1 on a phantom claim     |
+        | CLM-EVR-076 | a claim asking for a unit test, and no test citing it             | 0     | 0 on an executable claim |
 
     @unit
     Scenario Outline: Total of the out-of-balance Claim Reconciliations, by feature

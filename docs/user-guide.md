@@ -808,7 +808,7 @@ Then come the totals, in groups:
 
 The Markdown leaves out a kind no claim asks for and no evidence answers, an outcome no row has, the row with no kind when it is empty, and a place nothing was filed on. The JSON's `totals` keeps every kind, the row with no kind under `noKind`, the *All* row under `all`, and every outcome under each, at `0` where there is none.
 
-**`## Step account`** follows the Summary when the run read a step from its CI workflows. It has a row for each workflow and job the run read, counting its steps read, then its runners, reconciler steps, non-checks, plumbing and candidates. Each step read is counted once, so a row's last five counts add up to its steps read. A *Total* row sums the jobs when there is more than one. In the JSON, `stepAccount.total` also carries `accountedFor`, the steps the five dispositions count.
+**`## Step account`** follows the Summary when the run read a step from its CI workflows. It has a row for each workflow and job the run read, counting its steps read, then its runners, reconciler steps, non-checks, plumbing and candidates. Each step read is counted once, so a row's last five counts add up to its steps read. A *Total* row sums the jobs when there is more than one.
 
 ### The Claim Reconciliations
 

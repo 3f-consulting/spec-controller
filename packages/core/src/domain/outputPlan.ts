@@ -35,17 +35,26 @@ export type OutputRefusal<Format extends string> =
   | { readonly kind: "output-overwrites-an-input"; readonly output: OutputRequest<Format>; readonly input: IdentifiedInput };
 
 export type OutputPlan<Format extends string> =
-  | { readonly ok: true; readonly outputs: readonly OutputRequest<Format>[] }
+  | { readonly ok: true }
   | { readonly ok: false; readonly refusal: OutputRefusal<Format> };
 
-const toStandardOutput = <Format extends string>({ output, identity }: IdentifiedOutput<Format>): boolean =>
-  output.destination.to === "standard-output" || identity.is === "standard-output";
+const toStandardOutput = <Format extends string>({ identity }: IdentifiedOutput<Format>): boolean => identity.is === "standard-output";
+const toStandardError = <Format extends string>({ output }: IdentifiedOutput<Format>): boolean => output.destination.to === "standard-error";
 
-// One regular file by device and inode, or one file not yet made by its folder and name.
+// A regular file by its device and inode, a file not yet made by its folder's and its name; anything else is no file.
+function fileKeyOf(identity: FileIdentity): string | undefined {
+  switch (identity.is) {
+    case "regular-file":
+      return `${identity.device}:${identity.inode}`;
+    case "absent":
+      return identity.folder && `${identity.folder.device}:${identity.folder.inode}/${identity.name}`;
+  }
+  return undefined;
+}
+
 function sameFile(one: FileIdentity, other: FileIdentity): boolean {
-  if (one.is === "regular-file" && other.is === "regular-file") return one.device === other.device && one.inode === other.inode;
-  if (one.is !== "absent" || other.is !== "absent" || one.folder === undefined || other.folder === undefined) return false;
-  return one.folder.device === other.folder.device && one.folder.inode === other.folder.inode && one.name === other.name;
+  const key = fileKeyOf(one);
+  return key !== undefined && key === fileKeyOf(other);
 }
 
 // The first two outputs that land on one file, however each is named.
@@ -61,11 +70,14 @@ function sharingAFile<Format extends string>(outputs: readonly IdentifiedOutput<
 export function outputPlanOf<Format extends string>(outputs: readonly IdentifiedOutput<Format>[], inputs: readonly IdentifiedInput[]): OutputPlan<Format> {
   const onStandardOutput = outputs.filter(toStandardOutput);
   if (onStandardOutput.length > 1) return { ok: false, refusal: { kind: "more-than-one-to-standard-output", outputs: onStandardOutput.map(({ output }) => output) } };
-  const shared = sharingAFile(outputs);
+  // Reports to standard error follow one another in its stream, so only the first is compared with the files.
+  const firstOnStandardError = outputs.find(toStandardError);
+  const compared = outputs.filter((output) => !toStandardError(output) || output === firstOnStandardError);
+  const shared = sharingAFile(compared);
   if (shared !== undefined) return { ok: false, refusal: { kind: "outputs-share-a-file", first: shared[0].output, second: shared[1].output } };
-  for (const { output, identity } of outputs) {
+  for (const { output, identity } of compared) {
     const input = inputs.find((read) => sameFile(identity, read.identity));
     if (input !== undefined) return { ok: false, refusal: { kind: "output-overwrites-an-input", output, input } };
   }
-  return { ok: true, outputs: outputs.map(({ output }) => output) };
+  return { ok: true };
 }

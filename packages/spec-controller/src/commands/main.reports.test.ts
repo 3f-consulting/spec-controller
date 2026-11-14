@@ -36,8 +36,8 @@ describe("balance counts the steps of the CI workflows it reads", () => {
   it("[CLM-CLI-195] --ci naming a workflows folder whose one workflow has two steps: the report's step account counts two steps", () => {
     const folder = folderWithWorkflows({ "ci.yml": "jobs:\n  ci:\n    steps:\n      - run: echo one\n      - run: echo two\n" });
 
-    const { stepAccount } = JSON.parse(reportIn(folder, "json")) as { stepAccount?: { total: { stepsRead: number; accountedFor: number } } };
+    const { stepAccount } = JSON.parse(reportIn(folder, "json")) as { stepAccount?: { total: { stepsRead: number } } };
 
-    expect({ read: stepAccount?.total.stepsRead, accountedFor: stepAccount?.total.accountedFor }).toEqual({ read: 2, accountedFor: 2 });
+    expect(stepAccount?.total.stepsRead).toBe(2);
   });
 });

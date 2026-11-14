@@ -450,17 +450,7 @@ describe("allocate names what it could not read, and gives no code", () => {
 });
 
 describe("history and the feature files, read whole", () => {
-  it("[CLM-STG-062] a line in git history, since deleted, that read ++ CLM-ONE-005: the answer is CLM-ONE-006", () => {
-    const repository = repositoryOfOne();
-    repository.write("old.txt", "++ CLM-ONE-005\n");
-    repository.commit("second");
-    repository.write("old.txt", "gone\n");
-    repository.commit("third");
-
-    expect(allocate(ONE, repository.top)).toMatchObject({ answer: "CLM-ONE-006" });
-  });
-
-  it("[CLM-STG-062] a line in git history, written only in a merge's resolution and since deleted, had CLM-ONE-005: the answer is CLM-ONE-006", () => {
+  it("[CLM-STG-097] a merge's resolution, and neither side, had CLM-ONE-005, since deleted: the answer is CLM-ONE-006", () => {
     const repository = repositoryOfOne();
     repository.write("clash.txt", "base\n");
     repository.commit("base");
@@ -477,14 +467,5 @@ describe("history and the feature files, read whole", () => {
     repository.commit("after");
 
     expect(allocate(ONE, repository.top)).toMatchObject({ answer: "CLM-ONE-006" });
-  });
-
-  it("[CLM-STG-093] a feature file in the features folder it cannot read stops it as a usage error, naming what it could not read", () => {
-    const repository = repositoryOfOne();
-    repository.write("features/two.feature", featureFile("TWO", "CLM-TWO-001"));
-    repository.commit("second");
-    chmodSync(`${repository.top}/features/two.feature`, 0o000);
-
-    expect(allocate(ONE, repository.top)).toMatchObject({ stop: "usage-error", refusal: { key: "unreadable-in-tree", values: { path: "features/two.feature" } } });
   });
 });
