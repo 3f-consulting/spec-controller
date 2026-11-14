@@ -258,6 +258,17 @@ describe("a place it cannot write will stop the run, and nothing will be written
       },
     ],
     [
+      "CLM-FMT-008",
+      "a new file in a folder it may not write",
+      "may-not-be-written",
+      (folder: string) => {
+        mkdirSync(join(folder, "read-only"));
+        chmodSync(join(folder, "read-only"), 0o555);
+        return join(folder, "read-only", "report.md");
+      },
+      (place: string) => !existsSync(place),
+    ],
+    [
       "CLM-FMT-026",
       "an existing folder",
       "is-a-folder",
