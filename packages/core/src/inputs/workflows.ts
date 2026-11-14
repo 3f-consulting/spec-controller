@@ -5,10 +5,10 @@ import workflowsVariants from "./workflows.variants.json" with { type: "json" };
 
 // Which steps only set the job up is the reader's to say, from its list of the actions that do.
 // An action is matched on its owner/repo, so its sub-actions are matched with it. An entry ending in * names a family
-// of actions, such as every setup action.
+// of actions, such as every setup action: an owner/repo cut to the entry's length less the *, then the *, is the entry.
 const usesAction = (uses: string, action: string): boolean => {
   const repository = uses.split("@")[0]!.split("/").slice(0, 2).join("/");
-  return action.endsWith("*") ? repository.startsWith(action.slice(0, -1)) : repository === action;
+  return (action.endsWith("*") ? `${repository.slice(0, action.length - 1)}*` : repository) === action;
 };
 const isPlumbing = (uses: string): boolean => workflowsVariants["CLM-OBS-015"].variants.some((action) => usesAction(uses, action));
 const WRITES_STEP_RECORD = "toJSON(steps)";
