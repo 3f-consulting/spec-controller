@@ -12,23 +12,6 @@ const read = (...args: Parameters<typeof inputsReadFor>): InputsRead => {
   return inputs;
 };
 
-describe("an empty evidence report will count as no evidence, not as a broken file", () => {
-  it.each([
-    ["a Vitest evidence report", "vitest", "vitest.json", '{"testResults":[]}', []],
-    ["a Jest evidence report", "jest", "jest.json", '{"testResults":[]}', []],
-    ["a pytest evidence report", "pytest", "pytest.xml", '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"></testsuites>', []],
-    ["a JUnit evidence report", "junit", "junit.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<testsuites name="all"></testsuites>\n', []],
-    ["an RSpec evidence report", "rspec", "rspec.json", '{"examples":[],"summary":{}}', { examples: [], loadErrors: [] }],
-    ["a Cucumber evidence report", "cucumber", "cucumber.json", "[]", []],
-    ["a CI step record", "stepRecord", "steps.json", "{}", []],
-  ] as const)("[CLM-OBS-149] %s was written well formed, listing no tests: nothing will be posted, and the run will not stop", (_report, kind, file, report, nothing) => {
-    const folder = temporaryDirectory("empty-report-");
-    writeFileSync(join(folder, file), report);
-
-    expect(read([{ kind, path: file, byDefault: false }], folder)).toEqual({ features: [], [kind]: nothing, filesRead: [join(folder, file)], pathsRead: { [kind]: file } });
-  });
-});
-
 describe("balance will use the default when an input is not named", () => {
   it("[CLM-CLI-137] no manifest named, and package.json in the folder: balance reads package.json", () => {
     const folder = temporaryDirectory("default-manifest-");

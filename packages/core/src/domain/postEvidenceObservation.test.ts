@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
-import { resultsByFileFrom } from "../inputs/vitest.js";
-import { resultsBySuiteFrom } from "../inputs/junit.js";
-import { resultsByExampleFrom } from "../inputs/rspec.js";
-import { scenarioResultsFrom } from "../inputs/cucumber.js";
+import { resultsByFileFrom, whereResultsByFileBreak } from "../inputs/vitest.js";
+import { resultsBySuiteFrom, whereSuitesBreak, whyXmlDoesNotParse } from "../inputs/junit.js";
+import { resultsByExampleFrom, whereResultsByExampleBreak } from "../inputs/rspec.js";
+import { scenarioResultsFrom, whereScenarioResultsBreak } from "../inputs/cucumber.js";
+import { shellAnswers } from "../inputs/shell.js";
+import { stepRecordFrom, whereStepRecordBreaks } from "../inputs/stepRecord.js";
 import type { ClaimCode } from "./claimCodes.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureAsWritten } from "./postEvidenceObligation.js";
-import { observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { fitnessObservationsOf, observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, type EvidenceObservation } from "./postEvidenceObservation.js";
 import observationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
@@ -750,3 +752,42 @@ describe("balance posts a result from a feature file it did not read to the unna
   });
 });
 
+
+// Where a report breaks its shape, if anywhere; a report that breaks nowhere is read, and the run goes on.
+const whereXmlBreaks = (xml: string): string | undefined => whyXmlDoesNotParse(xml) ?? whereSuitesBreak(xml);
+
+describe("balance posts nothing from an evidence report that lists no tests", () => {
+  it.each<[string, () => string | undefined, () => readonly EvidenceObservation[]]>([
+    ["a Vitest evidence report", () => whereResultsByFileBreak({ testResults: [] }), () => postedByFile({ testResults: [] })],
+    ["a Jest evidence report", () => whereResultsByFileBreak({ testResults: [] }), () => postedByFile({ testResults: [] })],
+    [
+      "a pytest evidence report",
+      () => whereXmlBreaks('<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"></testsuites>'),
+      () => observationsBySuite(resultsBySuiteFrom('<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"></testsuites>', "pytest"), "/work"),
+    ],
+    [
+      "a JUnit evidence report",
+      () => whereXmlBreaks('<?xml version="1.0" encoding="UTF-8"?>\n<testsuites name="all"></testsuites>\n'),
+      () => observationsBySuite(resultsBySuiteFrom('<?xml version="1.0" encoding="UTF-8"?>\n<testsuites name="all"></testsuites>\n', "junit"), "/work"),
+    ],
+    ["an RSpec evidence report", () => whereResultsByExampleBreak({ examples: [], summary: {} }), () => postedByExample({ examples: [], summary: {} })],
+    ["a Cucumber evidence report", () => whereScenarioResultsBreak([]), () => postedByScenario([])],
+    ["a CI step record", () => whereStepRecordBreaks({}), () => fitnessObservationsOf([], stepRecordFrom({}), { runners: {}, nonChecks: [], deferralTags: [] }, {}, shellAnswers)],
+  ])("[CLM-OBS-149] %s was written well formed, listing no tests: nothing will be posted, and the run will not stop", (_report, whereItBreaks, posted) => {
+    expect({ breaks: whereItBreaks(), posted: posted() }).toEqual({ breaks: undefined, posted: [] });
+  });
+});
+
+describe("balance posts the results of a JUnit evidence report written as one suite or as suites of suites", () => {
+  const twoTests = '<testcase classname="example.AddsTest" name="[CLM-ONE-001] adds one" time="0.001"/><testcase classname="example.AddsTest" name="[CLM-ONE-002] adds two" time="0.001"/>';
+
+  it.each([
+    ["one suite, as Maven Surefire writes it", `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="example.AddsTest" tests="2" errors="0" skipped="0" failures="0">\n  ${twoTests}\n</testsuite>\n`],
+    ["a suites element with suites in it, as pytest writes it", `<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="2">${twoTests}</testsuite></testsuites>`],
+  ] as const)("[CLM-OBS-150] a JUnit evidence report was written well formed, as %s: an Evidence Observation will be posted for each of its tests", (_written, report) => {
+    expect({ breaks: whereXmlBreaks(report), posted: observationsBySuite(resultsBySuiteFrom(report, "junit"), "/work").map(({ name }) => name) }).toEqual({
+      breaks: undefined,
+      posted: ["[CLM-ONE-001] adds one", "[CLM-ONE-002] adds two"],
+    });
+  });
+});
