@@ -33,14 +33,7 @@ export interface UsageError {
   readonly about: Command | undefined;
 }
 
-const TOP_HELP = "spec-controller --help";
-
-const helpFor = (command: Command): string => `spec-controller ${command} --help`;
-
-const refused = (about: Command | undefined, key: string, values: Readonly<Record<string, string>> = {}): UsageError => ({
-  refusals: [{ key, values: { ...values, help: about === undefined ? TOP_HELP : helpFor(about) } }],
-  about,
-});
+const refused = (about: Command | undefined, key: string, values: Readonly<Record<string, string>> = {}): UsageError => ({ refusals: [{ key, values }], about });
 
 // Each value-taking flag's values in the order given, each other flag given, and the arguments that are no flag's.
 interface FlagsRead {

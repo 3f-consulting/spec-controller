@@ -57,21 +57,18 @@ describe("you will get the report format you named", () => {
   });
 });
 
-const BALANCE_HELP = "spec-controller balance --help";
-const ALLOCATE_HELP = "spec-controller allocate --help";
-
 describe("an argument the tool does not accept will stop the run", () => {
   it.each([
-    ["CLM-CLI-126", ["balance", "--"], "unknown-flag", { command: "balance", flag: "--", help: BALANCE_HELP }],
-    ["CLM-CLI-126", ["balance", "-hx"], "unknown-flag", { command: "balance", flag: "-x", help: BALANCE_HELP }],
-    ["CLM-CLI-126", ["balance", "-h=1"], "unknown-flag", { command: "balance", flag: "-=", help: BALANCE_HELP }],
-    ["CLM-CLI-126", ["allocate", "ABC", "-hn"], "unknown-flag", { command: "allocate", flag: "-n", help: ALLOCATE_HELP }],
-    ["CLM-CLI-127", ["balance", "--features", "--strict"], "missing-value", { flag: "--features", help: BALANCE_HELP }],
-    ["CLM-CLI-129", ["balance", "--target", "acme", "stray"], "stray-argument", { argument: "stray", help: BALANCE_HELP }],
-    ["CLM-CLI-130", ["balance", "--strict", "--strict"], "repeated-flag", { flag: "--strict", help: BALANCE_HELP }],
-    ["CLM-CLI-131", ["balance", "--strict=yes"], "equals-form", { given: "--strict=yes", spelling: "--strict yes", help: BALANCE_HELP }],
-    ["CLM-CLI-133", ["balance", "--format", "html"], "unknown-format", { format: "html", formats: "md, json", help: BALANCE_HELP }],
-    ["CLM-CLI-134", ["allocate"], "no-feature-code", { help: ALLOCATE_HELP }],
+    ["CLM-CLI-126", ["balance", "--"], "unknown-flag", { command: "balance", flag: "--" }],
+    ["CLM-CLI-126", ["balance", "-hx"], "unknown-flag", { command: "balance", flag: "-x" }],
+    ["CLM-CLI-126", ["balance", "-h=1"], "unknown-flag", { command: "balance", flag: "-=" }],
+    ["CLM-CLI-126", ["allocate", "ABC", "-hn"], "unknown-flag", { command: "allocate", flag: "-n" }],
+    ["CLM-CLI-127", ["balance", "--features", "--strict"], "missing-value", { flag: "--features" }],
+    ["CLM-CLI-129", ["balance", "--target", "acme", "stray"], "stray-argument", { argument: "stray" }],
+    ["CLM-CLI-130", ["balance", "--strict", "--strict"], "repeated-flag", { flag: "--strict" }],
+    ["CLM-CLI-131", ["balance", "--strict=yes"], "equals-form", { given: "--strict=yes", spelling: "--strict yes" }],
+    ["CLM-CLI-133", ["balance", "--format", "html"], "unknown-format", { format: "html", formats: "md, json" }],
+    ["CLM-CLI-134", ["allocate"], "no-feature-code", {}],
   ] as const)("[%s] a command line had %j: when it is read, the run will stop, refused as %s, naming its facts", (_clm, args, key, values) => {
     const request = runRequestOf(args);
 

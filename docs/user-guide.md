@@ -902,7 +902,7 @@ An error after the run has its exit code does not change it. One line goes to st
 
 ### Error codes
 
-**A refusal of a flag, a command, an argument, an input or an output carries its error code in square brackets**, at the start of its line on stderr, as in `[unknown-flag] balance does not take the flag --nope; see spec-controller balance --help`. The code names what went wrong and does not change when the words do, so quote it and look it up here.
+**A refusal of a flag, a command, an argument, an input or an output carries its error code in square brackets**, at the start of its line on stderr, as in `[unknown-flag] balance does not take the flag --nope`, followed by the help for what was asked for. The code names what went wrong and does not change when the words do, so quote it and look it up here.
 
 Every error below refuses the command as given. That is a usage error, and the run exits `2`. A refusal of the command line ends by pointing to the help that lists what was allowed.
 
