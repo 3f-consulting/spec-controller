@@ -355,6 +355,13 @@ describe("an input that is not valid will stop the run", () => {
       ["--junit", "junit.xml"],
       ["junit.xml", "JUnit", "writes: $ is not", "[input-not-in-its-shape]"],
     ],
+    [
+      "CLM-CLI-155",
+      "a JUnit evidence report with a test case that has no name",
+      { "junit.xml": '<testsuite name="s"><testcase classname="pkg.Foo"><failure/></testcase></testsuite>' },
+      ["--junit", "junit.xml"],
+      ["junit.xml", "JUnit", "[input-not-in-its-shape]"],
+    ],
     ["CLM-CLI-156", "a file in a JUnit directory not in JUnit's shape", { "junit/one.xml": "<testsuite/>", "junit/two.xml": "<html/>" }, ["--junit", "junit"], ["{input-junit-folder-file} junit/two.xml", "JUnit", "[input-not-in-its-shape]"]],
     ["CLM-CLI-157", "an RSpec evidence report not in RSpec's shape", { "rspec.json": '{"examples":3}' }, ["--rspec", "rspec.json"], ["rspec.json", "examples", "[input-not-in-its-shape]"]],
     ["CLM-CLI-157", "an RSpec evidence report whose messages are not all strings", { "rspec.json": '{"messages":["a",3],"examples":[],"summary":{}}' }, ["--rspec", "rspec.json"], ["rspec.json", "$.messages[1]", "[input-not-in-its-shape]"]],
