@@ -51,15 +51,18 @@ export function whyXmlDoesNotParse(xml: string): string | undefined {
   return valid === true ? undefined : `${valid.err.msg} (${valid.err.line}:${valid.err.col})`;
 }
 
-// A JUnit report's top is a suite, or the suites element holding them.
+const suitesOf = (document: Element): Element[] => [...suitesIn(document), ...suitesIn((document["testsuites"] as Element | undefined) ?? {})];
+
+// A JUnit report's top is a suite, or the suites element holding them, and each of its test cases has a name.
 export const whereSuitesBreak = (xml: string): string | undefined => {
   const document = parser.parse(xml) as Element;
-  return document["testsuites"] === undefined && document["testsuite"] === undefined ? "$" : undefined;
+  if (document["testsuites"] === undefined && document["testsuite"] === undefined) return "$";
+  const unnamed = suitesOf(document).some((suite) => elementsIn(suite, "testcase").some((testCase) => testCase["@name"] === undefined));
+  return unnamed ? "$..testcase" : undefined;
 };
 
 export function resultsBySuiteFrom(xml: string, from: "junit" | "pytest"): ResultsBySuiteAsWritten[] {
-  const document = parser.parse(xml) as Element;
-  return [...suitesIn(document), ...suitesIn((document["testsuites"] as Element | undefined) ?? {})].map((suite) => ({
+  return suitesOf(parser.parse(xml) as Element).map((suite) => ({
     // pytest writes an error only for a test that never reached its assertions; JUnit writes one for a test that failed.
     errorMeansNeverRan: from === "pytest",
     name: suite["@name"] as string,
