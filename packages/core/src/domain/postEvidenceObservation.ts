@@ -139,7 +139,7 @@ function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFo
   const { className, name, clmProperties, outcome, failure } = result;
   if (outcome === "skipped") return [];
   const collected = Boolean(className);
-  const cites = collected ? clmProperties.flatMap((property) => claimCodeFrom(property) ?? []) : [];
+  const cites = collected ? [...new Set(clmProperties)].flatMap((property) => claimCodeFrom(property) ?? []) : [];
   const resultOf: Result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
   const place = shownFromTarget(collected ? className! : name, targetFolder);
   return [unitObservation({ cites, result: resultOf, place, ...(collected && { name }), ...saidBy(failure) })];
