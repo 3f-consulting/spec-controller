@@ -80,7 +80,7 @@ describe("a row lists its reconciling items, each with where to look", () => {
     ["CLM-RPT-141", "a unit Evidence Obligation, and a passing unit test citing it", "@unit @CLM-CHK-001", [["unit", "passed", "CHK-001"]], ["—"]],
     [
       "CLM-RPT-142",
-      'a unit Evidence Obligation, and the unit test "[CLM-CHK-002] charges the card" in src/checkout.test.ts failing',
+      "a unit Evidence Obligation, and its unit test that charges the card in src/checkout.test.ts failing",
       "@unit @CLM-CHK-002",
       [["unit", "failed", "CHK-002", "src/checkout.test.ts", "[CLM-CHK-002] charges the card"]],
       ["unit: failing (src/checkout.test.ts: [CLM-CHK-002] charges the card)"],
