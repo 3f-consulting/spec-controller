@@ -20,8 +20,7 @@ function ownCheckoutHead(toolFolder: string): string | undefined {
 function versionAbove(folder: string): string | undefined {
   const manifest = join(folder, "package.json");
   if (existsSync(manifest)) {
-    const { version } = JSON.parse(readFileSync(manifest, "utf8")) as { version?: unknown };
-    return typeof version === "string" ? version : undefined;
+    return (JSON.parse(readFileSync(manifest, "utf8")) as { version?: string }).version;
   }
   return dirname(folder) === folder ? undefined : versionAbove(dirname(folder));
 }
