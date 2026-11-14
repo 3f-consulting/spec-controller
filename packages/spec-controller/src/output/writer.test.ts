@@ -7,7 +7,7 @@ import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import { refusalText } from "../runEnding/refusal.js";
 import { runRequestOf } from "../runRequest/runRequest.js";
 import runRequestVariants from "../runRequest/runRequest.variants.json" with { type: "json" };
-import outputPlanVariants from "../../../core/src/domain/outputPlan.variants.json" with { type: "json" };
+import identityVariants from "./identity.variants.json" with { type: "json" };
 import { processStreams } from "./streams.js";
 import type { Unwritable } from "./writable.js";
 import writableVariants from "./writable.variants.json" with { type: "json" };
@@ -286,7 +286,7 @@ describe("two reports share a place only when it is standard error or a place th
     expect({ exitCode, output: output.join(""), error: error.join("") }).toEqual({ exitCode: 0, output: "", error: "" });
   });
 
-  it.each(outputPlanVariants["CLM-FMT-005"].variants)(
+  it.each(identityVariants["CLM-FMT-005"].variants)(
     "[CLM-FMT-005] a run had two reports to write: when you ask for one with no destination and the other at %s, the run will stop, give no verdict and exit 2, complain naming what each report asked for, and nothing will be on standard output",
     (variant) => {
       const eachWay = SECOND_ON_STANDARD_OUTPUT[variant]!.map(([named, second]) => {
@@ -305,7 +305,7 @@ describe("two reports share a place only when it is standard error or a place th
     },
   );
 
-  it.for(outputPlanVariants["CLM-FMT-010"].variants)(
+  it.for(identityVariants["CLM-FMT-010"].variants)(
     "[CLM-FMT-010] a run had two reports to write: when you ask for them at a file and at %s, the run will stop, give no verdict and exit 2, complain naming the file and both reports, and the file will be as it was",
     (variant, { skip }) => {
       const file = join(temporaryDirectory("one-file-"), "report.md");
