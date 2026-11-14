@@ -52,7 +52,7 @@ describe("an input left out takes its default", () => {
 });
 
 describe("you will get the report format you named", () => {
-  it("[CLM-FMT-001] no format named: the Markdown report is asked for", () => {
+  it("[CLM-FMT-001] a run had its report to write: when you ask for no format, the Markdown report is asked for", () => {
     expect(balanceRequested([]).outputs).toEqual([{ format: "md", destination: { to: "standard-output" } }]);
   });
 });

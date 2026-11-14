@@ -17,11 +17,13 @@ describe("each of two reports will be where you asked", () => {
       { is: "absent", folder: { device: 1n, inode: 7n }, name: "report" },
       { is: "absent", folder: { device: 2n, inode: 7n }, name: "report" },
     ],
-  ] as const)("[%s] reports asked for at %s are each planned for their own file", (_clm, _files, one, other) => {
+  ] as const)("[%s] a run had two reports to write: when you ask for them at %s, each file will contain its own report, as each is planned for its own file", (_clm, _files, one, other) => {
     expect(outputPlanOf([toFile("md", "a/report", one), toFile("json", "b/report", other)], [])).toEqual({ ok: true });
   });
+});
 
-  it("[CLM-FMT-022] two reports asked for on standard error, redirected into a file, are planned one after the other", () => {
+describe("two reports share a place only when it is standard error or a place that discards them", () => {
+  it("[CLM-FMT-022] a run had two reports to write: when you ask for both on standard error, redirected into a file, both reports are planned on standard error, one after the other", () => {
     const redirected: FileIdentity = { is: "regular-file", device: 1n, inode: 7n };
     const onStandardError = (format: string): IdentifiedOutput<string> => ({ output: { format, destination: { to: "standard-error" } }, identity: redirected });
 
@@ -29,8 +31,8 @@ describe("each of two reports will be where you asked", () => {
   });
 });
 
-describe("a report will not be written over a file the run reads", () => {
-  it("[CLM-FMT-013] a report asked for at the file the run read is refused as overwriting that input", () => {
+describe("it stops before it damages anything", () => {
+  it("[CLM-FMT-013] the run read a file, such as your test results: when you ask for the report to go in that same file, the run is refused as overwriting it", () => {
     const identity: FileIdentity = { is: "regular-file", device: 1n, inode: 9n };
     const report = toFile("json", "results.json", identity);
     const input = { name: "vitest", path: "results.json", identity };

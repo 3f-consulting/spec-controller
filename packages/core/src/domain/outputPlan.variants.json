@@ -1,0 +1,16 @@
+{
+  "CLM-FMT-005": {
+    "class": "a second report also on standard output",
+    "variants": ["no destination", "a path that names standard output", "a link to standard output"]
+  },
+  "CLM-FMT-010": {
+    "class": "two names for one file",
+    "variants": [
+      "the same path",
+      "a link to it",
+      "standard output redirected to it",
+      "standard error redirected to it",
+      "on a volume that folds case, the same name in another case"
+    ]
+  }
+}
