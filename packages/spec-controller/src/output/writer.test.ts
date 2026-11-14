@@ -257,6 +257,7 @@ describe("a place it cannot write will stop the run, and nothing will be written
         return !existsSync(place);
       },
     ],
+    ["CLM-FMT-008", "an empty path", "may-not-be-written", (_folder: string): string => "", (_place: string): boolean => true],
     [
       "CLM-FMT-008",
       "a new file in a folder it may not write",
