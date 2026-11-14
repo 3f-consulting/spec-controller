@@ -21,7 +21,7 @@ function provenanceIn(folder: string, ...args: string[]): ProvenanceRead {
 // The path the provenance shows for the input of that name.
 const inputPath = ({ inputs }: ProvenanceRead, name: string): string | undefined => inputs.find((input) => input.name === name)?.path;
 
-describe("balance works out the target's folder", () => {
+describe("balance works out the target's folder from the corpus", () => {
   it.each([
     ["by its own path", (top: string) => top],
     [
@@ -32,7 +32,7 @@ describe("balance works out the target's folder", () => {
         return link;
       },
     ],
-  ])("[CLM-CLI-184] a corpus named in a git repository's subfolder, reached %s, run from elsewhere: the target is that repository", (_reached, named) => {
+  ])("[CLM-CLI-184] a balance command line named a corpus in a git repository's subfolder, reached %s, run from elsewhere: when it is read, the target's folder will be that repository", (_reached, named) => {
     const repository = repositoryForTest();
     repository.write("docs/features/one.feature", "@ONE\nFeature: one\n");
     const head = repository.commit("one");
@@ -42,14 +42,14 @@ describe("balance works out the target's folder", () => {
     expect({ sourceSha: provenance.sourceSha, corpus: inputPath(provenance, "features") }).toEqual({ sourceSha: head, corpus: "docs/features" });
   });
 
-  it("[CLM-CLI-144] a corpus named in no git repository, run from elsewhere: the target is the corpus's folder", () => {
+  it("[CLM-CLI-144] a balance command line named a corpus in no git repository, run from elsewhere: when it is read, the target's folder will be the corpus's parent folder", () => {
     const folder = temporaryDirectory("no-git-");
     mkdirSync(join(folder, "features"));
 
     expect(inputPath(provenanceIn(temporaryDirectory("elsewhere-"), "--features", join(folder, "features")), "features")).toBe("features");
   });
 
-  it("[CLM-CLI-142] no feature corpus named, run from a folder: the target is that folder", () => {
+  it("[CLM-CLI-142] a balance command line named no feature corpus, run from a folder: when it is read, the target's folder will be that folder", () => {
     const folder = temporaryDirectory("no-corpus-");
     mkdirSync(join(folder, "reports"));
     writeFileSync(join(folder, "reports", "vitest.json"), '{"testResults":[]}');
