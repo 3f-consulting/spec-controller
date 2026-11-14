@@ -315,6 +315,13 @@ describe("an input that is not valid will stop the run", () => {
       ["--ci", "workflows"],
       ["ci.yml", "workflow", "the job at jobs.ci holds no settings", "[input-does-not-parse]"],
     ],
+    [
+      "CLM-CLI-150",
+      "a workflow with a job written as a list",
+      { "workflows/ci.yml": "jobs:\n  ci: [lint]\n" },
+      ["--ci", "workflows"],
+      ["ci.yml", "workflow", "the job at jobs.ci holds no settings", "[input-does-not-parse]"],
+    ],
     ["CLM-CLI-151", "a Vitest evidence report not in Vitest's shape", { "vitest.json": '{"testResults":"none"}' }, ["--vitest", "vitest.json"], ["vitest.json", "$.testResults", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-151",
