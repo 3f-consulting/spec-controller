@@ -3,8 +3,8 @@ import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
 import { coreText } from "../messages/catalogue.js";
 import { isRecord, whereShapeBreaks } from "./shape.js";
 
-// A step as notChecks writes it: its workflow, which ends .yml and may hold a colon, its job, and its step.
-const STEP_AS_WRITTEN = /^(.+?\.yml):([^:]+):(.+)$/;
+// A step as notChecks writes it: its workflow, which ends .yml or .yaml and may hold a colon, its job, and its step.
+const STEP_AS_WRITTEN = /^(.+?\.ya?ml):([^:]+):(.+)$/;
 
 const settingSpellings: SettingSpellings = {
   keyOf: { runners: "runners", nonChecks: "notChecks", deferralTags: "deferralTags" },
