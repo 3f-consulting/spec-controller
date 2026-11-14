@@ -1,4 +1,4 @@
-import type { OutputRequest } from "@3f-consulting/spec-controller-core";
+import { isFeatureCode, type OutputRequest } from "@3f-consulting/spec-controller-core";
 import { parseArgs } from "node:util";
 import type { Refusal } from "../runEnding/runEnding.js";
 import { COMMANDS, isCommand, isHelp, type Command, type Flag, type InputKind } from "./flags.js";
@@ -138,20 +138,25 @@ function balanceRequested(read: FlagsRead): RunRequest | UsageError {
   };
 }
 
-function allocateRequested({ on, positionals }: FlagsRead): RunRequest | UsageError {
+// With no feature code, a request for allocate's help is answered; any other request needs one.
+function allocateRequested({ on, positionals }: FlagsRead, helpAsked: boolean): RunRequest | UsageError {
   const [featureCode] = positionals;
-  if (featureCode === undefined) return refused("allocate", "no-feature-code");
+  if (featureCode === undefined) return helpAsked ? { command: "help", about: "allocate" } : refused("allocate", "no-feature-code");
+  if (!isFeatureCode(featureCode)) return refused("allocate", "not-a-feature-code", { given: featureCode });
   return { command: "allocate", featureCode, asNewFeatureCode: on.has("new") };
 }
 
-// Help answers a command line it can read; a usage error is refused, whether or not help was asked for.
+// Help answers a command line it can read; a usage error is refused, whether or not help was asked for. Help asked for
+// first is read as if it came last.
 export function runRequestOf(args: readonly string[]): RunRequest | UsageError {
   const [command, ...rest] = args;
-  if (command === undefined || command === "help" || isHelp(command)) return { command: "help" };
+  if (command === undefined || command === "help" || args.every(isHelp)) return { command: "help" };
+  if (isHelp(command)) return runRequestOf([...rest, command]);
   if (command.startsWith("-")) return refused(undefined, "flag-before-command", { flag: command });
   if (!isCommand(command)) return refused(undefined, "unknown-command", { command });
   const read = flagsRead(command, rest);
   if ("refusals" in read) return read;
-  if (rest.some(isHelp)) return { command: "help", about: command };
-  return command === "balance" ? balanceRequested(read) : allocateRequested(read);
+  const helpAsked = rest.some(isHelp);
+  const asked = command === "balance" ? balanceRequested(read) : allocateRequested(read, helpAsked);
+  return helpAsked && !("refusals" in asked) ? { command: "help", about: command } : asked;
 }

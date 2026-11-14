@@ -111,6 +111,9 @@ describe("a command reads each argument as what it is, or refuses it", () => {
     ["CLM-CLI-131", "a flag and its value joined by an equals sign", ["balance", "--features=specs"], ["--features=specs", "--features specs", "[equals-form]"]],
     ["CLM-CLI-132", "a flag before the command", ["--features", "specs", "balance"], ["--features", "[flag-before-command]"]],
     ["CLM-CLI-133", "a report format the tool does not have", ["balance", "--format", "html"], ["html", "md", "json", "[unknown-format]"]],
+    ["CLM-CLI-133", "a report format the tool does not have, and a request for help", ["balance", "--format", "html", "--help"], ["html", "[unknown-format]"]],
+    ["CLM-CLI-132", "a flag before the command, after a request for help", ["--help", "--features", "specs", "balance"], ["--features", "[flag-before-command]"]],
+    ["CLM-CLI-125", "a command the tool does not have, after a request for help", ["-h", "frobnicate"], ["frobnicate", "[unknown-command]"]],
     ["CLM-CLI-134", "no feature code given to allocate", ["allocate"], ["[no-feature-code]"]],
     ["CLM-CLI-135", "two feature codes given to allocate", ["allocate", "ABC", "DEF"], ["DEF", "[extra-argument]"]],
   ] as const)("[%s] a command line had %s: when it is read, the run will stop, give no verdict and exit 2, and it will complain, naming its facts", (_clm, _error, args, facts) => {
