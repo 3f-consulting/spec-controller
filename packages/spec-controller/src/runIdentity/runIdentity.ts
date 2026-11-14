@@ -26,10 +26,13 @@ function versionAbove(folder: string): string | undefined {
   return dirname(folder) === folder ? undefined : versionAbove(dirname(folder));
 }
 
-// HEAD, the origin and the top level of the repository balance runs in; the tool's own checkout and version; the clock to the second.
-// As read: which of them wins is the domain's.
-export function runIdentityIn(folder: string, given: { readonly target?: string; readonly sourceSha?: string }): RunIdentity {
-  const toolFolder = dirname(fileURLToPath(import.meta.url));
+// HEAD, the origin and the top level of the repository balance runs in; the tool's own checkout and version, from the
+// folder it runs from; the clock to the second. As read: which of them wins is the domain's.
+export function runIdentityIn(
+  folder: string,
+  given: { readonly target?: string; readonly sourceSha?: string },
+  toolFolder = dirname(fileURLToPath(import.meta.url)),
+): RunIdentity {
   return {
     givenTarget: given.target,
     givenSourceSha: given.sourceSha,
