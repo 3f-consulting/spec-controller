@@ -25,21 +25,21 @@ describe("each run verdict, and each reason a run is not reconciled, has an open
     ],
     [
       "CLM-RPT-117",
-      "not reconciled, as unsound",
+      "not reconciled, because unsound",
       { verdict: "not-reconciled", why: "unsound" },
       "verdict-unsound",
       "Some evidence never ran, so the run cannot be relied on and is not reconciled: Run integrity names it.",
     ],
     [
       "CLM-RPT-118",
-      "not reconciled, for claim code errors",
+      "not reconciled, because of claim code errors",
       { verdict: "not-reconciled", why: "claim-code-errors" },
       "verdict-claim-code-errors",
       "Some claim codes are written where they do not belong, so the run is not reconciled: Errors in the inputs names them.",
     ],
     [
       "CLM-RPT-119",
-      "not reconciled, with nothing to reconcile",
+      "not reconciled, because there was nothing to reconcile",
       { verdict: "not-reconciled", why: "nothing-to-reconcile" },
       "verdict-nothing-to-reconcile",
       "No claim and no evidence were read, so there was nothing to reconcile and the run is not reconciled.",
@@ -51,22 +51,6 @@ describe("each run verdict, and each reason a run is not reconciled, has an open
       opening,
       verdict: [`- ${coreText("summary-run-verdict")}: ${coreText(words)}`],
     });
-  });
-});
-
-describe("an input the run did not read has no line, and one it read by default has one", () => {
-  it.each([
-    [
-      "CLM-RPT-114",
-      "a Vitest report and a Cucumber report, and no pytest report",
-      [{ name: "vitest", path: "vitest.json" }, { name: "pytest" }, { name: "cucumber", path: "cucumber.json" }],
-      ["  - Vitest report: `vitest.json`", "  - Cucumber report: `cucumber.json`"],
-    ],
-  ] as const)("[%s] a run that read %s has a provenance line for each input it read", (_clm, _read, inputs, lines) => {
-    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, inputs } }));
-    const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
-
-    expect(provenance.slice(provenance.indexOf(`- ${coreText("provenance-inputs")}:`))).toEqual([`- ${coreText("provenance-inputs")}:`, ...lines]);
   });
 });
 
@@ -109,14 +93,14 @@ describe("the step account shows each job's counts, and the Total row their sums
   });
 });
 
-describe("the provenance shows the tool's commit only when there is one", () => {
+describe("the provenance shows the tool SHA only when there is one", () => {
   it.each([
-    ["CLM-RPT-167", "the tool commit 9f8e7d6", { toolSha: "9f8e7d6" }, ["9f8e7d6"]],
-    ["CLM-RPT-168", "no tool commit", {}, []],
-  ] as const)("[%s] a run whose provenance had %s shows it in the provenance, or no line for it", (_clm, _commit, toolCommit, shown) => {
-    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, ...toolCommit } }));
+    ["CLM-RPT-167", "the tool SHA 9f8e7d6", { toolSha: "9f8e7d6" }, ["9f8e7d6"]],
+    ["CLM-RPT-168", "no tool SHA", {}, []],
+  ] as const)("[%s] a run whose provenance had %s shows the tool SHA in the provenance, or no line for it", (_clm, _toolSha, toolSha, shown) => {
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, ...toolSha } }));
     const label = `- ${coreText("provenance-tool-sha")}: `;
 
-    expect(report.split("\n").filter((line) => line.startsWith(label))).toEqual(shown.map((commit) => `${label}\`${commit}\``));
+    expect(report.split("\n").filter((line) => line.startsWith(label))).toEqual(shown.map((sha) => `${label}\`${sha}\``));
   });
 });

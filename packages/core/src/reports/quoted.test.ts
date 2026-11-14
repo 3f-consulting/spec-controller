@@ -29,13 +29,11 @@ function shown(name: string): { readonly name: string | undefined; readonly same
   };
 }
 
-describe("a name with a character Markdown reads as formatting shows in code unchanged", () => {
+describe("a name will show in code, and every row will have the same columns", () => {
   it.for(variants["CLM-RPT-084"].variants)("[CLM-RPT-084] a failing test named %j shows in code unchanged, and every row has the same columns", (name) => {
     expect(shown(name)).toEqual({ name, sameColumns: true });
   });
-});
 
-describe("a name with a line break shows in code as one quoted line", () => {
   it.for(variants["CLM-RPT-107"].variants)("[CLM-RPT-107] a failing test named %j shows in code as one quoted line, and every row has the same columns", (name) => {
     expect(shown(name)).toEqual({ name: JSON.stringify(name), sameColumns: true });
   });

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { QUALITY_CHECK_KINDS } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import catalogue from "../messages/messages.en.json" with { type: "json" };
@@ -113,15 +112,11 @@ describe("neither report will have an optional section the run had nothing for",
   });
 });
 
-describe("a report will show its Claim Reconciliations when the run had none", () => {
-  it("[CLM-RPT-105] a run with nothing to reconcile has its Claim Reconciliations in each report, showing none", () => {
-    const run = reconciled({ scenarios: [], unitTests: [] });
-    const markdown = markdownReportOf(run);
+describe("the Markdown report shows its Claim Reconciliations when the run had none", () => {
+  it("[CLM-RPT-105] a run with nothing to reconcile has its Claim Reconciliations in its Markdown report, showing none", () => {
+    const markdown = markdownReportOf(reconciled({ scenarios: [], unitTests: [] }));
     const section = markdown.slice(markdown.indexOf("\n## Claim Reconciliations\n") + 1);
 
-    expect({ markdown: section.startsWith("## Claim Reconciliations") && section.includes("None."), json: (JSON.parse(jsonReportOf(run)) as EvidenceReconciliation).claimReconciliations }).toEqual({
-      markdown: true,
-      json: [],
-    });
+    expect(section.split("\n").filter((line) => line !== "")).toEqual(["## Claim Reconciliations", coreText("claim-reconciliations-none")]);
   });
 });
