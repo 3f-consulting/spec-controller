@@ -1,0 +1,6 @@
+{
+  "CLM-MSG-023": {
+    "class": "a text the values cannot fill",
+    "variants": ["no text", "a gap no value names", "a broken brace"]
+  }
+}
