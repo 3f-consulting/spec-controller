@@ -1,5 +1,5 @@
 import { parse } from "unbash";
-import type { Command, Statement, Word } from "unbash";
+import type { Command, CommandNode, Statement, Word } from "unbash";
 import type { Scripts, ShellAnswers } from "../domain/postEvidenceObservation.js";
 import shellVariants from "./shell.variants.json" with { type: "json" };
 
@@ -15,12 +15,12 @@ const WRAPPERS = wrappers.variants.map((wrapper) => wrapper.split(" "));
 // A wrapper's options that take a value are read past with it.
 const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"], timeout: ["-k", "-s"] };
 
-// Each element of the line's && and ; lists, as the stages of its pipeline. A comment is no command.
-function pipelinesOf(statements: readonly Statement[]): Command[][] {
-  return statements
-    .flatMap(({ command }) => (command.type === "AndOr" ? command.commands : [command]))
-    .map((node) => (node.type === "Pipeline" ? node.commands : [node]).filter((stage): stage is Command => stage.type === "Command"));
+// Each element of the line's && and ; lists, as its pipeline's stages; a compound stage, such as a loop, runs no runner.
+function pipelinesOf(statements: readonly Statement[]): (readonly CommandNode[])[] {
+  return statements.flatMap(({ command }) => (command.type === "AndOr" ? command.commands : [command])).map((node) => (node.type === "Pipeline" ? node.commands : [node]));
 }
+
+const isCommand = (stage: CommandNode | undefined): stage is Command => stage?.type === "Command";
 
 // A command's name and arguments that are words; a command that only sets a variable has no name.
 const wordsOf = ({ name, args }: Command): string[] => [name, ...args].filter((word): word is Word => word?.type === "Word").map(({ value }) => value);
@@ -62,13 +62,13 @@ function runs(words: readonly string[], program: readonly string[], scripts: Scr
 function invokesThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: Set<string>): boolean {
   return pipelinesOf(parse(commandLine).commands).some((stages) => {
     const last = stages.at(-1);
-    return last !== undefined && runs(wordsOf(last), program, scripts, followed);
+    return isCommand(last) && runs(wordsOf(last), program, scripts, followed);
   });
 }
 
 // The reconciler is found in any command of the line, through launchers and wrappers, never through a script.
 const invokesAnywhere = (commandLine: string, program: string): boolean =>
-  pipelinesOf(parse(commandLine).commands).some((stages) => stages.some((stage) => runs(wordsOf(stage), wordsIn(program), {}, new Set())));
+  pipelinesOf(parse(commandLine).commands).some((stages) => stages.some((stage) => isCommand(stage) && runs(wordsOf(stage), wordsIn(program), {}, new Set())));
 
 // A runner is found only as the last command of a pipeline, through launchers, wrappers and the target's scripts.
 const invokesAsCommand = (commandLine: string, program: string, scripts: Scripts): boolean => invokesThrough(commandLine, wordsIn(program), scripts, new Set());
