@@ -47,7 +47,8 @@ const isWords = (text: string): boolean => (Object.values(catalogue) as string[]
 const inWords = (text: string): boolean => isWords(text) || (QUALITY_CHECK_KINDS as readonly string[]).includes(text) || /^`.*`$/.test(text);
 
 // Each line below the opening that is not blank, a heading, a key or a table, a labelled value, or a label over the values
-// under it: a heading, label or key not in the catalogue's words, a label with no value, or a line with no label.
+// under it: a heading, label or key not in the catalogue's words, a label with no value, a value under no label, or a line
+// with no label.
 function unlabelledOf(markdown: string): string[] {
   const lines = markdown.split("\n").slice(3);
   return lines.filter((line, at) => {
@@ -59,7 +60,9 @@ function unlabelledOf(markdown: string): string[] {
     const [, indent, label, value] = item;
     const inKey = lines.slice(0, at).reverse().find((before) => !before.startsWith("- ")) === `${coreText("key")}:`;
     if (inKey) return !isWords(label!) || !isWords(value!);
-    return !inWords(label!) || (value === undefined && !(lines[at + 1] ?? "").startsWith(`${indent!}  - `));
+    const over = lines.slice(0, at).reverse().find((before) => !before.startsWith(`${indent!}- `));
+    const underNoLabel = indent !== "" && !/^\s*- .+:$/.test(over ?? "");
+    return !inWords(label!) || underNoLabel || (value === undefined && !(lines[at + 1] ?? "").startsWith(`${indent!}  - `));
   });
 }
 
@@ -71,7 +74,7 @@ describe("each section will have its heading, each value its label, and each tab
         unitTests: [["never-ran", "ONE-001"], ["passed", "ONE-009"], ["failed"]],
         configurationErrors: [{ kind: "configuration-unknown-key", entry: "runer" }],
         stepsRead: true,
-        provenance: { toolSha: "9f8e7d6", inputs: [{ name: "vitest", path: "vitest.json" }] },
+        provenance: { toolSha: "9f8e7d6", inputs: [{ name: "features", path: "features" }, { name: "vitest", path: "vitest.json" }, { name: "cucumber" }] },
       }),
     );
     const tables = tablesOf(markdown);

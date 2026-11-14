@@ -101,9 +101,16 @@ describe("the provenance shows the tool SHA only when there is one", () => {
     ["CLM-RPT-167", "the tool SHA 9f8e7d6", { toolSha: "9f8e7d6" }, ["9f8e7d6"]],
     ["CLM-RPT-168", "no tool SHA", {}, []],
   ] as const)("[%s] a run whose provenance had %s shows the tool SHA in the provenance, or no line for it", (_clm, _toolSha, toolSha, shown) => {
-    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, ...toolSha } }));
     const label = `- ${coreText("provenance-tool-sha")}: `;
+    const provenanceLines = (provenance: Provenance): string[] => {
+      const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance }));
+      return report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
+    };
+    const lines = provenanceLines({ ...PROVENANCE, ...toolSha });
 
-    expect(report.split("\n").filter((line) => line.startsWith(label))).toEqual(shown.map((sha) => `${label}\`${sha}\``));
+    expect({ toolSha: lines.filter((line) => line.startsWith(label)), others: lines.filter((line) => !line.startsWith(label)) }).toEqual({
+      toolSha: shown.map((sha) => `${label}\`${sha}\``),
+      others: provenanceLines({ ...PROVENANCE, toolSha: "9f8e7d6" }).filter((line) => !line.startsWith(label)),
+    });
   });
 });
