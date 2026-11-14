@@ -116,6 +116,13 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-070 | CLM-ONE-7   | nothing else contained a ONE code                                                                                  | CLM-ONE-008  | the feature file and line                   |
         | CLM-STG-071 | CLM-ONE-999 | nothing else contained a ONE code                                                                                  | CLM-ONE-1000 | the feature file and line                   |
 
+    @unit @CLM-STG-098
+    Scenario: with no code seen, the answer is the feature code's first claim code
+      given the repository's features folder contained a feature file tagged @ONE, with no claim code
+      and nothing else contained a ONE code
+      when the developer asks for the next code for ONE
+      then the answer will be CLM-ONE-001, with no note
+
   Rule: allocate takes only a feature code a feature file has
 
     @unit @CLM-STG-083

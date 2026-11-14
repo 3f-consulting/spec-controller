@@ -129,6 +129,16 @@ function environmentForTest(variables: Readonly<Record<string, string>>): void {
   });
 }
 
+describe("with no code seen, the answer is the feature code's first claim code", () => {
+  it("[CLM-STG-098] a feature file tagged @ONE with no claim code, and nothing else with a ONE code: the answer is CLM-ONE-001, with no note", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", "@ONE\nFeature: one\n");
+    repository.commit("first");
+
+    expect(allocate(ONE, repository.top)).toEqual({ answer: "CLM-ONE-001", notes: [] });
+  });
+});
+
 describe("the answer is one past the highest code the repository has contained, by what git reads", () => {
   it("[CLM-STG-069] only a file the developer's own git configuration ignores contained CLM-ONE-900: the answer is CLM-ONE-002, noting the feature file and line", () => {
     const repository = repositoryForTest();
