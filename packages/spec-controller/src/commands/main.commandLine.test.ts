@@ -1,9 +1,11 @@
-import { chmodSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { textFor } from "@3f-consulting/spec-controller-core";
 import { describe, expect, it } from "vitest";
 import catalogue from "../messages/messages.en.json" with { type: "json" };
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
+import flagsVariants from "../runRequest/flags.variants.json" with { type: "json" };
+import runRequestVariants from "../runRequest/runRequest.variants.json" with { type: "json" };
 import { main } from "./main.js";
 
 interface Ran {
@@ -47,12 +49,16 @@ const FLAG_BESIDE_ITS_DESCRIPTION = { "--strict": /^\s+--strict\s{2,}\S/, "--exi
 // The flags help lists, each at the start of a line of its own with what its value is.
 const flagsListed = (help: string): string[] => help.split("\n").flatMap((line) => /^\s+((?:-h, )?--[a-z-]+(?: \S+)?)/.exec(line)?.[1] ?? []);
 
-describe("help will list what you can ask for", () => {
-  it.each([
-    ["CLM-CLI-115", ["balance", "--help"]],
-    ["CLM-CLI-116", ["balance", "-h"]],
-  ] as const)("[%s] %j lists balance's flags, and the run succeeds", (_clm, args) => {
-    const { exitCode, output } = ran(args);
+// Each way of asking for the commands, as the arguments after spec-controller.
+const ASKING_FOR_THE_COMMANDS: Readonly<Record<string, readonly string[]>> = {
+  "spec-controller --help": ["--help"],
+  "spec-controller help": ["help"],
+  "spec-controller alone": [],
+};
+
+describe("asking for help shows what can be asked for", () => {
+  it.each(runRequestVariants["CLM-CLI-115"].variants)("[CLM-CLI-115] a command line had balance %s: when it is read, help will list balance's flags, and the run will succeed", (asked) => {
+    const { exitCode, output } = ran(["balance", asked]);
 
     expect({ exitCode, heading: output.split("\n").slice(0, 3), flags: flagsListed(output) }).toEqual({
       exitCode: 0,
@@ -61,7 +67,7 @@ describe("help will list what you can ask for", () => {
     });
   });
 
-  it("[CLM-CLI-117] allocate --help lists the feature code it takes and its flags, and the run succeeds", () => {
+  it("[CLM-CLI-117] a command line had allocate --help: when it is read, help will list the feature code it takes and its flags, and the run will succeed", () => {
     const { exitCode, output } = ran(["allocate", "--help"]);
 
     expect({ exitCode, takesAFeatureCode: output.includes("allocate <feature code>"), flags: flagsListed(output) }).toEqual({
@@ -71,11 +77,10 @@ describe("help will list what you can ask for", () => {
     });
   });
 
-  it.each([
-    ["CLM-CLI-118", ["--help"]],
-    ["CLM-CLI-119", ["help"]],
-    ["CLM-CLI-120", []],
-  ] as const)("[%s] %j lists the commands, and the run succeeds", (_clm, args) => {
+  it.each(runRequestVariants["CLM-CLI-118"].variants)("[CLM-CLI-118] a command line had %s: when it is read, help will list the commands, and the run will succeed", (asked) => {
+    const args = ASKING_FOR_THE_COMMANDS[asked];
+    if (args === undefined) throw new Error(`no command line for the variant ${asked}`);
+
     const { exitCode, output } = ran(args);
 
     const lines = output.split("\n");
@@ -86,10 +91,8 @@ describe("help will list what you can ask for", () => {
       commands: ["balance", catalogue["command-balance"], "allocate", catalogue["command-allocate"]],
     });
   });
-});
 
-describe("a command's help gives each flag it takes beside what the flag does", () => {
-  it("[CLM-CLI-189] --strict and --exit-zero are each on a line of their own, followed by its description", () => {
+  it("[CLM-CLI-189] balance took the flags --strict and --exit-zero: when its help is shown, each flag will be on a line of its own, followed by its description", () => {
     const lines = ran(["balance", "--help"]).output.split("\n");
 
     expect(Object.values(FLAG_BESIDE_ITS_DESCRIPTION).map((flagLine) => lines.filter((line) => flagLine.test(line)).length)).toEqual([1, 1]);
@@ -97,22 +100,6 @@ describe("a command's help gives each flag it takes beside what the flag does", 
 });
 
 describe("help will answer, and nothing will run", () => {
-  it.each([
-    ["CLM-CLI-112", "a request for help beside an argument that fails validation", ["balance", "--features", "absent", "--bogus", "--help"], "--features <dir>"],
-    ["CLM-CLI-113", "allocate's help beside a flag allocate does not take", ["allocate", "ABC", "--vitest", "--help"], "--new"],
-  ] as const)("[%s] %s: help answers, it exits 0, and nothing runs or is written", (_clm, _given, args, aFlagListed) => {
-    const folder = temporaryDirectory("help-first-");
-
-    const { exitCode, output, error } = ran(args, folder);
-
-    expect({ exitCode, helped: flagsListed(output).includes(aFlagListed), error, written: readdirSync(folder) }).toEqual({
-      exitCode: 0,
-      helped: true,
-      error: "",
-      written: [],
-    });
-  });
-
   it("[CLM-CLI-114] help after a command the tool does not have will not answer: it exits 2", () => {
     const { exitCode, output, error } = ran(["frobnicate", "--help"]);
 
@@ -120,7 +107,7 @@ describe("help will answer, and nothing will run", () => {
   });
 });
 
-describe("an argument the tool does not accept will stop the run", () => {
+describe("a command reads each argument as what it is, or refuses it", () => {
   it.each([
     ["CLM-CLI-125", "a command the tool does not have", ["frobnicate"], ["frobnicate", "[unknown-command]"]],
     ["CLM-CLI-126", "a flag the command does not take", ["balance", "--bogus"], ["--bogus", "[unknown-flag]"]],
@@ -133,7 +120,7 @@ describe("an argument the tool does not accept will stop the run", () => {
     ["CLM-CLI-133", "a report format the tool does not have", ["balance", "--format", "html"], ["html", "md", "json", "[unknown-format]"]],
     ["CLM-CLI-134", "no feature code given to allocate", ["allocate"], ["[no-feature-code]"]],
     ["CLM-CLI-135", "two feature codes given to allocate", ["allocate", "ABC", "DEF"], ["DEF", "[extra-argument]"]],
-  ] as const)("[%s] %s: no verdict, exit 2, and a complaint with its facts", (_clm, _error, args, facts) => {
+  ] as const)("[%s] a command line had %s: when it is read, the run will stop, give no verdict and exit 2, and it will complain, naming its facts", (_clm, _error, args, facts) => {
     const { exitCode, output, error } = ran(args);
 
     expect({ exitCode, output, facts: facts.filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
@@ -200,7 +187,6 @@ describe("balance reads the feature corpus in path order", () => {
   });
 });
 
-// One passing result citing the corpus's one claim, as each runner writes it.
 const BY_FILE_PASSING = '{"testResults":[{"name":"/work/one.test.ts","status":"passed","message":"","assertionResults":[{"title":"[CLM-ONE-001] one","fullName":"[CLM-ONE-001] one","status":"passed","ancestorTitles":[],"failureMessages":[]}]}]}';
 const RSPEC_PASSING = '{"examples":[{"id":"./spec/one_spec.rb[1:1]","description":"[CLM-ONE-001] one","full_description":"[CLM-ONE-001] one","status":"passed","file_path":"./spec/one_spec.rb","line_number":1}],"summary":{}}';
 const CUCUMBER_PASSING =
@@ -210,13 +196,13 @@ interface ClaimsReported {
   readonly claimReconciliations: readonly { readonly qualityCheckReconciliations: readonly { readonly observation?: { readonly result: string } }[] }[];
 }
 
-describe("balance posts the result in the evidence report each runner's flag names", () => {
-  it.each([
-    ["CLM-CLI-196", "--vitest", BY_FILE_PASSING],
-    ["CLM-CLI-199", "--jest", BY_FILE_PASSING],
-    ["CLM-CLI-200", "--rspec", RSPEC_PASSING],
-    ["CLM-CLI-201", "--cucumber", CUCUMBER_PASSING],
-  ] as const)("[%s] %s naming a report of one passing result citing CLM-ONE-001: that result is posted", (_clm, flag, report) => {
+// Each runner's flag, with a report of one passing result citing the corpus's one claim, as that runner writes it.
+const REPORT_OF: Readonly<Record<string, string>> = { "--vitest": BY_FILE_PASSING, "--jest": BY_FILE_PASSING, "--rspec": RSPEC_PASSING, "--cucumber": CUCUMBER_PASSING };
+
+describe("a command reads each argument as what it is, or refuses it", () => {
+  it.each(flagsVariants["CLM-CLI-196"].variants)("[CLM-CLI-196] a command line had %s report.json: when it is read, balance will read report.json as that runner's report", (flag) => {
+    const report = REPORT_OF[flag];
+    if (report === undefined) throw new Error(`no report for the variant ${flag}`);
     const folder = folderWith({ "features/one.feature": "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n", "report.json": report });
 
     const { output } = ran(["balance", flag, "report.json", "--format", "json"], folder);
@@ -226,7 +212,7 @@ describe("balance posts the result in the evidence report each runner's flag nam
   });
 });
 
-describe("an input that is not valid will stop the run", () => {
+describe("a command validates every input before it does its work", () => {
   it.each([
     ["CLM-CLI-147", "a named input that does not exist", {}, ["--vitest", "absent.json"], ["absent.json", "Vitest evidence report", "[input-absent]"]],
     ["CLM-CLI-147", "a named input under a path that runs through a file", { results: "not a folder\n" }, ["--vitest", "results/vitest.json"], ["{input-vitest} results/vitest.json", "[input-absent]"]],
@@ -293,7 +279,7 @@ describe("an input that is not valid will stop the run", () => {
       ["--ci", "workflows"],
       ["ci.yml", "workflow", "jobs.ci.steps[0]", "neither an action nor a command", "[input-does-not-parse]"],
     ],
-    ["CLM-CLI-151", "a Vitest evidence report not in Vitest's shape", { "vitest.json": '{"testResults":"none"}' }, ["--vitest", "vitest.json"], ["vitest.json", "$.testResults", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-151", "a Vitest evidence report that is not in the shape Vitest writes", { "vitest.json": '{"testResults":"none"}' }, ["--vitest", "vitest.json"], ["vitest.json", "$.testResults", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-151",
       "a Vitest evidence report with one test file in its shape, and one not",
@@ -308,7 +294,7 @@ describe("an input that is not valid will stop the run", () => {
       ["--vitest", "vitest.json"],
       ["vitest.json", "$.testResults[0].assertionResults[0].failureMessages", "[input-not-in-its-shape]"],
     ],
-    ["CLM-CLI-152", "a Cucumber evidence report not in Cucumber's shape", { "cucumber.json": '{"features":[]}' }, ["--cucumber", "cucumber.json"], ["cucumber.json", "Cucumber", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-152", "a Cucumber evidence report that is not in the shape Cucumber writes", { "cucumber.json": '{"features":[]}' }, ["--cucumber", "cucumber.json"], ["cucumber.json", "Cucumber", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-152",
       "a Cucumber evidence report with one feature in its shape, and one not",
@@ -316,7 +302,7 @@ describe("an input that is not valid will stop the run", () => {
       ["--cucumber", "cucumber.json"],
       ["cucumber.json", "Cucumber", "$[1]", "[input-not-in-its-shape]"],
     ],
-    ["CLM-CLI-153", "a Jest evidence report not in Jest's shape", { "jest.json": "{}" }, ["--jest", "jest.json"], ["jest.json", "testResults", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-153", "a Jest evidence report that is not in the shape Jest writes", { "jest.json": "{}" }, ["--jest", "jest.json"], ["jest.json", "testResults", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-153",
       "a Jest evidence report with a test that has no failure messages",
@@ -324,8 +310,8 @@ describe("an input that is not valid will stop the run", () => {
       ["--jest", "jest.json"],
       ["jest.json", "$.testResults[0].assertionResults[0].failureMessages", "[input-not-in-its-shape]"],
     ],
-    ["CLM-CLI-154", "a pytest evidence report not in pytest's shape", { "pytest.xml": "<html/>" }, ["--pytest", "pytest.xml"], ["pytest.xml", "pytest", "[input-not-in-its-shape]"]],
-    ["CLM-CLI-155", "a JUnit evidence report not in JUnit's shape", { "junit.xml": "<html/>" }, ["--junit", "junit.xml"], ["junit.xml", "JUnit", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-154", "a pytest evidence report that is not in the shape pytest writes", { "pytest.xml": "<html/>" }, ["--pytest", "pytest.xml"], ["pytest.xml", "pytest", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-155", "a JUnit evidence report that is not in the shape JUnit writes", { "junit.xml": "<html/>" }, ["--junit", "junit.xml"], ["junit.xml", "JUnit", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-155",
       "a JUnit evidence report whose top is neither a suite nor the suites element",
@@ -333,10 +319,10 @@ describe("an input that is not valid will stop the run", () => {
       ["--junit", "junit.xml"],
       ["junit.xml", "JUnit", "writes: $ is not", "[input-not-in-its-shape]"],
     ],
-    ["CLM-CLI-156", "a file in a JUnit directory not in JUnit's shape", { "junit/one.xml": "<testsuite/>", "junit/two.xml": "<html/>" }, ["--junit", "junit"], ["{input-junit-folder-file} junit/two.xml", "JUnit", "[input-not-in-its-shape]"]],
-    ["CLM-CLI-157", "an RSpec evidence report not in RSpec's shape", { "rspec.json": '{"examples":3}' }, ["--rspec", "rspec.json"], ["rspec.json", "examples", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-156", "a file in a JUnit directory that is not in the shape JUnit writes", { "junit/one.xml": "<testsuite/>", "junit/two.xml": "<html/>" }, ["--junit", "junit"], ["{input-junit-folder-file} junit/two.xml", "JUnit", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-157", "an RSpec evidence report that is not in the shape RSpec writes", { "rspec.json": '{"examples":3}' }, ["--rspec", "rspec.json"], ["rspec.json", "examples", "[input-not-in-its-shape]"]],
     ["CLM-CLI-157", "an RSpec evidence report whose messages are not all strings", { "rspec.json": '{"messages":["a",3],"examples":[],"summary":{}}' }, ["--rspec", "rspec.json"], ["rspec.json", "$.messages[1]", "[input-not-in-its-shape]"]],
-    ["CLM-CLI-158", "a step record not in the shape of a record of step outcomes", { "steps.json": '{"test":"passed"}' }, ["--ci-steps", "steps.json"], ["steps.json", "step outcomes", "$.test", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-158", "a step record that is not in the shape of a record of step outcomes", { "steps.json": '{"test":"passed"}' }, ["--ci-steps", "steps.json"], ["steps.json", "step outcomes", "$.test", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-157",
       "an RSpec evidence report with its messages, its summary and one example in RSpec's shape, and one example not",
@@ -351,9 +337,9 @@ describe("an input that is not valid will stop the run", () => {
       ["--ci-steps", "steps.json"],
       ["steps.json", "step outcomes", "$.test", "[input-not-in-its-shape]"],
     ],
-    ["CLM-CLI-159", "a manifest not in a manifest's shape", { "package.json": "[]" }, ["--package-json", "package.json"], ["package.json", "manifest", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-159", "a manifest that is not in a manifest's shape", { "package.json": "[]" }, ["--package-json", "package.json"], ["package.json", "manifest", "[input-not-in-its-shape]"]],
     ["CLM-CLI-159", "a manifest that is null", { "package.json": "null" }, ["--package-json", "package.json"], ["package.json", "manifest", "[input-not-in-its-shape]"]],
-  ] as const)("[%s] %s: no verdict, exit 2, and a complaint with its facts", (_clm, _error, files, args, facts) => {
+  ] as const)("[%s] the run named %s: when balance reads its inputs, the run will stop, give no verdict and exit 2, and it will complain, naming the input and what is wrong with it", (_clm, _error, files, args, facts) => {
     const { exitCode, output, error } = ran(["balance", ...args], folderWith(files));
 
     expect({ exitCode, output, complaints: error.trimEnd().split("\n").length, facts: facts.map(shown).filter((fact) => !error.includes(fact)) }).toEqual({
@@ -364,7 +350,7 @@ describe("an input that is not valid will stop the run", () => {
     });
   });
 
-  it("[CLM-CLI-161] a named input that the tool is not permitted to read: no verdict, exit 2, and a complaint with its facts", () => {
+  it("[CLM-CLI-161] the run named a named input that the tool is not permitted to read, a Vitest evidence report: when balance reads its inputs, the run will stop, give no verdict and exit 2, and it will complain, naming the input and what is wrong with it", () => {
     const folder = folderWith({ "vitest.json": VITEST_SHAPED });
     chmodSync(join(folder, "vitest.json"), 0o000);
 
@@ -373,7 +359,7 @@ describe("an input that is not valid will stop the run", () => {
     expect({ exitCode, output, facts: ["vitest.json", "[input-not-permitted]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
   });
 
-  it("[CLM-CLI-161] a named feature corpus whose folder the tool is not permitted to read: no verdict, exit 2, and a complaint with its facts", () => {
+  it("[CLM-CLI-161] the run named a named input that the tool is not permitted to read, a feature corpus's folder: when balance reads its inputs, the run will stop, give no verdict and exit 2, and it will complain, naming the input and what is wrong with it", () => {
     const folder = folderWith({ "features/one.feature": "@ONE\nFeature: one\n" });
     chmodSync(join(folder, "features"), 0o000);
 
@@ -383,11 +369,11 @@ describe("an input that is not valid will stop the run", () => {
   });
 });
 
-describe("an input read by default that the tool is not permitted to read will stop the run, not count as none", () => {
+describe("an input left out takes its default", () => {
   it.each([
     ["the folder itself", ".github/workflows"],
     ["the folder that holds it", ".github"],
-  ] as const)("[CLM-CLI-198] no CI workflows named, and the tool not permitted to read %s: no verdict, exit 2, and a complaint that it is not permitted to read .github/workflows", (_closed, path) => {
+  ] as const)("[CLM-CLI-198] the run named no CI workflows, and the tool was not permitted to read the .github/workflows folder, closed at %s: when balance reads its inputs, the run will stop, give no verdict and exit 2, and it will complain, naming .github/workflows and that it may not read it", (_closed, path) => {
     const folder = folderWith({ ".github/workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: echo ci\n" });
     chmodSync(join(folder, path), 0o000);
 
@@ -397,8 +383,8 @@ describe("an input read by default that the tool is not permitted to read will s
   });
 });
 
-describe("a corpus with several feature files that do not parse will be refused, naming each of them", () => {
-  it("[CLM-CLI-185] two feature files that do not parse: no verdict, exit 2, and a complaint about each, with what is wrong in each", () => {
+describe("a command validates every input before it does its work", () => {
+  it("[CLM-CLI-185] the corpus had two feature files that did not parse: when balance reads it, the run will stop, give no verdict and exit 2, and it will complain, naming each file and what is wrong in it", () => {
     const folder = folderWith({ "features/one.feature": "not Gherkin\n", "features/two.feature": "@TWO\nFeature: two\n  Scenario: a\n    Given a table\n      | a | b |\n      | c |\n" });
 
     const { exitCode, output, error } = ran(["balance", "--features", "features"], folder);

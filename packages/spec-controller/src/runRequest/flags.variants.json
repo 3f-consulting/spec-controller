@@ -1,0 +1,6 @@
+{
+  "CLM-CLI-196": {
+    "class": "a runner's flag naming its evidence report",
+    "variants": ["--vitest", "--jest", "--rspec", "--cucumber"]
+  }
+}
