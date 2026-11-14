@@ -201,8 +201,6 @@ describe("balance posts a recorded step with no workflow step only when its id i
 
 describe("an Evidence Observation says where to look", () => {
   it.each([
-    ["CLM-OBS-081", "the step Lint in job build", { build: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] } }, "ci.yml:build:Lint"],
-    ["CLM-OBS-101", "the step with 3 as its name, running pnpm lint, in job build", { build: { steps: [{ id: "CLM-ONE-001", name: 3, run: "pnpm lint" }] } }, "ci.yml:build:pnpm lint"],
     ["CLM-OBS-102", "the step with no name and an empty command, in job build", { build: { steps: [{ id: "CLM-ONE-001", run: "" }] } }, "ci.yml:build:"],
     ["CLM-OBS-104", "the step Lint in jobs build and test", { build: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] }, test: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] } }, "CLM-ONE-001"],
     [
@@ -217,6 +215,19 @@ describe("an Evidence Observation says where to look", () => {
     const citing = fitnessObservationsOf(workflowOf(jobs), record, NO_SETTING, {}, shellAnswers).filter(({ cites }) => cites.length > 0);
 
     expect(citing.map((observation) => observation.place)).toEqual([place]);
+  });
+
+  // The name each variant gives the step.
+  const NAMED: Readonly<Record<string, string | number>> = { "in words": "Lint", "a number": 3 };
+
+  it.each(workflowsVariants["CLM-OBS-081"].variants)("[CLM-OBS-081] the step record had a passing fitness result, the step named %s in job build of ci.yml, citing CLM-ONE-001: it says where to look by that name", (variant) => {
+    const name = NAMED[variant];
+    if (name === undefined) throw new Error(`no name for the variant ${variant}`);
+    const record = recordOf({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
+
+    const citing = fitnessObservationsOf(workflowOf({ build: { steps: [{ id: "CLM-ONE-001", name, run: "pnpm lint" }] } }), record, NO_SETTING, {}, shellAnswers);
+
+    expect(citing.map((observation) => observation.place)).toEqual([`ci.yml:build:${String(name)}`]);
   });
 
   // The command each variant's step runs.
