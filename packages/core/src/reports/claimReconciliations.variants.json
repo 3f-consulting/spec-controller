@@ -6,5 +6,12 @@
       "one citing it that never ran",
       "asked for a unit and an e2e test and none citing it"
     ]
+  },
+  "CLM-RPT-169": {
+    "class": "a message whose first line is blank",
+    "variants": [
+      "an empty line",
+      "a line of spaces"
+    ]
   }
 }

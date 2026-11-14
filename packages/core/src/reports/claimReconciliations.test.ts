@@ -102,25 +102,38 @@ describe("the table has a column only for a kind some claim has an Evidence Obli
 });
 
 describe("a section showing a never-ran test's message quotes its first line", () => {
+  // The lines of the section under the heading that quote any of the message.
+  const linesQuoting = (report: string, heading: string): string[] =>
+    report
+      .split("\n\n## ")
+      .find((part) => `## ${part}`.startsWith(heading))!
+      .split("\n")
+      .filter((each) => each.includes("first line") || each.includes("second line"));
+
   const markdown = (message: string): string =>
     markdownReportOf(reconciledFrom([["one.feature", "ONE", [["@unit @CLM-ONE-001", "adds one"]]]], [["unit", "never-ran", "ONE-001", "one.test.ts", "adds", message, "one note", "another note"]]));
 
   it.each([
     ["CLM-RPT-085", "a message of three lines", "first line\nsecond line\nthird line", "the Claim Reconciliations", "## Claim Reconciliations", "| CLM-ONE-001 | U/- | out-of-balance | unit: missing; unit: never-ran (`one.test.ts`: `adds`) — `first line`, `one note`, `another note` |"],
     ["CLM-RPT-146", "a message of three lines", "first line\nsecond line\nthird line", "run integrity", "## Run integrity", "- unit: `one.test.ts`, `adds` — `first line`"],
-    [
-      "CLM-RPT-169",
-      "a message whose first line is blank, then two lines",
-      "\nfirst line\nsecond line",
-      "the Claim Reconciliations",
-      "## Claim Reconciliations",
-      "| CLM-ONE-001 | U/- | out-of-balance | unit: missing; unit: never-ran (`one.test.ts`: `adds`) — `first line`, `one note`, `another note` |",
-    ],
   ] as const)("[%s] a test that never ran with %s, and two notes balance added, has %s quote what it shows of them", (_clm, _described, message, _where, heading, line) => {
-    const section = markdown(message).split("\n\n## ").find((part) => `## ${part}`.startsWith(heading))!;
-
-    expect(section.split("\n").filter((each) => each.includes("first line") || each.includes("second line"))).toEqual([line]);
+    expect(linesQuoting(markdown(message), heading)).toEqual([line]);
   });
+
+  // The message whose first line is each blank line.
+  const blankFirst: Readonly<Record<string, string>> = {
+    "an empty line": "\nfirst line\nsecond line",
+    "a line of spaces": "  \nfirst line\nsecond line",
+  };
+
+  it.each(variants["CLM-RPT-169"].variants)(
+    "[CLM-RPT-169] a test that never ran with a message whose first line is %s, then two lines, and two notes balance added, has the Claim Reconciliations quote its first line that is not blank, and both notes",
+    (variant) => {
+      expect(linesQuoting(markdown(blankFirst[variant]!), "## Claim Reconciliations")).toEqual([
+        "| CLM-ONE-001 | U/- | out-of-balance | unit: missing; unit: never-ran (`one.test.ts`: `adds`) — `first line`, `one note`, `another note` |",
+      ]);
+    },
+  );
 });
 
 describe("a group will show its file or no file, any shared claim code, its counts and which failed", () => {
