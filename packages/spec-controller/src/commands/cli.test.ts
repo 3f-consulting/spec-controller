@@ -54,7 +54,7 @@ async function binRun(args: readonly string[], folder: string, output: (text: st
     written.error += String(text);
     return true;
   });
-  // The working directory is the folder, and cannot be found once the folder has been removed, as the system says.
+  // The working directory is the folder, and cannot be found while the folder does not exist, as the system says.
   vi.spyOn(process, "cwd").mockImplementation(() => {
     if (!existsSync(folder)) throw Object.assign(new Error("ENOENT: no such file or directory, uv_cwd"), { code: "ENOENT" });
     return folder;
