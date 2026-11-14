@@ -1,0 +1,10 @@
+{
+  "CLM-CLI-168": {
+    "class": "a run that is not reconciled, exit 3",
+    "variants": ["unsound", "claim code errors", "nothing to reconcile"]
+  },
+  "CLM-CLI-173": {
+    "class": "an exit code --exit-zero leaves alone",
+    "variants": ["2 (a usage error)", "3 (not reconciled)", "4 (an unexpected error)"]
+  }
+}

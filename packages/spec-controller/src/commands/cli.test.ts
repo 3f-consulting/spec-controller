@@ -2,6 +2,7 @@ import type { EventEmitter } from "node:events";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import crashGuardsVariants from "../runEnding/crashGuards.variants.json" with { type: "json" };
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 type Guard = (error: unknown) => void;
@@ -15,6 +16,9 @@ interface BinRun {
   readonly uncaught: Guard;
   readonly rejected: Guard;
 }
+
+// The variant the bin meets, run here through the bin itself.
+const WHILE_THE_PROGRAM_LOADS = "one while the program loads";
 
 const EVENTS = ["uncaughtException", "unhandledRejection"] as const;
 const exitCodeBefore = process.exitCode;
@@ -77,15 +81,16 @@ async function binRun(args: readonly string[], folder: string, output: (text: st
 }
 
 describe("each run verdict will have its exit code", () => {
-  it("[CLM-CLI-167] balance run from the command line, out of balance, writes its report and exits 1", async () => {
+  it("[CLM-CLI-167] a run reached the run verdict out of balance, run from the command line: when it ends, it will exit 1", async () => {
     const run = await binRun(["balance", "--format", "json"], folderOutOfBalance());
 
     expect({ exitCode: run.exitCode, reported: run.output.includes('"out-of-balance"') }).toEqual({ exitCode: 1, reported: true });
   });
 });
 
-describe("the run will give no verdict, and will exit 4", () => {
-  it("[CLM-CLI-179] an error while the program loads, run from the command line: no verdict, exit 4, and a complaint with the error", async () => {
+describe("the run reports an error it did not expect, rather than crashing silently", () => {
+  it(`[CLM-CLI-176] when the run meets an unexpected error, ${WHILE_THE_PROGRAM_LOADS}: the run will stop, give no verdict and exit 4, and it will complain, naming the error`, async () => {
+    expect(crashGuardsVariants["CLM-CLI-176"].variants).toContain(WHILE_THE_PROGRAM_LOADS);
     // A module whose evaluation throws, met as the bin reads what it exports.
     vi.doMock("./main.js", () => ({
       get main(): never {
@@ -107,7 +112,7 @@ describe("an unexpected error after the run verdict will leave its exit code alo
   it.each([
     ["an error nothing caught", (run: BinRun) => run.uncaught],
     ["a rejection nothing handled", (run: BinRun) => run.rejected],
-  ] as const)("[CLM-CLI-181] a run out of balance, run from the command line, that met %s afterwards exits 1, its verdict's code", async (_error, guard) => {
+  ] as const)("[CLM-CLI-181] a run reached its run verdict, out of balance, run from the command line: when it meets an unexpected error, %s, it will exit with its run verdict's code, 1", async (_error, guard) => {
     const run = await binRun(["balance"], folderOutOfBalance());
 
     guard(run)(new Error("after the verdict"));
@@ -117,7 +122,7 @@ describe("an unexpected error after the run verdict will leave its exit code alo
 });
 
 describe("a run will complain about only one unexpected error", () => {
-  it("[CLM-CLI-182] a run from the command line whose report could not be written, and that met an error nothing caught afterwards, complains about one of them", async () => {
+  it("[CLM-CLI-182] a run from the command line meets two unexpected errors, its report not written and an error nothing caught: it will complain about only one of them", async () => {
     const run = await binRun(["balance"], folderOutOfBalance(), () => {
       throw new Error("the report could not be written");
     });
