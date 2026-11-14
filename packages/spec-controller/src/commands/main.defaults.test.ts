@@ -81,8 +81,10 @@ describe("the run will be not reconciled, naming why", () => {
   });
 });
 
-describe("the provenance says what the run used", () => {
-  it("[CLM-EVR-037] the run had a target given as acme/web: when balance reconciles it, the provenance will have the target acme/web", () => {
-    expect(provenanceIn(temporaryDirectory("given-target-"), "--target", "acme/web").target).toBe("acme/web");
+describe("a command reads each argument as what it is, or refuses it", () => {
+  it("[CLM-CLI-121] a command line had --target and --source-sha, each with its value as the next argument: when it is read, each flag will take that value, as the run's provenance shows", () => {
+    const { target, sourceSha } = provenanceIn(temporaryDirectory("given-target-"), "--target", "acme/web", "--source-sha", "abc1234");
+
+    expect({ target, sourceSha }).toEqual({ target: "acme/web", sourceSha: "abc1234" });
   });
 });
