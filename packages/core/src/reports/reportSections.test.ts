@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { QUALITY_CHECK_KINDS } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import catalogue from "../messages/messages.en.json" with { type: "json" };
-import { jsonReportOf } from "./json.js";
 import { markdownReportOf } from "./markdown.js";
 import { reconciled } from "./reconciledRun.test-utils.js";
 
@@ -97,18 +96,16 @@ describe("each section will have its heading, each value its label, and each tab
   });
 });
 
-describe("neither report will have an optional section the run had nothing for", () => {
+describe("the Markdown report leaves out any part the run had nothing for", () => {
   it.each([
-    ["CLM-RPT-077", "errors in the inputs", "Errors in the inputs", "errorsInTheInputs"],
-    ["CLM-RPT-021", "run integrity", "Run integrity", "runIntegrity"],
-    ["CLM-RPT-052", "step accounting", "Step account", "stepAccount"],
-    ["CLM-RPT-006", "out of balance by feature", "Out of balance by feature", "outOfBalanceByFeature"],
-  ] as const)("[%s] a run with no %s has that section in neither report", (_clm, _section, heading, part) => {
-    const run = reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]] });
-    const json = JSON.parse(jsonReportOf(run)) as Record<string, unknown> & { readonly totals: Record<string, unknown> };
-    const markdown = markdownReportOf(run);
+    ["CLM-RPT-077", "errors in the inputs", "Errors in the inputs"],
+    ["CLM-RPT-021", "run integrity", "Run integrity"],
+    ["CLM-RPT-052", "step account", "Step account"],
+    ["CLM-RPT-006", "out of balance by feature", "Out of balance by feature"],
+  ] as const)("[%s] a run had nothing for %s: when its Markdown report is written, it will not have that part", (_clm, _part, heading) => {
+    const markdown = markdownReportOf(reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]] }));
 
-    expect({ markdown: markdown.includes(`## ${heading}`) || markdown.includes(`### ${heading}`), json: part in json || part in json.totals }).toEqual({ markdown: false, json: false });
+    expect(markdown.includes(`## ${heading}`) || markdown.includes(`### ${heading}`)).toBe(false);
   });
 });
 

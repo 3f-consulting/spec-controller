@@ -37,14 +37,8 @@ import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/r
 // A run has no step and no step record of an input it did not read.
 const NONE: readonly never[] = [];
 
-// The step account is printed only for a run that read a workflow step.
-function stepAccountFor(
-  steps: readonly WorkflowStepAsWritten[],
-  configuration: TargetConfiguration,
-  scripts: Readonly<Record<string, string>>,
-): { readonly stepAccount?: StepAccount } {
-  return steps.length === 0 ? {} : { stepAccount: stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers) }))) };
-}
+const stepAccountFor = (steps: readonly WorkflowStepAsWritten[], configuration: TargetConfiguration, scripts: Readonly<Record<string, string>>): StepAccount =>
+  stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers) })));
 
 // Every input the run could read, each with the path it read, its links followed, when it read one.
 const provenanceInputsOf = ({ pathsRead }: InputsRead, folder: string): ProvenanceInput[] =>
@@ -97,7 +91,7 @@ export function balance(
     claimCodeErrors: claimCodeErrorsOf(read.features),
     configurationErrors: errors,
     features: read.features,
-    ...stepAccountFor(steps, configuration, scripts),
+    stepAccount: stepAccountFor(steps, configuration, scripts),
     provenance,
   });
   try {

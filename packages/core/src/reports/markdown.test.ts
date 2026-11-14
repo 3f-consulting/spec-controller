@@ -8,6 +8,9 @@ import { markdownReportOf } from "./markdown.js";
 const runWith = (parts: Pick<EvidenceReconciliation, "runVerdict" | "provenance"> & Partial<EvidenceReconciliation>): EvidenceReconciliation => ({
   claimReconciliations: [],
   totals: totalsOf([], []),
+  stepAccount: stepAccountOf([]),
+  errorsInTheInputs: { claimCodeErrors: [], configurationErrors: [] },
+  runIntegrity: { neverRan: [] },
   ...parts,
 });
 

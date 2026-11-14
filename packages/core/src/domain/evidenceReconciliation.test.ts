@@ -195,7 +195,7 @@ describe("Total of the out-of-balance Claim Reconciliations, by feature file", (
     ],
     ["CLM-EVR-024", "a scenario with no code, in one.feature tagged @ONE", "one.feature", "@ONE\nFeature: one\n\n  @unit\n  Scenario: s\n    Given a step\n", [], [{ file: "one.feature", count: 1 }]],
     ["CLM-EVR-025", "a scenario with no code, in three.feature, which has no feature code", "three.feature", "Feature: three\n\n  @unit\n  Scenario: s\n    Given a step\n", [], [{ file: "three.feature", count: 1 }]],
-    ["CLM-EVR-026", "the unnamed claim", "none", "", [["unit", "passed"]], undefined],
+    ["CLM-EVR-026", "the unnamed claim", "none", "", [["unit", "passed"]], []],
   ] as const)("[%s] a claim out of balance %s is counted by its feature", (_clm, _claim, file, source, observed, byFeature) => {
     const features = source === "" ? [] : [featureAsWrittenFrom(file, source)];
     const totals = totalsOf(claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observed.map(observationOf)), features);
