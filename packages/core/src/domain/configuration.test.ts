@@ -102,12 +102,16 @@ describe("balance uses each configuration setting it can, and leaves out any it 
     expect(targetConfigurationFrom({ specController: block }, ciRead)).toEqual({ configuration: NONE, errors: [{ kind, entry }] });
   });
 
-  it.each([
-    ["after", "\nci.yml:ci:Install dependencies"],
-    ["before", "ci.yml:ci:Install dependencies\n"],
-  ] as const)(
-    '[CLM-CFG-016] the specController block had "ci.yml:ci:Install dependencies", %s a line break, in notChecks: when balance validates it, the run will not use it, and balance will find the error not-checks-entry-not-a-step-name, naming the entry as written',
-    (_where, entry) => {
+  // Each variant of CLM-CFG-016, as the entry is written.
+  const withALineBreak: Readonly<Record<string, string>> = {
+    "a line break before it": "\nci.yml:ci:Install dependencies",
+    "a line break after it": "ci.yml:ci:Install dependencies\n",
+  };
+
+  it.each(manifestVariants["CLM-CFG-016"].variants)(
+    '[CLM-CFG-016] the specController block had "ci.yml:ci:Install dependencies" with %s in notChecks: when balance validates it, the run will not use it, and balance will find the error not-checks-entry-not-a-step-name, naming the entry as written',
+    (variant) => {
+      const entry = withALineBreak[variant]!;
       const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
       expect(targetConfigurationFrom({ specController: { notChecks: [entry] } }, ciRead)).toEqual({ configuration: NONE, errors: [{ kind: "not-checks-entry-not-a-step-name", entry }] });

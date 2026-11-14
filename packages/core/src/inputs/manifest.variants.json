@@ -7,6 +7,10 @@
     "class": "a specController block that is not an object",
     "variants": ["null", "a number", "a string", "a list"]
   },
+  "CLM-CFG-016": {
+    "class": "a notChecks entry with a line break before it or after it",
+    "variants": ["a line break before it", "a line break after it"]
+  },
   "CLM-CFG-018": {
     "class": "a runners setting that is not an object",
     "variants": ["null", "a text such as \"vitest\"", "a number", "a list"]
