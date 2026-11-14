@@ -138,7 +138,7 @@ describe("a usage error shows the help for what was asked for, whether or not he
 });
 
 describe("an error will be shown with its error code", () => {
-  it("[CLM-ERC-001] balance did not take --colour: when a command line with --colour is read, it will show the error code unknown-flag, once", () => {
+  it("[CLM-ERC-001] a command line had a flag the command does not take: when it is read, it will show the error code unknown-flag, once", () => {
     expect(ran(["balance", "--colour"]).error.split("[unknown-flag]").length - 1).toBe(1);
   });
 });
@@ -159,8 +159,8 @@ const VITEST_SHAPED = '{"testResults":[]}';
 const CATALOGUE_CODE = /\{([a-z-]+)\}/g;
 const shown = (fact: string): string => fact.replace(CATALOGUE_CODE, (_code: string, code: string) => textFor(catalogue, code));
 
-describe("a well-formed JUnit evidence report will be read, not refused", () => {
-  it("[CLM-OBS-150] JUnit evidence reports were written well formed, as Maven Surefire writes them, a suite to a file beside its text summary: an Evidence Observation will be posted for each of their tests", () => {
+describe("balance reads every file of its kind a path names, a file or a folder", () => {
+  it("[CLM-CLI-204] the run named a JUnit folder with each suite's report and a text summary beside it, as Maven Surefire writes them: when balance reads its inputs, it will read the reports alone", () => {
     const suite = (name: string, test: string): string =>
       `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="example.${name}" tests="1" errors="0" skipped="0" failures="0">\n  <testcase name="${test}" classname="example.${name}" time="0.001"/>\n</testsuite>\n`;
     const folder = folderWith({
@@ -175,8 +175,8 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
   });
 });
 
-describe("balance reads the feature corpus in path order", () => {
-  it("[CLM-OBL-035] a corpus holding b.feature and a/x.feature: the report lists the claims of a/x.feature before those of b.feature", () => {
+describe("balance reads every file of its kind a path names, a file or a folder", () => {
+  it("[CLM-CLI-206] the feature corpus had b.feature and a/x.feature: when balance reads the corpus, the executable claims of a/x.feature will come before those of b.feature", () => {
     const folder = folderWith({
       "features/b.feature": "@BBB\nFeature: b\n\n  @unit @CLM-BBB-001\n  Scenario: b\n",
       "features/a/x.feature": "@AAA\nFeature: x\n\n  @unit @CLM-AAA-001\n  Scenario: x\n",

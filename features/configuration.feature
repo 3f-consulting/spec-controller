@@ -58,5 +58,4 @@ Feature: balance reads and validates the configuration settings in the specContr
     Scenario: a specController block of 5 stops the run
       given the specController block was 5
       when balance reads it
-      then the run will stop, give no verdict and exit 2
-      and it will complain, naming the specController block and what is wrong with it
+      then the run will stop with a usage error, give no verdict, and complain, naming the specController block and what is wrong with it

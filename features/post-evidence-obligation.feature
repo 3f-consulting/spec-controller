@@ -4,8 +4,7 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
   Your project's feature files make claims. balance reads them and raises the Evidence Obligations
   each claim asks for. This is the debit side.
 
-  First, balance finds the executable claims, in every feature file in the feature corpus, at any
-  depth, in path order. A scenario is one executable claim, and so is each row of an Outline with a
+  First, balance finds the executable claims in the feature files it is given. A scenario is one executable claim, and so is each row of an Outline with a
   clm column. A scenario with a deferral tag, such as @wip, on the scenario, its Rule or its Feature,
   is not an executable claim.
 
@@ -37,18 +36,6 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
       given a feature file had a Background, and a scenario tagged @unit @CLM-ONE-001
       when balance reads the corpus
       then there will be one executable claim, CLM-ONE-001
-
-    @unit @CLM-OBL-034
-    Scenario: balance reads a scenario in a subfolder of the feature corpus as an executable claim
-      given the feature corpus's one feature file was two folders down, at area/deeper/one.feature, with a scenario tagged @unit @CLM-ONE-001
-      when balance reads the corpus
-      then there will be one executable claim, CLM-ONE-001
-
-    @unit @CLM-OBL-035
-    Scenario: balance reads the feature corpus in path order
-      given the feature corpus had b.feature and a/x.feature
-      when balance reads the corpus
-      then the executable claims of a/x.feature will come before those of b.feature
 
     @unit @CLM-OBL-032
     Scenario: a feature file with no Feature has no executable claims

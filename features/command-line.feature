@@ -143,7 +143,7 @@ Feature: the command line reads what you give it
         | CLM-CLI-184 | /work/acme/docs/features | in a git repository at /work/acme | /work/acme |
         | CLM-CLI-144 | /tmp/x/features          | in no git repository              | /tmp/x     |
 
-  Rule: balance reads every workflow a CI workflows path names
+  Rule: balance reads every file of its kind a path names, a file or a folder
 
     @unit
     Scenario Outline: balance reads every workflow a CI workflows path names, a file or a folder
@@ -155,6 +155,24 @@ Feature: the command line reads what you give it
         | clm         | path                                          | workflows      |
         | CLM-CLI-193 | the workflow ci.yml                           | ci.yml alone   |
         | CLM-CLI-203 | a folder with ci.yml and release.yaml in it   | both workflows |
+
+    @unit @CLM-CLI-204
+    Scenario: balance reads every JUnit report in a JUnit folder, and passes over its other files
+      given the run named a JUnit folder with TEST-a.xml and TEST-a.txt in it
+      when balance reads its inputs
+      then it will read TEST-a.xml alone
+
+    @unit @CLM-CLI-205
+    Scenario: balance reads a scenario in a subfolder of the feature corpus as an executable claim
+      given the feature corpus's one feature file was two folders down, at area/deeper/one.feature, with a scenario tagged @unit @CLM-ONE-001
+      when balance reads the corpus
+      then there will be one executable claim, CLM-ONE-001
+
+    @unit @CLM-CLI-206
+    Scenario: balance reads the feature corpus in path order
+      given the feature corpus had b.feature and a/x.feature
+      when balance reads the corpus
+      then the executable claims of a/x.feature will come before those of b.feature
 
   Rule: a command validates every input before it does its work
 

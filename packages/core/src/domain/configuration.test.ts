@@ -127,7 +127,7 @@ describe("balance uses each configuration setting it can, and leaves out any it 
 });
 
 describe("a specController block that is not an object stops the run", () => {
-  it.each(manifestVariants["CLM-CFG-021"].variants)("[CLM-CFG-021] a specController block that was %s: when balance reads it, the run will stop, give no verdict and exit 2, and complain, naming the specController block", (variant) => {
+  it.each(manifestVariants["CLM-CFG-021"].variants)("[CLM-CFG-021] a specController block that was %s: when balance reads it, the run will stop with a usage error, give no verdict, and complain, naming the specController block and what is wrong with it", (variant) => {
     expect(whereManifestBreaks({ specController: notAnObject[variant] })).toBe("$.specController");
   });
 });

@@ -132,7 +132,7 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
     Scenario: no step in the corpus names an interface mechanic, outside the files whose subject is where output goes
       given the corpus had given, when, then, and and but lines, capitalised and lowercase
       when CI runs the fitness function over those lines
-      then none will name an output channel, an exit code, a flag, a file name or the binary
+      then none will name an interface mechanic
 
   Rule: every step in the corpus is one Cucumber runs
 

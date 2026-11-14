@@ -21,11 +21,11 @@ describe("an input left out takes its default", () => {
   });
 });
 
-describe("balance reads a feature file in a subfolder of the feature corpus", () => {
+describe("balance reads every file of its kind a path names, a file or a folder", () => {
   it.each([
     ["named", "corpus", false],
     ["read by default", "features", true],
-  ] as const)("[CLM-OBL-034] a corpus %s, beside its README: it reads area/deeper/one.feature", (_how, corpus, byDefault) => {
+  ] as const)("[CLM-CLI-205] the feature corpus, %s, had its one feature file two folders down, at area/deeper/one.feature, beside its README: when balance reads the corpus, it will read that feature file", (_how, corpus, byDefault) => {
     const folder = temporaryDirectory("corpus-depth-");
     mkdirSync(join(folder, corpus, "area", "deeper"), { recursive: true });
     writeFileSync(join(folder, corpus, "area", "deeper", "one.feature"), ONE_FEATURE);

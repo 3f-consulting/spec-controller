@@ -224,19 +224,15 @@ describe("Total of the excluded claim code occurrences", () => {
     "in a title": "@ONE\nFeature: one\n\n  @unit\n  Scenario: adds one, as @CLM-ONE-001 says\n    Given a step\n",
     "in a comment": "@ONE\nFeature: one\n\n  # as @CLM-ONE-001 says\n  @unit\n  Scenario: adds one\n    Given a step\n",
     "in an Examples cell outside a clm column": "@ONE\nFeature: one\n\n  @unit\n  Scenario Outline: adds <x>\n    Given <x>\n\n    Examples:\n      | x                 |\n      | @CLM-ONE-001, one |\n",
+    "with a comma stuck to it": "@ONE\nFeature: one\n\n  # as @CLM-ONE-001, says\n  @unit\n  Scenario: adds one\n    Given a step\n",
+    "with a closing bracket stuck to it": "@ONE\nFeature: one\n\n  # as (@CLM-ONE-001) says\n  @unit\n  Scenario: adds one\n    Given a step\n",
+    "with a closing bracket then a comma stuck to it": "@ONE\nFeature: one\n\n  # as (@CLM-ONE-001), says\n  @unit\n  Scenario: adds one\n    Given a step\n",
+    "with a full stop stuck to it": "@ONE\nFeature: one\n\n  # as @CLM-ONE-001. says\n  @unit\n  Scenario: adds one\n    Given a step\n",
   };
 
   it.each(evidenceReconciliationVariants["CLM-EVR-028"].variants)("[CLM-EVR-028] a feature file that had the claim code CLM-ONE-001 written %s will have 1 excluded claim code occurrence", (variant) => {
     const source = WRITTEN[variant];
     if (source === undefined) throw new Error(`no feature file for the variant ${variant}`);
-
-    expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)]).excludedClaimCodeOccurrences).toBe(1);
-  });
-});
-
-describe("a claim code in a comment, with punctuation stuck to its end, is counted where no claim reads it", () => {
-  it.each(evidenceReconciliationVariants["CLM-EVR-029"].variants)("[CLM-EVR-029] a feature file with @CLM-ONE-001%s in a comment has one excluded claim code occurrence", (punctuation) => {
-    const source = `@ONE\nFeature: one\n\n  # as @CLM-ONE-001${punctuation} says\n  @unit\n  Scenario: adds one\n    Given a step\n`;
 
     expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)]).excludedClaimCodeOccurrences).toBe(1);
   });
