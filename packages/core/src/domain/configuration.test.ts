@@ -43,6 +43,15 @@ describe("balance turns each configuration setting into its internal setting", (
     });
   });
 
+  it('[CLM-CFG-010] a specController block with "ci.yaml:ci:Install dependencies" in notChecks, with ci.yaml read, whose job ci had the step Install dependencies, gives that step', () => {
+    const ciRead = [{ workflow: "ci.yaml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
+
+    expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yaml:ci:Install dependencies"] } }, ciRead)).toEqual({
+      configuration: { ...NONE, nonChecks: [{ workflow: "ci.yaml", job: "ci", step: "Install dependencies" }] },
+      errors: [],
+    });
+  });
+
   it('[CLM-CFG-023] a specController block with "nightly.yml:ci:Install" in notChecks, with only ci.yml read, gives that step', () => {
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
