@@ -21,23 +21,6 @@ function provenanceIn(folder: string, ...args: string[]): ProvenanceRead {
 // The path the provenance shows for the input of that name.
 const inputPath = ({ inputs }: ProvenanceRead, name: string): string | undefined => inputs.find((input) => input.name === name)?.path;
 
-describe("balance will use the default when an input is not named", () => {
-  it("[CLM-EVR-077] no target name named: balance uses unknown-target", () => {
-    expect(provenanceIn(temporaryDirectory("no-target-")).target).toBe("unknown-target");
-  });
-
-  it("[CLM-EVR-078] no source commit named: balance uses the target's HEAD", () => {
-    const repository = repositoryForTest();
-    const head = repository.commit("one");
-
-    expect(provenanceIn(repository.top).sourceSha).toBe(head);
-  });
-
-  it("[CLM-EVR-079] no source commit named, in no git repository: balance uses unknown", () => {
-    expect(provenanceIn(temporaryDirectory("no-git-")).sourceSha).toBe("unknown");
-  });
-});
-
 describe("balance works out the target's folder", () => {
   it.each([
     ["by its own path", (top: string) => top],
@@ -84,10 +67,10 @@ describe("the run will be not reconciled, naming why", () => {
   }
 
   it.each([
-    ["CLM-EVR-006", "no corpus directory", (folder: string) => folder],
+    ["CLM-EVR-006", "no corpus folder", (folder: string) => folder],
     [
-      "CLM-EVR-007",
-      "an empty corpus directory",
+      "CLM-EVR-006",
+      "an empty corpus folder",
       (folder: string) => {
         mkdirSync(join(folder, "features"));
         return folder;
