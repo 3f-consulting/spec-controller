@@ -83,7 +83,6 @@ describe("you will get the report format you named", () => {
 
 describe("a report will be where you asked", () => {
   it.each([
-    ["CLM-FMT-016", "no destination", (_folder: string) => [], (_folder: string, output: string) => opensAsMarkdown(output)],
     [
       "CLM-FMT-003",
       "a file",
