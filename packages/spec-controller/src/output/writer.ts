@@ -35,8 +35,7 @@ const STREAM_OF = { "standard-output": "output", "standard-error": "error" } as 
 
 function onStream(asked: OutputRequest<string>, named: NamedStream, streams: StandardStreams): Placed {
   const stream = streams[STREAM_OF[named.is]];
-  const output = named.is === "standard-error" ? ({ ...asked, destination: { to: "standard-error" } } as const) : asked;
-  return { asked, output, identity: streamIdentity(stream.fd, named), write: stream.write };
+  return { asked, output: { ...asked, destination: { to: named.is } }, identity: streamIdentity(stream.fd, named), write: stream.write };
 }
 
 function placed(output: OutputRequest<string>, streams: StandardStreams): Placed {
