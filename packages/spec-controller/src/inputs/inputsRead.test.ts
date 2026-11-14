@@ -17,7 +17,13 @@ describe("an input left out takes its default", () => {
     const folder = temporaryDirectory("default-manifest-");
     writeFileSync(join(folder, "package.json"), JSON.stringify({ name: "acme", scripts: { test: "vitest run" } }));
 
-    expect(read([{ kind: "manifest", path: "package.json", byDefault: true }], folder).manifest).toEqual({ name: "acme", scripts: { test: "vitest run" } });
+    // What the run reads is package.json as its manifest, and nothing else; the file is among those no report may land on.
+    expect(read([{ kind: "manifest", path: "package.json", byDefault: true }], folder)).toStrictEqual({
+      features: [],
+      manifest: { name: "acme", scripts: { test: "vitest run" } },
+      filesRead: [join(folder, "package.json")],
+      pathsRead: { manifest: "package.json" },
+    });
   });
 });
 
