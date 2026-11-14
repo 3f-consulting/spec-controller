@@ -10,27 +10,47 @@
       "pnpm --filter <name> <script>",
       "yarn <script>",
       "yarn run <script>",
-      "yarn workspace <name> <script>"
+      "yarn workspace <name> <script>",
+      "a script that runs another script, followed however deep"
     ]
   },
   "CLM-OBS-010": {
     "class": "a launcher handing on to the unit runner",
-    "variants": ["npx", "pnpm exec", "pnpm <bin>", "yarn <bin>", "bunx", "python -m", "python3 -m", "uv run", "poetry run", "pipenv run", "coverage run -m", "bundle exec"]
+    "variants": ["npx", "pnpm exec", "pnpm <bin>", "yarn <bin>", "bunx", "python -m", "python3 -m", "uv run", "poetry run", "pipenv run", "coverage run -m", "bundle exec", "launchers chained"]
   },
   "CLM-OBS-011": {
     "class": "a list of commands with the unit runner among them",
     "variants": ["&&", ";"]
   },
+  "CLM-OBS-012": {
+    "class": "a step running spec-controller balance",
+    "variants": ["spec-controller balance", "spec-controller balance | tee report.md"]
+  },
   "CLM-OBS-112": {
     "class": "a wrapper that runs the command after it",
-    "variants": ["xvfb-run", "timeout <duration>"]
+    "variants": [
+      "xvfb-run",
+      "timeout <duration>",
+      "timeout -k <duration> <duration>",
+      "timeout -s <signal> <duration>",
+      "-n 99",
+      "-s 99",
+      "-e file",
+      "-f file",
+      "-p MIT-MAGIC",
+      "-w 1"
+    ]
   },
   "CLM-OBS-113": {
     "class": "a runner named in several words",
     "variants": ["mvn test", "./mvnw test", "./gradlew test", "./gradlew check", "./gradlew :app:test", "gotestsum"]
   },
-  "CLM-OBS-117": {
-    "class": "an option xvfb-run takes, with its value",
-    "variants": ["-n 99", "-s 99", "-e file", "-f file", "-p MIT-MAGIC", "-w 1"]
+  "CLM-OBS-115": {
+    "class": "a package script that leads to no command",
+    "variants": ["one that runs itself", "a scripts entry that is not text"]
+  },
+  "CLM-OBS-122": {
+    "class": "other lines before the runner in a multi-line step",
+    "variants": ["a shell function", "an assignment such as start=$SECONDS", "an if … fi block"]
   }
 }

@@ -1,0 +1,21 @@
+{
+  "CLM-EVR-039": {
+    "class": "an origin naming owner/repo in its path",
+    "variants": [
+      "https with a user, password, query or fragment",
+      "scp form (`git@host:owner/repo.git`)",
+      "ssh",
+      "`host:owner/repo.git`",
+      "a repository named `owner.github.io`",
+      "a GitLab subgroup (`group/sub/web` gives `sub/web`)"
+    ]
+  },
+  "CLM-EVR-047": {
+    "class": "a local origin gives its base name",
+    "variants": ["a path", "a `file://` URL"]
+  },
+  "CLM-EVR-052": {
+    "class": "an origin that gives unknown-target",
+    "variants": ["one with no owner and repository in its path", "`git://`", "a form no reader knows such as `foo`", "`/`", "`file:///`"]
+  }
+}

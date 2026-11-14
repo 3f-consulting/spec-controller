@@ -1,6 +1,29 @@
 {
-  "CLM-EVR-029": {
-    "class": "a claim code in a comment, with punctuation stuck to its end",
-    "variants": [",", ")", "),", "."]
+  "CLM-EVR-006": {
+    "class": "nothing to reconcile",
+    "variants": [
+      "no corpus folder",
+      "an empty corpus folder",
+      "a corpus with no scenario"
+    ]
+  },
+  "CLM-EVR-028": {
+    "class": "a claim code written where no claim reads it",
+    "variants": [
+      "in a title",
+      "in a comment",
+      "in an Examples cell outside a clm column",
+      "with a comma stuck to it",
+      "with a closing bracket stuck to it",
+      "with a closing bracket then a comma stuck to it",
+      "with a full stop stuck to it"
+    ]
+  },
+  "CLM-EVR-068": {
+    "class": "an observation counted on a phantom claim",
+    "variants": [
+      "passed",
+      "never ran"
+    ]
   }
 }

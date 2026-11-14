@@ -1,0 +1,6 @@
+{
+  "CLM-RPT-102": {
+    "class": "a JSON report that breaks its schema",
+    "variants": ["a required part removed", "a part the schema does not name", "text where a count goes"]
+  }
+}

@@ -21,23 +21,21 @@ function reportIn(folder: string, format: "md" | "json"): string {
   return report;
 }
 
-describe("neither report will have an optional section the run had nothing for", () => {
-  it("[CLM-RPT-052] a run whose workflows folder holds no workflow has a step account in neither report", () => {
-    const folder = folderWithWorkflows({});
-
-    expect({ markdown: reportIn(folder, "md").includes("## Step account"), json: "stepAccount" in (JSON.parse(reportIn(folder, "json")) as object) }).toEqual({
-      markdown: false,
-      json: false,
-    });
+describe("the Markdown report leaves out any part the run had nothing for", () => {
+  it("[CLM-RPT-052] a run had nothing for the step account, its workflows folder holding no workflow: when its Markdown report is written, it will not have that part", () => {
+    expect(reportIn(folderWithWorkflows({}), "md").includes("## Step account")).toBe(false);
   });
 });
 
-describe("balance counts the steps of the CI workflows it reads", () => {
-  it("[CLM-CLI-195] --ci naming a workflows folder whose one workflow has two steps: the report's step account counts two steps", () => {
-    const folder = folderWithWorkflows({ "ci.yml": "jobs:\n  ci:\n    steps:\n      - run: echo one\n      - run: echo two\n" });
+describe("a row lists its reconciling items, each with where to look", () => {
+  it("[CLM-RPT-154] a claim had a fitness Evidence Obligation, and its step ci.yml:build:Lint failing: when the Markdown report is written, its row's reconciling items will be fitness failing, at ci.yml:build:Lint", () => {
+    const folder = folderWithWorkflows({ "ci.yml": "jobs:\n  build:\n    steps:\n      - name: Lint\n        id: CLM-TWO-001\n        run: pnpm lint\n" });
+    writeFileSync(join(folder, "features", "two.feature"), "@TWO\nFeature: two\n\n  @fitness @CLM-TWO-001\n  Scenario: lints\n");
+    writeFileSync(join(folder, "steps.json"), '{"CLM-TWO-001":{"outcome":"failure","conclusion":"failure"}}');
+    let report = "";
 
-    const { stepAccount } = JSON.parse(reportIn(folder, "json")) as { stepAccount?: { total: { stepsRead: number } } };
+    main(["balance", "--ci", "workflows", "--ci-steps", "steps.json", "--format", "md"], folder, { output: { fd: 1, write: (text) => (report += text) }, error: { fd: 2, write: () => {} } });
 
-    expect(stepAccount?.total.stepsRead).toBe(2);
+    expect(report.split("\n").filter((line) => line.startsWith("| CLM-TWO-001 ")).map((row) => row.split("|").at(-2)!.trim())).toEqual(["fitness: failing (`ci.yml:build:Lint`)"]);
   });
 });

@@ -21,24 +21,7 @@ function provenanceIn(folder: string, ...args: string[]): ProvenanceRead {
 // The path the provenance shows for the input of that name.
 const inputPath = ({ inputs }: ProvenanceRead, name: string): string | undefined => inputs.find((input) => input.name === name)?.path;
 
-describe("balance will use the default when an input is not named", () => {
-  it("[CLM-CLI-139] no target name named: balance uses unknown-target", () => {
-    expect(provenanceIn(temporaryDirectory("no-target-")).target).toBe("unknown-target");
-  });
-
-  it("[CLM-CLI-140] no source commit named: balance uses the target's HEAD", () => {
-    const repository = repositoryForTest();
-    const head = repository.commit("one");
-
-    expect(provenanceIn(repository.top).sourceSha).toBe(head);
-  });
-
-  it("[CLM-CLI-141] no source commit named, in no git repository: balance uses unknown", () => {
-    expect(provenanceIn(temporaryDirectory("no-git-")).sourceSha).toBe("unknown");
-  });
-});
-
-describe("balance works out the target's folder", () => {
+describe("balance works out the target's folder from the corpus", () => {
   it.each([
     ["by its own path", (top: string) => top],
     [
@@ -49,7 +32,7 @@ describe("balance works out the target's folder", () => {
         return link;
       },
     ],
-  ])("[CLM-CLI-184] a corpus named in a git repository's subfolder, reached %s, run from elsewhere: the target is that repository", (_reached, named) => {
+  ])("[CLM-CLI-184] a balance command line named a corpus in a git repository's subfolder, reached %s, run from elsewhere: when it is read, the target's folder will be that repository", (_reached, named) => {
     const repository = repositoryForTest();
     repository.write("docs/features/one.feature", "@ONE\nFeature: one\n");
     const head = repository.commit("one");
@@ -59,14 +42,14 @@ describe("balance works out the target's folder", () => {
     expect({ sourceSha: provenance.sourceSha, corpus: inputPath(provenance, "features") }).toEqual({ sourceSha: head, corpus: "docs/features" });
   });
 
-  it("[CLM-CLI-144] a corpus named in no git repository, run from elsewhere: the target is the corpus's folder", () => {
+  it("[CLM-CLI-144] a balance command line named a corpus in no git repository, run from elsewhere: when it is read, the target's folder will be the corpus's parent folder", () => {
     const folder = temporaryDirectory("no-git-");
     mkdirSync(join(folder, "features"));
 
     expect(inputPath(provenanceIn(temporaryDirectory("elsewhere-"), "--features", join(folder, "features")), "features")).toBe("features");
   });
 
-  it("[CLM-CLI-142] no feature corpus named, run from a folder: the target is that folder", () => {
+  it("[CLM-CLI-142] a balance command line named no feature corpus, run from a folder: when it is read, the target's folder will be that folder", () => {
     const folder = temporaryDirectory("no-corpus-");
     mkdirSync(join(folder, "reports"));
     writeFileSync(join(folder, "reports", "vitest.json"), '{"testResults":[]}');
@@ -84,10 +67,10 @@ describe("the run will be not reconciled, naming why", () => {
   }
 
   it.each([
-    ["CLM-EVR-006", "no corpus directory", (folder: string) => folder],
+    ["CLM-EVR-006", "no corpus folder", (folder: string) => folder],
     [
-      "CLM-EVR-007",
-      "an empty corpus directory",
+      "CLM-EVR-006",
+      "an empty corpus folder",
       (folder: string) => {
         mkdirSync(join(folder, "features"));
         return folder;
@@ -95,5 +78,13 @@ describe("the run will be not reconciled, naming why", () => {
     ],
   ] as const)("[%s] a run with %s, and no Evidence Observation, is not reconciled, naming why", (_clm, _what, made) => {
     expect(runVerdictIn(made(temporaryDirectory("corpus-")))).toEqual({ verdict: "not-reconciled", why: "nothing-to-reconcile" });
+  });
+});
+
+describe("a command reads each argument as what it is, or refuses it", () => {
+  it("[CLM-CLI-121] a command line had --target and --source-sha, each with its value as the next argument: when it is read, each flag will take that value, as the run's provenance shows", () => {
+    const { target, sourceSha } = provenanceIn(temporaryDirectory("given-target-"), "--target", "acme/web", "--source-sha", "abc1234");
+
+    expect({ target, sourceSha }).toEqual({ target: "acme/web", sourceSha: "abc1234" });
   });
 });

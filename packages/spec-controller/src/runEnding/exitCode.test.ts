@@ -5,51 +5,58 @@ import { describe, expect, it } from "vitest";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { main } from "../commands/main.js";
 import { exitCodeOf } from "./exitCode.js";
+import exitCodeVariants from "./exitCode.variants.json" with { type: "json" };
 
-const BALANCED: RunVerdict = { verdict: "balanced" };
-const NOT_RECONCILED: RunVerdict = { verdict: "not-reconciled", why: "unsound" };
+const NOT_RECONCILED_BECAUSE: Readonly<Record<string, RunVerdict>> = {
+  unsound: { verdict: "not-reconciled", why: "unsound" },
+  "claim code errors": { verdict: "not-reconciled", why: "claim-code-errors" },
+  "nothing to reconcile": { verdict: "not-reconciled", why: "nothing-to-reconcile" },
+};
 
 describe("each run verdict will have its exit code", () => {
-  it.each([
-    ["CLM-CLI-166", "balanced", 0, BALANCED],
-    ["CLM-CLI-168", "not reconciled, because unsound", 3, NOT_RECONCILED],
-    ["CLM-CLI-169", "not reconciled, because claim code errors", 3, { verdict: "not-reconciled", why: "claim-code-errors" }],
-    ["CLM-CLI-170", "not reconciled, because nothing to reconcile", 3, { verdict: "not-reconciled", why: "nothing-to-reconcile" }],
-  ] as const)("[%s] a run that reached the run verdict %s exits %i", (_clm, _verdict, exitCode, runVerdict) => {
-    expect(exitCodeOf(runVerdict, { exitZero: false })).toBe(exitCode);
+  it("[CLM-CLI-166] a run reached the run verdict balanced: when it ends, it will exit 0", () => {
+    expect(exitCodeOf({ verdict: "balanced" }, { exitZero: false })).toBe(0);
+  });
+
+  it.each(exitCodeVariants["CLM-CLI-168"].variants)("[CLM-CLI-168] a run reached the run verdict not reconciled, because %s: when it ends, it will exit 3", (why) => {
+    const runVerdict = NOT_RECONCILED_BECAUSE[why];
+    if (runVerdict === undefined) throw new Error(`no run verdict for the variant ${why}`);
+
+    expect(exitCodeOf(runVerdict, { exitZero: false })).toBe(3);
   });
 });
 
-describe("under --exit-zero only an out-of-balance run will exit 0 instead of its code", () => {
-  it.each([
-    ["CLM-CLI-171", "balanced", 0, BALANCED],
-    ["CLM-CLI-173", "not reconciled", 3, NOT_RECONCILED],
-  ] as const)("[%s] a run %s exits %i under --exit-zero", (_clm, _ending, underExitZero, runVerdict) => {
-    expect(exitCodeOf(runVerdict, { exitZero: true })).toBe(underExitZero);
-  });
+const quiet = { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } };
 
-  it("[CLM-CLI-172] balance run again under --exit-zero exits 0 where it was out of balance at 1", () => {
+// Each exit code --exit-zero leaves alone, as a run under --exit-zero reaches it.
+const EXIT_UNDER_EXIT_ZERO: Readonly<Record<string, { readonly code: number; readonly exitCode: () => number }>> = {
+  "2 (a usage error)": { code: 2, exitCode: () => main(["balance", "--exit-zero", "--bogus"], temporaryDirectory("exit-zero-"), quiet) },
+  "3 (not reconciled)": { code: 3, exitCode: () => exitCodeOf({ verdict: "not-reconciled", why: "unsound" }, { exitZero: true }) },
+  "4 (an unexpected error)": {
+    code: 4,
+    exitCode: () =>
+      main(["balance", "--exit-zero"], temporaryDirectory("exit-zero-"), quiet, {
+        balance: () => {
+          throw new Error("an error before the verdict");
+        },
+      }),
+  },
+};
+
+describe("--exit-zero will change exit 1 to 0 and leave exit 3 alone", () => {
+  it("[CLM-CLI-172] a run's evidence was out of balance: when it runs under --exit-zero, it will exit 0", () => {
     const folder = temporaryDirectory("exit-zero-");
     mkdirSync(join(folder, "features"));
     writeFileSync(join(folder, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n");
-    const quiet = { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } };
     const balanced = (args: readonly string[]) => main(["balance", "--features", join(folder, "features"), ...args], folder, quiet);
 
     expect([balanced([]), balanced(["--exit-zero"])]).toEqual([1, 0]);
   });
 
-  // An ending with no verdict never reaches the verdict's exit code.
-  it.each([
-    ["CLM-CLI-174", "a usage error", ["balance", "--exit-zero", "--bogus"], 2, false],
-    ["CLM-CLI-175", "an unexpected error", ["balance", "--exit-zero"], 4, true],
-  ] as const)("[%s] a run ending on %s keeps its exit code under --exit-zero", (_clm, _ending, args, exitCode, unexpected) => {
-    const quiet = { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } };
-    const failing = {
-      balance: () => {
-        throw new Error("an error before the verdict");
-      },
-    };
+  it.each(exitCodeVariants["CLM-CLI-173"].variants)("[CLM-CLI-173] a run's evidence ended on %s: when it runs under --exit-zero, it will exit that code", (ending) => {
+    const run = EXIT_UNDER_EXIT_ZERO[ending];
+    if (run === undefined) throw new Error(`no run for the variant ${ending}`);
 
-    expect(main(args, temporaryDirectory("exit-zero-"), quiet, unexpected ? failing : {})).toBe(exitCode);
+    expect(run.exitCode()).toBe(run.code);
   });
 });
