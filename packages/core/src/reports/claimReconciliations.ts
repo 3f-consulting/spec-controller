@@ -1,5 +1,5 @@
 import { writtenClaimCode } from "../domain/claimCodes.js";
-import { evidenceGroupsOf, isExecutable, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
+import { evidenceGroupsOf, isExecutable, isUnnamed, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
 import { QUALITY_CHECK_KINDS, type QualityCheckKind } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import { firstLineOf, inCell } from "./quoted.js";
@@ -22,7 +22,8 @@ function cellOf({ claim, qualityCheckReconciliations }: ClaimReconciliation, kin
 // A claim is named by its code; by its code and file when another claim shares it; by its file and title when it has none.
 // A shared code makes every one of the claim's Quality Check Reconciliations duplicate-claim-code.
 function nameOf({ claim, qualityCheckReconciliations }: ClaimReconciliation): string {
-  if (!isExecutable(claim)) return claim.claimCode === undefined ? coreText("unnamed-claim") : writtenClaimCode(claim.claimCode);
+  if (isUnnamed(claim)) return coreText("unnamed-claim");
+  if (!isExecutable(claim)) return writtenClaimCode(claim.claimCode);
   if (claim.claimCode === undefined) return `${inCell(claim.file)} : ${inCell(claim.title)}`;
   const code = writtenClaimCode(claim.claimCode);
   return qualityCheckReconciliations[0]!.outcome === "duplicate-claim-code" ? `${code} (${inCell(claim.file)})` : code;
@@ -54,7 +55,7 @@ function groupItemsOf(claimReconciliation: ClaimReconciliation): string[] {
 
 function itemsOf(claimReconciliation: ClaimReconciliation): string {
   const { claim, qualityCheckReconciliations } = claimReconciliation;
-  const items = !isExecutable(claim) && claim.claimCode === undefined ? groupItemsOf(claimReconciliation) : qualityCheckReconciliations.filter(({ outcome }) => outcome !== "satisfied").map(itemOf);
+  const items = isUnnamed(claim) ? groupItemsOf(claimReconciliation) : qualityCheckReconciliations.filter(({ outcome }) => outcome !== "satisfied").map(itemOf);
   return items.length === 0 ? "—" : items.join("; ");
 }
 
