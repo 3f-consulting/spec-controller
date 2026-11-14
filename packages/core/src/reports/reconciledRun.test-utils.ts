@@ -38,7 +38,7 @@ export function reconciled({ scenarios, unitTests, configurationErrors = [], ste
     claimCodeErrors: claimCodeErrorsOf(features),
     configurationErrors,
     features,
-    ...(stepsRead && { stepAccount: stepAccountOf([{ step, disposition: "candidate" }]) }),
+    stepAccount: stepAccountOf(stepsRead ? [{ step, disposition: "fitnessFunction" }] : []),
     provenance: { ...PROVENANCE, ...provenance },
   });
 }
@@ -63,12 +63,12 @@ export function reconciledFrom(files: readonly FileHas[], evidence: readonly Evi
     featureAsWrittenFrom(file, `@${featureCode}\nFeature: ${file}\n${scenarios.map(([tags, title]) => `\n  ${tags}\n  Scenario: ${title}\n    Given a step\n`).join("")}`),
   );
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), evidence.map(evidenceOf));
-  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: [], configurationErrors: [], features, provenance: PROVENANCE });
+  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: [], configurationErrors: [], features, stepAccount: stepAccountOf([]), provenance: PROVENANCE });
 }
 
 // A run of the feature files given as written, and the configuration errors given, with no evidence.
 export function reconciledFromSources(sources: readonly (readonly [string, string])[], configurationErrors: readonly ConfigurationError[] = []): EvidenceReconciliation {
   const features = sources.map(([file, source]) => featureAsWrittenFrom(file, source));
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), []);
-  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: claimCodeErrorsOf(features), configurationErrors, features, provenance: PROVENANCE });
+  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: claimCodeErrorsOf(features), configurationErrors, features, stepAccount: stepAccountOf([]), provenance: PROVENANCE });
 }

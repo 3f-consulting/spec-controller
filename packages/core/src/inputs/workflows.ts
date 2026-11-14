@@ -1,14 +1,14 @@
-import { parse } from "yaml";
+import { isScalar, parseDocument } from "yaml";
 import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
 import { coreText } from "../messages/catalogue.js";
 import workflowsVariants from "./workflows.variants.json" with { type: "json" };
 
-// Which steps only set the job up is the reader's to say, from its list of the actions that do, by owner and
-// repository: an action in a repository on the list is one of them. An entry ending in * names a family of
-// repositories, such as every setup action.
+// Which steps only set the job up is the reader's to say, from its list of the actions that do.
+// An action is matched on its owner/repo, so its sub-actions are matched with it. An entry ending in * names a family
+// of actions, such as every setup action: an owner/repo cut to the entry's length less the *, then the *, is the entry.
 const usesAction = (uses: string, action: string): boolean => {
   const repository = uses.split("@")[0]!.split("/").slice(0, 2).join("/");
-  return action.endsWith("*") ? repository.startsWith(action.slice(0, -1)) : repository === action;
+  return (action.endsWith("*") ? `${repository.slice(0, action.length - 1)}*` : repository) === action;
 };
 const isPlumbing = (uses: string): boolean => workflowsVariants["CLM-OBS-015"].variants.some((action) => usesAction(uses, action));
 const WRITES_STEP_RECORD = "toJSON(steps)";
@@ -17,6 +17,9 @@ type Mapping = Readonly<Record<string, unknown>>;
 
 const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null && !Array.isArray(value);
 const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
+// A step named by a number is named by that number as the workflow writes it, as GitHub shows it: 1.10, not 1.1.
+const nameOf = (written: unknown): string | undefined =>
+  isScalar(written) && (typeof written.value === "string" || typeof written.value === "number") ? written.source : undefined;
 const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value : []);
 
 // What a step holds in each place it can write the step record from: its command, or its env: values.
@@ -27,13 +30,13 @@ const HELD_IN: Readonly<Record<string, (step: Mapping) => readonly unknown[]>> =
 const writesStepRecord = (step: Mapping): boolean =>
   workflowsVariants["CLM-OBS-013"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
 
-function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping): WorkflowStepAsWritten {
+function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping, nameAsWritten: unknown): WorkflowStepAsWritten {
   const uses = text(step["uses"]);
   return {
     workflow,
     job,
     jobContinueOnError,
-    name: text(step["name"]),
+    name: nameOf(nameAsWritten),
     uses,
     run: text(step["run"]),
     id: text(step["id"]),
@@ -44,7 +47,9 @@ function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknow
 }
 
 export function workflowStepsFrom(workflow: string, source: string): WorkflowStepAsWritten[] {
-  const document: unknown = parse(source);
+  const parsed = parseDocument(source);
+  if (parsed.errors[0] !== undefined) throw parsed.errors[0];
+  const document: unknown = parsed.toJS();
   const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
   // GitHub runs no workflow whose job is not a mapping, or whose step names neither an action nor a command.
   return Object.entries(jobs).flatMap(([job, definition]) => {
@@ -53,7 +58,7 @@ export function workflowStepsFrom(workflow: string, source: string): WorkflowSte
       if (!isMapping(step) || (text(step["uses"]) === undefined && text(step["run"]) === undefined)) {
         throw new TypeError(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
       }
-      return stepAsWritten(workflow, job, definition["continue-on-error"], step);
+      return stepAsWritten(workflow, job, definition["continue-on-error"], step, parsed.getIn(["jobs", job, "steps", at, "name"], true));
     });
   });
 }

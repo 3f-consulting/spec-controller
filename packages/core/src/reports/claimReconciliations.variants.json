@@ -1,0 +1,17 @@
+{
+  "CLM-RPT-132": {
+    "class": "a claim's unit cell reading U/-",
+    "variants": [
+      "asked for a unit test and none citing it",
+      "one citing it that never ran",
+      "asked for a unit and an e2e test and none citing it"
+    ]
+  },
+  "CLM-RPT-169": {
+    "class": "a message whose first line is blank",
+    "variants": [
+      "an empty line",
+      "a line of spaces"
+    ]
+  }
+}

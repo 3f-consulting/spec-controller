@@ -1,0 +1,18 @@
+{
+  "CLM-CLI-115": {
+    "class": "asking for balance's help",
+    "variants": ["--help", "-h"]
+  },
+  "CLM-CLI-118": {
+    "class": "asking for the commands",
+    "variants": ["spec-controller --help", "spec-controller help", "spec-controller alone"]
+  },
+  "CLM-FMT-001": {
+    "class": "asking for the Markdown report",
+    "variants": ["no format", "md"]
+  },
+  "CLM-FMT-003": {
+    "class": "a report file named by any path",
+    "variants": ["any path", "one whose name contains a colon"]
+  }
+}

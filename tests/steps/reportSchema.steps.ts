@@ -10,12 +10,13 @@ const CLI = resolve("packages/spec-controller/dist/cli.js");
 
 const SCHEMA = resolve("packages/spec-controller/dist/spec-reconciliation.schema.json");
 
+const VARIANTS = resolve("packages/core/src/reports/json.variants.json");
+
 type Report = Record<string, unknown> & { readonly totals: { readonly claimReconciliations: Record<string, unknown> } };
 
 interface SchemaCheck {
-  report: Report;
-  accepted: boolean;
-  errors: string;
+  reports: readonly (readonly [string, Report])[];
+  results: readonly (readonly [string, boolean, string])[];
 }
 
 // The JSON report the built command writes for a target with one feature file.
@@ -28,26 +29,31 @@ function realReport(): Report {
   return JSON.parse(run.stdout) as Report;
 }
 
-// Each report checked, as a real run's report with one change made to it.
-const WRITTEN: Readonly<Record<string, (report: Report) => Report>> = {
-  "a JSON report from a real run": (report) => report,
-  "a JSON report with one of its required parts removed": ({ totals: _totals, ...rest }) => rest as Report,
-  "a JSON report with a part the schema does not name": (report) => ({ ...report, extra: 1 }),
-  "a JSON report with text where a count goes": (report) => ({ ...report, totals: { ...report.totals, claimReconciliations: { ...report.totals.claimReconciliations, total: "1" } } }),
+// Each way a report breaks its schema, as one change made to a real run's report.
+const BREAKING: Readonly<Record<string, (report: Report) => Report>> = {
+  "a required part removed": ({ totals: _totals, ...rest }) => rest as Report,
+  "a part the schema does not name": (report) => ({ ...report, extra: 1 }),
+  "text where a count goes": (report) => ({ ...report, totals: { ...report.totals, claimReconciliations: { ...report.totals.claimReconciliations, total: "1" } } }),
+};
+
+// Each report checked: a real run's report as written, or as broken by every variant of its claim.
+const WRITTEN: Readonly<Record<string, readonly string[]>> = {
+  "a JSON report from a real run": ["as written"],
+  "a JSON report with one of its required parts removed": (JSON.parse(readFileSync(VARIANTS, "utf8")) as Record<string, { readonly variants: readonly string[] }>)["CLM-RPT-102"]!.variants,
 };
 
 Given(/^(a JSON report .+) was written$/, function (this: SchemaCheck, written: string) {
-  const change = WRITTEN[written];
-  assert.ok(change, `no report is written for "${written}"`);
-  this.report = change(realReport());
+  const changes = WRITTEN[written];
+  assert.ok(changes, `no report is written for "${written}"`);
+  const report = realReport();
+  this.reports = changes.map((change) => [change, change === "as written" ? report : BREAKING[change]!(report)]);
 });
 
 When("it is checked against the schema", function (this: SchemaCheck) {
   const validate = new Ajv({ allErrors: true }).compile(JSON.parse(readFileSync(SCHEMA, "utf8")));
-  this.accepted = validate(this.report);
-  this.errors = JSON.stringify(validate.errors);
+  this.results = this.reports.map(([change, report]) => [change, validate(report), JSON.stringify(validate.errors)]);
 });
 
 Then(/^it will be (accepted|refused)$/, function (this: SchemaCheck, result: string) {
-  assert.equal(this.accepted, result === "accepted", this.errors);
+  for (const [change, accepted, errors] of this.results) assert.equal(accepted, result === "accepted", `${change}: ${errors}`);
 });

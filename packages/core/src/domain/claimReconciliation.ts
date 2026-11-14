@@ -66,6 +66,9 @@ export interface EvidenceGroup {
 
 export const isExecutable = (claim: ExecutableClaim | PhantomClaim | UnnamedClaim): claim is ExecutableClaim => "obligations" in claim;
 
+// The unnamed claim is the one claim that neither asks for evidence nor has a code.
+export const isUnnamed = (claim: ExecutableClaim | PhantomClaim | UnnamedClaim): claim is UnnamedClaim => !isExecutable(claim) && claim.claimCode === undefined;
+
 type RanObservation = EvidenceObservation & { readonly result: Exclude<EvidenceObservation["result"], "never-ran"> };
 
 const ran = (observation: EvidenceObservation): observation is RanObservation => observation.result !== "never-ran";
@@ -89,9 +92,12 @@ function answered(obligation: EvidenceObligation, observations: readonly Evidenc
   return ofItsKind.map((observation) => ({ outcome: BOTH_SIDES_OUTCOME[observation.result], kind: obligation.kind, obligation, observation }));
 }
 
-function executableReconciliations({ claimCode, obligations }: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): OfAKind[] {
-  if (codeShared) return unanswerable(obligations, "duplicate-claim-code");
-  if (claimCode === undefined) return unanswerable(obligations, "no-claim-code");
+// Why no evidence can answer the claim, when none can: a code another claim shares, or no code.
+const unanswerableAs = ({ claimCode }: ExecutableClaim, codeShared: boolean): ObligationNoObservationCanAnswer["outcome"] | undefined =>
+  codeShared ? "duplicate-claim-code" : claimCode === undefined ? "no-claim-code" : undefined;
+
+function executableReconciliations({ obligations }: ExecutableClaim, observations: readonly EvidenceObservation[], unanswered: ObligationNoObservationCanAnswer["outcome"] | undefined): OfAKind[] {
+  if (unanswered !== undefined) return unanswerable(obligations, unanswered);
   const unasked = observations
     .filter((observation) => ran(observation) && !obligations.some(({ kind }) => kind === observation.kind))
     .map((observation): ObservationOnly => ({ outcome: "not-asked-for", kind: observation.kind, observation }));
@@ -120,11 +126,9 @@ const verdictOf = (qualityCheckReconciliations: readonly QualityCheckReconciliat
 
 // A claim that asks for nothing says why no evidence can answer it: a shared code, no code, or no check asked for.
 export function claimReconciliationOf(claim: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): ClaimReconciliation {
-  const reconciled = executableReconciliations(claim, observations, codeShared);
-  const qualityCheckReconciliations: QualityCheckReconciliation[] =
-    reconciled.length > 0
-      ? [...reconciled].sort(inOrder)
-      : [{ outcome: codeShared ? "duplicate-claim-code" : claim.claimCode === undefined ? "no-claim-code" : "no-quality-check" }];
+  const unanswered = unanswerableAs(claim, codeShared);
+  const reconciled = executableReconciliations(claim, observations, unanswered);
+  const qualityCheckReconciliations: QualityCheckReconciliation[] = reconciled.length > 0 ? [...reconciled].sort(inOrder) : [{ outcome: unanswered ?? "no-quality-check" }];
   return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
 }
 

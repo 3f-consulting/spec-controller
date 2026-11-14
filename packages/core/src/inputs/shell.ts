@@ -7,17 +7,24 @@ const { "CLM-OBS-009": scriptRuns, "CLM-OBS-010": launchers, "CLM-OBS-112": wrap
 
 const wordsIn = (text: string): string[] => text.split(" ");
 
+// An entry saying how forms combine, as launchers chained, matches no command; the reader follows one into the next.
+const formsOf = (variants: readonly string[]): string[][] => variants.map(wordsIn);
+
 // A launcher's words, up to the command it hands on to; the list names pnpm exec before pnpm, so it is read first.
-const LAUNCHERS = launchers.variants.map((launcher) => launcher.split(" ").filter((word) => word !== "<bin>"));
-const SCRIPT_VARIANTS = scriptRuns.variants.map((variant) => variant.split(" "));
-// A wrapper's words: its command, then a gap for each value it takes before the command it runs, as timeout's duration.
-const WRAPPERS = wrappers.variants.map((wrapper) => wrapper.split(" "));
-// A wrapper's options that take a value are read past with it.
-const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"], timeout: ["-k", "-s"] };
+const LAUNCHERS = formsOf(launchers.variants).map((launcher) => launcher.filter((word) => word !== "<bin>"));
+const SCRIPT_VARIANTS = formsOf(scriptRuns.variants);
+const isOption = (word: string | undefined): boolean => word?.startsWith("-") === true;
+// Each wrapper form, its command first (one opening with an option is xvfb-run's), then a gap for each value it takes
+// before the command it runs, as timeout's duration, or an option that takes a value, read past with it.
+const WRAPPER_FORMS = formsOf(wrappers.variants).map((form) => (isOption(form[0]) ? ["xvfb-run", ...form] : form));
+const GAPS = new Map(WRAPPER_FORMS.filter(([, first]) => !isOption(first)).map(([command, ...gaps]) => [command!, gaps.length]));
+const FORM_OPENINGS = new Set(WRAPPER_FORMS.map(([command, first]) => `${command} ${first}`));
 
 // Each element of the line's && and ; lists, as its pipeline's stages; a compound stage, such as a loop, runs no runner.
 function pipelinesOf(statements: readonly Statement[]): (readonly CommandNode[])[] {
-  return statements.flatMap(({ command }) => (command.type === "AndOr" ? command.commands : [command])).map((node) => (node.type === "Pipeline" ? node.commands : [node]));
+  return statements
+    .flatMap(({ command }) => (command.type === "AndOr" ? command.commands : [command]))
+    .map((node) => (node.type === "Pipeline" ? node.commands : [node]));
 }
 
 const isCommand = (stage: CommandNode | undefined): stage is Command => stage?.type === "Command";
@@ -41,11 +48,11 @@ function scriptRun(words: readonly string[], scripts: Scripts): string | undefin
 function handedOn(words: readonly string[]): readonly string[] | undefined {
   const launcher = LAUNCHERS.find((opening) => opensWith(words, opening));
   if (launcher !== undefined) return words.slice(launcher.length);
-  const wrapper = WRAPPERS.find(([command]) => command === words[0]);
-  if (wrapper === undefined) return undefined;
+  const gaps = GAPS.get(words[0]!);
+  if (gaps === undefined) return undefined;
   let at = 1;
-  while (words[at]?.startsWith("-")) at += OPTIONS_TAKING_A_VALUE[wrapper[0]!]!.includes(words[at]!) ? 2 : 1;
-  return words.slice(at + wrapper.length - 1);
+  while (isOption(words[at])) at += FORM_OPENINGS.has(`${words[0]} ${words[at]}`) ? 2 : 1;
+  return words.slice(at + gaps);
 }
 
 function runs(words: readonly string[], program: readonly string[], scripts: Scripts, followed: Set<string>): boolean {

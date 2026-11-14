@@ -1,5 +1,5 @@
 import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
-import type { TargetConfiguration } from "./configuration.js";
+import { isAt, type TargetConfiguration } from "./configuration.js";
 import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
 import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
@@ -219,7 +219,7 @@ function rowCodesOf(features: readonly FeatureAsWritten[]): (file: string, line:
   // The longest feature file path the result's path ends with is its file.
   const longestFirst = [...byFile.keys()].sort((one, other) => other.length - one.length);
   return (file, line) => {
-    const featureFile = longestFirst.find((candidate) => `/${file}`.endsWith(`/${candidate}`));
+    const featureFile = longestFirst.find((path) => `/${file}`.endsWith(`/${path}`));
     const code = featureFile === undefined ? undefined : byFile.get(featureFile)!.get(line);
     return code ? [code] : [];
   };
@@ -242,13 +242,12 @@ export function observationsOfScenarios(
   });
 }
 
-// What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a candidate fitness function.
-export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "candidate";
+// What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a fitness function.
+export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "fitnessFunction";
 
 const RECONCILER = "spec-controller balance";
 
-const isNamedIn = (step: WorkflowStepAsWritten, { nonChecks }: TargetConfiguration): boolean =>
-  nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === stepIdentityOf(step));
+const isNamedIn = (step: WorkflowStepAsWritten, { nonChecks }: TargetConfiguration): boolean => nonChecks.some((address) => isAt(step, address));
 
 // The reconciler is recognised in any command of the step, a runner only as the command the step runs, through its scripts.
 const runsARunner = (run: string, { runners }: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): boolean =>
@@ -261,7 +260,7 @@ export function stepDispositionOf(step: WorkflowStepAsWritten, configuration: Ta
   if (isNamedIn(step, configuration)) return "nonCheck";
   if (step.plumbing) return "plumbing";
   if (step.run !== undefined && runsARunner(step.run, configuration, scripts, shell)) return "runner";
-  return "candidate";
+  return "fitnessFunction";
 }
 
 // The step record says how a step went by its outcome, read before continue-on-error turns a failure into success.
@@ -303,7 +302,7 @@ export function fitnessObservationsOf(
   // A runner posts nothing of its own, unless its id is a claim code the step record holds.
   const posting = steps.filter((step) => {
     const disposition = stepDispositionOf(step, configuration, scripts, shell);
-    return disposition === "candidate" || (disposition === "runner" && claimCodeFrom(step.id) !== undefined && entryFor(step) !== undefined);
+    return disposition === "fitnessFunction" || (disposition === "runner" && claimCodeFrom(step.id) !== undefined && entryFor(step) !== undefined);
   });
   const postedOnce = posting.filter((step, at) => entryFor(step) === undefined || posting.findIndex(({ id }) => id === step.id) === at);
   return [

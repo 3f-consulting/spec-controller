@@ -2,8 +2,8 @@ import type { StepAccount, StepCounts } from "../domain/evidenceReconciliation.j
 import { coreText } from "../messages/catalogue.js";
 import { tableOf } from "./table.js";
 
-const COUNTS = ["stepsRead", "runners", "reconcilerSteps", "nonChecks", "plumbing", "candidates"] as const satisfies readonly (keyof StepCounts)[];
-const COLUMNS = ["workflow", "job", "steps-read", "runners", "reconciler-steps", "non-checks", "plumbing", "candidates"];
+const COUNTS = ["stepsRead", "runners", "reconcilerSteps", "nonChecks", "plumbing", "fitnessFunctions"] as const satisfies readonly (keyof StepCounts)[];
+const COLUMNS = ["workflow", "job", "steps-read", "runners", "reconciler-steps", "non-checks", "plumbing", "fitness-functions"];
 
 // A Total row is printed only when there is more than one job to total.
 export function stepAccountSection({ jobs, total }: StepAccount): string[] {
