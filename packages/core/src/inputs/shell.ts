@@ -7,13 +7,23 @@ const { "CLM-OBS-009": scriptRuns, "CLM-OBS-010": launchers, "CLM-OBS-112": wrap
 
 const wordsIn = (text: string): string[] => text.split(" ");
 
+// An entry saying how the forms combine, as launchers chained, matches no command: the reader reaches what it says by
+// following one form into the next.
+const formsOf = (variants: readonly string[]): string[][] => variants.map(wordsIn);
+
 // A launcher's words, up to the command it hands on to; the list names pnpm exec before pnpm, so it is read first.
-const LAUNCHERS = launchers.variants.map((launcher) => launcher.split(" ").filter((word) => word !== "<bin>"));
-const SCRIPT_VARIANTS = scriptRuns.variants.map((variant) => variant.split(" "));
+const LAUNCHERS = formsOf(launchers.variants).map((launcher) => launcher.filter((word) => word !== "<bin>"));
+const SCRIPT_VARIANTS = formsOf(scriptRuns.variants);
+// The wrappers' list gives each wrapper's forms, and, alone, xvfb-run's options with their values.
+const isOption = (word: string | undefined): boolean => word?.startsWith("-") === true;
+const WRAPPER_FORMS = formsOf(wrappers.variants).filter(([command]) => !isOption(command));
 // A wrapper's words: its command, then a gap for each value it takes before the command it runs, as timeout's duration.
-const WRAPPERS = wrappers.variants.map((wrapper) => wrapper.split(" "));
+const WRAPPERS = WRAPPER_FORMS.filter(([, first]) => !isOption(first));
 // A wrapper's options that take a value are read past with it.
-const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = { "xvfb-run": ["-n", "-s", "-e", "-f", "-p", "-w"], timeout: ["-k", "-s"] };
+const OPTIONS_TAKING_A_VALUE: Readonly<Record<string, readonly string[]>> = {
+  ...Object.fromEntries(WRAPPERS.map(([command]) => [command!, WRAPPER_FORMS.filter(([named, option]) => named === command && isOption(option)).map(([, option]) => option!)])),
+  "xvfb-run": formsOf(wrappers.variants).filter(([option]) => isOption(option)).map(([option]) => option!),
+};
 
 // Each element of the line's && and ; lists, as the stages of its pipeline. A comment is no command.
 function pipelinesOf(statements: readonly Statement[]): Command[][] {
