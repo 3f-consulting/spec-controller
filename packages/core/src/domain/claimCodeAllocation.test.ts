@@ -53,13 +53,14 @@ const SEEN_IN_A_FILE_NOW: Readonly<Record<string, (repository: TestRepository) =
   },
 };
 
-// A line holding the code, committed and then deleted: the file and line it was in, and the commit that had it.
+// A line holding the code, committed and then deleted: the file and line it was in, and the commit that had it. A line
+// above it begins "++ ", which history shows as "+++ ", as it shows a file's name.
 function deletedLine(repository: TestRepository, code: string): Seen {
-  repository.write("old.txt", `kept\n${code}\n`);
+  repository.write("old.txt", `kept\n++ added\n${code}\n`);
   const commit = repository.commit("first");
   repository.write("old.txt", "kept\n");
   repository.commit("second");
-  return { code, path: "old.txt", line: 2, commit };
+  return { code, path: "old.txt", line: 3, commit };
 }
 
 const SEEN_IN_HISTORY: Readonly<Record<string, (repository: TestRepository) => Seen>> = {
