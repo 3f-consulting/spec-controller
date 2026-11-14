@@ -198,7 +198,9 @@ interface ClaimsReported {
 }
 
 // Each runner's flag, with a report of one passing result citing the corpus's one claim, as that runner writes it.
-const REPORT_OF: Readonly<Record<string, string>> = { "--vitest": BY_FILE_PASSING, "--jest": BY_FILE_PASSING, "--rspec": RSPEC_PASSING, "--cucumber": CUCUMBER_PASSING };
+const PYTEST_PASSING =
+  '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" tests="1"><testcase classname="tests.test_one" name="test_one"><properties><property name="clm" value="CLM-ONE-001" /></properties></testcase></testsuite></testsuites>';
+const REPORT_OF: Readonly<Record<string, string>> = { "--vitest": BY_FILE_PASSING, "--jest": BY_FILE_PASSING, "--rspec": RSPEC_PASSING, "--cucumber": CUCUMBER_PASSING, "--pytest": PYTEST_PASSING };
 
 describe("a command reads each argument as what it is, or refuses it", () => {
   it.each(flagsVariants["CLM-CLI-196"].variants)("[CLM-CLI-196] a command line had %s report.json: when it is read, balance will read report.json as that runner's report", (flag) => {
