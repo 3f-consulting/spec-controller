@@ -7,14 +7,12 @@ const { "CLM-OBS-009": scriptRuns, "CLM-OBS-010": launchers, "CLM-OBS-112": wrap
 
 const wordsIn = (text: string): string[] => text.split(" ");
 
-// An entry saying how the forms combine, as launchers chained, matches no command: the reader reaches what it says by
-// following one form into the next.
+// An entry saying how forms combine, as launchers chained, matches no command; the reader follows one into the next.
 const formsOf = (variants: readonly string[]): string[][] => variants.map(wordsIn);
 
 // A launcher's words, up to the command it hands on to; the list names pnpm exec before pnpm, so it is read first.
 const LAUNCHERS = formsOf(launchers.variants).map((launcher) => launcher.filter((word) => word !== "<bin>"));
 const SCRIPT_VARIANTS = formsOf(scriptRuns.variants);
-// The wrappers' list gives each wrapper's forms, and, alone, xvfb-run's options with their values.
 const isOption = (word: string | undefined): boolean => word?.startsWith("-") === true;
 const WRAPPER_FORMS = formsOf(wrappers.variants).filter(([command]) => !isOption(command));
 // A wrapper's words: its command, then a gap for each value it takes before the command it runs, as timeout's duration.
