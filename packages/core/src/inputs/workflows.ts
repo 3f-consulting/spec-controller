@@ -47,12 +47,13 @@ export function workflowStepsFrom(workflow: string, source: string): WorkflowSte
   const document: unknown = parse(source);
   const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
   // GitHub runs no workflow whose job is not a mapping, or whose step names neither an action nor a command.
-  return Object.entries(jobs as Readonly<Record<string, Mapping>>).flatMap(([job, definition]) =>
-    mappingsIn(definition["steps"]).map((step, at) => {
+  return Object.entries(jobs).flatMap(([job, definition]) => {
+    if (!isMapping(definition)) throw new TypeError(coreText("job-holds-no-settings", { place: `jobs.${job}` }));
+    return mappingsIn(definition["steps"]).map((step, at) => {
       if (!isMapping(step) || (text(step["uses"]) === undefined && text(step["run"]) === undefined)) {
         throw new TypeError(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
       }
       return stepAsWritten(workflow, job, definition["continue-on-error"], step);
-    }),
-  );
+    });
+  });
 }
