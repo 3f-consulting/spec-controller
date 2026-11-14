@@ -119,7 +119,7 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
     expect(errorsIn(files, ([, , tags]) => scenarioTagged(tags))).toEqual(errors);
   });
 
-  // How each variant writes CLM-TWO-001 in one.feature, tagged @ONE.
+  // How each variant writes another feature's claim code in one.feature, tagged @ONE.
   const foreignIn: Readonly<Record<string, () => string>> = {
     "as a scenario's tag": () => `${scenarioTagged("@CLM-ONE-001")}\n${scenarioTagged("@CLM-TWO-001")}`,
     "in a clm cell": () => "  @unit\n  Scenario Outline: that Outline\n    Given <x>\n\n    Examples:\n      | x | clm         |\n      | a | CLM-TWO-001 |\n",
@@ -135,7 +135,7 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
     ]);
   });
 
-  // Where each variant tags CLM-ONE-009: on the Outline, or on its Examples block.
+  // Where each variant tags the claim code: on the Outline, or on its Examples block.
   const taggedOn: Readonly<Record<string, readonly [outlineTags: string, examplesTags: string]>> = {
     "tagged on the Outline": ["@CLM-ONE-009", ""],
     "tagged on its Examples block": ["@unit", "@CLM-ONE-009"],

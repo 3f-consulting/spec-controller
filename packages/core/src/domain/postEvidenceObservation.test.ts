@@ -184,7 +184,7 @@ describe("balance posts a result as passed or failed", () => {
   });
 });
 
-// How each writer of JUnit XML spells a test citing CLM-ONE-001, and what it writes inside the test when it fails, and
+// How each writer of JUnit XML spells a test citing a claim code, and what it writes inside the test when it fails, and
 // each way it writes one skipped.
 interface SuiteCase {
   readonly writer: SuiteWriter;
@@ -287,7 +287,7 @@ describe("balance posts a result as passed or failed, from a report kept by exam
   });
 });
 
-// Each writer of Cucumber's report, with a scenario tagged @CLM-ONE-001 whose every step passed. Ruby and JVM Cucumber
+// Each writer of Cucumber's report, with a scenario tagged with a claim code whose every step passed. Ruby and JVM Cucumber
 // leave out a feature's empty elements and a scenario's empty steps and tags.
 const cucumberWriters: Readonly<Record<string, () => unknown>> = {
   "cucumber-js": () => reportByScenario("features/one.feature", [{ tags: ["integration", "CLM-ONE-001"], steps: [PASSED, ["Then ", "it is two", "passed"]] }]),
@@ -432,7 +432,7 @@ describe("balance posts what could not run as never ran, from a report kept by s
   });
 });
 
-// How each test runner's evidence report spells a result citing CLM-ONE-001.
+// How each test runner's evidence report spells a result citing a claim code.
 const citingOneIn: Readonly<Record<string, readonly [source: string, citation: string]>> = {
   Vitest: ["vitest", "[CLM-ONE-001]"],
   Jest: ["jest", "[CLM-ONE-001]"],
@@ -483,7 +483,7 @@ describe("balance posts a nested test citing its own code, or its parent's code 
   });
 });
 
-// How JUnit 5 in Java and Go via gotestsum write a test nested in a parent citing CLM-ONE-002, by the test's own name.
+// How JUnit 5 in Java and Go via gotestsum write a test nested in a parent citing another claim code, by the test's own name.
 const nestedIn: Readonly<Record<string, (own: string) => readonly [suite: string, className: string, name: string]>> = {
   "JUnit 5 in Java": (own) => ["[CLM-ONE-002] a class", "[CLM-ONE-002] a class", own === "" ? "adds one" : `${own} adds one`],
   "Go subtests via gotestsum": (own) => ["example.com/adds", "example.com/adds", own === "" ? "TestAdds/[CLM-ONE-002]_a_group/adds_one" : `TestAdds/[CLM-ONE-002]_a_group/${own}_adds_one`],
@@ -636,7 +636,7 @@ const notACode: Readonly<Record<string, readonly [source: string, citation: stri
   "a clm property that is not a code": ["pytest", "CLM-A-001"],
 };
 
-// Two claim codes, CLM-ONE-001 and CLM-ONE-002, in each runner's spelling.
+// Two claim codes in each runner's spelling.
 const twoCodes: Readonly<Record<string, readonly (readonly [source: string, citation: string])[]>> = {
   "Vitest and Jest titles": [
     ["vitest", "[CLM-ONE-001] [CLM-ONE-002]"],
@@ -727,7 +727,7 @@ describe("balance posts a failed test with the message its report gave", () => {
     },
   ];
 
-  // A failed test citing CLM-ONE-001, as each report writes it with the message given.
+  // A failed test citing a claim code, as each report writes it with the message given.
   const failingIn: Readonly<Record<string, (messages: readonly string[]) => EvidenceObservation[]>> = {
     Vitest: (messages) => observationsByFile(resultsByFileFrom(vitestFailing(messages)), "/work"),
     RSpec: (messages) => observationsByExample(resultsByExampleFrom(rspecFailing(messages.join("\n"))), "/work"),

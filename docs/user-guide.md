@@ -571,7 +571,7 @@ All configuration sits under `specController` in the target's `package.json`, wh
 
 ### How discovery works
 
-**You do not name a list of checks.** You name the commands that run your behavioural suites, a closed set of four, one per layer. **Every other step of the workflows `--ci` names is a candidate fitness function**, whatever it invokes, whether a `run:` step or a `uses:` action.
+**You do not name a list of checks.** You name the commands that run your behavioural suites, a closed set of four, one per layer. **Every other step of the workflows `--ci` names is a fitness function**, whatever it invokes, whether a `run:` step or a `uses:` action.
 
 Discovery is not Node-shaped: it does not match `package.json` script names against prefixes. A pipeline with a bare `run: ruff` and no `package.json` script is discovered like any other.
 
@@ -580,7 +580,7 @@ Discovery is not Node-shaped: it does not match `package.json` script names agai
 - **`runners` is keyed by the four layers and nothing else:** `unit`, `integration`, `e2e`, `performance`.
 - **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this layer*. An omitted key says nothing about the layer.
 - **A key outside the four** is named in `## Errors in the inputs` as `runner-key-not-a-layer`, excludes nothing, and does not abort the run.
-- **No `runners` block at all is not an error.** Every step that is not a reconciler step, a non-check or plumbing becomes a candidate. That is the zero-annotation report.
+- **No `runners` block at all is not an error.** Every step that is not a reconciler step, a non-check or plumbing becomes a fitness function. That is the zero-annotation report.
 - **A runner is recognised only as the command a step runs.** That is the command a step's line opens with, or a command after `&&` or `;` in it, past any `NAME=value` settings. A runner named anywhere else, as an argument or a path, leaves the step a check, and so does a step that pipes the runner's output into another command.
 - **A runner may be handed on to.** The launchers are `npx`, `pnpm exec`, `pnpm <bin>`, `yarn <bin>`, `bunx`, `python -m`, `python3 -m`, `uv run`, `poetry run`, `pipenv run`, `coverage run -m` and `bundle exec`, and launchers chain, so `uv run python -m pytest` reaches `pytest`. The wrappers `xvfb-run` and `timeout <duration>` hand on too, past their options and the values they take, so `timeout 75 pnpm test` runs `test`.
 - **A runner may be run by a `package.json` script.** A step runs a script as `npm test`, `npm run <script>`, `pnpm <script>`, `pnpm run <script>`, `pnpm -r <script>`, `pnpm --filter <name> <script>`, `yarn <script>`, `yarn run <script>` or `yarn workspace <name> <script>`, when the target's own `package.json` has a script by that name. The script is followed, through any scripts it runs in turn, however deep. A script that runs itself ends as a check.
@@ -599,7 +599,7 @@ These variants are the only ones `balance` reads, one list per claim, in [`packa
 - **An entry that matches no step of a workflow the run read is named** in `## Errors in the inputs`, as `not-checks-entry-matches-no-step`. An entry naming a workflow the run did not read is not judged.
 - **Never list `balance` itself or its `toJSON(steps)` dump.** They are excluded by construction.
 
-**GitHub plumbing is excluded by construction too.** A step whose only work is one of these actions is excluded: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/cache/restore`, `actions/upload-artifact` and `actions/download-artifact`. Each is matched on its whole name, whatever ref follows, and `actions/setup-*` on every action whose name begins `actions/setup-`. Such a step moves code, tools and files and judges nothing, so the report counts it under *Plumbing* in the **Step account**, never as a check. The list is closed: every other action stays a candidate, including `actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks` is a non-check, as you named it.
+**GitHub plumbing is excluded by construction too.** A step whose only work is one of these actions is excluded: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/cache/restore`, `actions/upload-artifact` and `actions/download-artifact`. Each is matched on its whole name, whatever ref follows, and `actions/setup-*` on every action whose name begins `actions/setup-`. Such a step moves code, tools and files and judges nothing, so the report counts it under *Plumbing* in the **Step account**, never as a check. The list is closed: every other action stays a fitness function, including `actions/dependency-review-action`, which is a check. A plumbing step you also name in `notChecks` is a non-check, as you named it.
 
 ### Deferring a scenario — `deferralTags`
 
@@ -644,7 +644,7 @@ None of them refuses the run. Each is a line in `## Errors in the inputs`, right
 
 - **The configuration's location is Node-shaped.** `runners` and `notChecks` sit under `specController` in a `package.json`. A repository that has no `package.json` adds a stub file. What can be discovered is not Node-shaped.
 - **Annotating steps has no such limit.** An `id:` is a key of the step mapping, the command below it can be any command in any language, and nothing in the resolution reads a manifest.
-- **Runner recognition has a false positive you can see.** A suite run through an action, or a runner buried in a quoted argument to a wrapper, is reported as a candidate check rather than silently excluded. Fix each with one line of `notChecks`.
+- **Runner recognition has a false positive you can see.** A suite run through an action, or a runner buried in a quoted argument to a wrapper, is reported as a fitness function rather than silently excluded. Fix each with one line of `notChecks`.
 - **A check that legitimately applies to only some platforms is not served.** A matrix build uses `if:` to skip such a step, and in the step record that skip reads `never-ran`, so the run is not reconciled. *"The command examined nothing"* and *"this row was not obliged on this run"* are different claims, and only the first is modelled.
 
 ---
@@ -808,7 +808,7 @@ Then come the totals, in groups:
 
 The Markdown leaves out a kind no claim asks for and no evidence answers, an outcome no row has, the row with no kind when it is empty, and a place nothing was filed on. The JSON's `totals` keeps every kind, the row with no kind under `noKind`, the *All* row under `all`, and every outcome under each, at `0` where there is none.
 
-**`## Step account`** follows the Summary when the run read a step from its CI workflows. It has a row for each workflow and job the run read, counting its steps read, then its runners, reconciler steps, non-checks, plumbing and candidates. Each step read is counted once, so a row's last five counts add up to its steps read. A *Total* row sums the jobs when there is more than one.
+**`## Step account`** follows the Summary when the run read a step from its CI workflows. It has a row for each workflow and job the run read, counting its steps read, then its runners, reconciler steps, non-checks, plumbing and fitness functions. Each step read is counted once, so a row's last five counts add up to its steps read. A *Total* row sums the jobs when there is more than one.
 
 ### The Claim Reconciliations
 
@@ -1068,7 +1068,7 @@ The code is written under `CLM`, one past the highest number a claim code in the
 
 **A fitness function shows `missing` or `cannot-fail` when you didn't expect it.** `missing` means no CI step carries that scenario's claim code as its `id:`; `package.json` scripts play no part in it. `cannot-fail` means the step that cites it, or its job, runs under `continue-on-error: true`, and the step passed. Both are real findings, not tool errors.
 
-**My first run fails with a wall of checks that cite nothing.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness function until something says otherwise. A candidate that cites no claim posts to the unnamed claim, so `balance` exits `1`.
+**My first run fails with a wall of checks that cite nothing.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a fitness function until something says otherwise. A fitness function that cites no claim posts to the unnamed claim, so `balance` exits `1`.
 
 1. Read the report's **Step account**. It names each workflow and job, how many steps were read, and what became of every one. GitHub's own checkout, setup, cache and artifact actions are already counted out as plumbing.
 2. Name your runners, name your non-checks, or narrow `--ci`. See [Configuration](#configuration--the-speccontroller-block).

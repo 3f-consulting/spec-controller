@@ -21,10 +21,10 @@ const stepsOf = (step: object) => workflowStepsFrom("ci.yml", JSON.stringify({ j
 
 describe("balance counts each step as what it does, and posts only a fitness function", () => {
   it.each([
-    ["CLM-OBS-004", "running pnpm audit-the-tree", { run: "pnpm audit-the-tree" }, undefined, "a fitness function", "candidate", 1],
-    ["CLM-OBS-002", "using actions/dependency-review-action", { uses: "actions/dependency-review-action@v4" }, undefined, "a fitness function", "candidate", 1],
-    ["CLM-OBS-003", "using someone/checkout", { uses: "someone/checkout@v1" }, undefined, "a fitness function", "candidate", 1],
-    ["CLM-OBS-008", "running pnpm test, with no unit runner", { run: "pnpm test" }, undefined, "a fitness function", "candidate", 1],
+    ["CLM-OBS-004", "running pnpm audit-the-tree", { run: "pnpm audit-the-tree" }, undefined, "a fitness function", "fitnessFunction", 1],
+    ["CLM-OBS-002", "using actions/dependency-review-action", { uses: "actions/dependency-review-action@v4" }, undefined, "a fitness function", "fitnessFunction", 1],
+    ["CLM-OBS-003", "using someone/checkout", { uses: "someone/checkout@v1" }, undefined, "a fitness function", "fitnessFunction", 1],
+    ["CLM-OBS-008", "running pnpm test, with no unit runner", { run: "pnpm test" }, undefined, "a fitness function", "fitnessFunction", 1],
     ["CLM-OBS-109", "running spec-controller balance, that step in notChecks", { name: "Reconcile", run: "spec-controller balance" }, "Reconcile", "the reconciler", "reconciler", 0],
     ["CLM-OBS-014", "named Install, that step in notChecks", { name: "Install", run: "pnpm install" }, "Install", "a non-check", "nonCheck", 0],
     ["CLM-OBS-016", "using actions/checkout, that step in notChecks", { uses: "actions/checkout@v4" }, "actions/checkout@v4", "a non-check", "nonCheck", 0],
@@ -58,7 +58,7 @@ describe("balance counts each step as what it does, and posts only a fitness fun
     const configuration: TargetConfiguration = { runners: { unit: "vitest" }, nonChecks: [], deferralTags: [] };
 
     expect({ counted: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers), posted: fitnessObservationsOf(steps, [], configuration, {}, shellAnswers).length }).toEqual({
-      counted: "candidate",
+      counted: "fitnessFunction",
       posted: 1,
     });
   });
@@ -243,9 +243,9 @@ const countedAndPosted = (run: string, runner: string, scripts: Readonly<Record<
 
 describe("a runner is recognised only as the command a step runs", () => {
   it.each([
-    ["CLM-OBS-005", "gradle lint", "gradle test", "candidate"],
-    ["CLM-OBS-006", "eslint vitest.config.ts", "vitest", "candidate"],
-    ["CLM-OBS-007", "vitest run | tee out.txt", "vitest", "candidate"],
+    ["CLM-OBS-005", "gradle lint", "gradle test", "fitnessFunction"],
+    ["CLM-OBS-006", "eslint vitest.config.ts", "vitest", "fitnessFunction"],
+    ["CLM-OBS-007", "vitest run | tee out.txt", "vitest", "fitnessFunction"],
   ] as const)("[%s] a step running %s, with %s as its unit runner, will be counted as a %s", (_clm, run, runner, countedAs) => {
     expect(dispositionOf(run, runner)).toBe(countedAs);
   });
@@ -295,11 +295,11 @@ describe("a runner is recognised only as the command a step runs", () => {
   it.each(shellVariants["CLM-OBS-115"].variants)("[CLM-OBS-115] a step running a package script, %s, will be counted as a fitness function, and a fitness Evidence Observation will be posted", (variant) => {
     const [run, scripts] = leadingNowhere[variant]!;
 
-    expect(countedAndPosted(run, "vitest", scriptsFrom({ scripts }))).toEqual({ countedAs: "candidate", posted: 1 });
+    expect(countedAndPosted(run, "vitest", scriptsFrom({ scripts }))).toEqual({ countedAs: "fitnessFunction", posted: 1 });
   });
 
   it("[CLM-OBS-125] a step running go test ./..., in a target whose test script runs vitest, will be counted as a fitness function, and a fitness Evidence Observation will be posted", () => {
-    expect(countedAndPosted("go test ./...", "vitest", { test: "vitest run" })).toEqual({ countedAs: "candidate", posted: 1 });
+    expect(countedAndPosted("go test ./...", "vitest", { test: "vitest run" })).toEqual({ countedAs: "fitnessFunction", posted: 1 });
   });
 
   // A step running vitest behind each wrapper form, past what it takes; xvfb-run's options are given with their values.
@@ -314,7 +314,7 @@ describe("a runner is recognised only as the command a step runs", () => {
   });
 
   it("[CLM-OBS-126] a step running xvfb-run --help, a wrapper given only options, will be counted as a fitness function, and a fitness Evidence Observation will be posted", () => {
-    expect(countedAndPosted("xvfb-run --help", "vitest")).toEqual({ countedAs: "candidate", posted: 1 });
+    expect(countedAndPosted("xvfb-run --help", "vitest")).toEqual({ countedAs: "fitnessFunction", posted: 1 });
   });
 
   it.each(shellVariants["CLM-OBS-113"].variants)("[CLM-OBS-113] a step running %s, a runner named in several words, will be counted as a runner", (runner) => {

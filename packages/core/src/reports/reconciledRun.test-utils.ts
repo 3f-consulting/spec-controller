@@ -38,7 +38,7 @@ export function reconciled({ scenarios, unitTests, configurationErrors = [], ste
     claimCodeErrors: claimCodeErrorsOf(features),
     configurationErrors,
     features,
-    stepAccount: stepAccountOf(stepsRead ? [{ step, disposition: "candidate" }] : []),
+    stepAccount: stepAccountOf(stepsRead ? [{ step, disposition: "fitnessFunction" }] : []),
     provenance: { ...PROVENANCE, ...provenance },
   });
 }

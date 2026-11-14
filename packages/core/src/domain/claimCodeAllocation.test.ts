@@ -28,7 +28,7 @@ interface Seen {
   readonly standIn?: string;
 }
 
-// Each variant's repository, beside a feature file tagged @ONE whose scenario is tagged @CLM-ONE-001.
+// Each variant's repository, beside a feature file tagged @ONE whose scenario is tagged with a claim code under it.
 const SEEN_IN_A_FILE_NOW: Readonly<Record<string, (repository: TestRepository) => Seen>> = {
   "a file git tracks": (repository) => {
     repository.write(".github/workflows/ci.yml", "jobs: {}\n# CLM-ONE-005\n");
