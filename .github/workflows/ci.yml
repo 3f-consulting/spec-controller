@@ -153,7 +153,7 @@ jobs:
           node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}" packages || [ $? -eq 2 ]
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}"
 
-      - name: Duplication — no clone in production code
+      - name: Duplication — no production code is a copy of other production code
         id: CLM-FIT-032
         if: always()
         shell: bash
@@ -282,7 +282,7 @@ jobs:
           jq -e '.paths.scanned | length > 0' "$RUNNER_TEMP/semgrep.json" > /dev/null || { echo "Semgrep scanned no file under packages"; exit 1; }
 
       # The printer's other half is the type check: it refuses an error handed to the printer, or an input error entry, that no catalogue holds.
-      - name: Semgrep — nothing in the packages writes to standard error but the printer
+      - name: Semgrep — every error the tool shows a reader is shown from one place
         id: CLM-FIT-076
         if: always()
         run: |
@@ -300,7 +300,7 @@ jobs:
       # Each probe pipes one line that breaks one rule into Vale and reds the step unless Vale names that rule, so a dead
       # rule fails before the tree is read. The probe's tokens are built at run time, so this file holds none of them.
       # The runner's default bash has no pipefail, so the probe's verdict is grep's, not Vale's exit.
-      - name: Vale — no ticket ID, claim code or narrated history in a comment, description or document it reads
+      - name: Vale — no comment, description or current-state document points to the product's history
         id: CLM-FIT-075
         if: always()
         run: |
