@@ -102,7 +102,7 @@ describe("balance uses each configuration setting it can, and leaves out any it 
     expect(targetConfigurationFrom({ specController: block }, ciRead)).toEqual({ configuration: NONE, errors: [{ kind, entry }] });
   });
 
-  // Each variant of CLM-CFG-016, as the entry is written.
+  // Each variant of a notChecks entry beside a line break, as the entry is written.
   const withALineBreak: Readonly<Record<string, string>> = {
     "a line break before it": "\nci.yml:ci:Install dependencies",
     "a line break after it": "ci.yml:ci:Install dependencies\n",
