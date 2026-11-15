@@ -172,12 +172,12 @@ describe("the answer is one past the highest code in the feature file, a tracked
     });
   });
 
-  it("[CLM-STG-062] a line in git history, since deleted, that read @@ -1 +1 @@ CLM-ONE-005 on line 12: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
+  it("[CLM-STG-062] a line in git history, since deleted, that read CLM-ONE-005 on line 12: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
     repository.write("old.txt", "kept\n".repeat(11));
     repository.commit("first");
-    repository.write("old.txt", `${"kept\n".repeat(11)}@@ -1 +1 @@ CLM-ONE-005\n`);
+    repository.write("old.txt", `${"kept\n".repeat(11)}CLM-ONE-005\n`);
     const commit = repository.commit("second");
     repository.write("old.txt", "kept\n".repeat(11));
     repository.commit("third");
