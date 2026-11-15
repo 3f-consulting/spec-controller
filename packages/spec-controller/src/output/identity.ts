@@ -33,7 +33,7 @@ function foldsCase(folder: string): boolean {
   const name = basename(folder);
   if (name.toUpperCase() === name.toLowerCase()) return false;
   const [upper, lower] = [name.toUpperCase(), name.toLowerCase()].map((spelled) => statSync(join(dirname(folder), spelled), PROBED));
-  return false && upper !== undefined && upper.dev === lower?.dev && upper.ino === lower.ino;
+  return upper !== undefined && upper.dev === lower?.dev && upper.ino === lower.ino;
 }
 
 function notMadeYet(path: string): FileIdentity {
