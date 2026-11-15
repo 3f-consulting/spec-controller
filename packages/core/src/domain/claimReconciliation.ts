@@ -118,13 +118,13 @@ function inOrder(one: OfAKind, other: OfAKind): number {
 const verdictOf = (qualityCheckReconciliations: readonly QualityCheckReconciliation[]): ClaimReconciliation["verdict"] =>
   qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied") ? "balanced" : "out-of-balance";
 
-// A claim that asks for nothing says why no evidence can answer it: a shared code, or no check asked for.
+// A claim that asks for nothing says why no evidence can answer it: a shared code, no code, or no check asked for.
 export function claimReconciliationOf(claim: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): ClaimReconciliation {
   const reconciled = executableReconciliations(claim, observations, codeShared);
   const qualityCheckReconciliations: QualityCheckReconciliation[] =
     reconciled.length > 0
       ? [...reconciled].sort(inOrder)
-      : [{ outcome: codeShared ? "duplicate-claim-code" : "no-quality-check" }];
+      : [{ outcome: codeShared ? "duplicate-claim-code" : claim.claimCode === undefined ? "no-claim-code" : "no-quality-check" }];
   return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
 }
 
