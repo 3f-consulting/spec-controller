@@ -37,7 +37,7 @@ export function treeLines({ in: where, top }: Standing, featureCode: string): Re
   return { read: lines };
 }
 
-const HUNK = /@@ -\S+ \+(\d+)/;
+const HUNK = /^@@ -\S+ \+(\d+)/;
 
 // Every line history has added that may write one of the feature code's codes, with its file, line and commit; a merge
 // is read against its first parent, so a line written in its resolution counts. Messages are not read.

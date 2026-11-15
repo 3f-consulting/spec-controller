@@ -187,6 +187,21 @@ describe("the answer is one past the highest code in the feature file, a tracked
       highest: { note: "highest-seen", code: "CLM-ONE-005", path: "old.txt", line: 12, commit },
     });
   });
+  it("[CLM-STG-062] a committed patch file, since deleted, whose line 12 read @@ -1 +40 @@ CLM-ONE-005: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    repository.write("fix.patch", "kept\n".repeat(11));
+    repository.commit("first");
+    repository.write("fix.patch", `${"kept\n".repeat(11)}@@ -1 +40 @@ CLM-ONE-005\n`);
+    const commit = repository.commit("second");
+    repository.write("fix.patch", "kept\n".repeat(11));
+    repository.commit("third");
+
+    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
+      answer: "CLM-ONE-006",
+      highest: { note: "highest-seen", code: "CLM-ONE-005", path: "fix.patch", line: 12, commit },
+    });
+  });
 });
 
 describe("allocate gives a code only under a feature code a feature file has, unless asked for a new one", () => {
