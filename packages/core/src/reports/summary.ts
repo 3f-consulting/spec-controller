@@ -31,7 +31,6 @@ function byKindGroup({ qualityCheckReconciliations: { byKind, noKind, all } }: T
         ...(counted(noKind) ? [rowOf(coreText("summary-no-kind"), noKind)] : []),
         rowOf(coreText("summary-all"), all),
       ],
-      ["summary-across-a-row"],
     ),
   );
 }

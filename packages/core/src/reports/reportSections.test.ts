@@ -77,8 +77,7 @@ describe("each section will have its heading, each value its label, and each tab
       headings: headingsOf(markdown),
       unlabelled: unlabelledOf(markdown),
       unkeyed: tables.flatMap(({ columns, keyed }) => columns.filter((column) => !keyed.includes(column))),
-      unworded: tables.flatMap(({ columns }) => columns.filter((column) => !isWords(column))),
-      marks: tables.map(({ columns, keyed }) => keyed.filter((name) => !columns.includes(name))),
+      byFeature: markdown.includes(`\n### ${coreText("summary-by-feature")}\n`),
       summaryRowLabels: tables
         .filter(({ heading }) => heading.startsWith("### ") && heading !== `### ${coreText("summary-claim-reconciliations")}`)
         .flatMap(({ rows }) => rows.map(([label]) => label!).filter((label) => !inWords(label))),
@@ -86,8 +85,7 @@ describe("each section will have its heading, each value its label, and each tab
       headings: ["Run provenance", "Errors in the inputs", "Run integrity", "Summary", "Step account", "Claim Reconciliations"],
       unlabelled: [],
       unkeyed: [],
-      unworded: [],
-      marks: [[], [coreText("summary-across-a-row")], [], [], [], [coreText("claims-blank-cell"), coreText("claims-dash"), coreText("claims-unnamed-row")]],
+      byFeature: true,
       summaryRowLabels: [],
     });
   });
