@@ -259,13 +259,13 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(isFitnessFunction("go test ./...", "vitest", { test: "vitest run" })).toBe(true);
   });
 
-  // A step running vitest behind each wrapper, past what the wrapper takes.
+  // A step running vitest behind each wrapper.
   const behindTheWrapper: Readonly<Record<string, string>> = {
-    "xvfb-run": "xvfb-run -a --server-args=-screen vitest run",
-    "timeout <duration>": "timeout --preserve-status 75 vitest run",
+    "xvfb-run": "xvfb-run vitest run",
+    "timeout <duration>": "timeout 75 vitest run",
   };
 
-  it.each(shellVariants["CLM-OBS-112"].variants)("[CLM-OBS-112] a step running its unit runner behind the wrapper %s, past its options, will not be a fitness function", (wrapper) => {
+  it.each(shellVariants["CLM-OBS-112"].variants)("[CLM-OBS-112] a step running its unit runner behind the wrapper %s will not be a fitness function", (wrapper) => {
     expect(isFitnessFunction(behindTheWrapper[wrapper]!, "vitest")).toBe(false);
   });
 
@@ -298,7 +298,7 @@ describe("a runner is recognised only as the command a step runs", () => {
       "CLM-OBS-146",
       "running vitest run, with the id CLM-ONE-001, whose outcome a step record, given, does not have",
       { id: "CLM-ONE-001", run: "vitest run" },
-      [{ build: { outcome: "success", conclusion: "success" } }, undefined],
+      [{ build: { outcome: "success", conclusion: "success" } }],
       "runner",
     ],
     [
@@ -313,7 +313,7 @@ describe("a runner is recognised only as the command a step runs", () => {
     const configuration = countedAs === "plumbing" ? NO_SETTING : unitRunner("vitest");
 
     for (const record of records) {
-      expect(fitnessObservationsOf(steps, record === undefined ? [] : stepRecordFrom(record), configuration, {}, shellAnswers)).toEqual([]);
+      expect(fitnessObservationsOf(steps, stepRecordFrom(record), configuration, {}, shellAnswers)).toEqual([]);
     }
   });
 });

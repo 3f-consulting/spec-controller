@@ -20,10 +20,10 @@ describe("the JSON report keeps every part and every count, empty or zero", () =
       outOfBalanceByFeature: json.totals.outOfBalanceByFeature,
     }).toEqual({ errorsInTheInputs: { claimCodeErrors: [], configurationErrors: [] }, runIntegrity: { neverRan: [] }, stepAccount: [], outOfBalanceByFeature: [] });
     expect({
-      kinds: byKind.map(({ kind }) => kind),
+      kinds: new Set(byKind.map(({ kind }) => kind)),
       outcomes: [...byKind, noKind].map(({ byOutcome }) => Object.keys(byOutcome)),
       failing: byKind.find(({ kind }) => kind === "unit")?.byOutcome.failing,
       performance: byKind.find(({ kind }) => kind === "performance")?.evidenceObligations,
-    }).toEqual({ kinds: KINDS, outcomes: [OUTCOMES, OUTCOMES, OUTCOMES, OUTCOMES, OUTCOMES, OUTCOMES], failing: 0, performance: 0 });
+    }).toEqual({ kinds: new Set(KINDS), outcomes: [OUTCOMES, OUTCOMES, OUTCOMES, OUTCOMES, OUTCOMES, OUTCOMES], failing: 0, performance: 0 });
   });
 });

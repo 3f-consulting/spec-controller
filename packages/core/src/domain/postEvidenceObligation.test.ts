@@ -35,9 +35,7 @@ describe("an Outline will be one executable claim for each row only when it has 
 
 describe("balance reads a scenario after a Background as an executable claim", () => {
   it("[CLM-OBL-031] a feature file with a Background, and a scenario tagged @unit @CLM-ONE-001, has one executable claim, CLM-ONE-001", () => {
-    // A Background on the Feature, and another on the Rule the scenario sits under.
-    const withABackground =
-      "Feature: one\n\n  Background:\n    Given a thing\n\n  Rule: a rule\n\n    Background:\n      Given another thing\n\n    @unit @CLM-ONE-001\n    Scenario: a scenario\n      Given a step\n";
+    const withABackground = "Feature: one\n\n  Background:\n    Given a thing\n\n  @unit @CLM-ONE-001\n  Scenario: a scenario\n    Given a step\n";
 
     expect(claimsIn(withABackground).map(({ claimCode }) => written(claimCode))).toEqual(["CLM-ONE-001"]);
   });

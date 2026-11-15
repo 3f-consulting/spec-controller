@@ -257,7 +257,7 @@ describe("balance reads a result as passed or failed, citing the code it names, 
     ["CLM-OBS-029", "passed", "passed"],
     ["CLM-OBS-030", "failed", "failed"],
   ])("[%s] a result in RSpec's evidence report, CLM-ONE-001 in brackets in its description, that %s, is read as %s, citing CLM-ONE-001", (_clm, status, result) => {
-    const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status }], [], true));
+    const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status }]));
 
     expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
   });

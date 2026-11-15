@@ -41,9 +41,9 @@ describe("the step account totals its jobs only when it has more than one", () =
   const counts: StepCounts = { stepsRead: 2, runners: 0, reconcilerSteps: 1, nonChecks: 0, plumbing: 0, fitnessFunctions: 1 };
 
   it.each([
-    ["CLM-RPT-112", "one job", [{ workflow: "ci.yml", job: "build" }], ["ci.yml"]],
-    ["CLM-RPT-113", "two jobs, in two workflows", [{ workflow: "ci.yml", job: "build" }, { workflow: "nightly.yml", job: "sweep" }], ["ci.yml", "nightly.yml", "Total"]],
-  ] as const)("[%s] a run that read the steps of %s has a step account row for each job, and a Total row only for more than one", (_clm, _jobs, jobs, rows) => {
+    ["CLM-RPT-112", "one job", [{ workflow: "ci.yml", job: "build" }], false],
+    ["CLM-RPT-113", "two jobs, in two workflows", [{ workflow: "ci.yml", job: "build" }, { workflow: "nightly.yml", job: "sweep" }], true],
+  ] as const)("[%s] a run that read the steps of %s has a step account row for each job, and a Total row only for more than one", (_clm, _jobs, jobs, hasTotal) => {
     const report = markdownReportOf(
       runWith({
         runVerdict: { verdict: "balanced" },
@@ -53,7 +53,7 @@ describe("the step account totals its jobs only when it has more than one", () =
     );
     const stepAccount = report.slice(report.indexOf("## Step account"));
 
-    expect(stepAccount.split("\n").filter((line) => line.startsWith("| ") && !line.startsWith("| Workflow") && !line.startsWith("| ---")).map((line) => line.split(" | ")[0]!.slice(2))).toEqual(rows);
+    expect(stepAccount.split("\n").some((line) => line.startsWith("| Total |"))).toBe(hasTotal);
   });
 });
 

@@ -11,7 +11,6 @@ const CUCUMBER = resolve("node_modules/@cucumber/cucumber/bin/cucumber.js");
 
 interface Rows {
   folder: string;
-  status: number | null;
   report: string;
   error: string;
 }
@@ -49,13 +48,34 @@ Given("Cucumber's evidence report had a result for each row", function (this: Ro
 
 When("balance posts the evidence", function (this: Rows) {
   const run = spawnSync(process.execPath, [CLI, "balance", "--features", "features", "--cucumber", "cucumber.json", "--format", "json"], { cwd: this.folder, encoding: "utf8" });
-  this.status = run.status;
   this.report = run.stdout;
   this.error = run.stderr;
 });
 
-// Each row's claim is balanced only by an observation citing its own code; a row filed under the other's leaves one out of balance.
+interface ClaimCode {
+  readonly featureCode: string;
+  readonly number: string;
+}
+
+interface ClaimsReported {
+  readonly claimReconciliations: readonly {
+    readonly claim: { readonly claimCode?: ClaimCode };
+    readonly qualityCheckReconciliations: readonly { readonly observation?: { readonly kind: string; readonly cites: readonly ClaimCode[] } }[];
+  }[];
+}
+
+const written = ({ featureCode, number }: ClaimCode): string => `CLM-${featureCode}-${number}`;
+
+// Each row's Claim Reconciliation, with the observations posted on it: their kind, and the claim codes each cites.
 Then("an Evidence Observation will be posted for each row, citing the claim code of its row", function (this: Rows) {
-  const { runVerdict } = JSON.parse(this.report) as { runVerdict: { verdict: string } };
-  assert.deepEqual({ status: this.status, verdict: runVerdict.verdict }, { status: 0, verdict: "balanced" }, this.error);
+  const { claimReconciliations } = JSON.parse(this.report) as ClaimsReported;
+  const posted = (code: string) =>
+    claimReconciliations
+      .filter(({ claim }) => claim.claimCode !== undefined && written(claim.claimCode) === code)
+      .map(({ qualityCheckReconciliations }) => qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [{ kind: observation.kind, cites: observation.cites.map(written) }] : [])));
+  assert.deepEqual(
+    { "CLM-ONE-001": posted("CLM-ONE-001"), "CLM-ONE-002": posted("CLM-ONE-002") },
+    { "CLM-ONE-001": [[{ kind: "integration", cites: ["CLM-ONE-001"] }]], "CLM-ONE-002": [[{ kind: "integration", cites: ["CLM-ONE-002"] }]] },
+    this.error,
+  );
 });

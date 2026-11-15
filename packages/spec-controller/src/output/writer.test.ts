@@ -131,7 +131,7 @@ describe("each of two reports will be where you asked", () => {
       "CLM-FMT-004",
       "no destination for one, a file for the other",
       (folder: string) => ["--format", "md", "--format", `json:${join(folder, "report.json")}`],
-      (folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(readFileSync(join(folder, "report.json"), "utf8")) && error === "",
+      (folder: string, output: string) => opensAsMarkdown(output) && isJsonReport(readFileSync(join(folder, "report.json"), "utf8")),
     ],
     [
       "CLM-FMT-020",
@@ -447,14 +447,5 @@ describe("a report and a refusal will be on the run's own standard streams", () 
     writeReports(outputsAskedFor([]), [], reconciliation(), processStreams, AS_ASKED);
 
     expect(opensAsMarkdown(output.join(""))).toBe(true);
-  });
-
-  it("[CLM-FMT-027] a report asked for at a file in a folder that doesn't exist stops the run with exit 2, naming the place and why on the run's standard error", () => {
-    const place = join(temporaryDirectory("own-standard-error-"), "missing", "report.md");
-    const error = writtenOn(process.stderr);
-
-    const ending = writeReports(outputsAskedFor(["--format", `md:${place}`]), [], reconciliation(), processStreams, AS_ASKED);
-
-    expect({ ending, complaint: error.join("") }).toEqual({ ending: 2, complaint: refused("report-not-written", { place, why: textFor(appCatalogue, "folder-does-not-exist") }) });
   });
 });

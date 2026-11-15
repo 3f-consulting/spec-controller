@@ -20,16 +20,24 @@ interface ReportRun {
 }
 
 // What each destination asks for: the --format flags, and whether standard output is redirected into the file.
+// Where both reports would go in one file, that file already holds an earlier report.
 const ASKED: Readonly<Record<string, (file: string) => { readonly formats: readonly string[]; readonly outputIntoFile?: boolean }>> = {
   "no destination for one, a file for the other": (file) => ({ formats: ["md", `json:${file}`] }),
   "no destination for one, standard error for the other": () => ({ formats: ["md", "json:/dev/stderr"] }),
   "two different files": (file) => ({ formats: [`md:${file}`, `json:${file}.json`] }),
-  "a file and at the same path": (file) => ({ formats: [`md:${file}`, `json:${file}`] }),
+  "a file and at the same path": (file) => {
+    writeFileSync(file, EARLIER_REPORT);
+    return { formats: [`md:${file}`, `json:${file}`] };
+  },
   "a file and at a link to it": (file) => {
+    writeFileSync(file, EARLIER_REPORT);
     symlinkSync(file, `${file}.link`);
     return { formats: [`md:${file}`, `json:${file}.link`] };
   },
-  "a file and at standard output, redirected to the file": (file) => ({ formats: [`md:${file}`, "json"], outputIntoFile: true }),
+  "a file and at standard output, redirected to the file": (file) => {
+    writeFileSync(file, EARLIER_REPORT);
+    return { formats: [`md:${file}`, "json"], outputIntoFile: true };
+  },
 };
 
 const isJsonReport = (text: string): boolean => {
@@ -43,7 +51,6 @@ const isJsonReport = (text: string): boolean => {
 Given("a run had two reports to write", function (this: ReportRun) {
   this.folder = temporaryDirectory("report-destination-");
   this.file = join(this.folder, "report.md");
-  writeFileSync(this.file, EARLIER_REPORT);
 });
 
 When(/^you ask for them at (.+)$/, function (this: ReportRun, destination: string) {
