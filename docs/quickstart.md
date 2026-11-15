@@ -200,7 +200,7 @@ A run is not reconciled when you cannot rely on it. Its run verdict says why: `u
 
 The [README's sample report](../README.md) shows every kind of Claim Reconciliation in one small example. Read it as double entry:
 
-- **The run verdict**, in the report's opening sentence and under `## Summary`, says what the whole run comes to: balanced, out of balance, or not reconciled with its reason.
+- **The run verdict**, under `## Summary`, says what the whole run comes to: balanced, out of balance, or not reconciled with its reason.
 - **A Claim Reconciliation** is the evidence reconciled for one claim, one row of the `## Claim Reconciliations` table. A claim is usually a scenario. The Claim Reconciliation sets the evidence the claim asks for against the results reported for it.
 - **Each Quality Check Reconciliation** pairs one obligation, one piece of evidence, or both, and has an outcome. `satisfied` means the evidence arrived and passed.
 - **The verdict** of a Claim Reconciliation is **balanced** or **out-of-balance**.

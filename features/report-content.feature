@@ -3,8 +3,8 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   The tool writes what it found: JSON for programs, Markdown for people. Each has the structure
   it promises. The JSON has every part; the Markdown leaves out a part the run had nothing for. The
-  Markdown opens with a sentence for
-  the run verdict, adds the headings, labels and keys a person needs, and shows every name it quotes
+  Markdown names the run verdict in its Summary, adds the headings, labels and keys a person needs,
+  and shows every name it quotes
   in code, so no character in it breaks a table. Whether an answer or a count is right is proved
   where it is worked out; this file says only where each one shows.
 
@@ -27,7 +27,7 @@ Feature: Each report has the right structure, and the Markdown explains it
     Scenario: the Markdown report's sections will come in a fixed order
       given a run had something for every section
       when its Markdown report is written
-      then the opening sentence will come first, under the title, and its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
+      then its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
 
   Rule: the Markdown adds the words a person needs to read the data
 
@@ -79,13 +79,13 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-146 | a message of three lines                            | run integrity             | the message's first line                                   |
         | CLM-RPT-169 | a message whose first line is blank, then two lines | the Claim Reconciliations | the message's first line that is not blank, and both notes |
 
-  Rule: the Markdown report opens with a sentence for its run verdict
+  Rule: the Markdown report's Summary names the run verdict
 
     @unit
-    Scenario Outline: each run verdict, and each reason a run is not reconciled, has an opening of its own
+    Scenario Outline: the Summary names each run verdict, and each reason a run is not reconciled
       given a run was <run verdict>
       when the Markdown report is written
-      then the report will have the opening for <run verdict>
+      then its Summary will name the run verdict <run verdict>
 
       Examples:
         | clm         | run verdict                                            |

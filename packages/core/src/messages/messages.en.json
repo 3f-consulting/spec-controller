@@ -1,9 +1,4 @@
 {
-  "balanced-opening": "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention.",
-  "out-of-balance-opening": "Some claims lack the evidence they ask for, so the run is out of balance: the Claim Reconciliations below say what each needs.",
-  "unsound-opening": "Some evidence never ran, so the run cannot be relied on and is not reconciled: Run integrity names it.",
-  "claim-code-errors-opening": "Some claim codes are written where they do not belong, so the run is not reconciled: Errors in the inputs names them.",
-  "nothing-to-reconcile-opening": "No claim and no evidence were read, so there was nothing to reconcile and the run is not reconciled.",
   "provenance-heading": "Run provenance",
   "provenance-target": "Target repository",
   "provenance-source-sha": "Commit reconciled",

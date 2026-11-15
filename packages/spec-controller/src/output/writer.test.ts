@@ -35,9 +35,7 @@ function capturedStreams(): { readonly output: string[]; readonly error: string[
 // What the run says on standard error when it refuses, as the catalogue words it.
 const refused = (key: string, values: Readonly<Record<string, string>>): string => `${refusalText({ key, values })}\n`;
 
-const MARKDOWN_OPENING = "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention.";
-
-const opensAsMarkdown = (text: string): boolean => text.startsWith(`# Evidence Reconciliation\n\n${MARKDOWN_OPENING}`);
+const opensAsMarkdown = (text: string): boolean => text.startsWith("# Evidence Reconciliation\n\n## ");
 
 // Text that is not JSON is not the JSON report, rather than an error.
 function isJsonReport(text: string): boolean {
@@ -71,9 +69,7 @@ describe("you will get the report format you ask for", () => {
     writeReports(outputsAskedFor(args), [], reconciliation(), streams, AS_ASKED);
 
     const written = output.join("");
-    expect(report === "JSON" ? JSON.parse(written) : written.split("\n")[2]).toEqual(
-      report === "JSON" ? reconciliation() : "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention.",
-    );
+    expect(report === "JSON" ? JSON.parse(written) : opensAsMarkdown(written)).toEqual(report === "JSON" ? reconciliation() : true);
   });
 });
 
