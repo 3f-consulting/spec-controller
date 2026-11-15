@@ -1,7 +1,7 @@
 import {
   allocationOf,
   featureAsWrittenFrom,
-  isFeatureCode,
+  featureCodeOfFile,
   writtenClaimCode,
   type Allocation,
   type AllocationAsked,
@@ -26,12 +26,13 @@ function featureCodesUnder(top: string): Read<string[]> {
   try {
     sources = featureSourcesUnder(join(top, FEATURES));
   } catch (error) {
-    // A file system error names the path it could not read.
-    return { refusal: { key: "unreadable-in-tree", values: { path: relative(top, (error as NodeJS.ErrnoException).path!), said: (error as Error).message } } };
+    const path = (error as NodeJS.ErrnoException).path ?? join(top, FEATURES);
+    return { refusal: { key: "unreadable-in-tree", values: { path: relative(top, path), said: (error as Error).message } } };
   }
   for (const { file, source } of sources) {
     try {
-      featureCodes.push(...featureAsWrittenFrom(file, source).fileTags.filter(isFeatureCode));
+      const featureCode = featureCodeOfFile(featureAsWrittenFrom(file, source));
+      if (featureCode !== undefined) featureCodes.push(featureCode);
     } catch {
       return { refusal: { key: "feature-file-does-not-parse", values: { file: relative(top, file) } } };
     }
