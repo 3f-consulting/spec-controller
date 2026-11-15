@@ -74,6 +74,7 @@ describe("help will list what you can ask for", () => {
 
   it.each([
     ["CLM-CLI-118", ["--help"]],
+    ["CLM-CLI-118", ["-h"]],
     ["CLM-CLI-119", ["help"]],
     ["CLM-CLI-120", []],
   ] as const)("[%s] %j lists the commands, and the run succeeds", (_clm, args) => {
