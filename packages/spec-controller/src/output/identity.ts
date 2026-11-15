@@ -17,7 +17,6 @@ export function streamIdentity(fd: number, stream: NamedStream): FileIdentity {
 
 const PROBED = { ...EXACT, throwIfNoEntry: false } as const;
 
-// Each standard stream by its name.
 const STREAM_NAMED = new Map<string, NamedStream["is"]>([
   ["/dev/stdout", "standard-output"],
   ["/dev/stderr", "standard-error"],
@@ -27,7 +26,6 @@ const STREAM_NAMED = new Map<string, NamedStream["is"]>([
 export const whereItWillBe = (path: string): string =>
   lstatSync(path, { throwIfNoEntry: false })?.isSymbolicLink() ? resolve(dirname(path), readlinkSync(path)) : resolve(path);
 
-// A stream named by its path, or by the link the path is.
 const streamNamedBy = (path: string): NamedStream["is"] | undefined => STREAM_NAMED.get(resolve(path)) ?? STREAM_NAMED.get(whereItWillBe(path));
 
 // A volume folds case when its folder, named in capitals, is the same folder.
@@ -37,14 +35,12 @@ function foldsCase(folder: string): boolean {
   return named !== undefined && named.dev === asWritten?.dev && named.ino === asWritten.ino;
 }
 
-// A file not made yet is known by the path it will be made at, in one case where its volume folds case.
 function notMadeYet(path: string): FileIdentity {
   const where = whereItWillBe(path);
   return { is: "absent", path: foldsCase(dirname(where)) ? where.toLowerCase() : where };
 }
 
-// What a path names, through any link: one of the run's standard streams, a regular file, something else, or nothing
-// yet. A stream's path reports another device than the stream's own descriptor does, so a stream is known by name first.
+// What a path names, through any link; a stream by name first, as its path reports another device than its descriptor.
 export function pathIdentity(path: string): FileIdentity {
   try {
     const stream = streamNamedBy(path);

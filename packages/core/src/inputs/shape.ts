@@ -1,5 +1,4 @@
-// What a report holds where its reader reads it: a list, a record of one kind of entry, or named fields, some of them
-// optional.
+// What a report holds where its reader reads it: a list, a record of one kind of entry, or named fields.
 export type Shape =
   | "list"
   | { readonly entriesOf: Shape }
@@ -9,7 +8,6 @@ export const isRecord = (value: unknown): value is Readonly<Record<string, unkno
 
 const firstOf = (breaks: readonly (string | undefined)[]): string | undefined => breaks.find((at) => at !== undefined);
 
-// A report's top, where every path in it starts.
 export const TOP = "$";
 
 // Where the value first breaks its shape, as a path from the report's top; nothing when it holds.
