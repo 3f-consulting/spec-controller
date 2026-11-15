@@ -13,26 +13,23 @@ const scenario = (tags: string): string => `Feature: one\n\n  ${tags}\n  Scenari
 const outline = (tags: string, examples: string): string =>
   `Feature: one\n\n  Rule: a rule\n\n    ${tags}\n    Scenario Outline: an outline\n      Given <x>\n\n      Examples:\n${examples}`;
 
-// A feature with one scenario, or one Outline with the Examples rows given, under the tags given.
-const featureOf = ([shape, tags, examples]: readonly [string, string, string?]): string =>
-  shape === "outline" ? outline(tags, examples ?? "") : scenario(tags);
-
 const written = (code: ClaimCode | undefined): string | undefined => code && `CLM-${code.featureCode}-${code.number}`;
 
 const kindsOf = ({ obligations }: ExecutableClaim): string[] => obligations.map(({ kind }) => String(kind)).sort();
 
 describe("an Outline will be one executable claim for each row only when it has a clm column", () => {
   it.each([
-    ["CLM-OBL-001", "two rows with the claim codes CLM-ONE-001 and CLM-ONE-002", ["outline", "@unit", "      | clm         | x |\n      | CLM-ONE-001 | a |\n      | CLM-ONE-002 | b |\n"] as const, ["CLM-ONE-001", "CLM-ONE-002"]],
-    ["CLM-OBL-002", "the tag @CLM-ONE-001 and no clm column", ["outline", "@unit @CLM-ONE-001", "      | x |\n      | a |\n      | b |\n"] as const, ["CLM-ONE-001"]],
+    ["CLM-OBL-001", "two rows with the claim codes CLM-ONE-001 and CLM-ONE-002", "@unit", "      | clm         | x |\n      | CLM-ONE-001 | a |\n      | CLM-ONE-002 | b |\n", ["CLM-ONE-001", "CLM-ONE-002"]],
+    ["CLM-OBL-002", "the tag @CLM-ONE-001 and no clm column", "@unit @CLM-ONE-001", "      | x |\n      | a |\n      | b |\n", ["CLM-ONE-001"]],
     [
       "CLM-OBL-033",
       "an Examples block with CLM-ONE-001 in its clm column, and an Examples block with no table yet",
-      ["outline", "@unit", "      | clm         | x |\n      | CLM-ONE-001 | a |\n\n      Examples:\n"] as const,
+      "@unit",
+      "      | clm         | x |\n      | CLM-ONE-001 | a |\n\n      Examples:\n",
       ["CLM-ONE-001"],
     ],
-  ])("[%s] a Scenario Outline with %s has its executable claims", (_clm, _shape, feature, codes) => {
-    expect(claimsIn(featureOf(feature)).map(({ claimCode }) => written(claimCode))).toEqual(codes);
+  ])("[%s] a Scenario Outline with %s has its executable claims", (_clm, _shape, tags, examples, codes) => {
+    expect(claimsIn(outline(tags, examples)).map(({ claimCode }) => written(claimCode))).toEqual(codes);
   });
 });
 
@@ -55,40 +52,33 @@ describe("a feature file with no Feature has no executable claims", () => {
   });
 });
 
-// A scenario tagged @unit, with the deferral tag on it, on its Feature, or on the Rule it sits under.
-const deferredBy = (deferral: string, on: "the scenario" | "its Feature" | "its Rule"): string => {
-  if (on === "its Feature") return `${deferral}\nFeature: one\n\n  @unit\n  Scenario: a scenario\n    Given a step\n`;
-  if (on === "its Rule") return `Feature: one\n\n  ${deferral}\n  Rule: a rule\n\n    @unit\n    Scenario: a scenario\n      Given a step\n`;
-  return scenario(`@unit ${deferral}`);
-};
-
 describe("a deferral tag on the scenario, its Rule or its Feature will leave no executable claim", () => {
   it.each([
-    ["CLM-OBL-003", "@wip", "the scenario", []],
-    ["CLM-OBL-004", "@ignore", "the scenario", []],
-    ["CLM-OBL-005", "@skip", "the scenario", []],
-    ["CLM-OBL-006", "@todo", "the scenario", []],
-    ["CLM-OBL-007", "@pending", "the scenario", []],
-    ["CLM-OBL-008", "@blocked", "the scenario", ["blocked"]],
-    ["CLM-OBL-025", "@wip", "its Feature", []],
-    ["CLM-OBL-026", "@wip", "its Rule", []],
-  ] as const)("[%s] a scenario tagged @unit, with %s on %s, is no executable claim", (_clm, deferral, on, configured) => {
-    expect(claimsIn(deferredBy(deferral, on), { deferralTags: configured, strict: false })).toEqual([]);
+    ["CLM-OBL-003", "@wip", "the scenario", "Feature: one\n\n  @unit @wip\n  Scenario: a scenario\n    Given a step\n", []],
+    ["CLM-OBL-004", "@ignore", "the scenario", "Feature: one\n\n  @unit @ignore\n  Scenario: a scenario\n    Given a step\n", []],
+    ["CLM-OBL-005", "@skip", "the scenario", "Feature: one\n\n  @unit @skip\n  Scenario: a scenario\n    Given a step\n", []],
+    ["CLM-OBL-006", "@todo", "the scenario", "Feature: one\n\n  @unit @todo\n  Scenario: a scenario\n    Given a step\n", []],
+    ["CLM-OBL-007", "@pending", "the scenario", "Feature: one\n\n  @unit @pending\n  Scenario: a scenario\n    Given a step\n", []],
+    ["CLM-OBL-008", "@blocked", "the scenario", "Feature: one\n\n  @unit @blocked\n  Scenario: a scenario\n    Given a step\n", ["blocked"]],
+    ["CLM-OBL-025", "@wip", "its Feature", "@wip\nFeature: one\n\n  @unit\n  Scenario: a scenario\n    Given a step\n", []],
+    ["CLM-OBL-026", "@wip", "its Rule", "Feature: one\n\n  @wip\n  Rule: a rule\n\n    @unit\n    Scenario: a scenario\n      Given a step\n", []],
+  ] as const)("[%s] a scenario tagged @unit, with %s on %s, is no executable claim", (_clm, _deferral, _on, feature, configured) => {
+    expect(claimsIn(feature, { deferralTags: configured, strict: false })).toEqual([]);
   });
 });
 
 describe("the Evidence Obligations will follow the claim's kind-of-quality-check tags", () => {
   it.each([
-    ["CLM-OBL-009", ["scenario", "@CLM-ONE-001 @unit"] as const, ["unit"]],
-    ["CLM-OBL-010", ["scenario", "@CLM-ONE-001 @unit @e2e"] as const, ["e2e", "unit"]],
-    ["CLM-OBL-011", ["scenario", "@CLM-ONE-001 @unit @integration @e2e @performance"] as const, ["e2e", "integration", "performance", "unit"]],
-    ["CLM-OBL-012", ["scenario", "@CLM-ONE-001 @fitness"] as const, ["fitness"]],
-    ["CLM-OBL-013", ["scenario", "@CLM-ONE-001"] as const, []],
-    ["CLM-OBL-014", ["scenario", "@CLM-ONE-001 @unit @integrationpending"] as const, ["unit"]],
-    ["CLM-OBL-015", ["scenario", "@CLM-ONE-001 @integrationpending"] as const, []],
-    ["CLM-OBL-016", ["outline", "@unit @integration", "      | clm         | x |\n      | CLM-ONE-001 | a |\n"] as const, ["integration", "unit"]],
-  ])("[%s] the claim of CLM-ONE-001 raises its kinds' Evidence Obligations", (_clm, feature, kinds) => {
-    expect(claimsIn(featureOf(feature)).map(kindsOf)).toEqual([kinds]);
+    ["CLM-OBL-009", "@CLM-ONE-001 @unit", undefined, ["unit"]],
+    ["CLM-OBL-010", "@CLM-ONE-001 @unit @e2e", undefined, ["e2e", "unit"]],
+    ["CLM-OBL-011", "@CLM-ONE-001 @unit @integration @e2e @performance", undefined, ["e2e", "integration", "performance", "unit"]],
+    ["CLM-OBL-012", "@CLM-ONE-001 @fitness", undefined, ["fitness"]],
+    ["CLM-OBL-013", "@CLM-ONE-001", undefined, []],
+    ["CLM-OBL-014", "@CLM-ONE-001 @unit @integrationpending", undefined, ["unit"]],
+    ["CLM-OBL-015", "@CLM-ONE-001 @integrationpending", undefined, []],
+    ["CLM-OBL-016", "@unit @integration", "      | clm         | x |\n      | CLM-ONE-001 | a |\n", ["integration", "unit"]],
+  ])("[%s] the claim of CLM-ONE-001 raises its kinds' Evidence Obligations", (_clm, tags, examples, kinds) => {
+    expect(claimsIn(examples === undefined ? scenario(tags) : outline(tags, examples)).map(kindsOf)).toEqual([kinds]);
   });
 });
 
@@ -108,12 +98,12 @@ describe("a strict run will raise the Evidence Obligations a deferral put off", 
 
 describe("a claim that cannot be mapped to a single claim code will raise its Evidence Obligation with no claim code", () => {
   it.each([
-    ["CLM-OBL-020", ["scenario", "@unit @CLM-ONE-001 @CLM-ONE-002"] as const],
-    ["CLM-OBL-021", ["outline", "@unit", "      | clm | x |\n      |     | a |\n"] as const],
-    ["CLM-OBL-022", ["outline", "@unit", "      | clm   | x |\n      | first | a |\n"] as const],
-    ["CLM-OBL-023", ["scenario", "@unit @CLM-A-001"] as const],
-  ])("[%s] its unit Evidence Obligation is raised with no claim code", (_clm, feature) => {
-    expect(claimsIn(featureOf(feature)).map((claim) => ({ claimCode: written(claim.claimCode), kinds: kindsOf(claim) }))).toEqual([
+    ["CLM-OBL-020", "@unit @CLM-ONE-001 @CLM-ONE-002", undefined],
+    ["CLM-OBL-021", "@unit", "      | clm | x |\n      |     | a |\n"],
+    ["CLM-OBL-022", "@unit", "      | clm   | x |\n      | first | a |\n"],
+    ["CLM-OBL-023", "@unit @CLM-A-001", undefined],
+  ])("[%s] its unit Evidence Obligation is raised with no claim code", (_clm, tags, examples) => {
+    expect(claimsIn(examples === undefined ? scenario(tags) : outline(tags, examples)).map((claim) => ({ claimCode: written(claim.claimCode), kinds: kindsOf(claim) }))).toEqual([
       { claimCode: undefined, kinds: ["unit"] },
     ]);
   });

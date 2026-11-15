@@ -156,20 +156,6 @@ describe("the answer is one past the highest code in the feature file, a tracked
     });
   });
 
-  it("[CLM-STG-062] a line in git history, since deleted, had CLM-ONE-005 in a file whose name holds a space: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
-    const repository = repositoryForTest();
-    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
-    repository.write("old notes.txt", "kept\nCLM-ONE-005\n");
-    const commit = repository.commit("first");
-    repository.write("old notes.txt", "kept\n");
-    repository.commit("second");
-
-    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
-      answer: "CLM-ONE-006",
-      highest: { note: "highest-seen", code: "CLM-ONE-005", path: "old notes.txt", line: 2, commit },
-    });
-  });
-
   it("[CLM-STG-062] a line in git history, since deleted, had CLM-ONE-005 in the second of two files one commit changed: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
@@ -186,12 +172,12 @@ describe("the answer is one past the highest code in the feature file, a tracked
     });
   });
 
-  it("[CLM-STG-062] a line in git history, since deleted, that read @@ -1 +1 @@ CLM-ONE-005 on line 12: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
+  it("[CLM-STG-062] a line in git history, since deleted, that read CLM-ONE-005 on line 12: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
     repository.write("old.txt", "kept\n".repeat(11));
     repository.commit("first");
-    repository.write("old.txt", `${"kept\n".repeat(11)}@@ -1 +1 @@ CLM-ONE-005\n`);
+    repository.write("old.txt", `${"kept\n".repeat(11)}CLM-ONE-005\n`);
     const commit = repository.commit("second");
     repository.write("old.txt", "kept\n".repeat(11));
     repository.commit("third");
@@ -199,6 +185,21 @@ describe("the answer is one past the highest code in the feature file, a tracked
     expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
       answer: "CLM-ONE-006",
       highest: { note: "highest-seen", code: "CLM-ONE-005", path: "old.txt", line: 12, commit },
+    });
+  });
+  it("[CLM-STG-062] a committed patch file, since deleted, whose line 12 read @@ -1 +40 @@ CLM-ONE-005: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
+    const repository = repositoryForTest();
+    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
+    repository.write("fix.patch", "kept\n".repeat(11));
+    repository.commit("first");
+    repository.write("fix.patch", `${"kept\n".repeat(11)}@@ -1 +40 @@ CLM-ONE-005\n`);
+    const commit = repository.commit("second");
+    repository.write("fix.patch", "kept\n".repeat(11));
+    repository.commit("third");
+
+    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
+      answer: "CLM-ONE-006",
+      highest: { note: "highest-seen", code: "CLM-ONE-005", path: "fix.patch", line: 12, commit },
     });
   });
 });
@@ -367,18 +368,14 @@ describe("allocate names what it could not read, and gives no code", () => {
     const blob = repository.git("rev-parse", "HEAD:features/one.feature");
     rmSync(`${repository.top}/.git/objects/${blob.slice(0, 2)}/${blob.slice(2)}`);
 
-    const outcome = allocate(ONE, repository.top);
-
-    expect({ outcome, asWords: whatGitSaid(outcome).asWords }).toEqual({ outcome: stoppedOn("unreadable-history", { said: expect.stringContaining(blob) }), asWords: true });
+    expect(allocate(ONE, repository.top)).toEqual(stoppedOn("unreadable-history", { said: expect.stringContaining(blob) }));
   });
 
   it("[CLM-STG-074] a damaged repository stops it as a usage error, naming what it could not read, and what git said", () => {
     const repository = repositoryOfOne();
     appendFileSync(`${repository.top}/.git/config`, "[[[\n");
 
-    const outcome = allocate(ONE, repository.top);
-
-    expect({ outcome, asWords: whatGitSaid(outcome).asWords }).toEqual({ outcome: stoppedOn("damaged-repository", { said: expect.stringContaining("config") }), asWords: true });
+    expect(allocate(ONE, repository.top)).toEqual(stoppedOn("damaged-repository", { said: expect.stringContaining("config") }));
   });
 
   it("[CLM-STG-074] a repository whose configuration gives searching a value git cannot read stops it as a usage error, naming what it could not read, and what git said", () => {

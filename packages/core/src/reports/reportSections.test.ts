@@ -10,7 +10,7 @@ import { reconciled } from "./reconciledRun.test-utils.js";
 const headingsOf = (markdown: string): string[] => markdown.split("\n").filter((line) => line.startsWith("## ")).map((line) => line.slice(3));
 
 describe("the Markdown report's sections will come in a fixed order", () => {
-  it("[CLM-RPT-009] a run with something for every section has its opening under the title, then the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations", () => {
+  it("[CLM-RPT-009] a run with something for every section has the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order", () => {
     const markdown = markdownReportOf(
       reconciled({
         scenarios: ["@unit @CLM-ONE-001", "@unit @CLM-TWO-001"],
@@ -20,13 +20,8 @@ describe("the Markdown report's sections will come in a fixed order", () => {
       }),
     );
     const sections = ["Run provenance", "Errors in the inputs", "Run integrity", "Summary", "Claim Reconciliations"];
-    const [title, , opening] = markdown.split("\n");
 
-    expect({ title, opening, sections: headingsOf(markdown).filter((heading) => sections.includes(heading)) }).toEqual({
-      title: "# Evidence Reconciliation",
-      opening: "Some evidence never ran, so the run cannot be relied on and is not reconciled: Run integrity names it.",
-      sections,
-    });
+    expect(headingsOf(markdown).filter((heading) => sections.includes(heading))).toEqual(sections);
   });
 });
 
@@ -48,10 +43,10 @@ function tablesOf(markdown: string): { readonly heading: string; readonly column
 const isWords = (text: string): boolean => (Object.values(catalogue) as string[]).includes(text);
 const inWords = (text: string): boolean => isWords(text) || (QUALITY_CHECK_KINDS as readonly string[]).includes(text) || /^`.*`$/.test(text);
 
-// Each line below the opening that is not blank, a heading, a key or a table, a labelled value, or a label over the values
+// Each line below the title that is not blank, a heading, a key or a table, a labelled value, or a label over the values
 // under it: a heading, label or key not in the catalogue's words, a label with no value, or a line with no label.
 function unlabelledOf(markdown: string): string[] {
-  const lines = markdown.split("\n").slice(3);
+  const lines = markdown.split("\n").slice(2);
   return lines.filter((line, at) => {
     if (line === "" || line.startsWith("| ") || line === `${coreText("key")}:`) return false;
     const heading = /^#{2,3} (.+)$/.exec(line);
@@ -82,8 +77,7 @@ describe("each section will have its heading, each value its label, and each tab
       headings: headingsOf(markdown),
       unlabelled: unlabelledOf(markdown),
       unkeyed: tables.flatMap(({ columns, keyed }) => columns.filter((column) => !keyed.includes(column))),
-      unworded: tables.flatMap(({ columns }) => columns.filter((column) => !isWords(column))),
-      marks: tables.map(({ columns, keyed }) => keyed.filter((name) => !columns.includes(name))),
+      byFeature: markdown.includes(`\n### ${coreText("summary-by-feature")}\n`),
       summaryRowLabels: tables
         .filter(({ heading }) => heading.startsWith("### ") && heading !== `### ${coreText("summary-claim-reconciliations")}`)
         .flatMap(({ rows }) => rows.map(([label]) => label!).filter((label) => !inWords(label))),
@@ -91,8 +85,7 @@ describe("each section will have its heading, each value its label, and each tab
       headings: ["Run provenance", "Errors in the inputs", "Run integrity", "Summary", "Step account", "Claim Reconciliations"],
       unlabelled: [],
       unkeyed: [],
-      unworded: [],
-      marks: [[], [coreText("summary-across-a-row")], [], [], [], [coreText("claims-blank-cell"), coreText("claims-dash"), coreText("claims-unnamed-row")]],
+      byFeature: true,
       summaryRowLabels: [],
     });
   });

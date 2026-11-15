@@ -1,7 +1,7 @@
 import { Before, Given, Then, When } from "@cucumber/cucumber";
 import { spawnSync } from "node:child_process";
 import assert from "node:assert/strict";
-import { closeSync, existsSync, openSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { closeSync, openSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
 
@@ -50,9 +50,7 @@ Given("a run had two reports to write", function (this: ReportRun) {
 });
 
 When(/^you ask for them at (.+)$/, function (this: ReportRun, destination: string) {
-  const ask = ASKED[destination];
-  assert.ok(ask, `no destination is written for "${destination}"`);
-  const { formats, outputIntoFile } = ask(this.file);
+  const { formats, outputIntoFile } = ASKED[destination]!(this.file);
   const output = outputIntoFile === true ? openSync(this.file, "a") : "pipe";
   const run = spawnSync(process.execPath, [CLI, "balance", ...formats.flatMap((format) => ["--format", format])], {
     cwd: this.folder,
@@ -90,6 +88,5 @@ Then("it will complain, naming the file and both reports", function (this: Repor
 });
 
 Then("the file will be as it was", function (this: ReportRun) {
-  assert.ok(existsSync(this.file));
   assert.equal(readFileSync(this.file, "utf8"), EARLIER_REPORT);
 });

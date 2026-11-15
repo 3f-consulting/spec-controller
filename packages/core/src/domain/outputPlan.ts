@@ -10,13 +10,13 @@ export interface OutputRequest<Format extends string> {
 }
 
 // The Output port probes each place and reports what it is: a regular file's device and inode, something that is not a
-// regular file, one of the run's own standard streams, or nothing there yet, with the folder it would be made in, when
-// that folder exists, and its name.
+// regular file, one of the run's own standard streams, or nothing there yet, with the path it would be made at through its
+// folder's real path, in one case on a volume that folds case.
 export type FileIdentity =
   | { readonly is: "regular-file"; readonly device: bigint; readonly inode: bigint }
   | { readonly is: "not-a-regular-file" }
   | { readonly is: "standard-output" | "standard-error" }
-  | { readonly is: "absent"; readonly folder?: { readonly device: bigint; readonly inode: bigint }; readonly name: string };
+  | { readonly is: "absent"; readonly path: string };
 
 export interface IdentifiedOutput<Format extends string> {
   readonly output: OutputRequest<Format>;
@@ -41,13 +41,13 @@ export type OutputPlan<Format extends string> =
 const toStandardOutput = <Format extends string>({ identity }: IdentifiedOutput<Format>): boolean => identity.is === "standard-output";
 const toStandardError = <Format extends string>({ output }: IdentifiedOutput<Format>): boolean => output.destination.to === "standard-error";
 
-// A regular file by its device and inode, a file not yet made by its folder's and its name; anything else is no file.
+// A regular file by its device and inode, a file not yet made by its path; anything else is no file.
 function fileKeyOf(identity: FileIdentity): string | undefined {
   switch (identity.is) {
     case "regular-file":
       return `${identity.device}:${identity.inode}`;
     case "absent":
-      return identity.folder && `${identity.folder.device}:${identity.folder.inode}/${identity.name}`;
+      return identity.path;
   }
   return undefined;
 }

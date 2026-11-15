@@ -7,7 +7,7 @@ import type { Provenance } from "../domain/provenance.js";
 import type { EvidenceObservation, Result } from "../domain/postEvidenceObservation.js";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 
-const PROVENANCE: Provenance = { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] };
+export const PROVENANCE: Provenance = { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] };
 
 // What a run has, as literals: its feature files' scenario tags, its unit tests, and anything else it has.
 export interface RunHas {
@@ -59,16 +59,13 @@ const evidenceOf = ([kind, result, code, place = "one.test.ts", name = "a test",
 
 // A run of the feature files and evidence given, read and reconciled as balance does.
 export function reconciledFrom(files: readonly FileHas[], evidence: readonly EvidenceHas[]): EvidenceReconciliation {
-  const features = files.map(([file, featureCode, scenarios]) =>
-    featureAsWrittenFrom(file, `@${featureCode}\nFeature: ${file}\n${scenarios.map(([tags, title]) => `\n  ${tags}\n  Scenario: ${title}\n    Given a step\n`).join("")}`),
-  );
-  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), evidence.map(evidenceOf));
-  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: [], configurationErrors: [], features, stepAccount: stepAccountOf([]), provenance: PROVENANCE });
+  const sources = files.map(([file, featureCode, scenarios]) => [file, `@${featureCode}\nFeature: ${file}\n${scenarios.map(([tags, title]) => `\n  ${tags}\n  Scenario: ${title}\n    Given a step\n`).join("")}`] as const);
+  return reconciledFromSources(sources, [], evidence);
 }
 
-// A run of the feature files given as written, and the configuration errors given, with no evidence.
-export function reconciledFromSources(sources: readonly (readonly [string, string])[], configurationErrors: readonly ConfigurationError[] = []): EvidenceReconciliation {
+// A run of the feature files given as written, and the configuration errors and evidence given.
+export function reconciledFromSources(sources: readonly (readonly [string, string])[], configurationErrors: readonly ConfigurationError[] = [], evidence: readonly EvidenceHas[] = []): EvidenceReconciliation {
   const features = sources.map(([file, source]) => featureAsWrittenFrom(file, source));
-  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), []);
+  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), evidence.map(evidenceOf));
   return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: claimCodeErrorsOf(features), configurationErrors, features, stepAccount: stepAccountOf([]), provenance: PROVENANCE });
 }

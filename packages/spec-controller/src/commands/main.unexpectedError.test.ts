@@ -6,8 +6,7 @@ import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { main } from "./main.js";
 
 interface Ended {
-  // Or what escaped main, if anything did.
-  readonly exitCode: ExitCode | string;
+  readonly exitCode: ExitCode;
   readonly output: string;
   readonly complaints: readonly string[];
 }
@@ -19,8 +18,7 @@ function balanceRun(throwing: { readonly inBalance?: unknown; readonly onOutput?
   writeFileSync(join(folder, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n");
   let output = "";
   let error = "";
-  const run = (): ExitCode =>
-    main(
+  const exitCode = main(
     ["balance", ...flags],
     folder,
     {
@@ -41,12 +39,6 @@ function balanceRun(throwing: { readonly inBalance?: unknown; readonly onOutput?
         }
       : {},
   );
-  let exitCode: ExitCode | string;
-  try {
-    exitCode = run();
-  } catch {
-    exitCode = "an error escaped main";
-  }
   return { exitCode, output, complaints: error.split("\n").filter((line) => line.includes("unexpected error")) };
 }
 

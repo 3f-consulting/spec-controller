@@ -1,5 +1,6 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import type { FailureAsWritten, ResultInSuiteAsWritten, ResultsBySuiteAsWritten } from "../domain/postEvidenceObservation.js";
+import { TOP } from "./shape.js";
 
 // A JUnit XML evidence report, as far as its reader reads it: suites, nested or not, each holding its test cases.
 interface Element {
@@ -48,7 +49,7 @@ const suitesIn = (element: Element): Element[] => elementsIn(element, "testsuite
 
 export function whyXmlDoesNotParse(xml: string): string | undefined {
   const valid = XMLValidator.validate(xml);
-  return valid === true ? undefined : `${valid.err.msg} (${valid.err.line}:${valid.err.col})`;
+  return valid === true ? undefined : valid.err.msg;
 }
 
 const suitesOf = (document: Element): Element[] => [...suitesIn(document), ...suitesIn((document["testsuites"] as Element | undefined) ?? {})];
@@ -56,7 +57,7 @@ const suitesOf = (document: Element): Element[] => [...suitesIn(document), ...su
 // A JUnit report's top is a suite, or the suites element holding them, and each of its test cases has a name.
 export const whereSuitesBreak = (xml: string): string | undefined => {
   const document = parser.parse(xml) as Element;
-  if (document["testsuites"] === undefined && document["testsuite"] === undefined) return "$";
+  if (document["testsuites"] === undefined && document["testsuite"] === undefined) return TOP;
   const unnamed = suitesOf(document).some((suite) => elementsIn(suite, "testcase").some((testCase) => testCase["@name"] === undefined));
   return unnamed ? "$..testcase" : undefined;
 };

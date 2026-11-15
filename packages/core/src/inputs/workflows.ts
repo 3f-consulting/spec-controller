@@ -48,14 +48,9 @@ function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknow
 export function workflowStepsFrom(workflow: string, source: string): WorkflowStepAsWritten[] {
   const document: unknown = parse(source);
   const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
-  // GitHub runs no workflow whose job is not a mapping, or whose step names neither an action nor a command.
+  // GitHub runs no workflow whose job is not a mapping.
   return Object.entries(jobs).flatMap(([job, definition]) => {
     if (!isMapping(definition)) throw new TypeError(coreText("job-holds-no-settings", { place: `jobs.${job}` }));
-    return mappingsIn(definition["steps"]).map((step, at) => {
-      if (!isMapping(step) || (text(step["uses"]) === undefined && text(step["run"]) === undefined)) {
-        throw new TypeError(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
-      }
-      return stepAsWritten(workflow, job, definition["continue-on-error"], step);
-    });
+    return mappingsIn(definition["steps"]).map((step) => stepAsWritten(workflow, job, definition["continue-on-error"], step));
   });
 }
