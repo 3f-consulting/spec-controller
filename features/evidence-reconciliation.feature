@@ -139,7 +139,7 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
     Scenario: each job's counts will add up to the steps read in it
       given a run read the steps of two jobs
       when balance reconciles it
-      then each job will have a count of its runners, reconciler steps, non-checks, plumbing and candidates
+      then each job will have a count of its runners, reconciler steps, non-checks, plumbing and fitness functions
       and those counts will add up to the steps read in that job
 
     @unit @CLM-EVR-033

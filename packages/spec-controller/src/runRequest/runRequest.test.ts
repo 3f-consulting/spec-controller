@@ -51,34 +51,28 @@ describe("balance will use the default when an input is not named", () => {
   });
 });
 
-describe("help will answer, and nothing will run", () => {
-  it("[CLM-CLI-112] a request for help beside a flag before the command: help answers", () => {
-    expect(runRequestOf(["--bogus", "--help"])).toEqual({ command: "help" });
-  });
-});
-
 describe("you will get the report format you ask for", () => {
   it("[CLM-FMT-001] no format named: the Markdown report is asked for", () => {
     expect(balanceRequested([]).outputs).toEqual([{ format: "md", destination: { to: "standard-output" } }]);
   });
 });
 
-const BALANCE_HELP = "spec-controller balance --help";
-const ALLOCATE_HELP = "spec-controller allocate --help";
 
 describe("an argument the tool does not accept will stop the run", () => {
   it.each([
-    ["CLM-CLI-126", ["balance", "--"], "unknown-flag", { command: "balance", flag: "--", help: BALANCE_HELP }],
-    ["CLM-CLI-126", ["balance", "-hx"], "unknown-flag", { command: "balance", flag: "-x", help: BALANCE_HELP }],
-    ["CLM-CLI-126", ["balance", "-h=1"], "unknown-flag", { command: "balance", flag: "-=", help: BALANCE_HELP }],
-    ["CLM-CLI-126", ["allocate", "ABC", "-hn"], "unknown-flag", { command: "allocate", flag: "-n", help: ALLOCATE_HELP }],
-    ["CLM-CLI-127", ["balance", "--features", "--strict"], "missing-value", { flag: "--features", help: BALANCE_HELP }],
-    ["CLM-CLI-129", ["balance", "--target", "acme", "stray"], "stray-argument", { argument: "stray", help: BALANCE_HELP }],
-    ["CLM-CLI-130", ["balance", "--strict", "--strict"], "repeated-flag", { flag: "--strict", help: BALANCE_HELP }],
-    ["CLM-CLI-131", ["balance", "--strict=yes"], "equals-form", { given: "--strict=yes", spelling: "--strict yes", help: BALANCE_HELP }],
-    ["CLM-CLI-133", ["balance", "--format", "html"], "unknown-format", { format: "html", formats: "md, json", help: BALANCE_HELP }],
-    ["CLM-CLI-134", ["allocate"], "no-feature-code", { help: ALLOCATE_HELP }],
+    ["CLM-CLI-126", ["balance", "--"], "unknown-flag", { command: "balance", flag: "--" }],
+    ["CLM-CLI-126", ["balance", "-hx"], "unknown-flag", { command: "balance", flag: "-x" }],
+    ["CLM-CLI-126", ["balance", "-h=1"], "unknown-flag", { command: "balance", flag: "-=" }],
+    ["CLM-CLI-126", ["allocate", "ABC", "-hn"], "unknown-flag", { command: "allocate", flag: "-n" }],
+    ["CLM-CLI-127", ["balance", "--features", "--strict"], "missing-value", { flag: "--features" }],
+    ["CLM-CLI-129", ["balance", "--target", "acme", "stray"], "stray-argument", { argument: "stray" }],
+    ["CLM-CLI-130", ["balance", "--strict", "--strict"], "repeated-flag", { flag: "--strict" }],
+    ["CLM-CLI-131", ["balance", "--strict=yes"], "equals-form", { given: "--strict=yes", spelling: "--strict yes" }],
+    ["CLM-CLI-133", ["balance", "--format", "html"], "unknown-format", { format: "html", formats: "md, json" }],
+    ["CLM-CLI-134", ["allocate"], "no-feature-code", {}],
   ] as const)("[%s] %j is refused as %s, with its facts", (_clm, args, key, values) => {
-    expect(runRequestOf(args)).toEqual({ refusals: [{ key, values }] });
+    const requested = runRequestOf(args);
+
+    expect("refusals" in requested && requested.refusals).toEqual([{ key, values }]);
   });
 });

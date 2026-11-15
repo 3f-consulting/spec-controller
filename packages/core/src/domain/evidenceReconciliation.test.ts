@@ -175,7 +175,7 @@ describe("Total of the out-of-balance Claim Reconciliations, by feature file", (
     ],
     ["CLM-EVR-024", "a scenario with no code, in one.feature tagged @ONE", "one.feature", "@ONE\nFeature: one\n\n  @unit\n  Scenario: s\n    Given a step\n", [], [{ file: "one.feature", count: 1 }]],
     ["CLM-EVR-025", "a scenario with no code, in three.feature, which has no feature code", "three.feature", "Feature: three\n\n  @unit\n  Scenario: s\n    Given a step\n", [], [{ file: "three.feature", count: 1 }]],
-    ["CLM-EVR-026", "the unnamed claim", "none", "", [["unit", "passed"]], undefined],
+    ["CLM-EVR-026", "the unnamed claim", "none", "", [["unit", "passed"]], []],
   ] as const)("[%s] a Claim Reconciliation out of balance, for %s, is counted under its feature file", (_clm, _claim, file, source, observed, byFeature) => {
     const features = source === "" ? [] : [featureAsWrittenFrom(file, source)];
     const totals = totalsOf(claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observed.map(observationOf)), features);
@@ -234,7 +234,7 @@ describe("balance accounts for every step it reads", () => {
   ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, read) => {
     const { jobs } = stepAccountOf(read());
 
-    expect(jobs.map(({ stepsRead, runners, reconcilerSteps, nonChecks, plumbing, candidates }) => ({ stepsRead, sum: runners + reconcilerSteps + nonChecks + plumbing + candidates }))).toEqual([
+    expect(jobs.map(({ stepsRead, runners, reconcilerSteps, nonChecks, plumbing, fitnessFunctions }) => ({ stepsRead, sum: runners + reconcilerSteps + nonChecks + plumbing + fitnessFunctions }))).toEqual([
       { stepsRead: 3, sum: 3 },
       { stepsRead: 2, sum: 2 },
     ]);
@@ -243,7 +243,7 @@ describe("balance accounts for every step it reads", () => {
   it("[CLM-EVR-033] the total will be the sum of the jobs", () => {
     const { total } = stepAccountOf(twoJobs());
 
-    expect(total).toEqual({ stepsRead: 5, runners: 0, reconcilerSteps: 1, nonChecks: 1, plumbing: 1, candidates: 2 });
+    expect(total).toEqual({ stepsRead: 5, runners: 0, reconcilerSteps: 1, nonChecks: 1, plumbing: 1, fitnessFunctions: 2 });
   });
 
   it("[CLM-EVR-072] a workflow with a job that calls a reusable workflow, and a job with one step, has the one step counted", () => {

@@ -242,8 +242,8 @@ export function observationsOfScenarios(
   });
 }
 
-// What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a candidate fitness function.
-export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "candidate";
+// What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a fitness function.
+export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "fitnessFunction";
 
 const RECONCILER = "spec-controller balance";
 
@@ -256,12 +256,21 @@ const runsARunner = (run: string, { runners }: TargetConfiguration, scripts: Scr
 
 export type Scripts = Readonly<Record<string, string>>;
 
-export function stepDispositionOf(step: WorkflowStepAsWritten, configuration: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): StepDisposition {
+// A runner is a fitness function of its own when its id is a claim code the step record holds.
+export function stepDispositionOf(
+  step: WorkflowStepAsWritten,
+  configuration: TargetConfiguration,
+  scripts: Scripts,
+  shell: ShellAnswers,
+  record: readonly StepRecordEntryAsWritten[] = [],
+): StepDisposition {
   if (step.writesStepRecord || (step.run !== undefined && shell.invokesAnywhere(step.run, RECONCILER))) return "reconciler";
   if (isNamedIn(step, configuration)) return "nonCheck";
   if (step.plumbing) return "plumbing";
-  if (step.run !== undefined && runsARunner(step.run, configuration, scripts, shell)) return "runner";
-  return "candidate";
+  if (step.run !== undefined && runsARunner(step.run, configuration, scripts, shell)) {
+    return claimCodeFrom(step.id) !== undefined && record.some(({ key }) => key === step.id) ? "fitnessFunction" : "runner";
+  }
+  return "fitnessFunction";
 }
 
 // The step record says how a step went by its outcome, read before continue-on-error turns a failure into success.
@@ -300,11 +309,7 @@ export function fitnessObservationsOf(
   shell: ShellAnswers,
 ): EvidenceObservation[] {
   const entryFor = ({ id }: WorkflowStepAsWritten) => record.find(({ key }) => key === id);
-  // A runner posts nothing of its own, unless its id is a claim code the step record holds.
-  const posting = steps.filter((step) => {
-    const disposition = stepDispositionOf(step, configuration, scripts, shell);
-    return disposition === "candidate" || (disposition === "runner" && claimCodeFrom(step.id) !== undefined && entryFor(step) !== undefined);
-  });
+  const posting = steps.filter((step) => stepDispositionOf(step, configuration, scripts, shell, record) === "fitnessFunction");
   const postedOnce = posting.filter((step, at) => entryFor(step) === undefined || posting.findIndex(({ id }) => id === step.id) === at);
   return [
     ...postedOnce.map((step) => observationOf(step, posting, entryFor(step))),

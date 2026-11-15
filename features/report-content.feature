@@ -2,7 +2,8 @@
 Feature: Each report has the right structure, and the Markdown explains it
 
   The tool writes what it found: JSON for programs, Markdown for people. Each has the structure
-  it promises and leaves out a part the run had nothing for. The Markdown opens with a sentence for
+  it promises. The JSON has every part; the Markdown leaves out a part the run had nothing for. The
+  Markdown opens with a sentence for
   the run verdict, adds the headings, labels and keys a person needs, and shows every name it quotes
   in code, so no character in it breaks a table. Whether an answer or a count is right is proved
   where it is worked out; this file says only where each one shows.
@@ -36,16 +37,16 @@ Feature: Each report has the right structure, and the Markdown explains it
       when its Markdown report is written
       then each section will have its heading, each value its label, and each table a line saying what its columns mean
 
-  Rule: a report leaves out any optional section that would be empty
+  Rule: the Markdown report leaves out any part the run had nothing for
 
     @unit
-    Scenario Outline: neither report will have an optional section the run had nothing for
-      given a run had no <optional section>
-      when its reports are written
-      then neither report will have that optional section
+    Scenario Outline: the Markdown report will not have a part the run had nothing for
+      given a run had no <part>
+      when its Markdown report is written
+      then it will not have that part
 
       Examples:
-        | clm         | optional section          |
+        | clm         | part                      |
         | CLM-RPT-077 | errors in the inputs      |
         | CLM-RPT-021 | run integrity             |
         | CLM-RPT-052 | step account              |
@@ -164,9 +165,9 @@ Feature: Each report has the right structure, and the Markdown explains it
       then the step account's <row> will show <counts>
 
       Examples:
-        | clm         | row           | counts                                                                               |
-        | CLM-RPT-165 | row for build | 2 steps read, 1 runner, 0 reconciler steps, 0 non-checks, 0 plumbing and 1 candidate |
-        | CLM-RPT-166 | Total row     | 3 steps read, 1 runner, 0 reconciler steps, 0 non-checks, 1 plumbing and 1 candidate |
+        | clm         | row           | counts                                                                                      |
+        | CLM-RPT-165 | row for build | 2 steps read, 1 runner, 0 reconciler steps, 0 non-checks, 0 plumbing and 1 fitness function |
+        | CLM-RPT-166 | Total row     | 3 steps read, 1 runner, 0 reconciler steps, 0 non-checks, 1 plumbing and 1 fitness function |
 
   Rule: the Summary leaves out a row or column whose counts are all zero
 
@@ -199,13 +200,14 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-112 | one job                    | not have |
         | CLM-RPT-113 | two jobs, in two workflows | have     |
 
-  Rule: the JSON report keeps every count, zero or not
+  Rule: the JSON report keeps every part and every count, empty or zero
 
     @unit @CLM-RPT-128
-    Scenario: a run of passing unit tests alone still has the JSON count failing and performance, at 0
+    Scenario: a run of passing unit tests alone still has every part and every count in its JSON
       given a run had only passing unit tests, each cited by a claim with a unit Evidence Obligation
       when the JSON report is written
-      then its totals will have every kind, the row with no kind, and every outcome under each, the ones with nothing at 0
+      then it will have every part, the ones with nothing empty
+      and its totals will have every kind, the row with no kind, and every outcome under each, the ones with nothing at 0
 
   Rule: every report has its Claim Reconciliations, even when there are none
 
