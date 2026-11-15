@@ -153,7 +153,7 @@ jobs:
           node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}" packages || [ $? -eq 2 ]
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}"
 
-      - name: Duplication — no clone in production code
+      - name: Duplication — no production code is a copy of other production code
         id: CLM-FIT-032
         if: always()
         shell: bash
