@@ -17,8 +17,8 @@ interface CucumberJsonFeature {
   }[];
 }
 
-// A list of features, each a record.
-const REPORT: Shape = { listOf: { fields: {} } };
+// A list of features.
+const REPORT: Shape = "list";
 
 export const whereScenarioResultsBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
