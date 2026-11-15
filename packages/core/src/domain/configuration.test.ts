@@ -13,25 +13,25 @@ import { fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservat
 
 const NONE: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
 
-describe("balance turns each configuration setting into its internal setting", () => {
+describe("balance takes each configuration setting it can use as the runner, non-check or deferral tag it names", () => {
   it.each([
     ["CLM-CFG-008", '"unit": "vitest" under runners', { runners: { unit: "vitest" } }, { ...NONE, runners: { unit: "vitest" } }],
     ["CLM-CFG-009", '"performance": null under runners', { runners: { performance: null } }, { ...NONE, runners: { performance: null } }],
     [
       "CLM-CFG-011",
-      '"nightly:build.yml:ci:Install" in notChecks',
-      { notChecks: ["nightly:build.yml:ci:Install"] },
-      { ...NONE, nonChecks: [{ workflow: "nightly:build.yml", job: "ci", step: "Install" }] },
+      '"nightly:build.yml:ci:Install dependencies" in notChecks',
+      { notChecks: ["nightly:build.yml:ci:Install dependencies"] },
+      { ...NONE, nonChecks: [{ workflow: "nightly:build.yml", job: "ci", step: "Install dependencies" }] },
     ],
     ["CLM-CFG-012", '"deferred" in deferralTags', { deferralTags: ["deferred"] }, { ...NONE, deferralTags: ["deferred"] }],
     ["CLM-CFG-013", '"@blocked" in deferralTags', { deferralTags: ["@blocked"] }, { ...NONE, deferralTags: ["blocked"] }],
     ["CLM-CFG-014", '" deferred " in deferralTags', { deferralTags: [" deferred "] }, { ...NONE, deferralTags: ["deferred"] }],
     ["CLM-CFG-006", "nothing", undefined, NONE],
-  ] as const)("[%s] a specController block with %s gives that internal setting", (_clm, _setting, block, configuration) => {
+  ] as const)("[%s] a specController block with %s is taken as what it sets", (_clm, _setting, block, configuration) => {
     expect(targetConfigurationFrom(block === undefined ? {} : { specController: block }, [])).toEqual({ configuration, errors: [] });
   });
 
-  it('[CLM-CFG-010] a specController block with "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies, gives that step', () => {
+  it('[CLM-CFG-010] a specController block with "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies, takes that step as a non-check', () => {
     const ciRead = [
       { workflow: "ci.yml", job: "ci", name: "Build", plumbing: false, writesStepRecord: false },
       { workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false },
@@ -43,17 +43,17 @@ describe("balance turns each configuration setting into its internal setting", (
     });
   });
 
-  it('[CLM-CFG-023] a specController block with "nightly.yml:ci:Install" in notChecks, with only ci.yml read, gives that step', () => {
+  it('[CLM-CFG-023] a specController block with "nightly.yml:ci:Install dependencies" in notChecks, with only ci.yml read, takes that step as a non-check', () => {
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
-    expect(targetConfigurationFrom({ specController: { notChecks: ["nightly.yml:ci:Install"] } }, ciRead)).toEqual({
-      configuration: { ...NONE, nonChecks: [{ workflow: "nightly.yml", job: "ci", step: "Install" }] },
+    expect(targetConfigurationFrom({ specController: { notChecks: ["nightly.yml:ci:Install dependencies"] } }, ciRead)).toEqual({
+      configuration: { ...NONE, nonChecks: [{ workflow: "nightly.yml", job: "ci", step: "Install dependencies" }] },
       errors: [],
     });
   });
 });
 
-describe("a configuration setting balance cannot use will be left out", () => {
+describe("balance leaves out a configuration setting it cannot use, naming the error", () => {
   it.each([
     ["CLM-CFG-004", '"unit": 3 under runners', { runners: { unit: 3 } }, { kind: "configuration-wrong-kind", entry: "runners.unit" }],
     ["CLM-CFG-003", '"unittest": "vitest" under runners', { runners: { unittest: "vitest" } }, { kind: "runner-key-not-a-layer", entry: "runners.unittest" }],
@@ -85,7 +85,7 @@ describe("a configuration setting balance cannot use will be left out", () => {
     ],
     ["CLM-CFG-019", '"notChecks": "Install"', { notChecks: "Install" }, { kind: "configuration-wrong-kind", entry: "notChecks" }],
     ["CLM-CFG-020", "3 in deferralTags", { deferralTags: [3] }, { kind: "configuration-wrong-kind", entry: "deferralTags[0]" }],
-  ] as const)("[%s] a specController block with %s leaves it out, with its error", (_clm, _setting, block, error) => {
+  ] as const)("[%s] a specController block with %s leaves it out, finding its error naming the setting", (_clm, _setting, block, error) => {
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
     expect(targetConfigurationFrom({ specController: block }, ciRead)).toEqual({ configuration: NONE, errors: [error] });
