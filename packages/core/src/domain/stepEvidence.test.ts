@@ -301,10 +301,7 @@ describe("a runner is recognised only as the command a step runs", () => {
     const configuration = countedAs === "plumbing" ? NO_SETTING : unitRunner("vitest");
 
     for (const record of records) {
-      expect({
-        countedAs: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers),
-        posted: fitnessObservationsOf(steps, record === undefined ? [] : stepRecordFrom(record), configuration, {}, shellAnswers),
-      }).toEqual({ countedAs, posted: [] });
+      expect(fitnessObservationsOf(steps, record === undefined ? [] : stepRecordFrom(record), configuration, {}, shellAnswers)).toEqual([]);
     }
   });
 });

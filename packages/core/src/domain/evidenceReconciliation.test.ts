@@ -7,7 +7,7 @@ import { claimCodeErrorsOf } from "./claimCodes.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
 import { runVerdictOf, stepAccountOf, totalsOf } from "./evidenceReconciliation.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
-import { stepDispositionOf, type EvidenceObservation, type Result } from "./postEvidenceObservation.js";
+import { stepDispositionOf, type EvidenceObservation, type Result, type StepRecordEntryAsWritten } from "./postEvidenceObservation.js";
 
 // Evidence as a row gives it: its kind, its result, and the code it cites, such as ONE-001, if any.
 type Observed = readonly [EvidenceObservation["kind"], Result, string?];
@@ -209,27 +209,26 @@ describe("a claim code in a scenario's title, with punctuation stuck to its end,
 });
 
 describe("balance accounts for every step it reads", () => {
-  // Two jobs, in one workflow or of one name in two: each a row of its own.
-  const disposed = (steps: ReturnType<typeof workflowStepsFrom>, install: { readonly workflow: string; readonly job: string }) =>
-    steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [{ ...install, step: "Install" }], deferralTags: [] }, {}, shellAnswers) }));
+  // Steps disposed of under a configuration whose one non-check is the Install step of the job given.
+  const disposed = (steps: ReturnType<typeof workflowStepsFrom>, install: { readonly workflow: string; readonly job: string }, runners: Readonly<Record<string, string>> = {}, record: readonly StepRecordEntryAsWritten[] = []) =>
+    steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners, nonChecks: [{ ...install, step: "Install" }], deferralTags: [] }, {}, shellAnswers, record) }));
   const BUILD = [{ uses: "actions/checkout@v4" }, { run: "pnpm lint" }, { run: "spec-controller balance" }];
   const INSTALL = [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }];
   const twoJobs = () => disposed(workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: BUILD }, test: { steps: INSTALL } } })), { workflow: "ci.yml", job: "test" });
-  const twoJobsOfOneName = () =>
-    disposed(
-      [...workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: BUILD } } })), ...workflowStepsFrom("nightly.yml", JSON.stringify({ jobs: { build: { steps: INSTALL } } }))],
-      { workflow: "nightly.yml", job: "build" },
-    );
+
+  // A Vitest step whose id is a claim code the step record does not hold, which runs a runner and is counted as one.
+  const UNIT = { id: "CLM-ONE-001", run: "vitest run" };
 
   it.each([
-    ["in one workflow", twoJobs],
-    ["of one name, in two workflows", twoJobsOfOneName],
-  ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, read) => {
-    const { jobs } = stepAccountOf(read());
+    ["in one workflow, with no step record", ["ci.yml", "ci.yml"], ["build", "test"], []],
+    ["of one name, in two workflows, with a step record of another step", ["ci.yml", "nightly.yml"], ["build", "build"], [{ key: "lint", outcome: "success", conclusion: "success" }]],
+  ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, [first, second], [build, test], record) => {
+    const steps = [...workflowStepsFrom(first, JSON.stringify({ jobs: { [build]: { steps: [...BUILD, UNIT] } } })), ...workflowStepsFrom(second, JSON.stringify({ jobs: { [test]: { steps: INSTALL } } }))];
+    const { jobs } = stepAccountOf(disposed(steps, { workflow: second, job: test }, { unit: "vitest" }, record));
 
-    expect(jobs.map(({ stepsRead, runners, reconcilerSteps, nonChecks, plumbing, fitnessFunctions }) => ({ stepsRead, sum: runners + reconcilerSteps + nonChecks + plumbing + fitnessFunctions }))).toEqual([
-      { stepsRead: 3, sum: 3 },
-      { stepsRead: 2, sum: 2 },
+    expect(jobs.map(({ workflow: _workflow, job: _job, ...counts }) => counts)).toEqual([
+      { stepsRead: 4, runners: 1, reconcilerSteps: 1, nonChecks: 0, plumbing: 1, fitnessFunctions: 1 },
+      { stepsRead: 2, runners: 0, reconcilerSteps: 0, nonChecks: 1, plumbing: 0, fitnessFunctions: 1 },
     ]);
   });
 
