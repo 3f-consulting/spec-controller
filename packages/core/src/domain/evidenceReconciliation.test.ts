@@ -123,6 +123,7 @@ describe("Total of the Quality Check Reconciliations, by kind of quality check a
     ],
     ["CLM-EVR-062", "a passing unit test citing no code", [], [["unit", "passed"]], "unit", { obligations: 0, observations: 1, outcomes: { "cites-no-claim": 1 } }],
     ["CLM-EVR-063", "a scenario with a code and no kind-of-quality-check tag", ["@CLM-ONE-001"], [], "no kind", { obligations: 0, observations: 0, outcomes: { "no-quality-check": 1 } }],
+    ["CLM-EVR-064", "a scenario with no code and no kind-of-quality-check tag", ["@other"], [], "no kind", { obligations: 0, observations: 0, outcomes: { "no-claim-code": 1 } }],
   ] as const)("[%s] a run with %s has its counts for that kind", (_clm, _what, scenarios, observed, kind, counts) => {
     const { byKind, noKind } = totalsOfRun(scenarios.length === 0 ? [] : [scenariosTagged(...scenarios)], observed).qualityCheckReconciliations;
     const row = kind === "no kind" ? noKind : byKind.find((counted) => counted.kind === kind)!;
