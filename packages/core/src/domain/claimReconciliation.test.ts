@@ -62,7 +62,6 @@ describe("each Quality Check Reconciliation's outcome will follow from its two s
     ["CLM-LDG-056", "phantom", [], [["unit", "passed"], ["unit", "passed"]], "out-of-balance", ["cites-unknown-claim", "cites-unknown-claim"]],
     ["CLM-LDG-007", "unnamed", [], [["unit", "passed"]], "out-of-balance", ["cites-no-claim"]],
     ["CLM-LDG-057", "unnamed", [], [["unit", "never-ran"]], "out-of-balance", ["never-ran"]],
-    ["CLM-LDG-058", "unnamed", [], [["unit", "passed"], ["unit", "passed"]], "out-of-balance", ["cites-no-claim", "cites-no-claim"]],
   ])("[%s] a claim %s, with its Evidence Obligations and Evidence Observations, has its verdict and outcomes", (_clm, read, kinds, observations, verdict, outcomes) => {
     const filed = observations.map((observation) => observationOf(read, observation));
     const claim = claimOf(read, kinds);

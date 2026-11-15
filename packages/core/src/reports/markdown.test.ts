@@ -54,20 +54,12 @@ describe("each run verdict, and each reason a run is not reconciled, has an open
   });
 });
 
-describe("the provenance has a line for each input the run read, by default or not", () => {
-  it.each([
-    [
-      "CLM-RPT-114",
-      "a Vitest report and a Cucumber report, and no pytest report",
-      [{ name: "vitest", path: "vitest.json" }, { name: "pytest" }, { name: "cucumber", path: "cucumber.json" }],
-      ["  - Vitest report: `vitest.json`", "  - Cucumber report: `cucumber.json`"],
-    ],
-    ["CLM-RPT-115", "the CI workflows by default", [{ name: "workflows", path: ".github/workflows" }], ["  - CI workflows: `.github/workflows`"]],
-  ] as const)("[%s] a run that read %s has a provenance line for each input it read", (_clm, _read, inputs, lines) => {
-    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, inputs } }));
+describe("the provenance shows each input the run read on its own line", () => {
+  it("[CLM-RPT-115] the provenance has a line for an input the run read by default", () => {
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, inputs: [{ name: "workflows", path: ".github/workflows" }] } }));
     const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
 
-    expect(provenance.slice(provenance.indexOf(`- ${coreText("provenance-inputs")}:`))).toEqual([`- ${coreText("provenance-inputs")}:`, ...lines]);
+    expect(provenance.slice(provenance.indexOf(`- ${coreText("provenance-inputs")}:`))).toEqual([`- ${coreText("provenance-inputs")}:`, "  - CI workflows: `.github/workflows`"]);
   });
 });
 

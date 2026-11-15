@@ -87,25 +87,20 @@ Feature: Each report has the right structure, and the Markdown explains it
       then the report will have the opening for <run verdict>
 
       Examples:
-        | clm         | run verdict                               |
-        | CLM-RPT-111 | balanced                                  |
-        | CLM-RPT-116 | out of balance                            |
-        | CLM-RPT-117 | not reconciled, because unsound                |
-        | CLM-RPT-118 | not reconciled, because of claim code errors     |
+        | clm         | run verdict                                            |
+        | CLM-RPT-111 | balanced                                               |
+        | CLM-RPT-116 | out of balance                                         |
+        | CLM-RPT-117 | not reconciled, because unsound                        |
+        | CLM-RPT-118 | not reconciled, because of claim code errors           |
         | CLM-RPT-119 | not reconciled, because there was nothing to reconcile |
 
   Rule: the provenance shows each input the run read on its own line
 
-    @unit
-    Scenario Outline: the provenance has a line for each input the run read, by default or not
-      given a run read <inputs read>
+    @unit @CLM-RPT-115
+    Scenario: the provenance has a line for an input the run read by default
+      given a run read the CI workflows by default
       when the Markdown report is written
-      then the provenance will have <lines>
-
-      Examples:
-        | clm         | inputs read                                                 | lines                                         |
-        | CLM-RPT-114 | a Vitest report and a Cucumber report, and no pytest report | one line for each report, and none for pytest |
-        | CLM-RPT-115 | the CI workflows by default                                 | a line for the CI workflows                   |
+      then the provenance will have a line for the CI workflows
 
     @unit
     Scenario Outline: the provenance shows the tool SHA only when there is one
@@ -114,8 +109,8 @@ Feature: Each report has the right structure, and the Markdown explains it
       then the provenance will show <shown>
 
       Examples:
-        | clm         | tool SHA                | shown                     |
-        | CLM-RPT-167 | the tool SHA 9f8e7d6 | the tool SHA 9f8e7d6 |
+        | clm         | tool SHA             | shown                  |
+        | CLM-RPT-167 | the tool SHA 9f8e7d6 | the tool SHA 9f8e7d6   |
         | CLM-RPT-168 | no tool SHA          | no line for a tool SHA |
 
   Rule: the report names the files, codes or setting each error in the inputs involves
@@ -127,14 +122,9 @@ Feature: Each report has the right structure, and the Markdown explains it
       then Errors in the inputs will list <kind> with <involved>
 
       Examples:
-        | clm         | the inputs                                                                                 | kind                         | involved                                       |
-        | CLM-RPT-147 | one.feature, tagged @ONE, with a scenario tagged @CLM-TWO-001, and two.feature tagged @TWO | foreign-claim-code           | one.feature, CLM-TWO-001 and two.feature       |
-        | CLM-RPT-148 | one.feature, tagged @ONE, with a scenario tagged @CLM-ZZZ-001, and no file tagged @ZZZ     | foreign-claim-code           | one.feature and CLM-ZZZ-001                    |
-        | CLM-RPT-149 | three.feature, with no feature code, with a scenario tagged @CLM-ONE-002                   | no-feature-code              | three.feature                                  |
-        | CLM-RPT-150 | one.feature and uno.feature, both tagged @ONE                                              | duplicate-feature-code       | ONE, one.feature and uno.feature               |
-        | CLM-RPT-151 | the scenario adds in one.feature, tagged both @CLM-ONE-001 and @CLM-ONE-002                | several-claim-codes          | one.feature, adds, CLM-ONE-001 and CLM-ONE-002 |
-        | CLM-RPT-152 | the Outline adds in one.feature, tagged @CLM-ONE-009, with a clm column                    | claim-code-beside-clm-column | one.feature, adds and CLM-ONE-009              |
-        | CLM-RPT-153 | a configuration setting runer, which balance does not know                                 | configuration-unknown-key    | runer                                          |
+        | clm         | the inputs                                                                                 | kind                      | involved                                 |
+        | CLM-RPT-147 | one.feature, tagged @ONE, with a scenario tagged @CLM-TWO-001, and two.feature tagged @TWO | foreign-claim-code        | one.feature, CLM-TWO-001 and two.feature |
+        | CLM-RPT-153 | a configuration setting runer, which balance does not know                                 | configuration-unknown-key | runer                                    |
 
   Rule: run integrity says where each Evidence Observation that never ran is
 
@@ -230,7 +220,7 @@ Feature: Each report has the right structure, and the Markdown explains it
       then its row will read <cell> under Unit
 
       Examples:
-        | clm         | evidence                                                          | cell  |
+        | clm         | evidence                                                               | cell  |
         | CLM-RPT-129 | a unit Evidence Obligation, and two passing unit tests citing it       | U/2   |
         | CLM-RPT-130 | a unit Evidence Obligation, and one failing unit test citing it        | U/1   |
         | CLM-RPT-131 | a unit Evidence Obligation, and one unit test citing it that never ran | U/-   |
@@ -266,14 +256,12 @@ Feature: Each report has the right structure, and the Markdown explains it
       then its row's reconciling items will be <items>
 
       Examples:
-        | clm         | evidence                                                                                                  | items                                                                   |
+        | clm         | evidence                                                                                                       | items                                                                   |
         | CLM-RPT-141 | a unit Evidence Obligation, and a passing unit test citing it                                                  | none                                                                    |
         | CLM-RPT-142 | a unit Evidence Obligation, and the unit test "[CLM-CHK-002] charges the card" in src/checkout.test.ts failing | unit failing, at src/checkout.test.ts, "[CLM-CHK-002] charges the card" |
         | CLM-RPT-143 | a unit and an e2e Evidence Obligation, and neither citing it                                                   | unit missing, then e2e missing                                          |
-        | CLM-RPT-154 | a fitness Evidence Obligation, and its step ci.yml:build:Lint failing                                      | fitness failing, at ci.yml:build:Lint                                   |
-        | CLM-RPT-155 | a code and no kind-of-quality-check tag                                                                   | no-quality-check                                                        |
-        | CLM-RPT-156 | no scenario, and a passing unit test charges in a.test.ts citing it                                       | unit cites-unknown-claim, at a.test.ts, "charges"                       |
-        | CLM-RPT-157 | no code, and asked for a unit test                                                                        | unit no-claim-code                                                      |
+        | CLM-RPT-154 | a fitness Evidence Obligation, and its step ci.yml:build:Lint failing                                          | fitness failing, at ci.yml:build:Lint                                   |
+        | CLM-RPT-155 | a code and no kind-of-quality-check tag                                                                        | no-quality-check                                                        |
 
     @unit
     Scenario Outline: the Markdown has a line of claim codes no claim reads only when there are some

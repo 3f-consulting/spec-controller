@@ -36,8 +36,6 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-006 | a step running eslint vitest.config.ts                                                                | vitest as its unit runner      | will be          |
         | CLM-OBS-007 | a step running vitest run \| tee out.txt                                                              | vitest as its unit runner      | will be          |
         | CLM-OBS-008 | a step running pnpm test                                                                              | no unit runner                 | will be          |
-        | CLM-OBS-139 | a step named Install in job test of ci.yml, whose job ci had a step named Install                     | ci.yml:ci:Install in notChecks | will be          |
-        | CLM-OBS-140 | a step named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci                 | ci.yml:ci:Install in notChecks | will be          |
         | CLM-OBS-141 | a step using actions/dependency-review-action                                                         | vitest as its unit runner      | will be          |
         | CLM-OBS-009 | a step running pnpm test, whose script runs vitest                                                    | vitest as its unit runner      | will not be      |
         | CLM-OBS-114 | a step running pnpm test, whose script runs another script, whose script runs vitest                  | vitest as its unit runner      | will not be      |

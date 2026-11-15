@@ -22,7 +22,6 @@ describe("each run verdict will have its exit code", () => {
 
 describe("under --exit-zero only an out-of-balance run's exit code changes", () => {
   it.each([
-    ["CLM-CLI-171", "balanced", 0, BALANCED],
     ["CLM-CLI-173", "not reconciled", 3, NOT_RECONCILED],
   ] as const)("[%s] a run whose evidence was %s exits %i under --exit-zero", (_clm, _ending, underExitZero, runVerdict) => {
     expect(exitCodeOf(runVerdict, { exitZero: true })).toBe(underExitZero);

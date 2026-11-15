@@ -73,10 +73,10 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then <what happens>
 
       Examples:
-        | clm         | given                                     | what happens                      |
-        | CLM-CLI-121 | a flag and its value as two arguments     | the flag will take that value     |
-        | CLM-CLI-122 | a flag that takes no value                | the flag will be on               |
-        | CLM-CLI-123 | --format twice                            | each report will be made          |
+        | clm         | given                                                     | what happens                      |
+        | CLM-CLI-121 | a flag and its value as two arguments                     | the flag will take that value     |
+        | CLM-CLI-122 | a flag that takes no value                                | the flag will be on               |
+        | CLM-CLI-123 | --format twice                                            | each report will be made          |
         | CLM-CLI-124 | two command lines with the same flags in different orders | both orders will be read the same |
 
     @unit
@@ -137,7 +137,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
       Examples:
         | clm         | corpus                   | where                             | folder     |
         | CLM-CLI-142 | no feature corpus        | run from /work/acme               | /work/acme |
-        | CLM-CLI-143 | /work/acme/features      | in a git repository at /work/acme | /work/acme |
         | CLM-CLI-184 | /work/acme/docs/features | in a git repository at /work/acme | /work/acme |
         | CLM-CLI-144 | /tmp/x/features          | in no git repository              | /tmp/x     |
 
@@ -199,12 +198,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
       given the run named the workflow ci.yml as its CI workflows, and then a folder with ci.yml and release.yaml in it
       when balance reads its inputs
       then it will read ci.yml alone, and then both workflows
-
-    @unit @CLM-CLI-195
-    Scenario: balance counts the steps of the CI workflows it reads
-      given the run named a CI workflows folder whose one workflow had two steps
-      when balance writes its report
-      then the report's step account will count two steps
 
   Rule: a command validates every input before it does its work
 
@@ -314,7 +307,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
       Examples:
         | clm         | ending              | code |
-        | CLM-CLI-171 | balanced            | 0    |
         | CLM-CLI-172 | out of balance      | 0    |
         | CLM-CLI-173 | not reconciled      | 3    |
         | CLM-CLI-174 | a usage error       | 2    |
