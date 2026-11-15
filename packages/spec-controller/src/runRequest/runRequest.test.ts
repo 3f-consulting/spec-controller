@@ -36,7 +36,7 @@ describe("a flag the command takes will take effect", () => {
     ]);
   });
 
-  it("[CLM-CLI-124] a command's flags in two different orders are read the same", () => {
+  it("[CLM-CLI-124] two command lines with the same flags in different orders are read the same", () => {
     expect(balanceRequested(["--strict", "--features", "specs", "--target", "acme"])).toEqual(balanceRequested(["--target", "acme", "--features", "specs", "--strict"]));
   });
 });

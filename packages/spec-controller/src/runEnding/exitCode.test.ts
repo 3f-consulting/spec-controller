@@ -20,15 +20,15 @@ describe("each run verdict will have its exit code", () => {
   });
 });
 
-describe("under --exit-zero only an out-of-balance run will exit 0 instead of its code", () => {
+describe("under --exit-zero only an out-of-balance run's exit code changes", () => {
   it.each([
     ["CLM-CLI-171", "balanced", 0, BALANCED],
     ["CLM-CLI-173", "not reconciled", 3, NOT_RECONCILED],
-  ] as const)("[%s] a run %s exits %i under --exit-zero", (_clm, _ending, underExitZero, runVerdict) => {
+  ] as const)("[%s] a run whose evidence was %s exits %i under --exit-zero", (_clm, _ending, underExitZero, runVerdict) => {
     expect(exitCodeOf(runVerdict, { exitZero: true })).toBe(underExitZero);
   });
 
-  it("[CLM-CLI-172] balance run again under --exit-zero exits 0 where it was out of balance at 1", () => {
+  it("[CLM-CLI-172] balance run under --exit-zero exits 0 where its evidence was out of balance", () => {
     const folder = temporaryDirectory("exit-zero-");
     mkdirSync(join(folder, "features"));
     writeFileSync(join(folder, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n");
@@ -42,7 +42,7 @@ describe("under --exit-zero only an out-of-balance run will exit 0 instead of it
   it.each([
     ["CLM-CLI-174", "a usage error", ["balance", "--exit-zero", "--bogus"], 2, false],
     ["CLM-CLI-175", "an unexpected error", ["balance", "--exit-zero"], 4, true],
-  ] as const)("[%s] a run ending on %s keeps its exit code under --exit-zero", (_clm, _ending, args, exitCode, unexpected) => {
+  ] as const)("[%s] a run whose evidence was %s keeps its exit code under --exit-zero", (_clm, _ending, args, exitCode, unexpected) => {
     const quiet = { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } };
     const failing = {
       balance: () => {

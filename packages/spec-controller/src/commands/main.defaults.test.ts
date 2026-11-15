@@ -38,7 +38,7 @@ describe("balance will use the default when an input is not named", () => {
   });
 });
 
-describe("balance works out the target's folder", () => {
+describe("the target's folder will be the git repository the corpus is in, or else the corpus's parent folder", () => {
   it.each([
     ["by its own path", (top: string) => top],
     [

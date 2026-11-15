@@ -90,7 +90,7 @@ describe("each run verdict will have its exit code", () => {
 });
 
 describe("a default that cannot be read will stop the run", () => {
-  it("[CLM-CLI-145] balance run from the command line in a working directory that has been removed: no verdict, exit 2, and a complaint naming the corpus read by default and what is wrong", async () => {
+  it("[CLM-CLI-145] balance run from the command line in a working directory that has been removed: the run stops, no verdict, exit 2, and a complaint naming the corpus read by default and what is wrong", async () => {
     const removed = join(temporaryDirectory("removed-"), "work");
     mkdirSync(join(removed, "features"), { recursive: true });
     rmSync(removed, { recursive: true });
@@ -103,8 +103,8 @@ describe("a default that cannot be read will stop the run", () => {
   });
 });
 
-describe("the run will give no verdict, and will exit 4", () => {
-  it("[CLM-CLI-179] an error while the program loads, run from the command line: no verdict, exit 4, and a complaint with the error", async () => {
+describe("an unexpected error will stop the run with no verdict and exit 4, naming the error", () => {
+  it("[CLM-CLI-179] an error while the program loads, run from the command line: the run stops, no verdict, exit 4, and a complaint with the error", async () => {
     // A module whose evaluation throws, met as the bin reads what it exports.
     vi.doMock("./main.js", () => ({
       get main(): never {
@@ -126,7 +126,7 @@ describe("an unexpected error after the run verdict will leave its exit code alo
   it.each([
     ["an error nothing caught", (run: BinRun) => run.uncaught],
     ["a rejection nothing handled", (run: BinRun) => run.rejected],
-  ] as const)("[CLM-CLI-181] a run out of balance, run from the command line, that met %s afterwards exits 1, its verdict's code", async (_error, guard) => {
+  ] as const)("[CLM-CLI-181] a run out of balance, run from the command line, that meets %s afterwards exits 1, its verdict's code", async (_error, guard) => {
     const run = await binRun(["balance"], folderOutOfBalance());
 
     guard(run)(new Error("after the verdict"));
@@ -136,7 +136,7 @@ describe("an unexpected error after the run verdict will leave its exit code alo
 });
 
 describe("a run will complain about only one unexpected error", () => {
-  it("[CLM-CLI-182] a run from the command line whose report could not be written, and that met an error nothing caught afterwards, complains about one of them", async () => {
+  it("[CLM-CLI-182] a run from the command line whose report could not be written, and that meets an error nothing caught afterwards, complains about only one of them", async () => {
     const run = await binRun(["balance"], folderOutOfBalance(), () => {
       throw new Error("the report could not be written");
     });

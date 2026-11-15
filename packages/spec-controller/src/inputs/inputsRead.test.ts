@@ -65,7 +65,7 @@ describe("an input read by default that does not exist will count as none, not a
 });
 
 describe("balance reads the one workflow a CI workflows path names, or every workflow in the folder it names", () => {
-  it("[CLM-CLI-193] the workflow ci.yml, then a folder holding ci.yml and release.yaml beside its README and a folder of templates: it reads ci.yml alone, then both", () => {
+  it("[CLM-CLI-193] the workflow ci.yml, then a folder with ci.yml and release.yaml beside its README and a folder of templates: it reads ci.yml alone, then both", () => {
     const folder = temporaryDirectory("workflows-");
     mkdirSync(join(folder, "workflows", "templates"), { recursive: true });
     writeFileSync(join(folder, "workflows", "ci.yml"), "jobs:\n  ci:\n    steps:\n      - run: echo ci\n");
