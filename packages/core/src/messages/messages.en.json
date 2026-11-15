@@ -29,7 +29,7 @@
   "step-account-reconciler-steps": "Reconciler steps",
   "step-account-non-checks": "Non-checks",
   "step-account-plumbing": "Plumbing",
-  "step-account-fitness-functions": "Fitness functions",
+  "step-account-candidates": "Candidates",
   "step-account-total": "Total",
   "report-title": "Evidence Reconciliation",
   "errors-heading": "Errors in the inputs",
@@ -115,7 +115,7 @@
   "step-account-reconciler-steps-key": "steps that run this reconciliation or write the step record it reads.",
   "step-account-non-checks-key": "steps the target names under specController.notChecks, other than reconciler steps.",
   "step-account-plumbing-key": "steps that only set up the job with one of GitHub's own actions: checking out, caching, moving artefacts or setting up a toolchain.",
-  "step-account-fitness-functions-key": "every other step, each read as a fitness function.",
+  "step-account-candidates-key": "every other step, each read as a fitness function.",
   "claim-column-key": "the claim: its claim code; its code and file when another claim shares the code; its file and title when it has no code.",
   "kind-column-fitness-key": "F when the claim asks for a fitness function, - when it does not; then how many of its fitness functions ran, - for none.",
   "kind-column-unit-key": "U when the claim asks for a unit test, - when it does not; then how many of its unit tests ran, - for none. U/2 is a unit test asked for and two that ran.",
@@ -130,5 +130,6 @@
   "claims-dash-key": "under a kind, the row of a phantom claim or the unnamed claim, which asks for nothing; under Reconciling items, none.",
   "claims-unnamed-row": "On the unnamed claim's row",
   "claims-unnamed-row-key": "each reconciling item is a group of its tests by kind, file and shared claim code, with how many ran, passed and failed, and the name of each that failed.",
+  "configuration-block-not-an-object": "the specController block in the package manifest is not an object, so none of its settings can be read",
   "step-names-neither-action-nor-command": "the step at {place} names neither an action nor a command, so GitHub would not run its workflow"
 }

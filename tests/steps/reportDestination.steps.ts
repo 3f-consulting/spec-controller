@@ -81,6 +81,11 @@ Then("each file will contain its own report", function (this: ReportRun) {
   assert.ok(isJsonReport(readFileSync(`${this.file}.json`, "utf8")));
 });
 
+Then("both reports will be on standard error, one after the other", function (this: ReportRun) {
+  assert.ok(this.error.startsWith(MARKDOWN_TITLE), this.error);
+  assert.ok(isJsonReport(this.error.slice(this.error.indexOf("\n{") + 1)), this.error);
+});
+
 Then("the run will stop, give no verdict and exit 2", function (this: ReportRun) {
   assert.equal(this.status, 2);
   assert.equal(this.output, "");

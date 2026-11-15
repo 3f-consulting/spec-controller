@@ -1,5 +1,6 @@
 export type InputFault =
   | "absent"
+  | "default-unreadable"
   | "not-permitted"
   | "wrong-kind-of-path"
   | "does-not-parse"

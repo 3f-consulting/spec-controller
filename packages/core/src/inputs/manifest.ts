@@ -1,5 +1,6 @@
 import { targetConfigurationOf, type ConfigurationError, type SettingSpellings, type TargetConfiguration } from "../domain/configuration.js";
 import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
+import { coreText } from "../messages/catalogue.js";
 import { isRecord, whereShapeBreaks } from "./shape.js";
 
 // A step as notChecks writes it: its workflow, which ends .yml and may hold a colon, its job, and its step.
@@ -17,16 +18,17 @@ const settingSpellings: SettingSpellings = {
   },
 };
 
-// A manifest is a record of fields, its specController block, if it has one, a record of settings; what each setting
-// holds is its own reader's to say.
-export const whereManifestBreaks = (manifest: unknown): string | undefined =>
-  whereShapeBreaks(manifest, { fields: { specController: { fields: {} } }, optional: ["specController"] });
+// A manifest is a record of fields; what each holds is its own reader's to say.
+export const whereManifestBreaks = (manifest: unknown): string | undefined => whereShapeBreaks(manifest, { fields: {} });
 
 export function targetConfigurationFrom(
   manifest: unknown,
   steps: readonly WorkflowStepAsWritten[],
 ): { readonly configuration: TargetConfiguration; readonly errors: readonly ConfigurationError[] } {
-  return targetConfigurationOf(isRecord(manifest) ? manifest.specController : undefined, steps, settingSpellings);
+  const block = isRecord(manifest) ? manifest.specController : undefined;
+  // A block that is not an object is no setting at all, and stops the run.
+  if (block !== undefined && !isRecord(block)) throw new TypeError(coreText("configuration-block-not-an-object"));
+  return targetConfigurationOf(block, steps, settingSpellings);
 }
 
 // The scripts a manifest names, each as the command it runs.

@@ -5,18 +5,18 @@ Feature: a message catalogue gives back the text for a code
   Each package has one.
 
   Asked for the text under a message code, with any values to fill in, the catalogue gives back
-  that text. A text its values cannot fill never stops a run: what comes back names the code and
-  its values instead.
+  that text. A mistake in a catalogue never stops a run: what comes back names the code and its
+  values instead.
 
   Rule: a code that takes no values gives back its text unchanged
 
     @unit @CLM-MSG-008
-    Scenario: no-features gives back "No feature files were found."
+    Scenario: the text for a code will be its text, unchanged
       given the catalogue had the text "No feature files were found." under the code no-features
       when the text for no-features is retrieved
       then the text will be "No feature files were found."
 
-  Rule: a code that takes values gives back its text with each gap filled, or else the code and its values
+  Rule: a code that takes values gives back its text with each gap filled in
 
     @unit
     Scenario Outline: each value will fill its gap in the text
@@ -32,15 +32,37 @@ Feature: a message catalogue gives back the text for a code
         | CLM-MSG-018 | {format} is not {format}.              | format html                         | html is not html.                  |
         | CLM-MSG-019 | The format {format} is not written.    | format {other}                      | The format {other} is not written. |
         | CLM-MSG-020 | The format {format} is not written.    | format it's                         | The format it's is not written.    |
+        | CLM-MSG-021 | The format {format} is not written.    | an empty format                     | The format  is not written.        |
+        | CLM-MSG-022 | No format was written.                 | format html                         | No format was written.             |
 
-    @unit @CLM-MSG-023
-    Scenario: a text with a gap no value names will give back the code and its values
-      given the catalogue had "The format {colour} is not written." under the code unknown-format
+  Rule: a mistake in a catalogue gives back the code and its values
+
+    @unit
+    Scenario Outline: a code with no usable text will give back the code
+      given the catalogue had <entry> under the code no-features
+      when the text for no-features is retrieved
+      then the text will be "no-features"
+
+      Examples:
+        | clm         | entry                                    |
+        | CLM-MSG-002 | no text                                  |
+        | CLM-MSG-004 | a blank text                             |
+        | CLM-MSG-007 | the text "No feature {files were found." |
+
+    @unit
+    Scenario Outline: a text the values cannot fill will give back the code and its values
+      given the catalogue had <entry> under the code unknown-format
       when the text for unknown-format is retrieved with format html
       then the text will be "unknown-format (format: html)"
 
+      Examples:
+        | clm         | entry                                         |
+        | CLM-MSG-023 | no text                                       |
+        | CLM-MSG-005 | the text "The format {name} is not written."  |
+        | CLM-MSG-024 | the text "The format {format is not written." |
+
     @unit @CLM-MSG-025
-    Scenario: the catalogue gives back the code and its values for a null value
+    Scenario: a value of null will give back the code and its values
       given the catalogue had the text "The format {format} is not written." under the code unknown-format
       when the text for unknown-format is retrieved with format null
       then the text will be "unknown-format (format: null)"

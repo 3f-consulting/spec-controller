@@ -4,12 +4,11 @@ export interface ClaimCode {
   readonly number: string;
 }
 
-// Each error's values come in the order a reader is told them.
 export type ClaimCodeError =
   | {
       readonly kind: "foreign-claim-code";
-      readonly file: string;
       readonly claimCode: ClaimCode;
+      readonly file: string;
       // The files tagged with the code's feature code: none, one, or several where the feature code is duplicated.
       readonly filesWithItsFeatureCode: readonly string[];
     }
@@ -126,7 +125,7 @@ function misfiledCodes(feature: FileToCheck, filesByCode: ReadonlyMap<string, re
   if (featureCode === undefined) return carried.length === 0 ? [] : [{ kind: "no-feature-code", file: feature.file }];
   return carried
     .filter((claimCode) => claimCode.featureCode !== featureCode)
-    .map((claimCode) => ({ kind: "foreign-claim-code", file: feature.file, claimCode, filesWithItsFeatureCode: filesByCode.get(claimCode.featureCode) ?? [] }));
+    .map((claimCode) => ({ kind: "foreign-claim-code", claimCode, file: feature.file, filesWithItsFeatureCode: filesByCode.get(claimCode.featureCode) ?? [] }));
 }
 
 function codesOnOneScenario(file: string, { tags, title, examples }: ScenarioToCheck): ClaimCodeError[] {

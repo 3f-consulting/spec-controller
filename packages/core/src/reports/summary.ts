@@ -49,7 +49,7 @@ function whereFiledGroup({ evidenceObservations }: Totals): string[] {
 }
 
 function byFeatureGroup({ outOfBalanceByFeature }: Totals): string[] {
-  if (outOfBalanceByFeature.length === 0) return [];
+  if (outOfBalanceByFeature === undefined) return [];
   return group(
     "summary-by-feature",
     tableOf(

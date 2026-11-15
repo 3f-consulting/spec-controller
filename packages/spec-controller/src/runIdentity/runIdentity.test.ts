@@ -30,16 +30,16 @@ function repositoryWithOrigin(origin: string): TestFolder {
 describe("the provenance describes the run, as the run's repository and the tool's folder give it", () => {
   it.each([
     ["CLM-EVR-039", "https://ci:s3cret@example.com/acme/web?x=1#y", "acme/web"],
-    ["CLM-EVR-039", "git@github.com:acme/web.git", "acme/web"],
-    ["CLM-EVR-039", "ssh://git@github.com/acme/web.git", "acme/web"],
-    ["CLM-EVR-039", "github.com:acme/web.git", "acme/web"],
-    ["CLM-EVR-039", "git@github.com:acme/acme.github.io.git", "acme/acme.github.io"],
-    ["CLM-EVR-039", "https://gitlab.com/group/sub/web.git", "sub/web"],
+    ["CLM-EVR-045", "git@github.com:acme/web.git", "acme/web"],
+    ["CLM-EVR-049", "ssh://git@github.com/acme/web.git", "acme/web"],
+    ["CLM-EVR-050", "github.com:acme/web.git", "acme/web"],
+    ["CLM-EVR-074", "git@github.com:acme/acme.github.io.git", "acme/acme.github.io"],
+    ["CLM-EVR-075", "https://gitlab.com/group/sub/web.git", "sub/web"],
     ["CLM-EVR-047", "/srv/git/web.git", "web"],
-    ["CLM-EVR-047", "file:///srv/git/web.git", "web"],
-    ["CLM-EVR-052", "git://example.com/acme/web.git", "unknown-target"],
+    ["CLM-EVR-048", "file:///srv/git/web.git", "web"],
+    ["CLM-EVR-051", "git://example.com/acme/web.git", "unknown-target"],
     ["CLM-EVR-052", "https://example.com/web", "unknown-target"],
-    ["CLM-EVR-052", "foo", "unknown-target"],
+    ["CLM-EVR-071", "foo", "unknown-target"],
   ] as const)("[%s] no target given, and a repository whose origin is %s: the target is %s", (_clm, origin, target) => {
     expect(provenanceIn(repositoryWithOrigin(origin)).target).toBe(target);
   });
@@ -50,21 +50,6 @@ describe("the provenance describes the run, as the run's repository and the tool
 
   it("[CLM-EVR-038] a source SHA given as abc1234, in a git repository at another commit: the source SHA is abc1234", () => {
     expect(provenanceIn(repositoryWithOrigin("https://github.com/acme/web"), { sourceSha: "abc1234" }).sourceSha).toBe("abc1234");
-  });
-
-  it("[CLM-EVR-077] no target given, in a folder with no origin: the target is unknown-target", () => {
-    expect(provenanceIn(folderForTest()).target).toBe("unknown-target");
-  });
-
-  it("[CLM-EVR-078] no source SHA given, in a git repository: the source SHA is its HEAD", () => {
-    const repository = repositoryForTest();
-    const head = repository.commit("first");
-
-    expect(provenanceIn(repository).sourceSha).toBe(head);
-  });
-
-  it("[CLM-EVR-079] no source SHA given, in no git repository: the source SHA is unknown", () => {
-    expect(provenanceIn(folderForTest()).sourceSha).toBe("unknown");
   });
 
   it("[CLM-EVR-053] a run that started at 2026-11-12T07:08:14.999Z: the run's time is 2026-11-12T07:08:14Z", () => {

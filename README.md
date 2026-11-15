@@ -147,7 +147,7 @@ Here is part of the report for a larger set of scenarios, with a CI pipeline: th
 
 ## Step account
 
-| Workflow | Job | Steps read | Runners | Reconciler steps | Non-checks | Plumbing | Fitness functions |
+| Workflow | Job | Steps read | Runners | Reconciler steps | Non-checks | Plumbing | Candidates |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | ci.yml | build | 7 | 1 | 2 | 1 | 1 | 2 |
 
@@ -177,7 +177,7 @@ Read it as double entry. Each claim is an account: its tags are what it is owed,
 
 The two claims with an `F` are CI checks: a complexity limit that passes, and a lint step that failed. A check is reconciled the same way as a test: its scenario is owed one, and the step's result, read from the run's step record, is the evidence. A scenario tagged `@unit @e2e` is owed both, and balances only when a unit test and an end-to-end run each arrive and pass. No single test runner can see that.
 
-The **Step account** says what became of every CI step the run read. In this sample, the seven steps are: the test runner's step; the two steps that are the reconciler's own; the install, named a non-check; GitHub's checkout action, counted as plumbing; and the two checks, counted as fitness functions.
+The **Step account** says what became of every CI step the run read. In this sample, the seven steps are: the test runner's step; the two steps that are the reconciler's own; the install, named a non-check; GitHub's checkout action, counted as plumbing; and the two checks, counted as candidates.
 
 The report uses these exact terms:
 

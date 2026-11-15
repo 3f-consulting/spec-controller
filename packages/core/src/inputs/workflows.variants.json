@@ -1,26 +1,10 @@
 {
   "CLM-OBS-013": {
     "class": "a step writing out the step record",
-    "variants": [
-      "run:",
-      "env:"
-    ]
+    "variants": ["run:", "env:"]
   },
   "CLM-OBS-015": {
     "class": "an action that only sets the job up",
-    "variants": [
-      "actions/checkout",
-      "actions/cache",
-      "actions/setup-*",
-      "actions/upload-artifact",
-      "actions/download-artifact"
-    ]
-  },
-  "CLM-OBS-081": {
-    "class": "a step's name",
-    "variants": [
-      "in words",
-      "a number"
-    ]
+    "variants": ["actions/checkout", "actions/cache", "actions/cache/restore", "actions/setup-*", "actions/upload-artifact", "actions/download-artifact"]
   }
 }

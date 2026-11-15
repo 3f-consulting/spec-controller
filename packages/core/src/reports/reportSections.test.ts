@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { QUALITY_CHECK_KINDS } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import catalogue from "../messages/messages.en.json" with { type: "json" };
+import { jsonReportOf } from "./json.js";
 import { markdownReportOf } from "./markdown.js";
 import { reconciled } from "./reconciledRun.test-utils.js";
 
@@ -47,8 +49,7 @@ const isWords = (text: string): boolean => (Object.values(catalogue) as string[]
 const inWords = (text: string): boolean => isWords(text) || (QUALITY_CHECK_KINDS as readonly string[]).includes(text) || /^`.*`$/.test(text);
 
 // Each line below the opening that is not blank, a heading, a key or a table, a labelled value, or a label over the values
-// under it: a heading, label or key not in the catalogue's words, a label with no value, a value under no label, or a line
-// with no label.
+// under it: a heading, label or key not in the catalogue's words, a label with no value, or a line with no label.
 function unlabelledOf(markdown: string): string[] {
   const lines = markdown.split("\n").slice(3);
   return lines.filter((line, at) => {
@@ -60,9 +61,7 @@ function unlabelledOf(markdown: string): string[] {
     const [, indent, label, value] = item;
     const inKey = lines.slice(0, at).reverse().find((before) => !before.startsWith("- ")) === `${coreText("key")}:`;
     if (inKey) return !isWords(label!) || !isWords(value!);
-    const over = lines.slice(0, at).reverse().find((before) => !before.startsWith(`${indent!}- `));
-    const underNoLabel = indent !== "" && !/^\s*- .+:$/.test(over ?? "");
-    return !inWords(label!) || underNoLabel || (value === undefined && !(lines[at + 1] ?? "").startsWith(`${indent!}  - `));
+    return !inWords(label!) || (value === undefined && !(lines[at + 1] ?? "").startsWith(`${indent!}  - `));
   });
 }
 
@@ -74,7 +73,7 @@ describe("each section will have its heading, each value its label, and each tab
         unitTests: [["never-ran", "ONE-001"], ["passed", "ONE-009"], ["failed"]],
         configurationErrors: [{ kind: "configuration-unknown-key", entry: "runer" }],
         stepsRead: true,
-        provenance: { toolSha: "9f8e7d6", inputs: [{ name: "features", path: "features" }, { name: "vitest", path: "vitest.json" }, { name: "cucumber" }] },
+        provenance: { toolSha: "9f8e7d6", inputs: [{ name: "vitest", path: "vitest.json" }] },
       }),
     );
     const tables = tablesOf(markdown);
@@ -99,26 +98,30 @@ describe("each section will have its heading, each value its label, and each tab
   });
 });
 
-describe("the Markdown report leaves out any part the run had nothing for", () => {
+describe("neither report will have an optional section the run had nothing for", () => {
   it.each([
-    ["CLM-RPT-077", "errors in the inputs", "Errors in the inputs"],
-    ["CLM-RPT-021", "run integrity", "Run integrity"],
-    ["CLM-RPT-052", "step account", "Step account"],
-    ["CLM-RPT-006", "out of balance by feature", "Out of balance by feature"],
-  ] as const)("[%s] a run had nothing for %s: when its Markdown report is written, it will not have that part, nor any line in its place", (_clm, _part, heading) => {
-    const markdown = markdownReportOf(
-      reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]], provenance: { inputs: [{ name: "features", path: "features" }] } }),
-    );
+    ["CLM-RPT-077", "errors in the inputs", "Errors in the inputs", "errorsInTheInputs"],
+    ["CLM-RPT-021", "run integrity", "Run integrity", "runIntegrity"],
+    ["CLM-RPT-052", "step accounting", "Step account", "stepAccount"],
+    ["CLM-RPT-006", "out of balance by feature", "Out of balance by feature", "outOfBalanceByFeature"],
+  ] as const)("[%s] a run with no %s has that section in neither report", (_clm, _section, heading, part) => {
+    const run = reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]] });
+    const json = JSON.parse(jsonReportOf(run)) as Record<string, unknown> & { readonly totals: Record<string, unknown> };
+    const markdown = markdownReportOf(run);
 
-    expect({ part: markdown.includes(`## ${heading}`) || markdown.includes(`### ${heading}`), inItsPlace: unlabelledOf(markdown) }).toEqual({ part: false, inItsPlace: [] });
+    expect({ markdown: markdown.includes(`## ${heading}`) || markdown.includes(`### ${heading}`), json: part in json || part in json.totals }).toEqual({ markdown: false, json: false });
   });
 });
 
-describe("the Markdown report shows its Claim Reconciliations when the run had none", () => {
-  it("[CLM-RPT-105] a run with nothing to reconcile has its Claim Reconciliations in its Markdown report, showing none", () => {
-    const markdown = markdownReportOf(reconciled({ scenarios: [], unitTests: [] }));
+describe("a report will show its Claim Reconciliations when the run had none", () => {
+  it("[CLM-RPT-105] a run with nothing to reconcile has its Claim Reconciliations in each report, showing none", () => {
+    const run = reconciled({ scenarios: [], unitTests: [] });
+    const markdown = markdownReportOf(run);
     const section = markdown.slice(markdown.indexOf("\n## Claim Reconciliations\n") + 1);
 
-    expect(section.split("\n").filter((line) => line !== "")).toEqual(["## Claim Reconciliations", coreText("claim-reconciliations-none")]);
+    expect({ markdown: section.startsWith("## Claim Reconciliations") && section.includes("None."), json: (JSON.parse(jsonReportOf(run)) as EvidenceReconciliation).claimReconciliations }).toEqual({
+      markdown: true,
+      json: [],
+    });
   });
 });
