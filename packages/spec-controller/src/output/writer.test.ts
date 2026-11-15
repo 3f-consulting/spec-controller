@@ -345,6 +345,19 @@ describe("two reports will not go in one file", () => {
     expect({ ending, complaint: error.join(""), made: existsSync(file) }).toEqual({ ending: 2, complaint: refused("outputs-share-file", { reports: `md:${file}, json:${file}` }), made: false });
   });
 
+  it("[CLM-FMT-010] one report at Report.md and the other at report.md, neither made yet, in a folder its name in capitals and in small letters both lead to: they are one file and the run stops", () => {
+    const parent = temporaryDirectory("one-new-file-by-case-");
+    mkdirSync(join(parent, "Out"));
+    // Where the volume does not fold case, links give the folder its other spellings; where it does, they are already its names.
+    ["OUT", "out"].filter((other) => !existsSync(join(parent, other))).forEach((other) => symlinkSync("Out", join(parent, other)));
+    const [upper, lower] = [join(parent, "Out", "Report.md"), join(parent, "Out", "report.md")];
+    const { error, streams } = capturedStreams();
+
+    const ending = writeReports(outputsAskedFor(["--format", `md:${upper}`, "--format", `json:${lower}`]), [], reconciliation(), streams, AS_ASKED);
+
+    expect({ ending, complaint: error.join("") }).toEqual({ ending: 2, complaint: refused("outputs-share-file", { reports: `md:${upper}, json:${lower}` }) });
+  });
+
   it("[CLM-FMT-010] one report at Report.md and the other at report.md, neither made yet: on a volume that folds case they are one file and the run stops, and on one that does not each is written", () => {
     const folder = temporaryDirectory("one-new-file-by-case-");
     // Whether the volume folds case, as the system answers for a file made and looked up by its other case.

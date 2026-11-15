@@ -28,11 +28,12 @@ export const whereItWillBe = (path: string): string =>
 
 const streamNamedBy = (path: string): NamedStream["is"] | undefined => STREAM_NAMED.get(resolve(path)) ?? STREAM_NAMED.get(whereItWillBe(path));
 
-// A volume folds case when its folder, named in capitals and in small letters, two names, is one folder.
+// A folder's volume folds case when the folder's own name, in capitals and in small letters, two names, is one folder.
 function foldsCase(folder: string): boolean {
-  const [upper, lower] = [folder.toUpperCase(), folder.toLowerCase()];
-  const [one, other] = [statSync(upper, PROBED), statSync(lower, PROBED)];
-  return upper !== lower && one !== undefined && one.dev === other?.dev && one.ino === other.ino;
+  const name = basename(folder);
+  if (name.toUpperCase() === name.toLowerCase()) return false;
+  const [upper, lower] = [name.toUpperCase(), name.toLowerCase()].map((spelled) => statSync(join(dirname(folder), spelled), PROBED));
+  return upper !== undefined && upper.dev === lower?.dev && upper.ino === lower.ino;
 }
 
 function notMadeYet(path: string): FileIdentity {
