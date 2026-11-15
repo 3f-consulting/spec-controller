@@ -10,13 +10,13 @@ Feature: You get each report in the format and place you asked for, and the run 
   The run stops before it writes anything, and so damages nothing, when:
 
   - it cannot write there, such as to a read-only file or a folder that does not exist
-  - two reports would go to the same place
+  - two reports would overwrite each other
   - a report would overwrite a file the run reads, such as your test results
 
   Rule: you get what you asked for
 
     @unit
-    Scenario Outline: you will get the report format you named
+    Scenario Outline: you will get the report format you ask for
       given a run had its report to write
       when you ask for <format>
       then you will get <report>
@@ -28,7 +28,7 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-015 | json      | the JSON report     |
 
     @unit
-    Scenario Outline: a report will be where you asked
+    Scenario Outline: a report will go where you ask
       given a run had a report to write
       when you ask for it at <destination>
       then <where it will be>
@@ -53,45 +53,20 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-004 | no destination for one, a file for the other         | one will be on standard output, and the other in the file       |
         | CLM-FMT-020 | no destination for one, standard error for the other | one will be on standard output, and the other on standard error |
         | CLM-FMT-021 | two different files                                  | each file will contain its own report                           |
-        | CLM-FMT-022 | standard error for both                              | both reports will be on standard error, one after the other     |
+
+  Rule: two reports share a place only when neither would overwrite the other
+
+    @unit @CLM-FMT-022
+    Scenario: both reports go one after the other to a place that appends
+      given a run had two reports to write
+      when you ask for both on standard error
+      then both reports will be on standard error, one after the other
 
     @unit @CLM-FMT-035
-    Scenario: two reports asked for at one device will both be written, as a device is not a file they share
+    Scenario: both reports are written to a place that discards what it is given
       given a run had two reports to write
       when you ask for both at /dev/null
       then both will be written, and the run will not stop
-
-  Rule: it stops before it damages anything
-
-    @unit
-    Scenario Outline: a place it cannot write will stop the run, and nothing will be written
-      given a run had its report to write
-      when you ask for it at <destination>
-      then the run will stop, give no verdict and exit 2
-      and it will complain, naming the place and why it cannot write there
-      and nothing will be written
-
-      Examples:
-        | clm         | destination                           |
-        | CLM-FMT-008 | a file it may not write               |
-        | CLM-FMT-026 | an existing folder                    |
-        | CLM-FMT-027 | a file in a folder that doesn't exist |
-        | CLM-FMT-034 | a link that leads round to itself     |
-
-    @unit
-    Scenario Outline: if one report cannot be written, neither will be
-      given a run had two reports to write
-      when you ask for one at a place it cannot write, and the other at <other>
-      then the run will stop, give no verdict and exit 2
-      and it will complain, naming the place and why it cannot write there
-      and <what stays>
-
-      Examples:
-        | clm         | other                         | what stays                                        |
-        | CLM-FMT-009 | no destination                | nothing will be on standard output                |
-        | CLM-FMT-028 | a file that does not exist    | the file will still not exist                     |
-        | CLM-FMT-029 | a file that already exists    | the file will be as it was                        |
-        | CLM-FMT-030 | a link to a file not yet made | the file will still not exist, and the link stays |
 
     @unit
     Scenario Outline: two reports will not both go to standard output
@@ -121,14 +96,46 @@ Feature: You get each report in the format and place you asked for, and the run 
         | CLM-FMT-024 | a link to it                            |
         | CLM-FMT-025 | standard output, redirected to the file |
 
+  Rule: it stops before it damages anything
+
+    @unit
+    Scenario Outline: a place it cannot write will stop the run, and nothing will be written
+      given a run had its report to write
+      when you ask for it at <destination>
+      then the run will stop, give no verdict and exit 2
+      and it will complain, naming the place and why it cannot write there
+      and nothing will be written
+
+      Examples:
+        | clm         | destination                           |
+        | CLM-FMT-008 | a file it may not write               |
+        | CLM-FMT-026 | an existing folder                    |
+        | CLM-FMT-027 | a file in a folder that doesn't exist |
+        | CLM-FMT-034 | a link that leads round to itself     |
+
+    @unit
+    Scenario Outline: the run writes neither report when it cannot write one
+      given a run had two reports to write
+      when you ask for one at a place it cannot write, and the other at <other>
+      then the run will stop, give no verdict and exit 2
+      and it will complain, naming the place and why it cannot write there
+      and <what stays>
+
+      Examples:
+        | clm         | other                         | what stays                                        |
+        | CLM-FMT-009 | no destination                | nothing will be on standard output                |
+        | CLM-FMT-028 | a file that does not exist    | the file will still not exist                     |
+        | CLM-FMT-029 | a file that already exists    | the file will be as it was                        |
+        | CLM-FMT-030 | a link to a file not yet made | the file will still not exist, and the link will still point there |
+
     @unit @CLM-FMT-033
-    Scenario: a report will be written to a file the run does not read, even on the same device
+    Scenario: the run writes a report to a file it does not read, even one on the same disk
       given the run read one file
-      when you ask for the report to go in another file on the same device
+      when you ask for the report to go in another file on the same disk
       then the report will be written there
 
     @unit @CLM-FMT-013
-    Scenario: a report will not be written over a file the run reads
+    Scenario: the run refuses to write a report over a file it reads
       given the run read a file, such as your test results
       when you ask for the report to go in that same file
       then the run will stop, give no verdict and exit 2

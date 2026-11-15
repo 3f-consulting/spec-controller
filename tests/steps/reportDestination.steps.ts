@@ -24,7 +24,6 @@ const ASKED: Readonly<Record<string, (file: string) => { readonly formats: reado
   "no destination for one, a file for the other": (file) => ({ formats: ["md", `json:${file}`] }),
   "no destination for one, standard error for the other": () => ({ formats: ["md", "json:/dev/stderr"] }),
   "two different files": (file) => ({ formats: [`md:${file}`, `json:${file}.json`] }),
-  "standard error for both": () => ({ formats: ["md:/dev/stderr", "json:/dev/stderr"] }),
   "a file and at the same path": (file) => ({ formats: [`md:${file}`, `json:${file}`] }),
   "a file and at a link to it": (file) => {
     symlinkSync(file, `${file}.link`);
@@ -79,11 +78,6 @@ Then("one will be on standard output, and the other on standard error", function
 Then("each file will contain its own report", function (this: ReportRun) {
   assert.ok(readFileSync(this.file, "utf8").startsWith(MARKDOWN_TITLE));
   assert.ok(isJsonReport(readFileSync(`${this.file}.json`, "utf8")));
-});
-
-Then("both reports will be on standard error, one after the other", function (this: ReportRun) {
-  assert.ok(this.error.startsWith(MARKDOWN_TITLE), this.error);
-  assert.ok(isJsonReport(this.error.slice(this.error.indexOf("\n{") + 1)), this.error);
 });
 
 Then("the run will stop, give no verdict and exit 2", function (this: ReportRun) {

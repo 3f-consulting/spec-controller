@@ -2,21 +2,27 @@
 Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its Evidence Observations
 
   balance sets a claim's Evidence Obligations against its Evidence Observations, matching them
-  on their kind of quality check. Each Quality Check Reconciliation has an outcome, such as
-  satisfied when evidence is present and passing, failing when it is present and failing, or
-  missing when it is absent.
+  on their kind of quality check. Each Quality Check Reconciliation's outcome follows from which
+  sides it has. With both, the evidence was satisfied, failing, or cannot-fail when it passed where
+  it could not have failed. With an Evidence Obligation alone, it is missing, or the claim has
+  no-claim-code or a duplicate-claim-code. With an Evidence Observation alone, it is not-asked-for,
+  cites-unknown-claim, cites-no-claim, or never-ran. With neither, the claim has no-quality-check.
 
   balance works from both sides, the Evidence Obligations and the Evidence Observations, so every
   claim, of whichever kind, has a Claim Reconciliation.
 
   A claim's verdict has two values. It is balanced when every Quality Check Reconciliation on it
-  is satisfied. Otherwise it is out of balance, and it lists every reconciling item, each typed
-  and none ranked.
+  is satisfied. Otherwise it is out of balance, and it lists every reconciling item, each with its
+  outcome.
+
+  Evidence no single executable claim can take is posted to the unnamed claim. balance groups it
+  there by kind of quality check, file and shared claim code, and counts each group. Each Claim
+  Reconciliation lists its Quality Check Reconciliations in one fixed order.
 
   Rule: a Claim Reconciliation follows from its evidence
 
     @unit
-    Scenario Outline: balance works out each Quality Check Reconciliation's outcome, and from those the verdict
+    Scenario Outline: each Quality Check Reconciliation's outcome will follow from its two sides, and the claim's verdict from those outcomes
       given there was <Evidence Obligations> under <claim code>
       and there was <Evidence Observations>
       when balance reconciles them
@@ -42,7 +48,7 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-010 | @CLM-ONE-001                            | no Evidence Obligation                        | a unit test citing it                                                | out of balance | one not-asked-for                 |
         | CLM-LDG-009 | @CLM-ONE-001                            | no Evidence Obligation                        | no test citing it                                                    | out of balance | one no-quality-check              |
         | CLM-LDG-053 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing fitness function citing it, whose step cannot fail its job | out of balance | one cannot-fail                   |
-        | CLM-LDG-021 | no code                                 | a unit Evidence Obligation                    | no test, since none can cite it                                      | out of balance | one no-claim-code                 |
+        | CLM-LDG-021 | no code                                 | a unit Evidence Obligation                    | no test                                                              | out of balance | one no-claim-code                 |
         | CLM-LDG-054 | @CLM-ONE-001, shared with another claim | a unit Evidence Obligation                    | no test citing it                                                    | out of balance | one duplicate-claim-code          |
         | CLM-LDG-077 | @CLM-ONE-001, shared with another claim | no Evidence Obligation                        | no test citing it                                                    | out of balance | one duplicate-claim-code          |
         | CLM-LDG-006 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | a unit test citing it                                                | out of balance | one cites-unknown-claim           |
@@ -58,39 +64,10 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
       when balance reconciles them
       then there will be two Claim Reconciliations under @CLM-ONE-001, one naming one.feature and "a", the other two.feature and "b"
 
-  Rule: a Claim Reconciliation sorts its Quality Check Reconciliations, so two runs over the same evidence list them in the same order
-
-    They are sorted by kind of quality check: unit, integration, e2e, performance, then fitness.
-    Within a kind, they are sorted by where their tests are, then by the code each cites, then by
-    everything else each records.
-
-    @unit
-    Scenario Outline: balance sorts a Claim Reconciliation's Quality Check Reconciliations by kind of quality check, then where the test is, then the code it cites, then what else it records
-      given there was <Evidence Obligations> under <claim code>
-      and there was, in this order, <Unsorted Evidence Observations>
-      when balance reconciles them
-      then its Quality Check Reconciliations will be sorted as <Sorted Evidence Observations>
-
-      Examples:
-        | clm         | claim code        | Evidence Obligations                                                            | Unsorted Evidence Observations                                                                                                                  | Sorted Evidence Observations                                                                                                                    |
-        | CLM-LDG-059 | @CLM-ONE-001      | a unit, an integration, an e2e, a performance and a fitness Evidence Obligation | a passing fitness function, performance test, e2e test, integration test, then unit test, each citing it                                        | a passing unit test, integration test, e2e test, performance test, then fitness function, each citing it                                        |
-        | CLM-LDG-060 | @CLM-ONE-001      | a unit Evidence Obligation                                                      | a passing unit test in z.test.ts citing it, then a failing one in a.test.ts                                                                     | a failing unit test in a.test.ts citing it, then a passing one in z.test.ts                                                                     |
-        | CLM-LDG-061 | the unnamed claim | no Evidence Obligation                                                          | a unit test in z.test.ts citing no code, then one in a.test.ts citing @CLM-ONE-002, on two executable claims                                    | a unit test in a.test.ts citing @CLM-ONE-002, on two executable claims, then one in z.test.ts citing no code                                    |
-        | CLM-LDG-062 | the unnamed claim | no Evidence Obligation                                                          | a unit test in a.test.ts citing @CLM-ONE-002, on two executable claims, then one in a.test.ts citing no code                                    | a unit test in a.test.ts citing no code, then one in a.test.ts citing @CLM-ONE-002, on two executable claims                                    |
-        | CLM-LDG-063 | the unnamed claim | no Evidence Obligation                                                          | a unit test in a.test.ts citing @CLM-ONE-002, on two executable claims, failing with "a", then one in a.test.ts citing no code failing with "b" | a unit test in a.test.ts citing no code failing with "b", then one in a.test.ts citing @CLM-ONE-002, on two executable claims, failing with "a" |
-        | CLM-LDG-064 | @CLM-ONE-001      | a unit Evidence Obligation                                                      | a unit test in a.test.ts citing it failing with "b", then one failing with "a"                                                                  | a unit test in a.test.ts citing it failing with "a", then one failing with "b"                                                                  |
-
-    @unit @CLM-LDG-076
-    Scenario: a missing check comes before the evidence of its kind
-      given there was a unit and a fitness Evidence Obligation under @CLM-ONE-001
-      and there was a unit test in a.test.ts citing it that never ran
-      when balance reconciles them
-      then its Quality Check Reconciliations will be sorted as the missing unit check, the unit test that never ran, then the missing fitness check
-
   Rule: balance groups the unnamed claim's evidence by kind of quality check, file and shared claim code
 
     @unit
-    Scenario Outline: evidence of the same kind, file and shared claim code will share a group
+    Scenario Outline: balance will split the unnamed claim's evidence by kind, file and shared claim code, and by nothing else
       given the unnamed claim had <evidence>
       when balance reconciles it
       then it will have <groups>
@@ -106,7 +83,7 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-070 | an uncited fitness function, and one citing the shared claim code CLM-ONE-001        | two fitness groups, one naming CLM-ONE-001 |
 
     @unit
-    Scenario Outline: a group of tests will count them and name those that failed
+    Scenario Outline: balance counts a group's results and names those that failed
       given a group on the unnamed claim had <tests>
       when balance reconciles it
       then the group will have <ran> ran, <passed> passed and <failed> failed, naming <failures>
@@ -117,3 +94,26 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-072 | a passing test and a failing test "b"                             | 2   | 1      | 1      | the test b |
         | CLM-LDG-074 | a passing fitness function whose step cannot fail its job         | 1   | 1      | 0      | no test    |
         | CLM-LDG-075 | a passing test in a.test.ts, and a.test.ts's tests that never ran | 1   | 1      | 0      | no test    |
+
+  Rule: a Claim Reconciliation sorts its Quality Check Reconciliations, so two runs over the same evidence list them in the same order
+
+    They are sorted by kind of quality check: unit, integration, e2e, performance, then fitness.
+    Within a kind, a missing one comes first, then they are sorted by where their tests are, then
+    by the code each cites, then by everything else each records.
+
+    @unit
+    Scenario Outline: balance will list a claim's Quality Check Reconciliations in the same order whatever order the evidence came in
+      given there was <Evidence Obligations> under <claim code>
+      and there was <Evidence Observations, in this order>
+      when balance reconciles them
+      then its Quality Check Reconciliations will be in the order <Quality Check Reconciliations, in order>
+
+      Examples:
+        | clm         | claim code        | Evidence Obligations                                                            | Evidence Observations, in this order                                                                                                            | Quality Check Reconciliations, in order                                                                                                         |
+        | CLM-LDG-059 | @CLM-ONE-001      | a unit, an integration, an e2e, a performance and a fitness Evidence Obligation | a passing fitness function, performance test, e2e test, integration test, then unit test, each citing it                                        | a passing unit test, integration test, e2e test, performance test, then fitness function, each citing it                                        |
+        | CLM-LDG-060 | @CLM-ONE-001      | a unit Evidence Obligation                                                      | a passing unit test in z.test.ts citing it, then a failing one in a.test.ts                                                                     | a failing unit test in a.test.ts citing it, then a passing one in z.test.ts                                                                     |
+        | CLM-LDG-061 | the unnamed claim | no Evidence Obligation                                                          | a unit test in z.test.ts citing no code, then one in a.test.ts citing @CLM-ONE-002, on two executable claims                                    | a unit test in a.test.ts citing @CLM-ONE-002, on two executable claims, then one in z.test.ts citing no code                                    |
+        | CLM-LDG-062 | the unnamed claim | no Evidence Obligation                                                          | a unit test in a.test.ts citing @CLM-ONE-002, on two executable claims, then one in a.test.ts citing no code                                    | a unit test in a.test.ts citing no code, then one in a.test.ts citing @CLM-ONE-002, on two executable claims                                    |
+        | CLM-LDG-063 | the unnamed claim | no Evidence Obligation                                                          | a unit test in a.test.ts citing @CLM-ONE-002, on two executable claims, failing with "a", then one in a.test.ts citing no code failing with "b" | a unit test in a.test.ts citing no code failing with "b", then one in a.test.ts citing @CLM-ONE-002, on two executable claims, failing with "a" |
+        | CLM-LDG-064 | @CLM-ONE-001      | a unit Evidence Obligation                                                      | a unit test in a.test.ts citing it failing with "b", then one failing with "a"                                                                  | a unit test in a.test.ts citing it failing with "a", then one failing with "b"                                                                  |
+        | CLM-LDG-076 | @CLM-ONE-001      | a unit and a fitness Evidence Obligation                                        | a unit test in a.test.ts citing it that never ran                                                                                               | unit missing, the unit test in a.test.ts that never ran, then fitness missing                                                                   |
