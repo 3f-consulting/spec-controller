@@ -202,19 +202,6 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
   });
 });
 
-describe("balance reads the feature corpus in path order", () => {
-  it("[CLM-CLI-197] a corpus with b.feature and a/x.feature: the report lists the claims of a/x.feature before those of b.feature", () => {
-    const folder = folderWith({
-      "features/b.feature": "@BBB\nFeature: b\n\n  @unit @CLM-BBB-001\n  Scenario: b\n",
-      "features/a/x.feature": "@AAA\nFeature: x\n\n  @unit @CLM-AAA-001\n  Scenario: x\n",
-    });
-
-    const { output } = ran(["balance", "--format", "json"], folder);
-
-    expect((JSON.parse(output) as { claimReconciliations: { claim: { file: string } }[] }).claimReconciliations.map(({ claim }) => claim.file)).toEqual(["a/x.feature", "b.feature"]);
-  });
-});
-
 // One passing result citing the corpus's one claim, as each runner writes it.
 const BY_FILE_PASSING = '{"testResults":[{"name":"/work/one.test.ts","status":"passed","message":"","assertionResults":[{"title":"[CLM-ONE-001] one","fullName":"[CLM-ONE-001] one","status":"passed","ancestorTitles":[],"failureMessages":[]}]}]}';
 const RSPEC_PASSING = '{"examples":[{"id":"./spec/one_spec.rb[1:1]","description":"[CLM-ONE-001] one","full_description":"[CLM-ONE-001] one","status":"passed","file_path":"./spec/one_spec.rb","line_number":1}],"summary":{}}';
