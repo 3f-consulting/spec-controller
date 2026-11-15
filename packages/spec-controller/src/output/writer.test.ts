@@ -7,6 +7,7 @@ import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import { refusalText } from "../runEnding/refusal.js";
 import { runRequestOf } from "../runRequest/runRequest.js";
+import { pathIdentity } from "./identity.js";
 import { processStreams } from "./streams.js";
 import { writeReports } from "./writer.js";
 
@@ -343,6 +344,13 @@ describe("two reports will not go in one file", () => {
     const ending = writeReports(outputsAskedFor(["--format", `md:${file}`, "--format", `json:${file}`]), [], reconciliation(), streams, AS_ASKED);
 
     expect({ ending, complaint: error.join(""), made: existsSync(file) }).toEqual({ ending: 2, complaint: refused("outputs-share-file", { reports: `md:${file}, json:${file}` }), made: false });
+  });
+
+  it("[CLM-FMT-010] Report.md and report.md, neither made yet, are one file where the volume folds case, and two where it does not", () => {
+    const folder = temporaryDirectory("one-new-file-by-case-");
+    const filesWhere = (folds: boolean): number => new Set(["Report.md", "report.md"].map((name) => JSON.stringify(pathIdentity(join(folder, name), () => folds)))).size;
+
+    expect({ folds: filesWhere(true), doesNotFold: filesWhere(false) }).toEqual({ folds: 1, doesNotFold: 2 });
   });
 
   it("[CLM-FMT-010] one report at Report.md and the other at report.md, neither made yet: on a volume that folds case they are one file and the run stops, and on one that does not each is written", () => {
