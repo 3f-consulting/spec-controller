@@ -4,10 +4,12 @@ import { resultsByFileFrom } from "../inputs/vitest.js";
 import { resultsBySuiteFrom } from "../inputs/junit.js";
 import { resultsByExampleFrom } from "../inputs/rspec.js";
 import { scenarioResultsFrom } from "../inputs/cucumber.js";
+import { shellAnswers } from "../inputs/shell.js";
+import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { ClaimCode } from "./claimCodes.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureAsWritten } from "./postEvidenceObligation.js";
-import { observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { fitnessObservationsOf, observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, type EvidenceObservation } from "./postEvidenceObservation.js";
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
 const ONE_002: ClaimCode = { featureCode: "ONE", number: "002" };
@@ -643,3 +645,30 @@ describe("balance posts a result from a feature file it did not read to the unna
   });
 });
 
+// A passing result of each kind of quality check, citing CLM-ONE-001, from the source that gives that kind.
+const passedCitingOne001: Readonly<Record<string, () => EvidenceObservation[]>> = {
+  unit: () => postedByFile(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])),
+  integration: () => postedByScenario(reportByScenario("features/one.feature", [{ tags: ["CLM-ONE-001", "integration"], steps: [PASSED] }])),
+  e2e: () => postedByScenario(reportByScenario("features/one.feature", [{ tags: ["CLM-ONE-001", "e2e"], steps: [PASSED] }])),
+  performance: () => postedByScenario(reportByScenario("features/one.feature", [{ tags: ["CLM-ONE-001", "performance"], steps: [PASSED] }])),
+  fitness: () =>
+    fitnessObservationsOf(
+      workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] } } })),
+      [],
+      { runners: {}, nonChecks: [], deferralTags: [] },
+      {},
+      shellAnswers,
+    ),
+};
+
+describe("balance posts each result as an Evidence Observation of its kind", () => {
+  it.each([
+    ["CLM-OBS-151", "unit"],
+    ["CLM-OBS-152", "integration"],
+    ["CLM-OBS-153", "e2e"],
+    ["CLM-OBS-154", "performance"],
+    ["CLM-OBS-155", "fitness"],
+  ] as const)("[%s] a %s result, passed, citing CLM-ONE-001, is posted as an Evidence Observation of that kind, as passed, citing CLM-ONE-001", (_clm, kind) => {
+    expect(passedCitingOne001[kind]!().map(({ kind: posted, result, cites }) => ({ kind: posted, result, cites }))).toEqual([{ kind, result: "passed", cites: [ONE_001] }]);
+  });
+});

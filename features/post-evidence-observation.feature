@@ -36,6 +36,8 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-006 | a step running eslint vitest.config.ts                                                                | vitest as its unit runner      | will be          |
         | CLM-OBS-007 | a step running vitest run \| tee out.txt                                                              | vitest as its unit runner      | will be          |
         | CLM-OBS-008 | a step running pnpm test                                                                              | no unit runner                 | will be          |
+        | CLM-OBS-139 | a step named Install in job test of ci.yml, whose job ci had a step named Install                     | ci.yml:ci:Install in notChecks | will be          |
+        | CLM-OBS-140 | a step named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci                 | ci.yml:ci:Install in notChecks | will be          |
         | CLM-OBS-141 | a step using actions/dependency-review-action                                                         | vitest as its unit runner      | will be          |
         | CLM-OBS-009 | a step running pnpm test, whose script runs vitest                                                    | vitest as its unit runner      | will not be      |
         | CLM-OBS-114 | a step running pnpm test, whose script runs another script, whose script runs vitest                  | vitest as its unit runner      | will not be      |
@@ -114,6 +116,22 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-136 | the step record                     | the id audit, on a step in ci.yml running pnpm audit-the-tree | it succeeded                                                 | passed           | no claim code |
         | CLM-OBS-123 | the step record                     | the id audit, on a step in ci.yml running pnpm audit-the-tree | it failed                                                    | failed           | no claim code |
         | CLM-OBS-143 | the step record                     | the ids CLM-ONE-001 and CLM-ONE-002, on two steps in ci.yml   | each succeeded                                               | passed, for each | its own code  |
+
+  Rule: balance posts each result as an Evidence Observation of its kind
+
+    @unit
+    Scenario Outline: balance posts a result at its kind of quality check, as it went, citing its code
+      given a <kind of quality check> result, passed, citing CLM-ONE-001
+      when balance posts the evidence
+      then a <kind of quality check> Evidence Observation will be posted, as passed, citing CLM-ONE-001
+
+      Examples:
+        | clm         | kind of quality check |
+        | CLM-OBS-151 | unit                  |
+        | CLM-OBS-152 | integration           |
+        | CLM-OBS-153 | e2e                   |
+        | CLM-OBS-154 | performance           |
+        | CLM-OBS-155 | fitness               |
 
   Rule: balance posts each result with how it went
 
