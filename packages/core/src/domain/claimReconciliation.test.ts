@@ -3,6 +3,7 @@ import type { ClaimCode } from "./claimCodes.js";
 import { citedClaimReconciliationOf, claimReconciliationOf, claimReconciliationsOf, evidenceGroupsOf } from "./claimReconciliation.js";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { shellAnswers } from "../inputs/shell.js";
+import { stepRecordFrom } from "../inputs/stepRecord.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { executableClaimsOf, type ExecutableClaim, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { fitnessObservationsOf, type EvidenceObservation, type PhantomClaim, type Result, type UnnamedClaim } from "./postEvidenceObservation.js";
@@ -216,6 +217,13 @@ describe("two uncited fitness functions share one group", () => {
     expect(groupsOf(posted).map(({ kind, file, qualityCheckReconciliations }) => ({ kind, file, places: qualityCheckReconciliations.map(({ observation }) => observation?.place) }))).toEqual([
       { kind: "fitness", file: undefined, places: ["ci.yml:build:pnpm lint", "ci.yml:test:pnpm audit-the-tree"] },
     ]);
+  });
+
+  it("[CLM-LDG-069] a step with the id lint, in job build, that failed, and a step with no id, in job test, are one fitness group naming the failure by its place", () => {
+    const steps = workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: [{ id: "lint", run: "pnpm lint" }] }, test: { steps: [{ run: "pnpm audit-the-tree" }] } } }));
+    const posted = fitnessObservationsOf(steps, stepRecordFrom({ lint: { outcome: "failure", conclusion: "failure" } }), { runners: {}, nonChecks: [], deferralTags: [] }, {}, shellAnswers);
+
+    expect(groupsOf(posted).map(({ kind, failures }) => ({ kind, failures }))).toEqual([{ kind: "fitness", failures: ["ci.yml:build:pnpm lint"] }]);
   });
 });
 
