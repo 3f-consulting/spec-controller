@@ -35,7 +35,7 @@ function notMadeYet(path: string, foldsCase: (folder: string) => boolean): FileI
   const where = whereItWillBe(path);
   const folder = realpathSync(dirname(where));
   const at = join(folder, basename(where));
-  return { is: "absent", path: at };
+  return { is: "absent", path: foldsCase(folder) ? at.toLowerCase() : at };
 }
 
 // What a path names, through any link; a stream by name first, as its path reports another device than its descriptor.
