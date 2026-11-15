@@ -19,7 +19,7 @@ const REPORT: Shape = { fields: { examples: "list", summary: { fields: {} } } };
 
 export const whereResultsByExampleBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
-const LOADING = /while loading (\S+?)\.\s/i;
+const LOADING = /while loading (\S+?)\.?\s/i;
 
 export function resultsByExampleFrom(report: unknown): ResultsByExampleAsWritten {
   const { messages, examples, summary } = report as RspecJsonReport;
