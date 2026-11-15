@@ -3,6 +3,7 @@ import { UNEXPECTED_ERROR } from "../runEnding/codes.js";
 import { complainerTo, loadGuarded } from "../runEnding/crashGuards.js";
 import { endRunOn, endRunUnlessEnded } from "../runEnding/exitCode.js";
 import { writeToStandardError } from "../runEnding/standardError.js";
+import { workingFolderOf } from "../runRequest/workingFolder.js";
 
 // The guards are in place before the program loads, so an error while it loads, or one nothing catches, ends at 4 a run not yet ended.
 const complain = complainerTo(writeToStandardError);
@@ -18,4 +19,4 @@ const program = await loadGuarded(
   complain,
   endRunUnlessEnded,
 );
-if (program !== undefined) endRunOn(program.main(process.argv.slice(2), process.cwd(), program.processStreams, { complain }));
+if (program !== undefined) endRunOn(program.main(process.argv.slice(2), workingFolderOf(), program.processStreams, { complain }));

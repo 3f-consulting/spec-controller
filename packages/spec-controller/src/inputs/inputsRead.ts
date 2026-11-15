@@ -169,8 +169,8 @@ function filesOf({ kind, path: shown, byDefault }: InputNamed, folder: string): 
   const path = resolve(folder, shown);
   const { reads, endings }: InputReader = READERS[kind];
   const stats = statAt(path);
-  // A default that does not exist is none.
-  if (isAbsent(stats) && byDefault) return undefined;
+  // A default that does not exist is none, unless the folder the run started in is gone too.
+  if (isAbsent(stats) && byDefault) return isAbsent(statAt(folder)) ? [failed(shown, "default-unreadable", text("working-folder-removed"))] : undefined;
   if ("fault" in stats) return [failed(shown, stats.fault, stats.said)];
   if (stats.isDirectory() && endings !== undefined) {
     try {

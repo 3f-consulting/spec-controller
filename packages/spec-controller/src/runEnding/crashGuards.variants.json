@@ -1,6 +1,0 @@
-{
-  "CLM-CLI-176": {
-    "class": "an unexpected error, exit 4 with no verdict",
-    "variants": ["one nothing else handles", "one that cannot be formatted", "one before the run reached its verdict", "one while the program loads"]
-  }
-}

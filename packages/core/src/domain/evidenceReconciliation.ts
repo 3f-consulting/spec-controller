@@ -1,5 +1,5 @@
 import type { ClaimCodeError } from "./claimCodes.js";
-import { isExecutable, isUnnamed, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
+import { isExecutable, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import type { ConfigurationError } from "./configuration.js";
 import { QUALITY_CHECK_KINDS, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import type { EvidenceObservation, StepDisposition } from "./postEvidenceObservation.js";
@@ -36,7 +36,7 @@ export interface Totals {
     readonly onPhantomClaim: number;
     readonly onUnnamedClaim: number;
   };
-  readonly outOfBalanceByFeature: readonly { readonly file: string; readonly count: number }[];
+  readonly outOfBalanceByFeature?: readonly { readonly file: string; readonly count: number }[];
   readonly excludedClaimCodeOccurrences: number;
 }
 
@@ -46,7 +46,7 @@ export interface StepCounts {
   readonly reconcilerSteps: number;
   readonly nonChecks: number;
   readonly plumbing: number;
-  readonly fitnessFunctions: number;
+  readonly candidates: number;
 }
 
 export interface StepAccount {
@@ -55,8 +55,8 @@ export interface StepAccount {
 }
 
 export interface ErrorsInTheInputs {
-  readonly claimCodeErrors: readonly ClaimCodeError[];
-  readonly configurationErrors: readonly ConfigurationError[];
+  readonly claimCodeErrors?: readonly ClaimCodeError[];
+  readonly configurationErrors?: readonly ConfigurationError[];
 }
 
 export interface RunIntegrity {
@@ -67,10 +67,10 @@ export interface EvidenceReconciliation {
   readonly claimReconciliations: readonly ClaimReconciliation[];
   readonly runVerdict: RunVerdict;
   readonly totals: Totals;
-  readonly stepAccount: StepAccount;
+  readonly stepAccount?: StepAccount;
   readonly provenance: Provenance;
-  readonly errorsInTheInputs: ErrorsInTheInputs;
-  readonly runIntegrity: RunIntegrity;
+  readonly errorsInTheInputs?: ErrorsInTheInputs;
+  readonly runIntegrity?: RunIntegrity;
 }
 
 // Not reconciled, first because evidence never ran, then for claim code errors, then for nothing to reconcile; otherwise
@@ -88,10 +88,10 @@ const COUNTED: Readonly<Record<StepDisposition, keyof Omit<StepCounts, "stepsRea
   reconciler: "reconcilerSteps",
   nonCheck: "nonChecks",
   plumbing: "plumbing",
-  fitnessFunction: "fitnessFunctions",
+  candidate: "candidates",
 };
 
-const NONE: StepCounts = { stepsRead: 0, runners: 0, reconcilerSteps: 0, nonChecks: 0, plumbing: 0, fitnessFunctions: 0 };
+const NONE: StepCounts = { stepsRead: 0, runners: 0, reconcilerSteps: 0, nonChecks: 0, plumbing: 0, candidates: 0 };
 
 const countedIn = (counts: StepCounts, disposition: StepDisposition): StepCounts => ({
   ...counts,
@@ -116,27 +116,23 @@ export function stepAccountOf(steps: readonly DisposedStep[]): StepAccount {
   return { jobs, total: countsOf(steps) };
 }
 
-// Every outcome once, in the order they are counted: the keys of a record the type holds whole.
-const OUTCOMES = Object.keys({
-  satisfied: null,
-  failing: null,
-  "cannot-fail": null,
-  missing: null,
-  "no-claim-code": null,
-  "duplicate-claim-code": null,
-  "not-asked-for": null,
-  "cites-unknown-claim": null,
-  "cites-no-claim": null,
-  "never-ran": null,
-  "no-quality-check": null,
-} satisfies Record<Outcome, null>) as Outcome[];
-
-// Each Evidence Observation is counted once, on the Quality Check Reconciliation that holds it.
-const observationsIn = (reconciliations: readonly QualityCheckReconciliation[]): number => reconciliations.filter(({ observation }) => observation !== undefined).length;
+const OUTCOMES: readonly Outcome[] = [
+  "satisfied",
+  "failing",
+  "cannot-fail",
+  "missing",
+  "no-claim-code",
+  "duplicate-claim-code",
+  "not-asked-for",
+  "cites-unknown-claim",
+  "cites-no-claim",
+  "never-ran",
+  "no-quality-check",
+];
 
 const countsOfReconciliations = (reconciliations: readonly QualityCheckReconciliation[], evidenceObligations: number): QualityCheckCounts => ({
   evidenceObligations,
-  evidenceObservations: observationsIn(reconciliations),
+  evidenceObservations: reconciliations.filter(({ observation }) => observation !== undefined).length,
   byOutcome: Object.fromEntries(OUTCOMES.map((outcome) => [outcome, reconciliations.filter((reconciliation) => reconciliation.outcome === outcome).length])) as Record<Outcome, number>,
 });
 
@@ -169,23 +165,24 @@ function qualityCheckCountsOf(claimReconciliations: readonly ClaimReconciliation
 }
 
 const filedOn = (claim: ClaimReconciliation["claim"]): "onExecutableClaim" | "onPhantomClaim" | "onUnnamedClaim" =>
-  isExecutable(claim) ? "onExecutableClaim" : isUnnamed(claim) ? "onUnnamedClaim" : "onPhantomClaim";
+  isExecutable(claim) ? "onExecutableClaim" : claim.claimCode === undefined ? "onUnnamedClaim" : "onPhantomClaim";
 
 // Each Evidence Observation counts once, on the claim it was filed on: an executable claim, a phantom claim or the unnamed claim.
 function whereFiledOf(claimReconciliations: readonly ClaimReconciliation[]): Totals["evidenceObservations"] {
   const filed = { onExecutableClaim: 0, onPhantomClaim: 0, onUnnamedClaim: 0 };
   for (const { claim, qualityCheckReconciliations } of claimReconciliations) {
-    filed[filedOn(claim)] += observationsIn(qualityCheckReconciliations);
+    filed[filedOn(claim)] += qualityCheckReconciliations.filter(({ observation }) => observation !== undefined).length;
   }
   return { total: filed.onExecutableClaim + filed.onPhantomClaim + filed.onUnnamedClaim, ...filed };
 }
 
 // Each feature file with an out-of-balance executable claim, in the order read, and how many; a phantom claim and the
 // unnamed claim are counted in the total, on no feature's row.
-function outOfBalanceByFeatureOf(claimReconciliations: readonly ClaimReconciliation[]): Totals["outOfBalanceByFeature"] {
+function outOfBalanceByFeatureOf(claimReconciliations: readonly ClaimReconciliation[]): { readonly outOfBalanceByFeature?: Totals["outOfBalanceByFeature"] } {
   const counts = new Map<string, number>();
   for (const { claim, verdict } of claimReconciliations) if (verdict === "out-of-balance" && isExecutable(claim)) counts.set(claim.file, (counts.get(claim.file) ?? 0) + 1);
-  return [...counts].map(([file, count]) => ({ file, count }));
+  const rows = [...counts].map(([file, count]) => ({ file, count }));
+  return rows.length === 0 ? {} : { outOfBalanceByFeature: rows };
 }
 
 // A claim code written as a tag anywhere but on a scenario is read by no claim: in a title, a step, a description or a comment.
@@ -201,7 +198,7 @@ export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], f
     claimReconciliations: { total: claimReconciliations.length, balanced, outOfBalance: claimReconciliations.length - balanced },
     qualityCheckReconciliations: qualityCheckCountsOf(claimReconciliations),
     evidenceObservations: whereFiledOf(claimReconciliations),
-    outOfBalanceByFeature: outOfBalanceByFeatureOf(claimReconciliations),
+    ...outOfBalanceByFeatureOf(claimReconciliations),
     excludedClaimCodeOccurrences: excludedClaimCodeOccurrencesOf(features),
   };
 }
@@ -212,22 +209,23 @@ export interface RunReconciled {
   readonly claimCodeErrors: readonly ClaimCodeError[];
   readonly configurationErrors: readonly ConfigurationError[];
   readonly features: readonly FeatureAsWritten[];
-  readonly stepAccount: StepAccount;
+  readonly stepAccount?: StepAccount;
   readonly provenance: Provenance;
 }
 
-// The domain's one entry point: every part is present, empty where the run had nothing for it.
+// The domain's one entry point: an optional part is present only when the run has something for it.
 export function evidenceReconciliationOf({ claimReconciliations, claimCodeErrors, configurationErrors, features, stepAccount, provenance }: RunReconciled): EvidenceReconciliation {
   const neverRan = claimReconciliations.flatMap(({ qualityCheckReconciliations }) =>
     qualityCheckReconciliations.flatMap((reconciliation) => (reconciliation.outcome === "never-ran" ? [reconciliation.observation] : [])),
   );
+  const errors = { ...(claimCodeErrors.length > 0 && { claimCodeErrors }), ...(configurationErrors.length > 0 && { configurationErrors }) };
   return {
     claimReconciliations,
     runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors),
     totals: totalsOf(claimReconciliations, features),
-    stepAccount,
+    ...(stepAccount && { stepAccount }),
     provenance,
-    errorsInTheInputs: { claimCodeErrors, configurationErrors },
-    runIntegrity: { neverRan },
+    ...(Object.keys(errors).length > 0 && { errorsInTheInputs: errors }),
+    ...(neverRan.length > 0 && { runIntegrity: { neverRan } }),
   };
 }

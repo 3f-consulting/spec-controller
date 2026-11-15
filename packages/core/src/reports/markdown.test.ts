@@ -8,9 +8,6 @@ import { markdownReportOf } from "./markdown.js";
 const runWith = (parts: Pick<EvidenceReconciliation, "runVerdict" | "provenance"> & Partial<EvidenceReconciliation>): EvidenceReconciliation => ({
   claimReconciliations: [],
   totals: totalsOf([], []),
-  stepAccount: stepAccountOf([]),
-  errorsInTheInputs: { claimCodeErrors: [], configurationErrors: [] },
-  runIntegrity: { neverRan: [] },
   ...parts,
 });
 
@@ -28,21 +25,21 @@ describe("each run verdict, and each reason a run is not reconciled, has an open
     ],
     [
       "CLM-RPT-117",
-      "not reconciled, because unsound",
+      "not reconciled, as unsound",
       { verdict: "not-reconciled", why: "unsound" },
       "verdict-unsound",
       "Some evidence never ran, so the run cannot be relied on and is not reconciled: Run integrity names it.",
     ],
     [
       "CLM-RPT-118",
-      "not reconciled, because of claim code errors",
+      "not reconciled, for claim code errors",
       { verdict: "not-reconciled", why: "claim-code-errors" },
       "verdict-claim-code-errors",
       "Some claim codes are written where they do not belong, so the run is not reconciled: Errors in the inputs names them.",
     ],
     [
       "CLM-RPT-119",
-      "not reconciled, because there was nothing to reconcile",
+      "not reconciled, with nothing to reconcile",
       { verdict: "not-reconciled", why: "nothing-to-reconcile" },
       "verdict-nothing-to-reconcile",
       "No claim and no evidence were read, so there was nothing to reconcile and the run is not reconciled.",
@@ -57,8 +54,25 @@ describe("each run verdict, and each reason a run is not reconciled, has an open
   });
 });
 
+describe("an input the run did not read has no line, and one it read by default has one", () => {
+  it.each([
+    [
+      "CLM-RPT-114",
+      "a Vitest report and a Cucumber report, and no pytest report",
+      [{ name: "vitest", path: "vitest.json" }, { name: "pytest" }, { name: "cucumber", path: "cucumber.json" }],
+      ["  - Vitest report: `vitest.json`", "  - Cucumber report: `cucumber.json`"],
+    ],
+    ["CLM-RPT-115", "the CI workflows by default", [{ name: "workflows", path: ".github/workflows" }], ["  - CI workflows: `.github/workflows`"]],
+  ] as const)("[%s] a run that read %s has a provenance line for each input it read", (_clm, _read, inputs, lines) => {
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, inputs } }));
+    const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
+
+    expect(provenance.slice(provenance.indexOf(`- ${coreText("provenance-inputs")}:`))).toEqual([`- ${coreText("provenance-inputs")}:`, ...lines]);
+  });
+});
+
 describe("the step account totals its jobs only when it has more than one", () => {
-  const counts: StepCounts = { stepsRead: 2, runners: 0, reconcilerSteps: 1, nonChecks: 0, plumbing: 0, fitnessFunctions: 1 };
+  const counts: StepCounts = { stepsRead: 2, runners: 0, reconcilerSteps: 1, nonChecks: 0, plumbing: 0, candidates: 1 };
 
   it.each([
     ["CLM-RPT-112", "one job", [{ workflow: "ci.yml", job: "build" }], ["ci.yml"]],
@@ -86,7 +100,7 @@ describe("the step account shows each job's counts, and the Total row their sums
   ] as const)("[%s] steps read in job build of ci.yml, 1 a test runner, and in job sweep of nightly.yml, 1 only setting the job up, show the step account's %s with its counts", (_clm, _row, job, counts) => {
     const stepAccount = stepAccountOf([
       { step: step("ci.yml", "build", "pnpm test"), disposition: "runner" },
-      { step: step("ci.yml", "build", "pnpm lint"), disposition: "fitnessFunction" },
+      { step: step("ci.yml", "build", "pnpm lint"), disposition: "candidate" },
       { step: step("nightly.yml", "sweep", "actions/checkout"), disposition: "plumbing" },
     ]);
     const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: PROVENANCE, stepAccount }));
@@ -96,21 +110,14 @@ describe("the step account shows each job's counts, and the Total row their sums
   });
 });
 
-describe("the provenance shows the tool SHA only when there is one", () => {
+describe("the provenance shows the tool's commit only when there is one", () => {
   it.each([
-    ["CLM-RPT-167", "the tool SHA 9f8e7d6", { toolSha: "9f8e7d6" }, ["9f8e7d6"]],
-    ["CLM-RPT-168", "no tool SHA", {}, []],
-  ] as const)("[%s] a run whose provenance had %s shows the tool SHA in the provenance, or no line for it", (_clm, _toolSha, toolSha, shown) => {
+    ["CLM-RPT-167", "the tool commit 9f8e7d6", { toolSha: "9f8e7d6" }, ["9f8e7d6"]],
+    ["CLM-RPT-168", "no tool commit", {}, []],
+  ] as const)("[%s] a run whose provenance had %s shows it in the provenance, or no line for it", (_clm, _commit, toolCommit, shown) => {
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, ...toolCommit } }));
     const label = `- ${coreText("provenance-tool-sha")}: `;
-    const provenanceLines = (provenance: Provenance): string[] => {
-      const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance }));
-      return report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
-    };
-    const lines = provenanceLines({ ...PROVENANCE, ...toolSha });
 
-    expect({ toolSha: lines.filter((line) => line.startsWith(label)), others: lines.filter((line) => !line.startsWith(label)) }).toEqual({
-      toolSha: shown.map((sha) => `${label}\`${sha}\``),
-      others: provenanceLines({ ...PROVENANCE, toolSha: "9f8e7d6" }).filter((line) => !line.startsWith(label)),
-    });
+    expect(report.split("\n").filter((line) => line.startsWith(label))).toEqual(shown.map((commit) => `${label}\`${commit}\``));
   });
 });

@@ -1,14 +1,10 @@
 {
-  "CLM-CFG-012": {
-    "class": "a deferral tag written without its @",
-    "variants": ["without spaces around it", "with spaces around it"]
-  },
   "CLM-CFG-021": {
     "class": "a specController block that is not an object",
     "variants": ["null", "a number", "a string", "a list"]
   },
   "CLM-CFG-018": {
     "class": "a runners setting that is not an object",
-    "variants": ["null", "a text such as \"vitest\"", "a number", "a list"]
+    "variants": ["null", "a number", "a string", "a list"]
   }
 }

@@ -7,8 +7,6 @@ import { gitIn } from "./git.js";
 // What a read gave, or why it could not be made: a failed read stops allocate.
 export type Read<Value> = { readonly read: Value } | { readonly refusal: Refusal };
 
-const gitSaid = (stderr: string): string => stderr.trim();
-
 export type Standing = { readonly in: "repository"; readonly top: string } | { readonly in: "folder"; readonly top: string };
 
 // Where allocate reads from: the top of the repository the developer stands in, or the folder itself outside git.
@@ -16,7 +14,7 @@ export function standingOf(folder: string): Read<Standing> {
   const { status, stdout, stderr } = gitIn(folder, ["rev-parse", "--show-toplevel"]);
   if (status === 0) return { read: { in: "repository", top: stdout.trim() } };
   if (stderr.includes("not a git repository")) return { read: { in: "folder", top: folder } };
-  return { refusal: { key: "damaged-repository", values: { said: gitSaid(stderr) } } };
+  return { refusal: { key: "damaged-repository", values: { said: stderr.trim() } } };
 }
 
 // git names a file or folder it could not read on its error stream, whatever its exit status says.
@@ -30,7 +28,7 @@ export function treeLines({ in: where, top }: Standing, featureCode: string): Re
   const unreadable = UNREADABLE.exec(stderr);
   if (unreadable !== null) return { refusal: { key: "unreadable-in-tree", values: { path: unreadable[1] ?? unreadable[2]!, said: unreadable[0] } } };
   // git grep exits 1 for no line found; anything else is a failure to read.
-  if (status !== 0 && status !== 1) return { refusal: { key: "unreadable-in-tree", values: { path: top, said: gitSaid(stderr) } } };
+  if (status !== 0 && status !== 1) return { refusal: { key: "unreadable-in-tree", values: { path: top, said: stderr.trim() } } };
   // git ends each line found with a newline and parts it with NULs; it reads no file it takes for binary, so no text has one.
   const lines = stdout.split("\n").slice(0, -1).map((record) => {
     const [path, line, text] = record.split("\0") as [string, string, string];
@@ -57,7 +55,7 @@ export function historyLines(top: string, featureCode: string): Read<ClaimCodeOc
     "--no-color",
     "--no-ext-diff",
   ]);
-  if (status !== 0) return { refusal: { key: "unreadable-history", values: { said: gitSaid(stderr) } } };
+  if (status !== 0) return { refusal: { key: "unreadable-history", values: { said: stderr.trim() } } };
   const occurrences: ClaimCodeOccurrence[] = [];
   let commit!: string;
   let path!: string;

@@ -5,9 +5,11 @@ export type Catalogue = Readonly<Record<string, string>>;
 
 export type MessageValues = Readonly<Record<string, string | number | null>>;
 
-// A mistake in the catalogue names the code and each of its values instead of stopping the run.
-const codeAndValues = (code: string, values: MessageValues): string =>
-  [code, ...Object.entries(values).map(([name, value]) => `(${name}: ${String(value)})`)].join(" ");
+// A mistake in the catalogue names the code and its values instead of stopping the run.
+function codeAndValues(code: string, values: MessageValues): string {
+  const named = Object.entries(values).map(([name, value]) => `${name}: ${String(value)}`);
+  return named.length === 0 ? code : `${code} (${named.join(", ")})`;
+}
 
 // Each text is parsed once, however often it is asked for; <angle brackets> in it are text.
 const formats = new Map<string, IntlMessageFormat>();

@@ -1,6 +1,0 @@
-{
-  "CLM-FMT-008": {
-    "class": "a place it cannot write",
-    "variants": ["a file it may not write", "an existing folder", "a file in a folder that does not exist", "a link that leads round to itself"]
-  }
-}
