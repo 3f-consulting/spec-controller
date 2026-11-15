@@ -33,9 +33,9 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-115 | balance --help         | balance's flags                         |
         | CLM-CLI-116 | balance -h             | balance's flags                         |
         | CLM-CLI-117 | allocate --help        | the feature code it takes and its flags |
-        | CLM-CLI-118 | spec-controller --help | the commands                            |
-        | CLM-CLI-119 | spec-controller help   | the commands                            |
-        | CLM-CLI-120 | nothing at all         | the commands                            |
+        | CLM-CLI-118 | spec-controller --help | the commands, each with what it does    |
+        | CLM-CLI-119 | spec-controller help   | the commands, each with what it does    |
+        | CLM-CLI-120 | nothing at all         | the commands, each with what it does    |
 
     @unit @CLM-CLI-189
     Scenario: a command's help gives each flag it takes beside what the flag does

@@ -73,7 +73,7 @@ describe("help will list what you can ask for", () => {
     ["CLM-CLI-118", ["-h"]],
     ["CLM-CLI-119", ["help"]],
     ["CLM-CLI-120", []],
-  ] as const)("[%s] %j lists the commands, and the run succeeds", (_clm, args) => {
+  ] as const)("[%s] %j lists the commands, each with what it does, and the run succeeds", (_clm, args) => {
     const { exitCode, output } = ran(args);
 
     expect({ exitCode, commands: output.split("\n").flatMap((line) => /^\s+(balance|allocate)\s{2,}(\S.*)$/.exec(line)?.slice(1) ?? []) }).toEqual({
