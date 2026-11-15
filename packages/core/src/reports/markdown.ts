@@ -10,16 +10,16 @@ import { summarySection } from "./summary.js";
 // The opening sentence: what the run verdict is and what it asks of the reader.
 const openingOf = (runVerdict: RunVerdict): string => coreText(`${runVerdict.verdict === "not-reconciled" ? runVerdict.why : runVerdict.verdict}-opening`);
 
-// The title and the opening, then each section in its order; an optional section only when the run has something for it.
+// The title and the opening, then each section in its order; a part the run had nothing for is left out.
 export function markdownReportOf(reconciliation: EvidenceReconciliation): string {
   const { runVerdict, provenance, errorsInTheInputs, runIntegrity, totals, stepAccount, claimReconciliations } = reconciliation;
   const sections = [
     [`# ${coreText("report-title")}`, "", openingOf(runVerdict)],
     provenanceSection(provenance),
-    ...(errorsInTheInputs === undefined ? [] : [errorsInTheInputsSection(errorsInTheInputs)]),
-    ...(runIntegrity === undefined ? [] : [runIntegritySection(runIntegrity)]),
+    ...(errorsInTheInputs.claimCodeErrors.length + errorsInTheInputs.configurationErrors.length === 0 ? [] : [errorsInTheInputsSection(errorsInTheInputs)]),
+    ...(runIntegrity.neverRan.length === 0 ? [] : [runIntegritySection(runIntegrity)]),
     summarySection(totals, runVerdict),
-    ...(stepAccount === undefined ? [] : [stepAccountSection(stepAccount)]),
+    ...(stepAccount.jobs.length === 0 ? [] : [stepAccountSection(stepAccount)]),
     claimReconciliationsSection(claimReconciliations),
   ];
   return `${sections.map((lines) => lines.join("\n")).join("\n\n")}\n`;

@@ -21,14 +21,9 @@ function reportIn(folder: string, format: "md" | "json"): string {
   return report;
 }
 
-describe("neither report will have an optional section the run had nothing for", () => {
-  it("[CLM-RPT-052] a run whose workflows folder holds no workflow has a step account in neither report", () => {
-    const folder = folderWithWorkflows({});
-
-    expect({ markdown: reportIn(folder, "md").includes("## Step account"), json: "stepAccount" in (JSON.parse(reportIn(folder, "json")) as object) }).toEqual({
-      markdown: false,
-      json: false,
-    });
+describe("the Markdown report leaves out any part the run had nothing for", () => {
+  it("[CLM-RPT-052] a run whose workflows folder holds no workflow has no step account in its Markdown report", () => {
+    expect(reportIn(folderWithWorkflows({}), "md").includes("## Step account")).toBe(false);
   });
 });
 

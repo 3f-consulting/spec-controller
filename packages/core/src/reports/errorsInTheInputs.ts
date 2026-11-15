@@ -14,7 +14,7 @@ function factsOf(error: ClaimCodeError): readonly string[] {
 
 const item = (kind: string, facts: readonly string[]): string => `- ${quoted(kind)}: ${facts.map(quoted).join(", ")}`;
 
-export function errorsInTheInputsSection({ claimCodeErrors = [], configurationErrors = [] }: ErrorsInTheInputs): string[] {
+export function errorsInTheInputsSection({ claimCodeErrors, configurationErrors }: ErrorsInTheInputs): string[] {
   return [
     `## ${coreText("errors-heading")}`,
     "",
