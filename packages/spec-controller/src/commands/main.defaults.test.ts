@@ -84,10 +84,10 @@ describe("the run will be not reconciled, naming why", () => {
   }
 
   it.each([
-    ["CLM-EVR-006", "no corpus directory", (folder: string) => folder],
+    ["CLM-EVR-006", "no feature corpus", (folder: string) => folder],
     [
       "CLM-EVR-007",
-      "an empty corpus directory",
+      "an empty feature corpus",
       (folder: string) => {
         mkdirSync(join(folder, "features"));
         return folder;

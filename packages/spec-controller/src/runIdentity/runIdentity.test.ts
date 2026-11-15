@@ -27,7 +27,7 @@ function repositoryWithOrigin(origin: string): TestFolder {
   return repository;
 }
 
-describe("the provenance describes the run, as the run's repository and the tool's folder give it", () => {
+describe("the provenance says what the run used, as the run's repository and the tool's folder give it", () => {
   it.each([
     ["CLM-EVR-039", "https://ci:s3cret@example.com/acme/web?x=1#y", "acme/web"],
     ["CLM-EVR-045", "git@github.com:acme/web.git", "acme/web"],
@@ -103,7 +103,7 @@ describe("the provenance describes the run, as the run's repository and the tool
       "tools/dist",
       () => ({ toolSha: undefined, toolVersion: "unknown" }),
     ],
-  ] as const)("[%s] the tool running %s has the provenance it describes", (_clm, _running, folderMade, files, toolPath, details) => {
+  ] as const)("[%s] the tool running %s has its commit or its version in the provenance", (_clm, _running, folderMade, files, toolPath, details) => {
     const folder: TestFolder & Partial<Pick<TestRepository, "commit">> = folderMade();
     Object.entries(files).forEach(([path, text]) => folder.write(path, text));
     const head = folder.commit?.("first") ?? "";

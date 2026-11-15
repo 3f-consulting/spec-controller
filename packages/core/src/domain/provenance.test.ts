@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { repositoryOfOrigin } from "../inputs/origin.js";
 import { provenanceOf, type Provenance, type ProvenanceInput, type RunIdentity } from "./provenance.js";
 
-describe("the provenance describes the run", () => {
+describe("the provenance says what the run used", () => {
   it.each([
     ["CLM-EVR-037", "a target given as acme/web", { givenTarget: "acme/web", origin: "https://github.com/other/repo" }, [], { target: "acme/web" }],
     ["CLM-EVR-039", "no target given, and an origin with a user, password, query and fragment", { origin: "https://ci:s3cret@example.com/acme/web?x=1#y" }, [], { target: "acme/web" }],
@@ -29,7 +29,7 @@ describe("the provenance describes the run", () => {
     ["CLM-EVR-044", "an input inside the target's folder", {}, [{ name: "vitest", path: "/work/acme/a.json" }], { inputs: [{ name: "vitest", path: "a.json" }] }],
     ["CLM-EVR-053", "a start at 2026-11-12T07:08:14Z", { runTime: "2026-11-12T07:08:14Z" }, [], { runTime: "2026-11-12T07:08:14Z" }],
   ] as const satisfies readonly (readonly [string, string, Partial<RunIdentity>, readonly ProvenanceInput[], Partial<Provenance>])[])(
-    "[%s] a run that had %s has the provenance it describes",
+    "[%s] a run that had %s has what it used in the provenance",
     (_clm, _had, identity, inputs, details) => {
       const provenance = provenanceOf({ toolInstalledAsPackage: false, runTime: "2026-01-01T00:00:00Z", ...identity }, inputs, "/work/acme", repositoryOfOrigin);
 
