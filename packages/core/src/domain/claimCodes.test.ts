@@ -87,7 +87,7 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
   it.each([
     [
       "CLM-STG-054",
-      [["one.feature", "@ONE", "@CLM-TWO-001"], ["two.feature", "@TWO", "@unit"]],
+      [["one.feature", "@ONE", "@CLM-ONE-001;@CLM-TWO-001"], ["two.feature", "@TWO", "@unit"]],
       [{ kind: "foreign-claim-code", claimCode: { featureCode: "TWO", number: "001" }, file: "one.feature", filesWithItsFeatureCode: ["two.feature"] }],
     ],
     [

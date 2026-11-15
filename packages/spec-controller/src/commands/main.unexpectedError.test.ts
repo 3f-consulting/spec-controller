@@ -11,15 +11,15 @@ interface Ended {
   readonly complaints: readonly string[];
 }
 
-// balance run over a corpus of one claim with no evidence, so its run verdict is out of balance.
-function balanceRun(throwing: { readonly inBalance?: unknown; readonly onOutput?: unknown }): Ended {
+// balance run, with the flags given, over a corpus of one claim with no evidence, so its run verdict is out of balance.
+function balanceRun(throwing: { readonly inBalance?: unknown; readonly onOutput?: unknown }, flags: readonly string[] = []): Ended {
   const folder = temporaryDirectory("unexpected-");
   mkdirSync(join(folder, "features"));
   writeFileSync(join(folder, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n");
   let output = "";
   let error = "";
   const exitCode = main(
-    ["balance"],
+    ["balance", ...flags],
     folder,
     {
       output: {
@@ -56,12 +56,14 @@ describe("an unexpected error will stop the run with no verdict and exit 4, nami
   ] as const)("[%s] %s: the run stops, no verdict, exit 4, and a complaint with the error, under its error code", (_clm, _error, thrown, shown) => {
     const { exitCode, output, complaints } = balanceRun({ inBalance: thrown });
 
-    expect({ exitCode, output, complaints: complaints.map((line) => line.includes(shown)) }).toEqual({ exitCode: 4, output: "", complaints: [true] });
+    expect({ exitCode, output, complaints: complaints.map((line) => line.startsWith("[unexpected-error] ") && line.includes(shown)) }).toEqual({ exitCode: 4, output: "", complaints: [true] });
   });
 });
 
 describe("an unexpected error after the run verdict will leave its exit code alone", () => {
-  it("[CLM-CLI-181] a run out of balance whose report cannot be written exits 1, its verdict's code", () => {
-    expect(balanceRun({ onOutput: new Error("the report could not be written") }).exitCode).toBe(1);
+  it("[CLM-CLI-181] a run out of balance under --exit-zero whose report cannot be written exits 0, its verdict's code", () => {
+    const { exitCode, complaints } = balanceRun({ onOutput: new Error("the report could not be written") }, ["--exit-zero"]);
+
+    expect({ exitCode, complaints: complaints.length }).toEqual({ exitCode: 0, complaints: 1 });
   });
 });

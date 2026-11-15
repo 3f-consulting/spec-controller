@@ -58,6 +58,7 @@ describe("an argument the tool does not accept will stop the run", () => {
     ["CLM-CLI-127", ["balance", "--features", "--strict"], "missing-value", { flag: "--features" }],
     ["CLM-CLI-129", ["balance", "--target", "acme", "stray"], "stray-argument", { argument: "stray" }],
     ["CLM-CLI-130", ["balance", "--strict", "--strict"], "repeated-flag", { flag: "--strict" }],
+    ["CLM-CLI-133", ["balance", "--format", "html"], "unknown-format", { format: "html", formats: "md, json" }],
   ] as const)("[%s] %j is refused as %s, with its facts", (_clm, args, key, values) => {
     const requested = runRequestOf(args);
 

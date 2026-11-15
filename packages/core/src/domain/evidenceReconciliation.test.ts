@@ -36,7 +36,16 @@ function runVerdictOfRun(corpus: readonly string[], observed: readonly Observed[
 describe("the run will be balanced or out of balance, as its Claim Reconciliations call for", () => {
   it.each([
     ["CLM-EVR-001", "only balanced Claim Reconciliations", ["@CLM-ONE-001"], [["unit", "passed", "ONE-001"]], "balanced"],
-    ["CLM-EVR-002", "a Claim Reconciliation out of balance", ["@CLM-ONE-001"], [["unit", "failed", "ONE-001"]], "out-of-balance"],
+    [
+      "CLM-EVR-002",
+      "a Claim Reconciliation out of balance, beside a balanced one",
+      ["@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: adds\n    Given a step\n\n  @unit @CLM-ONE-002\n  Scenario: subtracts\n    Given a step\n"],
+      [
+        ["unit", "failed", "ONE-001"],
+        ["unit", "passed", "ONE-002"],
+      ],
+      "out-of-balance",
+    ],
     ["CLM-EVR-003", "no feature corpus, and Evidence Observations citing no claim code", [], [["unit", "passed"]], "out-of-balance"],
   ] as const)("[%s] a run with %s has its run verdict", (_clm, _what, corpus, evidence, verdict) => {
     expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict });
@@ -149,7 +158,14 @@ describe("Total of the Evidence Observations, by where they were filed", () => {
 
 describe("Total of the out-of-balance Claim Reconciliations, by feature file", () => {
   it.each([
-    ["CLM-EVR-023", "tagged @CLM-ONE-001, in one.feature tagged @ONE", "one.feature", "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: s\n    Given a step\n", [], [{ file: "one.feature", count: 1 }]],
+    [
+      "CLM-EVR-023",
+      "tagged @CLM-ONE-001, in one.feature tagged @ONE, beside a balanced claim",
+      "one.feature",
+      "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: s\n    Given a step\n\n  @unit @CLM-ONE-002\n  Scenario: t\n    Given a step\n",
+      [["unit", "passed", "ONE-002"]],
+      [{ file: "one.feature", count: 1 }],
+    ],
     ["CLM-EVR-024", "a scenario with no code, in one.feature tagged @ONE", "one.feature", "@ONE\nFeature: one\n\n  @unit\n  Scenario: s\n    Given a step\n", [], [{ file: "one.feature", count: 1 }]],
     ["CLM-EVR-025", "a scenario with no code, in three.feature, which has no feature code", "three.feature", "Feature: three\n\n  @unit\n  Scenario: s\n    Given a step\n", [], [{ file: "three.feature", count: 1 }]],
     ["CLM-EVR-026", "the unnamed claim", "none", "", [["unit", "passed"]], []],
@@ -200,15 +216,15 @@ describe("balance accounts for every step it reads", () => {
   const INSTALL = [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }];
   const twoJobs = () => disposed(workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: BUILD }, test: { steps: INSTALL } } })), { workflow: "ci.yml", job: "test" });
 
-  // A Vitest step, which runs a runner and is counted as one.
-  const UNIT = { run: "vitest run" };
+  // A Vitest step whose id is a claim code the step record does not hold, which runs a runner and is counted as one.
+  const UNIT = { id: "CLM-ONE-001", run: "vitest run" };
 
   it.each([
-    ["in one workflow", ["ci.yml", "ci.yml"], ["build", "test"]],
-    ["of one name, in two workflows", ["ci.yml", "nightly.yml"], ["build", "build"]],
-  ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, [first, second], [build, test]) => {
+    ["in one workflow, with no step record", ["ci.yml", "ci.yml"], ["build", "test"], []],
+    ["of one name, in two workflows, with a step record of another step", ["ci.yml", "nightly.yml"], ["build", "build"], [{ key: "lint", outcome: "success", conclusion: "success" }]],
+  ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, [first, second], [build, test], record) => {
     const steps = [...workflowStepsFrom(first, JSON.stringify({ jobs: { [build]: { steps: [...BUILD, UNIT] } } })), ...workflowStepsFrom(second, JSON.stringify({ jobs: { [test]: { steps: INSTALL } } }))];
-    const { jobs } = stepAccountOf(disposed(steps, { workflow: second, job: test }, { unit: "vitest" }));
+    const { jobs } = stepAccountOf(disposed(steps, { workflow: second, job: test }, { unit: "vitest" }, record));
 
     expect(jobs.map(({ workflow: _workflow, job: _job, ...counts }) => counts)).toEqual([
       { stepsRead: 4, runners: 1, reconcilerSteps: 1, nonChecks: 0, plumbing: 1, fitnessFunctions: 1 },

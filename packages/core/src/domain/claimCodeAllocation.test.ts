@@ -347,6 +347,12 @@ function repositoryOfOne() {
 
 const stoppedOn = (key: string, values: Readonly<Record<string, unknown>>) => ({ refusal: { key, values } });
 
+// What git said, as a refusal names it, and whether that is git's words without the newline git ends them with.
+function whatGitSaid(outcome: AllocateOutcome): { readonly said: unknown; readonly asWords: boolean } {
+  const said = "refusal" in outcome ? outcome.refusal.values["said"] : undefined;
+  return { said, asWords: typeof said === "string" && said === said.trim() };
+}
+
 describe("allocate names what it could not read, and gives no code", () => {
   it("[CLM-STG-072] a file git cannot read stops it as a usage error, naming what it could not read, and what git said", () => {
     const repository = repositoryOfOne();
@@ -376,7 +382,12 @@ describe("allocate names what it could not read, and gives no code", () => {
     const repository = repositoryOfOne();
     repository.git("config", "grep.lineNumber", "not-a-boolean");
 
-    expect(allocate(ONE, repository.top)).toEqual(stoppedOn("unreadable-in-tree", { path: realpathSync(repository.top), said: expect.stringContaining("grep.linenumber") }));
+    const outcome = allocate(ONE, repository.top);
+
+    expect({ outcome, asWords: whatGitSaid(outcome).asWords }).toEqual({
+      outcome: stoppedOn("unreadable-in-tree", { path: realpathSync(repository.top), said: expect.stringContaining("grep.linenumber") }),
+      asWords: true,
+    });
   });
 
   it("[CLM-STG-085] a folder in the tree it cannot read stops it as a usage error, naming what it could not read", () => {
