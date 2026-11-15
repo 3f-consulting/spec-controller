@@ -902,9 +902,9 @@ An error after the run has its exit code does not change it. One line goes to st
 
 ### Error codes
 
-**A refusal of a flag, a command, an argument, an input or an output carries its error code in square brackets**, at the start of its line on stderr, as in `[unknown-flag] balance does not take the flag --nope; see spec-controller balance --help`. The code names what went wrong and does not change when the words do, so quote it and look it up here.
+**A refusal of a flag, a command, an argument, an input or an output carries its error code in square brackets**, at the start of its line on stderr, as in `[unknown-flag] balance does not take the flag --nope`. The code names what went wrong and does not change when the words do, so quote it and look it up here.
 
-Every error below refuses the command as given. That is a usage error, and the run exits `2`. A refusal of the command line ends by pointing to the help that lists what was allowed.
+Every error below refuses the command as given. That is a usage error, and the run exits `2`. A refusal of the command line is followed by the help for what was asked for, which lists what was allowed.
 
 An error in the inputs is not a refusal. Its line in the report's `## Errors in the inputs` gives its code, and those codes are listed under [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped) and [Claim code errors](#claim-code-errors).
 
@@ -966,7 +966,7 @@ spec-controller balance --features ./features \
   --cucumber ./cucumber-report.json
 ```
 
-Run `spec-controller --help` for the top-level summary of the commands. Run `spec-controller balance --help` for the full list of `balance`'s flags. A `--help` or `-h` before the command answers the top-level help at exit `0`, whatever else is given there, even a token that would otherwise be refused. After the command, it is that command's own help.
+Run `spec-controller --help` for the top-level summary of the commands. Run `spec-controller balance --help` for the full list of `balance`'s flags. After a command, `--help` or `-h` gives that command's own help. Help answers only when nothing else on the command line is refused: a usage error wins, even beside `--help`, and its complaint is followed by the help for what was asked for, at exit `2`.
 
 ### Flags
 
@@ -1045,7 +1045,7 @@ The code is written under `CLM`, one past the highest number a claim code in the
   - `0` when it answers.
   - `2` for a usage error (no feature code given, a feature code not in the claim-code form, a second feature code, a flag it does not take, or a file, folder or history it cannot read) or an unknown feature code. The error code says which it was (see [Error codes](#error-codes)), and it gives no code. An unknown feature code's refusal lists the feature codes the feature files carry.
   - It never refuses because history is short.
-  - `--help` or `-h` anywhere among its arguments answers its help at `0`.
+  - `--help` or `-h` among its arguments answers its help at `0`, unless another argument is refused: then the refusal and its help, at `2`.
 
 **What it reads.**
 

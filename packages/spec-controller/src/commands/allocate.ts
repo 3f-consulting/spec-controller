@@ -2,7 +2,6 @@ import {
   allocationOf,
   featureAsWrittenFrom,
   featureCodeOfFile,
-  isFeatureCode,
   writtenClaimCode,
   type Allocation,
   type AllocationAsked,
@@ -63,7 +62,6 @@ function notesOf(asked: AllocationAsked, allocation: Extract<Allocation, { kind:
 const stopped = (refusal: Refusal): AllocateOutcome => ({ stop: "usage-error", refusal });
 
 export function allocate(asked: AllocationAsked, standingIn: string): AllocateOutcome {
-  if (!isFeatureCode(asked.featureCode)) return stopped({ key: "not-a-feature-code", values: { given: asked.featureCode } });
   const standing = standingOf(standingIn);
   if ("refusal" in standing) return stopped(standing.refusal);
   const featureCodes = featureCodesUnder(standing.read.top);
