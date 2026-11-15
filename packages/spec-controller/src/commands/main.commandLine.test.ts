@@ -133,6 +133,7 @@ describe("an argument the tool does not accept will stop the run", () => {
     ["CLM-CLI-133", "a report format the tool does not have", ["balance", "--format", "html"], ["html", "md", "json", "[unknown-format]"]],
     ["CLM-CLI-134", "no feature code given to allocate", ["allocate"], ["[no-feature-code]"]],
     ["CLM-CLI-135", "two feature codes given to allocate", ["allocate", "ABC", "DEF"], ["DEF", "[extra-argument]"]],
+    ["CLM-CLI-208", "something given to allocate that is not a feature code", ["allocate", "one"], ["one", "[not-a-feature-code]"]],
   ] as const)("[%s] %s: the run stops, no verdict, exit 2, and a complaint with its facts", (_clm, _given, args, facts) => {
     const { exitCode, output, error } = ran(args);
 

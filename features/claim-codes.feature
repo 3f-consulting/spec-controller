@@ -135,12 +135,6 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-078 | a test fixture's feature file was tagged @ZZZ            |
         | CLM-STG-079 | a feature file tagged @ZZZ was deleted by a later commit |
 
-    @unit @CLM-STG-084
-    Scenario: a request that is not a feature code stops as a usage error
-      given the repository's features folder contained a feature file tagged @ONE
-      when the developer asks for the next code giving something that is not a feature code
-      then it will stop as a usage error, and give no code
-
     @unit
     Scenario Outline: a request for a new feature code gives the next code for any well-formed one
       given the repository's features folder contained a feature file tagged @ONE, with a scenario tagged @CLM-ONE-003
