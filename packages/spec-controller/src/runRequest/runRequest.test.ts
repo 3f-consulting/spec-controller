@@ -55,7 +55,6 @@ describe("you will get the report format you ask for", () => {
 
 describe("an argument the tool does not accept will stop the run", () => {
   it.each([
-    ["CLM-CLI-126", ["balance", "--"], "unknown-flag", { command: "balance", flag: "--" }],
     ["CLM-CLI-127", ["balance", "--features", "--strict"], "missing-value", { flag: "--features" }],
     ["CLM-CLI-129", ["balance", "--target", "acme", "stray"], "stray-argument", { argument: "stray" }],
     ["CLM-CLI-130", ["balance", "--strict", "--strict"], "repeated-flag", { flag: "--strict" }],

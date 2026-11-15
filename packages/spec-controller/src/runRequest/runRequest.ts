@@ -81,8 +81,8 @@ function flagsRead(command: Command, args: readonly string[]): FlagsRead | Usage
   const positionals: string[] = [];
   const tokens = tokensOf(flags, args);
   for (const [at, token] of tokens.entries()) {
-    // -- is no flag any command takes.
-    if (token.kind === "option-terminator") return refused("unknown-flag", { command, flag: "--" }, command);
+    // -- ends the flags; what follows it is read as an argument.
+    if (token.kind === "option-terminator") continue;
     if (token.kind === "positional") {
       const refusal = positionalRefusal(command, flags, tokens[at - 1], token.value, positionals.length);
       if (refusal !== undefined) return refusal;
