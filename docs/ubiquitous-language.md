@@ -45,7 +45,7 @@ Correctness is the agreement of two independent records. The debit side is the `
 | Term | Meaning | Bookkeeping term | Double-check |
 |---|---|---|---|
 | `Test Specification` | The **`executable specifications`** taken together: feature files (`@`-tags), step definitions and test code. It is the record of the **behaviours** to be proved and the `Evidence Obligations` for each. | Debit journal — the book of original entry for debits | |
-| `Evidence Obligation` | An `executable claim` raises one for each `kind-of-check tag` that applies to it, to be met by `Evidence Observations`. The `@`-tags on the scenario name those kinds: the `layers` `@unit`, `@integration`, `@e2e` and `@performance`, and `@fitness`. A row of an Outline takes its Outline's tags. A deferred scenario raises none. | Debit — the entry for what an account requires | demand, declare, require, insist, expect — every inflection (demanded, demander, declared, undeclared, required, requirement, …); obligation (bare); the `Declared` prefix |
+| `Evidence Obligation` | An `executable claim` raises one for each `kind-of-quality-check tag` that applies to it, to be met by `Evidence Observations`. The `@`-tags on the scenario name those kinds: the `layers` `@unit`, `@integration`, `@e2e` and `@performance`, and `@fitness`. A row of an Outline takes its Outline's tags. A deferred scenario raises none. | Debit — the entry for what an account requires | demand, declare, require, insist, expect — every inflection (demanded, demander, declared, undeclared, required, requirement, …); obligation (bare); the `Declared` prefix |
 
 #### The credit side
 
@@ -94,7 +94,7 @@ Each link has two sides, and the table below gives both links the same cells. Ea
 | **On the second side only** | unstated: a quality check of behaviour the document specification does not state | `not-asked-for`; `cites-unknown-claim`, a `phantom claim`; `cites-no-claim`, the `unnamed claim` |
 | **On both sides, disagreeing** | conflict: the document specification and a quality check assert different outcomes | `failing`: the check ran, and the application did not do what it checks |
 | **On both sides, but the evidence cannot be trusted** | | `never-ran`: the check never reached its assertions; `cannot-fail`: the check passed, but its step or its job sets `continue-on-error`, so its red might not fail the build |
-| **The claim is written so it cannot be reconciled** | | `no-claim-code`: the claim carries no code; `duplicate-claim-code`: two claims share one code; `no-quality-check`: the claim asks for no quality check, carrying a claim code and no kind-of-check tag, and nothing cites it |
+| **The claim is written so it cannot be reconciled** | | `no-claim-code`: the claim carries no code; `duplicate-claim-code`: two claims share one code; `no-quality-check`: the claim asks for no quality check, carrying a claim code and no kind-of-quality-check tag, and nothing cites it |
 
 A structural contract, in `analyse`, is not a claim at all: a test asserting an invariant rather than one input and one outcome.
 
@@ -175,7 +175,7 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | configuration errors | The `specController` entries the run could not use, in `## Errors in the inputs` (`errorsInTheInputs.configurationErrors` in the JSON): one of the wrong kind, read as absent (`configuration-wrong-kind`); a key the block does not read (`configuration-unknown-key`); a `runners` key that is not a layer (`runner-key-not-a-layer`); or a `notChecks` entry that matches no step (`not-checks-entry-matches-no-step`) or names none (`not-checks-entry-not-a-step-name`). Each is named on the report, and none refuses the run. |
 | deferral tag | A tag that puts a scenario off, on the scenario itself, on the Rule it sits under or on its Feature: it is not an `executable claim`, raises no evidence obligation, and posts nothing. Evidence still citing its code lands on a `phantom claim`. The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`, and `deferralTags` extends it. Under `--strict` it is ignored. |
 | `@<quality-check-kind>pending` | A tag that raises nothing: the scenario asks for no evidence of that one `kind of quality check`. Under `--strict` it is read as `@<quality-check-kind>`. |
-| kind-of-check tag | A tag naming a `kind of quality check`: `@unit`, `@integration`, `@e2e`, `@performance` or `@fitness`. Each one on an `executable claim` raises one `evidence obligation`. |
+| kind-of-quality-check tag | A tag naming a `kind of quality check`: `@unit`, `@integration`, `@e2e`, `@performance` or `@fitness`. Each one on an `executable claim` raises one `evidence obligation`. |
 
 ### Claim codes
 
