@@ -31,10 +31,10 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       then every function in them will be under the CRAP limit
 
     @fitness @CLM-FIT-009
-    Scenario: the packages, core's adapters and its domain import each other only where this repository's boundaries allow
+    Scenario: the packages, core's adapters and its domain import each other only where this repository's boundaries allow, with no list of tolerated breaks
       given the repository drew boundaries between its packages, core's adapters and its domain
       when CI runs the fitness function over every import in the packages
-      then no import will break a boundary
+      then no import will break a boundary, and there will be no list of tolerated breaks
 
     @fitness @CLM-FIT-011
     Scenario: each package's source, its unit tests and the behavioural suite's code type-check
@@ -91,7 +91,7 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       when CI runs the fitness function over its tracked test and production lines
       then the ratio will be within the ceiling
 
-  Rule: every production file is mutation-tested, or listed as not
+  Rule: no production code misses mutation testing unannounced
 
     @fitness @CLM-FIT-040
     Scenario: every production source file in the packages is in a mutation scope or on the recorded list of files no scope mutates

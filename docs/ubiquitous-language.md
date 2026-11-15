@@ -45,7 +45,7 @@ Correctness is the agreement of two independent records. The debit side is the `
 | Term | Meaning | Bookkeeping term | Double-check |
 |---|---|---|---|
 | `Test Specification` | The **`executable specifications`** taken together: feature files (`@`-tags), step definitions and test code. It is the record of the **behaviours** to be proved and the `Evidence Obligations` for each. | Debit journal — the book of original entry for debits | |
-| `Evidence Obligation` | An `executable claim` raises one for each `kind-of-check tag` that applies to it, to be met by `Evidence Observations`. The `@`-tags on the scenario name those kinds: the `layers` `@unit`, `@integration`, `@e2e` and `@performance`, and `@fitness`. A row of an Outline takes its Outline's tags. A deferred scenario raises none. | Debit — the entry for what an account requires | demand, declare, require, insist, expect — every inflection (demanded, demander, declared, undeclared, required, requirement, …); obligation (bare); the `Declared` prefix |
+| `Evidence Obligation` | An `executable claim` raises one for each `kind-of-quality-check tag` that applies to it, to be met by `Evidence Observations`. The `@`-tags on the scenario name those kinds: the `layers` `@unit`, `@integration`, `@e2e` and `@performance`, and `@fitness`. A row of an Outline takes its Outline's tags. A deferred scenario raises none. | Debit — the entry for what an account requires | demand, declare, require, insist, expect — every inflection (demanded, demander, declared, undeclared, required, requirement, …); obligation (bare); the `Declared` prefix |
 
 #### The credit side
 
@@ -94,7 +94,7 @@ Each link has two sides, and the table below gives both links the same cells. Ea
 | **On the second side only** | unstated: a quality check of behaviour the document specification does not state | `not-asked-for`; `cites-unknown-claim`, a `phantom claim`; `cites-no-claim`, the `unnamed claim` |
 | **On both sides, disagreeing** | conflict: the document specification and a quality check assert different outcomes | `failing`: the check ran, and the application did not do what it checks |
 | **On both sides, but the evidence cannot be trusted** | | `never-ran`: the check never reached its assertions; `cannot-fail`: the check passed, but its step or its job sets `continue-on-error`, so its red might not fail the build |
-| **The claim is written so it cannot be reconciled** | | `no-claim-code`: the claim carries no code; `duplicate-claim-code`: two claims share one code; `no-quality-check`: the claim asks for no quality check, carrying a claim code and no kind-of-check tag, and nothing cites it |
+| **The claim is written so it cannot be reconciled** | | `no-claim-code`: the claim carries no code; `duplicate-claim-code`: two claims share one code; `no-quality-check`: the claim asks for no quality check, carrying a claim code and no kind-of-quality-check tag, and nothing cites it |
 
 A structural contract, in `analyse`, is not a claim at all: a test asserting an invariant rather than one input and one outcome.
 
@@ -142,10 +142,10 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | provenance | The report's record of what was reconciled: the target, its source SHA, the tool SHA when there is one, the tool version, the time the run started, and the inputs the run read with their paths. So a reconciliation is reproducible and attributable. Its JSON key is `provenance`. |
 | source SHA | The target's commit, by default its resolved `HEAD`. |
 | tool SHA | The commit of the tool's own checkout, when the tool runs from one, never the target's. A tool installed as a package has none. |
-| run integrity | The report section `## Run integrity` (`runIntegrity` in the JSON), printed only when evidence never ran. It lists each `never-ran` `evidence observation`: its `kind of quality check` and where to look. Such a run is `unsound`. |
+| run integrity | The report section `## Run integrity` (`runIntegrity` in the JSON). The Markdown prints it only when evidence never ran; the JSON always has it, its list empty when none did. It lists each `never-ran` `evidence observation`: its `kind of quality check` and where to look. Such a run is `unsound`. |
 | proof never ran | An `evidence observation` that never ran to a result, so the behaviour it proves was never exercised: a `never-ran` one. |
 | Evidence Observations (the total) | The `Summary`'s count of evidence observations over every `kind of quality check`, fitness included, and its balancing identity: every evidence observation lands on an `executable claim`, a phantom claim or the unnamed claim, and the three counts sum to the total. |
-| errors in the inputs | The report section `## Errors in the inputs` (`errorsInTheInputs` in the JSON), printed only when the run found any: the `Claim code errors` and the `configuration errors`, each a line giving its code, then what it is about. |
+| errors in the inputs | The report section `## Errors in the inputs` (`errorsInTheInputs` in the JSON). The Markdown prints it only when the run found any; the JSON always has it, its lists empty when there are none. It holds the `Claim code errors` and the `configuration errors`, each a line giving its code, then what it is about. |
 
 ### Fitness functions in CI
 
@@ -156,9 +156,9 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | non-check | A step the target names under `specController.notChecks`, unless it is a reconciler step. The `step account` counts it under *Non-checks* (`nonChecks` in the JSON). Double-check: *Excluded*, a word seen standing in for it, means a non-check only where it is used in this sense. |
 | plumbing step | A step that only sets up the job: it checks out the source, caches, sets up a toolchain, or moves artefacts between jobs. It is neither a check nor a runner. The CI workflow's reader says which steps are plumbing. The `step account` counts them under *Plumbing* (`plumbing` in the JSON). A plumbing step the manifest also names a non-check is a non-check: it is counted with the non-checks. |
 | variant | One of the ways of writing an input that `balance` treats as the same, such as a launcher (`npx`, `uv run`) before a runner, or a package manager's way of running a script. One claim stands for each kind of input, and its variants are listed in a data file beside the reader that reads them, such as [`shell.variants.json`](../packages/core/src/inputs/shell.variants.json), keyed by that claim's code. The shell reader's launchers, wrappers and script runners are in the first; the places a step can write the step record from (`run:` and `env:`) and the plumbing actions are in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json), beside the workflow reader. A way of writing one not listed is not read as that kind. Double-check: *form*, *spelling*. |
-| fitness function, in CI | A step in the discovery scope that is not a declared runner, the reconciler, a non-check or a plumbing step. |
+| fitness function | A step in the discovery scope that is not a declared runner, the reconciler, a non-check or a plumbing step, and a runner step whose `id:` is a claim code the step record has. The `step account` counts it under *Fitness functions* (`fitnessFunctions` in the JSON). |
 | uncited fitness function | A fitness function whose step cites no claim. Its `evidence observation` lands on the unnamed claim. |
-| step account | The report's account of the CI steps the run read, `## Step account` after the `Summary` (`stepAccount` in the JSON), printed when the run read CI workflows, so every step read is accounted for. It has a row per workflow and job counting the steps read, then the steps by disposition (runners, reconciler steps, non-checks, plumbing, fitness functions), and a total over the rows, which the Markdown prints when there is more than one job. |
+| step account | The report's account of the CI steps the run read, `## Step account` after the `Summary` (`stepAccount` in the JSON). The Markdown prints it when the run read a CI workflow step, so every step read is accounted for; the JSON always has it, with no rows when none was read. It has a row per workflow and job counting the steps read, then the steps by disposition (runners, reconciler steps, non-checks, plumbing, fitness functions), and a total over the rows, which the Markdown prints when there is more than one job. |
 | check step | The CI step that already runs a check, carrying the check's claim code as its `id:`. |
 | citation | The claim code on a check step's `id:`: a citation of the scenario, never a definition of the check. |
 | converted fitness function | A fitness function whose CI step carries its `@fitness` scenario's claim code as its `id:`, so `balance` credits its result to that scenario. |
@@ -175,7 +175,7 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | configuration errors | The `specController` entries the run could not use, in `## Errors in the inputs` (`errorsInTheInputs.configurationErrors` in the JSON): one of the wrong kind, read as absent (`configuration-wrong-kind`); a key the block does not read (`configuration-unknown-key`); a `runners` key that is not a layer (`runner-key-not-a-layer`); or a `notChecks` entry that matches no step (`not-checks-entry-matches-no-step`) or names none (`not-checks-entry-not-a-step-name`). Each is named on the report, and none refuses the run. |
 | deferral tag | A tag that puts a scenario off, on the scenario itself, on the Rule it sits under or on its Feature: it is not an `executable claim`, raises no evidence obligation, and posts nothing. Evidence still citing its code lands on a `phantom claim`. The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`, and `deferralTags` extends it. Under `--strict` it is ignored. |
 | `@<quality-check-kind>pending` | A tag that raises nothing: the scenario asks for no evidence of that one `kind of quality check`. Under `--strict` it is read as `@<quality-check-kind>`. |
-| kind-of-check tag | A tag naming a `kind of quality check`: `@unit`, `@integration`, `@e2e`, `@performance` or `@fitness`. Each one on an `executable claim` raises one `evidence obligation`. |
+| kind-of-quality-check tag | A tag naming a `kind of quality check`: `@unit`, `@integration`, `@e2e`, `@performance` or `@fitness`. Each one on an `executable claim` raises one `evidence obligation`. |
 
 ### Claim codes
 
@@ -187,14 +187,14 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | shared claim code | A code two scenarios carry. Each scenario is a claim of its own: it has its own Claim Reconciliation under the code, and every Quality Check Reconciliation on it reads `duplicate-claim-code`. An evidence observation citing the code credits neither and posts to the unnamed claim. |
 | known feature code, unknown feature code | A feature code is known when a feature file in `features/`, at the top of the repository, is headed with it. `allocate` refuses an unknown feature code unless `--new` is given. |
 | highest seen | The highest code `allocate` found for a feature code, with where it was seen. |
-| excluded claim code occurrence | A claim code written in a feature file outside a tag or a clm column, such as in a title, a step, an Examples cell of no clm column or a comment. No claim reads it. The `Summary` counts them, when there are any (`totals.excludedClaimCodeOccurrences` in the JSON). |
+| excluded claim code occurrence | A claim code written with its `@` in a feature file anywhere but on a scenario's tag line, such as in a title, a step, an Examples cell or a comment. No claim reads it. The `Summary` counts them, when there are any (`totals.excludedClaimCodeOccurrences` in the JSON). |
 
 ### The corpus, the report's views and term spelling
 
 | Term | Meaning |
 |---|---|
 | corpus | The feature files under `--features`, whose scenarios one run reconciles. |
-| Out of balance by feature | The Summary subsection, `### Out of balance by feature` (`totals.outOfBalanceByFeature` in the JSON), with a row for each feature file and how many of its claims are out of balance. A phantom claim and the unnamed claim are on no feature's row. It is left out when none is. |
+| Out of balance by feature | The Summary subsection, `### Out of balance by feature` (`totals.outOfBalanceByFeature` in the JSON), with a row for each feature file and how many of its claims are out of balance. A phantom claim and the unnamed claim are on no feature's row. The Markdown leaves it out when no feature file has one; the JSON has it, empty. |
 
 ## Borrowed from 3F Consulting's delivery methodology
 

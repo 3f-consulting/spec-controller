@@ -21,13 +21,23 @@ Feature: every claim code is well formed, filed under its file's code, and never
     then it will <result>
 
     Examples:
-      | clm         | form                  | id          | result                         |
-      | CLM-STG-037 | feature code          | AB          | be a feature code              |
-      | CLM-STG-040 | feature code          | A           | not be a feature code          |
-      | CLM-STG-044 | claim code            | CLM-ONE-001 | be a claim code                |
-      | CLM-STG-047 | claim code            | CLM-A-001   | not be a claim code            |
-      | CLM-STG-049 | retired scenario code | SCN-ONE-001 | be a retired scenario code     |
-      | CLM-STG-052 | retired scenario code | SCN-A-001   | not be a retired scenario code |
+      | clm         | form                  | id           | result                         |
+      | CLM-STG-037 | feature code          | AB           | be a feature code              |
+      | CLM-STG-038 | feature code          | ABCDE        | be a feature code              |
+      | CLM-STG-039 | feature code          | A1           | be a feature code              |
+      | CLM-STG-040 | feature code          | A            | not be a feature code          |
+      | CLM-STG-041 | feature code          | ABCDEF       | not be a feature code          |
+      | CLM-STG-042 | feature code          | abc          | not be a feature code          |
+      | CLM-STG-044 | claim code            | CLM-ONE-001  | be a claim code                |
+      | CLM-STG-045 | claim code            | CLM-ONE-7    | be a claim code                |
+      | CLM-STG-046 | claim code            | CLM-ONE-1000 | be a claim code                |
+      | CLM-STG-047 | claim code            | CLM-A-001    | not be a claim code            |
+      | CLM-STG-048 | claim code            | CLM-ONE-     | not be a claim code            |
+      | CLM-STG-049 | retired scenario code | SCN-ONE-001  | be a retired scenario code     |
+      | CLM-STG-050 | retired scenario code | SCN-ONE-7    | be a retired scenario code     |
+      | CLM-STG-051 | retired scenario code | SCN-ONE-1000 | be a retired scenario code     |
+      | CLM-STG-052 | retired scenario code | SCN-A-001    | not be a retired scenario code |
+      | CLM-STG-053 | retired scenario code | SCN-ONE-     | not be a retired scenario code |
 
   @unit @CLM-STG-043
   Scenario: a tag above Feature: will be the feature code of that file
@@ -50,14 +60,16 @@ Feature: every claim code is well formed, filed under its file's code, and never
       then balance will find the error <error>, naming <facts>
 
       Examples:
-        | clm         | files                                                                                                               | error                        | facts                                                             |
-        | CLM-STG-054 | one.feature, tagged @ONE, contained a scenario tagged @CLM-TWO-001, and two.feature was tagged @TWO                 | foreign-claim-code           | CLM-TWO-001, one.feature, and two.feature as the file tagged @TWO |
-        | CLM-STG-055 | one.feature, tagged @ONE, contained a scenario tagged @CLM-ZZZ-001, and no file was tagged @ZZZ                     | foreign-claim-code           | CLM-ZZZ-001, one.feature, and no file tagged @ZZZ                 |
-        | CLM-STG-056 | three.feature had no feature code, and contained a scenario tagged @CLM-ONE-002                                     | no-feature-code              | three.feature                                                     |
-        | CLM-STG-057 | one.feature and uno.feature were both tagged @ONE                                                                   | duplicate-feature-code       | @ONE, one.feature and uno.feature                                 |
-        | CLM-STG-058 | one.feature contained a scenario tagged both @CLM-ONE-001 and @CLM-ONE-002                                          | several-claim-codes          | one.feature, that scenario, CLM-ONE-001 and CLM-ONE-002           |
-        | CLM-STG-059 | one.feature contained an Outline tagged @CLM-ONE-009 with a clm column                                              | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
-        | CLM-STG-094 | one.feature contained an Outline tagged @CLM-ONE-009, with a clm column and an Examples block tagged @CLM-ONE-009   | claim-code-beside-clm-column | one.feature, that Outline, and CLM-ONE-009 once                   |
+        | clm         | files                                                                                                              | error                        | facts                                                             |
+        | CLM-STG-054 | one.feature, tagged @ONE, contained a scenario tagged @CLM-TWO-001, and two.feature was tagged @TWO                | foreign-claim-code           | CLM-TWO-001, one.feature, and two.feature as the file tagged @TWO |
+        | CLM-STG-095 | one.feature, tagged @ONE, contained an Outline with CLM-TWO-001 in its clm column, and two.feature was tagged @TWO | foreign-claim-code           | CLM-TWO-001, one.feature, and two.feature as the file tagged @TWO |
+        | CLM-STG-055 | one.feature, tagged @ONE, contained a scenario tagged @CLM-ZZZ-001, and no file was tagged @ZZZ                    | foreign-claim-code           | CLM-ZZZ-001, one.feature, and no file tagged @ZZZ                 |
+        | CLM-STG-056 | three.feature had no feature code, and contained a scenario tagged @CLM-ONE-002                                    | no-feature-code              | three.feature                                                     |
+        | CLM-STG-057 | one.feature and uno.feature were both tagged @ONE                                                                  | duplicate-feature-code       | @ONE, one.feature and uno.feature                                 |
+        | CLM-STG-058 | one.feature contained a scenario tagged both @CLM-ONE-001 and @CLM-ONE-002                                         | several-claim-codes          | one.feature, that scenario, CLM-ONE-001 and CLM-ONE-002           |
+        | CLM-STG-059 | one.feature contained an Outline tagged @CLM-ONE-009 with a clm column                                             | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
+        | CLM-STG-060 | one.feature contained an Outline with a clm column and an Examples block tagged @CLM-ONE-009                       | claim-code-beside-clm-column | one.feature, that Outline, CLM-ONE-009                            |
+        | CLM-STG-094 | one.feature contained an Outline tagged @CLM-ONE-009, with a clm column and an Examples block tagged @CLM-ONE-009  | claim-code-beside-clm-column | one.feature, that Outline, and CLM-ONE-009 once                   |
 
     @unit @CLM-STG-096
     Scenario: a claim code in an Examples cell of an Outline with no clm column is no claim code error
@@ -65,12 +77,12 @@ Feature: every claim code is well formed, filed under its file's code, and never
       when balance reads it
       then it will find no claim code error
 
-  Rule: allocate's next code is one past the highest code the repository's files or history contained
+  Rule: allocate's next code is one past the highest code that has ever been in the repository
 
     allocate takes feature codes from the feature files. It takes numbers from every file git lists
     in the tree, leaving out the files git ignores, and from every line the repository's reachable
-    history has contained. It counts a code written under CLM or under the retired SCN, and answers
-    under CLM, so it never hands out again a number a code has had, even one since retired.
+    history has contained. It counts a code written under CLM or under the retired SCN, and answers under CLM, so it never hands out
+    again a number a code has had, even one since retired.
 
     @unit
     Scenario Outline: the answer is one past the highest code in the feature file, a tracked file or history
@@ -81,12 +93,19 @@ Feature: every claim code is well formed, filed under its file's code, and never
       and it will note the highest code it saw, and where: <seen>
 
       Examples:
-        | clm         | in the file | elsewhere                                                              | answer       | seen                                        |
-        | CLM-STG-061 | CLM-ONE-001 | a file git tracks, such as a workflow or a test, contained CLM-ONE-005 | CLM-ONE-006  | that file and line                          |
-        | CLM-STG-062 | CLM-ONE-001 | a line in git history, since deleted, had CLM-ONE-005                  | CLM-ONE-006  | the file and line it was in, and the commit |
-        | CLM-STG-065 | CLM-ONE-001 | a file git tracks contained SCN-ONE-, with no number                   | CLM-ONE-002  | the feature file and line                   |
-        | CLM-STG-070 | CLM-ONE-7   | nothing else contained a ONE code                                      | CLM-ONE-008  | the feature file and line                   |
-        | CLM-STG-071 | CLM-ONE-999 | nothing else contained a ONE code                                      | CLM-ONE-1000 | the feature file and line                   |
+        | clm         | in the file | elsewhere                                                                                                          | answer       | seen                                        |
+        | CLM-STG-061 | CLM-ONE-001 | a file git tracks, such as a workflow or a test, contained CLM-ONE-005                                             | CLM-ONE-006  | that file and line                          |
+        | CLM-STG-066 | CLM-ONE-001 | a new file git does not ignore contained CLM-ONE-005                                                               | CLM-ONE-006  | that file and line                          |
+        | CLM-STG-067 | CLM-ONE-001 | a file at the repository's top contained CLM-ONE-005, and the developer stood in a subdirectory containing no code | CLM-ONE-006  | that file and line                          |
+        | CLM-STG-062 | CLM-ONE-001 | a line in git history, since deleted, had CLM-ONE-005                                                              | CLM-ONE-006  | the file and line it was in, and the commit |
+        | CLM-STG-097 | CLM-ONE-001 | a merge's resolution, and neither side, had CLM-ONE-005                                                            | CLM-ONE-006  | the file and line it was in, and the commit |
+        | CLM-STG-063 | CLM-ONE-001 | a file git tracks contained SCN-ONE-005                                                                            | CLM-ONE-006  | that file and line                          |
+        | CLM-STG-064 | CLM-ONE-001 | a line in git history, since deleted, had SCN-ONE-005                                                              | CLM-ONE-006  | the file and line it was in, and the commit |
+        | CLM-STG-065 | CLM-ONE-001 | a file git tracks contained SCN-ONE-, with no number                                                               | CLM-ONE-002  | the feature file and line                   |
+        | CLM-STG-068 | CLM-ONE-001 | only a commit's message contained CLM-ONE-900                                                                      | CLM-ONE-002  | the feature file and line                   |
+        | CLM-STG-069 | CLM-ONE-001 | only a file git ignores contained CLM-ONE-900                                                                      | CLM-ONE-002  | the feature file and line                   |
+        | CLM-STG-070 | CLM-ONE-7   | nothing else contained a ONE code                                                                                  | CLM-ONE-008  | the feature file and line                   |
+        | CLM-STG-071 | CLM-ONE-999 | nothing else contained a ONE code                                                                                  | CLM-ONE-1000 | the feature file and line                   |
 
     @unit @CLM-STG-098
     Scenario: with no code seen, the answer is the feature code's first claim code
@@ -103,12 +122,18 @@ Feature: every claim code is well formed, filed under its file's code, and never
       when the developer asks for the next code for NEST
       then the answer will be CLM-NEST-005, and nothing else
 
-    @unit @CLM-STG-077
-    Scenario: allocate refuses a feature code no feature file has, and lists those that have one
-      given the repository's features folder contained feature files tagged @ONE and @TWO, and none tagged @ZZZ
+    @unit
+    Scenario Outline: allocate refuses a feature code no feature file has, and lists those that have one
+      given the repository's features folder contained feature files tagged @ONE and @TWO, and <where>
       when the developer asks for the next code for ZZZ
       then it will stop as an unknown feature code, and give no code
       and it will list ONE and TWO, in alphabetical order
+
+      Examples:
+        | clm         | where                                                    |
+        | CLM-STG-077 | no file mentioned ZZZ                                    |
+        | CLM-STG-078 | a test fixture's feature file was tagged @ZZZ            |
+        | CLM-STG-079 | a feature file tagged @ZZZ was deleted by a later commit |
 
     @unit
     Scenario Outline: a request for a new feature code gives the next code for any well-formed one
@@ -142,9 +167,9 @@ Feature: every claim code is well formed, filed under its file's code, and never
       and it will note that <boundary>
 
       Examples:
-        | clm         | copy                                 | request                                    | answer      | boundary                                             |
-        | CLM-STG-075 | not a git repository                 | the next code for ONE                      | CLM-ONE-002 | no history was read                                  |
-        | CLM-STG-076 | a shallow clone from after that line | the next code for ONE                      | CLM-ONE-002 | history before the clone's first commit was not read |
+        | clm         | copy                                 | request                                     | answer      | boundary                                             |
+        | CLM-STG-075 | not a git repository                 | the next code for ONE                       | CLM-ONE-002 | no history was read                                  |
+        | CLM-STG-076 | a shallow clone from after that line | the next code for ONE                       | CLM-ONE-002 | history before the clone's first commit was not read |
         | CLM-STG-087 | not a git repository                 | the next code for ZZ, as a new feature code | CLM-ZZ-001  | no history was read                                  |
         | CLM-STG-088 | a shallow clone                      | the next code for ZZ, as a new feature code | CLM-ZZ-001  | history before the clone's first commit was not read |
 
@@ -154,13 +179,17 @@ Feature: every claim code is well formed, filed under its file's code, and never
     Scenario Outline: allocate names what it could not read, and gives no code
       given there was <what>
       when the developer asks for the next code
-      then it will stop, naming <what it names>
+      then it will stop as a usage error, naming <what it names>
       and it will give no code
 
       Examples:
-        | clm         | what                       | what it names                             |
-        | CLM-STG-072 | a file git cannot read     | what it could not read, and what git said |
-        | CLM-STG-073 | history git failed to read | what it could not read                    |
+        | clm         | what                                | what it names                             |
+        | CLM-STG-072 | a file git cannot read              | what it could not read, and what git said |
+        | CLM-STG-073 | history git failed to read          | what it could not read                    |
+        | CLM-STG-074 | a damaged repository                | what it could not read, and what git said |
+        | CLM-STG-085 | a folder in the tree it cannot read | what it could not read                    |
+        | CLM-STG-093 | a file in the tree it cannot read   | what it could not read                    |
+        | CLM-STG-089 | a feature file that does not parse  | what it could not read                    |
 
     @unit @CLM-STG-090
     Scenario: allocate still answers when a nested checkout has a folder it cannot read

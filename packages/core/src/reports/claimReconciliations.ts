@@ -1,5 +1,5 @@
 import { writtenClaimCode } from "../domain/claimCodes.js";
-import { evidenceGroupsOf, isExecutable, isUnnamed, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
+import { evidenceGroupsOf, isExecutable, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
 import { QUALITY_CHECK_KINDS, type QualityCheckKind } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import { firstLineOf, inCell } from "./quoted.js";
@@ -20,24 +20,20 @@ function cellOf({ claim, qualityCheckReconciliations }: ClaimReconciliation, kin
 }
 
 // A claim is named by its code; by its code and file when another claim shares it; by its file and title when it has none.
-// A shared code makes every one of the claim's Quality Check Reconciliations duplicate-claim-code.
 function nameOf({ claim, qualityCheckReconciliations }: ClaimReconciliation): string {
-  if (!isExecutable(claim)) return isUnnamed(claim) ? coreText("unnamed-claim") : writtenClaimCode(claim.claimCode);
+  if (!isExecutable(claim)) return claim.claimCode === undefined ? coreText("unnamed-claim") : writtenClaimCode(claim.claimCode);
   if (claim.claimCode === undefined) return `${inCell(claim.file)} : ${inCell(claim.title)}`;
   const code = writtenClaimCode(claim.claimCode);
-  return qualityCheckReconciliations[0]!.outcome === "duplicate-claim-code" ? `${code} (${inCell(claim.file)})` : code;
+  return qualityCheckReconciliations.some(({ outcome }) => outcome === "duplicate-claim-code") ? `${code} (${inCell(claim.file)})` : code;
 }
 
 const whereToLook = ({ observation }: QualityCheckReconciliation): string =>
   observation === undefined ? "" : ` (${[observation.place, ...(observation.name === undefined ? [] : [observation.name])].map(inCell).join(": ")})`;
 
-// Texts the inputs gave, each in code, one after another.
-const listed = (texts: readonly string[]): string => texts.map(inCell).join(", ");
-
 // What the evidence said: its message's first line, then every note balance added.
 const saidBy = ({ observation }: QualityCheckReconciliation): string => {
   const said = [...(observation?.message === undefined ? [] : [firstLineOf(observation.message)]), ...(observation?.notes ?? [])];
-  return said.length === 0 ? "" : ` — ${listed(said)}`;
+  return said.length === 0 ? "" : ` — ${said.map(inCell).join(", ")}`;
 };
 
 const itemOf = (reconciliation: QualityCheckReconciliation): string =>
@@ -48,13 +44,13 @@ const itemOf = (reconciliation: QualityCheckReconciliation): string =>
 function groupItemsOf(claimReconciliation: ClaimReconciliation): string[] {
   return evidenceGroupsOf(claimReconciliation).map(({ kind, file, claimCode, qualityCheckReconciliations, ran, passed, failed, failures }) => {
     const where = [...(file === undefined ? [] : [inCell(file)]), ...(claimCode === undefined ? [] : [writtenClaimCode(claimCode)])];
-    return `${kind}: ${qualityCheckReconciliations[0]!.outcome}${where.length === 0 ? "" : ` (${where.join(", ")})`} — ${coreText("group-counts", { ran, passed, failed })}${failures.length === 0 ? "" : `: ${listed(failures)}`}`;
+    return `${kind}: ${qualityCheckReconciliations[0]!.outcome}${where.length === 0 ? "" : ` (${where.join(", ")})`} — ${coreText("group-counts", { ran, passed, failed })}${failures.length === 0 ? "" : `: ${failures.map(inCell).join(", ")}`}`;
   });
 }
 
 function itemsOf(claimReconciliation: ClaimReconciliation): string {
   const { claim, qualityCheckReconciliations } = claimReconciliation;
-  const items = isUnnamed(claim) ? groupItemsOf(claimReconciliation) : qualityCheckReconciliations.filter(({ outcome }) => outcome !== "satisfied").map(itemOf);
+  const items = !isExecutable(claim) && claim.claimCode === undefined ? groupItemsOf(claimReconciliation) : qualityCheckReconciliations.filter(({ outcome }) => outcome !== "satisfied").map(itemOf);
   return items.length === 0 ? "—" : items.join("; ");
 }
 

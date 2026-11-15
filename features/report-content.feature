@@ -2,11 +2,11 @@
 Feature: Each report has the right structure, and the Markdown explains it
 
   The tool writes what it found: JSON for programs, Markdown for people. Each has the structure
-  it promises. The JSON is the Evidence Reconciliation serialised, whole. The Markdown leaves out a
-  part the run had nothing for, opens with a sentence for the run verdict, adds the headings, labels
-  and keys a person needs, and shows every name it quotes in code, so no character in it breaks a
-  table. Whether an answer or a count is right is proved where it is worked out; this file says only
-  where each one shows.
+  it promises. The JSON has every part; the Markdown leaves out a part the run had nothing for. The
+  Markdown opens with a sentence for
+  the run verdict, adds the headings, labels and keys a person needs, and shows every name it quotes
+  in code, so no character in it breaks a table. Whether an answer or a count is right is proved
+  where it is worked out; this file says only where each one shows.
 
   Rule: each report has the structure it promises
 
@@ -20,6 +20,8 @@ Feature: Each report has the right structure, and the Markdown explains it
         | clm         | report                                               | result   |
         | CLM-RPT-101 | a JSON report from a real run                        | accepted |
         | CLM-RPT-102 | a JSON report with one of its required parts removed | refused  |
+        | CLM-RPT-103 | a JSON report with a part the schema does not name   | refused  |
+        | CLM-RPT-104 | a JSON report with text where a count goes           | refused  |
 
     @unit @CLM-RPT-009
     Scenario: the Markdown report's sections will come in a fixed order
@@ -39,7 +41,7 @@ Feature: Each report has the right structure, and the Markdown explains it
 
     @unit
     Scenario Outline: the Markdown report will not have a part the run had nothing for
-      given a run had nothing for <part>
+      given a run had no <part>
       when its Markdown report is written
       then it will not have that part
 
@@ -50,7 +52,7 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-052 | step account              |
         | CLM-RPT-006 | out of balance by feature |
 
-  Rule: the Markdown report shows each name it quotes in code
+  Rule: the Markdown report shows each name it quotes in code, so no character in it changes the table
 
     @unit
     Scenario Outline: a name will show in code, and every row will have the same columns
@@ -93,7 +95,13 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-118 | not reconciled, because of claim code errors           |
         | CLM-RPT-119 | not reconciled, because there was nothing to reconcile |
 
-  Rule: the provenance shows what the run used, and has no line for what it lacks
+  Rule: the provenance shows each input the run read on its own line
+
+    @unit @CLM-RPT-115
+    Scenario: the provenance has a line for an input the run read by default
+      given a run read the CI workflows by default
+      when the Markdown report is written
+      then the provenance will have a line for the CI workflows
 
     @unit
     Scenario Outline: the provenance shows the tool SHA only when there is one
@@ -115,9 +123,13 @@ Feature: Each report has the right structure, and the Markdown explains it
       then Errors in the inputs will list <kind> with <involved>
 
       Examples:
-        | clm         | the inputs                                                                                 | kind                      | involved                                 |
-        | CLM-RPT-147 | one.feature, tagged @ONE, with a scenario tagged @CLM-TWO-001, and two.feature tagged @TWO | foreign-claim-code        | one.feature, CLM-TWO-001 and two.feature |
-        | CLM-RPT-153 | a configuration setting runer, which balance does not know                                 | configuration-unknown-key | runer                                    |
+        | clm         | the inputs                                                                                 | kind                         | involved                                       |
+        | CLM-RPT-147 | one.feature, tagged @ONE, with a scenario tagged @CLM-TWO-001, and two.feature tagged @TWO | foreign-claim-code           | one.feature, CLM-TWO-001 and two.feature       |
+        | CLM-RPT-149 | three.feature, with no feature code, with a scenario tagged @CLM-ONE-002                   | no-feature-code              | three.feature                                  |
+        | CLM-RPT-150 | one.feature and uno.feature, both tagged @ONE                                              | duplicate-feature-code       | ONE, one.feature and uno.feature               |
+        | CLM-RPT-151 | the scenario adds in one.feature, tagged both @CLM-ONE-001 and @CLM-ONE-002                | several-claim-codes          | one.feature, adds, CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-RPT-152 | the Outline adds in one.feature, tagged @CLM-ONE-009, with a clm column                    | claim-code-beside-clm-column | one.feature, adds and CLM-ONE-009              |
+        | CLM-RPT-153 | a configuration setting runer, which balance does not know                                 | configuration-unknown-key    | runer                                          |
 
   Rule: run integrity says where each Evidence Observation that never ran is
 
@@ -136,7 +148,7 @@ Feature: Each report has the right structure, and the Markdown explains it
 
     @unit @CLM-RPT-163
     Scenario: the Summary shows the run's Claim Reconciliations, balanced and out of balance
-      given a run had a claim with a unit Evidence Obligation and a passing unit test citing it, and one with a failing one
+      given a run had a claim with a passing unit test and a claim with a failing unit test
       when its Markdown report is written
       then the Summary will show 2 Claim Reconciliations, 1 balanced and 1 out of balance
 
@@ -188,21 +200,22 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-112 | one job                    | not have |
         | CLM-RPT-113 | two jobs, in two workflows | have     |
 
-  Rule: the JSON report lists every kind of quality check, zero or not
+  Rule: the JSON report keeps every part and every count, empty or zero
 
     @unit @CLM-RPT-128
-    Scenario: a run of passing unit tests alone still lists every kind of quality check in the JSON, at 0
+    Scenario: a run of passing unit tests alone still has every part and every count in its JSON
       given a run had only passing unit tests, each cited by a claim with a unit Evidence Obligation
       when the JSON report is written
-      then its totals will list every kind of quality check, the ones the run had none of at 0
+      then it will have every part, the ones with nothing empty
+      and its totals will have every kind, the row with no kind, and every outcome under each, the ones with nothing at 0
 
-  Rule: the Markdown report shows its Claim Reconciliations, even when there are none
+  Rule: every report has its Claim Reconciliations, even when there are none
 
     @unit @CLM-RPT-105
-    Scenario: the Markdown report shows its Claim Reconciliations when the run had none
+    Scenario: a report will show its Claim Reconciliations when the run had none
       given a run had nothing to reconcile
-      when its Markdown report is written
-      then it will show its Claim Reconciliations, as none
+      when its reports are written
+      then each report will have its Claim Reconciliations, showing none
 
   Rule: the Markdown shows the Claim Reconciliations as one table, a row per claim
 
@@ -213,12 +226,14 @@ Feature: Each report has the right structure, and the Markdown explains it
       then its row will read <cell> under Unit
 
       Examples:
-        | clm         | evidence                                                         | cell  |
-        | CLM-RPT-129 | a unit Evidence Obligation, and two passing unit tests citing it | U/2   |
-        | CLM-RPT-130 | a unit Evidence Obligation, and one failing unit test citing it  | U/1   |
-        | CLM-RPT-132 | a unit Evidence Obligation, and no unit test citing it           | U/-   |
-        | CLM-RPT-133 | no unit Evidence Obligation, and one passing unit test citing it | -/1   |
-        | CLM-RPT-134 | no unit Evidence Obligation, and no unit test citing it          | empty |
+        | clm         | evidence                                                               | cell  |
+        | CLM-RPT-129 | a unit Evidence Obligation, and two passing unit tests citing it       | U/2   |
+        | CLM-RPT-130 | a unit Evidence Obligation, and one failing unit test citing it        | U/1   |
+        | CLM-RPT-131 | a unit Evidence Obligation, and one unit test citing it that never ran | U/-   |
+        | CLM-RPT-132 | a unit Evidence Obligation, and no unit test citing it                 | U/-   |
+        | CLM-RPT-133 | no unit Evidence Obligation, and one passing unit test citing it       | -/1   |
+        | CLM-RPT-134 | no unit Evidence Obligation, and no unit test citing it                | empty |
+        | CLM-RPT-158 | a unit and an e2e Evidence Obligation, and no test citing it           | U/-   |
 
     @unit
     Scenario Outline: each row will be named by its claim code, or by its file and title
@@ -250,9 +265,9 @@ Feature: Each report has the right structure, and the Markdown explains it
         | clm         | evidence                                                                                                       | items                                                                   |
         | CLM-RPT-141 | a unit Evidence Obligation, and a passing unit test citing it                                                  | none                                                                    |
         | CLM-RPT-142 | a unit Evidence Obligation, and the unit test "[CLM-CHK-002] charges the card" in src/checkout.test.ts failing | unit failing, at src/checkout.test.ts, "[CLM-CHK-002] charges the card" |
-        | CLM-RPT-143 | a unit and an e2e Evidence Obligation, and neither citing it                                                   | unit missing and e2e missing                                            |
+        | CLM-RPT-143 | a unit and an e2e Evidence Obligation, and neither citing it                                                   | unit missing, then e2e missing                                          |
         | CLM-RPT-154 | a fitness Evidence Obligation, and its step ci.yml:build:Lint failing                                          | fitness failing, at ci.yml:build:Lint                                   |
-        | CLM-RPT-155 | a code and no kind-of-check tag                                                                                | no-quality-check                                                        |
+        | CLM-RPT-155 | a code and no kind-of-quality-check tag                                                                        | no-quality-check                                                        |
 
     @unit
     Scenario Outline: the Markdown has a line of claim codes no claim reads only when there are some
@@ -273,14 +288,20 @@ Feature: Each report has the right structure, and the Markdown explains it
 
   Rule: the Markdown report shows the unnamed claim's evidence in its groups
 
-    @unit
-    Scenario Outline: a group will show its file or no file, any shared claim code, its counts and which failed
-      given the unnamed claim had <group>
+    @unit @CLM-RPT-110
+    Scenario: the report shows the unnamed claim's evidence one group per file, with how many tests ran, passed and failed
+      given a run had unit tests citing no claim in two files, and one test in one of them failed
       when its Markdown report is written
-      then the group will show <shown>
+      then the unnamed claim will show one group for each file, with how many of its tests ran, passed and failed, and the name of the test that failed
 
-      Examples:
-        | clm         | group                                                                               | shown                                             |
-        | CLM-RPT-110 | a unit group for a.test.ts, with 2 ran, 1 passed and 1 failed, the test "b" failing | a.test.ts, 2 ran, 1 passed and 1 failed, naming b |
-        | CLM-RPT-162 | a unit group for a.test.ts under the shared claim code CLM-ONE-001                  | CLM-ONE-001 beside a.test.ts                      |
-        | CLM-RPT-159 | a fitness group                                                                     | no file                                           |
+    @unit @CLM-RPT-162
+    Scenario: a group of the unnamed claim's evidence with a shared claim code shows that code
+      given a run had a passing unit test in a.test.ts citing no code, and one in a.test.ts citing CLM-ONE-001, which two scenarios share
+      when its Markdown report is written
+      then the unnamed claim will show two unit groups for a.test.ts, one showing CLM-ONE-001
+
+    @unit @CLM-RPT-159
+    Scenario: the unnamed claim's fitness evidence shows as one group with no file
+      given a run had the step ci.yml:build:Lint passing, citing no claim
+      when its Markdown report is written
+      then the unnamed claim will show one fitness group, with no file, 1 ran, 1 passed and 0 failed

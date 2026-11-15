@@ -16,7 +16,8 @@ export interface MainRuns {
   readonly complain: Complain;
 }
 
-// Help and an answer go to standard output; a note, a refusal and an unexpected error go to standard error.
+// Help and an answer go to standard output; a note, a refusal with the help that follows it, and an unexpected error go
+// to standard error.
 function run(args: readonly string[], folder: string, streams: StandardStreams, runs: MainRuns): ExitCode {
   const request = runRequestOf(args);
   if ("refusals" in request) {

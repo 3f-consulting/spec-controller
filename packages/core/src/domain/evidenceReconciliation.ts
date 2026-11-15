@@ -1,5 +1,5 @@
 import type { ClaimCodeError } from "./claimCodes.js";
-import { isExecutable, isUnnamed, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
+import { isExecutable, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import type { ConfigurationError } from "./configuration.js";
 import { QUALITY_CHECK_KINDS, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import type { EvidenceObservation, StepDisposition } from "./postEvidenceObservation.js";
@@ -116,27 +116,23 @@ export function stepAccountOf(steps: readonly DisposedStep[]): StepAccount {
   return { jobs, total: countsOf(steps) };
 }
 
-// Every outcome once, in the order they are counted: the keys of a record the type holds whole.
-const OUTCOMES = Object.keys({
-  satisfied: null,
-  failing: null,
-  "cannot-fail": null,
-  missing: null,
-  "no-claim-code": null,
-  "duplicate-claim-code": null,
-  "not-asked-for": null,
-  "cites-unknown-claim": null,
-  "cites-no-claim": null,
-  "never-ran": null,
-  "no-quality-check": null,
-} satisfies Record<Outcome, null>) as Outcome[];
-
-// Each Evidence Observation is counted once, on the Quality Check Reconciliation that holds it.
-const observationsIn = (reconciliations: readonly QualityCheckReconciliation[]): number => reconciliations.filter(({ observation }) => observation !== undefined).length;
+const OUTCOMES: readonly Outcome[] = [
+  "satisfied",
+  "failing",
+  "cannot-fail",
+  "missing",
+  "no-claim-code",
+  "duplicate-claim-code",
+  "not-asked-for",
+  "cites-unknown-claim",
+  "cites-no-claim",
+  "never-ran",
+  "no-quality-check",
+];
 
 const countsOfReconciliations = (reconciliations: readonly QualityCheckReconciliation[], evidenceObligations: number): QualityCheckCounts => ({
   evidenceObligations,
-  evidenceObservations: observationsIn(reconciliations),
+  evidenceObservations: reconciliations.filter(({ observation }) => observation !== undefined).length,
   byOutcome: Object.fromEntries(OUTCOMES.map((outcome) => [outcome, reconciliations.filter((reconciliation) => reconciliation.outcome === outcome).length])) as Record<Outcome, number>,
 });
 
@@ -169,13 +165,13 @@ function qualityCheckCountsOf(claimReconciliations: readonly ClaimReconciliation
 }
 
 const filedOn = (claim: ClaimReconciliation["claim"]): "onExecutableClaim" | "onPhantomClaim" | "onUnnamedClaim" =>
-  isExecutable(claim) ? "onExecutableClaim" : isUnnamed(claim) ? "onUnnamedClaim" : "onPhantomClaim";
+  isExecutable(claim) ? "onExecutableClaim" : claim.claimCode === undefined ? "onUnnamedClaim" : "onPhantomClaim";
 
 // Each Evidence Observation counts once, on the claim it was filed on: an executable claim, a phantom claim or the unnamed claim.
 function whereFiledOf(claimReconciliations: readonly ClaimReconciliation[]): Totals["evidenceObservations"] {
   const filed = { onExecutableClaim: 0, onPhantomClaim: 0, onUnnamedClaim: 0 };
   for (const { claim, qualityCheckReconciliations } of claimReconciliations) {
-    filed[filedOn(claim)] += observationsIn(qualityCheckReconciliations);
+    filed[filedOn(claim)] += qualityCheckReconciliations.filter(({ observation }) => observation !== undefined).length;
   }
   return { total: filed.onExecutableClaim + filed.onPhantomClaim + filed.onUnnamedClaim, ...filed };
 }
@@ -216,7 +212,7 @@ export interface RunReconciled {
   readonly provenance: Provenance;
 }
 
-// The domain's one entry point: every part is present, empty where the run had nothing for it.
+// The domain's one entry point: every part is present, empty when the run had nothing for it.
 export function evidenceReconciliationOf({ claimReconciliations, claimCodeErrors, configurationErrors, features, stepAccount, provenance }: RunReconciled): EvidenceReconciliation {
   const neverRan = claimReconciliations.flatMap(({ qualityCheckReconciliations }) =>
     qualityCheckReconciliations.flatMap((reconciliation) => (reconciliation.outcome === "never-ran" ? [reconciliation.observation] : [])),

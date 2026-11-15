@@ -12,26 +12,37 @@ const read = (...args: Parameters<typeof inputsReadFor>): InputsRead => {
   return inputs;
 };
 
-describe("an input left out takes its default", () => {
-  it("[CLM-CLI-137] the run named no manifest, and package.json was in the folder: when balance reads its inputs, balance will use package.json", () => {
-    const folder = temporaryDirectory("default-manifest-");
-    writeFileSync(join(folder, "package.json"), JSON.stringify({ name: "acme", scripts: { test: "vitest run" } }));
+describe("an empty evidence report will count as no evidence, not as a broken file", () => {
+  it.each([
+    ["a Vitest evidence report", "vitest", "vitest.json", '{"testResults":[]}', []],
+    ["a Jest evidence report", "jest", "jest.json", '{"testResults":[]}', []],
+    ["a pytest evidence report", "pytest", "pytest.xml", '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"></testsuites>', []],
+    ["a JUnit evidence report", "junit", "junit.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<testsuites name="all"></testsuites>\n', []],
+    ["an RSpec evidence report", "rspec", "rspec.json", '{"examples":[],"summary":{}}', { examples: [], loadErrors: [] }],
+    ["a Cucumber evidence report", "cucumber", "cucumber.json", "[]", []],
+    ["a CI step record", "stepRecord", "steps.json", "{}", []],
+  ] as const)("[CLM-CLI-146] %s listing nothing posts nothing, and the run does not stop", (_report, kind, file, report, nothing) => {
+    const folder = temporaryDirectory("empty-report-");
+    writeFileSync(join(folder, file), report);
 
-    // What the run reads is package.json as its manifest, and nothing else; the file is among those no report may land on.
-    expect(read([{ kind: "manifest", path: "package.json", byDefault: true }], folder)).toStrictEqual({
-      features: [],
-      manifest: { name: "acme", scripts: { test: "vitest run" } },
-      filesRead: [join(folder, "package.json")],
-      pathsRead: { manifest: "package.json" },
-    });
+    expect(read([{ kind, path: file, byDefault: false }], folder)).toEqual({ features: [], [kind]: nothing, filesRead: [join(folder, file)], pathsRead: { [kind]: file } });
   });
 });
 
-describe("balance reads every file of its kind a path names, a file or a folder", () => {
+describe("balance will use the default when an input is not named", () => {
+  it("[CLM-CLI-137] no manifest named, and package.json in the folder: balance reads package.json", () => {
+    const folder = temporaryDirectory("default-manifest-");
+    writeFileSync(join(folder, "package.json"), JSON.stringify({ name: "acme", scripts: { test: "vitest run" } }));
+
+    expect(read([{ kind: "manifest", path: "package.json", byDefault: true }], folder).manifest).toEqual({ name: "acme", scripts: { test: "vitest run" } });
+  });
+});
+
+describe("balance reads a feature file in a subfolder of the feature corpus", () => {
   it.each([
     ["named", "corpus", false],
     ["read by default", "features", true],
-  ] as const)("[CLM-CLI-205] the feature corpus, %s, had its one feature file two folders down, at area/deeper/one.feature, beside its README: when balance reads the corpus, it will read that feature file", (_how, corpus, byDefault) => {
+  ] as const)("[CLM-CLI-191] a corpus %s, beside its README: it reads area/deeper/one.feature", (_how, corpus, byDefault) => {
     const folder = temporaryDirectory("corpus-depth-");
     mkdirSync(join(folder, corpus, "area", "deeper"), { recursive: true });
     writeFileSync(join(folder, corpus, "area", "deeper", "one.feature"), ONE_FEATURE);
@@ -41,41 +52,43 @@ describe("balance reads every file of its kind a path names, a file or a folder"
   });
 });
 
-describe("an input left out takes its default", () => {
+describe("an input read by default that does not exist will count as none, not as a missing input", () => {
   it.each([
-    ["CLM-CLI-183", "CI workflows", "the .github/workflows folder", "CI workflows", "workflows", ".github/workflows", (inputs: InputsRead) => inputs.workflowSteps],
-    ["CLM-CLI-190", "feature corpus", "the features folder", "feature corpus", "features", "features", (inputs: InputsRead) => inputs.features],
-    ["CLM-CLI-192", "manifest", "package.json", "manifest", "manifest", "package.json", (inputs: InputsRead) => inputs.manifest],
-  ] as const)("[%s] the run named no %s, and %s did not exist: when balance reads its inputs, it will read no %s", (_clm, _input, _default, _none, kind, path, readOf) => {
+    ["CLM-CLI-183", "a workflows folder", "workflows", ".github/workflows", (inputs: InputsRead) => inputs.workflowSteps],
+    ["CLM-CLI-190", "a feature corpus", "features", "features", (inputs: InputsRead) => inputs.features],
+    ["CLM-CLI-192", "a manifest", "manifest", "package.json", (inputs: InputsRead) => inputs.manifest],
+  ] as const)("[%s] %s read by default that does not exist: none is read, and the run does not stop", (_clm, _input, kind, path, readOf) => {
     const inputs = inputsReadFor([{ kind, path, byDefault: true }], temporaryDirectory("absent-default-"));
 
     expect("refusals" in inputs ? inputs.refusals : readOf(inputs) ?? []).toEqual([]);
   });
 });
 
-describe("balance reads every workflow a CI workflows path names", () => {
-  // A folder holding ci.yml and release.yaml beside a README and a folder of templates.
-  function workflowsFolder(): string {
+describe("balance reads the one workflow a CI workflows path names, or every workflow in the folder it names", () => {
+  it.each([
+    ["CLM-CLI-193", "the workflow ci.yml", "workflows/ci.yml", ["ci.yml"]],
+    ["CLM-CLI-207", "a folder with ci.yml and release.yaml in it, beside its README and a folder of templates", "workflows", ["ci.yml", "release.yaml"]],
+  ] as const)("[%s] the run named %s as its CI workflows, at %s: it reads %j", (_clm, _named, path, read) => {
     const folder = temporaryDirectory("workflows-");
     mkdirSync(join(folder, "workflows", "templates"), { recursive: true });
     writeFileSync(join(folder, "workflows", "ci.yml"), "jobs:\n  ci:\n    steps:\n      - run: echo ci\n");
     writeFileSync(join(folder, "workflows", "release.yaml"), "jobs:\n  release:\n    steps:\n      - run: echo release\n");
     writeFileSync(join(folder, "workflows", "README.md"), "# Workflows\n\n- `ci.yml`: the checks on every push\n");
     writeFileSync(join(folder, "workflows", "templates", "partial.yml"), "jobs:\n  partial:\n    steps:\n      - run: echo partial\n");
-    return folder;
-  }
+    const inputs = inputsReadFor([{ kind: "workflows", path, byDefault: false }], folder);
 
-  // The workflows balance reads from the CI workflows path, or the keys of its refusals.
-  function workflowsRead(path: string): string[] {
-    const inputs = inputsReadFor([{ kind: "workflows", path, byDefault: false }], workflowsFolder());
-    return "refusals" in inputs ? inputs.refusals.map(({ key }) => key) : [...new Set(inputs.workflowSteps?.map(({ workflow }) => workflow))];
-  }
-
-  it("[CLM-CLI-193] the run named the workflow ci.yml as its CI workflows: when balance reads its inputs, it will read ci.yml alone", () => {
-    expect(workflowsRead("workflows/ci.yml")).toEqual(["ci.yml"]);
+    expect("refusals" in inputs ? inputs.refusals.map(({ key }) => key) : [...new Set(inputs.workflowSteps?.map(({ workflow }) => workflow))]).toEqual(read);
   });
+});
 
-  it("[CLM-CLI-203] the run named a folder with ci.yml and release.yaml in it as its CI workflows, beside a README and a folder of templates: when balance reads its inputs, it will read both workflows", () => {
-    expect(workflowsRead("workflows")).toEqual(["ci.yml", "release.yaml"]);
+describe("balance reads the feature corpus in path order", () => {
+  it("[CLM-CLI-197] a corpus with b.feature and a/x.feature: balance reads a/x.feature before b.feature", () => {
+    const folder = temporaryDirectory("corpus-order-");
+    mkdirSync(join(folder, "features", "a"), { recursive: true });
+    writeFileSync(join(folder, "features", "b.feature"), "@BBB\nFeature: b\n\n  @unit @CLM-BBB-001\n  Scenario: b\n");
+    writeFileSync(join(folder, "features", "a", "x.feature"), "@AAA\nFeature: x\n\n  @unit @CLM-AAA-001\n  Scenario: x\n");
+    const inputs = inputsReadFor([{ kind: "features", path: "features", byDefault: false }], folder);
+
+    expect("refusals" in inputs ? inputs.refusals.map(({ key }) => key) : inputs.features.map(({ file }) => file)).toEqual(["a/x.feature", "b.feature"]);
   });
 });

@@ -17,7 +17,7 @@ const settingSpellings: SettingSpellings = {
   },
 };
 
-// A manifest is a record of fields, its specController block, if it has one, a record of settings; what each setting
+// A manifest is a record of fields, its specController block, when it has one, a record too; what each other field
 // holds is its own reader's to say.
 export const whereManifestBreaks = (manifest: unknown): string | undefined =>
   whereShapeBreaks(manifest, { fields: { specController: { fields: {} } }, optional: ["specController"] });

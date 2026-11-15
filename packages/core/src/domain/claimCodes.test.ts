@@ -1,42 +1,47 @@
 import { describe, expect, it } from "vitest";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { allocationOf, claimCodeErrorsOf, claimCodeFrom, featureCodeOfFile, isFeatureCode } from "./claimCodes.js";
-import claimCodesVariants from "./claimCodes.variants.json" with { type: "json" };
 
 const is = (found: boolean, what: string): string => `${found ? "be" : "not be"} a ${what}`;
 
-// A retired scenario code counts only where allocation reads it: as the highest code seen under its feature code.
-const isRetiredScenarioCode = (id: string): boolean =>
-  "highestSeen" in allocationOf({ featureCode: id.split("-")[1]!, asNewFeatureCode: true }, [], [{ text: id, path: "notes.txt", line: 1 }]);
-
 describe("an id is a feature code, a claim code or a retired scenario code only in that form", () => {
-  it.each(claimCodesVariants["CLM-STG-037"].variants)("[CLM-STG-037] the id %s, checked against the feature code form, will be a feature code", (id) => {
-    expect(is(isFeatureCode(id), "feature code")).toBe("be a feature code");
+  it.each([
+    ["CLM-STG-037", "AB", "be a feature code"],
+    ["CLM-STG-038", "ABCDE", "be a feature code"],
+    ["CLM-STG-039", "A1", "be a feature code"],
+    ["CLM-STG-040", "A", "not be a feature code"],
+    ["CLM-STG-041", "ABCDEF", "not be a feature code"],
+    ["CLM-STG-042", "abc", "not be a feature code"],
+  ])("[%s] the id %s, checked against the feature code form, will %s", (_clm, code, result) => {
+    expect(is(isFeatureCode(code), "feature code")).toBe(result);
   });
 
-  it.each(claimCodesVariants["CLM-STG-040"].variants)("[CLM-STG-040] the id %s, checked against the feature code form, will not be a feature code", (id) => {
-    expect(is(isFeatureCode(id), "feature code")).toBe("not be a feature code");
+  it.each([
+    ["CLM-STG-044", "CLM-ONE-001", "be a claim code"],
+    ["CLM-STG-045", "CLM-ONE-7", "be a claim code"],
+    ["CLM-STG-046", "CLM-ONE-1000", "be a claim code"],
+    ["CLM-STG-047", "CLM-A-001", "not be a claim code"],
+    ["CLM-STG-048", "CLM-ONE-", "not be a claim code"],
+  ])("[%s] the id %s, checked against the claim code form, will %s", (_clm, id, result) => {
+    expect(is(claimCodeFrom(id) !== undefined, "claim code")).toBe(result);
   });
 
-  it.each(claimCodesVariants["CLM-STG-044"].variants)("[CLM-STG-044] the id %s, checked against the claim code form, will be a claim code", (id) => {
-    expect(is(claimCodeFrom(id) !== undefined, "claim code")).toBe("be a claim code");
-  });
+  // A retired scenario code counts only where allocation reads it: as the highest code seen under its feature code.
+  it.each([
+    ["CLM-STG-049", "SCN-ONE-001", "ONE", "be a retired scenario code"],
+    ["CLM-STG-050", "SCN-ONE-7", "ONE", "be a retired scenario code"],
+    ["CLM-STG-051", "SCN-ONE-1000", "ONE", "be a retired scenario code"],
+    ["CLM-STG-052", "SCN-A-001", "A", "not be a retired scenario code"],
+    ["CLM-STG-053", "SCN-ONE-", "ONE", "not be a retired scenario code"],
+  ])("[%s] the id %s, under the feature code %s, checked against the retired scenario code form, will %s", (_clm, id, featureCode, result) => {
+    const allocation = allocationOf({ featureCode, asNewFeatureCode: true }, [], [{ text: id, path: "notes.txt", line: 1 }]);
 
-  it.each(claimCodesVariants["CLM-STG-047"].variants)("[CLM-STG-047] the id %s, checked against the claim code form, will not be a claim code", (id) => {
-    expect(is(claimCodeFrom(id) !== undefined, "claim code")).toBe("not be a claim code");
-  });
-
-  it.each(claimCodesVariants["CLM-STG-049"].variants)("[CLM-STG-049] the id %s, checked against the retired scenario code form, will be a retired scenario code", (id) => {
-    expect(is(isRetiredScenarioCode(id), "retired scenario code")).toBe("be a retired scenario code");
-  });
-
-  it.each(claimCodesVariants["CLM-STG-052"].variants)("[CLM-STG-052] the id %s, checked against the retired scenario code form, will not be a retired scenario code", (id) => {
-    expect(is(isRetiredScenarioCode(id), "retired scenario code")).toBe("not be a retired scenario code");
+    expect(is("highestSeen" in allocation, "retired scenario code")).toBe(result);
   });
 });
 
 describe("a tag above Feature: will be the feature code of that file", () => {
-  it("[CLM-STG-043] a feature file had the tag @ONE above Feature: ONE will be the feature code of that file", () => {
+  it("[CLM-STG-043] the tag @ONE above Feature: makes ONE that file's feature code", () => {
     expect(featureCodeOfFile(featureAsWrittenFrom("one.feature", "@ONE\nFeature: one\n"))).toBe("ONE");
   });
 });
@@ -81,30 +86,23 @@ describe("a claim code in an Examples cell of an Outline with no clm column is n
 describe("a misplaced or clashing claim code will be a claim code error", () => {
   it.each([
     [
+      "CLM-STG-054",
+      [["one.feature", "@ONE", "@CLM-ONE-001;@CLM-TWO-001"], ["two.feature", "@TWO", "@unit"]],
+      [{ kind: "foreign-claim-code", claimCode: { featureCode: "TWO", number: "001" }, file: "one.feature", filesWithItsFeatureCode: ["two.feature"] }],
+    ],
+    [
       "CLM-STG-055",
-      "one.feature, tagged @ONE, contained a scenario tagged @CLM-ZZZ-001, and no file was tagged @ZZZ",
-      "foreign-claim-code",
       [["one.feature", "@ONE", "@CLM-ZZZ-001"]],
       [{ kind: "foreign-claim-code", claimCode: { featureCode: "ZZZ", number: "001" }, file: "one.feature", filesWithItsFeatureCode: [] }],
     ],
-    [
-      "CLM-STG-056",
-      "three.feature had no feature code, and contained a scenario tagged @CLM-ONE-002",
-      "no-feature-code",
-      [["three.feature", "", "@CLM-ONE-002"]],
-      [{ kind: "no-feature-code", file: "three.feature" }],
-    ],
+    ["CLM-STG-056", [["three.feature", "", "@CLM-ONE-002"]], [{ kind: "no-feature-code", file: "three.feature" }]],
     [
       "CLM-STG-057",
-      "one.feature and uno.feature were both tagged @ONE",
-      "duplicate-feature-code",
       [["one.feature", "@ONE", "@unit"], ["uno.feature", "@ONE", "@unit"]],
       [{ kind: "duplicate-feature-code", featureCode: "ONE", files: ["one.feature", "uno.feature"] }],
     ],
     [
       "CLM-STG-058",
-      "one.feature contained a scenario tagged both @CLM-ONE-001 and @CLM-ONE-002",
-      "several-claim-codes",
       [["one.feature", "@ONE", "@CLM-ONE-001 @CLM-ONE-002"]],
       [
         {
@@ -115,43 +113,24 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
         },
       ],
     ],
-  ] as const)("[%s] %s: balance will find the error %s, naming its facts", (_clm, _given, _error, files, errors) => {
-    expect(errorsIn(files, ([, , tags]) => scenarioTagged(tags))).toEqual(errors);
+  ] as const)("[%s] the scenarios' files have their claim code error", (_clm, files, errors) => {
+    expect(errorsIn(files, ([, , tags]) => tags.split(";").map(scenarioTagged).join("\n"))).toEqual(errors);
   });
 
-  // How each variant writes another feature's claim code in one.feature, tagged @ONE.
-  const foreignIn: Readonly<Record<string, () => string>> = {
-    "as a scenario's tag": () => `${scenarioTagged("@CLM-ONE-001")}\n${scenarioTagged("@CLM-TWO-001")}`,
-    "in a clm cell": () => "  @unit\n  Scenario Outline: that Outline\n    Given <x>\n\n    Examples:\n      | x | clm         |\n      | a | CLM-TWO-001 |\n",
-  };
+  it("[CLM-STG-095] one.feature, tagged @ONE, with CLM-TWO-001 in its Outline's clm column, and two.feature tagged @TWO, has a foreign claim code error", () => {
+    const outlineCiting = "  @unit\n  Scenario Outline: that Outline\n    Given <x>\n\n    Examples:\n      | x | clm         |\n      | a | CLM-TWO-001 |\n";
 
-  it.each(claimCodesVariants["CLM-STG-054"].variants)("[CLM-STG-054] one.feature, tagged @ONE, contained CLM-TWO-001 %s, and two.feature was tagged @TWO: balance will find the error foreign-claim-code, naming CLM-TWO-001, one.feature, and two.feature as the file tagged @TWO", (variant) => {
-    const writtenIn = foreignIn[variant];
-    if (writtenIn === undefined) throw new Error(`no feature file for the variant ${variant}`);
-    const written = writtenIn();
-
-    expect(errorsIn([["one.feature", "@ONE", ""], ["two.feature", "@TWO", "@unit"]], ([file, , tags]) => (file === "one.feature" ? written : scenarioTagged(tags)))).toEqual([
+    expect(errorsIn([["one.feature", "@ONE", ""], ["two.feature", "@TWO", "@unit"]], ([file, , tags]) => (file === "one.feature" ? outlineCiting : scenarioTagged(tags)))).toEqual([
       { kind: "foreign-claim-code", claimCode: { featureCode: "TWO", number: "001" }, file: "one.feature", filesWithItsFeatureCode: ["two.feature"] },
     ]);
   });
 
-  // Where each variant tags the claim code: on the Outline, or on its Examples block.
-  const taggedOn: Readonly<Record<string, readonly [outlineTags: string, examplesTags: string]>> = {
-    "tagged on the Outline": ["@CLM-ONE-009", ""],
-    "tagged on its Examples block": ["@unit", "@CLM-ONE-009"],
-  };
-
-  it.each(claimCodesVariants["CLM-STG-059"].variants)("[CLM-STG-059] one.feature contained an Outline with a clm column and CLM-ONE-009 %s: balance will find the error claim-code-beside-clm-column, naming one.feature, that Outline, CLM-ONE-009", (variant) => {
-    const tags = taggedOn[variant];
-    if (tags === undefined) throw new Error(`no tags for the variant ${variant}`);
-
-    expect(errorsIn([["one.feature", "@ONE", ""]], () => outlineWith(...tags))).toEqual([
-      { kind: "claim-code-beside-clm-column", file: "one.feature", title: "that Outline", claimCode: ONE_009 },
-    ]);
-  });
-
-  it("[CLM-STG-094] one.feature contained an Outline tagged @CLM-ONE-009, with a clm column and an Examples block tagged @CLM-ONE-009: balance will find the error claim-code-beside-clm-column, naming one.feature, that Outline, and CLM-ONE-009 once", () => {
-    expect(errorsIn([["one.feature", "@ONE", ""]], () => outlineWith("@CLM-ONE-009", "@CLM-ONE-009"))).toEqual([
+  it.each([
+    ["CLM-STG-059", "the Outline", "@CLM-ONE-009", ""],
+    ["CLM-STG-060", "its Examples block", "@unit", "@CLM-ONE-009"],
+    ["CLM-STG-094", "both the Outline and its Examples block", "@CLM-ONE-009", "@CLM-ONE-009"],
+  ])("[%s] CLM-ONE-009 tagged on %s, beside a clm column, is a claim code error naming it once", (_clm, _where, outlineTags, examplesTags) => {
+    expect(errorsIn([["one.feature", "@ONE", ""]], () => outlineWith(outlineTags, examplesTags))).toEqual([
       { kind: "claim-code-beside-clm-column", file: "one.feature", title: "that Outline", claimCode: ONE_009 },
     ]);
   });
@@ -161,12 +140,13 @@ const IN_THE_FILE = { path: "features/one.feature", line: 4 };
 
 describe("the answer is one past the highest code in the feature file, a tracked file or history", () => {
   it.each([
-    ["CLM-STG-061", "CLM-ONE-001", "a file git tracks, such as a workflow, contained CLM-ONE-005", "# CLM-ONE-005", "006", "CLM-ONE-005"],
-    ["CLM-STG-065", "CLM-ONE-001", "a file git tracks contained SCN-ONE-, with no number", "# SCN-ONE-", "002", "CLM-ONE-001"],
-    ["CLM-STG-070", "CLM-ONE-7", "nothing else contained a ONE code", "", "008", "CLM-ONE-7"],
-    ["CLM-STG-071", "CLM-ONE-999", "nothing else contained a ONE code", "", "1000", "CLM-ONE-999"],
-  ] as const)("[%s] a feature file tagged @ONE, with a scenario tagged @%s, and %s: the answer will be CLM-ONE-%s, noting the highest code it saw, %s, and where", (_clm, inTheFile, _elsewhere, written, number, seen) => {
-    const occurrences = [{ text: `  @${inTheFile}`, ...IN_THE_FILE }, { text: written, path: ".github/workflows/ci.yml", line: 2 }];
+    ["CLM-STG-061", "@CLM-ONE-001", "# CLM-ONE-005", "006", "CLM-ONE-005"],
+    ["CLM-STG-063", "@CLM-ONE-001", "# SCN-ONE-005", "006", "SCN-ONE-005"],
+    ["CLM-STG-065", "@CLM-ONE-001", "# SCN-ONE-", "002", "CLM-ONE-001"],
+    ["CLM-STG-070", "@CLM-ONE-7", "", "008", "CLM-ONE-7"],
+    ["CLM-STG-071", "@CLM-ONE-999", "", "1000", "CLM-ONE-999"],
+  ] as const)("[%s] a feature file tagged @ONE with a scenario tagged %s, and a tracked file holding %j, gives CLM-ONE-%s, noting %s", (_clm, inTheFile, elsewhere, number, seen) => {
+    const occurrences = [{ text: `  ${inTheFile}`, ...IN_THE_FILE }, { text: elsewhere, path: ".github/workflows/ci.yml", line: 2 }];
     const allocation = allocationOf({ featureCode: "ONE", asNewFeatureCode: false }, ["ONE"], occurrences);
 
     expect(allocation).toEqual({
@@ -178,8 +158,8 @@ describe("the answer is one past the highest code in the feature file, a tracked
   });
 });
 
-describe("allocate gives a code only under a feature code a feature file has, unless asked for a new one", () => {
-  it("[CLM-STG-077] feature files were tagged @TWO and @ONE, and none @ZZZ: the request for ZZZ will stop as an unknown feature code, give no code, and list ONE and TWO, in alphabetical order", () => {
+describe("allocate refuses a feature code no feature file has, and lists those that have one", () => {
+  it("[CLM-STG-077] feature files tagged @TWO and @ONE, and no file mentioning ZZZ, stop the request for ZZZ as an unknown feature code listing ONE and TWO, in alphabetical order", () => {
     expect(allocationOf({ featureCode: "ZZZ", asNewFeatureCode: false }, ["TWO", "ONE"], [{ text: "  @CLM-ONE-001", ...IN_THE_FILE }])).toEqual({
       kind: "unknown-feature-code",
       featureCode: "ZZZ",
@@ -193,7 +173,7 @@ describe("a request for a new feature code gives the next code for any well-form
     ["CLM-STG-080", "ZZ", { claimCode: { featureCode: "ZZ", number: "001" }, featureCodeAlreadyOnAFile: false }],
     ["CLM-STG-081", "ONE", { claimCode: { featureCode: "ONE", number: "004" }, highestSeen: { text: "CLM-ONE-003", ...IN_THE_FILE }, featureCodeAlreadyOnAFile: true }],
     ["CLM-STG-082", "OLD", { claimCode: { featureCode: "OLD", number: "008" }, highestSeen: { text: "CLM-OLD-007", path: "old.txt", line: 1, commit: "abc1234" }, featureCodeAlreadyOnAFile: false }],
-  ] as const)("[%s] a feature file tagged @ONE, with a scenario tagged @CLM-ONE-003, and history that once contained CLM-OLD-007: the next code for %s, as a new feature code, will be its answer, with the note the claim names", (_clm, featureCode, answer) => {
+  ] as const)("[%s] a feature file tagged @ONE with @CLM-ONE-003, and history once holding CLM-OLD-007, give %s as a new feature code its answer", (_clm, featureCode, answer) => {
     const occurrences = [{ text: "  @CLM-ONE-003", ...IN_THE_FILE }, { text: "CLM-OLD-007", path: "old.txt", line: 1, commit: "abc1234" }];
 
     expect(allocationOf({ featureCode, asNewFeatureCode: true }, ["ONE"], occurrences)).toEqual({ kind: "allocated", ...answer });

@@ -4,18 +4,17 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
   Your project's feature files make claims. balance reads them and raises the Evidence Obligations
   each claim asks for. This is the debit side.
 
-  First, balance finds the executable claims in the feature files it is given. A scenario is one executable claim, and so is each row of an Outline with a
-  clm column. A scenario with a deferral tag, such as @wip, on the scenario, its Rule or its Feature,
-  is not an executable claim.
+  First, balance finds the executable claims. A scenario is one executable claim, and so is each
+  row of an Outline with a clm column. A scenario with a deferral tag, such as @wip, on the
+  scenario, its Rule or its Feature, is not an executable claim.
 
-  Next, balance raises an Evidence Obligation for each kind-of-check tag on the executable claim.
+  Next, balance raises an Evidence Obligation for each kind-of-quality-check tag on the executable claim.
   A row of an Outline takes its Outline's tags. A tag such as @integrationpending is ignored, so
   it raises nothing. In a strict run, a deferral tag is ignored, and @integrationpending is read
   as @integration.
 
-  Last, balance reads the claim's code. An executable claim raises its Evidence Obligations under
-  its claim code when it has exactly one. With two codes, an empty clm cell, or a claim code tagged
-  on an Outline that also has a clm column, it raises them with no claim code.
+  Last, balance reads the claim's code. A claim that cannot be mapped to a single claim code raises
+  its Evidence Obligations with no claim code.
 
   Rule: an executable claim is a scenario, or a row of an Outline with a clm column
 
@@ -54,14 +53,18 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
       Examples:
         | clm         | deferral tag                           | where        |
         | CLM-OBL-003 | @wip                                   | the scenario |
+        | CLM-OBL-004 | @ignore                                | the scenario |
+        | CLM-OBL-005 | @skip                                  | the scenario |
+        | CLM-OBL-006 | @todo                                  | the scenario |
+        | CLM-OBL-007 | @pending                               | the scenario |
         | CLM-OBL-008 | @blocked, configured as a deferral tag | the scenario |
         | CLM-OBL-025 | @wip                                   | its Feature  |
         | CLM-OBL-026 | @wip                                   | its Rule     |
 
-  Rule: an executable claim raises one Evidence Obligation for each kind-of-check tag that applies to it, and none without one
+  Rule: an executable claim raises one Evidence Obligation for each kind-of-quality-check tag that applies to it, and none without one
 
     @unit
-    Scenario Outline: the Evidence Obligations will follow the claim's kind-of-check tags
+    Scenario Outline: the Evidence Obligations will follow the claim's kind-of-quality-check tags
       given an executable claim with the code CLM-ONE-001 had <tags>
       when balance reads the corpus
       then its claim will raise <Evidence Obligations>
@@ -95,16 +98,18 @@ Feature: Evidence Obligations are raised, one for each kind of quality check
         | CLM-OBL-029 | @performancepending       | a performance Evidence Obligation             |
         | CLM-OBL-030 | @fitnesspending           | a fitness Evidence Obligation                 |
 
-  Rule: an executable claim raises its Evidence Obligations under its claim code only when it has exactly one
+  Rule: an executable claim raises its Evidence Obligations under the one claim code it has
 
     @unit
-    Scenario Outline: an executable claim with no single claim code will raise its Evidence Obligations with no claim code
+    Scenario Outline: a claim that cannot be mapped to a single claim code will raise its Evidence Obligation with no claim code
       given an executable claim tagged @unit had <codes>
       when balance reads the corpus
       then its unit Evidence Obligation will be raised with no claim code
 
       Examples:
-        | clm         | codes                                                    |
-        | CLM-OBL-020 | the tags @CLM-ONE-001 and @CLM-ONE-002                   |
-        | CLM-OBL-021 | an empty clm cell                                        |
+        | clm         | codes                                                        |
+        | CLM-OBL-020 | the tags @CLM-ONE-001 and @CLM-ONE-002                       |
+        | CLM-OBL-021 | an empty clm cell                                            |
+        | CLM-OBL-022 | a clm cell reading "first"                                   |
+        | CLM-OBL-023 | the tag @CLM-A-001, which is not a claim code                |
         | CLM-OBL-024 | a claim code tag on its Outline, which also has a clm column |

@@ -19,6 +19,7 @@ import {
   type EvidenceObservation,
   type ProvenanceInput,
   type StepAccount,
+  type StepRecordEntryAsWritten,
   type TargetConfiguration,
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
@@ -37,8 +38,15 @@ import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/r
 // A run has no step and no step record of an input it did not read.
 const NONE: readonly never[] = [];
 
-const stepAccountFor = (steps: readonly WorkflowStepAsWritten[], configuration: TargetConfiguration, scripts: Readonly<Record<string, string>>): StepAccount =>
-  stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers) })));
+// Each workflow step the run read, counted by what it is; a run that read none has an empty step account.
+function stepAccountFor(
+  steps: readonly WorkflowStepAsWritten[],
+  record: readonly StepRecordEntryAsWritten[],
+  configuration: TargetConfiguration,
+  scripts: Readonly<Record<string, string>>,
+): StepAccount {
+  return stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers, record) })));
+}
 
 // Every input the run could read, each with the path it read, its links followed, when it read one.
 const provenanceInputsOf = ({ pathsRead }: InputsRead, folder: string): ProvenanceInput[] =>
@@ -91,7 +99,7 @@ export function balance(
     claimCodeErrors: claimCodeErrorsOf(read.features),
     configurationErrors: errors,
     features: read.features,
-    stepAccount: stepAccountFor(steps, configuration, scripts),
+    stepAccount: stepAccountFor(steps, read.stepRecord ?? NONE, configuration, scripts),
     provenance,
   });
   try {

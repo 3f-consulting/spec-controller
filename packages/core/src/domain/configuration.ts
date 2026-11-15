@@ -10,10 +10,6 @@ interface StepAddress {
   readonly step: string;
 }
 
-// A step is at an address when its workflow, its job and what it is known by are the address's.
-export const isAt = (step: WorkflowStepAsWritten, { workflow, job, step: named }: StepAddress): boolean =>
-  step.workflow === workflow && step.job === job && stepIdentityOf(step) === named;
-
 // null under runners: the target has no runner for that kind.
 export interface TargetConfiguration {
   readonly runners: Readonly<Partial<Record<Layer, string | null>>>;
@@ -79,7 +75,7 @@ function nonCheckOf(entry: string, steps: readonly WorkflowStepAsWritten[], { st
   const address = stepAddressOf(entry);
   if (address === undefined) return { kind: "not-checks-entry-not-a-step-name", entry };
   const inItsWorkflow = steps.filter(({ workflow }) => workflow === address.workflow);
-  const named = steps.some((step) => isAt(step, address));
+  const named = inItsWorkflow.some((step) => step.job === address.job && stepIdentityOf(step) === address.step);
   return inItsWorkflow.length === 0 || named ? address : { kind: "not-checks-entry-matches-no-step", entry };
 }
 

@@ -1,16 +1,12 @@
 import { chmodSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, readlinkSync, statSync, symlinkSync, writeFileSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { dirname, join } from "node:path";
 import { textFor, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import { refusalText } from "../runEnding/refusal.js";
 import { runRequestOf } from "../runRequest/runRequest.js";
-import runRequestVariants from "../runRequest/runRequest.variants.json" with { type: "json" };
-import identityVariants from "./identity.variants.json" with { type: "json" };
 import { processStreams } from "./streams.js";
-import type { Unwritable } from "./writable.js";
-import writableVariants from "./writable.variants.json" with { type: "json" };
 import { writeReports } from "./writer.js";
 
 // A run with nothing reconciled, its totals all zero.
@@ -19,9 +15,9 @@ const RECONCILIATION: EvidenceReconciliation = {
   runVerdict: { verdict: "balanced" },
   totals: { claimReconciliations: { total: 0, balanced: 0, outOfBalance: 0 }, qualityCheckReconciliations: { byKind: [{ kind: "unit", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "integration", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "e2e", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "performance", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, { kind: "fitness", evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }], noKind: { evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } }, all: { evidenceObligations: 0, evidenceObservations: 0, byOutcome: { satisfied: 0, failing: 0, "cannot-fail": 0, missing: 0, "no-claim-code": 0, "duplicate-claim-code": 0, "not-asked-for": 0, "cites-unknown-claim": 0, "cites-no-claim": 0, "never-ran": 0, "no-quality-check": 0 } } }, evidenceObservations: { total: 0, onExecutableClaim: 0, onPhantomClaim: 0, onUnnamedClaim: 0 }, outOfBalanceByFeature: [], excludedClaimCodeOccurrences: 0 },
   stepAccount: { jobs: [], total: { stepsRead: 0, runners: 0, reconcilerSteps: 0, nonChecks: 0, plumbing: 0, fitnessFunctions: 0 } },
+  provenance: { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] },
   errorsInTheInputs: { claimCodeErrors: [], configurationErrors: [] },
   runIntegrity: { neverRan: [] },
-  provenance: { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] },
 };
 
 // A run asked for no --exit-zero.
@@ -71,47 +67,34 @@ const outputsAskedFor = (args: readonly string[]) => {
   return "command" in request && request.command === "balance" ? request.outputs : [];
 };
 
-// The arguments that ask for the Markdown report each way.
-const MARKDOWN_ASKED: Readonly<Record<string, readonly string[]>> = { "no format": [], md: ["--format", "md"] };
+describe("you will get the report format you ask for", () => {
+  it.each([
+    ["CLM-FMT-001", "no format", "Markdown", []],
+    ["CLM-FMT-014", "md", "Markdown", ["--format", "md"]],
+    ["CLM-FMT-015", "json", "JSON", ["--format", "json"]],
+  ] as const)("[%s] asking for %s gives the %s report", (_clm, _format, report, args) => {
+    const { output, streams } = capturedStreams();
 
-// What the one report a run writes with these arguments puts on standard output.
-function reportOnStandardOutput(args: readonly string[]): string {
-  const { output, streams } = capturedStreams();
-  writeReports(outputsAskedFor(args), [], RECONCILIATION, streams, AS_ASKED);
-  return output.join("");
-}
+    writeReports(outputsAskedFor(args), [], RECONCILIATION, streams, AS_ASKED);
 
-describe("you will get the format you name, or Markdown when you name none", () => {
-  it.each(runRequestVariants["CLM-FMT-001"].variants)("[CLM-FMT-001] a run had its report to write: when you ask for %s, you will get the Markdown report", (format) => {
-    expect(opensAsMarkdown(reportOnStandardOutput(MARKDOWN_ASKED[format]!))).toBe(true);
-  });
-
-  it("[CLM-FMT-015] a run had its report to write: when you ask for json, you will get the JSON report", () => {
-    expect(JSON.parse(reportOnStandardOutput(["--format", "json"]))).toEqual(RECONCILIATION);
+    const written = output.join("");
+    expect(report === "JSON" ? JSON.parse(written) : written.split("\n")[2]).toEqual(
+      report === "JSON" ? RECONCILIATION : "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention.",
+    );
   });
 });
 
-// The name of the file each path asks for.
-const FILE_NAMED: Readonly<Record<string, string>> = { "any path": "report.md", "one whose name contains a colon": "a:b.md" };
-
-describe("a report will go where you ask, or to standard output when you name no place", () => {
-  it.each(runRequestVariants["CLM-FMT-003"].variants)(
-    "[CLM-FMT-003] a run had a report to write: when you ask for it at a file named by %s, it will be in that file, and nothing will be on standard output",
-    (path) => {
-      const file = join(temporaryDirectory("report-file-"), FILE_NAMED[path]!);
-      const { output, streams } = capturedStreams();
-
-      writeReports(outputsAskedFor(["--format", `md:${file}`]), [], RECONCILIATION, streams, AS_ASKED);
-
-      expect({ inTheFile: opensAsMarkdown(readFileSync(file, "utf8")), output: output.join("") }).toEqual({ inTheFile: true, output: "" });
-    },
-  );
-
+describe("a report will go where you ask", () => {
   it.each([
+    [
+      "CLM-FMT-003",
+      "a file",
+      (folder: string) => ["--format", `md:${join(folder, "report.md")}`],
+      (folder: string, output: string) => opensAsMarkdown(readFileSync(join(folder, "report.md"), "utf8")) && output === "",
+    ],
     [
       "CLM-FMT-018",
       "a file that already exists",
-      "the file will contain the new report",
       (folder: string) => {
         writeFileSync(join(folder, "report.md"), "an earlier report");
         return ["--format", `md:${join(folder, "report.md")}`];
@@ -119,9 +102,14 @@ describe("a report will go where you ask, or to standard output when you name no
       (folder: string) => opensAsMarkdown(readFileSync(join(folder, "report.md"), "utf8")),
     ],
     [
+      "CLM-FMT-017",
+      "a file whose name contains a colon",
+      (folder: string) => ["--format", `md:${join(folder, "a:b.md")}`],
+      (folder: string) => opensAsMarkdown(readFileSync(join(folder, "a:b.md"), "utf8")),
+    ],
+    [
       "CLM-FMT-012",
       "a link to a file that does not exist yet",
-      "it will be in the file the link points to, and the link will still point there",
       (folder: string) => {
         symlinkSync(join(folder, "target.md"), join(folder, "link.md"));
         return ["--format", `md:${join(folder, "link.md")}`];
@@ -131,7 +119,6 @@ describe("a report will go where you ask, or to standard output when you name no
     [
       "CLM-FMT-019",
       "a file in the corpus folder that is not a feature file",
-      "the file will contain the new report, and the feature files will be as they were",
       (folder: string) => {
         mkdirSync(join(folder, "features"));
         writeFileSync(join(folder, "features", "one.feature"), "Feature: one\n");
@@ -140,15 +127,15 @@ describe("a report will go where you ask, or to standard output when you name no
       (folder: string) =>
         opensAsMarkdown(readFileSync(join(folder, "features", "report.md"), "utf8")) && readFileSync(join(folder, "features", "one.feature"), "utf8") === "Feature: one\n",
     ],
-  ] as const)("[%s] a run had a report to write: when you ask for it at %s, %s", (_clm, _destination, _whereItWillBe, ask, isThere) => {
+  ] as const)("[%s] a report asked for at %s is there", (_clm, _destination, ask, isThere) => {
     const folder = temporaryDirectory("report-destination-");
-    const { streams } = capturedStreams();
+    const { output, streams } = capturedStreams();
     const args = ask(folder);
     const inputsRead = existsSync(join(folder, "features")) ? [join(folder, "features", "one.feature")] : [];
 
     writeReports(outputsAskedFor(args), inputsRead, RECONCILIATION, streams, AS_ASKED);
 
-    expect(isThere(folder)).toBe(true);
+    expect(isThere(folder, output.join(""))).toBe(true);
   });
 });
 
@@ -157,42 +144,36 @@ describe("each of two reports will be where you asked", () => {
     [
       "CLM-FMT-004",
       "no destination for one, a file for the other",
-      "one will be on standard output, and the other in the file",
       (folder: string) => ["--format", "md", "--format", `json:${join(folder, "report.json")}`],
       (folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(readFileSync(join(folder, "report.json"), "utf8")) && error === "",
     ],
     [
       "CLM-FMT-020",
       "no destination for one, standard error for the other",
-      "one will be on standard output, and the other on standard error",
       (_folder: string) => ["--format", "md", "--format", "json:/dev/stderr"],
       (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
     ],
     [
       "CLM-FMT-020",
       "no destination for one, standard error by its descriptor for the other",
-      "one will be on standard output, and the other on standard error",
       (_folder: string) => ["--format", "md", "--format", "json:/dev/fd/2"],
       (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
     ],
     [
       "CLM-FMT-020",
       "no destination for one, standard error by the process's descriptor for the other",
-      "one will be on standard output, and the other on standard error",
       (_folder: string) => ["--format", "md", "--format", "json:/proc/self/fd/2"],
       (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
     ],
     [
       "CLM-FMT-020",
       "no destination for one, standard error by the last of forty links in a chain to it for the other",
-      "one will be on standard output, and the other on standard error",
       (folder: string) => ["--format", "md", "--format", `json:${chainOfLinksTo("/dev/stderr", folder)}`],
       (_folder: string, output: string, error: string) => opensAsMarkdown(output) && isJsonReport(error),
     ],
     [
       "CLM-FMT-021",
       "two different files",
-      "each file will contain its own report",
       (folder: string) => ["--format", `md:${join(folder, "report.md")}`, "--format", `json:${join(folder, "report.json")}`],
       (folder: string, output: string) =>
         opensAsMarkdown(readFileSync(join(folder, "report.md"), "utf8")) && isJsonReport(readFileSync(join(folder, "report.json"), "utf8")) && output === "",
@@ -200,7 +181,6 @@ describe("each of two reports will be where you asked", () => {
     [
       "CLM-FMT-021",
       "two different files of one name, in two folders",
-      "each file will contain its own report",
       (folder: string) => {
         mkdirSync(join(folder, "a"));
         mkdirSync(join(folder, "b"));
@@ -209,7 +189,7 @@ describe("each of two reports will be where you asked", () => {
       (folder: string, output: string) =>
         opensAsMarkdown(readFileSync(join(folder, "a", "report"), "utf8")) && isJsonReport(readFileSync(join(folder, "b", "report"), "utf8")) && output === "",
     ],
-  ] as const)("[%s] a run had two reports to write: when you ask for them at %s, %s", (_clm, _destinations, _whereTheyWillBe, ask, areThere) => {
+  ] as const)("[%s] two reports asked for at %s are each there", (_clm, _destinations, ask, areThere) => {
     const folder = temporaryDirectory("report-destinations-");
     const { output, error, streams } = capturedStreams();
 
@@ -219,253 +199,127 @@ describe("each of two reports will be where you asked", () => {
   });
 });
 
-// Both reports on standard error: the Markdown first, then the JSON.
-const bothOneAfterTheOther = (onStandardError: string): boolean => opensAsMarkdown(onStandardError) && isJsonReport(onStandardError.slice(onStandardError.indexOf("\n{") + 1));
-
-// The second report each way of naming standard output, by what it is: a format alone, a path, or a link.
-const SECOND_ON_STANDARD_OUTPUT: Readonly<Record<string, readonly (readonly [string, (folder: string) => string])[]>> = {
-  "no destination": [["json", () => "json"]],
-  "a path that names standard output": [
-    ["/dev/stdout", () => "json:/dev/stdout"],
-    ["its descriptor", () => "json:/dev/fd/1"],
-    ["the process's descriptor", () => "json:/proc/self/fd/1"],
-  ],
-  "a link to standard output": [
-    [
-      "one link",
-      (folder) => {
-        symlinkSync("/dev/stdout", join(folder, "out"));
-        return `json:${join(folder, "out")}`;
-      },
-    ],
-    ["the last of forty links in a chain", (folder) => `json:${chainOfLinksTo("/dev/stdout", folder)}`],
-  ],
-};
-
-// The reports each way of naming one file asks for, and which of the run's streams, if either, is redirected into it.
-interface OneFileTwice {
-  readonly asked: readonly string[];
-  readonly redirected?: "output" | "error";
-}
-
-const ONE_FILE_TWICE: Readonly<Record<string, (file: string) => OneFileTwice>> = {
-  "the same path": (file) => ({ asked: [`md:${file}`, `json:${file}`] }),
-  "a link to it": (file) => {
-    symlinkSync(file, `${file}.link`);
-    return { asked: [`md:${file}`, `json:${file}.link`] };
-  },
-  "standard output redirected to it": (file) => ({ asked: [`md:${file}`, "json"], redirected: "output" }),
-  "standard error redirected to it": (file) => ({ asked: ["md:/dev/stderr", `json:${file}`], redirected: "error" }),
-  "on a volume that folds case, the same name in another case": (file) => ({ asked: [`md:${file}`, `json:${join(dirname(file), basename(file).toUpperCase())}`] }),
-};
-
-describe("two reports share a place only when it is standard error or a place that discards them", () => {
-  it("[CLM-FMT-022] a run had two reports to write: when you ask for both on standard error, both reports will be on standard error, one after the other", () => {
-    const { output, error, streams } = capturedStreams();
-
-    writeReports(outputsAskedFor(["--format", "md:/dev/stderr", "--format", "json:/dev/stderr"]), [], RECONCILIATION, streams, AS_ASKED);
-
-    expect({ bothThere: bothOneAfterTheOther(error.join("")), output: output.join("") }).toEqual({ bothThere: true, output: "" });
-  });
-
-  it("[CLM-FMT-022] a run had two reports to write: when you ask for both on standard error, redirected into a file, both reports will be on standard error, one after the other", () => {
+describe("both reports go one after the other to a place that appends", () => {
+  it.each([
+    ["CLM-FMT-022", "", false],
+    ["CLM-FMT-022", ", redirected into a file,", true],
+  ] as const)("[%s] two reports asked for on standard error%s are both on standard error, one after the other", (_clm, _redirected, redirect) => {
     const file = join(temporaryDirectory("standard-error-redirected-"), "log.txt");
     const { output, error, streams } = capturedStreams();
     const redirected = openSync(file, "a");
     onTestFinished(() => closeSync(redirected));
 
     const ending = endingOf(() =>
-      writeReports(outputsAskedFor(["--format", "md:/dev/stderr", "--format", "json:/dev/stderr"]), [], RECONCILIATION, { ...streams, error: { ...streams.error, fd: redirected } }, AS_ASKED),
+      writeReports(outputsAskedFor(["--format", "md:/dev/stderr", "--format", "json:/dev/stderr"]), [], RECONCILIATION, { ...streams, error: { ...streams.error, fd: redirect ? redirected : 2 } }, AS_ASKED),
     );
 
-    expect({ ending, bothThere: bothOneAfterTheOther(error.join("")), output: output.join("") }).toEqual({ ending: 0, bothThere: true, output: "" });
+    const onStandardError = error.join("");
+    expect({ ending, bothThere: opensAsMarkdown(onStandardError) && isJsonReport(onStandardError.slice(onStandardError.indexOf("\n{") + 1)), output: output.join("") }).toEqual({
+      ending: 0,
+      bothThere: true,
+      output: "",
+    });
   });
+});
 
-  it("[CLM-FMT-035] a run had two reports to write: when you ask for both at /dev/null, both will be written, and the run will not stop", () => {
+describe("both reports are written to a place that discards what it is given", () => {
+  it("[CLM-FMT-035] --format md:/dev/null --format json:/dev/null: both are written, and the run does not stop", () => {
     const { output, error, streams } = capturedStreams();
 
     const exitCode = writeReports(outputsAskedFor(["--format", "md:/dev/null", "--format", "json:/dev/null"]), [], RECONCILIATION, streams, AS_ASKED);
 
     expect({ exitCode, output: output.join(""), error: error.join("") }).toEqual({ exitCode: 0, output: "", error: "" });
   });
-
-  it.each(identityVariants["CLM-FMT-005"].variants)(
-    "[CLM-FMT-005] a run had two reports to write: when you ask for one with no destination and the other at %s, the run will stop, give no verdict and exit 2, complain naming what each report asked for, and nothing will be on standard output",
-    (variant) => {
-      const eachWay = SECOND_ON_STANDARD_OUTPUT[variant]!.map(([named, second]) => {
-        const { output, error, streams } = capturedStreams();
-        const asked = second(temporaryDirectory("both-to-standard-output-"));
-
-        const ending = endingOf(() => writeReports(outputsAskedFor(["--format", "md", "--format", asked]), [], RECONCILIATION, streams, AS_ASKED));
-
-        return {
-          ended: { named, ending, complaint: error.join(""), output: output.join("") },
-          stopped: { named, ending: 2, complaint: refused("more-than-one-to-stdout", { reports: `md, ${asked}` }), output: "" },
-        };
-      });
-
-      expect(eachWay.map(({ ended }) => ended)).toEqual(eachWay.map(({ stopped }) => stopped));
-    },
-  );
-
-  it.for(identityVariants["CLM-FMT-010"].variants)(
-    "[CLM-FMT-010] a run had two reports to write: when you ask for them at a file and at %s, the run will stop, give no verdict and exit 2, complain naming the file and both reports, and the file will be as it was",
-    (variant, { skip }) => {
-      const file = join(temporaryDirectory("one-file-"), "report.md");
-      writeFileSync(file, "an earlier report");
-      const { asked, redirected } = ONE_FILE_TWICE[variant]!(file);
-      skip(variant.includes("folds case") && !existsSync(join(dirname(file), "REPORT.MD")), "this volume does not fold case");
-      const { error, streams } = capturedStreams();
-      const into = redirected === undefined ? undefined : openSync(file, "a");
-      onTestFinished(() => (into === undefined ? undefined : closeSync(into)));
-      const streamsAsRedirected = into === undefined || redirected === undefined ? streams : { ...streams, [redirected]: { ...streams[redirected], fd: into } };
-
-      const ending = endingOf(() => writeReports(outputsAskedFor(asked.flatMap((one) => ["--format", one])), [], RECONCILIATION, streamsAsRedirected, AS_ASKED));
-
-      // The complaint goes to the list the test reads, so the file shows whether a report was written in it.
-      expect({ ending, complaint: error.join(""), file: readFileSync(file, "utf8") }).toEqual({
-        ending: 2,
-        complaint: refused("outputs-share-file", { reports: asked.join(", ") }),
-        file: "an earlier report",
-      });
-    },
-  );
-
-  it("[CLM-FMT-010] a run had two reports to write: when you ask for them at a file not yet made and at the same path, the run will stop, give no verdict and exit 2, complain naming the file and both reports, and the file will still not be made", () => {
-    const file = join(temporaryDirectory("one-new-file-"), "report.md");
-    const { error, streams } = capturedStreams();
-
-    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${file}`, "--format", `json:${file}`]), [], RECONCILIATION, streams, AS_ASKED));
-
-    expect({ ending, complaint: error.join(""), made: existsSync(file) }).toEqual({ ending: 2, complaint: refused("outputs-share-file", { reports: `md:${file}, json:${file}` }), made: false });
-  });
-
-  it("[CLM-FMT-010] a run had two reports to write: when you ask for them at Report.md and at report.md, neither made yet, on a volume that folds case they are one file and the run will stop, give no verdict and exit 2, and on one that does not each will be written", () => {
-    const folder = temporaryDirectory("one-new-file-by-case-");
-    // Whether the volume folds case, as the system answers for a file made and looked up by its other case.
-    writeFileSync(join(folder, "probe"), "");
-    const foldsCase = existsSync(join(folder, "PROBE"));
-    const [upper, lower] = [join(folder, "Report.md"), join(folder, "report.md")];
-    const { error, streams } = capturedStreams();
-
-    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${upper}`, "--format", `json:${lower}`]), [], RECONCILIATION, streams, AS_ASKED));
-
-    expect({ ending, complaint: error.join("") }).toEqual(
-      foldsCase ? { ending: 2, complaint: refused("outputs-share-file", { reports: `md:${upper}, json:${lower}` }) } : { ending: 0, complaint: "" },
-    );
-  });
 });
 
-// Each way to ask for a place the run cannot write: what it is, why the run cannot write there, the place, and whether it is as it was.
-type CannotWrite = readonly [string, Unwritable, (folder: string) => string, (place: string) => boolean];
-
-const CANNOT_WRITE: Readonly<Record<string, readonly CannotWrite[]>> = {
-  "a file it may not write": [
+describe("a place it cannot write will stop the run, and nothing will be written", () => {
+  it.each([
     [
-      "a read-only file",
+      "CLM-FMT-008",
+      "a file it may not write",
       "may-not-be-written",
-      (folder) => {
+      (folder: string) => {
         writeFileSync(join(folder, "report.md"), "an earlier report");
         chmodSync(join(folder, "report.md"), 0o444);
         return join(folder, "report.md");
       },
-      (place) => readFileSync(place, "utf8") === "an earlier report",
+      (place: string) => readFileSync(place, "utf8") === "an earlier report",
     ],
     [
+      "CLM-FMT-008",
       "a file in a folder it may not enter",
       "may-not-be-written",
-      (folder) => {
+      (folder: string) => {
         mkdirSync(join(folder, "locked"));
         chmodSync(join(folder, "locked"), 0o000);
         return join(folder, "locked", "report.md");
       },
-      (place) => {
+      (place: string) => {
         chmodSync(dirname(place), 0o755);
         return !existsSync(place);
       },
     ],
     [
+      "CLM-FMT-008",
       "a new file in a folder it may not write",
       "may-not-be-written",
-      (folder) => {
+      (folder: string) => {
         mkdirSync(join(folder, "read-only"));
         chmodSync(join(folder, "read-only"), 0o555);
         return join(folder, "read-only", "report.md");
       },
-      (place) => !existsSync(place),
+      (place: string) => !existsSync(place),
     ],
-  ],
-  "an existing folder": [
     [
-      "a folder",
+      "CLM-FMT-026",
+      "an existing folder",
       "is-a-folder",
-      (folder) => {
+      (folder: string) => {
         mkdirSync(join(folder, "reports"));
         return join(folder, "reports");
       },
-      (place) => statSync(place).isDirectory(),
+      (place: string) => statSync(place).isDirectory(),
     ],
-  ],
-  "a file in a folder that does not exist": [["a missing folder", "folder-does-not-exist", (folder) => join(folder, "missing", "report.md"), (place) => !existsSync(place)]],
-  "a link that leads round to itself": [
+    ["CLM-FMT-027", "a file in a folder that doesn't exist", "folder-does-not-exist", (folder: string) => join(folder, "missing", "report.md"), (place: string) => !existsSync(place)],
     [
-      "two links to each other",
+      "CLM-FMT-034",
+      "a link that leads round to itself",
       "leads-round-to-itself",
-      (folder) => {
+      (folder: string) => {
         symlinkSync(join(folder, "b"), join(folder, "a"));
         symlinkSync(join(folder, "a"), join(folder, "b"));
         return join(folder, "a");
       },
-      (place) => readlinkSync(place).endsWith("b"),
+      (place: string) => readlinkSync(place).endsWith("b"),
     ],
-  ],
-};
-
-describe("it stops before it damages anything", () => {
-  it.each(writableVariants["CLM-FMT-008"].variants)(
-    "[CLM-FMT-008] a run had its report to write: when you ask for it in %s, the run will stop, give no verdict and exit 2, complain naming the place and why it cannot write there, and nothing will be written",
-    (variant) => {
-      const eachWay = CANNOT_WRITE[variant]!.map(([way, why, place, asItWas]) => {
-        const { output, error, streams } = capturedStreams();
-        const destination = place(temporaryDirectory("unwritable-"));
-
-        const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${destination}`]), [], RECONCILIATION, streams, AS_ASKED));
-
-        return {
-          ended: { way, ending, complaint: error.join(""), output: output.join(""), asItWas: asItWas(destination) },
-          stopped: { way, ending: 2, complaint: refused("report-not-written", { place: destination, why: textFor(appCatalogue, why) }), output: "", asItWas: true },
-        };
-      });
-
-      expect(eachWay.map(({ ended }) => ended)).toEqual(eachWay.map(({ stopped }) => stopped));
-    },
-  );
-
-  it("[CLM-FMT-008] a run had its report to write: when you ask for it at an empty path, the run will stop, give no verdict and exit 2, complain naming the place and why it cannot write there, and nothing will be written", () => {
+  ] as const)("[%s] a report asked for at %s stops the run with exit 2, names the place and why, and writes nothing", (_clm, _destination, why, place, asItWas) => {
+    const folder = temporaryDirectory("unwritable-");
     const { output, error, streams } = capturedStreams();
+    const destination = place(folder);
 
-    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", "md:"]), [], RECONCILIATION, streams, AS_ASKED));
+    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${destination}`]), [], RECONCILIATION, streams, AS_ASKED));
 
-    expect({ ending, complaint: error.join(""), output: output.join("") }).toEqual({
+    expect({ ending, complaint: error.join(""), output: output.join(""), asItWas: asItWas(destination) }).toEqual({
       ending: 2,
-      complaint: refused("report-not-written", { place: "", why: textFor(appCatalogue, "may-not-be-written") }),
+      complaint: refused("report-not-written", { place: destination, why: textFor(appCatalogue, why) }),
       output: "",
+      asItWas: true,
     });
   });
+});
 
+describe("the run writes neither report when it cannot write one", () => {
   it.each([
-    ["CLM-FMT-009", "no destination", "nothing will be on standard output", (_folder: string) => [], (_folder: string, output: string) => output === ""],
+    ["CLM-FMT-009", "no destination", (_folder: string) => [], (_folder: string, output: string) => output === ""],
     [
       "CLM-FMT-028",
       "a file that does not exist",
-      "the file will still not exist",
       (folder: string) => ["--format", `json:${join(folder, "report.json")}`],
       (folder: string) => !existsSync(join(folder, "report.json")),
     ],
     [
       "CLM-FMT-029",
       "a file that already exists",
-      "the file will be as it was",
       (folder: string) => {
         writeFileSync(join(folder, "report.json"), "an earlier report");
         return ["--format", `json:${join(folder, "report.json")}`];
@@ -475,34 +329,104 @@ describe("it stops before it damages anything", () => {
     [
       "CLM-FMT-030",
       "a link to a file not yet made",
-      "the file will still not exist, and the link will still point there",
       (folder: string) => {
         symlinkSync(join(folder, "target.json"), join(folder, "link.json"));
         return ["--format", `json:${join(folder, "link.json")}`];
       },
       (folder: string) => !existsSync(join(folder, "target.json")) && readlinkSync(join(folder, "link.json")) === join(folder, "target.json"),
     ],
-  ] as const)(
-    "[%s] a run had two reports to write: when you ask for one at a place it cannot write, and the other at %s, the run will stop, give no verdict and exit 2, complain naming the place and why it cannot write there, and %s",
-    (_clm, _other, _whatStays, other, asItWas) => {
-      const folder = temporaryDirectory("neither-written-");
-      const { output, error, streams } = capturedStreams();
-      const unwritable = join(folder, "missing", "report.md");
-      const args = [...other(folder), "--format", `md:${unwritable}`];
-      const outputs = outputsAskedFor(args.length === 2 ? ["--format", "json", ...args] : args);
+  ] as const)("[%s] one report at a place it cannot write and the other at %s: the run stops with exit 2, and nothing is written", (_clm, _other, other, asItWas) => {
+    const folder = temporaryDirectory("neither-written-");
+    const { output, error, streams } = capturedStreams();
+    const unwritable = join(folder, "missing", "report.md");
+    const args = [...other(folder), "--format", `md:${unwritable}`];
+    const outputs = outputsAskedFor(args.length === 2 ? ["--format", "json", ...args] : args);
 
-      const ending = endingOf(() => writeReports(outputs, [], RECONCILIATION, streams, AS_ASKED));
+    const ending = endingOf(() => writeReports(outputs, [], RECONCILIATION, streams, AS_ASKED));
 
-      expect({ ending, complaint: error.join(""), asItWas: asItWas(folder, output.join("")) }).toEqual({
-        ending: 2,
-        complaint: refused("report-not-written", { place: unwritable, why: textFor(appCatalogue, "folder-does-not-exist") }),
-        asItWas: true,
-      });
-    },
-  );
+    expect({ ending, complaint: error.join(""), asItWas: asItWas(folder, output.join("")) }).toEqual({
+      ending: 2,
+      complaint: refused("report-not-written", { place: unwritable, why: textFor(appCatalogue, "folder-does-not-exist") }),
+      asItWas: true,
+    });
+  });
+});
 
-  it("[CLM-FMT-033] the run read one file: when you ask for the report to go in another file on the same disk, the report will be written there", () => {
-    const folder = temporaryDirectory("same-disk-");
+describe("two reports will not both go to standard output", () => {
+  it.each([
+    ["CLM-FMT-005", "no destination", (_folder: string): string => "json"],
+    ["CLM-FMT-011", "a path that names standard output", (_folder: string): string => "json:/dev/stdout"],
+    ["CLM-FMT-011", "a path that names standard output by its descriptor", (_folder: string): string => "json:/dev/fd/1"],
+    ["CLM-FMT-011", "a path that names standard output by the process's descriptor", (_folder: string): string => "json:/proc/self/fd/1"],
+    [
+      "CLM-FMT-023",
+      "a link to standard output",
+      (folder: string): string => {
+        symlinkSync("/dev/stdout", join(folder, "out"));
+        return `json:${join(folder, "out")}`;
+      },
+    ],
+    [
+      "CLM-FMT-023",
+      "the last of forty links in a chain to standard output",
+      (folder: string): string => `json:${chainOfLinksTo("/dev/stdout", folder)}`,
+    ],
+  ] as const)("[%s] one report with no destination and the other at %s: the run stops with exit 2, naming both, and nothing is on standard output", (_clm, _other, other) => {
+    const folder = temporaryDirectory("both-to-standard-output-");
+    const { output, error, streams } = capturedStreams();
+    const asked = other(folder);
+
+    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", "md", "--format", asked]), [], RECONCILIATION, streams, AS_ASKED));
+
+    expect({ ending, complaint: error.join(""), output: output.join("") }).toEqual({ ending: 2, complaint: refused("more-than-one-to-stdout", { reports: `md, ${asked}` }), output: "" });
+  });
+});
+
+describe("two reports will not go in one file", () => {
+  it.each([
+    ["CLM-FMT-010", "the same path", (file: string): readonly string[] => ["--format", `json:${file}`], (file: string): string => `json:${file}`],
+    [
+      "CLM-FMT-024",
+      "a link to it",
+      (file: string): readonly string[] => {
+        symlinkSync(file, `${file}.link`);
+        return ["--format", `json:${file}.link`];
+      },
+      (file: string): string => `json:${file}.link`,
+    ],
+    ["CLM-FMT-025", "standard output, redirected to the file", (_file: string): readonly string[] => ["--format", "json"], (_file: string): string => "json"],
+  ] as const)("[%s] one report at a file and the other at %s: the run stops with exit 2, naming the file and both, and the file is as it was", (clm, _other, other, otherAsGiven) => {
+    const file = join(temporaryDirectory("one-file-"), "report.md");
+    writeFileSync(file, "an earlier report");
+    const { error, streams } = capturedStreams();
+    const redirected = clm === "CLM-FMT-025" ? openSync(file, "a") : undefined;
+    onTestFinished(() => (redirected === undefined ? undefined : closeSync(redirected)));
+    const asked = ["--format", `md:${file}`, ...other(file)];
+
+    const ending = endingOf(() =>
+      writeReports(outputsAskedFor(asked), [], RECONCILIATION, redirected === undefined ? streams : { ...streams, output: { ...streams.output, fd: redirected } }, AS_ASKED),
+    );
+
+    expect({ ending, complaint: error.join(""), file: readFileSync(file, "utf8") }).toEqual({
+      ending: 2,
+      complaint: refused("outputs-share-file", { reports: `md:${file}, ${otherAsGiven(file)}` }),
+      file: "an earlier report",
+    });
+  });
+
+  it("[CLM-FMT-010] one report at a file not yet made and the other at the same path: the run stops with exit 2, naming the file and both, and the file is still not made", () => {
+    const file = join(temporaryDirectory("one-new-file-"), "report.md");
+    const { error, streams } = capturedStreams();
+
+    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${file}`, "--format", `json:${file}`]), [], RECONCILIATION, streams, AS_ASKED));
+
+    expect({ ending, complaint: error.join(""), made: existsSync(file) }).toEqual({ ending: 2, complaint: refused("outputs-share-file", { reports: `md:${file}, json:${file}` }), made: false });
+  });
+});
+
+describe("the run writes a report to a file it does not read, even one on the same disk", () => {
+  it("[CLM-FMT-033] a report asked for at another file on the same disk as the one the run read is written there", () => {
+    const folder = temporaryDirectory("same-device-");
     writeFileSync(join(folder, "results.json"), "test results");
     writeFileSync(join(folder, "report.md"), "an earlier report");
     const { streams } = capturedStreams();
@@ -511,8 +435,10 @@ describe("it stops before it damages anything", () => {
 
     expect({ ending, written: opensAsMarkdown(readFileSync(join(folder, "report.md"), "utf8")) }).toEqual({ ending: 0, written: true });
   });
+});
 
-  it("[CLM-FMT-013] the run read a file, such as your test results: when you ask for the report to go in that same file, the run will stop, give no verdict and exit 2, complain naming the file, and the file will be as it was", () => {
+describe("the run refuses to write a report over a file it reads", () => {
+  it("[CLM-FMT-013] a report asked for at the file the run read stops the run with exit 2, naming the file, and the file is as it was", () => {
     const results = join(temporaryDirectory("over-an-input-"), "results.json");
     writeFileSync(results, "test results");
     const { error, streams } = capturedStreams();
@@ -520,6 +446,38 @@ describe("it stops before it damages anything", () => {
     const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${results}`]), [results], RECONCILIATION, streams, AS_ASKED));
 
     expect({ ending, complaint: error.join(""), file: readFileSync(results, "utf8") }).toEqual({ ending: 2, complaint: refused("output-overwrites-input", { file: results }), file: "test results" });
+  });
+});
+
+describe("a report on standard error will not go in a file another report names or the run reads", () => {
+  it.each([
+    [
+      "CLM-FMT-031",
+      "a file another report names",
+      (file: string): readonly string[] => ["--format", `json:${file}`],
+      (_file: string): readonly string[] => [],
+      (file: string) => refused("outputs-share-file", { reports: `md:/dev/stderr, json:${file}` }),
+    ],
+    [
+      "CLM-FMT-032",
+      "a file the run reads",
+      (_file: string): readonly string[] => [],
+      (file: string): readonly string[] => [file],
+      (file: string) => refused("output-overwrites-input", { file }),
+    ],
+  ] as const)("[%s] standard error redirected to %s: a report asked for on standard error stops the run with exit 2, naming the file, and no report is written to it", (_clm, _file, others, inputsRead, complaint) => {
+    const file = join(temporaryDirectory("standard-error-redirected-"), "results.json");
+    writeFileSync(file, "an earlier file");
+    const { error, streams } = capturedStreams();
+    const redirected = openSync(file, "a");
+    onTestFinished(() => closeSync(redirected));
+
+    const ending = endingOf(() =>
+      writeReports(outputsAskedFor(["--format", "md:/dev/stderr", ...others(file)]), inputsRead(file), RECONCILIATION, { ...streams, error: { ...streams.error, fd: redirected } }, AS_ASKED),
+    );
+
+    // Standard error is the file, so what reached the stream reached the file.
+    expect({ ending, inTheFile: error.join("") + readFileSync(file, "utf8") }).toEqual({ ending: 2, inTheFile: `${complaint(file)}an earlier file` });
   });
 });
 
@@ -532,7 +490,7 @@ function writtenOn(stream: NodeJS.WriteStream): string[] {
 }
 
 describe("a report and a refusal will be on the run's own standard streams", () => {
-  it("[CLM-FMT-016] a run had a report to write: when you ask for it at no destination, it will be on the run's standard output", () => {
+  it("[CLM-FMT-016] a report asked for at no destination is on the run's standard output", () => {
     const output = writtenOn(process.stdout);
 
     writeReports(outputsAskedFor([]), [], RECONCILIATION, processStreams, AS_ASKED);
@@ -540,7 +498,7 @@ describe("a report and a refusal will be on the run's own standard streams", () 
     expect(opensAsMarkdown(output.join(""))).toBe(true);
   });
 
-  it("[CLM-FMT-008] a run had its report to write: when you ask for it in a file in a folder that does not exist, the run will stop and exit 2, complaining on the run's standard error, naming the place and why it cannot write there", () => {
+  it("[CLM-FMT-027] a report asked for at a file in a folder that doesn't exist stops the run with exit 2, naming the place and why on the run's standard error", () => {
     const place = join(temporaryDirectory("own-standard-error-"), "missing", "report.md");
     const error = writtenOn(process.stderr);
 

@@ -57,6 +57,15 @@ describe("each run verdict, and each reason a run is not reconciled, has an open
   });
 });
 
+describe("the provenance shows each input the run read on its own line", () => {
+  it("[CLM-RPT-115] the provenance has a line for an input the run read by default", () => {
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, inputs: [{ name: "workflows", path: ".github/workflows" }] } }));
+    const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
+
+    expect(provenance.slice(provenance.indexOf(`- ${coreText("provenance-inputs")}:`))).toEqual([`- ${coreText("provenance-inputs")}:`, "  - CI workflows: `.github/workflows`"]);
+  });
+});
+
 describe("the step account totals its jobs only when it has more than one", () => {
   const counts: StepCounts = { stepsRead: 2, runners: 0, reconcilerSteps: 1, nonChecks: 0, plumbing: 0, fitnessFunctions: 1 };
 
@@ -92,7 +101,7 @@ describe("the step account shows each job's counts, and the Total row their sums
     const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: PROVENANCE, stepAccount }));
     const rows = report.slice(report.indexOf("## Step account")).split("\n").filter((line) => line.startsWith("| ")).map((line) => line.slice(2, -2).split(" | "));
 
-    expect(rows.find((cells) => cells[1] === job)?.slice(2)).toEqual(counts);
+    expect({ counts: rows.find((cells) => cells[1] === job)?.slice(2), lastColumn: rows[0]?.at(-1) }).toEqual({ counts, lastColumn: coreText("step-account-fitness-functions") });
   });
 });
 
@@ -100,17 +109,10 @@ describe("the provenance shows the tool SHA only when there is one", () => {
   it.each([
     ["CLM-RPT-167", "the tool SHA 9f8e7d6", { toolSha: "9f8e7d6" }, ["9f8e7d6"]],
     ["CLM-RPT-168", "no tool SHA", {}, []],
-  ] as const)("[%s] a run whose provenance had %s shows the tool SHA in the provenance, or no line for it", (_clm, _toolSha, toolSha, shown) => {
+  ] as const)("[%s] a run whose provenance had %s shows it in the provenance, or no line for it", (_clm, _commit, toolCommit, shown) => {
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, ...toolCommit } }));
     const label = `- ${coreText("provenance-tool-sha")}: `;
-    const provenanceLines = (provenance: Provenance): string[] => {
-      const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance }));
-      return report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
-    };
-    const lines = provenanceLines({ ...PROVENANCE, ...toolSha });
 
-    expect({ toolSha: lines.filter((line) => line.startsWith(label)), others: lines.filter((line) => !line.startsWith(label)) }).toEqual({
-      toolSha: shown.map((sha) => `${label}\`${sha}\``),
-      others: provenanceLines({ ...PROVENANCE, toolSha: "9f8e7d6" }).filter((line) => !line.startsWith(label)),
-    });
+    expect(report.split("\n").filter((line) => line.startsWith(label))).toEqual(shown.map((commit) => `${label}\`${commit}\``));
   });
 });

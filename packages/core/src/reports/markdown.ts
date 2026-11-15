@@ -10,7 +10,7 @@ import { summarySection } from "./summary.js";
 // The opening sentence: what the run verdict is and what it asks of the reader.
 const openingOf = (runVerdict: RunVerdict): string => coreText(`${runVerdict.verdict === "not-reconciled" ? runVerdict.why : runVerdict.verdict}-opening`);
 
-// The title and the opening, then each section in its order, leaving out a part the run had nothing for.
+// The title and the opening, then each section in its order; a part the run had nothing for is left out.
 export function markdownReportOf(reconciliation: EvidenceReconciliation): string {
   const { runVerdict, provenance, errorsInTheInputs, runIntegrity, totals, stepAccount, claimReconciliations } = reconciliation;
   const sections = [

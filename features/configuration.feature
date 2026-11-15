@@ -4,27 +4,30 @@ Feature: balance reads and validates the configuration settings in the specContr
   A target's package.json can have a specController block with three configuration settings:
   runners, notChecks and deferral tags. balance reads and validates each one. A configuration
   setting that is not valid never stops the run, and the others still apply. A specController
-  block that is broken as a whole, such as null, is not a setting: it stops the run with a usage
-  error. What each setting changes is in the feature files about those things.
+  block that is broken as a whole, such as null, is not a setting: it stops the run as an
+  unexpected error. What each setting changes is in the feature files about those things.
 
-  Rule: balance uses each configuration setting it can, and leaves out any it cannot, naming the error
+  Rule: balance takes each configuration setting it can use
 
     @unit
-    Scenario Outline: balance reads each configuration setting it can use as what the run uses
+    Scenario Outline: balance takes each configuration setting it can use as the runner, non-check or deferral tag it names
       given the specController block had <configuration setting>
       when balance reads it
-      then the run will use <what the run uses>
+      then balance will take it as <what it sets>
 
       Examples:
-        | clm         | configuration setting                                                                                           | what the run uses                                                  |
-        | CLM-CFG-008 | "unit": "vitest" under runners                                                                                  | vitest as what runs the unit layer                                 |
-        | CLM-CFG-009 | "performance": null under runners                                                                               | no performance runner                                              |
-        | CLM-CFG-010 | "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies | the step Install dependencies, in job ci, in ci.yml, as a non-check |
-        | CLM-CFG-011 | "nightly:build.yml:ci:Install" in notChecks                                                                     | the step Install, in job ci, in nightly:build.yml, as a non-check  |
-        | CLM-CFG-023 | "nightly.yml:ci:Install" in notChecks, with only ci.yml read                                                    | the step Install, in job ci, in nightly.yml, as a non-check        |
-        | CLM-CFG-012 | "deferred" in deferralTags                                                                                      | @deferred as a deferral tag                                        |
-        | CLM-CFG-013 | "@blocked" in deferralTags                                                                                      | @blocked as a deferral tag                                         |
-        | CLM-CFG-006 | nothing                                                                                                         | no setting from the block                                          |
+        | clm         | configuration setting                                                                                           | what it sets                                                                   |
+        | CLM-CFG-008 | "unit": "vitest" under runners                                                                                  | vitest as the unit layer's runner                                              |
+        | CLM-CFG-009 | "performance": null under runners                                                                               | the performance layer as having no runner                                      |
+        | CLM-CFG-010 | "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies | the step Install dependencies, in job ci, in ci.yml, as a non-check            |
+        | CLM-CFG-011 | "nightly:build.yml:ci:Install dependencies" in notChecks                                                        | the step Install dependencies, in job ci, in nightly:build.yml, as a non-check |
+        | CLM-CFG-023 | "nightly.yml:ci:Install dependencies" in notChecks, with only ci.yml read                                       | the step Install dependencies, in job ci, in nightly.yml, as a non-check       |
+        | CLM-CFG-012 | "deferred" in deferralTags                                                                                      | @deferred as a deferral tag                                                    |
+        | CLM-CFG-013 | "@blocked" in deferralTags                                                                                      | @blocked as a deferral tag                                                     |
+        | CLM-CFG-014 | " deferred " in deferralTags                                                                                    | @deferred as a deferral tag                                                    |
+        | CLM-CFG-006 | nothing                                                                                                         | the defaults                                                                   |
+
+  Rule: balance leaves out any configuration setting it cannot use, and runs anyway
 
     @unit
     Scenario Outline: balance leaves out a configuration setting it cannot use, naming the error
@@ -55,7 +58,7 @@ Feature: balance reads and validates the configuration settings in the specContr
   Rule: a specController block that is not an object stops the run
 
     @unit @CLM-CFG-021
-    Scenario: a specController block of 5 stops the run
-      given the specController block was 5
+    Scenario: a specController block that is not an object stops the run as a usage error
+      given the specController block was 5, which is not an object
       when balance reads it
-      then the run will stop with a usage error, give no verdict, and complain, naming the specController block and what is wrong with it
+      then the run will stop as a usage error

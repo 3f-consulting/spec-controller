@@ -24,7 +24,6 @@ const ASKED: Readonly<Record<string, (file: string) => { readonly formats: reado
   "no destination for one, a file for the other": (file) => ({ formats: ["md", `json:${file}`] }),
   "no destination for one, standard error for the other": () => ({ formats: ["md", "json:/dev/stderr"] }),
   "two different files": (file) => ({ formats: [`md:${file}`, `json:${file}.json`] }),
-  "standard error for both": () => ({ formats: ["md:/dev/stderr", "json:/dev/stderr"] }),
   "a file and at the same path": (file) => ({ formats: [`md:${file}`, `json:${file}`] }),
   "a file and at a link to it": (file) => {
     symlinkSync(file, `${file}.link`);
