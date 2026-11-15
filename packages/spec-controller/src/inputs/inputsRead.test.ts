@@ -65,18 +65,30 @@ describe("an input read by default that does not exist will count as none, not a
 });
 
 describe("balance reads the one workflow a CI workflows path names, or every workflow in the folder it names", () => {
-  it("[CLM-CLI-193] the workflow ci.yml, then a folder with ci.yml and release.yaml beside its README and a folder of templates: it reads ci.yml alone, then both", () => {
+  it.each([
+    ["CLM-CLI-193", "the workflow ci.yml", "workflows/ci.yml", ["ci.yml"]],
+    ["CLM-CLI-207", "a folder with ci.yml and release.yaml in it, beside its README and a folder of templates", "workflows", ["ci.yml", "release.yaml"]],
+  ] as const)("[%s] the run named %s as its CI workflows, at %s: it reads %j", (_clm, _named, path, read) => {
     const folder = temporaryDirectory("workflows-");
     mkdirSync(join(folder, "workflows", "templates"), { recursive: true });
     writeFileSync(join(folder, "workflows", "ci.yml"), "jobs:\n  ci:\n    steps:\n      - run: echo ci\n");
     writeFileSync(join(folder, "workflows", "release.yaml"), "jobs:\n  release:\n    steps:\n      - run: echo release\n");
     writeFileSync(join(folder, "workflows", "README.md"), "# Workflows\n\n- `ci.yml`: the checks on every push\n");
     writeFileSync(join(folder, "workflows", "templates", "partial.yml"), "jobs:\n  partial:\n    steps:\n      - run: echo partial\n");
-    const workflowsRead = (path: string): string[] => {
-      const inputs = inputsReadFor([{ kind: "workflows", path, byDefault: false }], folder);
-      return "refusals" in inputs ? inputs.refusals.map(({ key }) => key) : [...new Set(inputs.workflowSteps?.map(({ workflow }) => workflow))];
-    };
+    const inputs = inputsReadFor([{ kind: "workflows", path, byDefault: false }], folder);
 
-    expect([workflowsRead("workflows/ci.yml"), workflowsRead("workflows")]).toEqual([["ci.yml"], ["ci.yml", "release.yaml"]]);
+    expect("refusals" in inputs ? inputs.refusals.map(({ key }) => key) : [...new Set(inputs.workflowSteps?.map(({ workflow }) => workflow))]).toEqual(read);
+  });
+});
+
+describe("balance reads the feature corpus in path order", () => {
+  it("[CLM-CLI-197] a corpus with b.feature and a/x.feature: balance reads a/x.feature before b.feature", () => {
+    const folder = temporaryDirectory("corpus-order-");
+    mkdirSync(join(folder, "features", "a"), { recursive: true });
+    writeFileSync(join(folder, "features", "b.feature"), "@BBB\nFeature: b\n\n  @unit @CLM-BBB-001\n  Scenario: b\n");
+    writeFileSync(join(folder, "features", "a", "x.feature"), "@AAA\nFeature: x\n\n  @unit @CLM-AAA-001\n  Scenario: x\n");
+    const inputs = inputsReadFor([{ kind: "features", path: "features", byDefault: false }], folder);
+
+    expect("refusals" in inputs ? inputs.refusals.map(({ key }) => key) : inputs.features.map(({ file }) => file)).toEqual(["a/x.feature", "b.feature"]);
   });
 });

@@ -19,43 +19,56 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
   there by kind of quality check, file and shared claim code, and counts each group. Each Claim
   Reconciliation lists its Quality Check Reconciliations in one fixed order.
 
-  Rule: a Claim Reconciliation follows from its evidence
+  Rule: a Quality Check Reconciliation's outcome follows from the sides it has
 
     @unit
-    Scenario Outline: each Quality Check Reconciliation's outcome will follow from its two sides, and the claim's verdict from those outcomes
+    Scenario Outline: balance gives each Quality Check Reconciliation its outcome from its two sides
       given there was <Evidence Obligations> under <claim code>
       and there was <Evidence Observations>
       when balance reconciles them
-      then the Claim Reconciliation will be <verdict>
-      and its Quality Check Reconciliations will have the outcomes <outcomes>
+      then its Quality Check Reconciliations will have the outcomes <outcomes>
 
       Examples:
-        | clm         | claim code                              | Evidence Obligations                          | Evidence Observations                                                | verdict        | outcomes                          |
-        | CLM-LDG-001 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a passing unit test citing it                                        | balanced       | one satisfied                     |
-        | CLM-LDG-049 | @CLM-ONE-001                            | an integration Evidence Obligation            | a passing integration test citing it                                 | balanced       | one satisfied                     |
-        | CLM-LDG-048 | @CLM-ONE-001                            | an e2e Evidence Obligation                    | a passing e2e test citing it                                         | balanced       | one satisfied                     |
-        | CLM-LDG-050 | @CLM-ONE-001                            | a performance Evidence Obligation             | a passing performance test citing it                                 | balanced       | one satisfied                     |
-        | CLM-LDG-025 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing fitness function citing it                                 | balanced       | one satisfied                     |
-        | CLM-LDG-027 | @CLM-ONE-001                            | a unit Evidence Obligation                    | three passing unit tests citing it                                   | balanced       | three satisfied                   |
-        | CLM-LDG-013 | @CLM-ONE-001                            | a unit and an e2e Evidence Obligation         | a passing unit test and a passing e2e test, each citing it           | balanced       | two satisfied                     |
-        | CLM-LDG-002 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a failing unit test citing it                                        | out of balance | one failing                       |
-        | CLM-LDG-047 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a passing and a failing unit test citing it                          | out of balance | one satisfied and one failing     |
-        | CLM-LDG-051 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing and a failing fitness function citing it                   | out of balance | one satisfied and one failing     |
-        | CLM-LDG-003 | @CLM-ONE-001                            | a unit Evidence Obligation                    | no unit test                                                         | out of balance | one missing                       |
-        | CLM-LDG-004 | @CLM-ONE-001                            | a unit and an integration Evidence Obligation | a failing unit test citing it                                        | out of balance | one failing and one missing       |
-        | CLM-LDG-052 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a unit test citing it that never reached its assertions              | out of balance | one missing and one never-ran     |
-        | CLM-LDG-008 | @CLM-ONE-001                            | a unit Evidence Obligation                    | an e2e test citing it                                                | out of balance | one missing and one not-asked-for |
-        | CLM-LDG-010 | @CLM-ONE-001                            | no Evidence Obligation                        | a unit test citing it                                                | out of balance | one not-asked-for                 |
-        | CLM-LDG-009 | @CLM-ONE-001                            | no Evidence Obligation                        | no test citing it                                                    | out of balance | one no-quality-check              |
-        | CLM-LDG-053 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing fitness function citing it, whose step cannot fail its job | out of balance | one cannot-fail                   |
-        | CLM-LDG-021 | no code                                 | a unit Evidence Obligation                    | no test                                                              | out of balance | one no-claim-code                 |
-        | CLM-LDG-054 | @CLM-ONE-001, shared with another claim | a unit Evidence Obligation                    | no test citing it                                                    | out of balance | one duplicate-claim-code          |
-        | CLM-LDG-077 | @CLM-ONE-001, shared with another claim | no Evidence Obligation                        | no test citing it                                                    | out of balance | one duplicate-claim-code          |
-        | CLM-LDG-006 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | a unit test citing it                                                | out of balance | one cites-unknown-claim           |
-        | CLM-LDG-055 | @CLM-ONE-002, on a deferred scenario    | no Evidence Obligation                        | a unit test citing it                                                | out of balance | one cites-unknown-claim           |
-        | CLM-LDG-056 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | two unit tests citing it                                             | out of balance | two cites-unknown-claim           |
-        | CLM-LDG-007 | the unnamed claim                       | no Evidence Obligation                        | a unit test citing no code                                           | out of balance | one cites-no-claim                |
-        | CLM-LDG-057 | the unnamed claim                       | no Evidence Obligation                        | a test file that never ran, citing no code                           | out of balance | one never-ran                     |
+        | clm         | claim code                              | Evidence Obligations                          | Evidence Observations                                                | outcomes                          |
+        | CLM-LDG-001 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a passing unit test citing it                                        | one satisfied                     |
+        | CLM-LDG-049 | @CLM-ONE-001                            | an integration Evidence Obligation            | a passing integration test citing it                                 | one satisfied                     |
+        | CLM-LDG-048 | @CLM-ONE-001                            | an e2e Evidence Obligation                    | a passing e2e test citing it                                         | one satisfied                     |
+        | CLM-LDG-050 | @CLM-ONE-001                            | a performance Evidence Obligation             | a passing performance test citing it                                 | one satisfied                     |
+        | CLM-LDG-025 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing fitness function citing it                                 | one satisfied                     |
+        | CLM-LDG-027 | @CLM-ONE-001                            | a unit Evidence Obligation                    | three passing unit tests citing it                                   | three satisfied                   |
+        | CLM-LDG-013 | @CLM-ONE-001                            | a unit and an e2e Evidence Obligation         | a passing unit test and a passing e2e test, each citing it           | two satisfied                     |
+        | CLM-LDG-002 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a failing unit test citing it                                        | one failing                       |
+        | CLM-LDG-047 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a passing and a failing unit test citing it                          | one satisfied and one failing     |
+        | CLM-LDG-051 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing and a failing fitness function citing it                   | one satisfied and one failing     |
+        | CLM-LDG-003 | @CLM-ONE-001                            | a unit Evidence Obligation                    | no unit test                                                         | one missing                       |
+        | CLM-LDG-004 | @CLM-ONE-001                            | a unit and an integration Evidence Obligation | a failing unit test citing it                                        | one failing and one missing       |
+        | CLM-LDG-052 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a unit test citing it that never reached its assertions              | one missing and one never-ran     |
+        | CLM-LDG-008 | @CLM-ONE-001                            | a unit Evidence Obligation                    | an e2e test citing it                                                | one missing and one not-asked-for |
+        | CLM-LDG-010 | @CLM-ONE-001                            | no Evidence Obligation                        | a unit test citing it                                                | one not-asked-for                 |
+        | CLM-LDG-009 | @CLM-ONE-001                            | no Evidence Obligation                        | no test citing it                                                    | one no-quality-check              |
+        | CLM-LDG-053 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing fitness function citing it, whose step cannot fail its job | one cannot-fail                   |
+        | CLM-LDG-021 | no code                                 | a unit Evidence Obligation                    | no test                                                              | one no-claim-code                 |
+        | CLM-LDG-054 | @CLM-ONE-001, shared with another claim | a unit Evidence Obligation                    | no test citing it                                                    | one duplicate-claim-code          |
+        | CLM-LDG-077 | @CLM-ONE-001, shared with another claim | no Evidence Obligation                        | no test citing it                                                    | one duplicate-claim-code          |
+        | CLM-LDG-006 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | a unit test citing it                                                | one cites-unknown-claim           |
+        | CLM-LDG-055 | @CLM-ONE-002, on a deferred scenario    | no Evidence Obligation                        | a unit test citing it                                                | one cites-unknown-claim           |
+        | CLM-LDG-056 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | two unit tests citing it                                             | two cites-unknown-claim           |
+        | CLM-LDG-007 | the unnamed claim                       | no Evidence Obligation                        | a unit test citing no code                                           | one cites-no-claim                |
+        | CLM-LDG-057 | the unnamed claim                       | no Evidence Obligation                        | a test file that never ran, citing no code                           | one never-ran                     |
+        | CLM-LDG-078 | no code                                 | no Evidence Obligation                        | no test                                                              | one no-claim-code                 |
+
+  Rule: a claim is balanced only when every Quality Check Reconciliation on it is satisfied
+
+    @unit
+    Scenario Outline: balance gives a claim its verdict from the outcomes of its Quality Check Reconciliations
+      given a claim's Quality Check Reconciliations had the outcomes <outcomes>
+      when balance reconciles it
+      then the Claim Reconciliation will be <verdict>
+
+      Examples:
+        | clm         | outcomes                      | verdict        |
+        | CLM-LDG-079 | two satisfied                 | balanced       |
+        | CLM-LDG-080 | one satisfied and one failing | out of balance |
 
     @unit @CLM-LDG-046
     Scenario: each executable claim sharing a claim code will have its own Claim Reconciliation, naming its feature file and title

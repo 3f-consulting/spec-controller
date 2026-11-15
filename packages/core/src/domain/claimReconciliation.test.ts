@@ -36,33 +36,34 @@ const observationOf = (read: ClaimRead, [kind, result]: ObservationRead): Eviden
   notes: [],
 });
 
-describe("each Quality Check Reconciliation's outcome will follow from its two sides, and the claim's verdict from those outcomes", () => {
-  it.each<[string, ClaimRead, readonly QualityCheckKind[], readonly ObservationRead[], string, readonly string[]]>([
-    ["CLM-LDG-001", "under its code", ["unit"], [["unit", "passed"]], "balanced", ["satisfied"]],
-    ["CLM-LDG-049", "under its code", ["integration"], [["integration", "passed"]], "balanced", ["satisfied"]],
-    ["CLM-LDG-048", "under its code", ["e2e"], [["e2e", "passed"]], "balanced", ["satisfied"]],
-    ["CLM-LDG-050", "under its code", ["performance"], [["performance", "passed"]], "balanced", ["satisfied"]],
-    ["CLM-LDG-025", "under its code", ["fitness"], [["fitness", "passed"]], "balanced", ["satisfied"]],
-    ["CLM-LDG-027", "under its code", ["unit"], [["unit", "passed"], ["unit", "passed"], ["unit", "passed"]], "balanced", ["satisfied", "satisfied", "satisfied"]],
-    ["CLM-LDG-013", "under its code", ["unit", "e2e"], [["unit", "passed"], ["e2e", "passed"]], "balanced", ["satisfied", "satisfied"]],
-    ["CLM-LDG-002", "under its code", ["unit"], [["unit", "failed"]], "out-of-balance", ["failing"]],
-    ["CLM-LDG-047", "under its code", ["unit"], [["unit", "passed"], ["unit", "failed"]], "out-of-balance", ["failing", "satisfied"]],
-    ["CLM-LDG-051", "under its code", ["fitness"], [["fitness", "passed"], ["fitness", "failed"]], "out-of-balance", ["failing", "satisfied"]],
-    ["CLM-LDG-003", "under its code", ["unit"], [], "out-of-balance", ["missing"]],
-    ["CLM-LDG-004", "under its code", ["unit", "integration"], [["unit", "failed"]], "out-of-balance", ["failing", "missing"]],
-    ["CLM-LDG-052", "under its code", ["unit"], [["unit", "never-ran"]], "out-of-balance", ["missing", "never-ran"]],
-    ["CLM-LDG-008", "under its code", ["unit"], [["e2e", "passed"]], "out-of-balance", ["missing", "not-asked-for"]],
-    ["CLM-LDG-010", "under its code", [], [["unit", "passed"]], "out-of-balance", ["not-asked-for"]],
-    ["CLM-LDG-009", "under its code", [], [], "out-of-balance", ["no-quality-check"]],
-    ["CLM-LDG-053", "under its code", ["fitness"], [["fitness", "passed-on-error"]], "out-of-balance", ["cannot-fail"]],
-    ["CLM-LDG-021", "with no code", ["unit"], [], "out-of-balance", ["no-claim-code"]],
-    ["CLM-LDG-054", "sharing its code", ["unit"], [], "out-of-balance", ["duplicate-claim-code"]],
-    ["CLM-LDG-077", "sharing its code", [], [], "out-of-balance", ["duplicate-claim-code"]],
-    ["CLM-LDG-006", "phantom", [], [["unit", "passed"]], "out-of-balance", ["cites-unknown-claim"]],
-    ["CLM-LDG-056", "phantom", [], [["unit", "passed"], ["unit", "passed"]], "out-of-balance", ["cites-unknown-claim", "cites-unknown-claim"]],
-    ["CLM-LDG-007", "unnamed", [], [["unit", "passed"]], "out-of-balance", ["cites-no-claim"]],
-    ["CLM-LDG-057", "unnamed", [], [["unit", "never-ran"]], "out-of-balance", ["never-ran"]],
-  ])("[%s] a claim %s, with its Evidence Obligations and Evidence Observations, has its verdict and outcomes", (_clm, read, kinds, observations, verdict, outcomes) => {
+describe("a Quality Check Reconciliation's outcome follows from the sides it has", () => {
+  it.each<[string, ClaimRead, readonly QualityCheckKind[], readonly ObservationRead[], readonly string[]]>([
+    ["CLM-LDG-001", "under its code", ["unit"], [["unit", "passed"]], ["satisfied"]],
+    ["CLM-LDG-049", "under its code", ["integration"], [["integration", "passed"]], ["satisfied"]],
+    ["CLM-LDG-048", "under its code", ["e2e"], [["e2e", "passed"]], ["satisfied"]],
+    ["CLM-LDG-050", "under its code", ["performance"], [["performance", "passed"]], ["satisfied"]],
+    ["CLM-LDG-025", "under its code", ["fitness"], [["fitness", "passed"]], ["satisfied"]],
+    ["CLM-LDG-027", "under its code", ["unit"], [["unit", "passed"], ["unit", "passed"], ["unit", "passed"]], ["satisfied", "satisfied", "satisfied"]],
+    ["CLM-LDG-013", "under its code", ["unit", "e2e"], [["unit", "passed"], ["e2e", "passed"]], ["satisfied", "satisfied"]],
+    ["CLM-LDG-002", "under its code", ["unit"], [["unit", "failed"]], ["failing"]],
+    ["CLM-LDG-047", "under its code", ["unit"], [["unit", "passed"], ["unit", "failed"]], ["failing", "satisfied"]],
+    ["CLM-LDG-051", "under its code", ["fitness"], [["fitness", "passed"], ["fitness", "failed"]], ["failing", "satisfied"]],
+    ["CLM-LDG-003", "under its code", ["unit"], [], ["missing"]],
+    ["CLM-LDG-004", "under its code", ["unit", "integration"], [["unit", "failed"]], ["failing", "missing"]],
+    ["CLM-LDG-052", "under its code", ["unit"], [["unit", "never-ran"]], ["missing", "never-ran"]],
+    ["CLM-LDG-008", "under its code", ["unit"], [["e2e", "passed"]], ["missing", "not-asked-for"]],
+    ["CLM-LDG-010", "under its code", [], [["unit", "passed"]], ["not-asked-for"]],
+    ["CLM-LDG-009", "under its code", [], [], ["no-quality-check"]],
+    ["CLM-LDG-053", "under its code", ["fitness"], [["fitness", "passed-on-error"]], ["cannot-fail"]],
+    ["CLM-LDG-021", "with no code", ["unit"], [], ["no-claim-code"]],
+    ["CLM-LDG-054", "sharing its code", ["unit"], [], ["duplicate-claim-code"]],
+    ["CLM-LDG-077", "sharing its code", [], [], ["duplicate-claim-code"]],
+    ["CLM-LDG-006", "phantom", [], [["unit", "passed"]], ["cites-unknown-claim"]],
+    ["CLM-LDG-056", "phantom", [], [["unit", "passed"], ["unit", "passed"]], ["cites-unknown-claim", "cites-unknown-claim"]],
+    ["CLM-LDG-007", "unnamed", [], [["unit", "passed"]], ["cites-no-claim"]],
+    ["CLM-LDG-057", "unnamed", [], [["unit", "never-ran"]], ["never-ran"]],
+    ["CLM-LDG-078", "with no code", [], [], ["no-claim-code"]],
+  ])("[%s] balance gives each Quality Check Reconciliation on a claim %s its outcome from its two sides", (_clm, read, kinds, observations, outcomes) => {
     const filed = observations.map((observation) => observationOf(read, observation));
     const claim = claimOf(read, kinds);
     // A claim sharing its code is reconciled beside the other claim that has it.
@@ -71,10 +72,18 @@ describe("each Quality Check Reconciliation's outcome will follow from its two s
         ? claimReconciliationsOf([claim as ExecutableClaim, { ...(claim as ExecutableClaim), title: "another scenario" }], filed)[0]!
         : reconciledAlone(claim, filed);
 
-    expect({ verdict: reconciliation.verdict, outcomes: reconciliation.qualityCheckReconciliations.map(({ outcome }) => outcome).sort() }).toEqual({
-      verdict,
-      outcomes,
-    });
+    expect(reconciliation.qualityCheckReconciliations.map(({ outcome }) => outcome).sort()).toEqual(outcomes);
+  });
+});
+
+describe("a claim is balanced only when every Quality Check Reconciliation on it is satisfied", () => {
+  it.each<[string, string, readonly QualityCheckKind[], readonly ObservationRead[], string]>([
+    ["CLM-LDG-079", "two satisfied", ["unit", "e2e"], [["unit", "passed"], ["e2e", "passed"]], "balanced"],
+    ["CLM-LDG-080", "one satisfied and one failing", ["unit"], [["unit", "passed"], ["unit", "failed"]], "out-of-balance"],
+  ])("[%s] balance gives a claim whose Quality Check Reconciliations have the outcomes %s its verdict", (_clm, _outcomes, kinds, observations, verdict) => {
+    const reconciliation = reconciledAlone(claimOf("under its code", kinds), observations.map((observation) => observationOf("under its code", observation)));
+
+    expect(reconciliation.verdict).toBe(verdict);
   });
 });
 

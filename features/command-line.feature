@@ -87,18 +87,19 @@ Feature: the command line reads what you give it, and says where each kind of ou
       and it will complain about it, with <facts>
 
       Examples:
-        | clm         | given                                         | facts                                   |
-        | CLM-CLI-125 | a command the tool does not have              | the command it does not know            |
-        | CLM-CLI-126 | a flag the command does not take              | the flag                                |
-        | CLM-CLI-127 | a flag that takes a value, given none         | the flag, as missing its value          |
-        | CLM-CLI-128 | a value given to a flag that takes none       | the flag and the value                  |
-        | CLM-CLI-129 | an argument that is no flag and no value      | the argument                            |
-        | CLM-CLI-130 | a flag that does not repeat, given twice      | the flag                                |
-        | CLM-CLI-131 | a flag and its value joined by an equals sign | the form, and the spelling that is read |
-        | CLM-CLI-132 | a flag before the command                     | the flag, as going after the command    |
-        | CLM-CLI-133 | a report format the tool does not have        | the format, and the formats it has      |
-        | CLM-CLI-134 | no feature code given to allocate             | that it needs a feature code            |
-        | CLM-CLI-135 | two feature codes given to allocate           | the argument past what it takes         |
+        | clm         | given                                                  | facts                                   |
+        | CLM-CLI-125 | a command the tool does not have                       | the command it does not know            |
+        | CLM-CLI-126 | a flag the command does not take                       | the flag                                |
+        | CLM-CLI-127 | a flag that takes a value, given none                  | the flag, as missing its value          |
+        | CLM-CLI-128 | a value given to a flag that takes none                | the flag and the value                  |
+        | CLM-CLI-129 | an argument that is no flag and no value               | the argument                            |
+        | CLM-CLI-130 | a flag that does not repeat, given twice               | the flag                                |
+        | CLM-CLI-131 | a flag and its value joined by an equals sign          | the form, and the spelling that is read |
+        | CLM-CLI-132 | a flag before the command                              | the flag, as going after the command    |
+        | CLM-CLI-133 | a report format the tool does not have                 | the format, and the formats it has      |
+        | CLM-CLI-134 | no feature code given to allocate                      | that it needs a feature code            |
+        | CLM-CLI-135 | two feature codes given to allocate                    | the argument past what it takes         |
+        | CLM-CLI-208 | something given to allocate that is not a feature code | the argument, as not a feature code     |
 
     @unit
     Scenario Outline: a refusal points to the help that lists what was allowed
@@ -190,14 +191,19 @@ Feature: the command line reads what you give it, and says where each kind of ou
     @unit @CLM-CLI-197
     Scenario: balance reads the feature corpus in path order
       given the feature corpus had b.feature and a/x.feature
-      when balance writes its report
-      then the report will list the claims of a/x.feature before those of b.feature
-
-    @unit @CLM-CLI-193
-    Scenario: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
-      given the run named the workflow ci.yml as its CI workflows, and then a folder with ci.yml and release.yaml in it
       when balance reads its inputs
-      then it will read ci.yml alone, and then both workflows
+      then it will read a/x.feature before b.feature
+
+    @unit
+    Scenario Outline: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
+      given the run named <CI workflows> as its CI workflows
+      when balance reads its inputs
+      then it will read <read>
+
+      Examples:
+        | clm         | CI workflows                                | read           |
+        | CLM-CLI-193 | the workflow ci.yml                         | ci.yml alone   |
+        | CLM-CLI-207 | a folder with ci.yml and release.yaml in it | both workflows |
 
     @unit @CLM-CLI-195
     Scenario: balance counts the steps of the CI workflows it reads

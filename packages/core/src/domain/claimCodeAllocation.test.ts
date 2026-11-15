@@ -257,17 +257,6 @@ describe("allocate gives a code only under a feature code a feature file has, un
     });
   });
 
-  it("[CLM-STG-084] a request that is not a feature code stops as a usage error, and gives no code", () => {
-    const repository = repositoryForTest();
-    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
-    repository.commit("first");
-
-    expect(allocate({ featureCode: "one", asNewFeatureCode: false }, repository.top)).toEqual({
-      stop: "usage-error",
-      refusal: { key: "not-a-feature-code", values: { given: "one" } },
-    });
-  });
-
   it.each([
     ["CLM-STG-080", "ZZ", "CLM-ZZ-001", []],
     ["CLM-STG-081", "ONE", "CLM-ONE-004", [{ note: "feature-code-on-a-file", featureCode: "ONE" }]],
