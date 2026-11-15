@@ -202,8 +202,8 @@ describe("balance reads a result as passed or failed, citing the code it names",
   it.each<[string, "vitest" | "jest", string, string]>([
     ["CLM-OBS-017", "vitest", "passed", "passed"],
     ["CLM-OBS-018", "vitest", "failed", "failed"],
-    ["CLM-OBS-019", "jest", "passed", "passed"],
-    ["CLM-OBS-020", "jest", "failed", "failed"],
+    ["CLM-OBS-017", "jest", "passed", "passed"],
+    ["CLM-OBS-018", "jest", "failed", "failed"],
   ])("[%s] a result in %s's evidence report, CLM-ONE-001 in brackets in its title, that %s, is read as %s, citing CLM-ONE-001", (_clm, from, status, result) => {
     const posted = postedByFile(reportFrom(from)("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status }], status));
 
@@ -327,7 +327,7 @@ describe("balance reads a result as passed or failed, citing the code it names, 
 describe("balance posts nothing for a test that was skipped", () => {
   it.each<[string, "vitest" | "jest", readonly string[]]>([
     ["CLM-OBS-036", "vitest", ["skipped", "todo"]],
-    ["CLM-OBS-037", "jest", ["pending", "todo"]],
+    ["CLM-OBS-036", "jest", ["pending", "todo"]],
   ])("[%s] a test in %s's evidence report citing CLM-ONE-001, skipped or marked todo, posts nothing", (_clm, from, statuses) => {
     const tests = statuses.map((status) => ({ title: "[CLM-ONE-001] it holds", status }));
 
@@ -437,8 +437,8 @@ describe("balance posts a nested test citing its own code, or its parent's code 
     ["CLM-OBS-065", "vitest", "CLM-ONE-001 in brackets in its title", "[CLM-ONE-001] it holds", [ONE_001]],
     ["CLM-OBS-066", "vitest", "no claim code", "it holds", [ONE_002]],
     ["CLM-OBS-067", "vitest", "CLM-ONE-001 in its title, with no brackets", "CLM-ONE-001 it holds", [ONE_002]],
-    ["CLM-OBS-068", "jest", "CLM-ONE-001 in brackets in its title", "[CLM-ONE-001] it holds", [ONE_001]],
-    ["CLM-OBS-069", "jest", "no claim code", "it holds", [ONE_002]],
+    ["CLM-OBS-065", "jest", "CLM-ONE-001 in brackets in its title", "[CLM-ONE-001] it holds", [ONE_001]],
+    ["CLM-OBS-066", "jest", "no claim code", "it holds", [ONE_002]],
   ])("[%s] a passing test in %s's evidence report with %s, nested in a describe with CLM-ONE-002 in brackets in its title, is posted citing its nearest code", (_clm, from, _titled, title, cites) => {
     const posted = postedByFile(reportFrom(from)("/work/one.test.ts", [{ ancestorTitles: ["[CLM-ONE-002] a group"], title, status: "passed" }]));
 
@@ -549,7 +549,7 @@ const filed = (reconciliations: readonly ClaimReconciliation[]): { claim: string
 
 // A passing quality check in the source named, with the citation as that source writes it.
 function postedFrom(source: string, citation: string): EvidenceObservation[] {
-  if (source === "vitest" || source === "jest") return postedByFile(reportByFile("/work/one.test.ts", [{ title: `${citation} it holds`, status: "passed" }]));
+  if (source === "vitest" || source === "jest") return postedByFile(reportFrom(source)("/work/one.test.ts", [{ title: `${citation} it holds`, status: "passed" }]));
   if (source === "pytest") {
     const properties = citation.split(" ").map((value) => `<property name="clm" value="${value}" />`).join("");
     return postedBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", `<properties>${properties}</properties>`));
