@@ -27,15 +27,17 @@ export type RunRequest =
     }
   | { readonly command: "allocate"; readonly featureCode: string; readonly asNewFeatureCode: boolean };
 
+// about: the command whose help follows the complaint; with none, the commands.
 export interface UsageError {
   readonly refusals: readonly Refusal[];
+  readonly about?: Command;
 }
 
 const TOP_HELP = "spec-controller --help";
 
 const helpFor = (command: Command): string => `spec-controller ${command} --help`;
 
-const refused = (key: string, values: Readonly<Record<string, string>>): UsageError => ({ refusals: [{ key, values }] });
+const refused = (key: string, values: Readonly<Record<string, string>>, about?: Command): UsageError => ({ refusals: [{ key, values }], ...(about && { about }) });
 
 // Each value-taking flag's values in the order given, each other flag given, and the arguments that are no flag's.
 interface FlagsRead {
@@ -49,9 +51,9 @@ function positionalRefusal(command: Command, flags: readonly Flag[], before: Tok
   const help = helpFor(command);
   if (command === "allocate" && positionals === 0) return undefined;
   if (before?.kind === "option" && flags.some(({ name, value }) => name === before.name && value === undefined)) {
-    return refused("unwanted-value", { flag: before.rawName, value: argument, help });
+    return refused("unwanted-value", { flag: before.rawName, value: argument, help }, command);
   }
-  return command === "allocate" ? refused("extra-argument", { argument, help }) : refused("stray-argument", { argument, help });
+  return command === "allocate" ? refused("extra-argument", { argument, help }, command) : refused("stray-argument", { argument, help }, command);
 }
 
 const tokensOf = (flags: readonly Flag[], args: readonly string[]) =>
@@ -70,10 +72,10 @@ type Token = ReturnType<typeof tokensOf>[number];
 // A flag's own fault, if it has one: joined to its value, missing it, or given again when it does not repeat.
 function flagRefusal(command: Command, flag: Flag, token: Extract<Token, { kind: "option" }>, given: boolean): UsageError | undefined {
   const help = helpFor(command);
-  if (token.inlineValue === true) return refused("equals-form", { given: `${token.rawName}=${String(token.value)}`, spelling: `${token.rawName} ${String(token.value)}`, help });
+  if (token.inlineValue === true) return refused("equals-form", { given: `${token.rawName}=${String(token.value)}`, spelling: `${token.rawName} ${String(token.value)}`, help }, command);
   // The next argument is another flag, not this one's value.
-  if (flag.value !== undefined && (token.value === undefined || token.value.startsWith("-"))) return refused("missing-value", { flag: token.rawName, help });
-  if (given && flag.repeats !== true) return refused("repeated-flag", { flag: token.rawName, help });
+  if (flag.value !== undefined && (token.value === undefined || token.value.startsWith("-"))) return refused("missing-value", { flag: token.rawName, help }, command);
+  if (given && flag.repeats !== true) return refused("repeated-flag", { flag: token.rawName, help }, command);
   return undefined;
 }
 
@@ -86,7 +88,7 @@ function flagsRead(command: Command, args: readonly string[]): FlagsRead | Usage
   const tokens = tokensOf(flags, args);
   for (const [at, token] of tokens.entries()) {
     // -- is no flag any command takes.
-    if (token.kind === "option-terminator") return refused("unknown-flag", { command, flag: "--", help: helpFor(command) });
+    if (token.kind === "option-terminator") return refused("unknown-flag", { command, flag: "--", help: helpFor(command) }, command);
     if (token.kind === "positional") {
       const refusal = positionalRefusal(command, flags, tokens[at - 1], token.value, positionals.length);
       if (refusal !== undefined) return refusal;
@@ -94,7 +96,7 @@ function flagsRead(command: Command, args: readonly string[]): FlagsRead | Usage
       continue;
     }
     const flag = flags.find(({ name }) => name === token.name);
-    if (flag === undefined) return refused("unknown-flag", { command, flag: token.rawName, help: helpFor(command) });
+    if (flag === undefined) return refused("unknown-flag", { command, flag: token.rawName, help: helpFor(command) }, command);
     const refusal = flagRefusal(command, flag, token, values.has(flag.name) || on.has(flag.name));
     if (refusal !== undefined) return refusal;
     if (token.value === undefined) on.add(flag.name);
@@ -113,7 +115,7 @@ function outputsOf(formats: readonly string[]): OutputRequest<ReportFormat>[] | 
   for (const value of formats) {
     const colon = value.indexOf(":");
     const format = colon === -1 ? value : value.slice(0, colon);
-    if (!REPORT_FORMATS.includes(format)) return refused("unknown-format", { format, formats: REPORT_FORMATS.join(", "), help: helpFor("balance") });
+    if (!REPORT_FORMATS.includes(format)) return refused("unknown-format", { format, formats: REPORT_FORMATS.join(", "), help: helpFor("balance") }, "balance");
     outputs.push({ format: format as ReportFormat, destination: colon === -1 ? { to: "standard-output" } : { to: "file", path: value.slice(colon + 1) } });
   }
   return outputs.length === 0 ? [DEFAULT_OUTPUT] : outputs;
@@ -144,18 +146,21 @@ function balanceRequested(read: FlagsRead): RunRequest | UsageError {
 
 function allocateRequested({ on, positionals }: FlagsRead): RunRequest | UsageError {
   const [featureCode] = positionals;
-  if (featureCode === undefined) return refused("no-feature-code", { help: helpFor("allocate") });
+  if (featureCode === undefined) return refused("no-feature-code", { help: helpFor("allocate") }, "allocate");
   return { command: "allocate", featureCode, asNewFeatureCode: on.has("new") };
 }
 
-// Help answers first, unless it follows a command the tool does not have.
+// Help answers only once the whole command line is read; a usage error anywhere in it wins.
 export function runRequestOf(args: readonly string[]): RunRequest | UsageError {
   const [command, ...rest] = args;
   if (command === undefined || command === "help") return { command: "help" };
-  if (command.startsWith("-")) return args.some(isHelp) ? { command: "help" } : refused("flag-before-command", { flag: command, help: TOP_HELP });
+  if (command.startsWith("-")) return isHelp(command) && rest.length === 0 ? { command: "help" } : refused("flag-before-command", { flag: command, help: TOP_HELP });
   if (!isCommand(command)) return refused("unknown-command", { command, help: TOP_HELP });
-  if (rest.some(isHelp)) return { command: "help", about: command };
   const read = flagsRead(command, rest);
   if ("refusals" in read) return read;
+  if (read.on.has("help")) {
+    const checked = command === "balance" ? balanceRequested(read) : read;
+    return "refusals" in checked ? checked : { command: "help", about: command };
+  }
   return command === "balance" ? balanceRequested(read) : allocateRequested(read);
 }

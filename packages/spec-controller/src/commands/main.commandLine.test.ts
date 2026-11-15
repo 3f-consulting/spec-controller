@@ -1,8 +1,9 @@
-import { chmodSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { textFor } from "@3f-consulting/spec-controller-core";
 import { describe, expect, it } from "vitest";
 import catalogue from "../messages/messages.en.json" with { type: "json" };
+import { helpText } from "../runRequest/help.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import { main } from "./main.js";
 
@@ -96,30 +97,6 @@ describe("a command's help gives each flag it takes beside what the flag does", 
   });
 });
 
-describe("help will answer, and nothing will run", () => {
-  it.each([
-    ["CLM-CLI-112", "a request for help beside an argument that fails validation", ["balance", "--features", "absent", "--bogus", "--help"], "--features <dir>"],
-    ["CLM-CLI-113", "allocate's help beside a flag allocate does not take", ["allocate", "ABC", "--vitest", "--help"], "--new"],
-  ] as const)("[%s] %s: help answers, it exits 0, and nothing runs or is written", (_clm, _given, args, aFlagListed) => {
-    const folder = temporaryDirectory("help-first-");
-
-    const { exitCode, output, error } = ran(args, folder);
-
-    expect({ exitCode, helped: flagsListed(output).includes(aFlagListed), error, written: readdirSync(folder) }).toEqual({
-      exitCode: 0,
-      helped: true,
-      error: "",
-      written: [],
-    });
-  });
-
-  it("[CLM-CLI-114] help after a command the tool does not have will not answer: it exits 2", () => {
-    const { exitCode, output, error } = ran(["frobnicate", "--help"]);
-
-    expect({ exitCode, output, unknownCommand: error.includes("[unknown-command]") }).toEqual({ exitCode: 2, output: "", unknownCommand: true });
-  });
-});
-
 describe("an argument the tool does not accept will stop the run", () => {
   it.each([
     ["CLM-CLI-125", "a command the tool does not have", ["frobnicate"], ["frobnicate", "[unknown-command]"]],
@@ -141,12 +118,17 @@ describe("an argument the tool does not accept will stop the run", () => {
   });
 });
 
-describe("a refusal points to the help that lists what was allowed", () => {
+describe("a usage error shows the help for what was asked for", () => {
   it.each([
-    ["CLM-CLI-187", "a flag balance does not take", ["balance", "--bogus"], "spec-controller balance --help"],
-    ["CLM-CLI-188", "a flag before the command", ["--features", "specs", "balance"], "spec-controller --help"],
-  ] as const)("[%s] %s: the complaint ends by pointing to its help", (_clm, _given, args, help) => {
-    expect(ran(args).error.trimEnd().endsWith(help)).toBe(true);
+    ["CLM-CLI-187", "a flag balance does not take", "balance's help", ["balance", "--bogus"], "balance"],
+    ["CLM-CLI-188", "a flag before the command", "the commands", ["--features", "specs", "balance"], undefined],
+    ["CLM-CLI-114", "a command the tool does not have, and a request for help after it", "the commands", ["frobnicate", "--help"], undefined],
+    ["CLM-CLI-112", "a request for balance's help beside an argument that fails validation", "balance's help", ["balance", "--features", "absent", "--bogus", "--help"], "balance"],
+    ["CLM-CLI-113", "allocate's help beside a flag allocate does not take", "allocate's help", ["allocate", "ABC", "--vitest", "--help"], "allocate"],
+  ] as const)("[%s] %s: the run stops, no verdict, exit 2, and the complaint is followed by %s", (_clm, _given, _help, args, about) => {
+    const { exitCode, output, error } = ran(args);
+
+    expect({ exitCode, output, followedByHelp: error.endsWith(helpText(about)) }).toEqual({ exitCode: 2, output: "", followedByHelp: true });
   });
 });
 

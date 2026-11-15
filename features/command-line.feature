@@ -3,10 +3,9 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
   spec-controller runs a command, balance or allocate. A command's flags go after it.
 
-  Help answers first. It lists the commands, or one command's flags. It runs nothing and writes
-  nothing. Running spec-controller with nothing after it also shows help. There is one exception:
-  help after a command the tool does not have does not answer. The run ends with a usage error, as
-  it does for any command the tool does not have.
+  Help lists the commands, or one command's flags. It runs nothing and writes nothing. Running
+  spec-controller with nothing after it also shows help. A usage error shows the help for what was
+  asked for, even beside a request for help, and exits 2.
 
   Every argument is read as what it is, or validation fails. Then the run stops with a usage error
   before anything runs. The error names the argument and says what is wrong with it.
@@ -44,25 +43,22 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when its help is shown
       then each flag will be on a line of its own, followed by its description
 
-  Rule: help comes before anything else on the command line, unless it follows a command the tool does not have
+  Rule: a usage error shows the help for what was asked for
 
     @unit
-    Scenario Outline: help will answer, and nothing will run
-      given a command line had <help> <beside>
+    Scenario Outline: a usage error will be followed by the help for what was asked for
+      given a command line had <given>
       when it is read
-      then help will answer, and it will exit 0
-      and nothing will have run or been written
+      then the run will stop, give no verdict and exit 2
+      and the complaint will be followed by <help>
 
       Examples:
-        | clm         | help               | beside                                   |
-        | CLM-CLI-112 | a request for help | beside an argument that fails validation |
-        | CLM-CLI-113 | allocate's help    | beside a flag allocate does not take     |
-
-    @unit @CLM-CLI-114
-    Scenario: help after a command the tool does not have will not answer
-      given a command line had a command the tool does not have, and a request for help after it
-      when it is read
-      then it will exit 2, as for a command the tool does not have
+        | clm         | given                                                                 | help            |
+        | CLM-CLI-187 | a flag balance does not take                                          | balance's help  |
+        | CLM-CLI-188 | a flag before the command                                             | the commands    |
+        | CLM-CLI-114 | a command the tool does not have, and a request for help after it     | the commands    |
+        | CLM-CLI-112 | a request for balance's help beside an argument that fails validation | balance's help  |
+        | CLM-CLI-113 | allocate's help beside a flag allocate does not take                  | allocate's help |
 
   Rule: a command accepts only the arguments it takes
 
@@ -101,17 +97,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-135 | two feature codes given to allocate                    | the argument past what it takes         |
         | CLM-CLI-208 | something given to allocate that is not a feature code | the argument, as not a feature code     |
 
-    @unit
-    Scenario Outline: a refusal points to the help that lists what was allowed
-      given a command line had <given>
-      when it is read
-      then the complaint will end by pointing to <help>
-
-      Examples:
-        | clm         | given                        | help                           |
-        | CLM-CLI-187 | a flag balance does not take | spec-controller balance --help |
-        | CLM-CLI-188 | a flag before the command    | spec-controller --help         |
-
   Rule: an input left out takes its default
 
     @unit
@@ -140,17 +125,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-142 | no feature corpus        | run from /work/acme               | /work/acme |
         | CLM-CLI-184 | /work/acme/docs/features | in a git repository at /work/acme | /work/acme |
         | CLM-CLI-144 | /tmp/x/features          | in no git repository              | /tmp/x     |
-
-    @unit @e2e
-    Scenario Outline: a default that cannot be read will stop the run
-      Given the run met <error>
-      When balance reads its inputs
-      Then the run will stop, give no verdict and exit 2
-      And it will complain about it, with <facts>
-
-      Examples:
-        | clm         | error                                                                                | facts                                         |
-        | CLM-CLI-145 | the corpus read by default that sits under a working directory that has been removed | the corpus read by default, and what is wrong |
 
     @unit @CLM-CLI-183
     Scenario: a workflows folder read by default that does not exist will count as no workflows, not as a missing input
