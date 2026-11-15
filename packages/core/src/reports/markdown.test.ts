@@ -25,21 +25,21 @@ describe("each run verdict, and each reason a run is not reconciled, has an open
     ],
     [
       "CLM-RPT-117",
-      "not reconciled, as unsound",
+      "not reconciled, because unsound",
       { verdict: "not-reconciled", why: "unsound" },
       "verdict-unsound",
       "Some evidence never ran, so the run cannot be relied on and is not reconciled: Run integrity names it.",
     ],
     [
       "CLM-RPT-118",
-      "not reconciled, for claim code errors",
+      "not reconciled, because of claim code errors",
       { verdict: "not-reconciled", why: "claim-code-errors" },
       "verdict-claim-code-errors",
       "Some claim codes are written where they do not belong, so the run is not reconciled: Errors in the inputs names them.",
     ],
     [
       "CLM-RPT-119",
-      "not reconciled, with nothing to reconcile",
+      "not reconciled, because there was nothing to reconcile",
       { verdict: "not-reconciled", why: "nothing-to-reconcile" },
       "verdict-nothing-to-reconcile",
       "No claim and no evidence were read, so there was nothing to reconcile and the run is not reconciled.",
@@ -54,7 +54,7 @@ describe("each run verdict, and each reason a run is not reconciled, has an open
   });
 });
 
-describe("an input the run did not read has no line, and one it read by default has one", () => {
+describe("the provenance has a line for each input the run read, by default or not", () => {
   it.each([
     [
       "CLM-RPT-114",
@@ -110,10 +110,10 @@ describe("the step account shows each job's counts, and the Total row their sums
   });
 });
 
-describe("the provenance shows the tool's commit only when there is one", () => {
+describe("the provenance shows the tool SHA only when there is one", () => {
   it.each([
-    ["CLM-RPT-167", "the tool commit 9f8e7d6", { toolSha: "9f8e7d6" }, ["9f8e7d6"]],
-    ["CLM-RPT-168", "no tool commit", {}, []],
+    ["CLM-RPT-167", "the tool SHA 9f8e7d6", { toolSha: "9f8e7d6" }, ["9f8e7d6"]],
+    ["CLM-RPT-168", "no tool SHA", {}, []],
   ] as const)("[%s] a run whose provenance had %s shows it in the provenance, or no line for it", (_clm, _commit, toolCommit, shown) => {
     const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, ...toolCommit } }));
     const label = `- ${coreText("provenance-tool-sha")}: `;

@@ -102,7 +102,7 @@ describe("neither report will have an optional section the run had nothing for",
   it.each([
     ["CLM-RPT-077", "errors in the inputs", "Errors in the inputs", "errorsInTheInputs"],
     ["CLM-RPT-021", "run integrity", "Run integrity", "runIntegrity"],
-    ["CLM-RPT-052", "step accounting", "Step account", "stepAccount"],
+    ["CLM-RPT-052", "step account", "Step account", "stepAccount"],
     ["CLM-RPT-006", "out of balance by feature", "Out of balance by feature", "outOfBalanceByFeature"],
   ] as const)("[%s] a run with no %s has that section in neither report", (_clm, _section, heading, part) => {
     const run = reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]] });

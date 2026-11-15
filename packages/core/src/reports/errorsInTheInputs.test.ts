@@ -8,7 +8,7 @@ function errorsListed(...[sources, configurationErrors]: Parameters<typeof recon
   return markdown.slice(markdown.indexOf("## Errors in the inputs")).split("\n\n## ")[0]!.split("\n").filter((line) => line.startsWith("- "));
 }
 
-describe("an error in the inputs is listed under its kind with the files, codes or setting it involves", () => {
+describe("Errors in the inputs lists each error under its kind, with the files, codes or setting it involves", () => {
   it.each([
     [
       "CLM-RPT-147",
