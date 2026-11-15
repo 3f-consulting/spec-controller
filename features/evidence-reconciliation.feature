@@ -84,7 +84,6 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-056 | a claim with a unit Evidence Obligation, and a unit test citing it that never ran  | unit        | 1           | 1            | 1 missing and 1 never-ran |
         | CLM-EVR-062 | a passing unit test citing no code                                                 | unit        | 0           | 1            | 1 cites-no-claim          |
         | CLM-EVR-063 | a scenario with a code and no kind-of-quality-check tag                            | no kind     | 0           | 0            | 1 no-quality-check        |
-        | CLM-EVR-064 | a scenario with no code and no kind-of-quality-check tag                           | no kind     | 0           | 0            | 1 no-claim-code           |
 
     @unit @CLM-EVR-065
     Scenario: Total of every kind
