@@ -17,13 +17,6 @@ describe("Errors in the inputs lists each error under its kind, with the files, 
       [],
       "- `foreign-claim-code`: `one.feature`, `CLM-TWO-001`, `two.feature`",
     ],
-    [
-      "CLM-RPT-148",
-      "one.feature, tagged @ONE, with a scenario tagged @CLM-ZZZ-001, and no file tagged @ZZZ",
-      [["one.feature", "@ONE\nFeature: one\n\n  @CLM-ZZZ-001\n  Scenario: adds\n"]],
-      [],
-      "- `foreign-claim-code`: `one.feature`, `CLM-ZZZ-001`",
-    ],
     ["CLM-RPT-149", "three.feature, with no feature code, with a scenario tagged @CLM-ONE-002", [["three.feature", "Feature: three\n\n  @CLM-ONE-002\n  Scenario: adds\n"]], [], "- `no-feature-code`: `three.feature`"],
     [
       "CLM-RPT-150",

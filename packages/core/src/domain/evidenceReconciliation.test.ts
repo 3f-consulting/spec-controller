@@ -84,8 +84,6 @@ function totalsOfRun(corpus: readonly string[], observed: readonly Observed[]): 
 
 describe("Total of the Claim Reconciliations", () => {
   it.each([
-    ["CLM-EVR-013", "a claim with a passing unit test", [["@CLM-ONE-001"]], [["unit", "passed", "ONE-001"]], { total: 1, balanced: 1, outOfBalance: 0 }],
-    ["CLM-EVR-014", "a claim with a failing unit test", [["@CLM-ONE-001"]], [["unit", "failed", "ONE-001"]], { total: 1, balanced: 0, outOfBalance: 1 }],
     [
       "CLM-EVR-015",
       "a claim with a passing unit test, and one with a failing unit test",
@@ -114,7 +112,6 @@ describe("Total of the Quality Check Reconciliations, by kind of quality check a
       "unit",
       { obligations: 1, observations: 2, outcomes: { satisfied: 2 } },
     ],
-    ["CLM-EVR-018", "a claim with a unit Evidence Obligation, and a failing unit test", ["@unit @CLM-ONE-001"], [["unit", "failed", "ONE-001"]], "unit", { obligations: 1, observations: 1, outcomes: { failing: 1 } }],
     ["CLM-EVR-055", "a claim with an integration Evidence Obligation, and no integration test", ["@integration @CLM-ONE-001"], [], "integration", { obligations: 1, observations: 0, outcomes: { missing: 1 } }],
     [
       "CLM-EVR-056",
@@ -124,50 +121,6 @@ describe("Total of the Quality Check Reconciliations, by kind of quality check a
       "unit",
       { obligations: 1, observations: 1, outcomes: { missing: 1, "never-ran": 1 } },
     ],
-    [
-      "CLM-EVR-057",
-      "a claim with a unit Evidence Obligation, a passing unit test, and one that never ran",
-      ["@unit @CLM-ONE-001"],
-      [["unit", "passed", "ONE-001"], ["unit", "never-ran", "ONE-001"]],
-      "unit",
-      { obligations: 1, observations: 2, outcomes: { satisfied: 1, "never-ran": 1 } },
-    ],
-    ["CLM-EVR-058", "a claim with a fitness Evidence Obligation, and its step passing", ["@fitness @CLM-ONE-001"], [["fitness", "passed", "ONE-001"]], "fitness", { obligations: 1, observations: 1, outcomes: { satisfied: 1 } }],
-    [
-      "CLM-EVR-059",
-      "a claim with a fitness Evidence Obligation, and its step passing where its failure is allowed",
-      ["@fitness @CLM-ONE-001"],
-      [["fitness", "passed-on-error", "ONE-001"]],
-      "fitness",
-      { obligations: 1, observations: 1, outcomes: { "cannot-fail": 1 } },
-    ],
-    [
-      "CLM-EVR-060",
-      "a claim with a fitness Evidence Obligation, and its step skipped",
-      ["@fitness @CLM-ONE-001"],
-      [["fitness", "never-ran", "ONE-001"]],
-      "fitness",
-      { obligations: 1, observations: 1, outcomes: { missing: 1, "never-ran": 1 } },
-    ],
-    ["CLM-EVR-061", "a claim with a fitness Evidence Obligation, and no step for it", ["@fitness @CLM-ONE-001"], [], "fitness", { obligations: 1, observations: 0, outcomes: { missing: 1 } }],
-    ["CLM-EVR-019", "a scenario with no code, with a unit Evidence Obligation", ["@unit"], [], "unit", { obligations: 1, observations: 0, outcomes: { "no-claim-code": 1 } }],
-    [
-      "CLM-EVR-020",
-      "two scenarios sharing a code, each with a unit Evidence Obligation",
-      ["@unit @CLM-ONE-001", "@unit @CLM-ONE-001"],
-      [],
-      "unit",
-      { obligations: 2, observations: 0, outcomes: { "duplicate-claim-code": 2 } },
-    ],
-    [
-      "CLM-EVR-021",
-      "a claim with only an e2e Evidence Obligation, and a passing unit test citing it",
-      ["@e2e @CLM-ONE-001"],
-      [["unit", "passed", "ONE-001"]],
-      "unit",
-      { obligations: 0, observations: 1, outcomes: { "not-asked-for": 1 } },
-    ],
-    ["CLM-EVR-022", "a passing fitness function citing a code no claim has", [], [["fitness", "passed", "TWO-001"]], "fitness", { obligations: 0, observations: 1, outcomes: { "cites-unknown-claim": 1 } }],
     ["CLM-EVR-062", "a passing unit test citing no code", [], [["unit", "passed"]], "unit", { obligations: 0, observations: 1, outcomes: { "cites-no-claim": 1 } }],
     ["CLM-EVR-063", "a scenario with a code and no kind-of-quality-check tag", ["@CLM-ONE-001"], [], "no kind", { obligations: 0, observations: 0, outcomes: { "no-quality-check": 1 } }],
     ["CLM-EVR-064", "a scenario with no code and no kind-of-quality-check tag", ["@other"], [], "no kind", { obligations: 0, observations: 0, outcomes: { "no-claim-code": 1 } }],

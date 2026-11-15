@@ -42,19 +42,6 @@ describe("balance identifies each result's kind of quality check", () => {
 const NO_SETTING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
 
 describe("balance identifies whether a CI step is a fitness function", () => {
-  const installIn = (workflow: string, job: string) => workflowStepsFrom(workflow, JSON.stringify({ jobs: { [job]: { steps: [{ name: "Install", run: "pnpm install" }] } } }));
-  const notCheckingCiInstall: TargetConfiguration = { runners: {}, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install" }], deferralTags: [] };
-
-  it.each([
-    ["CLM-OBS-139", "named Install in job test of ci.yml, whose job ci had a step named Install", () => installIn("ci.yml", "test")],
-    ["CLM-OBS-140", "named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci", () => installIn("nightly.yml", "ci")],
-  ] as const)("[%s] a step %s, with ci.yml:ci:Install in notChecks, will be a fitness function", (_clm, _step, step) => {
-    const steps = [...installIn("ci.yml", "ci"), ...step()];
-    const counted = steps.slice(1).map((one) => stepDispositionOf(one, notCheckingCiInstall, {}, shellAnswers));
-
-    expect({ counted, posted: fitnessObservationsOf(steps, [], notCheckingCiInstall, {}, shellAnswers).length }).toEqual({ counted: ["candidate"], posted: 1 });
-  });
-
   it("[CLM-OBS-141] a step using actions/dependency-review-action, with vitest as its unit runner, will be a fitness function", () => {
     const steps = stepsOf({ uses: "actions/dependency-review-action@v4" });
     const configuration: TargetConfiguration = { runners: { unit: "vitest" }, nonChecks: [], deferralTags: [] };

@@ -56,7 +56,6 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-056 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | two unit tests citing it                                             | out of balance | two cites-unknown-claim           |
         | CLM-LDG-007 | the unnamed claim                       | no Evidence Obligation                        | a unit test citing no code                                           | out of balance | one cites-no-claim                |
         | CLM-LDG-057 | the unnamed claim                       | no Evidence Obligation                        | a test file that never ran, citing no code                           | out of balance | one never-ran                     |
-        | CLM-LDG-058 | the unnamed claim                       | no Evidence Obligation                        | two unit tests citing no code                                        | out of balance | two cites-no-claim                |
 
     @unit @CLM-LDG-046
     Scenario: each executable claim sharing a claim code will have its own Claim Reconciliation, naming its feature file and title

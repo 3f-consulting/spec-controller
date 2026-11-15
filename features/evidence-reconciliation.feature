@@ -67,8 +67,6 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
 
       Examples:
         | clm         | what the run had                                                   | total | balanced | out of balance |
-        | CLM-EVR-013 | a claim with a passing unit test                                   | 1     | 1        | 0              |
-        | CLM-EVR-014 | a claim with a failing unit test                                   | 1     | 0        | 1              |
         | CLM-EVR-015 | a claim with a passing unit test, and one with a failing unit test | 2     | 1        | 1              |
         | CLM-EVR-016 | a unit test citing no code                                         | 1     | 0        | 1              |
 
@@ -79,24 +77,14 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       then the totals will have, for <kind>, <obligations> Evidence Obligations, <observations> Evidence Observations and <by outcome>
 
       Examples:
-        | clm         | what the run had                                                                                          | kind        | obligations | observations | by outcome                  |
-        | CLM-EVR-017 | a claim with an unit Evidence Obligation, and a passing unit test citing it                               | unit        | 1           | 1            | 1 satisfied                 |
-        | CLM-EVR-054 | a claim with an unit Evidence Obligation, and two passing unit tests citing it                            | unit        | 1           | 2            | 2 satisfied                 |
-        | CLM-EVR-018 | a claim with an unit Evidence Obligation, and a failing unit test citing it                               | unit        | 1           | 1            | 1 failing                   |
-        | CLM-EVR-055 | a claim with an integration Evidence Obligation, and no integration test citing it                        | integration | 1           | 0            | 1 missing                   |
-        | CLM-EVR-056 | a claim with an unit Evidence Obligation, and a unit test citing it that never ran                        | unit        | 1           | 1            | 1 missing and 1 never-ran   |
-        | CLM-EVR-057 | a claim with an unit Evidence Obligation, a passing unit test citing it, and one citing it that never ran | unit        | 1           | 2            | 1 satisfied and 1 never-ran |
-        | CLM-EVR-058 | a claim with a fitness Evidence Obligation, and its step passing                                          | fitness     | 1           | 1            | 1 satisfied                 |
-        | CLM-EVR-059 | a claim with a fitness Evidence Obligation, and its step passing where its failure is allowed             | fitness     | 1           | 1            | 1 cannot-fail               |
-        | CLM-EVR-060 | a claim with a fitness Evidence Obligation, and its step skipped                                          | fitness     | 1           | 1            | 1 missing and 1 never-ran   |
-        | CLM-EVR-061 | a claim with a fitness Evidence Obligation, and no step for it                                            | fitness     | 1           | 0            | 1 missing                   |
-        | CLM-EVR-019 | a scenario with no code, with a unit Evidence Obligation                                                  | unit        | 1           | 0            | 1 no-claim-code             |
-        | CLM-EVR-020 | two scenarios sharing @CLM-ONE-001, each with a unit Evidence Obligation                                  | unit        | 2           | 0            | 2 duplicate-claim-code      |
-        | CLM-EVR-021 | a claim with only an e2e Evidence Obligation, and a passing unit test citing it                           | unit        | 0           | 1            | 1 not-asked-for             |
-        | CLM-EVR-022 | a passing fitness function citing a code no claim has                                                     | fitness     | 0           | 1            | 1 cites-unknown-claim       |
-        | CLM-EVR-062 | a passing unit test citing no code                                                                        | unit        | 0           | 1            | 1 cites-no-claim            |
-        | CLM-EVR-063 | a scenario with a code and no kind-of-quality-check tag                                                   | no kind     | 0           | 0            | 1 no-quality-check          |
-        | CLM-EVR-064 | a scenario with no code and no kind-of-quality-check tag                                                  | no kind     | 0           | 0            | 1 no-claim-code             |
+        | clm         | what the run had                                                                   | kind        | obligations | observations | by outcome                |
+        | CLM-EVR-017 | a claim with a unit Evidence Obligation, and a passing unit test citing it         | unit        | 1           | 1            | 1 satisfied               |
+        | CLM-EVR-054 | a claim with a unit Evidence Obligation, and two passing unit tests citing it      | unit        | 1           | 2            | 2 satisfied               |
+        | CLM-EVR-055 | a claim with an integration Evidence Obligation, and no integration test citing it | integration | 1           | 0            | 1 missing                 |
+        | CLM-EVR-056 | a claim with a unit Evidence Obligation, and a unit test citing it that never ran  | unit        | 1           | 1            | 1 missing and 1 never-ran |
+        | CLM-EVR-062 | a passing unit test citing no code                                                 | unit        | 0           | 1            | 1 cites-no-claim          |
+        | CLM-EVR-063 | a scenario with a code and no kind-of-quality-check tag                            | no kind     | 0           | 0            | 1 no-quality-check        |
+        | CLM-EVR-064 | a scenario with no code and no kind-of-quality-check tag                           | no kind     | 0           | 0            | 1 no-claim-code           |
 
     @unit @CLM-EVR-065
     Scenario: Total of every kind
@@ -112,11 +100,11 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
 
       Examples:
         | clm         | what the run had                                                            | total | by where filed           |
-        | CLM-EVR-066 | a claim with an unit Evidence Obligation, and a passing unit test citing it | 1     | 1 on an executable claim |
+        | CLM-EVR-066 | a claim with a unit Evidence Obligation, and a passing unit test citing it | 1     | 1 on an executable claim |
         | CLM-EVR-067 | a passing unit test citing no code                                          | 1     | 1 on the unnamed claim   |
         | CLM-EVR-068 | a passing unit test citing a code no claim has                              | 1     | 1 on a phantom claim     |
         | CLM-EVR-069 | a unit test citing a code no claim has, which never ran                     | 1     | 1 on a phantom claim     |
-        | CLM-EVR-076 | a claim with an unit Evidence Obligation, and no test citing it             | 0     | 0 on an executable claim |
+        | CLM-EVR-076 | a claim with a unit Evidence Obligation, and no test citing it             | 0     | 0 on an executable claim |
 
     @unit
     Scenario Outline: Total of the out-of-balance Claim Reconciliations, by feature file

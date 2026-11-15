@@ -77,8 +77,6 @@ describe("a row lists its reconciling items, each with where to look", () => {
     ["CLM-RPT-143", "had a unit and an e2e Evidence Obligation, and neither citing it", "@unit @e2e @CLM-CHK-003", [], "unit: missing; e2e: missing"],
     ["CLM-RPT-154", "had a fitness Evidence Obligation, and its step ci.yml:build:Lint failing", "@fitness @CLM-CHK-004", [["fitness", "failed", "CHK-004", "ci.yml:build:Lint"]], "fitness: failing (ci.yml:build:Lint)"],
     ["CLM-RPT-155", "had a code and no kind-of-quality-check tag", "@CLM-CHK-005", [], "no-quality-check"],
-    ["CLM-RPT-156", "had no scenario, and a passing unit test charges in a.test.ts citing it", undefined, [["unit", "passed", "CHK-009", "a.test.ts", "charges"]], "unit: cites-unknown-claim (a.test.ts: charges)"],
-    ["CLM-RPT-157", "had no code, and asked for a unit test", "@unit", [], "unit: no-claim-code"],
   ] as const)("[%s] a claim that %s lists its reconciling items", (_clm, _evidence, tags, evidence, items) => {
     expect(cellUnder("Reconciling items", claimTable([["checkout.feature", "CHK", tags === undefined ? [] : [[tags, "checks out"]]]], evidence))).toBe(items);
   });

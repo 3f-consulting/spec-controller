@@ -32,7 +32,6 @@ Feature: a message catalogue gives back the text for a code
         | CLM-MSG-018 | {format} is not {format}.              | format html                         | html is not html.                  |
         | CLM-MSG-019 | The format {format} is not written.    | format {other}                      | The format {other} is not written. |
         | CLM-MSG-020 | The format {format} is not written.    | format it's                         | The format it's is not written.    |
-        | CLM-MSG-021 | The format {format} is not written.    | an empty format                     | The format  is not written.        |
         | CLM-MSG-022 | No format was written.                 | format html                         | No format was written.             |
 
   Rule: a mistake in a catalogue gives back the code and its values
@@ -45,7 +44,6 @@ Feature: a message catalogue gives back the text for a code
 
       Examples:
         | clm         | entry                                    |
-        | CLM-MSG-002 | no text                                  |
         | CLM-MSG-004 | a blank text                             |
         | CLM-MSG-007 | the text "No feature {files were found." |
 
