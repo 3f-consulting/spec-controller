@@ -2,6 +2,7 @@ import { chmodSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, re
 import { join } from "node:path";
 import { evidenceReconciliationOf, stepAccountOf, textFor, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
+import { inputsReadFor } from "../inputs/inputsRead.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import { refusalText } from "../runEnding/refusal.js";
@@ -21,6 +22,9 @@ const reconciliation = (): EvidenceReconciliation => ({
   }),
   runVerdict: { verdict: "balanced" },
 });
+
+// A Vitest evidence report listing no tests, as an input the run reads.
+const VITEST_REPORT = '{"testResults":[]}';
 
 // A run asked for no --exit-zero.
 const AS_ASKED = { exitZero: false };
@@ -400,13 +404,15 @@ describe("the run writes a report to a file it does not read, even one on the sa
 
 describe("the run refuses to write a report over a file it reads", () => {
   it("[CLM-FMT-013] a report asked for at the file the run read stops the run with exit 2, naming the file, and the file is as it was", () => {
-    const results = join(temporaryDirectory("over-an-input-"), "results.json");
-    writeFileSync(results, "test results");
+    const folder = temporaryDirectory("over-an-input-");
+    const results = join(folder, "results.json");
+    writeFileSync(results, VITEST_REPORT);
+    const inputs = inputsReadFor([{ kind: "vitest", path: "results.json", byDefault: false }], folder);
     const { error, streams } = capturedStreams();
 
-    const ending = writeReports(outputsAskedFor(["--format", `md:${results}`]), [results], reconciliation(), streams, AS_ASKED);
+    const ending = writeReports(outputsAskedFor(["--format", `md:${results}`]), "filesRead" in inputs ? inputs.filesRead : [], reconciliation(), streams, AS_ASKED);
 
-    expect({ ending, complaint: error.join(""), file: readFileSync(results, "utf8") }).toEqual({ ending: 2, complaint: refused("output-overwrites-input", { file: results }), file: "test results" });
+    expect({ ending, complaint: error.join(""), file: readFileSync(results, "utf8") }).toEqual({ ending: 2, complaint: refused("output-overwrites-input", { file: results }), file: VITEST_REPORT });
   });
 });
 

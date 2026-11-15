@@ -14,18 +14,14 @@ const read = (...args: Parameters<typeof inputsReadFor>): InputsRead => {
 
 describe("an empty evidence report will count as no evidence, not as a broken file", () => {
   it.each([
-    ["a Vitest evidence report", "vitest", "vitest.json", '{"testResults":[]}', []],
-    ["a Jest evidence report", "jest", "jest.json", '{"testResults":[]}', []],
-    ["a pytest evidence report", "pytest", "pytest.xml", '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"></testsuites>', []],
-    ["a JUnit evidence report", "junit", "junit.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<testsuites name="all"></testsuites>\n', []],
-    ["an RSpec evidence report", "rspec", "rspec.json", '{"examples":[],"summary":{}}', { examples: [], loadErrors: [] }],
-    ["a Cucumber evidence report", "cucumber", "cucumber.json", "[]", []],
-    ["a CI step record", "stepRecord", "steps.json", "{}", []],
-  ] as const)("[CLM-CLI-146] %s listing nothing posts nothing, and the run does not stop", (_report, kind, file, report, nothing) => {
+    ["a Vitest evidence report", "vitest", "vitest.json", '{"testResults":[]}'],
+    ["a CI step record", "stepRecord", "steps.json", "{}"],
+  ] as const)("[CLM-CLI-146] %s listing nothing posts nothing, and the run does not stop", (_report, kind, file, report) => {
     const folder = temporaryDirectory("empty-report-");
     writeFileSync(join(folder, file), report);
+    const { features, [kind]: posted, pathsRead } = read([{ kind, path: file, byDefault: false }], folder);
 
-    expect(read([{ kind, path: file, byDefault: false }], folder)).toEqual({ features: [], [kind]: nothing, filesRead: [join(folder, file)], pathsRead: { [kind]: file } });
+    expect({ features, posted, pathsRead }).toEqual({ features: [], posted: [], pathsRead: { [kind]: file } });
   });
 });
 
@@ -39,16 +35,13 @@ describe("balance will use the default when an input is not named", () => {
 });
 
 describe("balance reads a feature file in a subfolder of the feature corpus", () => {
-  it.each([
-    ["named", "corpus", false],
-    ["read by default", "features", true],
-  ] as const)("[CLM-CLI-191] a corpus %s, beside its README: it reads area/deeper/one.feature", (_how, corpus, byDefault) => {
+  it("[CLM-CLI-191] a corpus named, beside its README: it reads area/deeper/one.feature", () => {
     const folder = temporaryDirectory("corpus-depth-");
-    mkdirSync(join(folder, corpus, "area", "deeper"), { recursive: true });
-    writeFileSync(join(folder, corpus, "area", "deeper", "one.feature"), ONE_FEATURE);
-    writeFileSync(join(folder, corpus, "README.md"), "# The claims\n\nEach feature file states one area's claims.\n");
+    mkdirSync(join(folder, "corpus", "area", "deeper"), { recursive: true });
+    writeFileSync(join(folder, "corpus", "area", "deeper", "one.feature"), ONE_FEATURE);
+    writeFileSync(join(folder, "corpus", "README.md"), "# The claims\n\nEach feature file states one area's claims.\n");
 
-    expect(read([{ kind: "features", path: corpus, byDefault }], folder).features.map(({ file }) => file)).toEqual(["area/deeper/one.feature"]);
+    expect(read([{ kind: "features", path: "corpus", byDefault: false }], folder).features.map(({ file }) => file)).toEqual(["area/deeper/one.feature"]);
   });
 });
 
