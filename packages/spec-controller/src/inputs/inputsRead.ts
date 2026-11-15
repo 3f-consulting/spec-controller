@@ -58,8 +58,8 @@ const failed = <Contents>(path: string, fault: InputFault, detail: string): Inpu
 
 const text = (code: string): string => textFor(appCatalogue, code);
 
-// What a reader said is wrong, on one line, so each complaint is one line.
-const saidOf = (error: unknown): string => (error instanceof Error ? error.message : String(error)).trim().replace(/\s*\n\s*/g, " ");
+// What a reader said is wrong, on one line, so each complaint is one line; every reader throws an Error.
+const saidOf = (error: unknown): string => (error as Error).message.trim().replace(/\s*\n\s*/g, " ");
 
 // A path that names nothing, or runs through a file, does not exist; any other failure to reach it is the tool's not to read it.
 const faultOf = (error: unknown): InputFault => (["ENOENT", "ENOTDIR"].includes(String((error as NodeJS.ErrnoException).code)) ? "absent" : "not-permitted");

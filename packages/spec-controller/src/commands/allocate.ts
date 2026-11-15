@@ -26,8 +26,8 @@ function featureCodesUnder(top: string): Read<string[]> {
   try {
     sources = featureSourcesUnder(join(top, FEATURES));
   } catch (error) {
-    const path = (error as NodeJS.ErrnoException).path ?? join(top, FEATURES);
-    return { refusal: { key: "unreadable-in-tree", values: { path: relative(top, path), said: (error as Error).message } } };
+    // A file system error names the path it could not read.
+    return { refusal: { key: "unreadable-in-tree", values: { path: relative(top, (error as NodeJS.ErrnoException).path!), said: (error as Error).message } } };
   }
   for (const { file, source } of sources) {
     try {
