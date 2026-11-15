@@ -214,6 +214,7 @@ describe("balance reads a result as passed or failed, citing the code it names",
 describe("balance reads a result as passed or failed, citing the code it names, from a report kept by suite", () => {
   it.each<[string, SuiteWriter, string, string, string, string, string]>([
     ["CLM-OBS-021", "pytest", "pytest", "test_adds", "test_adds_one", CLM_PROPERTY, "passed"],
+    ["CLM-OBS-156", "pytest", "pytest", "test_adds", "test_adds_one", '<properties><property name="clm" value="CLM-ONE-001" /><property name="clm" value="CLM-ONE-001" /></properties>', "passed"],
     ["CLM-OBS-022", "pytest", "pytest", "test_adds", "test_adds_one", `${CLM_PROPERTY}<failure message="assert 1 == 2">def test_adds_one():\n&gt;       assert 1 == 2</failure>`, "failed"],
     ["CLM-OBS-023", "go", "example.com/adds", "example.com/adds", "TestAdds/[CLM-ONE-001]_adds_one", "", "passed"],
     ["CLM-OBS-024", "go", "example.com/adds", "example.com/adds", "TestAdds/[CLM-ONE-001]_adds_one", '<failure message="Failed" type="">=== RUN   TestAdds/[CLM-ONE-001]_adds_one&#xA;    adds_test.go:9: the assertion failed&#xA;</failure>', "failed"],
