@@ -95,6 +95,15 @@ describe("a step using a plumbing action is plumbing", () => {
       posted: fitnessObservationsOf(steps, [], NO_SETTING, {}, shellAnswers).length,
     }).toEqual({ countedAs: "plumbing", posted: 0 });
   });
+
+  it.each(["actions/cache/save", "actions/upload-artifact/merge"])("[CLM-OBS-015] a step using %s, an action in a plumbing action's repository, will not be a fitness function", (action) => {
+    const steps = stepsOf({ uses: `${action}@v4` });
+
+    expect({
+      countedAs: stepDispositionOf(steps[0]!, NO_SETTING, {}, shellAnswers),
+      posted: fitnessObservationsOf(steps, [], NO_SETTING, {}, shellAnswers).length,
+    }).toEqual({ countedAs: "plumbing", posted: 0 });
+  });
 });
 
 describe("balance reads a result as passed or failed, citing the code it names", () => {
