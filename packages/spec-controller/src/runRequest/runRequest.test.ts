@@ -57,7 +57,7 @@ describe("help will answer, and nothing will run", () => {
   });
 });
 
-describe("you will get the report format you named", () => {
+describe("you will get the report format you ask for", () => {
   it("[CLM-FMT-001] no format named: the Markdown report is asked for", () => {
     expect(balanceRequested([]).outputs).toEqual([{ format: "md", destination: { to: "standard-output" } }]);
   });
