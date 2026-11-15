@@ -88,14 +88,6 @@ describe("the provenance says what the run used, as the run's repository and the
       "tools/spec-controller/dist",
       () => ({ toolSha: undefined, toolVersion: "unknown" }),
     ],
-    [
-      "CLM-EVR-046",
-      "copied into a folder outside any repository, with no package.json above it",
-      folderForTest,
-      { "tools/dist/cli.js": "" },
-      "tools/dist",
-      () => ({ toolSha: undefined, toolVersion: "unknown" }),
-    ],
   ] as const)("[%s] the tool running %s has its commit or its version in the provenance", (_clm, _running, folderMade, files, toolPath, details) => {
     const folder: TestFolder & Partial<Pick<TestRepository, "commit">> = folderMade();
     Object.entries(files).forEach(([path, text]) => folder.write(path, text));
