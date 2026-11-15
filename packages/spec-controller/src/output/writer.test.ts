@@ -200,6 +200,7 @@ describe("a place it cannot write will stop the run, and nothing will be written
       },
       (place: string) => readFileSync(place, "utf8") === "an earlier report",
     ],
+    ["CLM-FMT-008", "an empty path", "may-not-be-written", (_folder: string): string => "", (_place: string): boolean => true],
     [
       "CLM-FMT-026",
       "an existing folder",
