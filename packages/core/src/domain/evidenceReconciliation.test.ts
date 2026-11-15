@@ -207,9 +207,9 @@ describe("Total of the excluded claim code occurrences", () => {
   });
 });
 
-describe("a claim code in a comment, with punctuation stuck to its end, is an excluded claim code occurrence", () => {
-  it.each(evidenceReconciliationVariants["CLM-EVR-029"].variants)("[CLM-EVR-029] a feature file with the claim code CLM-ONE-001%s as a word in a comment has one excluded claim code occurrence", (punctuation) => {
-    const source = `@ONE\nFeature: one\n\n  # as @CLM-ONE-001${punctuation} says\n  @unit\n  Scenario: adds one\n    Given a step\n`;
+describe("a claim code in a scenario's title, with punctuation stuck to its end, is an excluded claim code occurrence", () => {
+  it.each(evidenceReconciliationVariants["CLM-EVR-028"].variants)("[CLM-EVR-028] a feature file with the claim code CLM-ONE-001%s as a word in a scenario's title has one excluded claim code occurrence", (punctuation) => {
+    const source = `@ONE\nFeature: one\n\n  @unit\n  Scenario: adds one, as @CLM-ONE-001${punctuation} says\n    Given a step\n`;
 
     expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)]).excludedClaimCodeOccurrences).toBe(1);
   });
