@@ -58,7 +58,7 @@ Feature: balance reads and validates the configuration settings in the specContr
   Rule: a specController block that is not an object stops the run
 
     @unit @CLM-CFG-021
-    Scenario: a specController block that is not an object stops the run as an unexpected error
+    Scenario: a specController block that is not an object stops the run as a usage error
       given the specController block was 5, which is not an object
       when balance reads it
-      then the run will stop as an unexpected error
+      then the run will stop, give no verdict and exit 2
