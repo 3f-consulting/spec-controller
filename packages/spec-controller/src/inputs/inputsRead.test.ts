@@ -13,15 +13,19 @@ const read = (...args: Parameters<typeof inputsReadFor>): InputsRead => {
 };
 
 describe("an empty evidence report will count as no evidence, not as a broken file", () => {
-  it.each([
-    ["a Vitest evidence report", "vitest", "vitest.json", '{"testResults":[]}'],
-    ["a CI step record", "stepRecord", "steps.json", "{}"],
-  ] as const)("[CLM-CLI-146] %s listing nothing posts nothing, and the run does not stop", (_report, kind, file, report) => {
+  it("[CLM-CLI-146] a Vitest evidence report listing nothing posts nothing, and the run does not stop", () => {
     const folder = temporaryDirectory("empty-report-");
-    writeFileSync(join(folder, file), report);
-    const { features, [kind]: posted, pathsRead } = read([{ kind, path: file, byDefault: false }], folder);
+    writeFileSync(join(folder, "vitest.json"), '{"testResults":[]}');
+    const { features, vitest, pathsRead } = read([{ kind: "vitest", path: "vitest.json", byDefault: false }], folder);
 
-    expect({ features, posted, pathsRead }).toEqual({ features: [], posted: [], pathsRead: { [kind]: file } });
+    expect({ features, vitest, pathsRead }).toEqual({ features: [], vitest: [], pathsRead: { vitest: "vitest.json" } });
+  });
+
+  it("[CLM-CLI-146] a CI step record listing nothing posts nothing, and the run does not stop", () => {
+    const folder = temporaryDirectory("empty-report-");
+    writeFileSync(join(folder, "steps.json"), "{}");
+
+    expect(read([{ kind: "stepRecord", path: "steps.json", byDefault: false }], folder)).toEqual({ features: [], stepRecord: [], filesRead: [join(folder, "steps.json")], pathsRead: { stepRecord: "steps.json" } });
   });
 });
 
