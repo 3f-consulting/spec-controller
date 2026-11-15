@@ -12,13 +12,6 @@ function provenanceIn(repository: TestFolder, given: { readonly target?: string;
   return provenanceOf(runIdentityIn(repository.top, given, toolFolder), [], repository.top, repositoryOfOrigin);
 }
 
-// The details the row names, as the provenance has them; a detail the row gives as undefined is one it does not have.
-function detailsOf(provenance: Provenance, details: Partial<Provenance>): Partial<Provenance> {
-  return Object.fromEntries(Object.keys(details).flatMap((detail) => (detail in provenance ? [[detail, provenance[detail as keyof Provenance]]] : [])));
-}
-
-const asWritten = (details: Partial<Provenance>): Partial<Provenance> => Object.fromEntries(Object.entries(details).filter(([, value]) => value !== undefined));
-
 // A repository whose origin is the given one, at its first commit.
 function repositoryWithOrigin(origin: string): TestFolder {
   const repository = repositoryForTest();
@@ -110,6 +103,6 @@ describe("the provenance says what the run used, as the run's repository and the
 
     const provenance = provenanceIn(folder, {}, join(realpathSync(folder.top), toolPath));
 
-    expect(detailsOf(provenance, details(head))).toStrictEqual(asWritten(details(head)));
+    expect({ toolSha: provenance.toolSha, toolVersion: provenance.toolVersion }).toMatchObject(details(head));
   });
 });

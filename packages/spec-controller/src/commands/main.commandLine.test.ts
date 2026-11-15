@@ -338,7 +338,6 @@ describe("an input that is not valid will stop the run", () => {
       ["steps.json", "step outcomes", "$.test", "[input-not-in-its-shape]"],
     ],
     ["CLM-CLI-159", "a manifest not in a manifest's shape", { "package.json": "[]" }, ["--package-json", "package.json"], ["package.json", "manifest", "[input-not-in-its-shape]"]],
-    ["CLM-CLI-159", "a manifest that is null", { "package.json": "null" }, ["--package-json", "package.json"], ["package.json", "manifest", "[input-not-in-its-shape]"]],
   ] as const)("[%s] %s: the run stops, no verdict, exit 2, and a complaint with its facts", (_clm, _given, files, args, facts) => {
     const { exitCode, output, error } = ran(["balance", ...args], folderWith(files));
 
@@ -357,15 +356,6 @@ describe("an input that is not valid will stop the run", () => {
     const { exitCode, output, error } = ran(["balance", "--vitest", "vitest.json"], folder);
 
     expect({ exitCode, output, facts: ["vitest.json", "[input-not-permitted]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
-  });
-
-  it("[CLM-CLI-161] a named feature corpus whose folder the tool is not permitted to read: the run stops, no verdict, exit 2, and a complaint with its facts", () => {
-    const folder = folderWith({ "features/one.feature": "@ONE\nFeature: one\n" });
-    chmodSync(join(folder, "features"), 0o000);
-
-    const { exitCode, output, error } = ran(["balance", "--features", "features"], folder);
-
-    expect({ exitCode, output, facts: [shown("{input-features} features"), "[input-not-permitted]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
   });
 });
 

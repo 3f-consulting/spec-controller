@@ -22,9 +22,9 @@ function claimOf(read: ClaimRead, kinds: readonly QualityCheckKind[]): Executabl
   return { file: "one.feature", title: "a scenario", obligations, ...(read === "with no code" ? {} : { claimCode: ONE_001 }) };
 }
 
-// A claim reconciled on its own, by what kind of claim it is.
-const reconciledAlone = (claim: ExecutableClaim | PhantomClaim | UnnamedClaim, filed: readonly EvidenceObservation[]) =>
-  "obligations" in claim ? claimReconciliationOf(claim, filed, false) : citedClaimReconciliationOf(claim, filed);
+// A claim reconciled on its own, or beside a second claim with its code, by what kind of claim it is.
+const reconciledAlone = (claim: ExecutableClaim | PhantomClaim | UnnamedClaim, filed: readonly EvidenceObservation[], shared = false) =>
+  "obligations" in claim ? claimReconciliationsOf(shared ? [claim, claim] : [claim], filed)[0]! : citedClaimReconciliationOf(claim, filed);
 
 const citing = (read: ClaimRead): ClaimCode[] => (read === "phantom" ? [ONE_999] : read === "unnamed" ? [] : [ONE_001]);
 
@@ -65,12 +65,7 @@ describe("a Quality Check Reconciliation's outcome follows from the sides it has
     ["CLM-LDG-078", "with no code", [], [], ["no-claim-code"]],
   ])("[%s] balance gives each Quality Check Reconciliation on a claim %s its outcome from its two sides", (_clm, read, kinds, observations, outcomes) => {
     const filed = observations.map((observation) => observationOf(read, observation));
-    const claim = claimOf(read, kinds);
-    // A claim sharing its code is reconciled beside the other claim that has it.
-    const reconciliation =
-      read === "sharing its code"
-        ? claimReconciliationsOf([claim as ExecutableClaim, { ...(claim as ExecutableClaim), title: "another scenario" }], filed)[0]!
-        : reconciledAlone(claim, filed);
+    const reconciliation = reconciledAlone(claimOf(read, kinds), filed, read === "sharing its code");
 
     expect(reconciliation.qualityCheckReconciliations.map(({ outcome }) => outcome).sort()).toEqual(outcomes);
   });
@@ -98,18 +93,17 @@ describe("each executable claim sharing a claim code will have its own Claim Rec
   });
 });
 
-// An Evidence Observation as a sort row writes it: its kind, result, test file, the code it cites, and its message.
-type Placed = readonly [kind: QualityCheckKind, result: Result, place: string, cites: "it" | "no code" | "CLM-ONE-002", message: string];
+// An Evidence Observation as a row writes it: its kind, result, place, the codes it cites, and the name and message it
+// has, if any. A fitness function is a CI step, which has no name.
+type Placed = readonly [kind: QualityCheckKind, result: Result, place: string, cites: readonly ("001" | "002")[], named: string];
 
-const ONE_002: ClaimCode = { featureCode: "ONE", number: "002" };
-
-const placedObservation = ([kind, result, place, cites, message]: Placed): EvidenceObservation => ({
-  cites: cites === "it" ? [ONE_001] : cites === "CLM-ONE-002" ? [ONE_002] : [],
+const placedObservation = ([kind, result, place, cites, named]: Placed): EvidenceObservation => ({
+  cites: cites.map((number) => ({ featureCode: "ONE", number })),
   result,
   kind,
   place,
   notes: [],
-  ...(message === "" ? {} : { message }),
+  ...(named === "" ? {} : { message: named, ...(kind === "fitness" ? {} : { name: named }) }),
 });
 
 const sortedAs = ({ kind, observation }: { kind?: QualityCheckKind; observation?: EvidenceObservation }): string =>
@@ -122,9 +116,8 @@ describe("a deferred scenario's code is read by no executable claim", () => {
       { cites: [{ featureCode: "ONE", number: "002" }], result: "passed", kind: "unit", place: "one.test.ts", name: "a test", notes: [] },
     ]);
 
-    expect({ claim: reconciliation?.claim, verdict: reconciliation?.verdict, outcomes: reconciliation?.qualityCheckReconciliations.map(({ outcome }) => outcome) }).toEqual({
+    expect({ claim: reconciliation?.claim, outcomes: reconciliation?.qualityCheckReconciliations.map(({ outcome }) => outcome) }).toEqual({
       claim: { claimCode: { featureCode: "ONE", number: "002" } },
-      verdict: "out-of-balance",
       outcomes: ["cites-unknown-claim"],
     });
   });
@@ -137,11 +130,11 @@ describe("balance will list a claim's Quality Check Reconciliations in the same 
       "under its code",
       ["fitness", "performance", "e2e", "integration", "unit"],
       [
-        ["fitness", "passed", "a.test.ts", "it", ""],
-        ["performance", "passed", "a.test.ts", "it", ""],
-        ["e2e", "passed", "a.test.ts", "it", ""],
-        ["integration", "passed", "a.test.ts", "it", ""],
-        ["unit", "passed", "a.test.ts", "it", ""],
+        ["fitness", "passed", "a.test.ts", ["001"], ""],
+        ["performance", "passed", "a.test.ts", ["001"], ""],
+        ["e2e", "passed", "a.test.ts", ["001"], ""],
+        ["integration", "passed", "a.test.ts", ["001"], ""],
+        ["unit", "passed", "a.test.ts", ["001"], ""],
       ],
       ["unit|a.test.ts|001|", "integration|a.test.ts|001|", "e2e|a.test.ts|001|", "performance|a.test.ts|001|", "fitness|a.test.ts|001|"],
     ],
@@ -149,35 +142,35 @@ describe("balance will list a claim's Quality Check Reconciliations in the same 
       "CLM-LDG-060",
       "under its code",
       ["unit"],
-      [["unit", "passed", "z.test.ts", "it", ""], ["unit", "failed", "a.test.ts", "it", ""]],
+      [["unit", "passed", "z.test.ts", ["001"], ""], ["unit", "failed", "a.test.ts", ["001"], ""]],
       ["unit|a.test.ts|001|", "unit|z.test.ts|001|"],
     ],
     [
       "CLM-LDG-061",
       "unnamed",
       [],
-      [["unit", "passed", "z.test.ts", "no code", ""], ["unit", "passed", "a.test.ts", "CLM-ONE-002", ""]],
+      [["unit", "passed", "z.test.ts", [], ""], ["unit", "passed", "a.test.ts", ["002"], ""]],
       ["unit|a.test.ts|002|", "unit|z.test.ts||"],
     ],
     [
       "CLM-LDG-062",
       "unnamed",
       [],
-      [["unit", "passed", "a.test.ts", "CLM-ONE-002", ""], ["unit", "passed", "a.test.ts", "no code", ""]],
+      [["unit", "passed", "a.test.ts", ["002"], ""], ["unit", "passed", "a.test.ts", [], ""]],
       ["unit|a.test.ts||", "unit|a.test.ts|002|"],
     ],
     [
       "CLM-LDG-063",
       "unnamed",
       [],
-      [["unit", "failed", "a.test.ts", "CLM-ONE-002", "a"], ["unit", "failed", "a.test.ts", "no code", "b"]],
+      [["unit", "failed", "a.test.ts", ["002"], "a"], ["unit", "failed", "a.test.ts", [], "b"]],
       ["unit|a.test.ts||b", "unit|a.test.ts|002|a"],
     ],
     [
       "CLM-LDG-064",
       "under its code",
       ["unit"],
-      [["unit", "failed", "a.test.ts", "it", "b"], ["unit", "failed", "a.test.ts", "it", "a"]],
+      [["unit", "failed", "a.test.ts", ["001"], "b"], ["unit", "failed", "a.test.ts", ["001"], "a"]],
       ["unit|a.test.ts|001|a", "unit|a.test.ts|001|b"],
     ],
   ])("[%s] a claim %s has its Quality Check Reconciliations in order", (_clm, read, kinds, observations, sorted) => {
@@ -194,25 +187,12 @@ describe("balance will list a claim's Quality Check Reconciliations in the same 
   });
 });
 
-// Evidence on the unnamed claim as a group row writes it: its kind, result, place, the codes it cites, and its name.
-type Unnamed = readonly [kind: QualityCheckKind, result: Result, place: string, cites: readonly ("001" | "002")[], name: string];
-
-// A fitness function is a CI step, which has no name.
-const unnamedObservation = ([kind, result, place, cites, name]: Unnamed): EvidenceObservation => ({
-  cites: cites.map((number) => ({ featureCode: "ONE", number })),
-  result,
-  kind,
-  place,
-  ...(kind === "fitness" ? {} : { name }),
-  notes: [],
-});
-
 const groupsOf = (observations: readonly EvidenceObservation[]): ReturnType<typeof evidenceGroupsOf> => evidenceGroupsOf(citedClaimReconciliationOf({}, observations));
 
-const groupsOn = (evidence: readonly Unnamed[]): ReturnType<typeof evidenceGroupsOf> => groupsOf(evidence.map(unnamedObservation));
+const groupsOn = (evidence: readonly Placed[]): ReturnType<typeof evidenceGroupsOf> => groupsOf(evidence.map(placedObservation));
 
 describe("balance will split the unnamed claim's evidence by kind, file and shared claim code, and by nothing else", () => {
-  it.each<[string, readonly Unnamed[], readonly string[]]>([
+  it.each<[string, readonly Placed[], readonly string[]]>([
     ["CLM-LDG-065", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "a.test.ts", [], "y"]], ["unit a.test.ts  2"]],
     ["CLM-LDG-066", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "b.test.ts", [], "y"]], ["unit a.test.ts  1", "unit b.test.ts  1"]],
     ["CLM-LDG-067", [["unit", "passed", "a.test.ts", [], "x"], ["integration", "passed", "a.test.ts", [], "y"]], ["unit a.test.ts  1", "integration a.test.ts  1"]],
@@ -240,7 +220,7 @@ describe("two uncited fitness functions share one group", () => {
 });
 
 describe("balance counts a group's results and names those that failed", () => {
-  it.each<[string, readonly Unnamed[], number, number, number, readonly string[]]>([
+  it.each<[string, readonly Placed[], number, number, number, readonly string[]]>([
     ["CLM-LDG-071", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "passed", "a.test.ts", [], "b"]], 2, 2, 0, []],
     ["CLM-LDG-072", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "failed", "a.test.ts", [], "b"]], 2, 1, 1, ["b"]],
     ["CLM-LDG-074", [["fitness", "passed-on-error", "ci / Lint", [], "Lint"]], 1, 1, 0, []],

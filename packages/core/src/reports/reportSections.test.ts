@@ -24,7 +24,7 @@ describe("the Markdown report's sections will come in a fixed order", () => {
 
     expect({ title, opening, sections: headingsOf(markdown).filter((heading) => sections.includes(heading)) }).toEqual({
       title: "# Evidence Reconciliation",
-      opening: "Some evidence never ran, so the run cannot be relied on and is not reconciled: Run integrity names it.",
+      opening: coreText("unsound-opening"),
       sections,
     });
   });

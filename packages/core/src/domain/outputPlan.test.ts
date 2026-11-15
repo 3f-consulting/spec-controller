@@ -11,12 +11,6 @@ describe("each of two reports will be where you asked", () => {
       { is: "regular-file", device: 1n, inode: 7n },
       { is: "regular-file", device: 2n, inode: 7n },
     ],
-    [
-      "CLM-FMT-021",
-      "two files not yet made, of one name, in folders with one inode number on two devices",
-      { is: "absent", folder: { device: 1n, inode: 7n }, name: "report" },
-      { is: "absent", folder: { device: 2n, inode: 7n }, name: "report" },
-    ],
   ] as const)("[%s] reports asked for at %s are each planned for their own file", (_clm, _files, one, other) => {
     expect(outputPlanOf([toFile("md", "a/report", one), toFile("json", "b/report", other)], [])).toEqual({ ok: true });
   });

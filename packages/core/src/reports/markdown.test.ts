@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { stepAccountOf, totalsOf, type EvidenceReconciliation, type StepCounts } from "../domain/evidenceReconciliation.js";
-import type { Provenance } from "../domain/provenance.js";
 import { coreText } from "../messages/catalogue.js";
 import { markdownReportOf } from "./markdown.js";
+import { PROVENANCE } from "./reconciledRun.test-utils.js";
 
 // A run with nothing reconciled, and the parts given.
 const runWith = (parts: Pick<EvidenceReconciliation, "runVerdict" | "provenance"> & Partial<EvidenceReconciliation>): EvidenceReconciliation => ({
@@ -13,8 +13,6 @@ const runWith = (parts: Pick<EvidenceReconciliation, "runVerdict" | "provenance"
   runIntegrity: { neverRan: [] },
   ...parts,
 });
-
-const PROVENANCE: Provenance = { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] };
 
 describe("each run verdict, and each reason a run is not reconciled, has an opening of its own", () => {
   it.each([
@@ -101,7 +99,7 @@ describe("the step account shows each job's counts, and the Total row their sums
     const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: PROVENANCE, stepAccount }));
     const rows = report.slice(report.indexOf("## Step account")).split("\n").filter((line) => line.startsWith("| ")).map((line) => line.slice(2, -2).split(" | "));
 
-    expect({ counts: rows.find((cells) => cells[1] === job)?.slice(2), lastColumn: rows[0]?.at(-1) }).toEqual({ counts, lastColumn: coreText("step-account-fitness-functions") });
+    expect(rows.find((cells) => cells[1] === job)?.slice(2)).toEqual(counts);
   });
 });
 

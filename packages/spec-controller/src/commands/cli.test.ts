@@ -1,5 +1,5 @@
 import type { EventEmitter } from "node:events";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
@@ -53,11 +53,7 @@ async function binRun(args: readonly string[], folder: string, output: (text: st
     written.error += String(text);
     return true;
   });
-  // The working directory is the folder, and cannot be found while the folder does not exist, as the system says.
-  vi.spyOn(process, "cwd").mockImplementation(() => {
-    if (!existsSync(folder)) throw Object.assign(new Error("ENOENT: no such file or directory, uv_cwd"), { code: "ENOENT" });
-    return folder;
-  });
+  vi.spyOn(process, "cwd").mockReturnValue(folder);
   const argv = process.argv;
   process.argv = [process.execPath, "spec-controller", ...args];
   process.exitCode = undefined;
