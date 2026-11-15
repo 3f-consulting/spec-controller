@@ -962,7 +962,7 @@ spec-controller balance --features ./features \
   --cucumber ./cucumber-report.json
 ```
 
-Run `spec-controller --help` for the top-level summary of the commands. Run `spec-controller balance --help` for the full list of `balance`'s flags. After a command, `--help` or `-h` gives that command's own help. Help answers only when nothing else on the command line is refused: a usage error wins, even beside `--help`, and its complaint is followed by the help for what was asked for, at exit `2`.
+Run `spec-controller --help`, or `-h`, for the top-level summary of the commands. Run `spec-controller balance --help` for the full list of `balance`'s flags. After a command, `--help` or `-h` gives that command's own help. Help answers only when nothing else on the command line is refused: a usage error wins, even beside `--help`, and its complaint is followed by the help for what was asked for, at exit `2`.
 
 ### Flags
 
