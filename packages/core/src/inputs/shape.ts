@@ -9,8 +9,11 @@ export const isRecord = (value: unknown): value is Readonly<Record<string, unkno
 
 const firstOf = (breaks: readonly (string | undefined)[]): string | undefined => breaks.find((at) => at !== undefined);
 
-// Where the value first breaks its shape, as a path from the report's top ($); nothing when it holds.
-export function whereShapeBreaks(value: unknown, shape: Shape, at = "$"): string | undefined {
+// A report's top, where every path in it starts.
+export const TOP = "$";
+
+// Where the value first breaks its shape, as a path from the report's top; nothing when it holds.
+export function whereShapeBreaks(value: unknown, shape: Shape, at = TOP): string | undefined {
   if (shape === "list") return Array.isArray(value) ? undefined : at;
   if (!isRecord(value)) return at;
   if ("entriesOf" in shape) return firstOf(Object.entries(value).map(([key, entry]) => whereShapeBreaks(entry, shape.entriesOf, `${at}.${key}`)));
