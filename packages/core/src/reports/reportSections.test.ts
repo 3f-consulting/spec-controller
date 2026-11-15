@@ -10,7 +10,7 @@ import { reconciled } from "./reconciledRun.test-utils.js";
 const headingsOf = (markdown: string): string[] => markdown.split("\n").filter((line) => line.startsWith("## ")).map((line) => line.slice(3));
 
 describe("the Markdown report's sections will come in a fixed order", () => {
-  it("[CLM-RPT-009] a run with something for every section has the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order", () => {
+  it("[CLM-RPT-009] a run with something for every section opens with its title, and has the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order", () => {
     const markdown = markdownReportOf(
       reconciled({
         scenarios: ["@unit @CLM-ONE-001", "@unit @CLM-TWO-001"],
@@ -21,7 +21,10 @@ describe("the Markdown report's sections will come in a fixed order", () => {
     );
     const sections = ["Run provenance", "Errors in the inputs", "Run integrity", "Summary", "Claim Reconciliations"];
 
-    expect(headingsOf(markdown).filter((heading) => sections.includes(heading))).toEqual(sections);
+    expect({ title: markdown.split("\n")[0], sections: headingsOf(markdown).filter((heading) => sections.includes(heading)) }).toEqual({
+      title: `# ${coreText("report-title")}`,
+      sections,
+    });
   });
 });
 

@@ -27,7 +27,7 @@ Feature: Each report has the right structure, and the Markdown explains it
     Scenario: the Markdown report's sections will come in a fixed order
       given a run had something for every section
       when its Markdown report is written
-      then its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
+      then it will open with its title, and its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
 
   Rule: the Markdown adds the words a person needs to read the data
 
