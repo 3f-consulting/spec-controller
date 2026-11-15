@@ -5,13 +5,13 @@ Feature: a message catalogue gives back the text for a code
   Each package has one.
 
   Asked for the text under a message code, with any values to fill in, the catalogue gives back
-  that text. A mistake in a catalogue never stops a run: what comes back names the code and its
-  values instead.
+  that text. A text the catalogue cannot use, or cannot fill with the values given, never stops a
+  run: what comes back names the code and its values instead.
 
   Rule: a code that takes no values gives back its text unchanged
 
     @unit @CLM-MSG-008
-    Scenario: the text for a code will be its text, unchanged
+    Scenario: no-features gives back "No feature files were found."
       given the catalogue had the text "No feature files were found." under the code no-features
       when the text for no-features is retrieved
       then the text will be "No feature files were found."
@@ -62,7 +62,7 @@ Feature: a message catalogue gives back the text for a code
         | CLM-MSG-024 | the text "The format {format is not written." |
 
     @unit @CLM-MSG-025
-    Scenario: a value of null will give back the code and its values
+    Scenario: the catalogue gives back the code and its values for a null value
       given the catalogue had the text "The format {format} is not written." under the code unknown-format
       when the text for unknown-format is retrieved with format null
       then the text will be "unknown-format (format: null)"

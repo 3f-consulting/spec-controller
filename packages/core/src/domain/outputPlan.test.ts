@@ -20,16 +20,17 @@ describe("each of two reports will be where you asked", () => {
   ] as const)("[%s] reports asked for at %s are each planned for their own file", (_clm, _files, one, other) => {
     expect(outputPlanOf([toFile("md", "a/report", one), toFile("json", "b/report", other)], [])).toEqual({ ok: true });
   });
+});
 
+describe("both reports go one after the other to a place that appends", () => {
   it("[CLM-FMT-022] two reports asked for on standard error, redirected into a file, are planned one after the other", () => {
-    const redirected: FileIdentity = { is: "regular-file", device: 1n, inode: 7n };
-    const onStandardError = (format: string): IdentifiedOutput<string> => ({ output: { format, destination: { to: "standard-error" } }, identity: redirected });
+    const onStandardError = (format: string): IdentifiedOutput<string> => ({ output: { format, destination: { to: "standard-error" } }, identity: { is: "regular-file", device: 1n, inode: 7n } });
 
     expect(outputPlanOf([onStandardError("md"), onStandardError("json")], [])).toEqual({ ok: true });
   });
 });
 
-describe("a report will not be written over a file the run reads", () => {
+describe("the run refuses to write a report over a file it reads", () => {
   it("[CLM-FMT-013] a report asked for at the file the run read is refused as overwriting that input", () => {
     const identity: FileIdentity = { is: "regular-file", device: 1n, inode: 9n };
     const report = toFile("json", "results.json", identity);

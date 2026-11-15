@@ -38,7 +38,7 @@ describe("balance will use the default when an input is not named", () => {
   });
 });
 
-describe("balance works out the target's folder", () => {
+describe("the target's folder will be the git repository the corpus is in, or else the corpus's parent folder", () => {
   it.each([
     ["by its own path", (top: string) => top],
     [
@@ -84,10 +84,10 @@ describe("the run will be not reconciled, naming why", () => {
   }
 
   it.each([
-    ["CLM-EVR-006", "no corpus directory", (folder: string) => folder],
+    ["CLM-EVR-006", "no feature corpus", (folder: string) => folder],
     [
       "CLM-EVR-007",
-      "an empty corpus directory",
+      "an empty feature corpus",
       (folder: string) => {
         mkdirSync(join(folder, "features"));
         return folder;

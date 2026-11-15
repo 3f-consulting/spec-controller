@@ -77,17 +77,17 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-121 | a flag and its value as two arguments     | the flag will take that value     |
         | CLM-CLI-122 | a flag that takes no value                | the flag will be on               |
         | CLM-CLI-123 | --format twice                            | each report will be made          |
-        | CLM-CLI-124 | a command's flags in two different orders | both orders will be read the same |
+        | CLM-CLI-124 | two command lines with the same flags in different orders | both orders will be read the same |
 
     @unit
     Scenario Outline: an argument the tool does not accept will stop the run
-      given the run met <error>
-      when it stops
-      then it will give no verdict, and will exit 2
-      and it will complain about the error, with <facts>
+      given the command line had <given>
+      when it is read
+      then the run will stop, give no verdict and exit 2
+      and it will complain about it, with <facts>
 
       Examples:
-        | clm         | error                                         | facts                                   |
+        | clm         | given                                         | facts                                   |
         | CLM-CLI-125 | a command the tool does not have              | the command it does not know            |
         | CLM-CLI-126 | a flag the command does not take              | the flag                                |
         | CLM-CLI-127 | a flag that takes a value, given none         | the flag, as missing its value          |
@@ -115,7 +115,7 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
     @unit
     Scenario Outline: balance will use the default when an input is not named
-      given a balance command line had named no <input>
+      given the run named no <input>
       when it is read
       then balance will use <default>
 
@@ -129,8 +129,8 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-141 | source commit, in no git repository | unknown             |
 
     @unit
-    Scenario Outline: balance works out the target's folder
-      given a balance command line had named <corpus>, <where>
+    Scenario Outline: the target's folder will be the git repository the corpus is in, or else the corpus's parent folder
+      given a balance command line named <corpus>, <where>
       when it is read
       then the target's folder will be <folder>
 
@@ -144,25 +144,73 @@ Feature: the command line reads what you give it, and says where each kind of ou
     @unit @e2e
     Scenario Outline: a default that cannot be read will stop the run
       Given the run met <error>
-      When it stops
-      Then it will give no verdict, and will exit 2
-      And it will complain about the error, with <facts>
+      When balance reads its inputs
+      Then the run will stop, give no verdict and exit 2
+      And it will complain about it, with <facts>
 
       Examples:
         | clm         | error                                                                                | facts                                         |
         | CLM-CLI-145 | the corpus read by default that sits under a working directory that has been removed | the corpus read by default, and what is wrong |
 
+    @unit @CLM-CLI-183
+    Scenario: a workflows folder read by default that does not exist will count as no workflows, not as a missing input
+      given the run named no CI workflows, and the folder .github/workflows did not exist
+      when balance reads its inputs
+      then it will read no workflows
+      and the run will not stop
+
+    @unit @CLM-CLI-190
+    Scenario: a feature corpus read by default that does not exist will count as no feature files, not as a missing input
+      given the run named no feature corpus, and the folder features did not exist
+      when balance reads its inputs
+      then it will read no feature files
+      and the run will not stop
+
+    @unit @CLM-CLI-192
+    Scenario: a manifest read by default that does not exist will count as no manifest, not as a missing input
+      given the run named no manifest, and the file package.json did not exist
+      when balance reads its inputs
+      then it will read no manifest
+      and the run will not stop
+
+    @unit @CLM-CLI-198
+    Scenario: an input read by default that the tool is not permitted to read will stop the run, not count as none
+      given the run named no CI workflows, and the tool was not permitted to read the folder .github/workflows
+      when balance reads its inputs
+      then the run will stop, give no verdict and exit 2
+      and it will complain that it is not permitted to read .github/workflows
+
+  Rule: balance reads every input the command line names or leaves to its default
+
+    @unit @CLM-CLI-191
+    Scenario: balance reads a feature file in a subfolder of the feature corpus
+      given the feature corpus's one feature file was two folders down, at area/deeper/one.feature
+      when balance reads its inputs
+      then it will read area/deeper/one.feature
+
+    @unit @CLM-CLI-197
+    Scenario: balance reads the feature corpus in path order
+      given the feature corpus had b.feature and a/x.feature
+      when balance writes its report
+      then the report will list the claims of a/x.feature before those of b.feature
+
+    @unit @CLM-CLI-193
+    Scenario: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
+      given the run named the workflow ci.yml as its CI workflows, and then a folder with ci.yml and release.yaml in it
+      when balance reads its inputs
+      then it will read ci.yml alone, and then both workflows
+
+    @unit @CLM-CLI-195
+    Scenario: balance counts the steps of the CI workflows it reads
+      given the run named a CI workflows folder whose one workflow had two steps
+      when balance writes its report
+      then the report's step account will count two steps
+
   Rule: a command validates every input before it does its work
 
-    A command validates every input it reads before it does its work. This applies to inputs named
-    on the command line and to inputs left to their default: the evidence reports, the step record,
-    the feature corpus, the CI workflows and the manifest. An input that is well formed but empty
-    is valid. If the CI workflows are left to their default and that folder does not exist, the
-    tool reads no workflows. If the feature corpus is left to its default and that folder does not
-    exist, the tool reads no feature files. If the manifest is left to its default and that file
-    does not exist, the tool reads no manifest. An evidence report that is valid stays valid even if
-    its evidence did not fully materialise; the run is then unsound. The balance command leaves out
-    any configuration setting it cannot use, as configuration.feature says.
+    A command validates every input it reads before it does its work, whether named on the command
+    line or left to its default: the evidence reports, the step record, the feature corpus, the CI
+    workflows and the manifest. An input that is well formed but empty is valid.
 
     @unit @CLM-CLI-146
     Scenario: an empty evidence report will count as no evidence, not as a broken file
@@ -191,67 +239,15 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-200 | --rspec    |
         | CLM-CLI-201 | --cucumber |
 
-    @unit @CLM-CLI-183
-    Scenario: a workflows folder read by default that does not exist will count as no workflows, not as a missing input
-      given the run named no CI workflows, and the folder .github/workflows did not exist
-      when balance reads its inputs
-      then it will read no workflows
-      and the run will not stop
-
-    @unit @CLM-CLI-190
-    Scenario: a feature corpus read by default that does not exist will count as no feature files, not as a missing input
-      given the run named no feature corpus, and the folder features did not exist
-      when balance reads its inputs
-      then it will read no feature files
-      and the run will not stop
-
-    @unit @CLM-CLI-192
-    Scenario: a manifest read by default that does not exist will count as no manifest, not as a missing input
-      given the run named no manifest, and the file package.json did not exist
-      when balance reads its inputs
-      then it will read no manifest
-      and the run will not stop
-
-    @unit @CLM-CLI-198
-    Scenario: an input read by default that the tool is not permitted to read will stop the run, not count as none
-      given the run named no CI workflows, and the tool was not permitted to read the folder .github/workflows
-      when balance reads its inputs
-      then it will give no verdict, and will exit 2
-      and it will complain that it is not permitted to read .github/workflows
-
-    @unit @CLM-CLI-191
-    Scenario: balance reads a feature file in a subfolder of the feature corpus
-      given the feature corpus's one feature file was two folders down, at area/deeper/one.feature
-      when balance reads its inputs
-      then it will read area/deeper/one.feature
-
-    @unit @CLM-CLI-197
-    Scenario: balance reads the feature corpus in path order
-      given the feature corpus held b.feature and a/x.feature
-      when balance writes its report
-      then the report will list the claims of a/x.feature before those of b.feature
-
-    @unit @CLM-CLI-193
-    Scenario: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
-      given the run named the workflow ci.yml as its CI workflows, and then a folder holding ci.yml and release.yaml
-      when balance reads its inputs
-      then it will read ci.yml alone, and then both workflows
-
-    @unit @CLM-CLI-195
-    Scenario: balance counts the steps of the CI workflows it reads
-      given the run named a CI workflows folder whose one workflow had two steps
-      when balance writes its report
-      then the report's step account will count two steps
-
     @unit
     Scenario Outline: an input that is not valid will stop the run
-      given the run met <error>
-      when it stops
-      then it will give no verdict, and will exit 2
-      and it will complain about the error, with <facts>
+      given the command line had <given>
+      when it is read
+      then the run will stop, give no verdict and exit 2
+      and it will complain about it, with <facts>
 
       Examples:
-        | clm         | error                                                               | facts                                          |
+        | clm         | given                                                               | facts                                          |
         | CLM-CLI-147 | a named input that does not exist                                   | a named input, and what is wrong               |
         | CLM-CLI-160 | a named path that is not the kind of path its flag reads            | a named path, and what is wrong                |
         | CLM-CLI-161 | a named input that the tool is not permitted to read                | a named input, and what is wrong               |
@@ -270,17 +266,17 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-159 | a manifest that is not in a manifest's shape                        | a manifest, and what is wrong                  |
 
     @unit @CLM-CLI-185
-    Scenario: a corpus with several feature files that do not parse will be refused, naming each of them
+    Scenario: balance refuses a corpus with several feature files that do not parse, naming each
       given the corpus had two feature files that did not parse
       when balance reads it
-      then it will give no verdict, and will exit 2
+      then the run will stop, give no verdict and exit 2
       and it will complain about each file, with what is wrong in each
 
   Rule: each kind of output has its place
 
     @unit
     Scenario Outline: an answer will be on standard output, and anything about it on standard error
-      given a run had produced <output>
+      given a run produced <output>
       when it ends
       then it will be on <place>
 
@@ -295,7 +291,7 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
     @unit
     Scenario Outline: each run verdict will have its exit code
-      given a run had reached the run verdict <run verdict>
+      given a run reached the run verdict <run verdict>
       when it ends
       then it will exit <exit code>
 
@@ -307,14 +303,30 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-169 | not reconciled, because claim code errors    | 3         |
         | CLM-CLI-170 | not reconciled, because nothing to reconcile | 3         |
 
+  Rule: --exit-zero moves only an out-of-balance run's exit code, to 0
+
+    @unit
+    Scenario Outline: under --exit-zero only an out-of-balance run's exit code changes
+      given a run's evidence was <ending>
+      when it runs under --exit-zero
+      then it will exit <code>
+      and its run verdict, if it has one, will be the same
+
+      Examples:
+        | clm         | ending              | code |
+        | CLM-CLI-171 | balanced            | 0    |
+        | CLM-CLI-172 | out of balance      | 0    |
+        | CLM-CLI-173 | not reconciled      | 3    |
+        | CLM-CLI-174 | a usage error       | 2    |
+        | CLM-CLI-175 | an unexpected error | 4    |
+
   Rule: an unexpected error stops the run, with exit code 4 and a complaint
 
     @unit
-    Scenario Outline: the run will give no verdict, and will exit 4
-      given the run met <error>
-      when it stops
-      then it will give no verdict, and will exit 4
-      and it will complain about the error, with <facts>
+    Scenario Outline: an unexpected error will stop the run with no verdict and exit 4, naming the error
+      when the run meets <error>
+      then the run will stop, give no verdict and exit 4
+      and it will complain about it, with <facts>
 
       Examples:
         | clm         | error                                       | facts     |
@@ -325,30 +337,11 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
     @unit @CLM-CLI-181
     Scenario: an unexpected error after the run verdict will leave its exit code alone
-      given a run had reached its run verdict
-      and it met an unexpected error afterwards
-      when it ends
+      given a run reached its run verdict
+      when it meets an unexpected error
       then it will exit with its run verdict's code
 
     @unit @CLM-CLI-182
     Scenario: a run will complain about only one unexpected error
-      given a run had met two unexpected errors
-      when it ends
-      then it will have complained about one of them
-
-  Rule: --exit-zero moves only an out-of-balance run's exit code, to 0
-
-    @unit
-    Scenario Outline: under --exit-zero only an out-of-balance run will exit 0 instead of its code
-      given a run had ended on <ending> at <exit code>
-      when it runs again under --exit-zero
-      then it will exit <under --exit-zero>
-      and its run verdict, if it has one, will be the same
-
-      Examples:
-        | clm         | ending              | exit code | under --exit-zero |
-        | CLM-CLI-171 | balanced            | 0         | 0                 |
-        | CLM-CLI-172 | out of balance      | 1         | 0                 |
-        | CLM-CLI-173 | not reconciled      | 3         | 3                 |
-        | CLM-CLI-174 | a usage error       | 2         | 2                 |
-        | CLM-CLI-175 | an unexpected error | 4         | 4                 |
+      when a run meets two unexpected errors
+      then it will complain about only one of them

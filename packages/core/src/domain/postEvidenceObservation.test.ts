@@ -138,7 +138,7 @@ const postedByScenario = (report: unknown, features: readonly FeatureAsWritten[]
 const PASSED: StepRun = ["Given ", "one adds one", "passed"];
 
 describe("a Cucumber Background and hook post nothing of their own", () => {
-  it("[CLM-OBS-121] a scenario in Cucumber's evidence report tagged @CLM-ONE-001, every step passed after a Background and a hook that passed, is posted once, as passed, citing CLM-ONE-001", () => {
+  it("[CLM-OBS-121] a scenario in Cucumber's evidence report tagged @CLM-ONE-001, every step passed after a Background and a hook that passed, is read once, as passed, citing CLM-ONE-001", () => {
     const passed = { status: "passed" };
     const report = [
       {
@@ -160,20 +160,20 @@ describe("a Cucumber Background and hook post nothing of their own", () => {
   });
 });
 
-describe("balance posts a result as passed or failed, citing its claim code", () => {
+describe("balance reads a result as passed or failed, citing the code it names", () => {
   it.each<[string, "vitest" | "jest", string, string]>([
     ["CLM-OBS-017", "vitest", "passed", "passed"],
     ["CLM-OBS-018", "vitest", "failed", "failed"],
     ["CLM-OBS-019", "jest", "passed", "passed"],
     ["CLM-OBS-020", "jest", "failed", "failed"],
-  ])("[%s] a result in %s's evidence report, CLM-ONE-001 in brackets in its title, that %s, is posted as %s, citing CLM-ONE-001", (_clm, _from, status, result) => {
+  ])("[%s] a result in %s's evidence report, CLM-ONE-001 in brackets in its title, that %s, is read as %s, citing CLM-ONE-001", (_clm, _from, status, result) => {
     const posted = postedByFile(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status }], status));
 
     expect(posted.map(({ result: postedResult, cites }) => ({ result: postedResult, cites }))).toEqual([{ result, cites: [ONE_001] }]);
   });
 });
 
-describe("balance posts a result as passed or failed, citing its claim code, from a report kept by suite", () => {
+describe("balance reads a result as passed or failed, citing the code it names, from a report kept by suite", () => {
   it.each<[string, SuiteWriter, string, string, string, string, string]>([
     ["CLM-OBS-021", "pytest", "pytest", "test_adds", "test_adds_one", CLM_PROPERTY, "passed"],
     ["CLM-OBS-022", "pytest", "pytest", "test_adds", "test_adds_one", `${CLM_PROPERTY}<failure message="assert 1 == 2">def test_adds_one():\n&gt;       assert 1 == 2</failure>`, "failed"],
@@ -184,13 +184,13 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
     ["CLM-OBS-118", "surefire", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", '<error message="the database was not there" type="java.lang.IllegalStateException"><![CDATA[java.lang.IllegalStateException: the database was not there]]></error>', "failed"],
     ["CLM-OBS-027", "gradle", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", "", "passed"],
     ["CLM-OBS-028", "gradle", "example.AddsTest", "example.AddsTest", "[CLM-ONE-001] adds one", '<failure message="org.opentest4j.AssertionFailedError: expected: &lt;2&gt; but was: &lt;1&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;2&gt; but was: &lt;1&gt;\n</failure>', "failed"],
-  ])("[%s] a result in %s's evidence report citing CLM-ONE-001 is posted as it went, citing CLM-ONE-001", (_clm, writer, suite, className, name, inside, result) => {
+  ])("[%s] a result in %s's evidence report citing CLM-ONE-001 is read as it went, citing CLM-ONE-001", (_clm, writer, suite, className, name, inside, result) => {
     const posted = postedBySuite(writer, suite, testCase(className, name, inside));
 
     expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
   });
 
-  it("[CLM-OBS-055] a Kotlin class whose setup failed will be posted as one failing result citing no claim code", () => {
+  it("[CLM-OBS-055] balance posts a Kotlin class whose setup failed as one failed Evidence Observation, citing no claim code", () => {
     const failure = '<failure message="java.lang.IllegalStateException: the shared resource could not be set up" type="java.lang.IllegalStateException">java.lang.IllegalStateException: the shared resource could not be set up\n</failure>';
     const posted = postedBySuite("gradle", "[CLM-ONE-001] a class", testCase("example.SetupFailsTest", "initializationError", failure));
 
@@ -211,11 +211,11 @@ describe("balance posts nothing for a test that was skipped, from a report kept 
   });
 });
 
-describe("balance posts a result as passed or failed, citing its claim code, from a report kept by example", () => {
+describe("balance reads a result as passed or failed, citing the code it names, from a report kept by example", () => {
   it.each<[string, string, string]>([
     ["CLM-OBS-029", "passed", "passed"],
     ["CLM-OBS-030", "failed", "failed"],
-  ])("[%s] a result in RSpec's evidence report, CLM-ONE-001 in brackets in its description, that %s, is posted as %s, citing CLM-ONE-001", (_clm, status, result) => {
+  ])("[%s] a result in RSpec's evidence report, CLM-ONE-001 in brackets in its description, that %s, is read as %s, citing CLM-ONE-001", (_clm, status, result) => {
     const posted = postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds one", status }], [], true));
 
     expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
@@ -228,11 +228,11 @@ describe("balance posts a result as passed or failed, citing its claim code, fro
   });
 });
 
-describe("balance posts a result as passed or failed, citing its claim code, from a report kept by scenario", () => {
+describe("balance reads a result as passed or failed, citing the code it names, from a report kept by scenario", () => {
   it.each<[string, string, readonly StepRun[]]>([
     ["CLM-OBS-031", "passed", [PASSED, ["Then ", "it is two", "passed"]]],
     ["CLM-OBS-032", "failed", [["Given ", "one adds one", "failed"], ["Then ", "it is two", "skipped"]]],
-  ])("[%s] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 is posted as %s when every step passed, or one failed and the next was skipped, citing CLM-ONE-001", (_clm, result, steps) => {
+  ])("[%s] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 is read as %s when every step passed, or one failed and the next was skipped, citing CLM-ONE-001", (_clm, result, steps) => {
     const posted = postedByScenario(reportByScenario("features/one.feature", [{ tags: ["integration", "CLM-ONE-001"], steps }]));
 
     expect(posted.map(resultAndCitations)).toEqual([{ result, cites: [ONE_001] }]);
@@ -359,15 +359,15 @@ describe("balance posts what could not run as never ran, from a report kept by s
     ["CLM-OBS-051", [["Given ", "one adds one", "ambiguous"], ["Then ", "it is two", "skipped"]]],
     ["CLM-OBS-052", [["Given ", "one adds one", "undefined"], ["Then ", "it is two", "skipped"]]],
     ["CLM-OBS-110", [["Given ", "one is ready", "failed"], ["Given ", "one adds one", "undefined"]]],
-  ])("[%s] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 whose step \"one adds one\" matched no single definition is posted as never-ran, citing CLM-ONE-001 and naming \"Given one adds one\"", (_clm, steps) => {
+  ])("[%s] a scenario in Cucumber's evidence report tagged @CLM-ONE-001 whose step \"one adds one\" matched no single definition is posted as never-ran, citing CLM-ONE-001 and naming the step \"Given one adds one\"", (_clm, steps) => {
     const posted = postedByScenario(reportByScenario("features/one.feature", [{ tags: ["integration", "CLM-ONE-001"], steps }]));
 
     expect(posted.map(({ result, cites, message }) => ({ result, cites, message }))).toEqual([{ result: "never-ran", cites: [ONE_001], message: "Given one adds one" }]);
   });
 });
 
-describe("a test report's result will be unit evidence, and a Cucumber result will take the kind its tags name", () => {
-  it("[CLM-OBS-059] a result in Vitest's evidence report is posted as unit evidence", () => {
+describe("balance identifies a result's kind of quality check from its source and its tags", () => {
+  it("[CLM-OBS-059] a result in Vitest's evidence report is read as unit evidence", () => {
     const posted = postedByFile(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "failed" }], "failed"));
 
     expect(posted.map(({ kind }) => kind)).toEqual(["unit"]);
@@ -375,19 +375,19 @@ describe("a test report's result will be unit evidence, and a Cucumber result wi
 });
 
 describe("a test report kept by suite gives unit evidence", () => {
-  it("[CLM-OBS-060] a result in pytest's evidence report is posted as unit evidence", () => {
+  it("[CLM-OBS-060] a result in pytest's evidence report is read as unit evidence", () => {
     expect(postedBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)).map(({ kind }) => kind)).toEqual(["unit"]);
   });
 });
 
-describe("a Cucumber result will take the kind its tags name", () => {
+describe("balance identifies a Cucumber result's kind of quality check from its tags", () => {
   it.each<[string, readonly string[], string, readonly string[]]>([
     ["CLM-OBS-061", ["CLM-ONE-001", "smoke"], "passed", ["integration"]],
     ["CLM-OBS-062", ["CLM-ONE-001", "e2e"], "passed", ["e2e"]],
     ["CLM-OBS-063", ["CLM-ONE-001", "performance"], "passed", ["performance"]],
     ["CLM-OBS-064", ["CLM-ONE-001", "integration", "e2e"], "passed", ["integration", "e2e"]],
     ["CLM-OBS-111", ["CLM-ONE-001", "integration", "e2e"], "undefined", ["integration", "e2e"]],
-  ])("[%s] a scenario in Cucumber's evidence report tagged %j whose step %s is posted at the kinds of quality check its tags name", (_clm, tags, status, kinds) => {
+  ])("[%s] a scenario in Cucumber's evidence report tagged %j whose step %s is read as the kinds of quality check its tags name", (_clm, tags, status, kinds) => {
     const posted = postedByScenario(reportByScenario("features/one.feature", [{ tags, steps: [["Given ", "one adds one", status]] }]));
 
     expect(posted.map(({ kind }) => kind)).toEqual(kinds);
@@ -485,7 +485,7 @@ describe("balance posts a Cucumber result saying where to look", () => {
   });
 });
 
-describe("a test file outside the target's folder will be placed at the absolute path its evidence report recorded", () => {
+describe("balance places a test file outside the target's folder at the absolute path its evidence report recorded", () => {
   it("[CLM-OBS-098] a Jest test file at /home/runner/work/app/src/a.test.ts, for a target at /work/app, is placed at that path", () => {
     const file = "/home/runner/work/app/src/a.test.ts";
     const posted = postedByFile(reportByFile(file, [{ title: "[CLM-ONE-001] it holds", status: "passed" }]), "/work/app");
@@ -522,7 +522,7 @@ function postedFrom(source: string, citation: string): EvidenceObservation[] {
   return postedByScenario(reportByScenario("features/one.feature", [{ tags: ["integration", ...citation.split(" ")], steps: [PASSED] }]));
 }
 
-describe("balance files each Evidence Observation under the claim it cites, or else on a phantom claim or the unnamed claim", () => {
+describe("balance posts each Evidence Observation to the claim it cites, or else to a phantom claim or the unnamed claim", () => {
   it("[CLM-OBS-082] balance posts an Evidence Observation to the executable claim whose code it cites", () => {
     const reconciliations = claimReconciliationsOf(claimsTagged("CLM-ONE-001", "CLM-ONE-002"), postedFrom("vitest", "[CLM-ONE-001]"));
 

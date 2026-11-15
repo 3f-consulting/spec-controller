@@ -133,7 +133,7 @@ describe("an argument the tool does not accept will stop the run", () => {
     ["CLM-CLI-133", "a report format the tool does not have", ["balance", "--format", "html"], ["html", "md", "json", "[unknown-format]"]],
     ["CLM-CLI-134", "no feature code given to allocate", ["allocate"], ["[no-feature-code]"]],
     ["CLM-CLI-135", "two feature codes given to allocate", ["allocate", "ABC", "DEF"], ["DEF", "[extra-argument]"]],
-  ] as const)("[%s] %s: no verdict, exit 2, and a complaint with its facts", (_clm, _error, args, facts) => {
+  ] as const)("[%s] %s: the run stops, no verdict, exit 2, and a complaint with its facts", (_clm, _given, args, facts) => {
     const { exitCode, output, error } = ran(args);
 
     expect({ exitCode, output, facts: facts.filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
@@ -203,7 +203,7 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
 });
 
 describe("balance reads the feature corpus in path order", () => {
-  it("[CLM-CLI-197] a corpus holding b.feature and a/x.feature: the report lists the claims of a/x.feature before those of b.feature", () => {
+  it("[CLM-CLI-197] a corpus with b.feature and a/x.feature: the report lists the claims of a/x.feature before those of b.feature", () => {
     const folder = folderWith({
       "features/b.feature": "@BBB\nFeature: b\n\n  @unit @CLM-BBB-001\n  Scenario: b\n",
       "features/a/x.feature": "@AAA\nFeature: x\n\n  @unit @CLM-AAA-001\n  Scenario: x\n",
@@ -368,7 +368,7 @@ describe("an input that is not valid will stop the run", () => {
     ],
     ["CLM-CLI-159", "a manifest not in a manifest's shape", { "package.json": "[]" }, ["--package-json", "package.json"], ["package.json", "manifest", "[input-not-in-its-shape]"]],
     ["CLM-CLI-159", "a manifest that is null", { "package.json": "null" }, ["--package-json", "package.json"], ["package.json", "manifest", "[input-not-in-its-shape]"]],
-  ] as const)("[%s] %s: no verdict, exit 2, and a complaint with its facts", (_clm, _error, files, args, facts) => {
+  ] as const)("[%s] %s: the run stops, no verdict, exit 2, and a complaint with its facts", (_clm, _given, files, args, facts) => {
     const { exitCode, output, error } = ran(["balance", ...args], folderWith(files));
 
     expect({ exitCode, output, complaints: error.trimEnd().split("\n").length, facts: facts.map(shown).filter((fact) => !error.includes(fact)) }).toEqual({
@@ -379,7 +379,7 @@ describe("an input that is not valid will stop the run", () => {
     });
   });
 
-  it("[CLM-CLI-161] a named input that the tool is not permitted to read: no verdict, exit 2, and a complaint with its facts", () => {
+  it("[CLM-CLI-161] a named input that the tool is not permitted to read: the run stops, no verdict, exit 2, and a complaint with its facts", () => {
     const folder = folderWith({ "vitest.json": VITEST_SHAPED });
     chmodSync(join(folder, "vitest.json"), 0o000);
 
@@ -388,7 +388,7 @@ describe("an input that is not valid will stop the run", () => {
     expect({ exitCode, output, facts: ["vitest.json", "[input-not-permitted]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
   });
 
-  it("[CLM-CLI-161] a named feature corpus whose folder the tool is not permitted to read: no verdict, exit 2, and a complaint with its facts", () => {
+  it("[CLM-CLI-161] a named feature corpus whose folder the tool is not permitted to read: the run stops, no verdict, exit 2, and a complaint with its facts", () => {
     const folder = folderWith({ "features/one.feature": "@ONE\nFeature: one\n" });
     chmodSync(join(folder, "features"), 0o000);
 
@@ -402,7 +402,7 @@ describe("an input read by default that the tool is not permitted to read will s
   it.each([
     ["the folder itself", ".github/workflows"],
     ["the folder that holds it", ".github"],
-  ] as const)("[CLM-CLI-198] no CI workflows named, and the tool not permitted to read %s: no verdict, exit 2, and a complaint that it is not permitted to read .github/workflows", (_closed, path) => {
+  ] as const)("[CLM-CLI-198] no CI workflows named, and the tool not permitted to read %s: the run stops, no verdict, exit 2, and a complaint that it is not permitted to read .github/workflows", (_closed, path) => {
     const folder = folderWith({ ".github/workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: echo ci\n" });
     chmodSync(join(folder, path), 0o000);
 
@@ -412,8 +412,8 @@ describe("an input read by default that the tool is not permitted to read will s
   });
 });
 
-describe("a corpus with several feature files that do not parse will be refused, naming each of them", () => {
-  it("[CLM-CLI-185] two feature files that do not parse: no verdict, exit 2, and a complaint about each, with what is wrong in each", () => {
+describe("balance refuses a corpus with several feature files that do not parse, naming each", () => {
+  it("[CLM-CLI-185] two feature files that do not parse: the run stops, no verdict, exit 2, and a complaint about each, with what is wrong in each", () => {
     const folder = folderWith({ "features/one.feature": "not Gherkin\n", "features/two.feature": "@TWO\nFeature: two\n  Scenario: a\n    Given a table\n      | a | b |\n      | c |\n" });
 
     const { exitCode, output, error } = ran(["balance", "--features", "features"], folder);

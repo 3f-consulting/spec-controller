@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { textFor } from "./catalogue.js";
 
 describe("a code that takes no values gives back its text unchanged", () => {
-  it("[CLM-MSG-008] the text for a code will be its text, unchanged", () => {
+  it('[CLM-MSG-008] no-features gives back "No feature files were found."', () => {
     expect(textFor({ "no-features": "No feature files were found." }, "no-features")).toBe("No feature files were found.");
   });
 });
@@ -39,7 +39,7 @@ describe("a mistake in a catalogue gives back the code and its values", () => {
     expect(textFor(catalogue, "unknown-format", { format: "html" })).toBe("unknown-format (format: html)");
   });
 
-  it("[CLM-MSG-025] a value of null will give back the code and its values", () => {
+  it("[CLM-MSG-025] the catalogue gives back the code and its values for a null value", () => {
     expect(textFor({ "unknown-format": "The format {format} is not written." }, "unknown-format", { format: null })).toBe("unknown-format (format: null)");
   });
 });

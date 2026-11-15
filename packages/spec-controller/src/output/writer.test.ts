@@ -64,7 +64,7 @@ const outputsAskedFor = (args: readonly string[]) => {
   return "command" in request && request.command === "balance" ? request.outputs : [];
 };
 
-describe("you will get the report format you named", () => {
+describe("you will get the report format you ask for", () => {
   it.each([
     ["CLM-FMT-001", "no format", "Markdown", []],
     ["CLM-FMT-014", "md", "Markdown", ["--format", "md"]],
@@ -81,7 +81,7 @@ describe("you will get the report format you named", () => {
   });
 });
 
-describe("a report will be where you asked", () => {
+describe("a report will go where you ask", () => {
   it.each([
     [
       "CLM-FMT-003",
@@ -186,12 +186,6 @@ describe("each of two reports will be where you asked", () => {
       (folder: string, output: string) =>
         opensAsMarkdown(readFileSync(join(folder, "a", "report"), "utf8")) && isJsonReport(readFileSync(join(folder, "b", "report"), "utf8")) && output === "",
     ],
-    [
-      "CLM-FMT-022",
-      "standard error for both",
-      (_folder: string) => ["--format", "md:/dev/stderr", "--format", "json:/dev/stderr"],
-      (_folder: string, output: string, error: string) => opensAsMarkdown(error) && isJsonReport(error.slice(error.indexOf("\n{") + 1)) && output === "",
-    ],
   ] as const)("[%s] two reports asked for at %s are each there", (_clm, _destinations, ask, areThere) => {
     const folder = temporaryDirectory("report-destinations-");
     const { output, error, streams } = capturedStreams();
@@ -200,15 +194,20 @@ describe("each of two reports will be where you asked", () => {
 
     expect(areThere(folder, output.join(""), error.join(""))).toBe(true);
   });
+});
 
-  it("[CLM-FMT-022] two reports asked for on standard error, redirected into a file, are both on standard error, one after the other", () => {
+describe("both reports go one after the other to a place that appends", () => {
+  it.each([
+    ["CLM-FMT-022", "", false],
+    ["CLM-FMT-022", ", redirected into a file,", true],
+  ] as const)("[%s] two reports asked for on standard error%s are both on standard error, one after the other", (_clm, _redirected, redirect) => {
     const file = join(temporaryDirectory("standard-error-redirected-"), "log.txt");
     const { output, error, streams } = capturedStreams();
     const redirected = openSync(file, "a");
     onTestFinished(() => closeSync(redirected));
 
     const ending = endingOf(() =>
-      writeReports(outputsAskedFor(["--format", "md:/dev/stderr", "--format", "json:/dev/stderr"]), [], RECONCILIATION, { ...streams, error: { ...streams.error, fd: redirected } }, AS_ASKED),
+      writeReports(outputsAskedFor(["--format", "md:/dev/stderr", "--format", "json:/dev/stderr"]), [], RECONCILIATION, { ...streams, error: { ...streams.error, fd: redirect ? redirected : 2 } }, AS_ASKED),
     );
 
     const onStandardError = error.join("");
@@ -220,7 +219,7 @@ describe("each of two reports will be where you asked", () => {
   });
 });
 
-describe("two reports asked for at one device will both be written, as a device is not a file they share", () => {
+describe("both reports are written to a place that discards what it is given", () => {
   it("[CLM-FMT-035] --format md:/dev/null --format json:/dev/null: both are written, and the run does not stop", () => {
     const { output, error, streams } = capturedStreams();
 
@@ -306,7 +305,7 @@ describe("a place it cannot write will stop the run, and nothing will be written
   });
 });
 
-describe("if one report cannot be written, neither will be", () => {
+describe("the run writes neither report when it cannot write one", () => {
   it.each([
     ["CLM-FMT-009", "no destination", (_folder: string) => [], (_folder: string, output: string) => output === ""],
     [
@@ -422,8 +421,8 @@ describe("two reports will not go in one file", () => {
   });
 });
 
-describe("a report will be written to a file the run does not read, even on the same device", () => {
-  it("[CLM-FMT-033] a report asked for at another file on the same device as the one the run read is written there", () => {
+describe("the run writes a report to a file it does not read, even one on the same disk", () => {
+  it("[CLM-FMT-033] a report asked for at another file on the same disk as the one the run read is written there", () => {
     const folder = temporaryDirectory("same-device-");
     writeFileSync(join(folder, "results.json"), "test results");
     writeFileSync(join(folder, "report.md"), "an earlier report");
@@ -435,7 +434,7 @@ describe("a report will be written to a file the run does not read, even on the 
   });
 });
 
-describe("a report will not be written over a file the run reads", () => {
+describe("the run refuses to write a report over a file it reads", () => {
   it("[CLM-FMT-013] a report asked for at the file the run read stops the run with exit 2, naming the file, and the file is as it was", () => {
     const results = join(temporaryDirectory("over-an-input-"), "results.json");
     writeFileSync(results, "test results");
