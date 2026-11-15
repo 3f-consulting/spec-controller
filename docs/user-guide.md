@@ -933,7 +933,6 @@ An error in the inputs is not a refusal. Its line in the report's `## Errors in 
 | `input-wrong-kind-of-path` | a named path is a file where its flag reads a folder, or the reverse |
 | `input-does-not-parse` | an input does not parse: a JSON or JUnit XML report, a feature file or a workflow; each feature file that does not parse has a line of its own |
 | `input-not-in-its-shape` | a report parses, but is not in the shape its tool writes; the line says where it first breaks |
-| `input-default-unreadable` | an input read by default cannot be read, such as the corpus, when the working directory the run started in is gone |
 
 **`balance`'s reports:**
 

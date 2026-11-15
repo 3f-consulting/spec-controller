@@ -1,8 +1,7 @@
 import type { EventEmitter } from "node:events";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import catalogue from "../messages/messages.en.json" with { type: "json" };
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
 type Guard = (error: unknown) => void;
@@ -86,20 +85,6 @@ describe("each run verdict will have its exit code", () => {
     const run = await binRun(["balance", "--format", "json"], folderOutOfBalance());
 
     expect({ exitCode: run.exitCode, reported: run.output.includes('"out-of-balance"') }).toEqual({ exitCode: 1, reported: true });
-  });
-});
-
-describe("a default that cannot be read will stop the run", () => {
-  it("[CLM-CLI-145] balance run from the command line in a working directory that has been removed: the run stops, no verdict, exit 2, and a complaint naming the corpus read by default and what is wrong", async () => {
-    const removed = join(temporaryDirectory("removed-"), "work");
-    mkdirSync(join(removed, "features"), { recursive: true });
-    rmSync(removed, { recursive: true });
-
-    const run = await binRun(["balance"], removed);
-
-    const complaint = run.error.split("\n").find((line) => line.startsWith(`[input-default-unreadable] ${catalogue["input-features"]} features,`));
-
-    expect({ exitCode: run.exitCode, output: run.output, whatIsWrong: complaint?.endsWith(catalogue["working-folder-removed"]) }).toEqual({ exitCode: 2, output: "", whatIsWrong: true });
   });
 });
 
