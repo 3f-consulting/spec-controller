@@ -39,7 +39,6 @@ export function runIdentityIn(
     origin: gitAnswer(folder, ["remote", "get-url", "origin"]),
     gitTopLevel: gitAnswer(folder, ["rev-parse", "--show-toplevel"]),
     toolSha: ownCheckoutHead(toolFolder),
-    toolInstalledAsPackage: toolFolder.split(sep).includes("node_modules"),
     toolVersion: versionAbove(toolFolder),
     runTime: `${new Date().toISOString().slice(0, 19)}Z`,
   };

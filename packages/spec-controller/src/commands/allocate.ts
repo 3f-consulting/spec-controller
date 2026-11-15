@@ -15,7 +15,7 @@ import type { Refusal } from "../runEnding/runEnding.js";
 
 export type AllocateOutcome =
   | { readonly answer: string; readonly notes: readonly AllocateNote[] }
-  | { readonly stop: "usage-error" | "unknown-feature-code"; readonly refusal: Refusal };
+  | { readonly refusal: Refusal };
 
 const FEATURES = "features";
 
@@ -59,20 +59,18 @@ function notesOf(asked: AllocationAsked, allocation: Extract<Allocation, { kind:
   return seen === undefined ? [] : [{ note: "highest-seen", code: seen.text, path: seen.path, line: seen.line, commit: seen.commit }];
 }
 
-const stopped = (refusal: Refusal): AllocateOutcome => ({ stop: "usage-error", refusal });
-
 export function allocate(asked: AllocationAsked, standingIn: string): AllocateOutcome {
   const standing = standingOf(standingIn);
-  if ("refusal" in standing) return stopped(standing.refusal);
+  if ("refusal" in standing) return { refusal: standing.refusal };
   const featureCodes = featureCodesUnder(standing.read.top);
-  if ("refusal" in featureCodes) return stopped(featureCodes.refusal);
+  if ("refusal" in featureCodes) return { refusal: featureCodes.refusal };
   const tree = treeLines(standing.read, asked.featureCode);
-  if ("refusal" in tree) return stopped(tree.refusal);
+  if ("refusal" in tree) return { refusal: tree.refusal };
   const history = standing.read.in === "repository" ? historyLines(standing.read.top, asked.featureCode) : { read: [] };
-  if ("refusal" in history) return stopped(history.refusal);
+  if ("refusal" in history) return { refusal: history.refusal };
   const allocation = allocationOf(asked, featureCodes.read, [...tree.read, ...history.read]);
   if (allocation.kind === "unknown-feature-code") {
-    return { stop: "unknown-feature-code", refusal: { key: "unknown-feature-code", values: { featureCode: allocation.featureCode, featureCodes: allocation.featureCodes.join(", ") } } };
+    return { refusal: { key: "unknown-feature-code", values: { featureCode: allocation.featureCode, featureCodes: allocation.featureCodes.join(", ") } } };
   }
   return { answer: writtenClaimCode(allocation.claimCode), notes: [...notesOf(asked, allocation), ...boundaryNotes(historyBoundaryOf(standing.read))] };
 }

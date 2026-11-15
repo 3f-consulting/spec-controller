@@ -43,7 +43,7 @@ const evidenceReconciliation = evidenceReconciliationOf({
   configurationErrors: [],
   features,
   provenance: provenanceOf(
-    { givenTarget: "acme/shop", toolInstalledAsPackage: true, toolVersion: "0.1.0", runTime: "2026-01-01T00:00:00Z" },
+    { givenTarget: "acme/shop", toolVersion: "0.1.0", runTime: "2026-01-01T00:00:00Z" },
     [{ name: "features", path: "/work/shop/features" }],
     targetFolder,
     repositoryOfOrigin,

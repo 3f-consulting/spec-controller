@@ -11,14 +11,8 @@ function codeAndValues(code: string, values: MessageValues): string {
   return named.length === 0 ? code : `${code} (${named.join(", ")})`;
 }
 
-// Each text is parsed once, however often it is asked for; <angle brackets> in it are text.
-const formats = new Map<string, IntlMessageFormat>();
-
-function formatOf(text: string): IntlMessageFormat {
-  const format = formats.get(text) ?? new IntlMessageFormat(text, "en", undefined, { ignoreTag: true });
-  formats.set(text, format);
-  return format;
-}
+// <Angle brackets> in a text are text.
+const formatOf = (text: string): IntlMessageFormat => new IntlMessageFormat(text, "en", undefined, { ignoreTag: true });
 
 export function textFor(catalogue: Catalogue, code: string, values: MessageValues = {}): string {
   const text = catalogue[code];

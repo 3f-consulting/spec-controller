@@ -15,7 +15,7 @@ const lastSegment = (path: string): string | undefined => {
 };
 
 // A URL's scheme, then its path with no user, password, query or fragment.
-const URL_FORM = /([a-z][a-z0-9+.-]*):\/\/[^/?#]*([^?#]*)/i;
+const URL_FORM = /([a-z][a-z0-9+.-]*):\/\/[^/?#]*([^?#]*)/;
 
 // The scp form: a host, with or without a user, a colon, then the path.
 const SCP_FORM = /[^/:]:(.+)/;

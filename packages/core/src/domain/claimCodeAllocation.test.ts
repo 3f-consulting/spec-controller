@@ -225,7 +225,6 @@ describe("allocate gives a code only under a feature code a feature file has, un
     repository.commit("first");
 
     expect(allocate({ featureCode: "ZZZ", asNewFeatureCode: false }, repository.top)).toEqual({
-      stop: "unknown-feature-code",
       refusal: { key: "unknown-feature-code", values: { featureCode: "ZZZ", featureCodes: "ONE, TWO" } },
     });
   });
@@ -238,7 +237,6 @@ describe("allocate gives a code only under a feature code a feature file has, un
     repository.commit("first");
 
     expect(allocate({ featureCode: "ZZZ", asNewFeatureCode: false }, repository.top)).toEqual({
-      stop: "unknown-feature-code",
       refusal: { key: "unknown-feature-code", values: { featureCode: "ZZZ", featureCodes: "ONE, TWO" } },
     });
   });
@@ -253,7 +251,6 @@ describe("allocate gives a code only under a feature code a feature file has, un
     repository.commit("second");
 
     expect(allocate({ featureCode: "ZZZ", asNewFeatureCode: false }, repository.top)).toEqual({
-      stop: "unknown-feature-code",
       refusal: { key: "unknown-feature-code", values: { featureCode: "ZZZ", featureCodes: "ONE, TWO" } },
     });
   });
@@ -345,7 +342,7 @@ function repositoryOfOne() {
   return repository;
 }
 
-const stoppedOn = (key: string, values: Readonly<Record<string, unknown>>) => ({ stop: "usage-error", refusal: { key, values } });
+const stoppedOn = (key: string, values: Readonly<Record<string, unknown>>) => ({ refusal: { key, values } });
 
 // What git said, as a refusal names it, and whether that is git's words without the newline git ends them with.
 function whatGitSaid(outcome: AllocateOutcome): { readonly said: unknown; readonly asWords: boolean } {

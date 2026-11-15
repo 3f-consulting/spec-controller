@@ -20,7 +20,7 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-071", "no target given, and the origin file:///, a file URL with no segment", { origin: "file:///" }, [], { target: "unknown-target" }],
     ["CLM-EVR-038", "a source SHA given, in a git repository at another commit", { givenSourceSha: "abc1234", head: "def5678" }, [], { sourceSha: "abc1234" }],
     ["CLM-EVR-040", "the tool running from its own checkout", { toolSha: "9f8e7d6", toolVersion: "0.0.0" }, [], { toolSha: "9f8e7d6" }],
-    ["CLM-EVR-041", "the tool installed as a package", { toolSha: "1a2b3c4", toolInstalledAsPackage: true, toolVersion: "0.1.256" }, [], { toolSha: undefined, toolVersion: "0.1.256" }],
+    ["CLM-EVR-041", "the tool installed as a package", { toolVersion: "0.1.256" }, [], { toolSha: undefined, toolVersion: "0.1.256" }],
     ["CLM-EVR-046", "the tool copied in, its nearest package.json with no version", {}, [], { toolSha: undefined, toolVersion: "unknown" }],
     ["CLM-EVR-042", "a Cucumber evidence report given", {}, [{ name: "cucumber", path: "cucumber.json" }], { inputs: [{ name: "cucumber", path: "cucumber.json" }] }],
     ["CLM-EVR-043", "no Cucumber evidence report given", {}, [{ name: "cucumber" }], { inputs: [{ name: "cucumber" }] }],
@@ -29,7 +29,7 @@ describe("the provenance says what the run used", () => {
   ] as const satisfies readonly (readonly [string, string, Partial<RunIdentity>, readonly ProvenanceInput[], Partial<Provenance>])[])(
     "[%s] a run that had %s has what it used in the provenance",
     (_clm, _had, identity, inputs, details) => {
-      const provenance = provenanceOf({ toolInstalledAsPackage: false, runTime: "2026-01-01T00:00:00Z", ...identity }, inputs, "/work/acme", repositoryOfOrigin);
+      const provenance = provenanceOf({ runTime: "2026-01-01T00:00:00Z", ...identity }, inputs, "/work/acme", repositoryOfOrigin);
 
       expect(Object.fromEntries(Object.keys(details).flatMap((detail) => (detail in provenance ? [[detail, provenance[detail as keyof Provenance]]] : [])))).toStrictEqual(
         Object.fromEntries(Object.entries(details).filter(([, value]) => value !== undefined)),

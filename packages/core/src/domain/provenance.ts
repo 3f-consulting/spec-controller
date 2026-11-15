@@ -24,7 +24,6 @@ export interface RunIdentity {
   readonly origin?: string;
   readonly gitTopLevel?: string;
   readonly toolSha?: string;
-  readonly toolInstalledAsPackage: boolean;
   readonly toolVersion?: string;
   readonly runTime: string;
 }
@@ -37,7 +36,7 @@ export function provenanceOf(identity: RunIdentity, inputs: readonly ProvenanceI
   return {
     target: identity.givenTarget ?? (identity.origin === undefined ? undefined : repositoryOf(identity.origin)) ?? "unknown-target",
     sourceSha: identity.givenSourceSha ?? identity.head ?? "unknown",
-    ...(identity.toolInstalledAsPackage || identity.toolSha === undefined ? {} : { toolSha: identity.toolSha }),
+    ...(identity.toolSha === undefined ? {} : { toolSha: identity.toolSha }),
     toolVersion: identity.toolVersion ?? "unknown",
     runTime: identity.runTime,
     inputs: inputs.map(({ name, path }) => (path === undefined ? { name } : { name, path: shownFromTarget(path, targetFolder) })),

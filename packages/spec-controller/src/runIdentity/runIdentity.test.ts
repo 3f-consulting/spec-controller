@@ -66,10 +66,10 @@ describe("the provenance says what the run used, as the run's repository and the
     ],
     [
       "CLM-EVR-041",
-      "installed as a package, version 0.1.256, in a checkout of its own",
+      "installed as a package, version 0.1.256",
       repositoryForTest,
-      { "packages/spec-controller/node_modules/@3f-consulting/spec-controller/package.json": '{"version":"0.1.256"}', "packages/spec-controller/node_modules/@3f-consulting/spec-controller/dist/cli.js": "" },
-      "packages/spec-controller/node_modules/@3f-consulting/spec-controller/dist",
+      { "node_modules/@3f-consulting/spec-controller/package.json": '{"version":"0.1.256"}', "node_modules/@3f-consulting/spec-controller/dist/cli.js": "" },
+      "node_modules/@3f-consulting/spec-controller/dist",
       () => ({ toolSha: undefined, toolVersion: "0.1.256" }),
     ],
     [

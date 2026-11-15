@@ -171,7 +171,7 @@ function highestSeen(featureCode: string, occurrences: readonly ClaimCodeOccurre
 // One past the highest number the feature code has ever had, for a code a feature file has, or one asked for as new.
 export function allocationOf({ featureCode, asNewFeatureCode }: AllocationAsked, featureCodes: readonly string[], occurrences: readonly ClaimCodeOccurrence[]): Allocation {
   const onAFile = featureCodes.includes(featureCode);
-  if (!onAFile && !asNewFeatureCode) return { kind: "unknown-feature-code", featureCode, featureCodes: [...new Set(featureCodes)].sort() };
+  if (!onAFile && !asNewFeatureCode) return { kind: "unknown-feature-code", featureCode, featureCodes: [...featureCodes].sort() };
   const highest = highestSeen(featureCode, occurrences);
   const number = String((highest?.number ?? 0) + 1).padStart(NUMBER_WIDTH, "0");
   return {
