@@ -17,7 +17,7 @@ const noted = (note: string, about?: string): string => (about === undefined ? t
 
 const ONE = { featureCode: "ONE", asNewFeatureCode: false };
 
-describe("the answer is one past the highest code the repository has contained", () => {
+describe("the answer is one past the highest code in the feature file, a tracked file or history", () => {
   it("[CLM-STG-061] a file git tracks, such as a workflow or a test, contained CLM-ONE-005: the answer is CLM-ONE-006, noting that file and line", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
@@ -91,7 +91,7 @@ describe("the answer is one past the highest code the repository has contained",
   });
 
   it.each([
-    ["CLM-STG-065", "a file git tracks contained SCN-ONE-", { "partial.txt": "SCN-ONE-\n" }, "first"],
+    ["CLM-STG-065", "a file git tracks contained SCN-ONE-, with no number", { "partial.txt": "SCN-ONE-\n" }, "first"],
     ["CLM-STG-068", "only a commit's message contained CLM-ONE-900", {}, "first CLM-ONE-900"],
     ["CLM-STG-069", "only a file git ignores contained CLM-ONE-900", { ".gitignore": "ignored.txt\n", "ignored.txt": "CLM-ONE-900\n" }, "first"],
   ] as const)("[%s] %s: the answer is CLM-ONE-002, noting the feature file and line", (_clm, _what, files, message) => {
@@ -130,7 +130,7 @@ function environmentForTest(variables: Readonly<Record<string, string>>): void {
 }
 
 describe("with no code seen, the answer is the feature code's first claim code", () => {
-  it("[CLM-STG-098] a feature file tagged @ONE with no claim code, and nothing else with a ONE code: the answer is CLM-ONE-001, with no note", () => {
+  it("[CLM-STG-098] a feature file tagged @ONE with no claim code, and nothing else with a ONE code: the answer is CLM-ONE-001, and nothing else, with no note", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", "@ONE\nFeature: one\n");
     repository.commit("first");
@@ -139,7 +139,7 @@ describe("with no code seen, the answer is the feature code's first claim code",
   });
 });
 
-describe("the answer is one past the highest code the repository has contained, by what git reads", () => {
+describe("the answer is one past the highest code in the feature file, a tracked file or history, by what git reads", () => {
   it("[CLM-STG-069] only a file the developer's own git configuration ignores contained CLM-ONE-900: the answer is CLM-ONE-002, noting the feature file and line", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
@@ -203,8 +203,8 @@ describe("the answer is one past the highest code the repository has contained, 
   });
 });
 
-describe("allocate takes only a feature code a feature file has", () => {
-  it("[CLM-STG-083] a feature code on a feature file in a subdirectory is found", () => {
+describe("allocate gives a code only under a feature code a feature file has, unless asked for a new one", () => {
+  it("[CLM-STG-083] allocate finds a feature code on a feature file in a subfolder", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
     repository.write("features/deep/er/nest.feature", featureFile("NEST", "CLM-NEST-004"));
@@ -214,9 +214,9 @@ describe("allocate takes only a feature code a feature file has", () => {
   });
 
   it.each([
-    ["CLM-STG-077", "no file mentions ZZZ", false],
-    ["CLM-STG-078", "a test fixture's feature file is tagged @ZZZ", true],
-  ] as const)("[%s] the features folder held files tagged @ONE and @TWO, where %s: a request for ZZZ stops as an unknown feature code, gives no code, and lists ONE and TWO", (_clm, _where, withFixture) => {
+    ["CLM-STG-077", "no file mentioned ZZZ", false],
+    ["CLM-STG-078", "a test fixture's feature file was tagged @ZZZ", true],
+  ] as const)("[%s] the features folder held files tagged @ONE and @TWO, and %s: a request for ZZZ stops as an unknown feature code, gives no code, and lists ONE and TWO", (_clm, _where, withFixture) => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
     repository.write("features/two.feature", featureFile("TWO", "CLM-TWO-001"));
@@ -229,7 +229,7 @@ describe("allocate takes only a feature code a feature file has", () => {
     });
   });
 
-  it("[CLM-STG-077] the features folder held files tagged @ONE and @TWO, and one with no feature code, where no file mentions ZZZ: a request for ZZZ stops as an unknown feature code, listing ONE and TWO", () => {
+  it("[CLM-STG-077] the features folder held files tagged @ONE and @TWO, and one with no feature code, and no file mentioned ZZZ: a request for ZZZ stops as an unknown feature code, listing ONE and TWO", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
     repository.write("features/two.feature", featureFile("TWO", "CLM-TWO-001"));
@@ -272,7 +272,7 @@ describe("allocate takes only a feature code a feature file has", () => {
     ["CLM-STG-080", "ZZ", "CLM-ZZ-001", []],
     ["CLM-STG-081", "ONE", "CLM-ONE-004", [{ note: "feature-code-on-a-file", featureCode: "ONE" }]],
     ["CLM-STG-082", "OLD", "CLM-OLD-008", []],
-  ] as const)("[%s] --new gives the next code for %s, as a new feature code: the answer is %s, with only the notes the claim names", (_clm, featureCode, answer, notes) => {
+  ] as const)("[%s] a request for a new feature code gives the next code for %s: the answer is %s, with only the notes the claim names", (_clm, featureCode, answer, notes) => {
     const repository = repositoryForTest();
     repository.write("old.txt", "CLM-OLD-007\n");
     repository.commit("old");
@@ -285,7 +285,7 @@ describe("allocate takes only a feature code a feature file has", () => {
     expect({ outcome, written: notesWritten(outcome) }).toEqual({ outcome: { answer, notes }, written: notes.map(({ note, featureCode: about }) => noted(note, about)) });
   });
 
-  it("[CLM-STG-086] --new in a repository with no features folder gives the feature code's first claim code", () => {
+  it("[CLM-STG-086] a request for a new feature code, with no features folder, gives its first claim code", () => {
     const repository = repositoryForTest();
     repository.write("README.md", "nothing\n");
     repository.commit("first");
@@ -313,7 +313,7 @@ function copyWithNoGit(): string {
 }
 
 describe("allocate says what history it did not read", () => {
-  it("[CLM-STG-075] the developer's copy is not a git repository: the answer is CLM-ONE-002, noting that no history was read", () => {
+  it("[CLM-STG-075] the developer's copy was not a git repository: the answer is CLM-ONE-002, noting that no history was read", () => {
     const outcome = allocate(ONE, copyWithNoGit());
 
     expect(outcome).toMatchObject({ answer: "CLM-ONE-002" });
@@ -321,13 +321,13 @@ describe("allocate says what history it did not read", () => {
     expect(notesWritten(outcome)).toContain(noted("no-history-read"));
   });
 
-  it("[CLM-STG-075] the developer's copy is not a git repository, and the developer's git speaks German: the answer is CLM-ONE-002, noting that no history was read", () => {
+  it("[CLM-STG-075] the developer's copy was not a git repository, and the developer's git speaks German: the answer is CLM-ONE-002, noting that no history was read", () => {
     environmentForTest({ LANG: "en_US.UTF-8", LANGUAGE: "de" });
 
     expect(allocate(ONE, copyWithNoGit())).toEqual({ answer: "CLM-ONE-002", notes: [{ note: "highest-seen", code: "CLM-ONE-001", path: "features/one.feature", line: 4 }, { note: "no-history-read" }] });
   });
 
-  it("[CLM-STG-076] the developer's copy is a shallow clone from after that line: the answer is CLM-ONE-002, noting that history before the clone's first commit was not read", () => {
+  it("[CLM-STG-076] the developer's copy was a shallow clone from after that line: the answer is CLM-ONE-002, noting that history before the clone's first commit was not read", () => {
     const { top, firstCommit } = shallowCloneAfterTheLine();
     const outcome = allocate(ONE, top);
 
@@ -336,11 +336,11 @@ describe("allocate says what history it did not read", () => {
     expect(notesWritten(outcome)).toContain(noted("history-before", firstCommit));
   });
 
-  it("[CLM-STG-087] with no git repository and no code seen, --new ZZ answers CLM-ZZ-001, noting that no history was read", () => {
+  it("[CLM-STG-087] the developer's copy was not a git repository: the next code for ZZ, as a new feature code, is CLM-ZZ-001, and nothing else, noting that no history was read", () => {
     expect(allocate({ featureCode: "ZZ", asNewFeatureCode: true }, copyWithNoGit())).toEqual({ answer: "CLM-ZZ-001", notes: [{ note: "no-history-read" }] });
   });
 
-  it("[CLM-STG-088] in a shallow clone, with no code seen, --new ZZ answers CLM-ZZ-001, noting that history before the clone's first commit was not read", () => {
+  it("[CLM-STG-088] the developer's copy was a shallow clone: the next code for ZZ, as a new feature code, is CLM-ZZ-001, and nothing else, noting that history before the clone's first commit was not read", () => {
     const { top, firstCommit } = shallowCloneAfterTheLine();
 
     expect(allocate({ featureCode: "ZZ", asNewFeatureCode: true }, top)).toEqual({ answer: "CLM-ZZ-001", notes: [{ note: "history-before", commit: firstCommit }] });
@@ -439,7 +439,7 @@ describe("allocate names what it could not read, and gives no code", () => {
     expect(allocate(ONE, repository.top)).toEqual(stoppedOn("feature-file-does-not-parse", { file: "features/broken.feature" }));
   });
 
-  it("[CLM-STG-090] allocate still answers when a nested checkout holds a folder it cannot read", () => {
+  it("[CLM-STG-090] allocate still answers when a nested checkout has a folder it cannot read", () => {
     const repository = repositoryOfOne();
     nestedCheckoutIn(repository, "nested");
     repository.write("nested/locked/inside.txt", "kept\n");

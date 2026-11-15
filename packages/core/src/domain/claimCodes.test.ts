@@ -4,7 +4,7 @@ import { allocationOf, claimCodeErrorsOf, claimCodeFrom, featureCodeOfFile, isFe
 
 const is = (found: boolean, what: string): string => `${found ? "be" : "not be"} a ${what}`;
 
-describe("a feature code is two to five uppercase letters or digits", () => {
+describe("an id is a feature code, a claim code or a retired scenario code only in that form", () => {
   it.each([
     ["CLM-STG-037", "AB", "be a feature code"],
     ["CLM-STG-038", "ABCDE", "be a feature code"],
@@ -12,32 +12,28 @@ describe("a feature code is two to five uppercase letters or digits", () => {
     ["CLM-STG-040", "A", "not be a feature code"],
     ["CLM-STG-041", "ABCDEF", "not be a feature code"],
     ["CLM-STG-042", "abc", "not be a feature code"],
-  ])("[%s] the id %s will %s", (_clm, code, result) => {
+  ])("[%s] the id %s, checked against the feature code form, will %s", (_clm, code, result) => {
     expect(is(isFeatureCode(code), "feature code")).toBe(result);
   });
-});
 
-describe("a claim code is CLM, a feature code and a number", () => {
   it.each([
     ["CLM-STG-044", "CLM-ONE-001", "be a claim code"],
     ["CLM-STG-045", "CLM-ONE-7", "be a claim code"],
     ["CLM-STG-046", "CLM-ONE-1000", "be a claim code"],
     ["CLM-STG-047", "CLM-A-001", "not be a claim code"],
     ["CLM-STG-048", "CLM-ONE-", "not be a claim code"],
-  ])("[%s] the id %s will %s", (_clm, id, result) => {
+  ])("[%s] the id %s, checked against the claim code form, will %s", (_clm, id, result) => {
     expect(is(claimCodeFrom(id) !== undefined, "claim code")).toBe(result);
   });
-});
 
-// A retired scenario code counts only where allocation reads it: as the highest code seen under its feature code.
-describe("a retired scenario code is SCN, a feature code and a number", () => {
+  // A retired scenario code counts only where allocation reads it: as the highest code seen under its feature code.
   it.each([
     ["CLM-STG-049", "SCN-ONE-001", "ONE", "be a retired scenario code"],
     ["CLM-STG-050", "SCN-ONE-7", "ONE", "be a retired scenario code"],
     ["CLM-STG-051", "SCN-ONE-1000", "ONE", "be a retired scenario code"],
     ["CLM-STG-052", "SCN-A-001", "A", "not be a retired scenario code"],
     ["CLM-STG-053", "SCN-ONE-", "ONE", "not be a retired scenario code"],
-  ])("[%s] the id %s, under the feature code %s, will %s", (_clm, id, featureCode, result) => {
+  ])("[%s] the id %s, under the feature code %s, checked against the retired scenario code form, will %s", (_clm, id, featureCode, result) => {
     const allocation = allocationOf({ featureCode, asNewFeatureCode: true }, [], [{ text: id, path: "notes.txt", line: 1 }]);
 
     expect(is("highestSeen" in allocation, "retired scenario code")).toBe(result);
@@ -142,7 +138,7 @@ describe("a misplaced or clashing claim code will be a claim code error", () => 
 
 const IN_THE_FILE = { path: "features/one.feature", line: 4 };
 
-describe("the answer is one past the highest code the repository has contained", () => {
+describe("the answer is one past the highest code in the feature file, a tracked file or history", () => {
   it.each([
     ["CLM-STG-061", "@CLM-ONE-001", "# CLM-ONE-005", "006", "CLM-ONE-005"],
     ["CLM-STG-063", "@CLM-ONE-001", "# SCN-ONE-005", "006", "SCN-ONE-005"],
@@ -162,7 +158,7 @@ describe("the answer is one past the highest code the repository has contained",
   });
 });
 
-describe("a feature code no feature file has stops it, listing those that do", () => {
+describe("allocate refuses a feature code no feature file has, and lists those that have one", () => {
   it("[CLM-STG-077] feature files tagged @TWO and @ONE, and no file mentioning ZZZ, stop the request for ZZZ as an unknown feature code listing ONE and TWO, in alphabetical order", () => {
     expect(allocationOf({ featureCode: "ZZZ", asNewFeatureCode: false }, ["TWO", "ONE"], [{ text: "  @CLM-ONE-001", ...IN_THE_FILE }])).toEqual({
       kind: "unknown-feature-code",
@@ -172,7 +168,7 @@ describe("a feature code no feature file has stops it, listing those that do", (
   });
 });
 
-describe("--new gives the next code for any well-formed feature code", () => {
+describe("a request for a new feature code gives the next code for any well-formed one", () => {
   it.each([
     ["CLM-STG-080", "ZZ", { claimCode: { featureCode: "ZZ", number: "001" }, featureCodeAlreadyOnAFile: false }],
     ["CLM-STG-081", "ONE", { claimCode: { featureCode: "ONE", number: "004" }, highestSeen: { text: "CLM-ONE-003", ...IN_THE_FILE }, featureCodeAlreadyOnAFile: true }],
