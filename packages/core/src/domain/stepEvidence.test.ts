@@ -230,9 +230,12 @@ describe("a runner is recognised only as the command a step runs", () => {
   it.each([
     ["CLM-OBS-005", "gradle lint", "gradle test", true],
     ["CLM-OBS-006", "eslint vitest.config.ts", "vitest", true],
-    ["CLM-OBS-007", "vitest run | tee out.txt", "vitest", true],
   ] as const)("[%s] a step running %s, with %s as its unit runner, will be a fitness function", (_clm, run, runner, fitnessFunction) => {
     expect(isFitnessFunction(run, runner)).toBe(fitnessFunction);
+  });
+
+  it.each(shellVariants["CLM-OBS-007"].variants)("[CLM-OBS-007] a step running %s, with vitest as its unit runner, will be a fitness function", (run) => {
+    expect(isFitnessFunction(run, "vitest")).toBe(true);
   });
 
   it.each(shellVariants["CLM-OBS-011"].variants)("[CLM-OBS-011] a step running pnpm lint, then vitest run after %s, will not be a fitness function", (separator) => {

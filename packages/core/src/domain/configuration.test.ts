@@ -42,6 +42,15 @@ describe("balance takes each configuration setting it can use as the runner, non
     });
   });
 
+  it('[CLM-CFG-010] a specController block with "ci.yaml:ci:Install dependencies" in notChecks, with ci.yaml read, whose job ci had the step Install dependencies, takes that step as a non-check', () => {
+    const ciRead = [{ workflow: "ci.yaml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
+
+    expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yaml:ci:Install dependencies"] } }, ciRead)).toEqual({
+      configuration: { ...NONE, nonChecks: [{ workflow: "ci.yaml", job: "ci", step: "Install dependencies" }] },
+      errors: [],
+    });
+  });
+
   it('[CLM-CFG-023] a specController block with "nightly.yml:ci:Install dependencies" in notChecks, with only ci.yml read, takes that step as a non-check', () => {
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
@@ -70,24 +79,25 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
       { kind: "not-checks-entry-matches-no-step", entry: "ci.yml:lint:Install dependencies" },
     ],
     ["CLM-CFG-016", '"Install dependencies" in notChecks', { notChecks: ["Install dependencies"] }, { kind: "not-checks-entry-not-a-step-name", entry: "Install dependencies" }],
-    [
-      "CLM-CFG-016",
-      '"ci.yml:ci:Install dependencies", after a line break, in notChecks',
-      { notChecks: ["\nci.yml:ci:Install dependencies"] },
-      { kind: "not-checks-entry-not-a-step-name", entry: "\nci.yml:ci:Install dependencies" },
-    ],
-    [
-      "CLM-CFG-016",
-      '"ci.yml:ci:Install dependencies", before a line break, in notChecks',
-      { notChecks: ["ci.yml:ci:Install dependencies\n"] },
-      { kind: "not-checks-entry-not-a-step-name", entry: "ci.yml:ci:Install dependencies\n" },
-    ],
     ["CLM-CFG-019", '"notChecks": "Install"', { notChecks: "Install" }, { kind: "configuration-wrong-kind", entry: "notChecks" }],
     ["CLM-CFG-020", "3 in deferralTags", { deferralTags: [3] }, { kind: "configuration-wrong-kind", entry: "deferralTags[0]" }],
   ] as const)("[%s] a specController block with %s leaves it out, finding its error naming the setting", (_clm, _setting, block, error) => {
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
     expect(targetConfigurationFrom({ specController: block }, ciRead)).toEqual({ configuration: NONE, errors: [error] });
+  });
+
+  // Each variant of a notChecks entry beside a line break, as the entry is written.
+  const withALineBreak: Readonly<Record<string, string>> = {
+    "a line break before it": "\nci.yml:ci:Install dependencies",
+    "a line break after it": "ci.yml:ci:Install dependencies\n",
+  };
+
+  it.each(manifestVariants["CLM-CFG-016"].variants)('[CLM-CFG-016] a specController block with "ci.yml:ci:Install dependencies" with %s in notChecks leaves it out, finding its error naming the entry', (variant) => {
+    const entry = withALineBreak[variant]!;
+    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
+
+    expect(targetConfigurationFrom({ specController: { notChecks: [entry] } }, ciRead)).toEqual({ configuration: NONE, errors: [{ kind: "not-checks-entry-not-a-step-name", entry }] });
   });
 });
 

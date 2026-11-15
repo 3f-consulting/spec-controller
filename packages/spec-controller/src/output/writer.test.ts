@@ -234,6 +234,7 @@ describe("both reports are written to a place that discards what it is given", (
 
 describe("a place it cannot write will stop the run, and nothing will be written", () => {
   it.each([
+    ["CLM-FMT-008", "an empty path", "may-not-be-written", (_folder: string): string => "", (_place: string): boolean => true],
     [
       "CLM-FMT-008",
       "a file it may not write",
@@ -421,6 +422,21 @@ describe("two reports will not go in one file", () => {
     const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${file}`, "--format", `json:${file}`]), [], RECONCILIATION, streams, AS_ASKED));
 
     expect({ ending, complaint: error.join(""), made: existsSync(file) }).toEqual({ ending: 2, complaint: refused("outputs-share-file", { reports: `md:${file}, json:${file}` }), made: false });
+  });
+
+  it("[CLM-FMT-010] one report at Report.md and the other at report.md, neither made yet: on a volume that folds case they are one file and the run stops, and on one that does not each is written", () => {
+    const folder = temporaryDirectory("one-new-file-by-case-");
+    // Whether the volume folds case, as the system answers for a file made and looked up by its other case.
+    writeFileSync(join(folder, "probe"), "");
+    const foldsCase = existsSync(join(folder, "PROBE"));
+    const [upper, lower] = [join(folder, "Report.md"), join(folder, "report.md")];
+    const { error, streams } = capturedStreams();
+
+    const ending = endingOf(() => writeReports(outputsAskedFor(["--format", `md:${upper}`, "--format", `json:${lower}`]), [], RECONCILIATION, streams, AS_ASKED));
+
+    expect({ ending, complaint: error.join("") }).toEqual(
+      foldsCase ? { ending: 2, complaint: refused("outputs-share-file", { reports: `md:${upper}, json:${lower}` }) } : { ending: 0, complaint: "" },
+    );
   });
 });
 

@@ -1,4 +1,8 @@
 {
+  "CLM-OBS-007": {
+    "class": "a runner piped onward, into a command or a compound command",
+    "variants": ["vitest run | tee out.txt", "vitest run | while read -r line; do echo \"$line\"; done", "vitest run | if true; then cat; fi", "vitest run | (cat)"]
+  },
   "CLM-OBS-009": {
     "class": "a package manager running a script whose script runs the unit runner",
     "variants": [
