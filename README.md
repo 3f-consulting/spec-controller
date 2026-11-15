@@ -153,13 +153,13 @@ Here is part of the report for a larger set of scenarios, with a CI pipeline: th
 
 ## Claim Reconciliations
 
-| Claim | Fitness | Unit | Verdict | Reconciling items |
+| Claim | Unit | Fitness | Verdict | Reconciling items |
 | --- | --- | --- | --- | --- |
-| CLM-CHK-001 |  | U/1 | balanced | — |
-| CLM-CHK-002 |  | U/1 | out-of-balance | unit: failing (`src/checkout.test.ts`: `[CLM-CHK-002] charges the card`) — `expected 1 charge, got 0` |
-| CLM-CHK-003 |  | U/- | out-of-balance | unit: missing |
-| CLM-CHK-005 | F/1 |  | balanced | — |
-| CLM-CHK-006 | F/1 |  | out-of-balance | fitness: failing (`ci.yml:build:Lint`) |
+| CLM-CHK-001 | U/1 |  | balanced | — |
+| CLM-CHK-002 | U/1 |  | out-of-balance | unit: failing (`src/checkout.test.ts`: `[CLM-CHK-002] charges the card`) — `expected 1 charge, got 0` |
+| CLM-CHK-003 | U/- |  | out-of-balance | unit: missing |
+| CLM-CHK-005 |  | F/1 | balanced | — |
+| CLM-CHK-006 |  | F/1 | out-of-balance | fitness: failing (`ci.yml:build:Lint`) |
 | CLM-CHK-004 | — | — | out-of-balance | unit: cites-unknown-claim (`src/checkout.test.ts`: `[CLM-CHK-004] applies the discount`) |
 | (unnamed claim) | — | — | out-of-balance | unit: cites-no-claim (`src/checkout.test.ts`) — 1 ran, 1 passed, 0 failed |
 ```
@@ -244,7 +244,7 @@ Pass whichever reports you have. The *What you need* section of [`docs/user-guid
 
 `balance` is a gate: an out-of-balance run exits `1`. To watch before you gate, add `--exit-zero`. You get the same report, but an out-of-balance verdict exits `0`. Remove the flag when you are ready to gate. On GitHub Actions, `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page.
 
-**Before you name anything, `balance` lists what ran.** With no scenarios, every test and CI step it reads lands on the unnamed claim, in groups by kind of quality check and file, each saying how many ran, passed and failed, and naming each that failed. That tells you nothing your CI does not already show. It is a starting inventory, and the value begins when you name the behaviours. Setup steps your pipeline runs, such as publishing or version bumps, are listed as checks until you name them in `specController.notChecks`. GitHub's own checkout, setup, cache and artifact actions are left out for you.
+**Before you name anything, `balance` lists what ran.** With no scenarios, each test and fitness function that cites no code lands on the unnamed claim, in groups by kind of quality check and file, each saying how many ran, passed and failed, and naming each that failed. One that cites a code no scenario has lands on a phantom claim. That tells you nothing your CI does not already show. It is a starting inventory, and the value begins when you name the behaviours. Steps that run your declared runners, GitHub's own checkout, setup, cache and artifact actions, the reconciler's own steps and the non-checks you name post nothing. Setup steps your pipeline runs, such as publishing or version bumps, are listed as checks until you name them in `specController.notChecks`.
 
 [`docs/quickstart.md`](./docs/quickstart.md) takes you from nothing to a first run in CI. [`docs/user-guide.md`](./docs/user-guide.md) is the full reference: every flag, every runner, and the CI wiring in detail.
 
@@ -260,7 +260,7 @@ This repository was built with Claude Code, by an author who does not write Type
 
 The repository follows the discipline it asks of you. Its own CI reconciles its own scenarios with `balance` on every run, and gates on:
 
-- mutation testing at 95% per scope;
+- every production source file in a mutation scope, which a scheduled sweep, not each run, mutation-tests;
 - cognitive complexity, function length and CRAP;
 - duplication and unused code;
 - dependency boundaries;

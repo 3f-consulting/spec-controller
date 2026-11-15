@@ -75,18 +75,18 @@ There is one form per runner, and nothing else. The scenario's tag line (`@CLM-<
 |---|---|---|---|
 | `unit` | a Vitest assertion | a bracketed `[CLM-…]` in its `it` title, else in an enclosing `describe` title; the most specific wins | `describe("[CLM-<FFF>-<NNN>] a feature code whose highest live claim code …", …)` |
 | `integration`, `e2e`, `performance` | the Cucumber report's run of the scenario | the scenario's own claim code, which the report carries | the same `@CLM-<FFF>-<NNN>` tag line, as Cucumber reports it |
-| `unit` | a pytest test, in its JUnit XML report | exactly one `clm` property on its `<testcase>`, which a `@pytest.mark.clm` marker and a `conftest.py` hook write | `@pytest.mark.clm("CLM-<FFF>-<NNN>")` on the test |
+| `unit` | a pytest test, in its JUnit XML report | `clm` properties on its `<testcase>` naming exactly one claim code, a code written twice counting once, which a `@pytest.mark.clm` marker and a `conftest.py` hook write | `@pytest.mark.clm("CLM-<FFF>-<NNN>")` on the test |
 | `fitness` | the CI step that runs the check, read on its `outcome` | the step's `id:` | `id: CLM-FIT-<NNN>` on the step, against `@fitness @CLM-FIT-<NNN>` |
 
 **A citation form counts only when a reader is built for it.** Nothing reads a bare or `@`-prefixed code in a test title, a marker comment in a step-definition file, a code in any other comment, a Playwright spec or a k6 script. Such a form cites nothing, so the evidence observation it was meant for posts to the **unnamed claim**. The four forms are the whole mechanism. The readers in [`packages/core/src/inputs/`](../packages/core/src/inputs/) hand over each title, `clm` property, tag and step `id:` as written, and [`packages/core/src/domain/postEvidenceObservation.ts`](../packages/core/src/domain/postEvidenceObservation.ts) reads the code each cites, by the one form in [`packages/core/src/domain/claimCodes.ts`](../packages/core/src/domain/claimCodes.ts).
 
 #### Two links, one shape
 
-spec-controller reconciles on two links. `analyse` judges a `document specification` against the `quality checks`; `balance` judges the `quality checks` against the `Application code`. A claim can appear in three places: in prose, in the document specification; in the quality checks, in two layers, the surface (a feature file, whose `executable claims` raise `evidence obligations`) and its implementations (unit tests, step definitions, performance tests and CI steps); and in the check results, as `evidence observations`. A codebase may have any of these, or none.
+Reconciliation has two links. The first judges a `document specification` against the `quality checks`, and spec-controller has no command for it; `balance` judges the `quality checks` against the `Application code`. A claim can appear in three places: in prose, in the document specification; in the quality checks, in two layers, the surface (a feature file, whose `executable claims` raise `evidence obligations`) and its implementations (unit tests, step definitions, performance tests and CI steps); and in the check results, as `evidence observations`. A codebase may have any of these, or none.
 
 Each link has two sides, and the table below gives both links the same cells. Each keeps its own words for them, so a reader can see they are parallel without their being merged:
 
-| | spec ↔ checks (`analyse`) | checks ↔ application (`balance`) |
+| | spec ↔ checks | checks ↔ application (`balance`) |
 |---|---|---|
 | **The two sides** | the document specification / the quality checks | `evidence obligations`, raised by the surface / `evidence observations`, from the implementations running against the application |
 | **On both sides, agreeing** | met | `satisfied` |
@@ -96,7 +96,7 @@ Each link has two sides, and the table below gives both links the same cells. Ea
 | **On both sides, but the evidence cannot be trusted** | | `never-ran`: the check never reached its assertions; `cannot-fail`: the check passed, but its step or its job sets `continue-on-error`, so its red might not fail the build |
 | **The claim is written so it cannot be reconciled** | | `no-claim-code`: the claim carries no code; `duplicate-claim-code`: two claims share one code; `no-quality-check`: the claim asks for no quality check, carrying a claim code and no kind-of-quality-check tag, and nothing cites it |
 
-A structural contract, in `analyse`, is not a claim at all: a test asserting an invariant rather than one input and one outcome.
+A structural contract, on the spec ↔ checks link, is not a claim at all: a test asserting an invariant rather than one input and one outcome.
 
 #### Reconciling
 
@@ -125,7 +125,7 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | Term | Meaning |
 |---|---|
 | `balance` | The command that reconciles the Gherkin scenarios against the test and CI evidence and writes the Evidence Reconciliation. It is a gate: an out-of-balance run exits `1`. |
-| `allocate` | The command that prints the next claim code for a feature code: one past the highest code the repository has ever carried. |
+| `allocate` | The command that prints the next claim code for a feature code: one past the highest code the repository has ever carried, whether written under `CLM` or under the retired `SCN`. |
 | evidence report | A report a test runner writes, which `balance` reads as runtime test evidence: the Vitest, Cucumber, pytest, Jest, JUnit or RSpec report, each named by its own flag. |
 | report of test results | An evidence report of tests that are not scenarios run step by step: the Vitest, Jest, pytest, JUnit or RSpec report. Its fallback is `unit`. |
 | report of scenario runs | An evidence report of Gherkin scenarios run step by step: the Cucumber report. Its fallback is `integration`. |
@@ -137,7 +137,7 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | nothing to reconcile | There is no Claim Reconciliation at all, so the run has no basis for a verdict: it is `not reconciled` (exit `3`). |
 | unexpected error | An error nothing else handles. Before the run verdict it stops the run with no verdict, at exit `4`; after it, the run keeps its verdict's exit code. |
 | usage error | A malformed invocation, refused before anything runs (exit `2`). |
-| error code | The stable code a refusal shows its reader in square brackets at the start of its line, such as `[unknown-flag]`, so the refusal can be quoted and looked up in the user guide whatever its words. An error in the inputs gives its code in the report. An unexpected error's line carries none, and nothing that is not an error carries one. |
+| error code | The stable code a refusal shows its reader in square brackets at the start of its line, such as `[unknown-flag]`, so the refusal can be quoted and looked up in the user guide whatever its words. An error in the inputs gives its code in the report. An unexpected error's line carries `unexpected-error`, and nothing that is not an error carries one. |
 | target | The repository being reconciled. `--target` names it in the report's provenance; without it, the provenance names the git checkout's `origin`, or `unknown-target`. |
 | provenance | The report's record of what was reconciled: the target, its source SHA, the tool SHA when there is one, the tool version, the time the run started, and the inputs the run read with their paths. So a reconciliation is reproducible and attributable. Its JSON key is `provenance`. |
 | source SHA | The target's commit, by default its resolved `HEAD`. |
@@ -155,10 +155,10 @@ A structural contract, in `analyse`, is not a claim at all: a test asserting an 
 | discovery scope | The CI workflows `--ci` names. Every step of every job in them is read. |
 | non-check | A step the target names under `specController.notChecks`, unless it is a reconciler step. The `step account` counts it under *Non-checks* (`nonChecks` in the JSON). Double-check: *Excluded*, a word seen standing in for it, means a non-check only where it is used in this sense. |
 | plumbing step | A step that only sets up the job: it checks out the source, caches, sets up a toolchain, or moves artefacts between jobs. It is neither a check nor a runner. The CI workflow's reader says which steps are plumbing. The `step account` counts them under *Plumbing* (`plumbing` in the JSON). A plumbing step the manifest also names a non-check is a non-check: it is counted with the non-checks. |
-| variant | One of the ways of writing an input that `balance` treats as the same, such as a launcher (`npx`, `uv run`) before a runner, or a package manager's way of running a script. One claim stands for each kind of input, and its variants are listed in a data file beside the reader that reads them, such as [`shell.variants.json`](../packages/core/src/inputs/shell.variants.json), keyed by that claim's code. The shell reader's launchers, wrappers and script runners are in the first; the places a step can write the step record from (`run:` and `env:`) and the plumbing actions are in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json), beside the workflow reader. A way of writing one not listed is not read as that kind. Double-check: *form*, *spelling*. |
+| variant | One of the ways of writing an input that `balance` treats as the same, such as a launcher (`npx`, `uv run`) before a runner, or a package manager's way of running a script. One claim stands for each kind of input, and its variants are listed in a `*.variants.json` data file beside the code that reads them, keyed by that claim's code. There is one for the shell reader, the workflow reader, the manifest reader, the Markdown report's quoting of names, and the counting of claim codes in comments. [`shell.variants.json`](../packages/core/src/inputs/shell.variants.json) holds the ways a step's command reaches a runner: the launchers, the wrappers and `xvfb-run`'s options, the package managers' ways of running a script, the runners named in several words, the command lists a runner may stand in, and the pipes onward that leave it a check. The places a step can write the step record from (`run:` and `env:`) and the plumbing actions are in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json). A way of writing one not listed is not read as that kind. Double-check: *form*, *spelling*. |
 | fitness function | A step in the discovery scope that is not a declared runner, the reconciler, a non-check or a plumbing step, and a runner step whose `id:` is a claim code the step record has. The `step account` counts it under *Fitness functions* (`fitnessFunctions` in the JSON). |
 | uncited fitness function | A fitness function whose step cites no claim. Its `evidence observation` lands on the unnamed claim. |
-| step account | The report's account of the CI steps the run read, `## Step account` after the `Summary` (`stepAccount` in the JSON). The Markdown prints it when the run read a CI workflow step, so every step read is accounted for; the JSON always has it, with no rows when none was read. It has a row per workflow and job counting the steps read, then the steps by disposition (runners, reconciler steps, non-checks, plumbing, fitness functions), and a total over the rows, which the Markdown prints when there is more than one job. |
+| step account | The report's account of the CI steps the run read, `## Step account` (`stepAccount` in the JSON). The Markdown prints it when the run read a CI workflow step, so every step read is accounted for; the JSON always has it, with no rows when none was read. It has a row per workflow and job counting the steps read, then the steps by disposition (runners, reconciler steps, non-checks, plumbing, fitness functions), and a total over the rows, which the Markdown prints when there is more than one job. |
 | check step | The CI step that already runs a check, carrying the check's claim code as its `id:`. |
 | citation | The claim code on a check step's `id:`: a citation of the scenario, never a definition of the check. |
 | converted fitness function | A fitness function whose CI step carries its `@fitness` scenario's claim code as its `id:`, so `balance` credits its result to that scenario. |

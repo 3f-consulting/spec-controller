@@ -11,7 +11,7 @@ This guide is for anyone who runs `spec-controller balance` against a project, s
 
 `spec-controller` does not run your tests. It reads the reports your tools already produce.
 
-You do not need feature files to start. A project with none, or with feature files not tagged to spec-controller's model, is in the `new-client` adoption state, and `balance` still reports every check its pipeline ran. Scenarios tagged to the model are what the `conformant` state adds, and they are not the first step.
+You do not need feature files to start. With none, or with feature files not tagged to spec-controller's model, `balance` still reports every check its pipeline ran. Tagged scenarios are not the first step.
 
 **Contents**
 
@@ -53,7 +53,7 @@ If your project uses pnpm: Node 25 and later do not bundle corepack, so install 
 | An RSpec JSON report, written by `rspec --format json --out <path>` | runtime test evidence | `--rspec` |
 | Your CI run's own step record: the `toJSON(steps)` dump your pipeline writes | evidence for every converted fitness function (see [Wiring into CI](#wiring-into-ci)) | `--ci-steps` |
 | Your CI config (`ci.yml`) | the scope discovery ranges over | `--ci` |
-| `package.json` | read with the CI config to check that an UNCONVERTED fitness function is wired into CI over the real source; also holds your configuration | `--package-json` |
+| `package.json` | its `scripts`, which runner recognition follows, and your configuration | `--package-json` |
 
 ---
 
@@ -105,7 +105,7 @@ npx spec-controller balance \
   - The origin is named without any user, password, token, query or fragment its remote carries.
   - An `https` or `ssh` URL, and an scp remote such as `git@github.com:owner/repo.git`, are named `owner/repo`.
   - A local path, and a `file:` URL holding no user, are named by the repository's folder, as in `web` for `/srv/git/web.git`.
-  - Any other form names no origin, `git://`, `http://` and a transport such as `ext::` among them, and neither does a remote whose user part can only be guessed at.
+  - Any other form names no origin, a `git://` URL or a bare name such as `foo` among them.
 
 For the smallest form of the command and every flag, see [Command reference](#command-reference--balance).
 
@@ -251,7 +251,7 @@ def test_offers_the_next_code():
 | a code no feature file carries | makes a [phantom claim](#report-rows-to-know) |
 | no `clm` property, or a value that is not a claim code | lands on the unnamed claim |
 | `clm` properties naming two or more different codes | **credits none of them**; it lands on the unnamed claim, naming every code, because one test proves exactly one scenario |
-| a module that fails to collect, or a test whose setup or teardown errors | never ran its proof: it posts a `never-ran` Evidence Observation, the run is not reconciled, as `unsound` (exit `3`), and the scenario it cites reads `missing` |
+| a module that fails to collect, or a test whose setup errors | never ran its proof: it posts a `never-ran` Evidence Observation, the run is not reconciled, as `unsound` (exit `3`), and the scenario it cites reads `missing` |
 
 ### Citing a scenario from Jest
 
@@ -292,7 +292,7 @@ describe("allocating the next number", () => {
 | The test | What it posts |
 |---|---|
 | passing, citing one scenario | answers that scenario |
-| failing, including a test under a `beforeAll` that threw | answers that scenario as failing |
+| failing | answers that scenario as failing |
 | todo or skipped | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its title | **credits none of them**; it lands on the unnamed claim, naming every code |
 | a test file that failed to run | never ran its proof: it posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`) |
@@ -331,16 +331,13 @@ gotestsum writes the subtest into the report under its full name: the test funct
 
 A nested subtest's name carries every enclosing subtest's name too. `balance` reads the code in the subtest's own segment, after the last `/`, first. Only when that segment carries none does it read a code in an enclosing subtest's segment, nearest first. Name the runner in the `specController` block as `"unit": "gotestsum"` (see [Naming your runners](#naming-your-runners--runners)).
 
-**A panic stops the tests after it.** A panicking subtest posts a failing observation, and the panic ends that package's test binary. The tests it had not yet reached never appear in the report, and the scenarios they cite read `missing` until the panic is fixed.
-
 **What a gotestsum report posts:**
 
 | The subtest | What it posts |
 |---|---|
 | passing, citing one scenario | answers that scenario |
-| failing, or panicking | answers that scenario as failing |
+| failing | answers that scenario as failing |
 | skipped | nothing, so the scenario it cites reads `missing` |
-| never started, because its enclosing test failed first, or a panic stopped its package | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its own name | **credits none of them**; it lands on the unnamed claim, naming every code |
 | in a package that failed to compile | never ran its proof: the package posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`) |
 
@@ -353,7 +350,7 @@ mvn test
 spec-controller balance --junit target/surefire-reports
 ```
 
-`balance` reads every `TEST-*.xml` file at the top of that directory, one per test class, and ignores the `.txt` summaries beside them. You can give a single report file instead.
+`balance` reads every `.xml` file at the top of that directory, one `TEST-*.xml` per test class, and ignores the `.txt` summaries beside them. You can give a single report file instead.
 
 **Surefire drops the display name by default.** It writes the method name into the report, so no test cites anything: every test lands on the unnamed claim, and every `@unit` scenario reads `missing`. Surefire's phrased reporter writes the display name instead. Set it on the Surefire plugin in your `pom.xml`:
 
@@ -413,7 +410,7 @@ A JUnit 5 test in Kotlin cites its scenario as a Java one does, with the code in
 spec-controller balance --junit build/test-results/test
 ```
 
-Gradle writes the display name into the report with no configuration (measured with Gradle 9.8.1 and JUnit Jupiter 5.11.4). `balance` reads every `TEST-*.xml` file at the top of that directory, one per test class, and ignores the `binary/` directory beside them.
+Gradle writes the display name into the report with no configuration (measured with Gradle 9.8.1 and JUnit Jupiter 5.11.4). `balance` reads every `.xml` file at the top of that directory, one `TEST-*.xml` per test class, and ignores the `binary/` directory beside them.
 
 A complete test file:
 
@@ -481,22 +478,21 @@ end
 }
 ```
 
-**Put the code on the example, not on its group.** `balance` reads the code in the example's own description first. Only when that carries none does it read a code in an enclosing `describe` or `context` description, and then every group's code counts: if one group cites a scenario and a group nested inside it cites a second, an example in the inner group credits neither. One code on each example is the form that cannot go wrong.
+**Put the code on the example, not on its group.** `balance` reads the code in the example's own description first. Only when that carries none does it read a code in an enclosing `describe` or `context` description. One code on each example is the form that cannot go wrong.
 
 `balance` reads RSpec's JSON report rather than JUnit XML because `rspec_junit_formatter` joins an example's description to its groups' descriptions, so a code on an example cannot be told from a code on its group.
 
 Name the runner in the `specController` block as `"unit": "rspec"` (see [Naming your runners](#naming-your-runners--runners)).
 
-**A pending example proves nothing until it passes.** RSpec runs a `pending` example and expects it to fail. If it fails, RSpec reports it pending and `balance` reads no evidence, as it does for `skip` and `xit`. If it passes, RSpec reports it failed, and the scenario it cites reads failing until the `pending` is removed.
+**A pending example proves nothing.** RSpec reports a `pending` example that fails as pending, and `balance` reads no evidence from it, as it does for `skip` and `xit`.
 
 **What an RSpec report posts:**
 
 | The example | What it posts |
 |---|---|
 | passing, citing one scenario | answers that scenario |
-| failing, including an example stopped by a `before` or `before(:context)` hook that raised | answers that scenario as failing |
-| `pending` and passing | answers that scenario as failing |
-| `skip`, `xit`, or `pending` and failing | nothing, so the scenario it cites reads `missing` |
+| failing | answers that scenario as failing |
+| skipped or pending (`skip`, `xit`, `pending`) | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its own description | **credits none of them**; it lands on the unnamed claim, naming every code |
 | in a spec file that failed to load | never ran its proof: the file posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`) |
 
@@ -581,19 +577,19 @@ Discovery is not Node-shaped: it does not match `package.json` script names agai
 - **A value is a runner's name or `null`.** `null` is a statement, not a blank: *we have no runner for this layer*. An omitted key says nothing about the layer.
 - **A key outside the four** is named in `## Errors in the inputs` as `runner-key-not-a-layer`, excludes nothing, and does not abort the run.
 - **No `runners` block at all is not an error.** Every step that is not a reconciler step, a non-check or plumbing becomes a fitness function. That is the zero-annotation report.
-- **A runner is recognised only as the command a step runs.** That is the command a step's line opens with, or a command after `&&` or `;` in it, past any `NAME=value` settings. A runner named anywhere else, as an argument or a path, leaves the step a check, and so does a step that pipes the runner's output into another command.
-- **A runner may be handed on to.** The launchers are `npx`, `pnpm exec`, `pnpm <bin>`, `yarn <bin>`, `bunx`, `python -m`, `python3 -m`, `uv run`, `poetry run`, `pipenv run`, `coverage run -m` and `bundle exec`, and launchers chain, so `uv run python -m pytest` reaches `pytest`. The wrappers `xvfb-run` and `timeout <duration>` hand on too, past their options and the values they take, so `timeout 75 pnpm test` runs `test`.
+- **A runner is recognised only as the command a step runs.** That is the command a line of the step opens with, or a command after `&&` or `;` in it, past any `NAME=value` settings. So a runner is recognised after a line that sets a variable, after a shell function's definition, and after an `if … fi` block. A runner named anywhere else, as an argument or a path, leaves the step a check, and so does a step that pipes the runner's output onward, into another command or into a compound command such as a `while` loop, an `if` block or a subshell.
+- **A runner may be handed on to.** The launchers are `npx`, `pnpm exec`, `pnpm <bin>`, `yarn <bin>`, `bunx`, `python -m`, `python3 -m`, `uv run`, `poetry run`, `pipenv run`, `coverage run -m` and `bundle exec`, and launchers chain, so `uv run python -m pytest` reaches `pytest`. The wrappers `xvfb-run` and `timeout <duration>` hand on too, past their options and the values they take (`xvfb-run`'s `-n`, `-s`, `-e`, `-f`, `-p` and `-w` each take one), so `timeout 75 pnpm test` runs `test`.
 - **A runner may be run by a `package.json` script.** A step runs a script as `npm test`, `npm run <script>`, `pnpm <script>`, `pnpm run <script>`, `pnpm -r <script>`, `pnpm --filter <name> <script>`, `yarn <script>`, `yarn run <script>` or `yarn workspace <name> <script>`, when the target's own `package.json` has a script by that name. The script is followed, through any scripts it runs in turn, however deep. A script that runs itself ends as a check.
-- **A runner named in several words is recognised where a command opens with all of them**, such as `mvn test`, `./mvnw test`, `./gradlew test`, `./gradlew check` or `./gradlew :app:test`. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: `"rspec"` covers `bundle exec rspec`.
+- **A runner named in several words is recognised where a command opens with all of them**, as `mvn test`, `./mvnw test`, `./gradlew test`, `./gradlew check`, `./gradlew :app:test` and `gotestsum` are. A build tool runs more than its tests, so name it with its test task: then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: `"rspec"` covers `bundle exec rspec`.
 - **Any other variant is a check.** A launcher, script runner or wrapper not listed here leaves the step a check that runs the runner. Add such a step to `notChecks`, or run the runner in one of the variants above.
 
-These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json): `actions/checkout`, `actions/cache`, `actions/cache/restore`, `actions/setup-*`, `actions/upload-artifact` and `actions/download-artifact`.
+These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json): `actions/checkout`, `actions/cache`, `actions/setup-*`, `actions/upload-artifact` and `actions/download-artifact`, each matched on its owner and repository, whatever path or ref follows.
 
 ### Naming your non-checks — `notChecks`
 
 `notChecks` lists the steps that are neither runners nor checks: the non-checks.
 
-- **Each entry is `<workflow file>:<job id>:<step name>`**, matched **exactly**: no prefix form, no glob, no bare name.
+- **Each entry is `<workflow file>:<job id>:<step name>`.** A bare step name is not an entry.
 - **To take a whole workflow out, narrow `--ci`** rather than listing its steps.
 - **A non-check is counted on the report**, not dropped. The report's **Step account** counts it under *Non-checks*, in the row of its workflow and job.
 - **An entry that matches no step of a workflow the run read is named** in `## Errors in the inputs`, as `not-checks-entry-matches-no-step`. An entry naming a workflow the run did not read is not judged.
@@ -619,7 +615,7 @@ The built-in set is `@wip`, `@ignore`, `@skip`, `@todo` and `@pending`. Add your
 
 - **Your list extends the built-in set and never replaces it.** `@wip` defers whatever you configure.
 - **An entry may be written bare or with its `@`.** Surrounding whitespace is ignored.
-- **A value that is not an array, or an entry that is not a string,** is read as absent rather than refused, and is named in `## Errors in the inputs` as `configuration-wrong-kind`.
+- **An entry that is not a string** is read as absent rather than refused, and is named in `## Errors in the inputs` as `configuration-wrong-kind`.
 - **A tag in neither list never defers the scenario**, however much it looks like a deferral tag.
 
 **A deferral tag is scenario scope. `@<quality-check-kind>pending` is not.** `@integrationpending` is ignored: it raises no integration obligation, so a passing `@unit` beside it still reconciles `satisfied`, and an integration test citing the scenario reads `not-asked-for`. A deferral tag puts off the whole scenario.
@@ -773,7 +769,7 @@ Two limits:
 
 The output is the **Evidence Reconciliation**, the whole reconciliation, in two renderings of the same model:
 
-- **Markdown**, for people. It opens with its title, `# Evidence Reconciliation`, and one sentence that says what the run verdict is and what it asks of you. Its sections then come in a fixed order: `## Run provenance`; `## Errors in the inputs`, when there are any; `## Run integrity`, when some evidence never ran; `## Summary`, with the run verdict and the totals; `## Step account`, when the run read a step from its CI workflows; and `## Claim Reconciliations`. Every table has a key above it saying what each column means. A section the run had nothing for is left out, except `## Claim Reconciliations`, which reads *None.* when there are none.
+- **Markdown**, for people. It opens with its title, `# Evidence Reconciliation`, and one sentence that says what the run verdict is and what it asks of you. Its sections then come in a fixed order: `## Run provenance`; `## Errors in the inputs`, when there are any; `## Run integrity`, when some evidence never ran; `## Summary`, with the run verdict and the totals; and `## Claim Reconciliations`. It also has `## Step account` when the run read a step from its CI workflows. Every table has a key above it saying what each column means. A section the run had nothing for is left out, except `## Claim Reconciliations`, which reads *None.* when there are none.
 - **JSON**, for machines: the same model, for diffing two runs, feeding a dashboard, or building automation on top. Its top-level keys are `claimReconciliations`, `runVerdict`, `totals`, `stepAccount`, `provenance`, `errorsInTheInputs` and `runIntegrity`, every one present: a part the run had nothing for is empty. `runVerdict.verdict` is the run verdict (`balanced`, `out-of-balance` or `not-reconciled`), and a `not-reconciled` verdict carries `runVerdict.why` (`unsound`, `claim-code-errors` or `nothing-to-reconcile`), so automation reads it instead of working it out from the Claim Reconciliations. The JSON keeps every count, zero included.
 
 Both carry a **provenance** recording what was reconciled: the target, the source SHA, the tool's commit when it runs from its own checkout, the tool version, the time the run started, and each input the run read with its path. So a reconciliation is reproducible and attributable. The Markdown gives each input the run read a line of its own, one read by default included, and leaves out an input it did not read. The JSON lists every input, with a `path` only for one the run read.
@@ -808,7 +804,7 @@ Then come the totals, in groups:
 
 The Markdown leaves out a kind no claim asks for and no evidence answers, an outcome no row has, the row with no kind when it is empty, and a place nothing was filed on. The JSON's `totals` keeps every kind, the row with no kind under `noKind`, the *All* row under `all`, and every outcome under each, at `0` where there is none.
 
-**`## Step account`** follows the Summary when the run read a step from its CI workflows. It has a row for each workflow and job the run read, counting its steps read, then its runners, reconciler steps, non-checks, plumbing and fitness functions. Each step read is counted once, so a row's last five counts add up to its steps read. A *Total* row sums the jobs when there is more than one.
+**`## Step account`** is in the Markdown when the run read a step from its CI workflows. It has a row for each workflow and job the run read, counting its steps read, then its runners, reconciler steps, non-checks, plumbing and fitness functions. Each step read is counted once, so a row's last five counts add up to its steps read. A *Total* row sums the jobs when there is more than one.
 
 ### The Claim Reconciliations
 
@@ -845,7 +841,7 @@ Evidence that never ran and names no claim, or a code several scenarios share, l
 
 ### Passes that cannot fail
 
-The outcome to watch for is **cannot-fail**: a fitness function that is green, but whose CI step or job sets `continue-on-error: true`, so its red might not fail the CI run. That makes a green CI lie. A `continue-on-error` written as an expression is read as not set. Given the run's step record (`--ci-steps`), the step's own outcome answers the row: a swallowed red reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
+The outcome to watch for is **cannot-fail**: a fitness function that is green, but whose CI step or job sets `continue-on-error: true`, so its red might not fail the CI run. That makes a green CI lie. Given the run's step record (`--ci-steps`), the step's own outcome answers the row: a swallowed red reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
 
 ### What counts as a claim code
 
@@ -929,10 +925,10 @@ An error in the inputs is not a refusal. Its line in the report's `## Errors in 
 | Code | Meaning |
 |---|---|
 | `input-absent` | a named input does not exist |
-| `input-not-permitted` | the tool may not read a named input |
+| `input-not-permitted` | the tool may not read an input, named or read by default |
 | `input-wrong-kind-of-path` | a named path is a file where its flag reads a folder, or the reverse |
 | `input-does-not-parse` | an input does not parse: a JSON or JUnit XML report, a feature file or a workflow; each feature file that does not parse has a line of its own |
-| `input-not-in-its-shape` | a report parses, but is not in the shape its tool writes; the line says where it first breaks |
+| `input-not-in-its-shape` | a report, the step record or the manifest parses, but is not in its shape, a `specController` block that is not an object included; the line says where it first breaks |
 
 **`balance`'s reports:**
 
@@ -979,7 +975,7 @@ Run `spec-controller --help` for the top-level summary of the commands. Run `spe
 | `--junit <report.xml\|dir>` | A JUnit XML report, or a directory of them, from any runner that writes one: runtime unit test evidence. For example, for Go, `gotestsum --junitfile <path>` writes one; Maven Surefire writes the `target/surefire-reports` directory for a Java suite; Gradle writes `build/test-results/test` for a Kotlin one. A test cites its scenario with the code in square brackets in its name. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from Go](#citing-a-scenario-from-go), [Citing a scenario from Java](#citing-a-scenario-from-java) and [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin). |
 | `--rspec <report.json>` | An RSpec JSON report (`rspec --format json --out <path>`): runtime unit test evidence. An example cites its scenario with the code in square brackets in its description. Use it with `--vitest`, instead of it, or not at all. See [Citing a scenario from RSpec](#citing-a-scenario-from-rspec). |
 | `--cucumber <report.json>` | A Cucumber JSON report: runtime test evidence. |
-| `--ci <workflow.yml\|dir>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where the tool finds an UNCONVERTED fitness function running over the real source, and where a check step's `id:` supplies the claim code that its result cites. |
+| `--ci <workflow.yml\|dir>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where a check step's `id:` supplies the claim code that its result cites. |
 | `--package-json <path>` | The target's `package.json`: its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see [Configuration](#configuration--the-speccontroller-block)). A fitness function is named by its `@fitness` scenario and by the CI step whose `id:` is that scenario's claim code; no manifest key names one. Defaults to `package.json` in the working directory. |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did: the `toJSON(steps)` dump, which is the evidence for converted fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance: the project this run reconciled. |
@@ -1001,18 +997,18 @@ The rules below are all checked before anything is emitted. A run that breaks on
 
 **At most one output may go to stdout.** A path that names stdout itself (`/dev/stdout`, `/dev/fd/1`, `/proc/self/fd/1`, or a link to any of them) counts as stdout. So `--format md --format json:/dev/stdout` is refused, like `--format md --format json`.
 
-**No two outputs may share one regular file, however the file is named.** That covers the same path twice, the same format twice, `./` or an absolute spelling beside a relative one, a path through `..`, a symbolic link, a path through a linked directory, a hard link, and the file stdout is redirected into. The file is recognised by the operating system's identity for it, so on a case-insensitive volume `report.md` and `REPORT.MD` are one file. The refusal names both outputs. A destination that is not a regular file, such as `/dev/stderr` or `/dev/null`, may be given more than once, because writing it twice loses nothing.
+**No two outputs may share one file.** That covers the same path twice, a symbolic link to the other's file, and the file stdout is redirected into. The file is recognised by the operating system's identity for it, so on a case-insensitive volume `report.md` and `REPORT.MD` are one file. The refusal names both outputs. A destination that is not a regular file, such as `/dev/stderr` or `/dev/null`, may be given more than once, because writing it twice loses nothing.
 
-**No output may land on a file the run reads, however the file is named.** The files the run reads are:
+**No output may land on a file the run reads.** The files the run reads are:
 
 - the `--vitest`, `--cucumber`, `--pytest`, `--jest`, `--junit`, `--rspec`, `--ci-steps` or `--package-json` file, and each report in a `--junit` folder;
 - the `package.json` read by default;
 - any feature file of the `--features` corpus, or of the `features/` read by default;
 - the `--ci` workflow, any workflow of the `--ci` folder, or of the `.github/workflows` read by default.
 
-The file is recognised by its identity, as above. So a link, a hard link, or another spelling of an input counts, and so does stdout appended (`>>`) into one. The refusal names the output and the input. A file the run does not read, beside an input or inside one of its folders, is written as asked.
+The file is recognised by its identity, as above. So stderr redirected into an input counts when a report goes to stderr. The refusal names the output and the input. A file the run does not read, beside an input or inside one of its folders, is written as asked.
 
-**A path is written as given.** The directory it names must already exist, since `--format` creates none. A path that is a symbolic link to a file that does not exist yet is written through the link, creating the file it points to. A path that cannot be written (read-only, an existing directory, under a regular file, in a directory that does not exist, or a link that leads round to itself) is refused, naming the path and why.
+**A path is written as given.** The directory it names must already exist, since `--format` creates none. A path that is a symbolic link to a file that does not exist yet is written through the link, creating the file it points to. A path that cannot be written (an empty path, a file the tool may not write, an existing directory, a path in a directory that does not exist, or a link that leads round to itself) is refused, naming the path and why.
 
 ---
 
@@ -1032,7 +1028,7 @@ spec-controller allocate <FFF> --new
 # CLM-<FFF>-001
 ```
 
-The code is written under `CLM`, one past the highest number a claim code in the repository has **ever** carried for that feature code. So a number is never handed out again once a claim code has carried it, a retired number included, and every old reference to a code, in history, a chat or a stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and grows past them (`999` is followed by `1000`).
+The code is written under `CLM`, one past the highest number a code in the repository has **ever** carried for that feature code, whether written under `CLM` or under the retired `SCN`. So a number is never handed out again once a claim code has carried it, a retired number included, and every old reference to a code, in history, a chat or a stale document, keeps meaning what it meant. The number is at least three digits, zero-padded, and grows past them (`999` is followed by `1000`).
 
 - **The argument** is the feature code, `<FFF>`: two to five characters, each `A`–`Z` or `0`–`9`. A feature code is known when a feature file in `features/` at the top of the repository is headed with it. That is the corpus `balance` reads by default. A feature code that only history or a test fixture carries is not known.
 - **`--new`** starts a feature code no feature file's header carries yet, such as a first code in a tree with no feature files. Its first code is `001`, or one past any number the repository already carries for the feature code. Given for a feature code a header already carries, it answers as usual and says so on stderr.
@@ -1043,7 +1039,7 @@ The code is written under `CLM`, one past the highest number a claim code in the
   - when history is short, `no history was read: this is not a git repository` or `history was not read before the clone's first commit: <commit>`.
 - **Exit codes:**
   - `0` when it answers.
-  - `2` for a usage error (no feature code given, a feature code not in the claim-code form, a second feature code, a flag it does not take, or a file, folder or history it cannot read) or an unknown feature code. The error code says which it was (see [Error codes](#error-codes)), and it gives no code. An unknown feature code's refusal lists the feature codes the feature files carry.
+  - `2` for a usage error (no feature code given, a feature code that is not two to five uppercase letters or digits, a second feature code, a flag it does not take, or a file, folder or history it cannot read) or an unknown feature code. The error code says which it was (see [Error codes](#error-codes)), and it gives no code. An unknown feature code's refusal lists the feature codes the feature files carry.
   - It never refuses because history is short.
   - `--help` or `-h` among its arguments answers its help at `0`, unless another argument is refused: then the refusal and its help, at `2`.
 
@@ -1051,7 +1047,6 @@ The code is written under `CLM`, one past the highest number a claim code in the
 
 - Every text file in the repository, wherever you run it from: tracked files, and untracked files the repository does not ignore, since you allocate because you have just written a scenario.
 - The lines every commit on any branch or tag added. A merge is read against its first parent, so a code written in a conflict's resolution counts. Never commit messages: a code that only ever appeared in a message was never a scenario, and a message cannot be unwritten.
-- Outside a git repository, every text file under the folder it is run in.
 
 **Limits.**
 
@@ -1074,7 +1069,7 @@ The code is written under `CLM`, one past the highest number a claim code in the
 2. Name your runners, name your non-checks, or narrow `--ci`. See [Configuration](#configuration--the-speccontroller-block).
 3. To keep the report while you work it down without failing the build, add `--exit-zero`. Delete it when you are ready to gate.
 
-**A step I know is my test suite is reported as a check.** Runner recognition did not reach it. It recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. These are not reached: a suite run through a `uses:` action, one started by a launcher not on the list (`tox`, `nox`), one run as a project script (`hatch run test`), one with an option between a launcher and the runner (`uv run --frozen pytest`), one behind a wrapper not on the list (`nice`, `timeout`), or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
+**A step I know is my test suite is reported as a check.** Runner recognition did not reach it. It recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. These are not reached: a suite run through a `uses:` action, one started by a launcher not on the list (`tox`, `nox`), one run as a project script (`hatch run test`), one with an option between a launcher and the runner (`uv run --frozen pytest`), one behind a wrapper not on the list (`nice`, or `timeout` with no duration), or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
 
 **The run verdict reads *not reconciled, for claim code errors*.** The corpus files a claim code under the wrong feature file, or in a file with no header code, or two files share one header code, or a scenario carries more than one claim code, or an Outline carries a claim code beside a `clm` column. `## Errors in the inputs` names each by its handle and the files it is about. A misfiled code leaves every account reconciling, so the rest of the report is as it would be. A scenario carrying several codes, or an Outline carrying a code beside a `clm` column, has no account raised for it under any of them. The run exits `3` until the codes are filed correctly. See [Claim code errors](#claim-code-errors).
 

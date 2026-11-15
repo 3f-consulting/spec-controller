@@ -62,7 +62,7 @@ npx spec-controller balance \
 
 For the report command of every other runner, see [Every report, and the whole command](./user-guide.md#every-report-and-the-whole-command).
 
-**Before you name anything, `balance` lists what ran.** Each test and CI step it reads goes to the unnamed claim, in groups by kind of quality check and file. Each group says how many ran, passed and failed, and names each that failed. This list is a starting inventory. The value begins when you name the behaviours.
+**Before you name anything, `balance` lists what ran.** Each test and fitness function that cites no code goes to the unnamed claim, in groups by kind of quality check and file. Each group says how many ran, passed and failed, and names each that failed. One that cites a code no scenario has goes to a phantom claim. A step that runs a declared runner, GitHub's own checkout, setup, cache and artifact actions, the reconciler's own steps and a non-check post nothing. This list is a starting inventory. The value begins when you name the behaviours.
 
 ### Tell it which steps are your tests, and which check nothing
 
