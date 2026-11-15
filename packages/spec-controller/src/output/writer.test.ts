@@ -344,6 +344,21 @@ describe("two reports will not go in one file", () => {
 
     expect({ ending, complaint: error.join(""), made: existsSync(file) }).toEqual({ ending: 2, complaint: refused("outputs-share-file", { reports: `md:${file}, json:${file}` }), made: false });
   });
+
+  it("[CLM-FMT-010] one report at Report.md and the other at report.md, neither made yet: on a volume that folds case they are one file and the run stops, and on one that does not each is written", () => {
+    const folder = temporaryDirectory("one-new-file-by-case-");
+    // Whether the volume folds case, as the system answers for a file made and looked up by its other case.
+    writeFileSync(join(folder, "probe"), "");
+    const foldsCase = existsSync(join(folder, "PROBE"));
+    const [upper, lower] = [join(folder, "Report.md"), join(folder, "report.md")];
+    const { error, streams } = capturedStreams();
+
+    const ending = writeReports(outputsAskedFor(["--format", `md:${upper}`, "--format", `json:${lower}`]), [], reconciliation(), streams, AS_ASKED);
+
+    expect({ ending, complaint: error.join("") }).toEqual(
+      foldsCase ? { ending: 2, complaint: refused("outputs-share-file", { reports: `md:${upper}, json:${lower}` }) } : { ending: 0, complaint: "" },
+    );
+  });
 });
 
 describe("the run writes a report to a file it does not read, even one on the same disk", () => {

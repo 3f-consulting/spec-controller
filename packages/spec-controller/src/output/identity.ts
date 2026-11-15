@@ -30,6 +30,19 @@ export const whereItWillBe = (path: string): string =>
 // A stream named by its path, or by the link the path is.
 const streamNamedBy = (path: string): NamedStream["is"] | undefined => STREAM_NAMED.get(resolve(path)) ?? STREAM_NAMED.get(whereItWillBe(path));
 
+// A volume folds case when its folder, named in capitals, is the same folder.
+function foldsCase(folder: string): boolean {
+  const named = statSync(folder.toUpperCase(), PROBED);
+  const asWritten = statSync(folder, PROBED);
+  return named !== undefined && named.dev === asWritten?.dev && named.ino === asWritten.ino;
+}
+
+// A file not made yet is known by the path it will be made at, in one case where its volume folds case.
+function notMadeYet(path: string): FileIdentity {
+  const where = whereItWillBe(path);
+  return { is: "absent", path: foldsCase(dirname(where)) ? where.toLowerCase() : where };
+}
+
 // What a path names, through any link: one of the run's standard streams, a regular file, something else, or nothing
 // yet. A stream's path reports another device than the stream's own descriptor does, so a stream is known by name first.
 export function pathIdentity(path: string): FileIdentity {
@@ -37,7 +50,7 @@ export function pathIdentity(path: string): FileIdentity {
     const stream = streamNamedBy(path);
     if (stream !== undefined) return { is: stream };
     const stats = statSync(path, PROBED);
-    if (stats === undefined) return { is: "absent", path: whereItWillBe(path) };
+    if (stats === undefined) return notMadeYet(path);
     if (stats.isFile()) return regularFile(stats);
   } catch {
     // Names no file: a path the system cannot follow, such as one through a file.
