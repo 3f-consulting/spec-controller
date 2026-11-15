@@ -87,7 +87,7 @@
   "summary-balanced-key": "the claims whose every Quality Check Reconciliation is satisfied.",
   "summary-out-of-balance-key": "the claims with any other outcome.",
   "summary-kind-key": "the kind of quality check. No kind holds what a scenario asking for no kind of check gives, and All sums every row.",
-  "summary-evidence-obligations-key": "the evidence the claims ask for, one for each kind-of-check tag that applies.",
+  "summary-evidence-obligations-key": "the evidence the claims ask for, one for each kind-of-quality-check tag that applies.",
   "summary-evidence-observations-key": "the results of tests and fitness functions reported.",
   "summary-across-a-row": "Across a row",
   "summary-across-a-row-key": "the columns do not add up: one Evidence Obligation answered by two passing tests is 1 Evidence Obligation, 2 Evidence Observations and 2 Satisfied, as each Evidence Observation is its own Quality Check Reconciliation.",
