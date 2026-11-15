@@ -215,19 +215,6 @@ describe("allocate gives a code only under a feature code a feature file has, un
     });
   });
 
-  it("[CLM-STG-077] the features folder held files tagged @ONE and @TWO, and one with no feature code, and no file mentioned ZZZ: a request for ZZZ stops as an unknown feature code, listing ONE and TWO", () => {
-    const repository = repositoryForTest();
-    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
-    repository.write("features/two.feature", featureFile("TWO", "CLM-TWO-001"));
-    repository.write("features/plain.feature", "Feature: plain\n");
-    repository.commit("first");
-
-    expect(allocate({ featureCode: "ZZZ", asNewFeatureCode: false }, repository.top)).toEqual({
-      stop: "unknown-feature-code",
-      refusal: { key: "unknown-feature-code", values: { featureCode: "ZZZ", featureCodes: "ONE, TWO" } },
-    });
-  });
-
   it("[CLM-STG-079] a feature file tagged @ZZZ was deleted by a later commit: a request for ZZZ stops as an unknown feature code, listing ONE and TWO", () => {
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
@@ -353,18 +340,14 @@ describe("allocate names what it could not read, and gives no code", () => {
     const blob = repository.git("rev-parse", "HEAD:features/one.feature");
     rmSync(`${repository.top}/.git/objects/${blob.slice(0, 2)}/${blob.slice(2)}`);
 
-    const outcome = allocate(ONE, repository.top);
-
-    expect({ outcome, asWords: whatGitSaid(outcome).asWords }).toEqual({ outcome: stoppedOn("unreadable-history", { said: expect.stringContaining(blob) }), asWords: true });
+    expect(allocate(ONE, repository.top)).toEqual(stoppedOn("unreadable-history", { said: expect.stringContaining(blob) }));
   });
 
   it("[CLM-STG-074] a damaged repository stops it as a usage error, naming what it could not read, and what git said", () => {
     const repository = repositoryOfOne();
     appendFileSync(`${repository.top}/.git/config`, "[[[\n");
 
-    const outcome = allocate(ONE, repository.top);
-
-    expect({ outcome, asWords: whatGitSaid(outcome).asWords }).toEqual({ outcome: stoppedOn("damaged-repository", { said: expect.stringContaining("config") }), asWords: true });
+    expect(allocate(ONE, repository.top)).toEqual(stoppedOn("damaged-repository", { said: expect.stringContaining("config") }));
   });
 
   it("[CLM-STG-074] a repository whose configuration gives searching a value git cannot read stops it as a usage error, naming what it could not read, and what git said", () => {

@@ -1,7 +1,7 @@
 import {
   allocationOf,
   featureAsWrittenFrom,
-  featureCodeOfFile,
+  isFeatureCode,
   writtenClaimCode,
   type Allocation,
   type AllocationAsked,
@@ -31,8 +31,7 @@ function featureCodesUnder(top: string): Read<string[]> {
   }
   for (const { file, source } of sources) {
     try {
-      const featureCode = featureCodeOfFile(featureAsWrittenFrom(file, source));
-      if (featureCode !== undefined) featureCodes.push(featureCode);
+      featureCodes.push(...featureAsWrittenFrom(file, source).fileTags.filter(isFeatureCode));
     } catch {
       return { refusal: { key: "feature-file-does-not-parse", values: { file: relative(top, file) } } };
     }
