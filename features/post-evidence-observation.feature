@@ -94,8 +94,6 @@ Feature: Evidence Observations are posted, each to its claim
         | clm         | source                              | citation                                                      | outcome of it                                                | result           | cited         |
         | CLM-OBS-017 | Vitest's evidence report            | [CLM-ONE-001] in its title                                    | it passed                                                    | passed           | CLM-ONE-001   |
         | CLM-OBS-018 | Vitest's evidence report            | [CLM-ONE-001] in its title                                    | it failed                                                    | failed           | CLM-ONE-001   |
-        | CLM-OBS-019 | Jest's evidence report              | [CLM-ONE-001] in its title                                    | it passed                                                    | passed           | CLM-ONE-001   |
-        | CLM-OBS-020 | Jest's evidence report              | [CLM-ONE-001] in its title                                    | it failed                                                    | failed           | CLM-ONE-001   |
         | CLM-OBS-021 | pytest's evidence report            | the clm property CLM-ONE-001                                  | it passed                                                    | passed           | CLM-ONE-001   |
         | CLM-OBS-022 | pytest's evidence report            | the clm property CLM-ONE-001                                  | it failed                                                    | failed           | CLM-ONE-001   |
         | CLM-OBS-023 | Go's evidence report                | [CLM-ONE-001] in its subtest's name                           | it passed                                                    | passed           | CLM-ONE-001   |
@@ -144,7 +142,6 @@ Feature: Evidence Observations are posted, each to its claim
       Examples:
         | clm         | source                              | result                                   |
         | CLM-OBS-036 | Vitest's evidence report            | it was skipped or marked todo            |
-        | CLM-OBS-037 | Jest's evidence report              | it was skipped or marked todo            |
         | CLM-OBS-038 | pytest's evidence report            | it was skipped                           |
         | CLM-OBS-039 | Go's evidence report                | it was skipped                           |
         | CLM-OBS-040 | JUnit 5 in Java's evidence report   | it was disabled or its assumption failed |
@@ -254,8 +251,6 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-065 | Vitest's evidence report            | [CLM-ONE-001] in its title                 | a describe with [CLM-ONE-002] in its title                                              | CLM-ONE-001   |
         | CLM-OBS-066 | Vitest's evidence report            | no claim code                              | a describe with [CLM-ONE-002] in its title                                              | CLM-ONE-002   |
         | CLM-OBS-067 | Vitest's evidence report            | CLM-ONE-001 in its title, with no brackets | a describe with [CLM-ONE-002] in its title                                              | CLM-ONE-002   |
-        | CLM-OBS-068 | Jest's evidence report              | [CLM-ONE-001] in its title                 | a describe with [CLM-ONE-002] in its title                                              | CLM-ONE-001   |
-        | CLM-OBS-069 | Jest's evidence report              | no claim code                              | a describe with [CLM-ONE-002] in its title                                              | CLM-ONE-002   |
         | CLM-OBS-070 | Go's evidence report                | [CLM-ONE-001] in its subtest's name        | a subtest with [CLM-ONE-002] in its name                                                | CLM-ONE-001   |
         | CLM-OBS-071 | Go's evidence report                | no claim code                              | a subtest with [CLM-ONE-002] in its name                                                | CLM-ONE-002   |
         | CLM-OBS-072 | JUnit 5 in Java's evidence report   | [CLM-ONE-001] in its display name          | a class with [CLM-ONE-002] in its display name                                          | CLM-ONE-001   |

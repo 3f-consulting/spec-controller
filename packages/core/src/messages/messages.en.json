@@ -1,9 +1,4 @@
 {
-  "balanced-opening": "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention.",
-  "out-of-balance-opening": "Some claims lack the evidence they ask for, so the run is out of balance: the Claim Reconciliations below say what each needs.",
-  "unsound-opening": "Some evidence never ran, so the run cannot be relied on and is not reconciled: Run integrity names it.",
-  "claim-code-errors-opening": "Some claim codes are written where they do not belong, so the run is not reconciled: Errors in the inputs names them.",
-  "nothing-to-reconcile-opening": "No claim and no evidence were read, so there was nothing to reconcile and the run is not reconciled.",
   "provenance-heading": "Run provenance",
   "provenance-target": "Target repository",
   "provenance-source-sha": "Commit reconciled",
@@ -89,8 +84,6 @@
   "summary-kind-key": "the kind of quality check. No kind holds what a scenario asking for no kind of check gives, and All sums every row.",
   "summary-evidence-obligations-key": "the evidence the claims ask for, one for each kind-of-quality-check tag that applies.",
   "summary-evidence-observations-key": "the results of tests and fitness functions reported.",
-  "summary-across-a-row": "Across a row",
-  "summary-across-a-row-key": "the columns do not add up: one Evidence Obligation answered by two passing tests is 1 Evidence Obligation, 2 Evidence Observations and 2 Satisfied, as each Evidence Observation is its own Quality Check Reconciliation.",
   "outcome-satisfied-key": "an Evidence Obligation answered by an Evidence Observation that passed.",
   "outcome-failing-key": "an Evidence Obligation answered by an Evidence Observation that failed.",
   "outcome-cannot-fail-key": "an Evidence Obligation answered by an Evidence Observation that passed in a CI step or job that sets continue-on-error, so its red might not fail the build.",
@@ -123,12 +116,5 @@
   "kind-column-e2e-key": "E when the claim asks for an e2e test, - when it does not; then how many of its e2e tests ran, - for none.",
   "kind-column-performance-key": "P when the claim asks for a performance test, - when it does not; then how many of its performance tests ran, - for none.",
   "verdict-column-key": "balanced when every Quality Check Reconciliation is satisfied, out-of-balance otherwise.",
-  "items-column-key": "each Quality Check Reconciliation not satisfied, as its kind and outcome, then where to look and what it said. The key to the Summary's table by kind says what each outcome means.",
-  "claims-blank-cell": "A blank cell",
-  "claims-blank-cell-key": "the claim asks for no check of that kind, and none of that kind ran for it.",
-  "claims-dash": "—",
-  "claims-dash-key": "under a kind, the row of a phantom claim or the unnamed claim, which asks for nothing; under Reconciling items, none.",
-  "claims-unnamed-row": "On the unnamed claim's row",
-  "claims-unnamed-row-key": "each reconciling item is a group of its tests by kind, file and shared claim code, with how many ran, passed and failed, and the name of each that failed.",
-  "step-names-neither-action-nor-command": "the step at {place} names neither an action nor a command, so GitHub would not run its workflow"
+  "items-column-key": "each Quality Check Reconciliation not satisfied, as its kind and outcome, then where to look and what it said. The key to the Summary's table by kind says what each outcome means."
 }

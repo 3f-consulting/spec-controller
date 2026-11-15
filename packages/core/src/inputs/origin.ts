@@ -15,10 +15,10 @@ const lastSegment = (path: string): string | undefined => {
 };
 
 // A URL's scheme, then its path with no user, password, query or fragment.
-const URL_FORM = /^([a-z][a-z0-9+.-]*):\/\/[^/?#]*([^?#]*)/i;
+const URL_FORM = /([a-z][a-z0-9+.-]*):\/\/[^/?#]*([^?#]*)/i;
 
 // The scp form: a host, with or without a user, a colon, then the path.
-const SCP_FORM = /^[^/:]+:(.+)$/;
+const SCP_FORM = /[^/:]:(.+)/;
 
 // An origin as git's remote holds it. https and ssh, and the scp form, name owner/repo by their path's last two
 // segments; a local path or a file URL names its last. Any other form names none.

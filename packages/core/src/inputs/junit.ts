@@ -1,5 +1,6 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import type { FailureAsWritten, ResultInSuiteAsWritten, ResultsBySuiteAsWritten } from "../domain/postEvidenceObservation.js";
+import { TOP } from "./shape.js";
 
 // A JUnit XML evidence report, as far as its reader reads it: suites, nested or not, each holding its test cases.
 interface Element {
@@ -48,13 +49,13 @@ const suitesIn = (element: Element): Element[] => elementsIn(element, "testsuite
 
 export function whyXmlDoesNotParse(xml: string): string | undefined {
   const valid = XMLValidator.validate(xml);
-  return valid === true ? undefined : `${valid.err.msg} (${valid.err.line}:${valid.err.col})`;
+  return valid === true ? undefined : valid.err.msg;
 }
 
 // A JUnit report's top is a suite, or the suites element holding them.
 export const whereSuitesBreak = (xml: string): string | undefined => {
   const document = parser.parse(xml) as Element;
-  return document["testsuites"] === undefined && document["testsuite"] === undefined ? "$" : undefined;
+  return document["testsuites"] === undefined && document["testsuite"] === undefined ? TOP : undefined;
 };
 
 export function resultsBySuiteFrom(xml: string, from: "junit" | "pytest"): ResultsBySuiteAsWritten[] {

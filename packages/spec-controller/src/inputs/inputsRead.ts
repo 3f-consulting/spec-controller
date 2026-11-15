@@ -58,11 +58,11 @@ const failed = <Contents>(path: string, fault: InputFault, detail: string): Inpu
 
 const text = (code: string): string => textFor(appCatalogue, code);
 
-// What a reader said is wrong, on one line, so each complaint is one line.
-const saidOf = (error: unknown): string => (error instanceof Error ? error.message : String(error)).trim().replace(/\s*\n\s*/g, " ");
+// What a reader said is wrong, on one line, so each complaint is one line; every reader throws an Error.
+const saidOf = (error: unknown): string => (error as Error).message.trim().replace(/\s*\n\s*/g, " ");
 
-// A path that names nothing, or runs through a file, does not exist; any other failure to reach it is the tool's not to read it.
-const faultOf = (error: unknown): InputFault => (["ENOENT", "ENOTDIR"].includes(String((error as NodeJS.ErrnoException).code)) ? "absent" : "not-permitted");
+// A path that names nothing does not exist; any other failure to reach it is the tool's not to read it.
+const faultOf = (error: unknown): InputFault => ((error as NodeJS.ErrnoException).code === "ENOENT" ? "absent" : "not-permitted");
 
 function textAt(name: string, shown: string, path: string): InputRead<FileText> {
   try {
@@ -104,15 +104,13 @@ function xmlRead(file: FileText, from: "junit" | "pytest"): InputRead<Partial<In
   return breaks === undefined ? { ok: true, contents: { [from]: resultsBySuiteFrom(file.text, from) } } : failed(file.shown, "not-in-its-shape", breaks);
 }
 
-type PathKind = "file" | "folder" | "file-or-folder";
-
 interface InputReader {
-  readonly reads: PathKind;
+  // What its path must name: a file, unless it says a folder.
+  readonly reads?: "file" | "folder";
   // The endings of the files it reads in a folder, for an input that can name one.
   readonly endings?: readonly string[];
-  // What the input, and a file in its folder, are called in a complaint: their catalogue codes. A file in a folder
-  // with no name of its own is called as the input is.
-  readonly inputIs: string;
+  // What a file in its folder is called in a complaint: its catalogue code. A file in a folder with no name of its own is
+  // called as the input is.
   readonly fileIs?: string;
   readonly read: (files: readonly FileText[]) => InputRead<Partial<InputsRead>>[];
 }
@@ -123,25 +121,22 @@ const READERS = {
   features: {
     reads: "folder",
     endings: [".feature"],
-    inputIs: "input-features",
     fileIs: "input-feature-file",
     read: (files) => each(files, (file) => parsed(file, (text) => ({ features: [featureAsWrittenFrom(file.name, text)] }))),
   },
   workflows: {
-    reads: "file-or-folder",
     endings: [".yml", ".yaml"],
-    inputIs: "input-workflows",
     fileIs: "input-workflow",
     read: (files) => each(files, (file) => parsed(file, (text) => ({ workflowSteps: workflowStepsFrom(file.name, text) }))),
   },
-  vitest: { reads: "file", inputIs: "input-vitest", read: (files) => each(files, (file) => jsonRead(file, whereResultsByFileBreak, (report) => ({ vitest: resultsByFileFrom(report) }))) },
-  jest: { reads: "file", inputIs: "input-jest", read: (files) => each(files, (file) => jsonRead(file, whereResultsByFileBreak, (report) => ({ jest: resultsByFileFrom(report) }))) },
-  pytest: { reads: "file", inputIs: "input-pytest", read: (files) => each(files, (file) => xmlRead(file, "pytest")) },
-  junit: { reads: "file-or-folder", endings: [".xml"], inputIs: "input-junit", fileIs: "input-junit-folder-file", read: (files) => each(files, (file) => xmlRead(file, "junit")) },
-  rspec: { reads: "file", inputIs: "input-rspec", read: (files) => each(files, (file) => jsonRead(file, whereResultsByExampleBreak, (report) => ({ rspec: resultsByExampleFrom(report) }))) },
-  cucumber: { reads: "file", inputIs: "input-cucumber", read: (files) => each(files, (file) => jsonRead(file, whereScenarioResultsBreak, (report) => ({ cucumber: scenarioResultsFrom(report) }))) },
-  stepRecord: { reads: "file", inputIs: "input-step-record", read: (files) => each(files, (file) => jsonRead(file, whereStepRecordBreaks, (record) => ({ stepRecord: stepRecordFrom(record) }))) },
-  manifest: { reads: "file", inputIs: "input-manifest", read: (files) => each(files, (file) => jsonRead(file, whereManifestBreaks, (manifest) => ({ manifest }))) },
+  vitest: { read: (files) => each(files, (file) => jsonRead(file, whereResultsByFileBreak, (report) => ({ vitest: resultsByFileFrom(report) }))) },
+  jest: { read: (files) => each(files, (file) => jsonRead(file, whereResultsByFileBreak, (report) => ({ jest: resultsByFileFrom(report) }))) },
+  pytest: { read: (files) => each(files, (file) => xmlRead(file, "pytest")) },
+  junit: { endings: [".xml"], fileIs: "input-junit-folder-file", read: (files) => each(files, (file) => xmlRead(file, "junit")) },
+  rspec: { read: (files) => each(files, (file) => jsonRead(file, whereResultsByExampleBreak, (report) => ({ rspec: resultsByExampleFrom(report) }))) },
+  cucumber: { read: (files) => each(files, (file) => jsonRead(file, whereScenarioResultsBreak, (report) => ({ cucumber: scenarioResultsFrom(report) }))) },
+  stepRecord: { read: (files) => each(files, (file) => jsonRead(file, whereStepRecordBreaks, (record) => ({ stepRecord: stepRecordFrom(record) }))) },
+  manifest: { read: (files) => each(files, (file) => jsonRead(file, whereManifestBreaks, (manifest) => ({ manifest }))) },
 } satisfies Readonly<Record<string, InputReader>>;
 
 // Each input it can read, by the reader that reads it.
@@ -162,15 +157,13 @@ function statAt(path: string): Stats | { readonly fault: InputFault; readonly sa
   }
 }
 
-const isAbsent = (stats: ReturnType<typeof statAt>): boolean => "fault" in stats && stats.fault === "absent";
-
 // The files an input names, or why it cannot be read; a default that does not exist names none.
 function filesOf({ kind, path: shown, byDefault }: InputNamed, folder: string): InputRead<FileText>[] | undefined {
   const path = resolve(folder, shown);
-  const { reads, endings }: InputReader = READERS[kind];
+  const { reads = "file", endings }: InputReader = READERS[kind];
   const stats = statAt(path);
-  // A default that does not exist is none.
-  if (isAbsent(stats) && byDefault) return undefined;
+  // A default that cannot be reached is none.
+  if ("fault" in stats && byDefault) return undefined;
   if ("fault" in stats) return [failed(shown, stats.fault, stats.said)];
   if (stats.isDirectory() && endings !== undefined) {
     try {
@@ -184,7 +177,8 @@ function filesOf({ kind, path: shown, byDefault }: InputNamed, folder: string): 
 }
 
 function refusalOf(request: InputNamed, read: Extract<InputRead<unknown>, { ok: false }>): Refusal {
-  const { inputIs, fileIs = inputIs }: InputReader = READERS[request.kind];
+  const inputIs = `input-${request.kind}`;
+  const { fileIs = inputIs }: InputReader = READERS[request.kind];
   const input = text(read.path === request.path ? inputIs : fileIs);
   return { key: `input-${read.fault}`, values: { input, path: read.path, detail: read.detail, shape: text(`shape-${request.kind}`) } };
 }

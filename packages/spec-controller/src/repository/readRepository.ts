@@ -14,7 +14,7 @@ export function standingOf(folder: string): Read<Standing> {
   const { status, stdout, stderr } = gitIn(folder, ["rev-parse", "--show-toplevel"]);
   if (status === 0) return { read: { in: "repository", top: stdout.trim() } };
   if (stderr.includes("not a git repository")) return { read: { in: "folder", top: folder } };
-  return { refusal: { key: "damaged-repository", values: { said: stderr.trim() } } };
+  return { refusal: { key: "damaged-repository", values: { said: stderr } } };
 }
 
 // git names a file or folder it could not read on its error stream, whatever its exit status says.
@@ -55,7 +55,7 @@ export function historyLines(top: string, featureCode: string): Read<ClaimCodeOc
     "--no-color",
     "--no-ext-diff",
   ]);
-  if (status !== 0) return { refusal: { key: "unreadable-history", values: { said: stderr.trim() } } };
+  if (status !== 0) return { refusal: { key: "unreadable-history", values: { said: stderr } } };
   const occurrences: ClaimCodeOccurrence[] = [];
   let commit!: string;
   let path!: string;

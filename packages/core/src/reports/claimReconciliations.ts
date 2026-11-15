@@ -68,7 +68,6 @@ export function claimReconciliationsSection(claimReconciliations: readonly Claim
         claimReconciliation.verdict,
         itemsOf(claimReconciliation),
       ]),
-      ["claims-blank-cell", "claims-dash", "claims-unnamed-row"],
     ),
   ];
 }

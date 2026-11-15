@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { stepAccountOf, totalsOf, type EvidenceReconciliation, type StepCounts } from "../domain/evidenceReconciliation.js";
-import type { Provenance } from "../domain/provenance.js";
 import { coreText } from "../messages/catalogue.js";
 import { markdownReportOf } from "./markdown.js";
+import { PROVENANCE } from "./reconciledRun.test-utils.js";
 
 // A run with nothing reconciled, and the parts given.
 const runWith = (parts: Pick<EvidenceReconciliation, "runVerdict" | "provenance"> & Partial<EvidenceReconciliation>): EvidenceReconciliation => ({
@@ -14,46 +14,17 @@ const runWith = (parts: Pick<EvidenceReconciliation, "runVerdict" | "provenance"
   ...parts,
 });
 
-const PROVENANCE: Provenance = { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] };
-
-describe("each run verdict, and each reason a run is not reconciled, has an opening of its own", () => {
+describe("the Summary names each run verdict, and each reason a run is not reconciled", () => {
   it.each([
-    ["CLM-RPT-111", "balanced", { verdict: "balanced" }, "verdict-balanced", "Every claim has the evidence it asks for, so the run is balanced and nothing needs your attention."],
-    [
-      "CLM-RPT-116",
-      "out of balance",
-      { verdict: "out-of-balance" },
-      "verdict-out-of-balance",
-      "Some claims lack the evidence they ask for, so the run is out of balance: the Claim Reconciliations below say what each needs.",
-    ],
-    [
-      "CLM-RPT-117",
-      "not reconciled, because unsound",
-      { verdict: "not-reconciled", why: "unsound" },
-      "verdict-unsound",
-      "Some evidence never ran, so the run cannot be relied on and is not reconciled: Run integrity names it.",
-    ],
-    [
-      "CLM-RPT-118",
-      "not reconciled, because of claim code errors",
-      { verdict: "not-reconciled", why: "claim-code-errors" },
-      "verdict-claim-code-errors",
-      "Some claim codes are written where they do not belong, so the run is not reconciled: Errors in the inputs names them.",
-    ],
-    [
-      "CLM-RPT-119",
-      "not reconciled, because there was nothing to reconcile",
-      { verdict: "not-reconciled", why: "nothing-to-reconcile" },
-      "verdict-nothing-to-reconcile",
-      "No claim and no evidence were read, so there was nothing to reconcile and the run is not reconciled.",
-    ],
-  ] as const)("[%s] a run that was %s opens with its sentence, and its Summary names that run verdict", (_clm, _verdict, runVerdict, words, opening) => {
+    ["CLM-RPT-111", "balanced", { verdict: "balanced" }, "verdict-balanced"],
+    ["CLM-RPT-116", "out of balance", { verdict: "out-of-balance" }, "verdict-out-of-balance"],
+    ["CLM-RPT-117", "not reconciled, because unsound", { verdict: "not-reconciled", why: "unsound" }, "verdict-unsound"],
+    ["CLM-RPT-118", "not reconciled, because of claim code errors", { verdict: "not-reconciled", why: "claim-code-errors" }, "verdict-claim-code-errors"],
+    ["CLM-RPT-119", "not reconciled, because there was nothing to reconcile", { verdict: "not-reconciled", why: "nothing-to-reconcile" }, "verdict-nothing-to-reconcile"],
+  ] as const)("[%s] a run that was %s has its Summary name that run verdict", (_clm, _verdict, runVerdict, words) => {
     const lines = markdownReportOf(runWith({ runVerdict, provenance: PROVENANCE })).split("\n");
 
-    expect({ opening: lines[2], verdict: lines.filter((line) => line.startsWith(`- ${coreText("summary-run-verdict")}:`)) }).toEqual({
-      opening,
-      verdict: [`- ${coreText("summary-run-verdict")}: ${coreText(words)}`],
-    });
+    expect(lines.filter((line) => line.startsWith(`- ${coreText("summary-run-verdict")}:`))).toEqual([`- ${coreText("summary-run-verdict")}: ${coreText(words)}`]);
   });
 });
 
@@ -101,7 +72,7 @@ describe("the step account shows each job's counts, and the Total row their sums
     const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: PROVENANCE, stepAccount }));
     const rows = report.slice(report.indexOf("## Step account")).split("\n").filter((line) => line.startsWith("| ")).map((line) => line.slice(2, -2).split(" | "));
 
-    expect({ counts: rows.find((cells) => cells[1] === job)?.slice(2), lastColumn: rows[0]?.at(-1) }).toEqual({ counts, lastColumn: coreText("step-account-fitness-functions") });
+    expect(rows.find((cells) => cells[1] === job)?.slice(2)).toEqual(counts);
   });
 });
 

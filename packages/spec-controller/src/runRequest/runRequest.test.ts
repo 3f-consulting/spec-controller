@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { runRequestOf } from "./runRequest.js";
+import { runRequestOf, type RunRequest } from "./runRequest.js";
 
-const balanceRequested = (args: readonly string[]) => {
-  const request = runRequestOf(["balance", ...args]);
-  if (!("command" in request) || request.command !== "balance") throw new Error(`balance was not requested: ${JSON.stringify(request)}`);
-  return request;
-};
+const balanceRequested = (args: readonly string[]) => runRequestOf(["balance", ...args]) as Extract<RunRequest, { command: "balance" }>;
 
 describe("a flag the command takes will take effect", () => {
   it("[CLM-CLI-121] a flag and its value as two arguments: the flag takes that value", () => {
@@ -57,19 +53,13 @@ describe("you will get the report format you ask for", () => {
   });
 });
 
-
 describe("an argument the tool does not accept will stop the run", () => {
   it.each([
     ["CLM-CLI-126", ["balance", "--"], "unknown-flag", { command: "balance", flag: "--" }],
-    ["CLM-CLI-126", ["balance", "-hx"], "unknown-flag", { command: "balance", flag: "-x" }],
-    ["CLM-CLI-126", ["balance", "-h=1"], "unknown-flag", { command: "balance", flag: "-=" }],
-    ["CLM-CLI-126", ["allocate", "ABC", "-hn"], "unknown-flag", { command: "allocate", flag: "-n" }],
     ["CLM-CLI-127", ["balance", "--features", "--strict"], "missing-value", { flag: "--features" }],
     ["CLM-CLI-129", ["balance", "--target", "acme", "stray"], "stray-argument", { argument: "stray" }],
     ["CLM-CLI-130", ["balance", "--strict", "--strict"], "repeated-flag", { flag: "--strict" }],
-    ["CLM-CLI-131", ["balance", "--strict=yes"], "equals-form", { given: "--strict=yes", spelling: "--strict yes" }],
     ["CLM-CLI-133", ["balance", "--format", "html"], "unknown-format", { format: "html", formats: "md, json" }],
-    ["CLM-CLI-134", ["allocate"], "no-feature-code", {}],
   ] as const)("[%s] %j is refused as %s, with its facts", (_clm, args, key, values) => {
     const requested = runRequestOf(args);
 

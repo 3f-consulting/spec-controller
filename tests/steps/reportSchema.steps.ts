@@ -37,9 +37,7 @@ const WRITTEN: Readonly<Record<string, (report: Report) => Report>> = {
 };
 
 Given(/^(a JSON report .+) was written$/, function (this: SchemaCheck, written: string) {
-  const change = WRITTEN[written];
-  assert.ok(change, `no report is written for "${written}"`);
-  this.report = change(realReport());
+  this.report = WRITTEN[written]!(realReport());
 });
 
 When("it is checked against the schema", function (this: SchemaCheck) {

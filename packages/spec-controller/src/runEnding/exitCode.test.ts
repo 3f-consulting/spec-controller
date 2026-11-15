@@ -8,6 +8,7 @@ import { exitCodeOf } from "./exitCode.js";
 
 const BALANCED: RunVerdict = { verdict: "balanced" };
 const NOT_RECONCILED: RunVerdict = { verdict: "not-reconciled", why: "unsound" };
+const QUIET = { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } };
 
 describe("each run verdict will have its exit code", () => {
   it.each([
@@ -31,8 +32,7 @@ describe("under --exit-zero only an out-of-balance run's exit code changes", () 
     const folder = temporaryDirectory("exit-zero-");
     mkdirSync(join(folder, "features"));
     writeFileSync(join(folder, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n");
-    const quiet = { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } };
-    const balanced = (args: readonly string[]) => main(["balance", "--features", join(folder, "features"), ...args], folder, quiet);
+    const balanced = (args: readonly string[]) => main(["balance", "--features", join(folder, "features"), ...args], folder, QUIET);
 
     expect([balanced([]), balanced(["--exit-zero"])]).toEqual([1, 0]);
   });
@@ -42,13 +42,12 @@ describe("under --exit-zero only an out-of-balance run's exit code changes", () 
     ["CLM-CLI-174", "a usage error", ["balance", "--exit-zero", "--bogus"], 2, false],
     ["CLM-CLI-175", "an unexpected error", ["balance", "--exit-zero"], 4, true],
   ] as const)("[%s] a run whose evidence was %s keeps its exit code under --exit-zero", (_clm, _ending, args, exitCode, unexpected) => {
-    const quiet = { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } };
     const failing = {
       balance: () => {
         throw new Error("an error before the verdict");
       },
     };
 
-    expect(main(args, temporaryDirectory("exit-zero-"), quiet, unexpected ? failing : {})).toBe(exitCode);
+    expect(main(args, temporaryDirectory("exit-zero-"), QUIET, unexpected ? failing : {})).toBe(exitCode);
   });
 });
