@@ -119,6 +119,7 @@ describe("a usage error shows the help for what was asked for", () => {
     ["CLM-CLI-114", "a command the tool does not have, and a request for help after it", "the commands", ["frobnicate", "--help"], undefined],
     ["CLM-CLI-112", "a request for balance's help beside an argument that fails validation", "balance's help", ["balance", "--features", "absent", "--bogus", "--help"], "balance"],
     ["CLM-CLI-113", "allocate's help beside a flag allocate does not take", "allocate's help", ["allocate", "ABC", "--vitest", "--help"], "allocate"],
+    ["CLM-CLI-113", "allocate's help beside something that is not a feature code", "allocate's help", ["allocate", "abc", "--help"], "allocate"],
   ] as const)("[%s] %s: the run stops, no verdict, exit 2, and the complaint is followed by %s", (_clm, _given, _help, args, about) => {
     const { exitCode, output, error } = ran(args);
 
