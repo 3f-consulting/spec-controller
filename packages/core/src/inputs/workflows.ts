@@ -1,6 +1,5 @@
 import { parse } from "yaml";
 import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
-import { coreText } from "../messages/catalogue.js";
 import workflowsVariants from "./workflows.variants.json" with { type: "json" };
 
 // Which steps only set the job up is the reader's to say, from its list of the actions that do.
@@ -47,13 +46,8 @@ function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknow
 export function workflowStepsFrom(workflow: string, source: string): WorkflowStepAsWritten[] {
   const document: unknown = parse(source);
   const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
-  // GitHub runs no workflow whose job is not a mapping, or whose step names neither an action nor a command.
+  // GitHub runs no workflow whose job is not a mapping.
   return Object.entries(jobs as Readonly<Record<string, Mapping>>).flatMap(([job, definition]) =>
-    mappingsIn(definition["steps"]).map((step, at) => {
-      if (!isMapping(step) || (text(step["uses"]) === undefined && text(step["run"]) === undefined)) {
-        throw new TypeError(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
-      }
-      return stepAsWritten(workflow, job, definition["continue-on-error"], step);
-    }),
+    mappingsIn(definition["steps"]).map((step) => stepAsWritten(workflow, job, definition["continue-on-error"], step)),
   );
 }

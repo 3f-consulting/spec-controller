@@ -60,10 +60,13 @@ describe("an input read by default that does not exist will count as none, not a
 describe("balance reads the one workflow a CI workflows path names, or every workflow in the folder it names", () => {
   it.each([
     ["CLM-CLI-193", "the workflow ci.yml", "workflows/ci.yml", ["ci.yml"]],
+    ["CLM-CLI-193", "the workflow env.yml, a step in it with a number and true as its env: values", "other/env.yml", ["env.yml"]],
     ["CLM-CLI-207", "a folder with ci.yml and release.yaml in it, beside its README and a folder of templates", "workflows", ["ci.yml", "release.yaml"]],
   ] as const)("[%s] the run named %s as its CI workflows, at %s: it reads %j", (_clm, _named, path, read) => {
     const folder = temporaryDirectory("workflows-");
     mkdirSync(join(folder, "workflows", "templates"), { recursive: true });
+    mkdirSync(join(folder, "other"));
+    writeFileSync(join(folder, "other", "env.yml"), "jobs:\n  ci:\n    steps:\n      - run: echo env\n        env:\n          RETRIES: 3\n          CI: true\n");
     writeFileSync(join(folder, "workflows", "ci.yml"), "jobs:\n  ci:\n    steps:\n      - run: echo ci\n");
     writeFileSync(join(folder, "workflows", "release.yaml"), "jobs:\n  release:\n    steps:\n      - run: echo release\n");
     writeFileSync(join(folder, "workflows", "README.md"), "# Workflows\n\n- `ci.yml`: the checks on every push\n");
