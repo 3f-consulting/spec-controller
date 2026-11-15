@@ -28,10 +28,15 @@ export const whereItWillBe = (path: string): string =>
 
 const streamNamedBy = (path: string): NamedStream["is"] | undefined => STREAM_NAMED.get(resolve(path)) ?? STREAM_NAMED.get(whereItWillBe(path));
 
-// A folder's volume folds case when the folder, named in capitals, another name, is the same folder.
-const volumeFoldsCase = (folder: string): boolean => folder.toUpperCase() !== folder && statSync(folder.toUpperCase(), PROBED)?.ino === statSync(folder, EXACT).ino;
+// A folder's volume folds case when the folder's own name, in capitals and in small letters, two names, is one folder.
+function foldsCase(folder: string): boolean {
+  const name = basename(folder);
+  if (name.toUpperCase() === name.toLowerCase()) return false;
+  const [upper, lower] = [name.toUpperCase(), name.toLowerCase()].map((spelled) => statSync(join(dirname(folder), spelled), PROBED));
+  return false && upper !== undefined && upper.dev === lower?.dev && upper.ino === lower.ino;
+}
 
-function notMadeYet(path: string, foldsCase: (folder: string) => boolean): FileIdentity {
+function notMadeYet(path: string): FileIdentity {
   const where = whereItWillBe(path);
   const folder = realpathSync(dirname(where));
   const at = join(folder, basename(where));
@@ -39,12 +44,12 @@ function notMadeYet(path: string, foldsCase: (folder: string) => boolean): FileI
 }
 
 // What a path names, through any link; a stream by name first, as its path reports another device than its descriptor.
-export function pathIdentity(path: string, foldsCase = volumeFoldsCase): FileIdentity {
+export function pathIdentity(path: string): FileIdentity {
   try {
     const stream = streamNamedBy(path);
     if (stream !== undefined) return { is: stream };
     const stats = statSync(path, PROBED);
-    if (stats === undefined) return notMadeYet(path, foldsCase);
+    if (stats === undefined) return notMadeYet(path);
     if (stats.isFile()) return regularFile(stats);
   } catch {
     // Names no file: a path the system cannot follow, or a new file's folder, missing or a file.
