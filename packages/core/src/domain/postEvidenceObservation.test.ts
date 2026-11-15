@@ -645,7 +645,7 @@ describe("balance posts a result from a feature file it did not read to the unna
   });
 });
 
-// A passing result of each kind of quality check, citing CLM-ONE-001, from the source that gives that kind.
+// A passing result of each kind of quality check, citing the one claim, from the source that gives that kind.
 const passedCitingOne001: Readonly<Record<string, () => EvidenceObservation[]>> = {
   unit: () => postedByFile(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])),
   integration: () => postedByScenario(reportByScenario("features/one.feature", [{ tags: ["CLM-ONE-001", "integration"], steps: [PASSED] }])),
