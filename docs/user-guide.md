@@ -999,7 +999,7 @@ Run `spec-controller --help` for the top-level summary of the commands. Run `spe
 
 The rules below are all checked before anything is emitted. A run that breaks one is refused at exit `2`, prints no report, and writes no file.
 
-**At most one output may go to stdout.** A path that names stdout itself (`/dev/stdout`, `/dev/fd/1`, `/proc/self/fd/1`, or a link to any of them) counts as stdout. So `--format md --format json:/dev/stdout` is refused, like `--format md --format json`.
+**At most one output may go to stdout.** A path that names stdout itself (`/dev/stdout`, or a link to it) counts as stdout. So `--format md --format json:/dev/stdout` is refused, like `--format md --format json`.
 
 **No two outputs may share one regular file, however the file is named.** That covers the same path twice, the same format twice, `./` or an absolute spelling beside a relative one, a path through `..`, a symbolic link, a path through a linked directory, a hard link, and the file stdout is redirected into. The file is recognised by the operating system's identity for it, so on a case-insensitive volume `report.md` and `REPORT.MD` are one file. The refusal names both outputs. A destination that is not a regular file, such as `/dev/stderr` or `/dev/null`, may be given more than once, because writing it twice loses nothing.
 
