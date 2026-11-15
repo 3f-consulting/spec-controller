@@ -16,6 +16,8 @@ type Mapping = Readonly<Record<string, unknown>>;
 
 const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null;
 const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
+// A step's name as written, a number among them: YAML reads a bare 3 as a number.
+const nameText = (value: unknown): string | undefined => (typeof value === "number" ? String(value) : text(value));
 const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value : []);
 
 // What a step holds in each place it can write the step record from: its command, or its env: values.
@@ -32,7 +34,7 @@ function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknow
     workflow,
     job,
     jobContinueOnError,
-    name: text(step["name"]),
+    name: nameText(step["name"]),
     uses,
     run: text(step["run"]),
     id: text(step["id"]),

@@ -187,7 +187,7 @@ describe("a recorded step no workflow has, and a step whose id is not a claim co
 describe("an Evidence Observation says where to look", () => {
   it.each([
     ["CLM-OBS-081", "the step Lint in job build", { build: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] } }, "ci.yml:build:Lint"],
-    ["CLM-OBS-101", "the step with 3 as its name, running pnpm lint, in job build", { build: { steps: [{ id: "CLM-ONE-001", name: 3, run: "pnpm lint" }] } }, "ci.yml:build:pnpm lint"],
+    ["CLM-OBS-101", "the step with 3 as its name, running pnpm lint, in job build", { build: { steps: [{ id: "CLM-ONE-001", name: 3, run: "pnpm lint" }] } }, "ci.yml:build:3"],
     ["CLM-OBS-102", "the step with no name and an empty command, in job build", { build: { steps: [{ id: "CLM-ONE-001", run: "" }] } }, "ci.yml:build:"],
     ["CLM-OBS-103", "the step with no name, running a blank line then pnpm lint, in job build", { build: { steps: [{ id: "CLM-ONE-001", run: "  \n  pnpm lint" }] } }, "ci.yml:build:pnpm lint"],
     ["CLM-OBS-104", "the step Lint in jobs build and test", { build: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] }, test: { steps: [{ id: "CLM-ONE-001", name: "Lint", run: "pnpm lint" }] } }, "CLM-ONE-001"],
