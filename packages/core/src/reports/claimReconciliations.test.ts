@@ -78,7 +78,7 @@ describe("a row lists its reconciling items, each with where to look", () => {
     ["CLM-RPT-154", "had a fitness Evidence Obligation, and its step ci.yml:build:Lint failing", "@fitness @CLM-CHK-004", [["fitness", "failed", "CHK-004", "ci.yml:build:Lint"]], "fitness: failing (ci.yml:build:Lint)"],
     ["CLM-RPT-155", "had a code and no kind-of-quality-check tag", "@CLM-CHK-005", [], "no-quality-check"],
   ] as const)("[%s] a claim that %s lists its reconciling items", (_clm, _evidence, tags, evidence, items) => {
-    expect(cellUnder("Reconciling items", claimTable([["checkout.feature", "CHK", tags === undefined ? [] : [[tags, "checks out"]]]], evidence))).toBe(items);
+    expect(cellUnder("Reconciling items", claimTable([["checkout.feature", "CHK", [[tags, "checks out"]]]], evidence))).toBe(items);
   });
 });
 

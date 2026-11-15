@@ -391,12 +391,11 @@ describe("allocate names what it could not read, and gives no code", () => {
   });
 
   it("[CLM-STG-085] a folder in the tree it cannot read stops it as a usage error, naming what it could not read", () => {
-    const copy = folderForTest();
-    copy.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
-    copy.write("locked/inside.txt", "kept\n");
-    chmodSync(`${copy.top}/locked`, 0o000);
+    const repository = repositoryOfOne();
+    repository.write("locked/inside.txt", "kept\n");
+    chmodSync(`${repository.top}/locked`, 0o000);
 
-    expect(allocate(ONE, copy.top)).toEqual(stoppedOn("unreadable-in-tree", { path: "locked/", said: expect.stringContaining("Permission denied") }));
+    expect(allocate(ONE, repository.top)).toEqual(stoppedOn("unreadable-in-tree", { path: "locked/", said: expect.stringContaining("Permission denied") }));
   });
 
   it("[CLM-STG-085] a folder in the features folder it cannot read stops it as a usage error, naming what it could not read", () => {
@@ -409,12 +408,11 @@ describe("allocate names what it could not read, and gives no code", () => {
   });
 
   it("[CLM-STG-093] a file in the tree it cannot read stops it as a usage error, naming what it could not read", () => {
-    const copy = folderForTest();
-    copy.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
-    copy.write("locked.txt", "kept\n");
-    chmodSync(`${copy.top}/locked.txt`, 0o000);
+    const repository = repositoryOfOne();
+    repository.write("locked.txt", "kept\n");
+    chmodSync(`${repository.top}/locked.txt`, 0o000);
 
-    expect(allocate(ONE, copy.top)).toEqual(stoppedOn("unreadable-in-tree", { path: "locked.txt", said: expect.stringContaining("Permission denied") }));
+    expect(allocate(ONE, repository.top)).toEqual(stoppedOn("unreadable-in-tree", { path: "locked.txt", said: expect.stringContaining("Permission denied") }));
   });
 
   it("[CLM-STG-089] a feature file that does not parse stops it as a usage error, naming what it could not read", () => {

@@ -22,9 +22,11 @@ const UNREADABLE = /(?:error: failed to stat '(.+)'|warning: could not open dire
 
 const codesOf = (featureCode: string): string => `(CLM|SCN)-${featureCode}-[0-9]`;
 
-// Every line in the tree that may write one of the feature code's codes, from git: tracked and new files, ignored ones left out.
+// Every line that may write one of the feature code's codes, from git: in a repository, its tracked and new files, ignored
+// ones left out; outside one, its feature files.
 export function treeLines({ in: where, top }: Standing, featureCode: string): Read<ClaimCodeOccurrence[]> {
-  const { status, stdout, stderr } = gitIn(top, ["grep", "-n", "-z", "-I", where === "repository" ? "--untracked" : "--no-index", "-E", codesOf(featureCode)]);
+  const among = where === "repository" ? ["--untracked", "-E", codesOf(featureCode)] : ["--no-index", "-E", codesOf(featureCode), "--", "features/*.feature"];
+  const { status, stdout, stderr } = gitIn(top, ["grep", "-n", "-z", "-I", ...among]);
   const unreadable = UNREADABLE.exec(stderr);
   if (unreadable !== null) return { refusal: { key: "unreadable-in-tree", values: { path: unreadable[1] ?? unreadable[2]!, said: unreadable[0] } } };
   // git grep exits 1 for no line found; anything else is a failure to read.

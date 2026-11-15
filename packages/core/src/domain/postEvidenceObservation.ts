@@ -93,7 +93,6 @@ export interface ScenarioResultAsWritten {
 export interface StepRecordEntryAsWritten {
   readonly key: string;
   readonly outcome: string;
-  readonly conclusion: string;
 }
 
 // The shell reader's two answers, handed to the domain so it decides which question serves which step.

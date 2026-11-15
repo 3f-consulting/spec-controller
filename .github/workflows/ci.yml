@@ -131,7 +131,7 @@ jobs:
         # The tree line runs without --quiet: --quiet skips warn rules, and with them the dead-suppression reports for those rules and for a blanket directive.
         # So it reds on an error anywhere, a dead suppression included, and prints every warning, which exits 0, before an error ends the step.
         run: |
-          for sample in "core's source:packages/core/src/index.ts" "the app's source:packages/spec-controller/src/commands/cli.ts" "the step files:tests/steps/runVerdict.steps.ts" "the scripts:scripts/docs-check.mjs"; do
+          for sample in "core's source:packages/core/src/index.ts" "the app's source:packages/spec-controller/src/commands/cli.ts" "the step files:tests/steps/reportSchema.steps.ts" "the scripts:scripts/docs-check.mjs"; do
             [ "$(node_modules/.bin/eslint --print-config "${sample#*:}" | jq '[.rules // {} | .[] | select(.[0] > 0)] | length')" -gt 0 ] || { echo "ESLint enforces no rule on ${sample%%:*} (${sample#*:})"; exit 1; }
           done
           node_modules/.bin/eslint --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/" .

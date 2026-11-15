@@ -1,4 +1,4 @@
-import { Before, Given, Then, When } from "@cucumber/cucumber";
+import { Given, Then, When } from "@cucumber/cucumber";
 import { spawnSync } from "node:child_process";
 import assert from "node:assert/strict";
 import { closeSync, openSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
@@ -40,12 +40,9 @@ const isJsonReport = (text: string): boolean => {
   }
 };
 
-Before(function (this: ReportRun) {
+Given("a run had two reports to write", function (this: ReportRun) {
   this.folder = temporaryDirectory("report-destination-");
   this.file = join(this.folder, "report.md");
-});
-
-Given("a run had two reports to write", function (this: ReportRun) {
   writeFileSync(this.file, EARLIER_REPORT);
 });
 
@@ -84,7 +81,7 @@ Then("the run will stop, give no verdict and exit 2", function (this: ReportRun)
 });
 
 Then("it will complain, naming the file and both reports", function (this: ReportRun) {
-  assert.ok(this.error.includes(this.file) && this.error.includes("md") && this.error.includes("json"), this.error);
+  assert.ok(this.error.includes(this.file) && this.error.includes("md:") && this.error.includes("json"), this.error);
 });
 
 Then("the file will be as it was", function (this: ReportRun) {

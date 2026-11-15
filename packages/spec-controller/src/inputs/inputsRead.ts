@@ -73,10 +73,9 @@ function textAt(name: string, shown: string, path: string): InputRead<FileText> 
 }
 
 // Each file under the folder whose name ends as asked, at any depth or only at its top, by its path within the folder.
-// A folder whose name ends so is not a file of it.
 function filesIn(shown: string, path: string, endings: readonly string[], atAnyDepth: boolean): InputRead<FileText>[] {
   const names = readdirSync(path, { recursive: atAnyDepth, withFileTypes: true })
-    .filter((entry) => !entry.isDirectory() && endings.some((ending) => entry.name.endsWith(ending)))
+    .filter((entry) => endings.some((ending) => entry.name.endsWith(ending)))
     .map((entry) => relative(path, join(entry.parentPath, entry.name)));
   return names.sort().map((name) => textAt(name, join(shown, name), join(path, name)));
 }
