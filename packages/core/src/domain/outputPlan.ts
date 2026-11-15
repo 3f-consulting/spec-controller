@@ -10,8 +10,8 @@ export interface OutputRequest<Format extends string> {
 }
 
 // The Output port probes each place and reports what it is: a regular file's device and inode, something that is not a
-// regular file, one of the run's own standard streams, or nothing there yet, with the path it would be made at, in one case
-// on a volume that folds case.
+// regular file, one of the run's own standard streams, or nothing there yet, with the path it would be made at through its
+// folder's real path, in one case on a volume that folds case.
 export type FileIdentity =
   | { readonly is: "regular-file"; readonly device: bigint; readonly inode: bigint }
   | { readonly is: "not-a-regular-file" }

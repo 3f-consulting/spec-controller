@@ -1,6 +1,6 @@
 import type { FileIdentity } from "@3f-consulting/spec-controller-core";
-import { fstatSync, lstatSync, readlinkSync, statSync, type BigIntStats } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { fstatSync, lstatSync, readlinkSync, realpathSync, statSync, type BigIntStats } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
 
 // A device and inode as exactly as a stream's descriptor gives them. PROBED also answers nothing there yet as undefined.
 const EXACT = { bigint: true } as const;
@@ -28,16 +28,18 @@ export const whereItWillBe = (path: string): string =>
 
 const streamNamedBy = (path: string): NamedStream["is"] | undefined => STREAM_NAMED.get(resolve(path)) ?? STREAM_NAMED.get(whereItWillBe(path));
 
-// A volume folds case when its folder, named in capitals, is the same folder.
+// A volume folds case when its folder, named in capitals and in small letters, two names, is one folder.
 function foldsCase(folder: string): boolean {
-  const named = statSync(folder.toUpperCase(), PROBED);
-  const asWritten = statSync(folder, PROBED);
-  return named !== undefined && named.dev === asWritten?.dev && named.ino === asWritten.ino;
+  const [upper, lower] = [folder.toUpperCase(), folder.toLowerCase()];
+  const [one, other] = [statSync(upper, PROBED), statSync(lower, PROBED)];
+  return upper !== lower && one !== undefined && one.dev === other?.dev && one.ino === other.ino;
 }
 
 function notMadeYet(path: string): FileIdentity {
   const where = whereItWillBe(path);
-  return { is: "absent", path: foldsCase(dirname(where)) ? where.toLowerCase() : where };
+  const folder = realpathSync(dirname(where));
+  const at = join(folder, basename(where));
+  return { is: "absent", path: foldsCase(folder) ? at.toLowerCase() : at };
 }
 
 // What a path names, through any link; a stream by name first, as its path reports another device than its descriptor.
@@ -49,7 +51,7 @@ export function pathIdentity(path: string): FileIdentity {
     if (stats === undefined) return notMadeYet(path);
     if (stats.isFile()) return regularFile(stats);
   } catch {
-    // Names no file: a path the system cannot follow, such as one through a file.
+    // Names no file: a path the system cannot follow, or a new file's folder, missing or a file.
   }
   return { is: "not-a-regular-file" };
 }
