@@ -39,6 +39,42 @@ const reportByFile = (file: string, tests: readonly TestByFile[], fileStatus = "
 
 const postedByFile = (report: unknown, targetFolder = "/work"): EvidenceObservation[] => observationsByFile(resultsByFileFrom(report), targetFolder);
 
+// A file that could not run, as Jest words it: under its own heading, the error indented beneath.
+const jestSuiteFailure = (error: string): string => `  \u25cf Test suite failed to run\n\n    ${error}\n`;
+
+// The same tests as Jest 30 writes its JSON evidence report, field for field: its run counts around the files, each
+// test's own fields, its failure as Jest words it, and a file that could not run under Jest's own heading.
+const jestReportByFile = (file: string, tests: readonly TestByFile[], fileStatus = "passed", message = ""): unknown => ({
+  numFailedTestSuites: fileStatus === "failed" ? 1 : 0,
+  numPassedTestSuites: fileStatus === "failed" ? 0 : 1,
+  numTotalTestSuites: 1,
+  numTotalTests: tests.length,
+  success: fileStatus !== "failed",
+  wasInterrupted: false,
+  testResults: [
+    {
+      name: file,
+      status: fileStatus,
+      message: message === "" ? "" : jestSuiteFailure(message),
+      summary: "",
+      assertionResults: tests.map(({ ancestorTitles = [], title, status }) => ({
+        ancestorTitles,
+        title,
+        fullName: [...ancestorTitles, title].join(" "),
+        status,
+        failureMessages: status === "failed" ? ["Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: 2\nReceived: 1"] : [],
+        failureDetails: [],
+        numPassingAsserts: status === "passed" ? 1 : 0,
+        invocations: 1,
+        location: null,
+      })),
+    },
+  ],
+});
+
+// The evidence report the runner given writes for the tests.
+const reportFrom = (runner: "vitest" | "jest"): typeof reportByFile => (runner === "jest" ? jestReportByFile : reportByFile);
+
 // Who wrote a JUnit XML report: Maven Surefire for JUnit 5 in Java, Gradle for JUnit 5 in Kotlin, go-junit-report for Go, and pytest.
 type SuiteWriter = "surefire" | "gradle" | "go" | "pytest";
 
@@ -168,8 +204,8 @@ describe("balance reads a result as passed or failed, citing the code it names",
     ["CLM-OBS-018", "vitest", "failed", "failed"],
     ["CLM-OBS-019", "jest", "passed", "passed"],
     ["CLM-OBS-020", "jest", "failed", "failed"],
-  ])("[%s] a result in %s's evidence report, CLM-ONE-001 in brackets in its title, that %s, is read as %s, citing CLM-ONE-001", (_clm, _from, status, result) => {
-    const posted = postedByFile(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status }], status));
+  ])("[%s] a result in %s's evidence report, CLM-ONE-001 in brackets in its title, that %s, is read as %s, citing CLM-ONE-001", (_clm, from, status, result) => {
+    const posted = postedByFile(reportFrom(from)("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status }], status));
 
     expect(posted.map(({ result: postedResult, cites }) => ({ result: postedResult, cites }))).toEqual([{ result, cites: [ONE_001] }]);
   });
@@ -292,22 +328,22 @@ describe("balance posts nothing for a test that was skipped", () => {
   it.each<[string, "vitest" | "jest", readonly string[]]>([
     ["CLM-OBS-036", "vitest", ["skipped", "todo"]],
     ["CLM-OBS-037", "jest", ["pending", "todo"]],
-  ])("[%s] a test in %s's evidence report citing CLM-ONE-001, skipped or marked todo, posts nothing", (_clm, _from, statuses) => {
+  ])("[%s] a test in %s's evidence report citing CLM-ONE-001, skipped or marked todo, posts nothing", (_clm, from, statuses) => {
     const tests = statuses.map((status) => ({ title: "[CLM-ONE-001] it holds", status }));
 
-    expect(postedByFile(reportByFile("/work/one.test.ts", tests))).toEqual([]);
+    expect(postedByFile(reportFrom(from)("/work/one.test.ts", tests))).toEqual([]);
   });
 });
 
 describe("balance posts what could not run as never ran", () => {
   it.each<[string, "vitest" | "jest", string]>([
     ["CLM-OBS-044", "vitest", "Error: Cannot find module './adds.js'"],
-    ["CLM-OBS-045", "jest", "Test suite failed to run\n\nthe test file could not be loaded"],
-  ])("[%s] a test file in %s's evidence report that could not run is posted as never-ran, citing no claim code, naming the file and its error", (_clm, _from, error) => {
-    const posted = postedByFile(reportByFile("/work/a.test.ts", [], "failed", error));
+    ["CLM-OBS-045", "jest", "the test file could not be loaded"],
+  ])("[%s] a test file in %s's evidence report that could not run is posted as never-ran, citing no claim code, naming the file and its error", (_clm, from, error) => {
+    const posted = postedByFile(reportFrom(from)("/work/a.test.ts", [], "failed", error));
 
     expect(posted.map(({ result, cites, place, message }) => ({ result, cites, place, message }))).toEqual([
-      { result: "never-ran", cites: [], place: "a.test.ts", message: error },
+      { result: "never-ran", cites: [], place: "a.test.ts", message: from === "jest" ? jestSuiteFailure(error) : error },
     ]);
   });
 });
@@ -403,8 +439,8 @@ describe("balance posts a nested test citing its own code, or its parent's code 
     ["CLM-OBS-067", "vitest", "CLM-ONE-001 in its title, with no brackets", "CLM-ONE-001 it holds", [ONE_002]],
     ["CLM-OBS-068", "jest", "CLM-ONE-001 in brackets in its title", "[CLM-ONE-001] it holds", [ONE_001]],
     ["CLM-OBS-069", "jest", "no claim code", "it holds", [ONE_002]],
-  ])("[%s] a passing test in %s's evidence report with %s, nested in a describe with CLM-ONE-002 in brackets in its title, is posted citing its nearest code", (_clm, _from, _titled, title, cites) => {
-    const posted = postedByFile(reportByFile("/work/one.test.ts", [{ ancestorTitles: ["[CLM-ONE-002] a group"], title, status: "passed" }]));
+  ])("[%s] a passing test in %s's evidence report with %s, nested in a describe with CLM-ONE-002 in brackets in its title, is posted citing its nearest code", (_clm, from, _titled, title, cites) => {
+    const posted = postedByFile(reportFrom(from)("/work/one.test.ts", [{ ancestorTitles: ["[CLM-ONE-002] a group"], title, status: "passed" }]));
 
     expect(posted.map(({ cites: cited }) => cited)).toEqual([cites]);
   });
