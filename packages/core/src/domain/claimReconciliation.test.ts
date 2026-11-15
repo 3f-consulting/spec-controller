@@ -36,7 +36,7 @@ const observationOf = (read: ClaimRead, [kind, result]: ObservationRead): Eviden
   notes: [],
 });
 
-describe("balance works out each Quality Check Reconciliation's outcome, and from those the verdict", () => {
+describe("each Quality Check Reconciliation's outcome will follow from its two sides, and the claim's verdict from those outcomes", () => {
   it.each<[string, ClaimRead, readonly QualityCheckKind[], readonly ObservationRead[], string, readonly string[]]>([
     ["CLM-LDG-001", "under its code", ["unit"], [["unit", "passed"]], "balanced", ["satisfied"]],
     ["CLM-LDG-049", "under its code", ["integration"], [["integration", "passed"]], "balanced", ["satisfied"]],
@@ -122,7 +122,7 @@ describe("a deferred scenario's code is read by no executable claim", () => {
   });
 });
 
-describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations by kind of quality check, then where the test is, then the code it cites, then what else it records", () => {
+describe("balance will list a claim's Quality Check Reconciliations in the same order whatever order the evidence came in", () => {
   it.each<[string, "under its code" | "unnamed", readonly QualityCheckKind[], readonly Placed[], readonly string[]]>([
     [
       "CLM-LDG-059",
@@ -172,15 +172,13 @@ describe("balance sorts a Claim Reconciliation's Quality Check Reconciliations b
       [["unit", "failed", "a.test.ts", "it", "b"], ["unit", "failed", "a.test.ts", "it", "a"]],
       ["unit|a.test.ts|001|a", "unit|a.test.ts|001|b"],
     ],
-  ])("[%s] a claim %s has its Quality Check Reconciliations sorted", (_clm, read, kinds, observations, sorted) => {
+  ])("[%s] a claim %s has its Quality Check Reconciliations in order", (_clm, read, kinds, observations, sorted) => {
     const reconciliation = reconciledAlone(claimOf(read, kinds), observations.map(placedObservation));
 
     expect(reconciliation.qualityCheckReconciliations.map(sortedAs)).toEqual(sorted);
   });
-});
 
-describe("a missing check comes before the evidence of its kind", () => {
-  it("[CLM-LDG-076] a unit and a fitness Evidence Obligation under @CLM-ONE-001, and a unit test in a.test.ts citing it that never ran, sort as the missing unit check, the test that never ran, then the missing fitness check", () => {
+  it("[CLM-LDG-076] a unit and a fitness Evidence Obligation under @CLM-ONE-001, and a unit test in a.test.ts citing it that never ran, are in the order unit missing, the unit test in a.test.ts that never ran, then fitness missing", () => {
     const neverRan: EvidenceObservation = { cites: [ONE_001], result: "never-ran", kind: "unit", place: "a.test.ts", name: "adds" };
     const reconciliation = claimReconciliationOf(claimOf("under its code", ["unit", "fitness"]) as ExecutableClaim, [neverRan], false);
 
@@ -205,7 +203,7 @@ const groupsOf = (observations: readonly EvidenceObservation[]): ReturnType<type
 
 const groupsOn = (evidence: readonly Unnamed[]): ReturnType<typeof evidenceGroupsOf> => groupsOf(evidence.map(unnamedObservation));
 
-describe("evidence of the same kind, file and shared claim code will share a group", () => {
+describe("balance will split the unnamed claim's evidence by kind, file and shared claim code, and by nothing else", () => {
   it.each<[string, readonly Unnamed[], readonly string[]]>([
     ["CLM-LDG-065", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "a.test.ts", [], "y"]], ["unit a.test.ts  2"]],
     ["CLM-LDG-066", [["unit", "passed", "a.test.ts", [], "x"], ["unit", "passed", "b.test.ts", [], "y"]], ["unit a.test.ts  1", "unit b.test.ts  1"]],
@@ -233,7 +231,7 @@ describe("two uncited fitness functions share one group", () => {
   });
 });
 
-describe("a group of tests will count them and name those that failed", () => {
+describe("balance counts a group's results and names those that failed", () => {
   it.each<[string, readonly Unnamed[], number, number, number, readonly string[]]>([
     ["CLM-LDG-071", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "passed", "a.test.ts", [], "b"]], 2, 2, 0, []],
     ["CLM-LDG-072", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "failed", "a.test.ts", [], "b"]], 2, 1, 1, ["b"]],
