@@ -58,7 +58,7 @@ npx spec-controller balance \
 
 - **Every path you pass must exist.** Each report flag points at a file your tools have already written. Leave out any input you don't have. If you have no `features/` folder yet, leave out `--features`: the command refuses a folder that does not exist.
 - **`--target` names the project in the report.** Without it, the report uses the name of the git checkout's `origin`. With no `origin`, it reads `unknown-target`.
-- **`--exit-zero` stops the build going red while you watch.** A first run against a pipeline with no citations goes red. This is because every candidate step (each CI step treated as a check) cites nothing. Every observation then posts to the **unnamed claim**: the Claim Reconciliation for evidence that names no scenario. Without the flag, `balance` exits `1`. With it, you get the same report, but the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
+- **`--exit-zero` stops the build going red while you watch.** A first run against a pipeline with no citations goes red. This is because every fitness function (each CI step treated as a check) cites nothing. Every observation then posts to the **unnamed claim**: the Claim Reconciliation for evidence that names no scenario. Without the flag, `balance` exits `1`. With it, you get the same report, but the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
 
 For the report command of every other runner, see [Every report, and the whole command](./user-guide.md#every-report-and-the-whole-command).
 

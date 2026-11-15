@@ -234,7 +234,7 @@ describe("balance accounts for every step it reads", () => {
   ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, read) => {
     const { jobs } = stepAccountOf(read());
 
-    expect(jobs.map(({ stepsRead, runners, reconcilerSteps, nonChecks, plumbing, candidates }) => ({ stepsRead, sum: runners + reconcilerSteps + nonChecks + plumbing + candidates }))).toEqual([
+    expect(jobs.map(({ stepsRead, runners, reconcilerSteps, nonChecks, plumbing, fitnessFunctions }) => ({ stepsRead, sum: runners + reconcilerSteps + nonChecks + plumbing + fitnessFunctions }))).toEqual([
       { stepsRead: 3, sum: 3 },
       { stepsRead: 2, sum: 2 },
     ]);
@@ -243,7 +243,7 @@ describe("balance accounts for every step it reads", () => {
   it("[CLM-EVR-033] the total will be the sum of the jobs", () => {
     const { total } = stepAccountOf(twoJobs());
 
-    expect(total).toEqual({ stepsRead: 5, runners: 0, reconcilerSteps: 1, nonChecks: 1, plumbing: 1, candidates: 2 });
+    expect(total).toEqual({ stepsRead: 5, runners: 0, reconcilerSteps: 1, nonChecks: 1, plumbing: 1, fitnessFunctions: 2 });
   });
 
   it("[CLM-EVR-072] a workflow with a job that calls a reusable workflow, and a job with one step, has the one step counted", () => {

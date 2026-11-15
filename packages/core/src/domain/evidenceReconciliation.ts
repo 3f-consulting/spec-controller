@@ -46,7 +46,7 @@ export interface StepCounts {
   readonly reconcilerSteps: number;
   readonly nonChecks: number;
   readonly plumbing: number;
-  readonly candidates: number;
+  readonly fitnessFunctions: number;
 }
 
 export interface StepAccount {
@@ -88,10 +88,10 @@ const COUNTED: Readonly<Record<StepDisposition, keyof Omit<StepCounts, "stepsRea
   reconciler: "reconcilerSteps",
   nonCheck: "nonChecks",
   plumbing: "plumbing",
-  candidate: "candidates",
+  fitnessFunction: "fitnessFunctions",
 };
 
-const NONE: StepCounts = { stepsRead: 0, runners: 0, reconcilerSteps: 0, nonChecks: 0, plumbing: 0, candidates: 0 };
+const NONE: StepCounts = { stepsRead: 0, runners: 0, reconcilerSteps: 0, nonChecks: 0, plumbing: 0, fitnessFunctions: 0 };
 
 const countedIn = (counts: StepCounts, disposition: StepDisposition): StepCounts => ({
   ...counts,

@@ -67,7 +67,7 @@ describe("the provenance shows each input the run read on its own line", () => {
 });
 
 describe("the step account totals its jobs only when it has more than one", () => {
-  const counts: StepCounts = { stepsRead: 2, runners: 0, reconcilerSteps: 1, nonChecks: 0, plumbing: 0, candidates: 1 };
+  const counts: StepCounts = { stepsRead: 2, runners: 0, reconcilerSteps: 1, nonChecks: 0, plumbing: 0, fitnessFunctions: 1 };
 
   it.each([
     ["CLM-RPT-112", "one job", [{ workflow: "ci.yml", job: "build" }], ["ci.yml"]],
@@ -95,13 +95,13 @@ describe("the step account shows each job's counts, and the Total row their sums
   ] as const)("[%s] steps read in job build of ci.yml, 1 a test runner, and in job sweep of nightly.yml, 1 only setting the job up, show the step account's %s with its counts", (_clm, _row, job, counts) => {
     const stepAccount = stepAccountOf([
       { step: step("ci.yml", "build", "pnpm test"), disposition: "runner" },
-      { step: step("ci.yml", "build", "pnpm lint"), disposition: "candidate" },
+      { step: step("ci.yml", "build", "pnpm lint"), disposition: "fitnessFunction" },
       { step: step("nightly.yml", "sweep", "actions/checkout"), disposition: "plumbing" },
     ]);
     const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: PROVENANCE, stepAccount }));
     const rows = report.slice(report.indexOf("## Step account")).split("\n").filter((line) => line.startsWith("| ")).map((line) => line.slice(2, -2).split(" | "));
 
-    expect(rows.find((cells) => cells[1] === job)?.slice(2)).toEqual(counts);
+    expect({ counts: rows.find((cells) => cells[1] === job)?.slice(2), lastColumn: rows[0]?.at(-1) }).toEqual({ counts, lastColumn: coreText("step-account-fitness-functions") });
   });
 });
 
