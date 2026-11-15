@@ -16,7 +16,7 @@ const labelOf = ({ name, short, value }: Flag): string => `${short === undefined
 export function helpText(about?: Command): string {
   const lines =
     about === undefined
-      ? [text("help-usage"), "", text("help-commands"), ...listed(Object.keys(COMMANDS).map((command) => [command, text(`command-${command}`)]))]
-      : [text(`help-${about}-usage`), "", text("help-flags"), ...listed(COMMANDS[about].map((flag) => [labelOf(flag), text(`flag-${flag.name}`)]))];
+      ? [text("help-usage"), ...listed(Object.keys(COMMANDS).map((command) => [command, text(`command-${command}`)]))]
+      : [text(`help-${about}-usage`), ...listed(COMMANDS[about].map((flag) => [labelOf(flag), text(`flag-${flag.name}`)]))];
   return `${lines.join("\n")}\n`;
 }

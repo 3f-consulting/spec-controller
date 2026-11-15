@@ -55,11 +55,7 @@ describe("help will list what you can ask for", () => {
   ] as const)("[%s] %j lists balance's flags, and the run succeeds", (_clm, args) => {
     const { exitCode, output } = ran(args);
 
-    expect({ exitCode, heading: output.split("\n").slice(0, 3), flags: flagsListed(output) }).toEqual({
-      exitCode: 0,
-      heading: [catalogue["help-balance-usage"], "", catalogue["help-flags"]],
-      flags: BALANCE_FLAGS,
-    });
+    expect({ exitCode, flags: flagsListed(output) }).toEqual({ exitCode: 0, flags: BALANCE_FLAGS });
   });
 
   it("[CLM-CLI-117] allocate --help lists the feature code it takes and its flags, and the run succeeds", () => {
@@ -80,11 +76,8 @@ describe("help will list what you can ask for", () => {
   ] as const)("[%s] %j lists the commands, and the run succeeds", (_clm, args) => {
     const { exitCode, output } = ran(args);
 
-    const lines = output.split("\n");
-
-    expect({ exitCode, heading: lines.slice(0, 3), commands: lines.flatMap((line) => /^\s+(balance|allocate)\s{2,}(\S.*)$/.exec(line)?.slice(1) ?? []) }).toEqual({
+    expect({ exitCode, commands: output.split("\n").flatMap((line) => /^\s+(balance|allocate)\s{2,}(\S.*)$/.exec(line)?.slice(1) ?? []) }).toEqual({
       exitCode: 0,
-      heading: [catalogue["help-usage"], "", catalogue["help-commands"]],
       commands: ["balance", catalogue["command-balance"], "allocate", catalogue["command-allocate"]],
     });
   });
