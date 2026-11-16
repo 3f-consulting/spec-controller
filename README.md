@@ -69,7 +69,7 @@ Every outcome except `satisfied` turns the build red:
 | Cite a scenario from a unit test when its tags ask only for `@e2e` | `not-asked-for`: evidence the scenario never asked for |
 | Delete a CI check step | `missing` on its fitness function's scenario |
 | Let a CI check step or its job run under `continue-on-error: true` | `cannot-fail`: it passes, but its red might not fail the CI run. With the run's step record, the step's own outcome decides: a red it swallowed reads `failing`, and a green still reads `cannot-fail` |
-| Copy a scenario and keep its claim code | each copy gets a Claim Reconciliation of its own under that code, and every Quality Check Reconciliation on it (one for each kind of quality check it asks for) reads `duplicate-claim-code`: no evidence can be credited to either |
+| Copy a scenario and keep its claim code | each copy gets a Claim Reconciliation of its own under that code, and every Quality Check Reconciliation on it (one for each kind of quality check it asks for) reads `duplicate-claim-code`, or `no-quality-check` for a copy that asks for none: no evidence can be credited to either |
 | Tag a scenario `@wip` while its tests still cite it | the scenario is put off, so it asks for nothing, and its tests' evidence lands on a phantom claim (`cites-unknown-claim`) |
 | Write a scenario's tags but no claim code | `no-claim-code`: nothing can cite it |
 | Remove the tags naming a scenario's kinds of quality check while nothing cites it | `no-quality-check`: it asks for nothing, and nothing answers |

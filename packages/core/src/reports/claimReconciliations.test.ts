@@ -40,13 +40,21 @@ describe("each row will be named by its claim code, or by its file and title", (
       ["CLM-ONE-001 (one.feature)", "CLM-ONE-001 (two.feature)"],
       false,
     ],
+    [
+      "CLM-RPT-137",
+      "two scenarios sharing @CLM-ONE-001 and asking for no quality check, in one.feature and two.feature",
+      [["one.feature", "ONE", [["@CLM-ONE-001", "adds one"]]], ["two.feature", "TWO", [["@CLM-ONE-001", "adds one again"]]]],
+      [],
+      ["CLM-ONE-001 (one.feature)", "CLM-ONE-001 (two.feature)"],
+      false,
+    ],
     ["CLM-RPT-138", "a unit test citing @CLM-ONE-009, which no scenario has", [], [["unit", "passed", "ONE-009"]], ["CLM-ONE-009"], true],
     ["CLM-RPT-139", "a unit test citing no code", [], [["unit", "passed"]], ["(unnamed claim)"], true],
   ] as const)("[%s] a run with %s has its rows named, with its cells or — under every kind", (_clm, _claim, files, evidence, names, dashed) => {
     const { header, rows } = claimTable(files, evidence);
     const kindColumns = header.slice(1, header.indexOf("Verdict"));
 
-    expect({ names: rows.map((row) => row[0]), dashed: rows.every((row) => kindColumns.every((_column, at) => row[at + 1] === "—")) }).toEqual({ names, dashed });
+    expect({ names: rows.map((row) => row[0]), dashed: kindColumns.length > 0 && rows.every((row) => kindColumns.every((_column, at) => row[at + 1] === "—")) }).toEqual({ names, dashed });
   });
 });
 

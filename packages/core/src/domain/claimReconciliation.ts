@@ -31,9 +31,9 @@ interface ObservationOnly {
   readonly observation: EvidenceObservation;
 }
 
-// A claim that asks for nothing: with no code, or a shared one, no evidence can cite it; with its own, it asks for no check.
+// A claim that asks for nothing: with no code, nothing names it; with one, shared or not, it asks for no check.
 interface NeitherSide {
-  readonly outcome: "no-claim-code" | "duplicate-claim-code" | "no-quality-check";
+  readonly outcome: "no-claim-code" | "no-quality-check";
   readonly kind?: never;
   readonly obligation?: never;
   readonly observation?: never;
@@ -118,13 +118,13 @@ function inOrder(one: OfAKind, other: OfAKind): number {
 const verdictOf = (qualityCheckReconciliations: readonly QualityCheckReconciliation[]): ClaimReconciliation["verdict"] =>
   qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied") ? "balanced" : "out-of-balance";
 
-// A claim that asks for nothing says why no evidence can answer it: a shared code, no code, or no check asked for.
+// A claim that asks for nothing has no code, or asks for no check, whether or not its code is shared.
 export function claimReconciliationOf(claim: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): ClaimReconciliation {
   const reconciled = executableReconciliations(claim, observations, codeShared);
   const qualityCheckReconciliations: QualityCheckReconciliation[] =
     reconciled.length > 0
       ? [...reconciled].sort(inOrder)
-      : [{ outcome: codeShared ? "duplicate-claim-code" : claim.claimCode === undefined ? "no-claim-code" : "no-quality-check" }];
+      : [{ outcome: claim.claimCode === undefined ? "no-claim-code" : "no-quality-check" }];
   return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
 }
 

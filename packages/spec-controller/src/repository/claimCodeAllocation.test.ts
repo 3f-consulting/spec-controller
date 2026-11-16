@@ -1,10 +1,10 @@
 import { appendFileSync, chmodSync, realpathSync, rmSync } from "node:fs";
+import { textFor } from "@3f-consulting/spec-controller-core";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
-import { allocate, type AllocateOutcome } from "../../../spec-controller/src/commands/allocate.js";
-import appCatalogue from "../../../spec-controller/src/messages/messages.en.json" with { type: "json" };
-import { noteText } from "../../../spec-controller/src/output/allocateNotes.js";
-import { featureFile, folderForTest, nestedCheckoutIn, repositoryForTest, shallowCloneOf } from "../../../spec-controller/src/repository/repository.test-utils.js";
-import { textFor } from "../messages/catalogue.js";
+import { allocate, type AllocateOutcome } from "../commands/allocate.js";
+import appCatalogue from "../messages/messages.en.json" with { type: "json" };
+import { noteText } from "../output/allocateNotes.js";
+import { featureFile, folderForTest, nestedCheckoutIn, repositoryForTest, shallowCloneOf } from "./repository.test-utils.js";
 
 const answerAndHighest = (outcome: AllocateOutcome) =>
   "answer" in outcome ? { answer: outcome.answer, highest: outcome.notes.find(({ note }) => note === "highest-seen") } : outcome;

@@ -859,7 +859,7 @@ When Cucumber runs an Outline with a `clm` column, each row is credited by Cucum
 
 **A claim code is an account number, and two scenarios carrying one code are two claims that cannot reconcile.** A code two scenarios carry arises from the same id written twice:
 
-- Each scenario has a Claim Reconciliation of its own, and every Quality Check Reconciliation on it reads `duplicate-claim-code`. The Markdown names each row by the code and its feature file; the JSON gives each claim its file and title.
+- Each scenario has a Claim Reconciliation of its own. Each Quality Check Reconciliation for a quality check it asks for reads `duplicate-claim-code`; a scenario that asks for none reads `no-quality-check`. The Markdown names each row by the code and its feature file; the JSON gives each claim its file and title.
 - No evidence citing that code can be attributed to either scenario, so both claims are out of balance whatever the evidence says. An evidence observation citing the code credits neither and posts to the unnamed claim.
 - The rest of the report is unaffected. Every other account reconciles exactly as it would without the duplicate.
 - The run exits `1`, the out-of-balance verdict, and the report is printed.

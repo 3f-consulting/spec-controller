@@ -6,7 +6,8 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
   sides it has. With both, the evidence was satisfied, failing, or cannot-fail when it passed where
   it could not have failed. With an Evidence Obligation alone, it is missing, or the claim has
   no-claim-code or a duplicate-claim-code. With an Evidence Observation alone, it is not-asked-for,
-  cites-unknown-claim, cites-no-claim, or never-ran. With neither, the claim has no-quality-check.
+  cites-unknown-claim, cites-no-claim, or never-ran. With neither, the claim has
+  no-quality-check, or no-claim-code when it has no code.
 
   balance works from both sides, the Evidence Obligations and the Evidence Observations, so every
   claim, of whichever kind, has a Claim Reconciliation.
@@ -49,7 +50,7 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-053 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing fitness function citing it, whose step cannot fail its job | one cannot-fail                   |
         | CLM-LDG-021 | no code                                 | a unit Evidence Obligation                    | no test                                                              | one no-claim-code                 |
         | CLM-LDG-054 | @CLM-ONE-001, shared with another claim | a unit Evidence Obligation                    | no test citing it                                                    | one duplicate-claim-code          |
-        | CLM-LDG-077 | @CLM-ONE-001, shared with another claim | no Evidence Obligation                        | no test citing it                                                    | one duplicate-claim-code          |
+        | CLM-LDG-077 | @CLM-ONE-001, shared with another claim | no Evidence Obligation                        | no test citing it                                                    | one no-quality-check              |
         | CLM-LDG-006 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | a unit test citing it                                                | one cites-unknown-claim           |
         | CLM-LDG-055 | @CLM-ONE-002, on a deferred scenario    | no Evidence Obligation                        | a unit test citing it                                                | one cites-unknown-claim           |
         | CLM-LDG-056 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | two unit tests citing it                                             | two cites-unknown-claim           |

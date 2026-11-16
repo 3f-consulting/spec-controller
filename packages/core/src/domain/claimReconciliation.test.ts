@@ -58,7 +58,7 @@ describe("a Quality Check Reconciliation's outcome follows from the sides it has
     ["CLM-LDG-053", "under its code", ["fitness"], [["fitness", "passed-on-error"]], ["cannot-fail"]],
     ["CLM-LDG-021", "with no code", ["unit"], [], ["no-claim-code"]],
     ["CLM-LDG-054", "sharing its code", ["unit"], [], ["duplicate-claim-code"]],
-    ["CLM-LDG-077", "sharing its code", [], [], ["duplicate-claim-code"]],
+    ["CLM-LDG-077", "sharing its code", [], [], ["no-quality-check"]],
     ["CLM-LDG-006", "phantom", [], [["unit", "passed"]], ["cites-unknown-claim"]],
     ["CLM-LDG-056", "phantom", [], [["unit", "passed"], ["unit", "passed"]], ["cites-unknown-claim", "cites-unknown-claim"]],
     ["CLM-LDG-007", "unnamed", [], [["unit", "passed"]], ["cites-no-claim"]],

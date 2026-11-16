@@ -215,7 +215,7 @@ const DOMAIN_TEST_SELECTORS = [
 ];
 
 // A driven adapter's folder whose tests run a domain claim's examples through that real adapter, citing the claim.
-const CONTRACT_TEST_FOLDERS = ["packages/spec-controller/src/runIdentity/**"];
+const CONTRACT_TEST_FOLDERS = ["packages/spec-controller/src/runIdentity/**", "packages/spec-controller/src/repository/**"];
 
 const PROSE = ["Literal[value=/\\S\\s+\\S+\\s+\\S/]", "TemplateElement[value.raw=/\\S\\s+\\S+\\s+\\S/]"];
 
