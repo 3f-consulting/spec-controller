@@ -24,9 +24,9 @@ const parser = new XMLParser({
 
 const elementsIn = (element: Element, name: string): Element[] => (element[name] as Element[] | undefined) ?? [];
 
-// An outcome element says what went wrong, or why the test was skipped, in its message attribute, if it has one.
+// An outcome element says what went wrong, or why the test was skipped, in its message attribute, or else in its text.
 function failureAsWritten(outcome: unknown): FailureAsWritten {
-  const message = (outcome as Element)["@message"] as string | undefined;
+  const message = ((outcome as Element)["@message"] ?? (outcome as Element)["#text"]) as string | undefined;
   return message ? { message } : {};
 }
 
