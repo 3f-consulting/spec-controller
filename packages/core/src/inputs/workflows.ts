@@ -1,102 +1,61 @@
 import { parse } from "yaml";
-import type { PipelineStep, PipelineStepAction, WorkflowStep } from "../domain/postEvidenceObservation.js";
-import { parseSources, type Parsed, type Source, type SourcesParse } from "./sourceParse.js";
+import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
+import { coreText } from "../messages/catalogue.js";
+import workflowsVariants from "./workflows.variants.json" with { type: "json" };
 
-export interface PackageJsonScripts {
-  readonly scripts?: Record<string, string>;
+// Which steps only set the job up is the reader's to say, from its list of the actions that do, by owner and
+// repository: an action in a repository on the list is one of them. An entry ending in * names a family of
+// repositories, such as every setup action.
+const usesAction = (uses: string, action: string): boolean => {
+  const repository = uses.split("@")[0]!.split("/").slice(0, 2).join("/");
+  return action.endsWith("*") ? repository.startsWith(action.slice(0, -1)) : repository === action;
+};
+const isPlumbing = (uses: string): boolean => workflowsVariants["CLM-OBS-015"].variants.some((action) => usesAction(uses, action));
+const WRITES_STEP_RECORD = "toJSON(steps)";
+
+type Mapping = Readonly<Record<string, unknown>>;
+
+const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null && !Array.isArray(value);
+const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
+// A step's name as written, a number among them: YAML reads a bare 3 as a number.
+const nameText = (value: unknown): string | undefined => (typeof value === "number" ? String(value) : text(value));
+const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value : []);
+
+// What a step holds in each place it can write the step record from: its command, or its env: values.
+const HELD_IN: Readonly<Record<string, (step: Mapping) => readonly unknown[]>> = {
+  "run:": (step) => [step["run"]],
+  "env:": (step) => Object.values(isMapping(step["env"]) ? step["env"] : {}),
+};
+const writesStepRecord = (step: Mapping): boolean =>
+  workflowsVariants["CLM-OBS-013"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
+
+function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping): WorkflowStepAsWritten {
+  const uses = text(step["uses"]);
+  return {
+    workflow,
+    job,
+    jobContinueOnError,
+    name: nameText(step["name"]),
+    uses,
+    run: text(step["run"]),
+    id: text(step["id"]),
+    continueOnError: step["continue-on-error"],
+    plumbing: uses !== undefined && isPlumbing(uses),
+    writesStepRecord: writesStepRecord(step),
+  };
 }
 
-interface WorkflowContent {
-  readonly steps: readonly WorkflowStep[];
-}
-
-export type ParsedWorkflow = Parsed<WorkflowContent>;
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null;
-}
-
-const CONTINUE_ON_ERROR = "continue-on-error";
-
-function envValuesOf(value: unknown): readonly string[] {
-  return Object.values(isRecord(value) ? value : {}).filter(
-    (entry): entry is string => typeof entry === "string"
-  );
-}
-
-function idOf(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined;
-}
-
-const STEP_RECORD_EXPRESSION = "tojson(steps)";
-
-interface UsesReading {
-  readonly owner: string;
-  readonly repository: string;
-}
-
-function readUses(uses: string): UsesReading {
-  const [owner, repository] = uses.split(/[/@]/);
-  return { owner: String(owner), repository: String(repository) };
-}
-
-const PLUMBING_OWNER = "actions";
-const PLUMBING_REPOSITORIES: ReadonlySet<string> = new Set(["checkout", "cache", "upload-artifact", "download-artifact"]);
-const PLUMBING_REPOSITORY_PREFIX = "setup-";
-
-function isPlumbing(action: PipelineStepAction): boolean {
-  if (!("action" in action)) return false;
-  const { owner, repository } = readUses(action.action.name);
-  return owner === PLUMBING_OWNER && (PLUMBING_REPOSITORIES.has(repository) || repository.startsWith(PLUMBING_REPOSITORY_PREFIX));
-}
-
-function writesStepRecordOf(env: unknown, action: PipelineStepAction): boolean {
-  const written = "command" in action ? [...envValuesOf(env), action.command] : envValuesOf(env);
-  return written.some((text) => text.replace(/\s/g, "").toLowerCase().includes(STEP_RECORD_EXPRESSION));
-}
-
-function actionOf(step: Record<string, unknown>): PipelineStepAction {
-  const command = step["run"];
-  return typeof command === "string" ? { command } : { action: { name: step["uses"] as string } };
-}
-
-function nameOf(value: unknown): { readonly name?: string } {
-  return typeof value === "string" ? { name: value } : {};
-}
-
-function stepsOfJob(job: string, jobBody: Record<string, unknown>): WorkflowStep[] {
-  const steps = jobBody["steps"];
-  if (!Array.isArray(steps)) return [];
-  const jobContinueOnError = jobBody[CONTINUE_ON_ERROR];
-  return (steps as Record<string, unknown>[]).map((step) => {
-    const action = actionOf(step);
-    return {
-      job,
-      ...nameOf(step["name"]),
-      id: idOf(step["id"]),
-      continueOnError: step[CONTINUE_ON_ERROR],
-      jobContinueOnError,
-      writesStepRecord: writesStepRecordOf(step["env"], action),
-      plumbing: isPlumbing(action),
-      ...action,
-    };
+export function workflowStepsFrom(workflow: string, source: string): WorkflowStepAsWritten[] {
+  const document: unknown = parse(source);
+  const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
+  // GitHub runs no workflow whose job is not a mapping, or whose step names neither an action nor a command.
+  return Object.entries(jobs).flatMap(([job, definition]) => {
+    if (!isMapping(definition)) throw new TypeError(coreText("job-holds-no-settings", { place: `jobs.${job}` }));
+    return mappingsIn(definition["steps"]).map((step, at) => {
+      if (text(step["uses"]) === undefined && text(step["run"]) === undefined) {
+        throw new TypeError(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
+      }
+      return stepAsWritten(workflow, job, definition["continue-on-error"], step);
+    });
   });
-}
-
-function stepsOfDocument(doc: unknown): WorkflowStep[] {
-  const jobs = isRecord(doc) ? doc["jobs"] : undefined;
-  if (!isRecord(jobs)) return [];
-  return Object.entries(jobs as Record<string, Record<string, unknown>>).flatMap(([job, jobBody]) => stepsOfJob(job, jobBody));
-}
-
-function workflowOf(document: unknown): WorkflowContent {
-  return { steps: stepsOfDocument(document) };
-}
-
-export function parseWorkflows(sources: readonly Source[]): SourcesParse<WorkflowContent> {
-  return parseSources(sources, (source): unknown => parse(source), workflowOf);
-}
-
-export function pipelineStepsOf(workflows: readonly ParsedWorkflow[]): PipelineStep[] {
-  return workflows.flatMap(({ file, steps }) => steps.map((step) => ({ workflow: file, ...step })));
 }

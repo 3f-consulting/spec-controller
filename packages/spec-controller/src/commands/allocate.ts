@@ -1,83 +1,76 @@
-import { join } from "node:path";
-import { claimCodeMarksFor, nextClaimCode, type ClaimCodeOccurrence } from "@3f-consulting/spec-controller-core";
-import { asksForHelp } from "../runRequest/cliArgs.js";
-import { allocateCommand, cliRegistry, renderCommandHelp } from "../runRequest/cliRegistry.js";
-import { readFeatureCodes } from "../repository/readFeatureCodes.js";
-import { readRequest, type AllocateRequest } from "../runRequest/request.js";
-import { DEFAULT_FEATURES_DIR } from "../runRequest/defaults.js";
-import { refuse, UnparseableFeatureFiles, UnreadableInput } from "../repository/unreadable.js";
-import { corpusFeatureFiles, MissingFeatureCorpusError, type CorpusFeatureFile } from "../inputs/ingestScenarios.js";
-import { AppMessage } from "../messages/messages.js";
-import { historyBoundaryOf, readHistory, repositoryTop } from "../repository/readHistory.js";
-import { readTree, walkTree } from "../repository/readTree.js";
-import { alreadyHeadedNote, highestSeenLine, historyBoundaryLine, unknownFeatureCodeRefusal } from "../output/allocateNotes.js";
-import { endRunOn, USAGE_REFUSAL } from "../runEnding/exitCode.js";
-import { standardError, type RefusalLines, type StandardError } from "../runEnding/standardError.js";
+import {
+  allocationOf,
+  featureAsWrittenFrom,
+  featureCodeOfFile,
+  writtenClaimCode,
+  type Allocation,
+  type AllocationAsked,
+  type HistoryBoundary,
+} from "@3f-consulting/spec-controller-core";
+import { join, relative } from "node:path";
+import { featureSourcesUnder } from "../inputs/readFiles.js";
+import type { AllocateNote } from "../output/allocateNotes.js";
+import { historyBoundaryOf, historyLines, standingOf, treeLines, type Read } from "../repository/readRepository.js";
+import type { Refusal } from "../runEnding/runEnding.js";
 
-function shown(): StandardError {
-  return standardError(process.stderr, "allocate");
-}
+export type AllocateOutcome =
+  | { readonly answer: string; readonly notes: readonly AllocateNote[] }
+  | { readonly refusal: Refusal };
 
-export function runAllocate(argv: string[]): void {
-  if (asksForHelp(argv)) {
-    process.stdout.write(renderCommandHelp(allocateCommand) + "\n");
-    return;
-  }
-  answerOrRefuse(readRequest(argv, cliRegistry));
-}
+const FEATURES = "features";
 
-function answerOrRefuse(request: ReturnType<typeof readRequest>): void {
-  if ("usageError" in request) {
-    refuseUsage(request.usageError);
-    return;
-  }
+// The feature codes the repository's feature files are tagged with; one that does not parse stops allocate, named.
+function featureCodesUnder(top: string): Read<string[]> {
+  const featureCodes: string[] = [];
+  let sources: ReturnType<typeof featureSourcesUnder>;
   try {
-    answerRequest(request);
-  } catch (err) {
-    if (!(err instanceof UnreadableInput || err instanceof UnparseableFeatureFiles)) throw err;
-    refuseUsage(err.refusal);
+    sources = featureSourcesUnder(join(top, FEATURES));
+  } catch (error) {
+    const path = (error as NodeJS.ErrnoException).path ?? join(top, FEATURES);
+    return { refusal: { key: "unreadable-in-tree", values: { path: relative(top, path), said: (error as Error).message } } };
+  }
+  for (const { file, source } of sources) {
+    try {
+      const featureCode = featureCodeOfFile(featureAsWrittenFrom(file, source));
+      if (featureCode !== undefined) featureCodes.push(featureCode);
+    } catch {
+      return { refusal: { key: "feature-file-does-not-parse", values: { file: relative(top, file) } } };
+    }
+  }
+  return { read: featureCodes };
+}
+
+// A boundary that left history unread is noted with every answer.
+function boundaryNotes(boundary: HistoryBoundary): AllocateNote[] {
+  switch (boundary.kind) {
+    case "complete":
+      return [];
+    case "not-a-repository":
+      return [{ note: "no-history-read" }];
+    case "shallow":
+      return [{ note: "history-before", commit: boundary.before }];
   }
 }
 
-function refuseUsage(error: RefusalLines): void {
-  shown().error(error);
-  endRunOn(USAGE_REFUSAL);
+// A new feature code's answer says nothing of what was seen; it notes only a feature file that already has the code.
+function notesOf(asked: AllocationAsked, allocation: Extract<Allocation, { kind: "allocated" }>): AllocateNote[] {
+  if (asked.asNewFeatureCode) return allocation.featureCodeAlreadyOnAFile ? [{ note: "feature-code-on-a-file", featureCode: asked.featureCode }] : [];
+  const seen = allocation.highestSeen;
+  return seen === undefined ? [] : [{ note: "highest-seen", code: seen.text, path: seen.path, line: seen.line, commit: seen.commit }];
 }
 
-function answerRequest({ featureCode, isNew }: AllocateRequest): void {
-  const cwd = process.cwd();
-  const top = repositoryTop(cwd);
-  const featureCodes = readFeatureCodes(featureFilesIn(join(top ?? cwd, DEFAULT_FEATURES_DIR)));
-  const answer = nextClaimCode({ featureCode, featureCodes, isNew }, occurrencesFrom(cwd, featureCode, top));
-  (ANSWERED[answer.kind] as (answer: Answer, cwd: string) => void)(answer, cwd);
-}
-
-type Answer = ReturnType<typeof nextClaimCode>;
-
-const ANSWERED: { readonly [K in Answer["kind"]]: (answer: Extract<Answer, { kind: K }>, cwd: string) => void } = {
-  allocated: (answer, cwd) => {
-    writeLineIfAny(historyBoundaryLine(historyBoundaryOf(cwd), answer));
-    shown().note(highestSeenLine(answer));
-    writeLineIfAny(alreadyHeadedNote(answer));
-    process.stdout.write(answer.code + "\n");
-  },
-  "unknown-feature-code": (answer) => refuseUsage(unknownFeatureCodeRefusal(answer)),
-};
-
-function featureFilesIn(dir: string): CorpusFeatureFile[] {
-  try {
-    return corpusFeatureFiles(dir);
-  } catch (err) {
-    if (err instanceof MissingFeatureCorpusError) return [];
-    return refuse(AppMessage.FeatureCorpus, dir, err);
+export function allocate(asked: AllocationAsked, standingIn: string): AllocateOutcome {
+  const standing = standingOf(standingIn);
+  if ("refusal" in standing) return { refusal: standing.refusal };
+  const featureCodes = featureCodesUnder(standing.read.top);
+  if ("refusal" in featureCodes) return { refusal: featureCodes.refusal };
+  const tree = treeLines(standing.read, asked.featureCode);
+  if ("refusal" in tree) return { refusal: tree.refusal };
+  const history = standing.read.in === "repository" ? historyLines(standing.read.top, asked.featureCode) : { read: [] };
+  if ("refusal" in history) return { refusal: history.refusal };
+  const allocation = allocationOf(asked, featureCodes.read, [...tree.read, ...history.read]);
+  if (allocation.kind === "unknown-feature-code") {
+    return { refusal: { key: "unknown-feature-code", values: { featureCode: allocation.featureCode, featureCodes: allocation.featureCodes.join(", ") } } };
   }
-}
-
-function writeLineIfAny(line: string | null): void {
-  if (line !== null) shown().note(line);
-}
-
-function occurrencesFrom(cwd: string, featureCode: string, top: string | null): ClaimCodeOccurrence[] {
-  const marks = claimCodeMarksFor(featureCode);
-  return top !== null ? [...readTree(top, marks), ...readHistory(cwd, marks)] : walkTree(cwd, marks);
+  return { answer: writtenClaimCode(allocation.claimCode), notes: [...notesOf(asked, allocation), ...boundaryNotes(historyBoundaryOf(standing.read))] };
 }

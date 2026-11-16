@@ -1,61 +1,73 @@
-import { groupsOf, type ClaimReconciliation, type EvidenceGroup, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
-import { isUnnamedClaim, type EvidenceObservation } from "../domain/postEvidenceObservation.js";
-import { coreText } from "../messages/coreText.js";
-import { heading } from "./heading.js";
-import type { ClaimCode } from "../domain/claimCodes.js";
-import { labelled } from "./labelled.js";
-import { inCell, quoted } from "./quoted.js";
-import { table } from "./table.js";
+import { writtenClaimCode } from "../domain/claimCodes.js";
+import { evidenceGroupsOf, isExecutable, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
+import { QUALITY_CHECK_KINDS, type QualityCheckKind } from "../domain/postEvidenceObligation.js";
+import { coreText } from "../messages/catalogue.js";
+import { firstLineOf, inCell } from "./quoted.js";
+import { tableOf } from "./table.js";
 
-const codeText = ({ featureCode, number }: ClaimCode): string => `CLM-${featureCode}-${number}`;
+// A column for each kind some claim raises or some evidence answers: each gives a Quality Check Reconciliation of its kind.
+const kindsIn = (claimReconciliations: readonly ClaimReconciliation[]): QualityCheckKind[] =>
+  QUALITY_CHECK_KINDS.filter((kind) => claimReconciliations.some(({ qualityCheckReconciliations }) => qualityCheckReconciliations.some((reconciliation) => reconciliation.kind === kind)));
 
-export function whereToLook({ place, name }: EvidenceObservation): string {
-  return [place, ...(name === undefined ? [] : [name])].map(inCell).join(" ");
+// Whether the claim asks for the kind, by its letter or -, then how many of its tests of that kind ran, or -.
+function cellOf({ claim, qualityCheckReconciliations }: ClaimReconciliation, kind: QualityCheckKind): string {
+  if (!isExecutable(claim)) return "—";
+  const asked = claim.obligations.some((obligation) => obligation.kind === kind);
+  const observed = qualityCheckReconciliations.flatMap(({ observation }) => (observation?.kind === kind ? [observation] : []));
+  if (!asked && observed.length === 0) return "";
+  const ran = observed.filter(({ result }) => result !== "never-ran").length;
+  return `${asked ? kind[0]!.toUpperCase() : "-"}/${ran > 0 ? ran : "-"}`;
 }
 
-export function said({ message, notes }: EvidenceObservation): string {
-  const firstLine = message?.split(/\r?\n/).find((line) => line.trim() !== "");
-  return [...(firstLine === undefined ? [] : [firstLine]), ...notes].map(inCell).join(" ");
+// A claim is named by its code; by its code and file when another claim shares it; by its file and title when it has none.
+function nameOf({ claim, qualityCheckReconciliations }: ClaimReconciliation): string {
+  if (!isExecutable(claim)) return claim.claimCode === undefined ? coreText("unnamed-claim") : writtenClaimCode(claim.claimCode);
+  if (claim.claimCode === undefined) return `${inCell(claim.file)} : ${inCell(claim.title)}`;
+  const code = writtenClaimCode(claim.claimCode);
+  return qualityCheckReconciliations.some(({ outcome }) => outcome === "duplicate-claim-code") ? `${code} (${inCell(claim.file)})` : code;
 }
 
-function lineOf({ outcome, kind, observation }: QualityCheckReconciliation): string[] {
-  return [outcome, kind ?? "", observation ? whereToLook(observation) : "", observation ? said(observation) : ""];
+const whereToLook = ({ observation }: QualityCheckReconciliation): string =>
+  observation === undefined ? "" : ` (${[observation.place, ...(observation.name === undefined ? [] : [observation.name])].map(inCell).join(": ")})`;
+
+// What the evidence said: its message's first line, then every note balance added.
+const saidBy = ({ observation }: QualityCheckReconciliation): string => {
+  const said = [...(observation?.message === undefined ? [] : [firstLineOf(observation.message)]), ...(observation?.notes ?? [])];
+  return said.length === 0 ? "" : ` — ${said.map(inCell).join(", ")}`;
+};
+
+const itemOf = (reconciliation: QualityCheckReconciliation): string =>
+  `${reconciliation.kind === undefined ? "" : `${reconciliation.kind}: `}${reconciliation.outcome}${whereToLook(reconciliation)}${saidBy(reconciliation)}`;
+
+// The unnamed claim's evidence, in groups by kind, file and shared code, each with its file and code where it has them,
+// then how many ran, passed and failed.
+function groupItemsOf(claimReconciliation: ClaimReconciliation): string[] {
+  return evidenceGroupsOf(claimReconciliation).map(({ kind, file, claimCode, qualityCheckReconciliations, ran, passed, failed, failures }) => {
+    const where = [...(file === undefined ? [] : [inCell(file)]), ...(claimCode === undefined ? [] : [writtenClaimCode(claimCode)])];
+    return `${kind}: ${qualityCheckReconciliations[0]!.outcome}${where.length === 0 ? "" : ` (${where.join(", ")})`} — ${coreText("group-counts", { ran, passed, failed })}${failures.length === 0 ? "" : `: ${failures.map(inCell).join(", ")}`}`;
+  });
 }
 
-function claimHeading({ claim }: ClaimReconciliation): string[] {
-  if ("title" in claim) {
-    const code = claim.claimCode === undefined ? quoted(claim.title) : codeText(claim.claimCode);
-    return [`### ${code}`, [labelled("title-label", quoted(claim.title)), labelled("file-label", quoted(claim.file))].join("\n")];
-  }
-  if (claim.claimCode !== undefined) return [`### ${codeText(claim.claimCode)}`, labelled("phantom-claim-label", coreText("phantom-claim"))];
-  return [`### ${coreText("unnamed-claim")}`];
-}
-
-function groupLineOf({ kind, file, claimCode, ran, passed, failed, failures }: EvidenceGroup): string[] {
-  const counts = [ran, passed, failed].map(String);
-  return [kind, file === undefined ? "" : inCell(file), claimCode === undefined ? "" : codeText(claimCode), ...counts, failures.map(inCell).join(" ")];
-}
-
-// The unnamed claim's evidence, grouped by where it came from, so a reader can tell which file to fix.
-function evidenceGroups(claimReconciliation: ClaimReconciliation): string[] {
-  if (!isUnnamedClaim(claimReconciliation.claim)) return [];
-  const columns = ["kind-column", "file-column", "claim-code-column", "ran-column", "passed-column", "failed-column", "failures-column"] as const;
-  const header = columns.map((column) => coreText(column));
-  return [coreText("evidence-groups-key"), table(header, groupsOf(claimReconciliation).map(groupLineOf))];
-}
-
-function claimSection(claimReconciliation: ClaimReconciliation): string[] {
-  const header = [coreText("outcome-column"), coreText("kind-column"), coreText("where-column"), coreText("said-column")];
-  return [
-    ...claimHeading(claimReconciliation),
-    labelled("verdict-label", claimReconciliation.verdict),
-    coreText("claim-reconciliations-key"),
-    table(header, claimReconciliation.qualityCheckReconciliations.map(lineOf)),
-    ...evidenceGroups(claimReconciliation),
-  ];
+function itemsOf(claimReconciliation: ClaimReconciliation): string {
+  const { claim, qualityCheckReconciliations } = claimReconciliation;
+  const items = !isExecutable(claim) && claim.claimCode === undefined ? groupItemsOf(claimReconciliation) : qualityCheckReconciliations.filter(({ outcome }) => outcome !== "satisfied").map(itemOf);
+  return items.length === 0 ? "—" : items.join("; ");
 }
 
 export function claimReconciliationsSection(claimReconciliations: readonly ClaimReconciliation[]): string[] {
-  if (claimReconciliations.length === 0) return [heading(2, "claim-reconciliations-heading"), coreText("claim-reconciliations-none")];
-  return [heading(2, "claim-reconciliations-heading"), ...claimReconciliations.flatMap(claimSection)];
+  const heading = [`## ${coreText("claim-reconciliations-heading")}`, ""];
+  if (claimReconciliations.length === 0) return [...heading, coreText("claim-reconciliations-none")];
+  const kinds = kindsIn(claimReconciliations);
+  return [
+    ...heading,
+    ...tableOf(
+      ["claim-column", ...kinds.map((kind) => `kind-column-${kind}`), "verdict-column", "items-column"],
+      claimReconciliations.map((claimReconciliation) => [
+        nameOf(claimReconciliation),
+        ...kinds.map((kind) => cellOf(claimReconciliation, kind)),
+        claimReconciliation.verdict,
+        itemsOf(claimReconciliation),
+      ]),
+    ),
+  ];
 }

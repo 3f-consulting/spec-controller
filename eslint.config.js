@@ -214,6 +214,9 @@ const DOMAIN_TEST_SELECTORS = [
   },
 ];
 
+// A driven adapter's folder whose tests run a domain claim's examples through that real adapter, citing the claim.
+const CONTRACT_TEST_FOLDERS = ["packages/spec-controller/src/runIdentity/**"];
+
 const PROSE = ["Literal[value=/\\S\\s+\\S+\\s+\\S/]", "TemplateElement[value.raw=/\\S\\s+\\S+\\s+\\S/]"];
 
 // A files pattern that matches nothing lints nothing, and ESLint says nothing about it.
@@ -496,7 +499,7 @@ export default [
 
   {
     files: ["packages/**/*.test.ts"],
-    ignores: ["packages/core/src/domain/**"],
+    ignores: ["packages/core/src/domain/**", ...CONTRACT_TEST_FOLDERS],
     languageOptions: tsLanguageOptions,
     rules: {
       "domainTests/no-restricted-syntax": ["error", ...DOMAIN_TEST_SELECTORS],

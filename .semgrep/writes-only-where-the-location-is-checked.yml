@@ -14,7 +14,6 @@ rules:
       exclude:
         - "*.test.ts"
         - "*.test-utils.ts"
-        - "packages/spec-controller/src/output/outputLocation.ts"
         - "packages/spec-controller/src/output/writer.ts"
     patterns:
       - pattern-either:

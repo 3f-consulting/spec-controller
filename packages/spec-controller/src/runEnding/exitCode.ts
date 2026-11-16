@@ -1,41 +1,20 @@
-// Held in the app, not in core's domain, because this module loads with the crash guards, before core does.
-export const VERDICT_EXIT_CODE: Readonly<Record<"balanced" | "out-of-balance" | "not-reconciled", number>> = {
-  balanced: 0,
-  "out-of-balance": 1,
-  "not-reconciled": 3,
-};
+import type { RunVerdict } from "@3f-consulting/spec-controller-core";
+import { type ExitCode } from "./codes.js";
 
-export const USAGE_EXIT_CODE = 2;
+export { UNEXPECTED_ERROR, USAGE_ERROR } from "./codes.js";
 
-// A process outcome, not a verdict: the run never reached one, so no verdict code may stand for it.
-const UNEXPECTED_ERROR_EXIT_CODE = 4;
+const EXIT_CODES: Readonly<Record<RunVerdict["verdict"], ExitCode>> = { balanced: 0, "out-of-balance": 1, "not-reconciled": 3 };
 
-export type RunEnding =
-  | { readonly kind: "verdict"; readonly code: number }
-  | { readonly kind: "answer"; readonly code: number }
-  | { readonly kind: "usage-refusal" }
-  | { readonly kind: "unexpected-error" };
-
-export const USAGE_REFUSAL: RunEnding = { kind: "usage-refusal" };
-
-export const UNEXPECTED_ERROR: RunEnding = { kind: "unexpected-error" };
-
-export interface ExitCodeHolder {
-  exitCode?: number | string | null | undefined;
+// --exit-zero moves only an out-of-balance run's code, to 0.
+export function exitCodeOf(runVerdict: RunVerdict, under: { readonly exitZero: boolean }): ExitCode {
+  return under.exitZero && runVerdict.verdict === "out-of-balance" ? 0 : EXIT_CODES[runVerdict.verdict];
 }
 
-export function endRunOn(ending: RunEnding, proc: ExitCodeHolder = process): void {
-  proc.exitCode = codeOf(ending);
+export function endRunOn(exitCode: ExitCode): void {
+  process.exitCode = exitCode;
 }
 
-function codeOf(ending: RunEnding): number {
-  switch (ending.kind) {
-    case "verdict":
-    case "answer":
-      return ending.code;
-    case "usage-refusal":
-      return USAGE_EXIT_CODE;
-    case "unexpected-error":
-      return UNEXPECTED_ERROR_EXIT_CODE;
-  }
+// An unexpected error ends the run on its code only when the run has no code yet: after the verdict, the verdict's stays.
+export function endRunUnlessEnded(exitCode: ExitCode): void {
+  if (process.exitCode === undefined) process.exitCode = exitCode;
 }

@@ -1,7 +1,7 @@
 {
   "path": ["packages/core/src", "packages/spec-controller/src"],
   "format": ["typescript"],
-  "ignore": ["**/*.test.ts", "**/*.test-utils.ts", "**/fixtures/**"],
+  "ignore": ["**/*.test.ts", "**/*.test-utils.ts"],
   "minTokens": 50,
   "minLines": 5,
   "reporters": ["console"]

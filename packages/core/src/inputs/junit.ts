@@ -1,56 +1,72 @@
-import type { EvidenceObservation, TestCaseAsWritten } from "../domain/postEvidenceObservation.js";
-import { testCaseObservationsOf } from "../domain/postEvidenceObservation.js";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
+import type { FailureAsWritten, ResultInSuiteAsWritten, ResultsBySuiteAsWritten } from "../domain/postEvidenceObservation.js";
+import { TOP } from "./shape.js";
 
-export interface JunitXmlReport {
-  readonly testsuites: {
-    readonly testsuite?: ReadonlyArray<JunitTestsuite>;
-  };
+// A JUnit XML evidence report, as far as its reader reads it: suites, nested or not, each holding its test cases.
+interface Element {
+  readonly [name: string]: unknown;
 }
 
-interface JunitTestsuite {
-  readonly name?: string;
-  readonly testcase?: ReadonlyArray<JunitTestcase>;
+const OUTCOMES = ["failure", "error", "skipped"] as const;
+
+// Every value, an attribute's or a tag's text, is kept as the text it is written as. JUnit XML writes a suite's and a test
+// case's name, and a property's value, always as text.
+const VALUES_PARSED = false;
+
+const parser = new XMLParser({
+  ignoreAttributes: false,
+  // Attributes keep a prefix so that none is read as a child element of the same name.
+  attributeNamePrefix: "@",
+  parseTagValue: VALUES_PARSED,
+  parseAttributeValue: VALUES_PARSED,
+  isArray: (name) => ["testsuite", "testcase", "property", ...OUTCOMES].includes(name),
+});
+
+const elementsIn = (element: Element, name: string): Element[] => (element[name] as Element[] | undefined) ?? [];
+
+// An outcome element says what went wrong, or why the test was skipped, in its message attribute, or else in its text.
+function failureAsWritten(outcome: unknown): FailureAsWritten {
+  const message = ((outcome as Element)["@message"] ?? (outcome as Element)["#text"]) as string | undefined;
+  return message ? { message } : {};
 }
 
-interface JunitTestcase {
-  readonly classname?: string;
-  readonly name?: string;
-  readonly properties?: {
-    readonly property?: ReadonlyArray<{ readonly name?: string; readonly value?: string }>;
-  };
-  readonly failure?: { readonly message?: string; readonly "#text"?: string };
-  readonly error?: { readonly message?: string; readonly "#text"?: string };
-  readonly skipped?: unknown;
-}
-
-type ErrorsWritten = Pick<NonNullable<TestCaseAsWritten["error"]>, "inSetupOrTeardown">;
-
-// Each test case as the report wrote it: its suite, class, name and properties, and its failure, error or skip.
-function testCaseOf(suite: JunitTestsuite, testcase: JunitTestcase, errorsWritten: ErrorsWritten): TestCaseAsWritten {
-  const { failure, error } = testcase;
+function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {
+  const outcome = OUTCOMES.find((name) => testCase[name] !== undefined);
+  const clmProperties = elementsIn((testCase["properties"] as Element | undefined) ?? {}, "property")
+    .filter((property) => property["@name"] === "clm")
+    .map((property) => property["@value"] as string);
   return {
-    suite: suite.name,
-    classname: testcase.classname,
-    name: testcase.name,
-    properties: testcase.properties?.property ?? [],
-    ...(failure === undefined ? {} : { failure: { text: failure["#text"] } }),
-    ...(error === undefined ? {} : { error: { message: error.message, text: error["#text"], ...errorsWritten } }),
-    skipped: testcase.skipped !== undefined,
+    className: testCase["@classname"] as string | undefined,
+    name: testCase["@name"] as string,
+    clmProperties,
+    // A test case with no outcome element is one that passed; its outcome is written as an empty string.
+    outcome: outcome ?? "",
+    ...(outcome && { failure: failureAsWritten((testCase[outcome] as unknown[])[0]) }),
   };
 }
 
-function testCasesOf(report: JunitXmlReport, errorsWritten: ErrorsWritten): TestCaseAsWritten[] {
-  return (report.testsuites.testsuite ?? []).flatMap((suite) =>
-    (suite.testcase ?? []).map((testcase) => testCaseOf(suite, testcase, errorsWritten)),
-  );
+const suitesIn = (element: Element): Element[] => elementsIn(element, "testsuite").flatMap((suite) => [suite, ...suitesIn(suite)]);
+
+export function whyXmlDoesNotParse(xml: string): string | undefined {
+  const valid = XMLValidator.validate(xml);
+  return valid === true ? undefined : valid.err.msg;
 }
 
-// JUnit writes an <error> for an exception the test itself threw.
-export function parseJunitEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
-  return testCaseObservationsOf(testCasesOf(report, {}));
-}
+const suitesOf = (document: Element): Element[] => [...suitesIn(document), ...suitesIn((document["testsuites"] as Element | undefined) ?? {})];
 
-// pytest writes an <error> for an error in a test's setup or teardown.
-export function parsePytestEvidenceObservations(report: JunitXmlReport): EvidenceObservation[] {
-  return testCaseObservationsOf(testCasesOf(report, { inSetupOrTeardown: true }));
+// A JUnit report's top is a suite, or the suites element holding them, and each of its test cases has a name.
+export const whereSuitesBreak = (xml: string): string | undefined => {
+  const document = parser.parse(xml) as Element;
+  if (document["testsuites"] === undefined && document["testsuite"] === undefined) return TOP;
+  const unnamed = suitesOf(document).some((suite) => elementsIn(suite, "testcase").some((testCase) => testCase["@name"] === undefined));
+  return unnamed ? "$..testcase" : undefined;
+};
+
+export function resultsBySuiteFrom(xml: string, from: "junit" | "pytest"): ResultsBySuiteAsWritten[] {
+  return suitesOf(parser.parse(xml) as Element).map((suite) => ({
+    // pytest writes an error only for a test that never reached its assertions; JUnit writes one for a test that failed.
+    errorMeansNeverRan: from === "pytest",
+    name: suite["@name"] as string,
+    results: elementsIn(suite, "testcase").map(resultAsWritten),
+  }));
 }

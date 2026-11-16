@@ -1,191 +1,112 @@
-import { existsSync } from "node:fs";
-import { dirname } from "node:path";
 import {
-  claimCodesAtOf,
+  claimCodeErrorsOf,
+  claimReconciliationsOf,
   evidenceReconciliationOf,
-  outputClashOf,
-  outputPlanOf,
-  pipelineStepsOf,
-  provenanceFrom,
-  runIdentityOf,
-  recordedCheckStepsOf,
-  shellReading,
+  executableClaimsOf,
+  fitnessObservationsOf,
+  observationsByExample,
+  observationsByFile,
+  observationsBySuite,
+  observationsOfScenarios,
+  provenanceOf,
+  repositoryOfOrigin,
+  shellAnswers,
+  stepAccountOf,
   targetFolderOf,
+  stepDispositionOf,
+  scriptsFrom,
   targetConfigurationFrom,
-  type EvidenceReconciliation,
-  type IdentifiedInput,
-  type ParsedFeatureFile,
-  type ParsedWorkflow,
-  type Provenance,
-  type StepRecord,
+  type EvidenceObservation,
+  type ProvenanceInput,
+  type StepAccount,
+  type StepRecordEntryAsWritten,
+  type TargetConfiguration,
+  type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
-import {
-  documentReadBy,
-  observationsOf,
-  readCorpus,
-  readWorkflows,
-  type EvidenceReport,
-  type TargetManifest,
-} from "../inputs/ingestQualityChecks.js";
-import { inputPathsOf, requestedInputsOf, runInputsOf, type InputPaths } from "../runRequest/evidenceInputs.js";
-import { INPUT_DEFAULTS } from "../runRequest/defaults.js";
-import { collectFormatSpecs, requestedOutputsOf } from "../runRequest/formats.js";
-import { locatedOutputs, probedOutputs, renderedReports, writeRenderedReports } from "../output/writer.js";
-import { identifiedInputs } from "../output/outputLocation.js";
-import { outputRefusal, WRITTEN_FORMATS } from "../output/format.js";
-import { refuse, settlingRefusal } from "../runEnding/usageRefusal.js";
-import { inputsReadOf, type FilesRead } from "../inputs/inputsRead.js";
-import { corpusDirOf } from "../inputs/corpusDir.js";
-import {
-  checkInputsExist,
-  corpusReadRefusal,
-  reportRefusal,
-  corpusDirRefusal,
-  corpusUnparseableRefusal,
-  jsonInputsOf,
-  readReports,
-  workflowsReadRefusal,
-  workflowsUnparseableRefusal,
-} from "../inputs/unreadableInputs.js";
-import { exitCodeOf } from "../runEnding/exitStatus.js";
-import { endRunOn } from "../runEnding/exitCode.js";
-import { readTargetHead, readToolInstall, readRepositoryTop, readWorkingFolder, readTargetOrigin } from "../runIdentity/resolveRunInputs.js";
-import { balanceCommand, cliRegistry, renderCommandHelp } from "../runRequest/cliRegistry.js";
-import {
-  asksForHelp,
-  parseArgs,
-  checkArgvShape,
-  checkUnknownFlags,
-  checkMissingValues,
-} from "../runRequest/cliArgs.js";
+import { realpathSync } from "node:fs";
+import { resolve } from "node:path";
+import { inputsReadFor, type InputsRead } from "../inputs/inputsRead.js";
+import type { StandardStreams } from "../output/streams.js";
+import type { Complain } from "../runEnding/crashGuards.js";
+import { exitCodeOf } from "../runEnding/exitCode.js";
+import { refusedWith } from "../runEnding/refusal.js";
+import type { ExitCode } from "../runEnding/runEnding.js";
+import { runIdentityIn } from "../runIdentity/runIdentity.js";
+import { writeReports } from "../output/writer.js";
+import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/runRequest.js";
 
-export function runBalance(argv: string[]): boolean {
-  return settlingRefusal(() => balance(argv), false);
+// A run has no step and no step record of an input it did not read.
+const NONE: readonly never[] = [];
+
+// Each workflow step the run read, counted by what it is; a run that read none has an empty step account.
+function stepAccountFor(
+  steps: readonly WorkflowStepAsWritten[],
+  record: readonly StepRecordEntryAsWritten[],
+  configuration: TargetConfiguration,
+  scripts: Readonly<Record<string, string>>,
+): StepAccount {
+  return stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers, record) })));
 }
 
-function balance(argv: string[]): boolean {
-  const helped = asksForHelp(argv);
-  if (helped) process.stdout.write(renderCommandHelp(balanceCommand) + "\n");
-  return !helped && reconcile(argv);
+// Every input the run could read, each with the path it read, its links followed, when it read one.
+const provenanceInputsOf = ({ pathsRead }: InputsRead, folder: string): ProvenanceInput[] =>
+  INPUT_KINDS.map((kind) => ({ name: kind, path: pathsRead[kind] && realpathSync(resolve(folder, pathsRead[kind])) }));
+
+// A corpus the command line named is where the target is; with none named, it is where the run started.
+const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | undefined => {
+  const corpus = inputs.find((input) => input.kind === "features" && !input.byDefault);
+  return corpus === undefined ? undefined : resolve(folder, corpus.path);
+};
+
+// Each runner's results posted as Evidence Observations, beside the fitness functions' from the CI steps.
+function observationsOf(
+  read: InputsRead,
+  steps: readonly WorkflowStepAsWritten[],
+  configuration: TargetConfiguration,
+  scripts: Readonly<Record<string, string>>,
+  targetFolder: string,
+): EvidenceObservation[] {
+  return [
+    ...observationsByFile([...(read.vitest ?? []), ...(read.jest ?? [])], targetFolder),
+    ...observationsBySuite([...(read.pytest ?? []), ...(read.junit ?? [])], targetFolder),
+    ...(read.rspec === undefined ? [] : observationsByExample(read.rspec, targetFolder)),
+    ...(read.cucumber === undefined ? [] : observationsOfScenarios(read.cucumber, read.features, targetFolder)),
+    ...fitnessObservationsOf(steps, read.stepRecord ?? NONE, configuration, scripts, shellAnswers),
+  ];
 }
 
-function reconcile(argv: string[]): boolean {
-  const args = parseArgs(argv);
-
-  const shapeError = checkArgvShape(argv, cliRegistry, "balance");
-  if (shapeError) refuse(shapeError);
-
-  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance");
-  if (unknownFlagError) refuse(unknownFlagError);
-
-  const missingValueError = checkMissingValues(argv, cliRegistry, "balance");
-  if (missingValueError) refuse(missingValueError);
-
-  const { corpus, workflows, reports, read } = refuseUnreadableInputs(args);
-
-  const inputs = inputPathsOf(args);
-
-  const root = targetRootOf(inputs.features);
-
-  const evidenceReconciliation = runReconcile(reports, root, corpus, workflows, {
-    strict: args["strict"] !== undefined,
-    provenance: provenanceOf(args, inputs, root),
+export function balance(
+  { inputs, outputs, target, sourceSha, strict, exitZero }: Extract<RunRequest, { command: "balance" }>,
+  folder: string,
+  streams: StandardStreams,
+  complain: Complain,
+): ExitCode {
+  const corpus = corpusNamed(inputs, folder);
+  // Read first, so the run's time is when it started.
+  const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
+  const read = inputsReadFor(inputs, folder);
+  if ("refusals" in read) return refusedWith(read.refusals, streams.error.write);
+  const steps = read.workflowSteps ?? NONE;
+  const { configuration, errors } = targetConfigurationFrom(read.manifest, steps);
+  const scripts = scriptsFrom(read.manifest);
+  // git gives its top level with every link followed, so the folders and paths it is compared with follow theirs too.
+  const targetFolder = realpathSync(targetFolderOf({ workingFolder: folder, corpus: corpus && realpathSync(corpus), gitTopLevel: identity.gitTopLevel }));
+  const claims = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
+  const claimReconciliations = claimReconciliationsOf(claims, observationsOf(read, steps, configuration, scripts, targetFolder));
+  const provenance = provenanceOf(identity, provenanceInputsOf(read, folder), targetFolder, repositoryOfOrigin);
+  const reconciliation = evidenceReconciliationOf({
+    claimReconciliations,
+    claimCodeErrors: claimCodeErrorsOf(read.features),
+    configurationErrors: errors,
+    features: read.features,
+    stepAccount: stepAccountFor(steps, read.stepRecord ?? NONE, configuration, scripts),
+    provenance,
   });
-
-  writeReports(collectFormatSpecs(argv), evidenceReconciliation, identifiedInputs(inputsReadOf(args, read, INPUT_DEFAULTS.features)));
-
-  endRunOn({ kind: "verdict", code: exitCodeOf(evidenceReconciliation.runVerdict, args["exit-zero"] !== undefined) });
-  return true;
-}
-
-// The reports the --format specs ask for: planned, probed, checked against one another and the inputs, then written.
-export function writeReports(formatSpecs: readonly string[], evidenceReconciliation: EvidenceReconciliation, inputs: readonly IdentifiedInput[]): void {
-  const plan = outputPlanOf(locatedOutputs(requestedOutputsOf(formatSpecs)), WRITTEN_FORMATS);
-  if (!plan.ok) refuse(outputRefusal(plan.refusal));
-  const reports = renderedReports(plan.outputs, evidenceReconciliation);
-  const probed = probedOutputs(plan.outputs);
-  if ("refusal" in probed) refuse(probed.refusal);
-  const clash = outputClashOf(probed.identified, inputs);
-  if (clash !== undefined) refuse(outputRefusal(clash));
-  writeRenderedReports(reports);
-}
-
-interface ReadInputs {
-  readonly corpus: readonly ParsedFeatureFile[];
-  readonly workflows: readonly ParsedWorkflow[];
-  readonly reports: readonly EvidenceReport[];
-  readonly read: FilesRead;
-}
-
-function refuseUnreadableInputs(args: Record<string, string>): ReadInputs {
-  const given = requestedInputsOf(args);
-  const missingInputError = checkInputsExist(given, existsSync);
-  if (missingInputError) refuse(missingInputError);
-
-  const reportInputs = jsonInputsOf(given, existsSync, INPUT_DEFAULTS.packageJson);
-  const reportsReading = readReports(reportInputs);
-
-  const corpusDir = corpusDirOf(args, INPUT_DEFAULTS.features);
-  if (typeof corpusDir !== "string") refuse(corpusDirRefusal(corpusDir));
-
-  const corpusReading = readCorpus(corpusDir);
-  const workflowReading = readWorkflows(args["ci"] ?? INPUT_DEFAULTS.ci);
-  if (corpusReading.kind === "read-fault") refuse(corpusReadRefusal(args, corpusReading.fault));
-  if (workflowReading.kind === "read-fault") refuse(workflowsReadRefusal(args, workflowReading.fault));
-  if (workflowReading.kind === "unparseable") refuse(workflowsUnparseableRefusal(args, workflowReading.faults));
-
-  if (reportsReading.faulty !== undefined) refuse(reportRefusal(reportsReading.faulty));
-
-  if (corpusReading.kind === "unparseable") refuse(corpusUnparseableRefusal(corpusReading.faults));
-  return {
-    corpus: corpusReading.corpus,
-    workflows: workflowReading.workflows,
-    reports: reportsReading.reports,
-    read: {
-      reports: reportInputs.map(({ path }) => path),
-      corpus: corpusDir,
-      featureFiles: corpusReading.corpus.map(({ file }) => file),
-      workflows: workflowReading.paths,
-    },
-  };
-}
-
-// The target's folder, from the folder the corpus is in and the top of any git repository that folder is in.
-function targetRootOf(features: string | undefined): string {
-  const corpusFolder = features === undefined ? undefined : dirname(features);
-  return targetFolderOf(readWorkingFolder, corpusFolder, corpusFolder === undefined ? undefined : readRepositoryTop(corpusFolder));
-}
-
-function provenanceOf(args: Record<string, string>, inputs: InputPaths, root: string): Provenance {
-  const targetDir = args["features"] !== undefined ? dirname(args["features"]) : undefined;
-  const identity = runIdentityOf({
-    target: args["target"],
-    origin: readTargetOrigin(targetDir),
-    givenSourceSha: args["source-sha"],
-    head: readTargetHead(targetDir),
-    ...readToolInstall(),
-  });
-  return provenanceFrom(identity, runInputsOf(inputs), root);
-}
-
-function runReconcile(
-  reports: readonly EvidenceReport[],
-  root: string,
-  corpus: readonly ParsedFeatureFile[],
-  workflows: readonly ParsedWorkflow[],
-  run: { readonly strict: boolean; readonly provenance: Provenance },
-): EvidenceReconciliation {
-  const packageJson = (documentReadBy(reports, "package-manifest") as TargetManifest | undefined) ?? {};
-  const scripts = packageJson.scripts ?? {};
-  const steps = pipelineStepsOf(workflows);
-  const recordedSteps = recordedCheckStepsOf(documentReadBy(reports, "ci-step-record") as StepRecord | undefined);
-  return evidenceReconciliationOf({
-    features: corpus,
-    testObservations: observationsOf(reports, root, claimCodesAtOf(corpus)),
-    steps,
-    readings: { scripts, shell: shellReading },
-    ...(recordedSteps === undefined ? {} : { recordedSteps }),
-    configuration: targetConfigurationFrom(packageJson, steps),
-    ...run,
-  });
+  try {
+    return writeReports(outputs, read.filesRead, reconciliation, streams, { exitZero });
+  } catch (error) {
+    // The run has its verdict, so an error in writing it out leaves the verdict's exit code alone.
+    complain(error);
+    return exitCodeOf(reconciliation.runVerdict, { exitZero });
+  }
 }

@@ -1,29 +1,34 @@
-import type { EvidenceObservation, TestFileAsWritten } from "../domain/postEvidenceObservation.js";
-import { testFileObservationsOf } from "../domain/postEvidenceObservation.js";
+import type { ResultsByFileAsWritten } from "../domain/postEvidenceObservation.js";
+import { whereShapeBreaks, type Shape } from "./shape.js";
 
-export interface VitestJsonReport {
-  readonly testResults: ReadonlyArray<{
-    readonly name?: string;
-    readonly status?: string;
+// Jest's JSON evidence report, which Vitest also writes, as far as its reader reads it.
+interface JestJsonReport {
+  readonly testResults: readonly {
+    readonly name: string;
     readonly message?: string;
-    readonly assertionResults: ReadonlyArray<{
-      readonly fullName?: string;
-      readonly title?: string;
-      readonly status?: string;
-    }>;
-  }>;
+    readonly assertionResults: readonly {
+      readonly ancestorTitles: readonly string[];
+      readonly title: string;
+      readonly status: string;
+      readonly failureMessages: readonly string[];
+    }[];
+  }[];
 }
 
-// Each test file as the report wrote it: its path, its status and message, and each test's titles and status.
-function testFilesOf(report: VitestJsonReport): TestFileAsWritten[] {
-  return report.testResults.map((file) => ({
-    path: file.name,
-    status: file.status,
-    message: file.message,
-    tests: file.assertionResults.map((test) => ({ title: test.title, fullTitle: test.fullName, status: test.status })),
+// A record whose testResults is a list.
+const REPORT: Shape = { fields: { testResults: "list" } };
+
+export const whereResultsByFileBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
+
+export function resultsByFileFrom(report: unknown): ResultsByFileAsWritten[] {
+  return (report as JestJsonReport).testResults.map(({ name, message, assertionResults }) => ({
+    file: name,
+    message,
+    results: assertionResults.map(({ ancestorTitles, title, status: resultStatus, failureMessages }) => ({
+      ancestorTitles,
+      title,
+      status: resultStatus,
+      failureMessages,
+    })),
   }));
-}
-
-export function parseVitestEvidenceObservations(report: VitestJsonReport, root: string): EvidenceObservation[] {
-  return testFileObservationsOf(testFilesOf(report), root);
 }

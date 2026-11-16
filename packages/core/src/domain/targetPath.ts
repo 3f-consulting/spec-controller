@@ -1,37 +1,17 @@
-const SEPARATOR = "/";
+export const shownFromTarget = (path: string, targetFolder: string): string => {
+  const inside = `${targetFolder}/`;
+  return path.startsWith(inside) ? path.slice(inside.length) : path;
+};
 
-const UP = "..";
-
-const isAbsolute = (path: string): boolean => path.startsWith(SEPARATOR);
-
-// An absolute path's parts once "." and ".." are walked and empty parts dropped, as a path is resolved.
-function partsOf(absolute: string): string[] {
-  const parts: string[] = [];
-  for (const part of absolute.split(SEPARATOR)) {
-    if (part === UP) parts.pop();
-    else if (part !== "" && part !== ".") parts.push(part);
-  }
-  return parts;
+// Where the run started, the corpus the command line named, and the top level of the git repository the corpus is in.
+export interface TargetFolderAsked {
+  readonly workingFolder: string;
+  readonly corpus?: string;
+  readonly gitTopLevel?: string;
 }
 
-function below(root: string, path: string): string | undefined {
-  const from = partsOf(root);
-  const to = partsOf(path);
-  return from.every((part, at) => to[at] === part) ? to.slice(from.length).join(SEPARATOR) : undefined;
-}
+const parentOf = (path: string): string => path.slice(0, path.lastIndexOf("/"));
 
-// The root is absolute: the target's folder is. A path not below it is kept.
-export function relativizeToRoot(path: string, root: string): string {
-  if (!isAbsolute(path)) return path;
-  const rel = below(root, path);
-  if (rel === undefined) return path;
-  return rel === "" ? "." : rel;
-}
-
-// The target's folder: the working folder when no corpus is named, else the top of the git repository the corpus's
-// folder is in, else that folder, taken from the working folder. The working folder is asked for only when it is needed.
-export function targetFolderOf(workingFolder: () => string, corpusFolder?: string, repositoryTop?: string): string {
-  if (corpusFolder === undefined) return workingFolder();
-  if (repositoryTop !== undefined) return repositoryTop;
-  return isAbsolute(corpusFolder) ? corpusFolder : `${workingFolder()}${SEPARATOR}${corpusFolder}`;
-}
+// The git repository's top level; outside git, the named corpus's parent, or with none named, where the run started.
+export const targetFolderOf = ({ workingFolder, corpus, gitTopLevel }: TargetFolderAsked): string =>
+  gitTopLevel ?? (corpus === undefined ? workingFolder : parentOf(corpus));

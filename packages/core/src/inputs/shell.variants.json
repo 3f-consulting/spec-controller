@@ -1,0 +1,40 @@
+{
+  "CLM-OBS-007": {
+    "class": "a runner piped onward, into a command or a compound command",
+    "variants": ["vitest run | tee out.txt", "vitest run | while read -r line; do echo \"$line\"; done", "vitest run | if true; then cat; fi", "vitest run | (cat)"]
+  },
+  "CLM-OBS-009": {
+    "class": "a package manager running a script whose script runs the unit runner",
+    "variants": [
+      "npm test",
+      "npm run <script>",
+      "pnpm <script>",
+      "pnpm run <script>",
+      "pnpm -r <script>",
+      "pnpm --filter <name> <script>",
+      "yarn <script>",
+      "yarn run <script>",
+      "yarn workspace <name> <script>"
+    ]
+  },
+  "CLM-OBS-010": {
+    "class": "a launcher handing on to the unit runner",
+    "variants": ["npx", "pnpm exec", "pnpm <bin>", "yarn <bin>", "bunx", "python -m", "python3 -m", "uv run", "poetry run", "pipenv run", "coverage run -m", "bundle exec"]
+  },
+  "CLM-OBS-011": {
+    "class": "a list of commands with the unit runner among them",
+    "variants": ["&&", ";"]
+  },
+  "CLM-OBS-112": {
+    "class": "a wrapper that runs the command after it",
+    "variants": ["xvfb-run", "timeout <duration>"]
+  },
+  "CLM-OBS-113": {
+    "class": "a runner named in several words",
+    "variants": ["mvn test", "./mvnw test", "./gradlew test", "./gradlew check", "./gradlew :app:test", "gotestsum"]
+  },
+  "CLM-OBS-117": {
+    "class": "an option xvfb-run takes, with its value",
+    "variants": ["-n 99", "-s 99", "-e file", "-f file", "-p MIT-MAGIC", "-w 1"]
+  }
+}

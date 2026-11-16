@@ -1,5 +1,3 @@
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 
-export function renderJson(evidenceReconciliation: EvidenceReconciliation): string {
-  return `${JSON.stringify(evidenceReconciliation, null, 2)}\n`;
-}
+export const jsonReportOf = (reconciliation: EvidenceReconciliation): string => `${JSON.stringify(reconciliation, null, 2)}\n`;

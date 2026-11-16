@@ -1,93 +1,91 @@
-import { unlinkSync, writeFileSync } from "node:fs";
 import {
-  renderJson,
-  renderMarkdown,
+  jsonReportOf,
+  markdownReportOf,
+  outputPlanOf,
+  textFor,
   type EvidenceReconciliation,
-  type IdentifiedOutput,
-  type LocatedOutput,
-  type PlannedOutput,
-  type RequestedOutput,
+  type FileIdentity,
+  type OutputRefusal,
+  type OutputRequest,
 } from "@3f-consulting/spec-controller-core";
-import type { OutputFormat } from "./format.js";
-import {
-  namesStderr,
-  namesStdout,
-  probeDestination,
-  stderrIdentity,
-  stdoutIdentity,
-  unwritableRefusal,
-  type RegularFileIdentity,
-} from "./outputLocation.js";
-import { standardError } from "../runEnding/standardError.js";
-import type { Refusal } from "../runEnding/refusal.js";
+import { writeFileSync } from "node:fs";
+import appCatalogue from "../messages/messages.en.json" with { type: "json" };
+import { pathIdentity, streamIdentity, type NamedStream } from "./identity.js";
+import type { StandardStreams } from "./streams.js";
+import { refusalText } from "../runEnding/refusal.js";
+import { whyUnwritable } from "./writable.js";
+import { exitCodeOf, USAGE_ERROR } from "../runEnding/exitCode.js";
+import type { ExitCode, Refusal } from "../runEnding/runEnding.js";
 
-type Planned = PlannedOutput<OutputFormat>;
+const reportIn = (format: string, reconciliation: EvidenceReconciliation): string =>
+  format === "json" ? jsonReportOf(reconciliation) : markdownReportOf(reconciliation);
 
-// Each requested report, with whether the file it names is standard output, following any links.
-export function locatedOutputs(requested: readonly RequestedOutput[]): LocatedOutput[] {
-  return requested.map((output) => ({ ...output, namesStandardOutput: output.dest.kind === "file" && namesStdout(output.dest.path) }));
+// Where a report goes, probed once: the standard stream it names, by request or by its path, as that stream stands,
+// redirected into a file or not; otherwise the file its path names, which is checked before anything is written. The
+// plan is given standard error as such, and a refusal names the report as it was asked for.
+interface Placed {
+  readonly asked: OutputRequest<string>;
+  readonly output: OutputRequest<string>;
+  readonly identity: FileIdentity;
+  readonly file?: string;
+  readonly write: (report: string) => void;
 }
 
-export interface RenderedReport {
-  readonly output: Planned;
-  readonly text: string;
+const STREAM_OF = { "standard-output": "output", "standard-error": "error" } as const;
+
+function onStream(asked: OutputRequest<string>, named: NamedStream, streams: StandardStreams): Placed {
+  const stream = streams[STREAM_OF[named.is]];
+  return { asked, output: { ...asked, destination: { to: named.is } }, identity: streamIdentity(stream.fd, named), write: stream.write };
 }
 
-export function renderedReports(outputs: readonly Planned[], evidenceReconciliation: EvidenceReconciliation): RenderedReport[] {
-  return outputs.map((output) => ({ output, text: render(output.fmt, evidenceReconciliation) }));
+function placed(output: OutputRequest<string>, streams: StandardStreams): Placed {
+  const { destination } = output;
+  if (destination.to !== "file") return onStream(output, { is: destination.to }, streams);
+  const named = pathIdentity(destination.path);
+  if (named.is === "regular-file" || named.is === "absent" || named.is === "not-a-regular-file")
+    return { asked: output, output, identity: named, file: destination.path, write: (report) => writeFileSync(destination.path, report) };
+  return onStream(output, named, streams);
 }
 
-function render(fmt: OutputFormat, evidenceReconciliation: EvidenceReconciliation): string {
-  return fmt === "json" ? renderJson(evidenceReconciliation) : renderMarkdown(evidenceReconciliation);
-}
-
-export type ProbedOutputs = { readonly identified: readonly IdentifiedOutput<OutputFormat>[] } | { readonly refusal: Refusal };
-
-// Each planned report's destination, probed for the file it would write: the first that cannot be written refuses them
-// all. A file made only to probe it is removed again.
-export function probedOutputs(outputs: readonly Planned[]): ProbedOutputs {
-  const created: string[] = [];
-  try {
-    const identified: IdentifiedOutput<OutputFormat>[] = [];
-    for (const output of outputs) {
-      const probe = identify(output, created);
-      if ("refusal" in probe) return probe;
-      identified.push({ output, identity: probe.identity, toStandardError: output.dest.kind === "file" && namesStderr(output.dest.path) });
-    }
-    return { identified };
-  } finally {
-    for (const path of created) unlinkSync(path);
+// The first file a report cannot be written to, with why.
+function unwritableRefusal(outputs: readonly Placed[]): Refusal | undefined {
+  for (const { file } of outputs) {
+    if (file === undefined) continue;
+    const why = whyUnwritable(file);
+    if (why !== undefined) return { key: "report-not-written", values: { place: file, why: textFor(appCatalogue, why) } };
   }
+  return undefined;
 }
 
-type Probe = { readonly identity: RegularFileIdentity | undefined } | { readonly refusal: Refusal };
+// A report as its --format asked for it.
+const asGiven = ({ format, destination }: OutputRequest<string>): string => (destination.to === "file" ? `${format}:${destination.path}` : format);
 
-function identify(output: Planned, created: string[]): Probe {
-  const dest = output.dest;
-  if (dest.kind === "stdout") return { identity: stdoutIdentity() };
-  if (namesStderr(dest.path)) return { identity: stderrIdentity() };
-  try {
-    const probed = probeDestination(dest.path);
-    if (probed.created !== undefined) created.push(probed.created);
-    return { identity: probed.identity };
-  } catch (err) {
-    return { refusal: unwritableRefusal(output.fmt, dest.path, err) };
-  }
+// Each refusal names what it is about: the reports as asked for, which name any file they share, or the file the run reads.
+function planRefusal(refusal: OutputRefusal<string>, outputs: readonly Placed[]): Refusal {
+  const named = (planned: OutputRequest<string>): string => asGiven(outputs.find(({ output }) => output === planned)!.asked);
+  if (refusal.kind === "more-than-one-to-standard-output") return { key: "more-than-one-to-stdout", values: { reports: refusal.outputs.map(named).join(", ") } };
+  if (refusal.kind === "outputs-share-a-file")
+    return { key: "outputs-share-file", values: { reports: [refusal.first, refusal.second].map(named).join(", ") } };
+  return { key: "output-overwrites-input", values: { file: refusal.input.path } };
 }
 
-export function writeRenderedReports(reports: readonly RenderedReport[]): void {
-  for (const { output, text } of reports) emit(output, text);
-}
-
-function emit(output: Planned, text: string): void {
-  const dest = output.dest;
-  if (dest.kind === "stdout") {
-    process.stdout.write(text);
-    return;
+export function writeReports(
+  outputs: readonly OutputRequest<string>[],
+  inputsRead: readonly string[],
+  reconciliation: EvidenceReconciliation,
+  streams: StandardStreams,
+  under: { readonly exitZero: boolean },
+): ExitCode {
+  const outputsPlaced = outputs.map((output) => placed(output, streams));
+  const plan = outputPlanOf(
+    outputsPlaced,
+    inputsRead.map((path) => ({ name: path, path, identity: pathIdentity(path) })),
+  );
+  const refusal = plan.ok ? unwritableRefusal(outputsPlaced) : planRefusal(plan.refusal, outputsPlaced);
+  if (refusal !== undefined) {
+    streams.error.write(`${refusalText(refusal)}\n`);
+    return USAGE_ERROR;
   }
-  if (namesStderr(dest.path)) {
-    standardError(process.stderr).report(text);
-    return;
-  }
-  writeFileSync(dest.path, text);
+  outputsPlaced.forEach(({ output, write }) => write(reportIn(output.format, reconciliation)));
+  return exitCodeOf(reconciliation.runVerdict, under);
 }

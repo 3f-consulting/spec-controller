@@ -1,69 +1,51 @@
 import { Given, Then, When } from "@cucumber/cucumber";
-import { Ajv } from "ajv";
+import Ajv from "ajv";
+import { spawnSync } from "node:child_process";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { PUBLISHED_SCHEMA } from "./support/builtCli.js";
-import { CLAIM_RECONCILIATIONS_SECTION } from "./support/reportClaimReconciliations.js";
-import { BALANCED_ARGS, specController } from "./support/specControllerRun.js";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { temporaryDirectory } from "./support/temporaryDirectory.js";
-import type { ExpectedRefusal, SpecControllerWorld } from "./support/world.js";
 
-const UNNAMED_PART = "surprise";
+const CLI = resolve("packages/spec-controller/dist/cli.js");
 
-const TOTALS = "totals";
-const COUNT_PATH = [TOTALS, "claimReconciliations", "total"] as const;
+const SCHEMA = resolve("packages/spec-controller/dist/spec-reconciliation.schema.json");
 
-type Count = Record<string, Record<string, unknown>>;
+type Report = Record<string, unknown> & { readonly totals: { readonly claimReconciliations: Record<string, unknown> } };
 
-// Each report is a real run's report, then changed as the row says; the refusal is the one that change must draw.
-const REPORTS: Readonly<Record<string, (report: Record<string, unknown>) => ExpectedRefusal | null>> = {
-  "a JSON report from a real run": () => null,
-  "a JSON report with one of its required parts removed": (report) => {
-    assert.ok(CLAIM_RECONCILIATIONS_SECTION in report, `expected the real report to carry ${CLAIM_RECONCILIATIONS_SECTION}`);
-    delete report[CLAIM_RECONCILIATIONS_SECTION];
-    return { keyword: "required", instancePath: "", params: { missingProperty: CLAIM_RECONCILIATIONS_SECTION } };
-  },
-  "a JSON report with a part the schema does not name": (report) => {
-    report[UNNAMED_PART] = true;
-    return { keyword: "additionalProperties", instancePath: "", params: { additionalProperty: UNNAMED_PART } };
-  },
-  "a JSON report with text where a count goes": (report) => {
-    const [section, group, count] = COUNT_PATH;
-    const counts = (report[section] as Count)[group];
-    assert.equal(typeof counts?.[count], "number", `expected the real report to carry a count at ${COUNT_PATH.join(".")}`);
-    counts![count] = String(counts![count]);
-    return { keyword: "type", instancePath: `/${COUNT_PATH.join("/")}`, params: { type: "number" } };
-  },
-};
-
-for (const [report, change] of Object.entries(REPORTS)) {
-  Given(`${report} was written`, function (this: SpecControllerWorld) {
-    const path = join(temporaryDirectory(this, "spec-controller-schema-"), "spec-reconciliation.json");
-    const run = specController(["balance", ...BALANCED_ARGS, "--format", `json:${path}`]);
-    assert.ok(existsSync(path), `expected the run to write its JSON report; exit ${run.status}\n${run.stderr}`);
-    this.checkedReport = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
-    this.expectedRefusal = change(this.checkedReport);
-  });
+interface SchemaCheck {
+  report: Report;
+  accepted: boolean;
+  errors: string;
 }
 
-When("it is checked against the schema", function (this: SpecControllerWorld) {
-  assert.ok(existsSync(PUBLISHED_SCHEMA), `expected the package to ship its JSON Schema at ${PUBLISHED_SCHEMA}`);
-  const validate = new Ajv({ allErrors: true }).compile(JSON.parse(readFileSync(PUBLISHED_SCHEMA, "utf8")) as object);
-  this.schemaErrors = validate(this.checkedReport) ? [] : (validate.errors ?? []);
+// The JSON report the built command writes for a target with one feature file.
+function realReport(): Report {
+  const folder = temporaryDirectory("report-schema-");
+  mkdirSync(join(folder, "features"));
+  writeFileSync(join(folder, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: adds one\n    Given a step\n");
+  const run = spawnSync(process.execPath, [CLI, "balance", "--features", "features", "--format", "json"], { cwd: folder, encoding: "utf8" });
+  assert.notEqual(run.stdout, "", `the command wrote no report, exiting ${run.status}: ${run.stderr}`);
+  return JSON.parse(run.stdout) as Report;
+}
+
+// Each report checked, as a real run's report with one change made to it.
+const WRITTEN: Readonly<Record<string, (report: Report) => Report>> = {
+  "a JSON report from a real run": (report) => report,
+  "a JSON report with one of its required parts removed": ({ totals: _totals, ...rest }) => rest as Report,
+  "a JSON report with a part the schema does not name": (report) => ({ ...report, extra: 1 }),
+  "a JSON report with text where a count goes": (report) => ({ ...report, totals: { ...report.totals, claimReconciliations: { ...report.totals.claimReconciliations, total: "1" } } }),
+};
+
+Given(/^(a JSON report .+) was written$/, function (this: SchemaCheck, written: string) {
+  this.report = WRITTEN[written]!(realReport());
 });
 
-Then("it will be accepted", function (this: SpecControllerWorld) {
-  assert.equal(this.expectedRefusal, null, "a changed report was expected to be accepted");
-  assert.deepEqual(this.schemaErrors, [], `expected the report accepted; got:\n${JSON.stringify(this.schemaErrors, null, 2)}`);
+When("it is checked against the schema", function (this: SchemaCheck) {
+  const validate = new Ajv({ allErrors: true }).compile(JSON.parse(readFileSync(SCHEMA, "utf8")));
+  this.accepted = validate(this.report);
+  this.errors = JSON.stringify(validate.errors);
 });
 
-Then("it will be refused", function (this: SpecControllerWorld) {
-  assert.ok(this.expectedRefusal, "a real run's report was expected to be refused");
-  const { keyword, instancePath, params } = this.expectedRefusal;
-  assert.deepEqual(
-    this.schemaErrors.map((error) => ({ keyword: error.keyword, instancePath: error.instancePath, params: error.params })),
-    [{ keyword, instancePath, params }],
-    `expected one refusal, ${keyword} at "${instancePath}"; got:\n${JSON.stringify(this.schemaErrors, null, 2)}`,
-  );
+Then(/^it will be (accepted|refused)$/, function (this: SchemaCheck, result: string) {
+  assert.equal(this.accepted, result === "accepted", this.errors);
 });

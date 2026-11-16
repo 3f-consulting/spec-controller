@@ -1,65 +1,71 @@
-import type { EvidenceReconciliation, RunVerdict, StepAccount, Totals } from "../domain/evidenceReconciliation.js";
-import { coreText, type CoreTextCode } from "../messages/coreText.js";
-import { heading } from "./heading.js";
-import { labelled } from "./labelled.js";
+import type { Outcome } from "../domain/claimReconciliation.js";
+import type { QualityCheckCounts, RunVerdict, Totals } from "../domain/evidenceReconciliation.js";
+import { coreText } from "../messages/catalogue.js";
 import { inCell } from "./quoted.js";
-import { table } from "./table.js";
+import { tableOf } from "./table.js";
 
-const verdictOf = (runVerdict: RunVerdict): string => ("why" in runVerdict ? `${runVerdict.verdict} (${runVerdict.why})` : runVerdict.verdict);
+const verdictWords = (runVerdict: RunVerdict): string => coreText(`verdict-${runVerdict.verdict === "not-reconciled" ? runVerdict.why : runVerdict.verdict}`);
 
-const counted = (code: CoreTextCode, count: number): string[] => [coreText(code), String(count)];
+const group = (heading: string, lines: readonly string[]): string[] => ["", `### ${coreText(heading)}`, "", ...lines];
 
-function totalsTable({ claimReconciliations, qualityCheckReconciliations, evidenceObservations, excludedClaimCodeOccurrences }: Totals): string {
-  return table(
-    [coreText("counted-column"), coreText("count-column")],
-    [
-      counted("claim-reconciliations-total", claimReconciliations.total),
-      counted("claim-reconciliations-balanced", claimReconciliations.balanced),
-      counted("claim-reconciliations-out-of-balance", claimReconciliations.outOfBalance),
-      counted("quality-check-reconciliations-total", qualityCheckReconciliations.total),
-      counted("quality-check-reconciliations-out-of-balance", qualityCheckReconciliations.outOfBalance),
-      ...qualityCheckReconciliations.byOutcome.map(({ outcome, count }) => [outcome, String(count)]),
-      ...qualityCheckReconciliations.missingByKind.map(({ kind, count }) => [`${coreText("missing-label")} ${kind}`, String(count)]),
-      counted("evidence-observations-total", evidenceObservations.total),
-      ...evidenceObservations.byKind.map(({ kind, count }) => [kind, String(count)]),
-      counted("on-executable-claim-label", evidenceObservations.onExecutableClaim),
-      counted("on-phantom-claim-label", evidenceObservations.onPhantomClaim),
-      counted("on-unnamed-claim-label", evidenceObservations.onUnnamedClaim),
-      counted("fitness-functions-ran-label", evidenceObservations.fitnessFunctionsRan),
-      counted("excluded-claim-code-occurrences-label", excludedClaimCodeOccurrences),
-    ],
+function claimReconciliationsGroup({ claimReconciliations: { total, balanced, outOfBalance }, excludedClaimCodeOccurrences }: Totals): string[] {
+  return group("summary-claim-reconciliations", [
+    ...tableOf(["summary-total", "summary-balanced", "summary-out-of-balance"], [[total, balanced, outOfBalance]]),
+    ...(excludedClaimCodeOccurrences === 0 ? [] : ["", coreText("summary-excluded", { count: excludedClaimCodeOccurrences })]),
+  ]);
+}
+
+// Every Evidence Obligation and Evidence Observation gives a Quality Check Reconciliation, so a row with none has nothing.
+const counted = ({ byOutcome }: QualityCheckCounts): boolean => Object.values(byOutcome).some((count) => count > 0);
+
+// A kind no claim raises or answers, an outcome nothing has, and the row with no kind when it is empty are left out.
+function byKindGroup({ qualityCheckReconciliations: { byKind, noKind, all } }: Totals): string[] {
+  const outcomes = (Object.keys(all.byOutcome) as Outcome[]).filter((outcome) => all.byOutcome[outcome] > 0);
+  const rowOf = (name: string, counts: QualityCheckCounts): (string | number)[] => [name, counts.evidenceObligations, counts.evidenceObservations, ...outcomes.map((outcome) => counts.byOutcome[outcome])];
+  return group(
+    "summary-by-kind",
+    tableOf(
+      ["summary-kind", "summary-evidence-obligations", "summary-evidence-observations", ...outcomes.map((outcome) => `outcome-${outcome}`)],
+      [
+        ...byKind.filter(counted).map((row) => rowOf(row.kind, row)),
+        ...(counted(noKind) ? [rowOf(coreText("summary-no-kind"), noKind)] : []),
+        rowOf(coreText("summary-all"), all),
+      ],
+    ),
   );
 }
 
-function stepAccountLines({ jobs, total }: StepAccount): string[] {
-  const counts = ({ stepsRead, runners, reconcilerSteps, nonChecks, plumbing, candidates }: Omit<StepAccount["total"], "accountedFor">): string[] =>
-    [stepsRead, runners, reconcilerSteps, nonChecks, plumbing, candidates].map(String);
-  const header = ["workflow-column", "job-column", "steps-read-column", "runners-column", "reconciler-steps-column", "non-checks-column", "plumbing-column", "candidates-column"] as const;
-  return [
-    heading(3, "step-account-heading"),
-    coreText("step-account-key"),
-    table(header.map(coreText), [
-      ...jobs.map((job) => [inCell(job.workflow), inCell(job.job), ...counts(job)]),
-      [coreText("step-account-total"), "", ...counts(total)],
-    ]),
-    labelled("accounted-for-label", String(total.accountedFor)),
-  ];
+const WHERE_FILED = ["onExecutableClaim", "onPhantomClaim", "onUnnamedClaim"] as const;
+
+function whereFiledGroup({ evidenceObservations }: Totals): string[] {
+  return group(
+    "summary-where-filed",
+    tableOf(
+      ["summary-where-filed-column", "summary-where-filed-observations"],
+      [...WHERE_FILED.filter((place) => evidenceObservations[place] > 0).map((place) => [coreText(`summary-${place}`), evidenceObservations[place]]), [coreText("summary-total"), evidenceObservations.total]],
+    ),
+  );
 }
 
-export function summarySection({ runVerdict, totals, stepAccount }: EvidenceReconciliation): string[] {
-  const { outOfBalanceByFeature } = totals;
+function byFeatureGroup({ outOfBalanceByFeature }: Totals): string[] {
+  if (outOfBalanceByFeature.length === 0) return [];
+  return group(
+    "summary-by-feature",
+    tableOf(
+      ["summary-feature-file", "summary-feature-out-of-balance"],
+      outOfBalanceByFeature.map(({ file, count }) => [inCell(file), count]),
+    ),
+  );
+}
+
+export function summarySection(totals: Totals, runVerdict: RunVerdict): string[] {
   return [
-    heading(2, "summary-heading"),
-    labelled("run-verdict-label", verdictOf(runVerdict)),
-    coreText("totals-key"),
-    totalsTable(totals),
-    ...(outOfBalanceByFeature === undefined
-      ? []
-      : [
-          heading(3, "out-of-balance-by-feature-heading"),
-          coreText("out-of-balance-by-feature-key"),
-          table([coreText("file-column"), coreText("count-column")], outOfBalanceByFeature.map(({ file, count }) => [inCell(file), String(count)])),
-        ]),
-    ...(stepAccount === undefined ? [] : stepAccountLines(stepAccount)),
+    `## ${coreText("summary-heading")}`,
+    "",
+    `- ${coreText("summary-run-verdict")}: ${verdictWords(runVerdict)}`,
+    ...claimReconciliationsGroup(totals),
+    ...byKindGroup(totals),
+    ...whereFiledGroup(totals),
+    ...byFeatureGroup(totals),
   ];
 }

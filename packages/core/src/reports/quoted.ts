@@ -1,13 +1,11 @@
-// A span cannot hold an empty text, a line break or a space at both edges, so such a text is quoted as JSON.
-const holdsAsWritten = (text: string): boolean => text !== "" && !(text.startsWith(" ") && text.endsWith(" ")) && !/[\n\r]/.test(text);
-
-const longestBacktickRun = (text: string): number => Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
-
-export function quoted(written: string): string {
-  const text = holdsAsWritten(written) ? written : JSON.stringify(written);
-  const fence = "`".repeat(longestBacktickRun(text) + 1);
-  const pad = text.startsWith("`") || text.endsWith("`") ? " " : "";
-  return `${fence}${pad}${text}${pad}${fence}`;
+// A text the inputs gave, as a code span fenced past its backticks; as JSON where no span can hold it.
+export function quoted(text: string): string {
+  if (text === "" || /[\r\n]/.test(text) || (text.startsWith(" ") && text.endsWith(" "))) return `\`${JSON.stringify(text)}\``;
+  const fence = "`".repeat(Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length)) + 1);
+  const padding = text.startsWith("`") || text.endsWith("`") ? " " : "";
+  return `${fence}${padding}${text}${padding}${fence}`;
 }
 
-export const inCell = (written: string): string => quoted(written).replaceAll("|", "\\|");
+export const firstLineOf = (message: string): string => message.replace(/^\s*\n/, "").split("\n")[0]!;
+
+export const inCell = (text: string): string => quoted(text).replaceAll("|", "\\|");

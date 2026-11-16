@@ -1,62 +1,60 @@
-import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
 
-export function git(cwd: string, args: readonly string[]): string {
-  const result = spawnSync("git", ["-c", "user.name=f", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false", ...args], {
-    cwd,
-    encoding: "utf8",
-    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-  });
-  if (result.status !== 0) throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-  return result.stdout;
+export interface TestFolder {
+  readonly top: string;
+  readonly write: (path: string, text: string) => void;
 }
 
-// What git itself says when it cannot open the repository, as the allocate refusal quotes it.
-export function gitsOwnRefusal(cwd: string): { status: number | null; said: string } {
-  const result = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd, encoding: "utf8" });
-  return { status: result.status, said: result.stderr.split("\n")[0] ?? "" };
+export interface TestRepository extends TestFolder {
+  readonly git: (...args: string[]) => string;
+  // Commits everything not ignored, and gives the new commit's SHA.
+  readonly commit: (message: string) => string;
 }
 
-export function writeInto(root: string, path: string, content: string | Buffer): void {
-  mkdirSync(dirname(join(root, path)), { recursive: true });
-  writeFileSync(join(root, path), content);
+// A folder removed when the test that made it finishes.
+export function folderForTest(): TestFolder {
+  const top = temporaryDirectory("allocate-");
+  return {
+    top,
+    write: (path, text) => {
+      mkdirSync(dirname(join(top, path)), { recursive: true });
+      writeFileSync(join(top, path), text);
+    },
+  };
 }
 
-export function commitAll(repo: string, message: string): void {
-  git(repo, ["add", "-A"]);
-  git(repo, ["commit", "-q", "-m", message]);
+export function repositoryForTest(): TestRepository {
+  const folder = folderForTest();
+  const git = (...args: string[]): string => execFileSync("git", args, { cwd: folder.top, encoding: "utf8" }).trim();
+  git("init", "--quiet");
+  git("config", "user.email", "test@example.com");
+  git("config", "user.name", "test");
+  git("config", "commit.gpgsign", "false");
+  return {
+    ...folder,
+    git,
+    commit: (message) => {
+      git("add", "--all");
+      git("commit", "--quiet", "--allow-empty", "--message", message);
+      return git("rev-parse", "HEAD");
+    },
+  };
 }
 
-export function commitAllReturningHash(repo: string, message: string): string {
-  git(repo, ["add", "-A"]);
-  git(repo, ["commit", "-q", "-m", message]);
-  return git(repo, ["log", "-1", "--format=%h"]).trim();
+// A feature file tagged with its feature code, holding one scenario tagged with the given code, which sits on line 4.
+export const featureFile = (featureCode: string, code: string): string => `@${featureCode}\nFeature: one\n\n  @${code}\n  Scenario: s\n    Given x\n`;
+
+// A shallow clone of the repository, one commit deep, and the commit it starts from.
+export function shallowCloneOf(repository: TestRepository): { readonly top: string; readonly firstCommit: string } {
+  const clone = folderForTest();
+  execFileSync("git", ["clone", "--quiet", "--depth", "1", `file://${repository.top}`, clone.top]);
+  return { top: clone.top, firstCommit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: clone.top, encoding: "utf8" }).trim() };
 }
 
-const HEADED_ONE_CARRYING_003 = "@ONE\nFeature: feature code ONE\n\n  @CLM-ONE-003 @unit\n  Scenario: scenario 1\n    Given a step\n";
-
-export function repositoryHeadedOneCarrying003(prefix: string, files: Readonly<Record<string, string>> = {}): string {
-  const repo = freshDirectory(prefix);
-  git(repo, ["init", "-q", "-b", "main"]);
-  writeInto(repo, "features/one.feature", HEADED_ONE_CARRYING_003);
-  for (const [path, content] of Object.entries(files)) writeInto(repo, path, content);
-  commitAll(repo, "the corpus");
-  return repo;
+// A checkout of its own inside the repository, as a submodule's is.
+export function nestedCheckoutIn(repository: TestRepository, path: string): void {
+  execFileSync("git", ["init", "--quiet", join(repository.top, path)]);
 }
-
-export function freshDirectory(prefix: string): string {
-  return realpathSync(temporaryDirectory(prefix));
-}
-
-// The test file that withholds modes here restores them in its own hook.
-export const taken: Array<() => void> = [];
-
-export function withhold(path: string, mode: number): void {
-  const before = statSync(path).mode & 0o7777;
-  chmodSync(path, mode);
-  taken.push(() => chmodSync(path, before));
-}
-
-export const runsAsRoot = (): boolean => process.getuid?.() === 0;

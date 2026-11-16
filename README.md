@@ -30,43 +30,25 @@ A Vitest test that cites it, in its title:
 it("[CLM-CHK-001] refuses an empty basket", () => { /* … */ });
 ```
 
-`balance` reconciles them, and the Claim Reconciliation balances:
+`balance` reconciles them, and the claim's row of the Claim Reconciliations balances:
 
 ```markdown
-### CLM-CHK-001
-
-- Title: `an empty basket cannot be checked out`
-- File: `checkout.feature`
-
-- Verdict: balanced
-
-Each row is one Quality Check Reconciliation: its outcome, its kind of quality check, where to look, and what was said.
-
-| Outcome | Kind | Where to look | Said |
+| Claim | Unit | Verdict | Reconciling items |
 | --- | --- | --- | --- |
-| satisfied | unit | `src/checkout.test.ts` `[CLM-CHK-001] refuses an empty basket` |  |
+| CLM-CHK-001 | U/1 | balanced | — |
 ```
 
 Delete the test, and the run is out of balance and exits `1`:
 
 ```markdown
-### CLM-CHK-001
-
-- Title: `an empty basket cannot be checked out`
-- File: `checkout.feature`
-
-- Verdict: out-of-balance
-
-Each row is one Quality Check Reconciliation: its outcome, its kind of quality check, where to look, and what was said.
-
-| Outcome | Kind | Where to look | Said |
+| Claim | Unit | Verdict | Reconciling items |
 | --- | --- | --- | --- |
-| missing | unit |  |  |
+| CLM-CHK-001 | U/- | out-of-balance | unit: missing |
 ```
 
 </div>
 
-`satisfied` is a unit Evidence Obligation answered by a passing unit test. `missing` is a unit Evidence Obligation that no unit test answered.
+`U/1` says the claim asks for a unit test and one ran. A balanced claim has no reconciling items. `missing` is a unit Evidence Obligation that no unit test answered. The report puts a key above each table, left out here.
 
 ## What double entry buys: a change becomes deliberate
 
@@ -86,8 +68,8 @@ Every outcome except `satisfied` turns the build red:
 | Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-claim`) |
 | Cite a scenario from a unit test when its tags ask only for `@e2e` | `not-asked-for`: evidence the scenario never asked for |
 | Delete a CI check step | `missing` on its fitness function's scenario |
-| Let a CI check step or its job run under `continue-on-error` | without the run's step record, `cannot-fail`: it passes, but its red might not fail the CI run. With the record, the step's own outcome decides: a red it swallowed reads `failing`, and a green reads `satisfied` |
-| Copy a scenario and keep its claim code | each copy gets a Claim Reconciliation of its own under that code, and every Quality Check Reconciliation on it (its row for one kind of quality check) reads `duplicate-claim-code`: no evidence can be credited to either |
+| Let a CI check step or its job run under `continue-on-error: true` | `cannot-fail`: it passes, but its red might not fail the CI run. With the run's step record, the step's own outcome decides: a red it swallowed reads `failing`, and a green still reads `cannot-fail` |
+| Copy a scenario and keep its claim code | each copy gets a Claim Reconciliation of its own under that code, and every Quality Check Reconciliation on it (one for each kind of quality check it asks for) reads `duplicate-claim-code`: no evidence can be credited to either |
 | Tag a scenario `@wip` while its tests still cite it | the scenario is put off, so it asks for nothing, and its tests' evidence lands on a phantom claim (`cites-unknown-claim`) |
 | Write a scenario's tags but no claim code | `no-claim-code`: nothing can cite it |
 | Remove the tags naming a scenario's kinds of quality check while nothing cites it | `no-quality-check`: it asks for nothing, and nothing answers |
@@ -125,151 +107,61 @@ Today's mechanism holds the checks ↔ application link well at the unit layer. 
 
 ## Reading the full report
 
-Here is part of the report for a larger set of scenarios, with a CI pipeline: the Summary and the Claim Reconciliations.
+Here is part of the report for a larger set of scenarios, with a CI pipeline: the Summary, the Step account and the Claim Reconciliations. The key above each table is left out.
 
 <div class="sample-report">
 
 ```markdown
 ## Summary
 
-- Run verdict: out-of-balance
+- Run verdict: out of balance
 
-Each row is one count from the reconciliation: what is counted, then how many.
+### Claim Reconciliations
 
-| Counted | Count |
+| Total | Balanced | Out of balance |
+| --- | --- | --- |
+| 7 | 2 | 5 |
+
+### Quality Check Reconciliations, by kind
+
+| Kind | Evidence Obligations | Evidence Observations | Satisfied | Failing | Missing | Cites an unknown claim | Cites no claim |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| unit | 3 | 4 | 1 | 1 | 1 | 1 | 1 |
+| fitness | 2 | 2 | 1 | 1 | 0 | 0 | 0 |
+| All | 5 | 6 | 2 | 2 | 1 | 1 | 1 |
+
+### Evidence Observations, by where they were filed
+
+| Where filed | Evidence Observations |
 | --- | --- |
-| Claim Reconciliations | 7 |
-| Claim Reconciliations balanced | 2 |
-| Claim Reconciliations out of balance | 5 |
-| Quality Check Reconciliations | 7 |
-| Quality Check Reconciliations out of balance | 5 |
-| failing | 2 |
-| missing | 1 |
-| cites-unknown-claim | 1 |
-| cites-no-claim | 1 |
-| missing unit | 1 |
-| Evidence Observations | 6 |
-| unit | 4 |
-| fitness | 2 |
-| on an executable claim | 4 |
-| on a phantom claim | 1 |
-| on the unnamed claim | 1 |
-| fitness functions that ran | 2 |
-| claim codes written outside a tag | 0 |
+| On an executable claim | 4 |
+| On a phantom claim | 1 |
+| On the unnamed claim | 1 |
+| Total | 6 |
 
 ### Out of balance by feature
 
-Each row is a feature file, then how many of its claims are out of balance.
-
-| File | Count |
+| Feature file | Out of balance |
 | --- | --- |
 | `checkout.feature` | 3 |
 
-### Step account
+## Step account
 
-Each row is one job of a workflow, then how its steps were read.
-
-| Workflow | Job | Steps read | Runners | Reconciler steps | Non-checks | Plumbing | Candidates |
+| Workflow | Job | Steps read | Runners | Reconciler steps | Non-checks | Plumbing | Fitness functions |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `ci.yml` | `build` | 7 | 1 | 2 | 1 | 1 | 2 |
-| Total |  | 7 | 1 | 2 | 1 | 1 | 2 |
-
-- Accounted for: 7
+| ci.yml | build | 7 | 1 | 2 | 1 | 1 | 2 |
 
 ## Claim Reconciliations
 
-### CLM-CHK-001
-
-- Title: `an empty basket cannot be checked out`
-- File: `checkout.feature`
-
-- Verdict: balanced
-
-Each row is one Quality Check Reconciliation: its outcome, its kind of quality check, where to look, and what was said.
-
-| Outcome | Kind | Where to look | Said |
-| --- | --- | --- | --- |
-| satisfied | unit | `src/checkout.test.ts` `[CLM-CHK-001] refuses an empty basket` |  |
-
-### CLM-CHK-002
-
-- Title: `a basket is charged to the card`
-- File: `checkout.feature`
-
-- Verdict: out-of-balance
-
-Each row is one Quality Check Reconciliation: its outcome, its kind of quality check, where to look, and what was said.
-
-| Outcome | Kind | Where to look | Said |
-| --- | --- | --- | --- |
-| failing | unit | `src/checkout.test.ts` `[CLM-CHK-002] charges the card` |  |
-
-### CLM-CHK-003
-
-- Title: `a voucher lowers the total`
-- File: `checkout.feature`
-
-- Verdict: out-of-balance
-
-Each row is one Quality Check Reconciliation: its outcome, its kind of quality check, where to look, and what was said.
-
-| Outcome | Kind | Where to look | Said |
-| --- | --- | --- | --- |
-| missing | unit |  |  |
-
-### CLM-CHK-005
-
-- Title: `every function stays inside the complexity limit`
-- File: `checkout.feature`
-
-- Verdict: balanced
-
-Each row is one Quality Check Reconciliation: its outcome, its kind of quality check, where to look, and what was said.
-
-| Outcome | Kind | Where to look | Said |
-| --- | --- | --- | --- |
-| satisfied | fitness | `ci.yml:build:Complexity` |  |
-
-### CLM-CHK-006
-
-- Title: `the source passes the lint rules`
-- File: `checkout.feature`
-
-- Verdict: out-of-balance
-
-Each row is one Quality Check Reconciliation: its outcome, its kind of quality check, where to look, and what was said.
-
-| Outcome | Kind | Where to look | Said |
-| --- | --- | --- | --- |
-| failing | fitness | `ci.yml:build:Lint` |  |
-
-### CLM-CHK-004
-
-- Claim: a code no executable claim has
-
-- Verdict: out-of-balance
-
-Each row is one Quality Check Reconciliation: its outcome, its kind of quality check, where to look, and what was said.
-
-| Outcome | Kind | Where to look | Said |
-| --- | --- | --- | --- |
-| cites-unknown-claim | unit | `src/checkout.test.ts` `[CLM-CHK-004] applies the discount` |  |
-
-### The unnamed claim
-
-- Verdict: out-of-balance
-
-Each row is one Quality Check Reconciliation: its outcome, its kind of quality check, where to look, and what was said.
-
-| Outcome | Kind | Where to look | Said |
-| --- | --- | --- | --- |
-| cites-no-claim | unit | `src/checkout.test.ts` `rounds the total` |  |
-
-Each row is one group of the unnamed claim's evidence: its kind of quality check, its file, the claim code it shares, how many of its tests ran, passed and failed, and the names of those that failed.
-
-| Kind | File | Claim code | Ran | Passed | Failed | Failures |
-| --- | --- | --- | --- | --- | --- | --- |
-| unit | `src/checkout.test.ts` |  | 1 | 1 | 0 |  |
+| Claim | Unit | Fitness | Verdict | Reconciling items |
+| --- | --- | --- | --- | --- |
+| CLM-CHK-001 | U/1 |  | balanced | — |
+| CLM-CHK-002 | U/1 |  | out-of-balance | unit: failing (`src/checkout.test.ts`: `[CLM-CHK-002] charges the card`) — `expected 1 charge, got 0` |
+| CLM-CHK-003 | U/- |  | out-of-balance | unit: missing |
+| CLM-CHK-005 |  | F/1 | balanced | — |
+| CLM-CHK-006 |  | F/1 | out-of-balance | fitness: failing (`ci.yml:build:Lint`) |
+| CLM-CHK-004 | — | — | out-of-balance | unit: cites-unknown-claim (`src/checkout.test.ts`: `[CLM-CHK-004] applies the discount`) |
+| (unnamed claim) | — | — | out-of-balance | unit: cites-no-claim (`src/checkout.test.ts`) — 1 ran, 1 passed, 0 failed |
 ```
 
 </div>
@@ -283,15 +175,15 @@ Read it as double entry. Each claim is an account: its tags are what it is owed,
 - one test cites a scenario that doesn't exist;
 - one test cites nothing.
 
-The two `fitness` rows are CI checks: a complexity limit that passes, and a lint step that failed. A check is reconciled the same way as a test: its scenario is owed one, and the step's result, read from the run's step record, is the evidence. A scenario tagged `@unit @e2e` is owed both, and balances only when a unit test and an end-to-end run each arrive and pass. No single test runner can see that.
+The two claims with an `F` are CI checks: a complexity limit that passes, and a lint step that failed. A check is reconciled the same way as a test: its scenario is owed one, and the step's result, read from the run's step record, is the evidence. A scenario tagged `@unit @e2e` is owed both, and balances only when a unit test and an end-to-end run each arrive and pass. No single test runner can see that.
 
-The **Step account** says what became of every CI step the run read. In this sample, the seven steps are: the test runner's step; the two steps that are the reconciler's own; the install, named a non-check; GitHub's checkout action, counted as plumbing; and the two checks, counted as candidates.
+The **Step account** says what became of every CI step the run read. In this sample, the seven steps are: the test runner's step; the two steps that are the reconciler's own; the install, named a non-check; GitHub's checkout action, counted as plumbing; and the two checks, counted as fitness functions.
 
 The report uses these exact terms:
 
-- A *Claim Reconciliation* is the evidence reconciled for one claim. A claim is usually a scenario. It sets the evidence the claim asks for, if any (its *Evidence Obligations*), against the results reported for it (its *Evidence Observations*). Each of its rows is a *Quality Check Reconciliation*, with its own outcome.
+- A *Claim Reconciliation* is the evidence reconciled for one claim, one row of the table. A claim is usually a scenario. It sets the evidence the claim asks for, if any (its *Evidence Obligations*), against the results reported for it (its *Evidence Observations*). Each pairing is a *Quality Check Reconciliation*, with its own outcome, and the row lists those that are not `satisfied` as its reconciling items.
 - A *phantom claim* comes from a test that names a scenario which does not exist. The cause is usually a typo, or a deleted scenario.
-- The *unnamed claim* takes any test that names no scenario at all, or a code several scenarios share.
+- The *unnamed claim* takes any test that names no scenario at all, several, or a code several scenarios share.
 - A *cannot-fail* check is one that passes, but whose CI step or job sets `continue-on-error`, so its red might not fail the CI run.
 - The *run verdict* is `balanced`, `out-of-balance`, or `not-reconciled` with the reason the run could not be relied on: `unsound`, `claim-code-errors` or `nothing-to-reconcile`.
 
@@ -352,7 +244,7 @@ Pass whichever reports you have. The *What you need* section of [`docs/user-guid
 
 `balance` is a gate: an out-of-balance run exits `1`. To watch before you gate, add `--exit-zero`. You get the same report, but an out-of-balance verdict exits `0`. Remove the flag when you are ready to gate. On GitHub Actions, `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page.
 
-**Before you name anything, `balance` lists what ran.** With no scenarios, every test and CI step it reads lands on the unnamed claim, one row each, saying whether it passed or failed, and where to look. That tells you nothing your CI does not already show. It is a starting inventory, and the value begins when you name the behaviours. Setup steps your pipeline runs, such as publishing or version bumps, are listed as checks until you name them in `specController.notChecks`. GitHub's own checkout, setup, cache and artifact actions are left out for you.
+**Before you name anything, `balance` lists what ran.** With no scenarios, each test and fitness function that cites no code lands on the unnamed claim, in groups by kind of quality check and file, each saying how many ran, passed and failed, and naming each that failed. One that cites a code no scenario has lands on a phantom claim. That tells you nothing your CI does not already show. It is a starting inventory, and the value begins when you name the behaviours. Steps that run your declared runners, GitHub's own checkout, setup, cache and artifact actions, the reconciler's own steps and the non-checks you name post nothing. Setup steps your pipeline runs, such as publishing or version bumps, are listed as checks until you name them in `specController.notChecks`.
 
 [`docs/quickstart.md`](./docs/quickstart.md) takes you from nothing to a first run in CI. [`docs/user-guide.md`](./docs/user-guide.md) is the full reference: every flag, every runner, and the CI wiring in detail.
 
@@ -368,7 +260,7 @@ This repository was built with Claude Code, by an author who does not write Type
 
 The repository follows the discipline it asks of you. Its own CI reconciles its own scenarios with `balance` on every run, and gates on:
 
-- mutation testing at 95% per scope;
+- every production source file in a mutation scope, which a scheduled sweep, not each run, mutation-tests;
 - cognitive complexity, function length and CRAP;
 - duplication and unused code;
 - dependency boundaries;

@@ -1,41 +1,44 @@
-import type { ClaimCodesAt, EvidenceObservation, ScenarioRunAsWritten } from "../domain/postEvidenceObservation.js";
-import { scenarioRunObservationsOf } from "../domain/postEvidenceObservation.js";
-import { withoutSigil } from "./tags.js";
+import type { ScenarioResultAsWritten } from "../domain/postEvidenceObservation.js";
+import { whereShapeBreaks, type Shape } from "./shape.js";
 
-export type CucumberJsonReport = ReadonlyArray<{
-  readonly uri?: string;
-  readonly name?: string;
-  readonly elements?: ReadonlyArray<{
-    readonly line?: number;
-    readonly name?: string;
-    readonly tags?: ReadonlyArray<{ readonly name?: string }>;
-    readonly steps?: ReadonlyArray<{
-      readonly keyword?: string;
+// A feature of Cucumber's JSON evidence report, as far as its reader reads it. A hook is written as a step with no name.
+interface CucumberJsonFeature {
+  readonly uri: string;
+  readonly elements?: readonly {
+    readonly type: string;
+    readonly name: string;
+    readonly line: number;
+    readonly tags?: readonly { readonly name: string }[];
+    readonly steps?: readonly {
+      readonly keyword: string;
       readonly name?: string;
-      readonly result: { readonly status?: string };
-    }>;
-  }>;
-}>;
-
-// Each scenario run as the report wrote it: its feature's uri and name, its line, name and tags, and each step's
-// keyword, text and status.
-function scenarioRunsOf(report: CucumberJsonReport): ScenarioRunAsWritten[] {
-  return report.flatMap((feature) =>
-    (feature.elements ?? []).map((scenario) => ({
-      featurePath: feature.uri,
-      featureName: feature.name,
-      line: scenario.line,
-      name: scenario.name,
-      tags: (scenario.tags ?? []).map((tag) => withoutSigil(tag.name ?? "")),
-      steps: (scenario.steps ?? []).map((step) => ({ keyword: step.keyword, text: step.name, status: step.result.status })),
-    })),
-  );
+      readonly result: { readonly status: string; readonly error_message?: string };
+    }[];
+  }[];
 }
 
-export function parseCucumberEvidenceObservations(
-  report: CucumberJsonReport,
-  root: string,
-  claimCodesAt: ClaimCodesAt,
-): EvidenceObservation[] {
-  return scenarioRunObservationsOf(scenarioRunsOf(report), root, claimCodesAt);
+// A list of features.
+const REPORT: Shape = "list";
+
+export const whereScenarioResultsBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
+
+// A feature with no elements written has no scenarios.
+export function scenarioResultsFrom(report: unknown): ScenarioResultAsWritten[] {
+  return (report as readonly CucumberJsonFeature[]).flatMap(
+    ({ uri, elements }) =>
+      elements
+        ?.filter(({ type }) => type === "scenario")
+        .map(({ name, line, tags = [], steps = [] }) => ({
+          file: uri,
+          line,
+          title: name,
+          tags: tags.map(({ name: tag }) => tag.slice(1)),
+          steps: steps.map(({ keyword, name: text, result: { status, error_message } }) => ({
+            keyword,
+            text,
+            status,
+            message: error_message,
+          })),
+        })) ?? [],
+  );
 }

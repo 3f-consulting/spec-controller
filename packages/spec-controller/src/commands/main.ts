@@ -1,57 +1,48 @@
-import { runBalance } from "./balance.js";
-import { runAllocate } from "./allocate.js";
-import { parseHostInvocation, answerUnknownCommand, type HostInvocation } from "../runRequest/host.js";
-import { cliRegistry, renderTopLevelHelp } from "../runRequest/cliRegistry.js";
-import { settlingRefusal } from "../runEnding/usageRefusal.js";
-import { beginRun, markRunFinished, settleUnexpectedError } from "../runEnding/crashGuards.js";
-import { endRunOn, USAGE_REFUSAL } from "../runEnding/exitCode.js";
-import { standardError } from "../runEnding/standardError.js";
+import { noteText } from "../output/allocateNotes.js";
+import type { StandardStreams } from "../output/streams.js";
+import { UNEXPECTED_ERROR } from "../runEnding/exitCode.js";
+import { complainerTo, type Complain } from "../runEnding/crashGuards.js";
+import { refusedWith } from "../runEnding/refusal.js";
+import type { ExitCode } from "../runEnding/runEnding.js";
+import { helpText } from "../runRequest/help.js";
+import { runRequestOf } from "../runRequest/runRequest.js";
+import { allocate } from "./allocate.js";
+import { balance } from "./balance.js";
 
-function runCommand(command: string, argv: string[]): boolean {
-  switch (command) {
-    case "balance":
-      return runBalance(argv);
-    case "allocate":
-      runAllocate(argv);
-      return false;
-    default: {
-      const answer = answerUnknownCommand(command, renderTopLevelHelp(cliRegistry));
-      standardError(process.stderr).error(answer.refusal);
-      endRunOn({ kind: "answer", code: answer.exitCode });
-      return false;
-    }
+
+// What main runs, and how it complains of an unexpected error: given by the bin, and by a test that needs one to fail.
+export interface MainRuns {
+  readonly balance: typeof balance;
+  readonly complain: Complain;
+}
+
+// Help and an answer go to standard output; a note, a refusal with the help that follows it, and an unexpected error go
+// to standard error.
+function run(args: readonly string[], folder: string, streams: StandardStreams, runs: MainRuns): ExitCode {
+  const request = runRequestOf(args);
+  if ("refusals" in request) {
+    const exitCode = refusedWith(request.refusals, streams.error.write);
+    streams.error.write(helpText(request.about));
+    return exitCode;
   }
+  if (request.command === "help") {
+    streams.output.write(helpText(request.about));
+    return 0;
+  }
+  if (request.command === "balance") return runs.balance(request, folder, streams, runs.complain);
+  const outcome = allocate(request, folder);
+  if (!("answer" in outcome)) return refusedWith([outcome.refusal], streams.error.write);
+  streams.output.write(`${outcome.answer}\n`);
+  outcome.notes.forEach((note) => streams.error.write(`${noteText(note)}\n`));
+  return 0;
 }
 
-function refuseLeadingFaults(inv: HostInvocation): boolean {
-  if (inv.refusal === undefined) return false;
-  standardError(process.stderr).error(inv.refusal);
-  endRunOn(USAGE_REFUSAL);
-  return true;
-}
-
-export function main(hostArgv: string[]): void {
-  beginRun();
+export function main(args: readonly string[], folder: string, streams: StandardStreams, runs: Partial<MainRuns> = {}): ExitCode {
+  const runsWith: MainRuns = { balance, complain: complainerTo((text) => streams.error.write(text)), ...runs };
   try {
-    settlingRefusal(() => run(hostArgv), undefined);
-  } catch (err) {
-    settleUnexpectedError(err, process, process.stderr);
+    return run(args, folder, streams, runsWith);
+  } catch (error) {
+    runsWith.complain(error);
+    return UNEXPECTED_ERROR;
   }
-}
-
-function run(hostArgv: string[]): void {
-  const inv = parseHostInvocation(hostArgv);
-  if (refuseLeadingFaults(inv)) return;
-  const { run: toRun } = inv;
-
-  if (toRun === undefined || asksForHelp(toRun.command)) {
-    process.stdout.write(renderTopLevelHelp(cliRegistry) + "\n");
-    return;
-  }
-
-  if (runCommand(toRun.command, toRun.commandArgs)) markRunFinished();
-}
-
-function asksForHelp(command: string): boolean {
-  return command === "help" || command === "--help" || command === "-h";
 }

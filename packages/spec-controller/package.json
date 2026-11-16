@@ -27,7 +27,6 @@
   "devDependencies": {
     "@3f-consulting/spec-controller-core": "workspace:*",
     "esbuild": "0.28.1",
-    "fast-xml-parser": "^5.11.2",
     "ts-json-schema-generator": "^2.9.0",
     "yaml": "^2.9.0"
   },

@@ -1,359 +1,89 @@
 import { describe, expect, it } from "vitest";
-import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
-import type { EvidenceObservation } from "../domain/postEvidenceObservation.js";
-import { coreText } from "../messages/coreText.js";
-import { renderJson } from "./json.js";
-import { renderMarkdown } from "./markdown.js";
+import { stepAccountOf, totalsOf, type EvidenceReconciliation, type StepCounts } from "../domain/evidenceReconciliation.js";
+import { coreText } from "../messages/catalogue.js";
+import { markdownReportOf } from "./markdown.js";
+import { PROVENANCE } from "./reconciledRun.test-utils.js";
 
-const ONE_001 = { featureCode: "ONE", number: "001" };
-const TWO_002 = { featureCode: "TWO", number: "002" };
-
-function observation(said: Partial<EvidenceObservation> = {}): EvidenceObservation {
-  return { cites: [ONE_001], result: "failed", kind: "unit", place: "a.test.ts", name: "a test", message: "it broke", notes: [], ...said };
-}
-
-function everySection(failing: EvidenceObservation = observation()): EvidenceReconciliation {
-  return {
-    provenance: {
-      target: "acme/widgets",
-      sourceSha: "abc123",
-      toolSha: "def456",
-      toolVersion: "0.2.0",
-      inputs: [{ name: "features", path: "features" }, { name: "workflows" }],
-    },
-    errorsInTheInputs: {
-      claimCodeErrors: [
-        { kind: "no-feature-code", files: ["three.feature"] },
-        {
-          kind: "foreign-claim-code",
-          files: ["four.feature", "five.feature"],
-          claimCode: "CLM-FIVE-001",
-          namedFeatureCode: "FIVE",
-          namedFeatureFiles: ["five.feature"],
-        },
-        { kind: "several-claim-codes", files: ["six.feature"], scenario: "a scenario", codes: ["CLM-SIX-001", "CLM-SIX-002"] },
-      ],
-      configurationErrors: [{ kind: "configuration-unknown-key", entry: "runnerz" }],
-    },
-    runIntegrity: { neverRan: [observation({ result: "never-ran", name: "a file that never loaded" })] },
-    runVerdict: { verdict: "not-reconciled", why: "claim-code-errors" },
-    totals: {
-      claimReconciliations: { total: 4, balanced: 0, outOfBalance: 4 },
-      qualityCheckReconciliations: {
-        total: 4,
-        outOfBalance: 4,
-        byOutcome: [
-          { outcome: "failing", count: 1 },
-          { outcome: "no-claim-code", count: 1 },
-        ],
-        missingByKind: [{ kind: "unit", count: 0 }],
-      },
-      evidenceObservations: {
-        total: 3,
-        byKind: [
-          { kind: "unit", count: 2 },
-          { kind: "integration", count: 1 },
-        ],
-        onExecutableClaim: 1,
-        onPhantomClaim: 1,
-        onUnnamedClaim: 1,
-        fitnessFunctionsRan: 0,
-      },
-      outOfBalanceByFeature: [{ file: "one.feature", count: 1 }],
-      excludedClaimCodeOccurrences: 2,
-    },
-    stepAccount: {
-      jobs: [{ workflow: "ci.yml", job: "ci", stepsRead: 9, runners: 4, reconcilerSteps: 1, nonChecks: 3, plumbing: 1, candidates: 0 }],
-      total: { stepsRead: 9, runners: 4, reconcilerSteps: 1, nonChecks: 3, plumbing: 1, candidates: 0, accountedFor: 9 },
-    },
-    claimReconciliations: [
-      {
-        claim: { claimCode: ONE_001, file: "one.feature", title: "a claim", obligations: [{ kind: "unit" }] },
-        qualityCheckReconciliations: [{ outcome: "failing", kind: "unit", obligation: { kind: "unit" }, observation: failing }],
-        verdict: "out-of-balance",
-      },
-      {
-        claim: { file: "two.feature", title: "a claim with no code", obligations: [] },
-        qualityCheckReconciliations: [{ outcome: "no-claim-code", obligation: {} }],
-        verdict: "out-of-balance",
-      },
-      {
-        claim: { claimCode: TWO_002 },
-        qualityCheckReconciliations: [
-          {
-            outcome: "cites-unknown-claim",
-            kind: "integration",
-            observation: { cites: [TWO_002], result: "passed", kind: "integration", place: "b.test.ts", notes: [] },
-          },
-        ],
-        verdict: "out-of-balance",
-      },
-      {
-        claim: {},
-        qualityCheckReconciliations: [
-          { outcome: "cites-no-claim", kind: "unit", observation: observation({ cites: [], result: "passed", place: "c.test.ts", name: "c test", message: "said" }) },
-        ],
-        verdict: "out-of-balance",
-      },
-    ],
-  };
-}
-
-function headingsAt(level: number, markdown: string): string[] {
-  const marker = `${"#".repeat(level)} `;
-  return markdown.split("\n").flatMap((line) => (line.startsWith(marker) ? [line.slice(marker.length)] : []));
-}
-
-// The report with one section cut out: from its heading to the next heading at its level or above.
-function cutOut(markdown: string, sectionHeading: string): string {
-  const lines = markdown.split("\n");
-  const start = lines.indexOf(sectionHeading);
-  const level = sectionHeading.indexOf(" ");
-  const after = lines.findIndex((line, at) => at > start && /^#+ /.test(line) && line.indexOf(" ") <= level);
-  return [...lines.slice(0, start), ...lines.slice(after)].join("\n");
-}
-
-describe("the Markdown report's sections will come in a fixed order", () => {
-  it("[CLM-RPT-009] the Markdown report's sections will come in a fixed order", () => {
-    expect(headingsAt(2, renderMarkdown(everySection()))).toEqual([
-      coreText("provenance-heading"),
-      coreText("errors-in-the-inputs-heading"),
-      coreText("run-integrity-heading"),
-      coreText("summary-heading"),
-      coreText("claim-reconciliations-heading"),
-    ]);
-  });
+// A run with nothing reconciled, and the parts given.
+const runWith = (parts: Pick<EvidenceReconciliation, "runVerdict" | "provenance"> & Partial<EvidenceReconciliation>): EvidenceReconciliation => ({
+  claimReconciliations: [],
+  totals: totalsOf([], []),
+  stepAccount: stepAccountOf([]),
+  errorsInTheInputs: { claimCodeErrors: [], configurationErrors: [] },
+  runIntegrity: { neverRan: [] },
+  ...parts,
 });
 
-describe("a report will show its Claim Reconciliations when the run had none", () => {
-  it("[CLM-RPT-105] a report will show its Claim Reconciliations when the run had none", () => {
-    const nothing = { ...everySection(), claimReconciliations: [] };
-    const lines = renderMarkdown(nothing).split("\n").filter((line) => line !== "");
-    const section = lines.slice(lines.indexOf(`## ${coreText("claim-reconciliations-heading")}`));
-    expect({ markdown: section.slice(0, 2), json: (JSON.parse(renderJson(nothing)) as EvidenceReconciliation).claimReconciliations }).toEqual({
-      markdown: [`## ${coreText("claim-reconciliations-heading")}`, coreText("claim-reconciliations-none")],
-      json: [],
-    });
-  });
-});
-
-describe("neither report will have an optional section the run had nothing for", () => {
+describe("the Summary names each run verdict, and each reason a run is not reconciled", () => {
   it.each([
-    [
-      "CLM-RPT-077",
-      "## ",
-      "errors-in-the-inputs-heading",
-      ({ errorsInTheInputs: _absent, ...rest }: EvidenceReconciliation): EvidenceReconciliation => rest,
-      (json: EvidenceReconciliation): boolean => "errorsInTheInputs" in json,
-    ],
-    [
-      "CLM-RPT-021",
-      "## ",
-      "run-integrity-heading",
-      ({ runIntegrity: _absent, ...rest }: EvidenceReconciliation): EvidenceReconciliation => rest,
-      (json: EvidenceReconciliation): boolean => "runIntegrity" in json,
-    ],
-    [
-      "CLM-RPT-052",
-      "### ",
-      "step-account-heading",
-      ({ stepAccount: _absent, ...rest }: EvidenceReconciliation): EvidenceReconciliation => rest,
-      (json: EvidenceReconciliation): boolean => "stepAccount" in json,
-    ],
-    [
-      "CLM-RPT-006",
-      "### ",
-      "out-of-balance-by-feature-heading",
-      (evidenceReconciliation: EvidenceReconciliation): EvidenceReconciliation => {
-        const { outOfBalanceByFeature: _absent, ...totals } = evidenceReconciliation.totals;
-        return { ...evidenceReconciliation, totals };
-      },
-      (json: EvidenceReconciliation): boolean => "outOfBalanceByFeature" in json.totals,
-    ],
-  ] as const)("[%s] neither report has the section %s%s when the run had nothing for it", (_clm, marker, section, without, inJson) => {
-    const run = without(everySection());
-    expect({ markdown: renderMarkdown(run), json: inJson(JSON.parse(renderJson(run)) as EvidenceReconciliation) }).toEqual({
-      markdown: cutOut(renderMarkdown(everySection()), `${marker}${coreText(section)}`),
-      json: false,
-    });
+    ["CLM-RPT-111", "balanced", { verdict: "balanced" }, "verdict-balanced"],
+    ["CLM-RPT-116", "out of balance", { verdict: "out-of-balance" }, "verdict-out-of-balance"],
+    ["CLM-RPT-117", "not reconciled, because unsound", { verdict: "not-reconciled", why: "unsound" }, "verdict-unsound"],
+    ["CLM-RPT-118", "not reconciled, because of claim code errors", { verdict: "not-reconciled", why: "claim-code-errors" }, "verdict-claim-code-errors"],
+    ["CLM-RPT-119", "not reconciled, because there was nothing to reconcile", { verdict: "not-reconciled", why: "nothing-to-reconcile" }, "verdict-nothing-to-reconcile"],
+  ] as const)("[%s] a run that was %s has its Summary name that run verdict", (_clm, _verdict, runVerdict, words) => {
+    const lines = markdownReportOf(runWith({ runVerdict, provenance: PROVENANCE })).split("\n");
+
+    expect(lines.filter((line) => line.startsWith(`- ${coreText("summary-run-verdict")}:`))).toEqual([`- ${coreText("summary-run-verdict")}: ${coreText(words)}`]);
   });
 });
 
-describe("a name will read as it was given, in a table that stays a table", () => {
-  const UNESCAPED_PIPE = /(?<!\\)\|/g;
+describe("the provenance shows each input the run read on its own line", () => {
+  it("[CLM-RPT-115] the provenance has a line for an input the run read by default", () => {
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, inputs: [{ name: "workflows", path: ".github/workflows" }] } }));
+    const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
+
+    expect(provenance.slice(provenance.indexOf(`- ${coreText("provenance-inputs")}:`))).toEqual([`- ${coreText("provenance-inputs")}:`, "  - CI workflows: `.github/workflows`"]);
+  });
+});
+
+describe("the step account totals its jobs only when it has more than one", () => {
+  const counts: StepCounts = { stepsRead: 2, runners: 0, reconcilerSteps: 1, nonChecks: 0, plumbing: 0, fitnessFunctions: 1 };
 
   it.each([
-    ["CLM-RPT-084", "a|b", "`a\\|b`"],
-    ["CLM-RPT-084", "", '`""`'],
-    ["CLM-RPT-084", " a ", '`" a "`'],
-    ["CLM-RPT-106", "a\\b", "`a\\b`"],
-    ["CLM-RPT-107", "a\nb", '`"a\\nb"`'],
-    ["CLM-RPT-088", "`a`", "`` `a` ``"],
-    ["CLM-RPT-088", "`a", "`` `a ``"],
-    ["CLM-RPT-088", "a``b`", "``` a``b` ```"],
-    ["CLM-RPT-108", "*a*", "`*a*`"],
-  ])("[%s] the name %j reads as it was given, in a row that keeps its columns", (_clm, name, cell) => {
-    const lines = renderMarkdown(everySection(observation({ name }))).split("\n");
-    const [header] = lines.filter((line) => line.startsWith(`| ${coreText("outcome-column")} `));
-    const [row] = lines.filter((line) => line.startsWith("| failing | unit "));
-    expect({ cell: row?.includes(` ${cell} `), columns: row?.match(UNESCAPED_PIPE)?.length }).toEqual({
-      cell: true,
-      columns: header?.match(UNESCAPED_PIPE)?.length,
-    });
+    ["CLM-RPT-112", "one job", [{ workflow: "ci.yml", job: "build" }], false],
+    ["CLM-RPT-113", "two jobs, in two workflows", [{ workflow: "ci.yml", job: "build" }, { workflow: "nightly.yml", job: "sweep" }], true],
+  ] as const)("[%s] a run that read the steps of %s has a step account row for each job, and a Total row only for more than one", (_clm, _jobs, jobs, hasTotal) => {
+    const report = markdownReportOf(
+      runWith({
+        runVerdict: { verdict: "balanced" },
+        provenance: PROVENANCE,
+        stepAccount: { jobs: jobs.map((job) => ({ ...job, ...counts })), total: counts },
+      }),
+    );
+    const stepAccount = report.slice(report.indexOf("## Step account"));
+
+    expect(stepAccount.split("\n").some((line) => line.startsWith("| Total |"))).toBe(hasTotal);
   });
 });
 
-describe("the report quotes an Evidence Observation's first line and every note", () => {
-  it("[CLM-RPT-085] the report quotes an Evidence Observation's first line and every note", () => {
-    const neverRan = observation({ result: "never-ran", message: "first line\nsecond line\nthird line", notes: ["one note", "another note"] });
-    const markdown = renderMarkdown({ ...everySection(neverRan), runIntegrity: { neverRan: [neverRan] } });
-    const rowsQuoting = (text: string): number => markdown.split("\n").filter((line) => line.startsWith("|") && line.includes(` ${text} `)).length;
-    expect({
-      firstLine: rowsQuoting("`first line`"),
-      notes: [rowsQuoting("`one note`"), rowsQuoting("`another note`")],
-      laterLines: rowsQuoting("second line") + rowsQuoting("third line"),
-    }).toEqual({ firstLine: 2, notes: [2, 2], laterLines: 0 });
-  });
+describe("the step account shows each job's counts, and the Total row their sums", () => {
+  const step = (workflow: string, job: string, run: string) => ({ workflow, job, plumbing: false, writesStepRecord: false, run });
 
-  it("[CLM-RPT-085] the report quotes the first line that holds anything, as RSpec writes a load error's message", () => {
-    const neverRan = observation({ result: "never-ran", message: "\nWhile loading ./spec/a_spec.rb a `raise` occurred\nFailure/Error", notes: [] });
-    const markdown = renderMarkdown({ ...everySection(neverRan), runIntegrity: { neverRan: [neverRan] } });
-    const rows = markdown.split("\n").filter((line) => line.startsWith("|"));
-    expect({
-      quoted: rows.filter((line) => line.includes("While loading ./spec/a_spec.rb")).length,
-      empty: rows.filter((line) => line.includes("`\"\"`")).length,
-    }).toEqual({ quoted: 2, empty: 0 });
-  });
-});
-
-describe("each section will have its heading, each value its label, and each table a key", () => {
-  it("[CLM-RPT-109] each section will have its heading, each value its label, and each table a key", () => {
-    const lines = renderMarkdown(everySection())
-      .split("\n")
-      .filter((line) => line !== "");
-    const text = coreText;
-    const claimTable = [
-      text("claim-reconciliations-key"),
-      `| ${text("outcome-column")} | ${text("kind-column")} | ${text("where-column")} | ${text("said-column")} |`,
-      "| --- | --- | --- | --- |",
-    ];
-    expect(lines).toEqual([
-      `# ${text("report-title")}`,
-      `## ${text("provenance-heading")}`,
-      `- ${text("target-label")}: \`acme/widgets\``,
-      `- ${text("source-sha-label")}: \`abc123\``,
-      `- ${text("tool-sha-label")}: \`def456\``,
-      `- ${text("tool-version-label")}: \`0.2.0\``,
-      `- ${text("inputs-label")}: \`features\` (\`features\`), \`workflows\` (${text("input-not-given")})`,
-      `## ${text("errors-in-the-inputs-heading")}`,
-      `### ${text("claim-code-errors-heading")}`,
-      text("claim-code-errors-key"),
-      `| ${text("kind-column")} | ${text("about-column")} |`,
-      "| --- | --- |",
-      `| no-feature-code | ${text("files-label")}: \`three.feature\` |`,
-      `| foreign-claim-code | ${text("files-label")}: \`four.feature\` \`five.feature\`; ` +
-        `${text("claim-code-label")}: \`CLM-FIVE-001\`; ${text("named-feature-code-label")}: \`FIVE\`; ${text("named-feature-files-label")}: \`five.feature\` |`,
-      `| several-claim-codes | ${text("files-label")}: \`six.feature\`; ${text("scenario-label")}: \`a scenario\`; ${text("codes-label")}: \`CLM-SIX-001\` \`CLM-SIX-002\` |`,
-      `### ${text("configuration-errors-heading")}`,
-      text("configuration-errors-key"),
-      `| ${text("kind-column")} | ${text("setting-column")} |`,
-      "| --- | --- |",
-      "| configuration-unknown-key | `runnerz` |",
-      `## ${text("run-integrity-heading")}`,
-      text("never-ran-key"),
-      `| ${text("kind-column")} | ${text("where-column")} | ${text("said-column")} |`,
-      "| --- | --- | --- |",
-      "| unit | `a.test.ts` `a file that never loaded` | `it broke` |",
-      `## ${text("summary-heading")}`,
-      `- ${text("run-verdict-label")}: not-reconciled (claim-code-errors)`,
-      text("totals-key"),
-      `| ${text("counted-column")} | ${text("count-column")} |`,
-      "| --- | --- |",
-      `| ${text("claim-reconciliations-total")} | 4 |`,
-      `| ${text("claim-reconciliations-balanced")} | 0 |`,
-      `| ${text("claim-reconciliations-out-of-balance")} | 4 |`,
-      `| ${text("quality-check-reconciliations-total")} | 4 |`,
-      `| ${text("quality-check-reconciliations-out-of-balance")} | 4 |`,
-      "| failing | 1 |",
-      "| no-claim-code | 1 |",
-      `| ${text("missing-label")} unit | 0 |`,
-      `| ${text("evidence-observations-total")} | 3 |`,
-      "| unit | 2 |",
-      "| integration | 1 |",
-      `| ${text("on-executable-claim-label")} | 1 |`,
-      `| ${text("on-phantom-claim-label")} | 1 |`,
-      `| ${text("on-unnamed-claim-label")} | 1 |`,
-      `| ${text("fitness-functions-ran-label")} | 0 |`,
-      `| ${text("excluded-claim-code-occurrences-label")} | 2 |`,
-      `### ${text("out-of-balance-by-feature-heading")}`,
-      text("out-of-balance-by-feature-key"),
-      `| ${text("file-column")} | ${text("count-column")} |`,
-      "| --- | --- |",
-      "| `one.feature` | 1 |",
-      `### ${text("step-account-heading")}`,
-      text("step-account-key"),
-      `| ${text("workflow-column")} | ${text("job-column")} | ${text("steps-read-column")} | ${text("runners-column")} | ` +
-        `${text("reconciler-steps-column")} | ${text("non-checks-column")} | ${text("plumbing-column")} | ${text("candidates-column")} |`,
-      "| --- | --- | --- | --- | --- | --- | --- | --- |",
-      "| `ci.yml` | `ci` | 9 | 4 | 1 | 3 | 1 | 0 |",
-      `| ${text("step-account-total")} |  | 9 | 4 | 1 | 3 | 1 | 0 |`,
-      `- ${text("accounted-for-label")}: 9`,
-      `## ${text("claim-reconciliations-heading")}`,
-      "### CLM-ONE-001",
-      `- ${text("title-label")}: \`a claim\``,
-      `- ${text("file-label")}: \`one.feature\``,
-      `- ${text("verdict-label")}: out-of-balance`,
-      ...claimTable,
-      "| failing | unit | `a.test.ts` `a test` | `it broke` |",
-      "### `a claim with no code`",
-      `- ${text("title-label")}: \`a claim with no code\``,
-      `- ${text("file-label")}: \`two.feature\``,
-      `- ${text("verdict-label")}: out-of-balance`,
-      ...claimTable,
-      "| no-claim-code |  |  |  |",
-      "### CLM-TWO-002",
-      `- ${text("phantom-claim-label")}: ${text("phantom-claim")}`,
-      `- ${text("verdict-label")}: out-of-balance`,
-      ...claimTable,
-      "| cites-unknown-claim | integration | `b.test.ts` |  |",
-      `### ${text("unnamed-claim")}`,
-      `- ${text("verdict-label")}: out-of-balance`,
-      ...claimTable,
-      "| cites-no-claim | unit | `c.test.ts` `c test` | `said` |",
-      text("evidence-groups-key"),
-      `| ${text("kind-column")} | ${text("file-column")} | ${text("claim-code-column")} | ${text("ran-column")} | ${text("passed-column")} | ${text("failed-column")} | ${text("failures-column")} |`,
-      "| --- | --- | --- | --- | --- | --- | --- |",
-      "| unit | `c.test.ts` |  | 1 | 1 | 0 |  |",
+  it.each([
+    ["CLM-RPT-165", "row for build", "build", ["2", "1", "0", "0", "0", "1"]],
+    ["CLM-RPT-166", "Total row", "", ["3", "1", "0", "0", "1", "1"]],
+  ] as const)("[%s] steps read in job build of ci.yml, 1 a test runner, and in job sweep of nightly.yml, 1 only setting the job up, show the step account's %s with its counts", (_clm, _row, job, counts) => {
+    const stepAccount = stepAccountOf([
+      { step: step("ci.yml", "build", "pnpm test"), disposition: "runner" },
+      { step: step("ci.yml", "build", "pnpm lint"), disposition: "fitnessFunction" },
+      { step: step("nightly.yml", "sweep", "actions/checkout"), disposition: "plumbing" },
     ]);
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: PROVENANCE, stepAccount }));
+    const rows = report.slice(report.indexOf("## Step account")).split("\n").filter((line) => line.startsWith("| ")).map((line) => line.slice(2, -2).split(" | "));
+
+    expect(rows.find((cells) => cells[1] === job)?.slice(2)).toEqual(counts);
   });
 });
 
-describe("the report shows the unnamed claim's evidence one group per file, with how many tests ran, passed and failed", () => {
-  it("[CLM-RPT-110] the report shows the unnamed claim's evidence one group per file, with how many tests ran, passed and failed", () => {
-    const citingNoClaim = (place: string, name: string, result: EvidenceObservation["result"]) =>
-      ({ outcome: "cites-no-claim", kind: "unit", observation: { cites: [], result, kind: "unit", place, name, notes: [] } }) as const;
-    const run: EvidenceReconciliation = {
-      ...everySection(),
-      claimReconciliations: [
-        {
-          claim: {},
-          qualityCheckReconciliations: [
-            citingNoClaim("a.test.ts", "first a", "passed"),
-            citingNoClaim("a.test.ts", "second a", "passed"),
-            citingNoClaim("b.test.ts", "first b", "passed"),
-            citingNoClaim("b.test.ts", "second b", "failed"),
-          ],
-          verdict: "out-of-balance",
-        },
-      ],
-    };
-    const lines = renderMarkdown(run).split("\n");
-    const header = lines.indexOf("| Kind | File | Claim code | Ran | Passed | Failed | Failures |");
-    expect(lines.slice(header, header + 4)).toEqual([
-      "| Kind | File | Claim code | Ran | Passed | Failed | Failures |",
-      "| --- | --- | --- | --- | --- | --- | --- |",
-      "| unit | `a.test.ts` |  | 2 | 2 | 0 |  |",
-      "| unit | `b.test.ts` |  | 2 | 1 | 1 | `second b` |",
-    ]);
+describe("the provenance shows the tool SHA only when there is one", () => {
+  it.each([
+    ["CLM-RPT-167", "the tool SHA 9f8e7d6", { toolSha: "9f8e7d6" }, ["9f8e7d6"]],
+    ["CLM-RPT-168", "no tool SHA", {}, []],
+  ] as const)("[%s] a run whose provenance had %s shows it in the provenance, or no line for it", (_clm, _commit, toolCommit, shown) => {
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, ...toolCommit } }));
+    const label = `- ${coreText("provenance-tool-sha")}: `;
+
+    expect(report.split("\n").filter((line) => line.startsWith(label))).toEqual(shown.map((commit) => `${label}\`${commit}\``));
   });
 });

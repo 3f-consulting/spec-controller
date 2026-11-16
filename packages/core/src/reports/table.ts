@@ -1,5 +1,13 @@
-const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
+import { coreText } from "../messages/catalogue.js";
 
-export function table(header: readonly string[], rows: readonly (readonly string[])[]): string {
-  return [row(header), row(header.map(() => "---")), ...rows.map(row)].join("\n");
-}
+const row = (cells: readonly (string | number)[]): string => `| ${cells.join(" | ")} |`;
+
+// The table under its key: a line saying what each column means. Each code's meaning is its `-key` text.
+export const tableOf = (columns: readonly string[], rows: readonly (readonly (string | number)[])[]): string[] => [
+  `${coreText("key")}:`,
+  ...columns.map((code) => `- ${coreText(code)}: ${coreText(`${code}-key`)}`),
+  "",
+  row(columns.map((column) => coreText(column))),
+  row(columns.map(() => "---")),
+  ...rows.map(row),
+];

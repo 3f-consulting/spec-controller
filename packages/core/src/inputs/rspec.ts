@@ -1,32 +1,38 @@
-import type { EvidenceObservation, ExamplesAsWritten } from "../domain/postEvidenceObservation.js";
-import { exampleObservationsOf } from "../domain/postEvidenceObservation.js";
+import type { ResultsByExampleAsWritten } from "../domain/postEvidenceObservation.js";
+import { whereShapeBreaks, type Shape } from "./shape.js";
 
-export interface RspecJsonReport {
-  readonly examples?: ReadonlyArray<{
-    readonly description?: string;
-    readonly full_description?: string;
-    readonly status?: string;
-    readonly file_path?: string;
-  }>;
-  readonly summary?: { readonly errors_outside_of_examples_count?: number };
+// RSpec's JSON evidence report, as far as its reader reads it.
+interface RspecJsonReport {
   readonly messages?: readonly string[];
+  readonly examples: readonly {
+    readonly description: string;
+    readonly full_description: string;
+    readonly status: string;
+    readonly file_path: string;
+    readonly exception?: { readonly message?: string };
+  }[];
+  readonly summary: { readonly errors_outside_of_examples_count?: number };
 }
 
-// The report as RSpec wrote it: each example's description, full description, status and file, how many errors it met
-// outside any example, and its messages.
-function examplesOf(report: RspecJsonReport): ExamplesAsWritten {
+// A record of its examples, a list, and its summary, a record.
+const REPORT: Shape = { fields: { examples: "list", summary: { fields: {} } } };
+
+export const whereResultsByExampleBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
+
+const LOADING = /while loading (\S+?)\.?\s/i;
+
+export function resultsByExampleFrom(report: unknown): ResultsByExampleAsWritten {
+  const { messages, examples, summary } = report as RspecJsonReport;
+  // The errors outside any example are the last of its messages, one each. RSpec writes messages only when it has some.
+  const errors = summary.errors_outside_of_examples_count ?? 0;
   return {
-    examples: (report.examples ?? []).map((example) => ({
-      title: example.description,
-      fullTitle: example.full_description,
-      status: example.status,
-      path: example.file_path,
+    examples: examples.map(({ description, full_description, status, file_path, exception }) => ({
+      file: file_path,
+      fullDescription: full_description,
+      description,
+      status,
+      message: exception?.message,
     })),
-    errorsOutsideExamples: report.summary?.errors_outside_of_examples_count,
-    messages: report.messages ?? [],
+    loadErrors: (messages?.slice(messages.length - errors) ?? []).map((message) => ({ file: LOADING.exec(message)?.[1], message })),
   };
-}
-
-export function parseRspecEvidenceObservations(report: RspecJsonReport, root: string): EvidenceObservation[] {
-  return exampleObservationsOf(examplesOf(report), root);
 }

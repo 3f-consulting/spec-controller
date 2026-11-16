@@ -131,7 +131,7 @@ jobs:
         # The tree line runs without --quiet: --quiet skips warn rules, and with them the dead-suppression reports for those rules and for a blanket directive.
         # So it reds on an error anywhere, a dead suppression included, and prints every warning, which exits 0, before an error ends the step.
         run: |
-          for sample in "core's source:packages/core/src/index.ts" "the app's source:packages/spec-controller/src/commands/cli.ts" "the step files:tests/steps/runVerdict.steps.ts" "the scripts:scripts/docs-check.mjs"; do
+          for sample in "core's source:packages/core/src/index.ts" "the app's source:packages/spec-controller/src/commands/cli.ts" "the step files:tests/steps/reportSchema.steps.ts" "the scripts:scripts/docs-check.mjs"; do
             [ "$(node_modules/.bin/eslint --print-config "${sample#*:}" | jq '[.rules // {} | .[] | select(.[0] > 0)] | length')" -gt 0 ] || { echo "ESLint enforces no rule on ${sample%%:*} (${sample#*:})"; exit 1; }
           done
           node_modules/.bin/eslint --cache --cache-strategy content --cache-location "$RUNNER_TEMP/tool-cache/eslint/" .
@@ -153,12 +153,12 @@ jobs:
           node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}" packages || [ $? -eq 2 ]
           git diff -z --name-only --diff-filter=d "$(git merge-base origin/main HEAD)" -- 'packages/*/src/*' | xargs -0 -r node_modules/.bin/crap-typescript --format text --threshold "${CRAP_THRESHOLD:?}"
 
-      - name: Duplication — no clone in production code
+      - name: Duplication — no production code is a copy of other production code
         id: CLM-FIT-032
         if: always()
         shell: bash
         # jscpd, pinned in package.json, reads its settings from .jscpd.json, named so that one it cannot parse stops the run rather than falling back to defaults; the file takes no comments, so their reasons are here.
-        # It scans both packages' src as TypeScript, with tests, shared test helpers and fixtures ignored: production code only.
+        # It scans both packages' src as TypeScript, with tests and shared test helpers ignored: production code only.
         # minTokens 50 and minLines 5 are jscpd's own default definition of a clone, stated in full so a copier inherits it.
         # The step reds on jscpd's own exit code, so a clone anywhere in that population reds it, whichever files the change touches.
         # --fail-on-empty reds an analysis of no file. jscpd does not count seven files under the 50-token clone size, so none can hold a clone:
@@ -282,7 +282,7 @@ jobs:
           jq -e '.paths.scanned | length > 0' "$RUNNER_TEMP/semgrep.json" > /dev/null || { echo "Semgrep scanned no file under packages"; exit 1; }
 
       # The printer's other half is the type check: it refuses an error handed to the printer, or an input error entry, that no catalogue holds.
-      - name: Semgrep — nothing in the packages writes to standard error but the printer
+      - name: Semgrep — every error the tool shows a reader is shown from one place
         id: CLM-FIT-076
         if: always()
         run: |
@@ -295,12 +295,12 @@ jobs:
         shell: bash
         # Alternative: cloc counts each file's comment and code lines but applies no ceiling, so this awk is the ceiling.
         run: |
-          node_modules/.bin/cloc --vcs=git --fullpath --not-match-d='(^|/)tests/fixtures(/|$)' --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, -v max="${COMMENT_SHARE_MAX:?}" 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > max { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
+          node_modules/.bin/cloc --vcs=git --fullpath --not-match-f='(^|/)pnpm-lock\.yaml$' --exclude-lang=Markdown --skip-uniqueness --strip-str-comments --by-file --csv --quiet | awk -F, -v max="${COMMENT_SHARE_MAX:?}" 'NR > 1 && $1 != "SUM" && $4 + $5 > 0 && $4 / ($4 + $5) > max { printf "%s: %d of %d non-blank lines are comment\n", $2, $4, $4 + $5; over = 1 } END { exit over }'
 
       # Each probe pipes one line that breaks one rule into Vale and reds the step unless Vale names that rule, so a dead
       # rule fails before the tree is read. The probe's tokens are built at run time, so this file holds none of them.
       # The runner's default bash has no pipefail, so the probe's verdict is grep's, not Vale's exit.
-      - name: Vale — no ticket ID, claim code or narrated history in a comment, description or document it reads
+      - name: Vale — no comment, description or current-state document points to the product's history
         id: CLM-FIT-075
         if: always()
         run: |

@@ -104,13 +104,16 @@ jobs:
           pnpm --dir packages/spec-controller pack --pack-destination "$RUNNER_TEMP/release"
 
       - name: Smoke the packed artefacts in a clean room
+        # npx then fails when the packed bin is missing, rather than fetching an older release of the same name.
+        env:
+          npm_config_yes: "false"
         run: | # zizmor: ignore[adhoc-packages]
           room="$RUNNER_TEMP/clean-room"
           rm -rf "$room"
           mkdir -p "$room"
           cd "$room"
           npm install --prefer-offline --no-audit --no-fund --loglevel=error "$RUNNER_TEMP/release"/*.tgz
-          ./node_modules/.bin/spec-controller balance --help
+          npx spec-controller balance --help
 
       - name: Publish core
         run: |

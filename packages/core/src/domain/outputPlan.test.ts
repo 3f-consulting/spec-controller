@@ -1,80 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { outputClashOf, outputPlanOf, type IdentifiedInput, type IdentifiedOutput, type LocatedOutput } from "./outputPlan.js";
+import { outputPlanOf, type FileIdentity, type IdentifiedOutput } from "./outputPlan.js";
 
-type Format = "md" | "json";
+const toFile = (format: string, path: string, identity: FileIdentity): IdentifiedOutput<string> => ({ output: { format, destination: { to: "file", path } }, identity });
 
-const WRITTEN: readonly Format[] = ["md", "json"];
-
-const TO_STANDARD_OUTPUT: LocatedOutput = { fmt: "md", dest: { kind: "stdout" }, namesStandardOutput: false };
-
-describe("an argument the tool does not accept will stop the run", () => {
-  it.each<[string, readonly string[]]>([
-    ["CLM-CLI-133", ["xml"]],
-    ["CLM-CLI-133", ["xml", "yaml"]],
-  ])("[%s] a report format the tool does not have, %j, is refused, naming it and the formats the tool has", (_clm, formats) => {
-    const requested = formats.map((fmt): LocatedOutput => ({ fmt, dest: { kind: "stdout" }, namesStandardOutput: false }));
-    expect(outputPlanOf(requested, WRITTEN)).toEqual({ ok: false, refusal: { kind: "unknown-format", formats, written: WRITTEN } });
-  });
-
-  it("[CLM-CLI-133] a report format the tool has is planned as asked", () => {
-    const requested: LocatedOutput[] = [{ fmt: "json", dest: { kind: "file", path: "out.json" }, namesStandardOutput: false }];
-    expect(outputPlanOf(requested, WRITTEN)).toEqual({ ok: true, outputs: [{ fmt: "json", dest: { kind: "file", path: "out.json" } }] });
+describe("each of two reports will be where you asked", () => {
+  it.each([
+    [
+      "CLM-FMT-021",
+      "two files with one inode number, on two devices",
+      { is: "regular-file", device: 1n, inode: 7n },
+      { is: "regular-file", device: 2n, inode: 7n },
+    ],
+  ] as const)("[%s] reports asked for at %s are each planned for their own file", (_clm, _files, one, other) => {
+    expect(outputPlanOf([toFile("md", "a/report", one), toFile("json", "b/report", other)], [])).toEqual({ ok: true });
   });
 });
 
-describe("two reports will not both go to standard output", () => {
-  it.each<[string, string, LocatedOutput]>([
-    ["CLM-FMT-005", "no destination", { fmt: "json", dest: { kind: "stdout" }, namesStandardOutput: false }],
-    ["CLM-FMT-011", "a path that names standard output", { fmt: "json", dest: { kind: "file", path: "/dev/stdout" }, namesStandardOutput: true }],
-    ["CLM-FMT-023", "a link to standard output", { fmt: "json", dest: { kind: "file", path: "out" }, namesStandardOutput: true }],
-  ])("[%s] no destination beside %s is refused, naming what each report asked for", (_clm, _other, other) => {
-    expect(outputPlanOf([TO_STANDARD_OUTPUT, other], WRITTEN)).toEqual({
-      ok: false,
-      refusal: { kind: "more-than-one-to-standard-output", formats: ["md", "json"] },
-    });
-  });
+describe("both reports go one after the other to a place that appends", () => {
+  it("[CLM-FMT-022] two reports asked for on standard error, redirected into a file, are planned one after the other", () => {
+    const onStandardError = (format: string): IdentifiedOutput<string> => ({ output: { format, destination: { to: "standard-error" } }, identity: { is: "regular-file", device: 1n, inode: 7n } });
 
-  it("[CLM-FMT-005] no destination beside a file that is not standard output is planned", () => {
-    const toFile: LocatedOutput = { fmt: "json", dest: { kind: "file", path: "out.json" }, namesStandardOutput: false };
-    expect(outputPlanOf([TO_STANDARD_OUTPUT, toFile], WRITTEN)).toMatchObject({ ok: true });
+    expect(outputPlanOf([onStandardError("md"), onStandardError("json")], [])).toEqual({ ok: true });
   });
 });
 
-describe("a report will not be written over a file the run reads", () => {
-  const READ: IdentifiedInput = { subject: "the --vitest report", path: "vitest.json", identity: { dev: 1n, ino: 2n } };
+describe("the run refuses to write a report over a file it reads", () => {
+  it("[CLM-FMT-013] a report asked for at the file the run read is refused as overwriting that input", () => {
+    const identity: FileIdentity = { is: "regular-file", device: 1n, inode: 9n };
+    const report = toFile("json", "results.json", identity);
+    const input = { name: "vitest", path: "results.json", identity };
 
-  it("[CLM-FMT-013] a report on the file the run reads is refused, naming the report and the file", () => {
-    const onTheInput: IdentifiedOutput<Format> = { output: { fmt: "json", dest: { kind: "file", path: "again.json" } }, identity: { dev: 1n, ino: 2n }, toStandardError: false };
-    expect(outputClashOf([onTheInput], [READ])).toEqual({ kind: "output-overwrites-an-input", output: onTheInput.output, input: READ });
-  });
-
-  it("[CLM-FMT-013] the second of two reports, on the file the run reads, is refused", () => {
-    const elsewhere: IdentifiedOutput<Format> = { output: { fmt: "md", dest: { kind: "file", path: "report.md" } }, identity: { dev: 1n, ino: 3n }, toStandardError: false };
-    const onTheInput: IdentifiedOutput<Format> = { output: { fmt: "json", dest: { kind: "file", path: "vitest.json" } }, identity: { dev: 1n, ino: 2n }, toStandardError: false };
-    expect(outputClashOf([elsewhere, onTheInput], [READ])).toMatchObject({ kind: "output-overwrites-an-input", output: onTheInput.output });
-  });
-});
-
-describe("a report will be written to a file the run does not read, even on the same device", () => {
-  const READ: IdentifiedInput = { subject: "the --vitest report", path: "vitest.json", identity: { dev: 1n, ino: 2n } };
-
-  it("[CLM-FMT-033] a report on another file of the same device, or on a file of another device with the same number, is planned", () => {
-    const sameDevice: IdentifiedOutput<Format> = { output: { fmt: "md", dest: { kind: "file", path: "a.md" } }, identity: { dev: 1n, ino: 3n }, toStandardError: false };
-    const otherDevice: IdentifiedOutput<Format> = { output: { fmt: "json", dest: { kind: "file", path: "b.json" } }, identity: { dev: 4n, ino: 2n }, toStandardError: false };
-    expect(outputClashOf([sameDevice, otherDevice], [READ, { subject: "the corpus", path: "a.feature", identity: undefined }])).toBeUndefined();
-  });
-});
-
-describe("a report on standard error will not go in a file another report names or the run reads", () => {
-  const FILE = { dev: 1n, ino: 2n };
-  const toStandardError: IdentifiedOutput<Format> = { output: { fmt: "md", dest: { kind: "file", path: "/dev/stderr" } }, identity: FILE, toStandardError: true };
-  const toTheFile: IdentifiedOutput<Format> = { output: { fmt: "json", dest: { kind: "file", path: "report.json" } }, identity: FILE, toStandardError: false };
-  const READ: IdentifiedInput = { subject: "the --vitest report", path: "vitest.json", identity: FILE };
-
-  it.each<[string, readonly IdentifiedOutput<Format>[], readonly IdentifiedInput[], ReturnType<typeof outputClashOf<Format>>]>([
-    ["CLM-FMT-031", [toStandardError, toTheFile], [], { kind: "outputs-share-a-file", first: toStandardError.output, second: toTheFile.output }],
-    ["CLM-FMT-032", [toStandardError], [READ], { kind: "output-overwrites-an-input", output: toStandardError.output, input: READ }],
-  ])("[%s] a report on standard error, redirected onto that file, is refused", (_clm, outputs, inputs, refusal) => {
-    expect(outputClashOf(outputs, inputs)).toEqual(refusal);
+    expect(outputPlanOf([report], [input])).toEqual({ ok: false, refusal: { kind: "output-overwrites-an-input", output: report.output, input } });
   });
 });

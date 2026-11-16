@@ -1,104 +1,37 @@
-import { endRunOn, UNEXPECTED_ERROR, type ExitCodeHolder } from "./exitCode.js";
-import APP_TEXTS from "../messages/messages.en.json" with { type: "json" };
-import { AppError, type AppErrorValues, type CrashError } from "../messages/messages.js";
-import { standardError, type CodedLine, type LineWriter } from "./standardError.js";
+import appCatalogue from "../messages/messages.en.json" with { type: "json" };
+import { UNEXPECTED_ERROR, type ExitCode } from "./codes.js";
 
-interface CrashingProcess extends ExitCodeHolder {
-  on(event: "uncaughtException" | "unhandledRejection", listener: (err: unknown) => void): unknown;
-  exit(code?: number | string | null): unknown;
-}
+export type Complain = (error: unknown) => void;
 
-interface ErroringStream {
-  on(event: "error", listener: (err: unknown) => void): unknown;
-}
+// The complaint's error code, shown before it as a refusal shows its own.
+const UNEXPECTED = "unexpected-error";
 
-// A verdict is read from the run finishing, never from an exit code being set: a refusal's 2 and the guard's own 4 are codes, not verdicts.
-// A run that has not finished, or has written no line, holds no mark for it.
-interface RunState {
-  finished?: true;
-  lineWritten?: true;
-}
-
-let run: RunState = {};
-
-export function beginRun(): void {
-  run = {};
-}
-
-export function markRunFinished(): void {
-  run.finished = true;
-}
-
-// An error that arrives after main has returned — a stream that fails, a throw in a later tick, a rejected promise — would otherwise reach Node's default handler and end the run at 1.
-// Node treats a process past an uncaught exception as unsafe to resume, so that guard ends it once its line is written.
-// The others leave the process to end when its work drains, so a report still being written is not cut short.
-export function installCrashGuards(proc: CrashingProcess, stdout: ErroringStream, stderr: LineWriter): void {
-  beginRun();
-  const settle = (err: unknown): void => settleUnexpectedError(err, proc, stderr);
-  proc.on("uncaughtException", (err) => {
-    settle(err);
-    proc.exit(proc.exitCode);
-  });
-  proc.on("unhandledRejection", settle);
-  stdout.on("error", settle);
-}
-
-interface LoadedProgram {
-  main(argv: string[]): unknown;
-}
-
-// The guards are installed before the program's modules are evaluated, so a module that cannot load (a broken install, say) ends the run at 4, not at Node's 1.
-export async function boot(
-  proc: CrashingProcess,
-  stdout: ErroringStream,
-  stderr: LineWriter,
-  argv: string[],
-  load: () => Promise<unknown>,
-): Promise<void> {
-  installCrashGuards(proc, stdout, stderr);
-  let program: unknown;
+// An error is shown by its name and message; one that cannot be shown says so.
+function shown(error: unknown): string {
   try {
-    program = await load();
-  } catch (err) {
-    settleUnexpectedError(err, proc, stderr);
-    return;
-  }
-  (program as LoadedProgram).main(argv);
-}
-
-// The code is settled first, so a value that cannot be formatted cannot leave the run on Node's 1.
-// A run writes one line at most: a later error changes nothing and says nothing.
-export function settleUnexpectedError(err: unknown, proc: ExitCodeHolder, stderr: LineWriter): void {
-  if (run.lineWritten) return;
-  run.lineWritten = true;
-  settleExitCode(proc);
-  standardError(stderr).error(unexpectedErrorLine(err));
-}
-
-function settleExitCode(proc: ExitCodeHolder): void {
-  if (run.finished) return;
-  endRunOn(UNEXPECTED_ERROR, proc);
-}
-
-const CRASH_TEXTS: Readonly<Record<CrashError, string>> = APP_TEXTS;
-
-function unexpectedErrorLine(err: unknown): CodedLine {
-  return filled(CRASH_TEXTS[AppError.UnexpectedError], { name: nameOf(err), firstLine: firstLineOf(err) }) as CodedLine;
-}
-
-// Both placeholders are filled in one pass, so a value holding a placeholder or a brace is printed as given.
-function filled(text: string, values: AppErrorValues[CrashError]): string {
-  return text.replace(/\{(name|firstLine)\}/g, (_, key: keyof typeof values) => values[key]);
-}
-
-function nameOf(err: unknown): string {
-  return (err as Error | undefined)?.name ?? "";
-}
-
-function firstLineOf(err: unknown): string {
-  try {
-    return (err as Error).message.split("\n", 1)[0]!;
+    return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
   } catch {
-    return "";
+    return appCatalogue["error-not-shown"];
+  }
+}
+
+// A run complains of its first unexpected error only, however many it meets.
+export function complainerTo(write: (text: string) => void): Complain {
+  let complained = false;
+  return (error) => {
+    if (complained) return;
+    complained = true;
+    write(`[${UNEXPECTED}] ${appCatalogue[UNEXPECTED]}: ${shown(error)}\n`);
+  };
+}
+
+// The program is loaded under the guards, so an error while it loads ends the run at 4 with a complaint.
+export async function loadGuarded<Program>(load: () => Promise<Program>, complain: Complain, end: (exitCode: ExitCode) => void): Promise<Program | undefined> {
+  try {
+    return await load();
+  } catch (error) {
+    complain(error);
+    end(UNEXPECTED_ERROR);
+    return undefined;
   }
 }

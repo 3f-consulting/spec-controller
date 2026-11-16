@@ -1,6 +1,23 @@
 import type { QualityCheckKind } from "./postEvidenceObligation.js";
-import { stepIdentityOf, type PipelineStep } from "./postEvidenceObservation.js";
+import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
 
+type Layer = Exclude<QualityCheckKind, "fitness">;
+
+// A step named in notChecks: its workflow, job and step name.
+interface StepAddress {
+  readonly workflow: string;
+  readonly job: string;
+  readonly step: string;
+}
+
+// null under runners: the target has no runner for that kind.
+export interface TargetConfiguration {
+  readonly runners: Readonly<Partial<Record<Layer, string | null>>>;
+  readonly nonChecks: readonly StepAddress[];
+  readonly deferralTags: readonly string[];
+}
+
+// entry is the setting as written, such as runners.unit or deferralTags[0].
 export interface ConfigurationError {
   readonly kind:
     | "configuration-wrong-kind"
@@ -11,105 +28,73 @@ export interface ConfigurationError {
   readonly entry: string;
 }
 
-type Layer = Exclude<QualityCheckKind, "fitness">;
-
-interface NonCheck {
-  readonly workflow: string;
-  readonly job: string;
-  readonly step: string;
+// The settings reader's answers, handed to the domain: the key each setting is written under, the step a non-check as
+// written names, and a deferral tag as written.
+export interface SettingSpellings {
+  readonly keyOf: Readonly<Record<keyof TargetConfiguration, string>>;
+  readonly stepAddressOf: (entry: string) => StepAddress | undefined;
+  readonly tagOf: (entry: string) => string;
 }
 
-export interface TargetConfiguration {
-  readonly runners: Readonly<Partial<Record<Layer, string | null>>>;
-  readonly nonChecks: readonly NonCheck[];
-  readonly deferralTags: readonly string[];
-}
+const LAYERS: readonly string[] = Object.keys({ unit: null, integration: null, e2e: null, performance: null } satisfies Record<Layer, null>);
 
-export interface ConfigurationRead {
-  readonly configuration: TargetConfiguration;
+const NO_SETTING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
+
+// A setting as read: what of it can be used, and an error for each part left out.
+interface Read<Value> {
+  readonly value: Value;
   readonly errors: readonly ConfigurationError[];
 }
 
-type Setting = "runners" | "nonChecks" | "deferralTags";
-
-// How the target spells each setting, so an error names the setting as written.
-export interface SettingNames {
-  readonly settings: Readonly<Record<string, Setting>>;
-}
-
-const LAYERS: readonly Layer[] = ["unit", "integration", "e2e", "performance"];
-
-const NOTHING_READ: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
-
-const isBlock = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const isLayer = (key: string): key is Layer => (LAYERS as readonly string[]).includes(key);
-
-const isRunner = (runner: unknown): runner is string | null => typeof runner === "string" || runner === null;
+const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> => typeof value === "object" && value !== null && !Array.isArray(value);
 
 const wrongKind = (entry: string): ConfigurationError => ({ kind: "configuration-wrong-kind", entry });
 
-interface SettingRead {
-  readonly written: string;
-  readonly value: unknown;
-}
-
-function runnersIn(read: SettingRead | undefined, errors: ConfigurationError[]): TargetConfiguration["runners"] {
-  if (read === undefined) return {};
-  const { written, value } = read;
-  if (!isBlock(value)) return errors.push(wrongKind(written)), {};
-  const runners: Partial<Record<Layer, string | null>> = {};
-  for (const [key, runner] of Object.entries(value)) {
-    if (!isLayer(key)) errors.push({ kind: "runner-key-not-a-layer", entry: `${written}.${key}` });
-    else if (isRunner(runner)) runners[key] = runner;
-    else errors.push(wrongKind(`${written}.${key}`));
-  }
-  return runners;
-}
-
-function stringsIn(read: SettingRead | undefined, errors: ConfigurationError[]): string[] {
-  if (read === undefined) return [];
-  const { written: setting, value } = read;
-  if (!Array.isArray(value)) return errors.push(wrongKind(setting)), [];
-  return value.flatMap((entry: unknown, at) => (typeof entry === "string" ? [entry] : (errors.push(wrongKind(`${setting}[${at}]`)), [])));
-}
-
-// A workflow's file name may hold a colon, so the job and step are split off from the right.
-function nonCheckOf(entry: string): NonCheck | undefined {
-  const beforeStep = entry.lastIndexOf(":");
-  const beforeJob = entry.lastIndexOf(":", beforeStep - 1);
-  if (beforeJob <= 0) return undefined;
-  return { workflow: entry.slice(0, beforeJob), job: entry.slice(beforeJob + 1, beforeStep), step: entry.slice(beforeStep + 1) };
-}
-
-function nonChecksIn(entries: readonly string[], stepsRead: readonly PipelineStep[], errors: ConfigurationError[]): NonCheck[] {
-  return entries.flatMap((entry) => {
-    const nonCheck = nonCheckOf(entry);
-    if (nonCheck === undefined) return errors.push({ kind: "not-checks-entry-not-a-step-name", entry }), [];
-    const { workflow, job, step } = nonCheck;
-    const inWorkflow = stepsRead.filter((read) => read.workflow === workflow);
-    if (inWorkflow.length > 0 && !inWorkflow.some((read) => read.job === job && stepIdentityOf(read) === step)) {
-      return errors.push({ kind: "not-checks-entry-matches-no-step", entry }), [];
-    }
-    return [nonCheck];
+function runnersRead(runners: unknown, name: string): Read<TargetConfiguration["runners"]> {
+  if (runners === undefined) return { value: {}, errors: [] };
+  if (!isRecord(runners)) return { value: {}, errors: [wrongKind(name)] };
+  const entries = Object.entries(runners);
+  const errors = entries.flatMap(([layer, runner]): ConfigurationError[] => {
+    if (!LAYERS.includes(layer)) return [{ kind: "runner-key-not-a-layer", entry: `${name}.${layer}` }];
+    return typeof runner === "string" || runner === null ? [] : [wrongKind(`${name}.${layer}`)];
   });
+  return { value: Object.fromEntries(entries.filter(([layer, runner]) => LAYERS.includes(layer) && (typeof runner === "string" || runner === null))), errors };
 }
 
-export function targetConfigurationOf(block: unknown, names: SettingNames, stepsRead: readonly PipelineStep[]): ConfigurationRead {
-  if (block === undefined) return { configuration: NOTHING_READ, errors: [] };
-  const errors: ConfigurationError[] = [];
-  const read: Partial<Record<Setting, SettingRead>> = {};
-  for (const [written, value] of Object.entries(block as Readonly<Record<string, unknown>>)) {
-    const setting = names.settings[written];
-    if (setting === undefined) errors.push({ kind: "configuration-unknown-key", entry: written });
-    else read[setting] = { written, value };
-  }
-  const { runners, nonChecks, deferralTags } = read;
-  const configuration = {
-    runners: runnersIn(runners, errors),
-    nonChecks: nonChecksIn(stringsIn(nonChecks, errors), stepsRead, errors),
-    deferralTags: stringsIn(deferralTags, errors),
+// A list setting: each text entry read, or an error naming the entry; anything but a list is the wrong kind.
+function listRead<Value>(list: unknown, name: string, readEntry: (entry: string) => Value | ConfigurationError): Read<Value[]> {
+  if (list === undefined) return { value: [], errors: [] };
+  if (!Array.isArray(list)) return { value: [], errors: [wrongKind(name)] };
+  const read = list.map((entry: unknown, at) => (typeof entry === "string" ? readEntry(entry) : wrongKind(`${name}[${at}]`)));
+  const isError = (entry: Value | ConfigurationError): entry is ConfigurationError => entry instanceof Object && "kind" in entry;
+  return { value: read.filter((entry): entry is Value => !isError(entry)), errors: read.filter(isError) };
+}
+
+// A non-check names a step; one in a workflow that was read must be a step in it.
+function nonCheckOf(entry: string, steps: readonly WorkflowStepAsWritten[], { stepAddressOf }: SettingSpellings): StepAddress | ConfigurationError {
+  const address = stepAddressOf(entry);
+  if (address === undefined) return { kind: "not-checks-entry-not-a-step-name", entry };
+  const inItsWorkflow = steps.filter(({ workflow }) => workflow === address.workflow);
+  const named = inItsWorkflow.some((step) => step.job === address.job && stepIdentityOf(step) === address.step);
+  return inItsWorkflow.length === 0 || named ? address : { kind: "not-checks-entry-matches-no-step", entry };
+}
+
+// Each setting is read under the key it is written under, and named by it.
+export function targetConfigurationOf(
+  block: unknown,
+  steps: readonly WorkflowStepAsWritten[],
+  spellings: SettingSpellings,
+): { readonly configuration: TargetConfiguration; readonly errors: readonly ConfigurationError[] } {
+  if (block === undefined) return { configuration: NO_SETTING, errors: [] };
+  const settings = block as Readonly<Record<string, unknown>>;
+  const { keyOf } = spellings;
+  const runners = runnersRead(settings[keyOf.runners], keyOf.runners);
+  const nonChecks = listRead(settings[keyOf.nonChecks], keyOf.nonChecks, (entry) => nonCheckOf(entry, steps, spellings));
+  const deferralTags = listRead(settings[keyOf.deferralTags], keyOf.deferralTags, spellings.tagOf);
+  const known = Object.values(keyOf);
+  const unknownKeys = Object.keys(settings).flatMap((key): ConfigurationError[] => (known.includes(key) ? [] : [{ kind: "configuration-unknown-key", entry: key }]));
+  return {
+    configuration: { runners: runners.value, nonChecks: nonChecks.value, deferralTags: deferralTags.value },
+    errors: [...runners.errors, ...nonChecks.errors, ...deferralTags.errors, ...unknownKeys],
   };
-  return { configuration, errors };
 }

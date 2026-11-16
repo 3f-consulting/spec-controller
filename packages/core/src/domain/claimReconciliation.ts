@@ -1,26 +1,25 @@
-import { sameCode, type ClaimCode } from "./claimCodes.js";
-import type { EvidenceObligation, ExecutableClaim, QualityCheckKind } from "./postEvidenceObligation.js";
-import { claimPostedTo, filedUnder, type EvidenceObservation, type PhantomClaim, type UnnamedClaim } from "./postEvidenceObservation.js";
+import { QUALITY_CHECK_KINDS, type EvidenceObligation, type ExecutableClaim, type QualityCheckKind } from "./postEvidenceObligation.js";
+import type { ClaimCode } from "./claimCodes.js";
+import type { EvidenceObservation, PhantomClaim, UnnamedClaim } from "./postEvidenceObservation.js";
 
-type ObligationNamingItsKind = Required<EvidenceObligation>;
-
+// Each shape names the sides it does not have as never, so an outcome on the wrong shape does not compile.
 interface BothSides {
   readonly outcome: "satisfied" | "failing" | "cannot-fail";
   readonly kind: QualityCheckKind;
-  readonly obligation: ObligationNamingItsKind;
+  readonly obligation: EvidenceObligation;
   readonly observation: EvidenceObservation;
 }
 
-interface MissingEvidence {
+interface ObligationOnly {
   readonly outcome: "missing";
   readonly kind: QualityCheckKind;
-  readonly obligation: ObligationNamingItsKind;
+  readonly obligation: EvidenceObligation;
   readonly observation?: never;
 }
 
-interface ObligationNoEvidenceCanAnswer {
+interface ObligationNoObservationCanAnswer {
   readonly outcome: "no-claim-code" | "duplicate-claim-code";
-  readonly kind?: QualityCheckKind;
+  readonly kind: QualityCheckKind;
   readonly obligation: EvidenceObligation;
   readonly observation?: never;
 }
@@ -32,14 +31,18 @@ interface ObservationOnly {
   readonly observation: EvidenceObservation;
 }
 
+// A claim that asks for nothing: with no code, or a shared one, no evidence can cite it; with its own, it asks for no check.
 interface NeitherSide {
-  readonly outcome: "no-quality-check";
+  readonly outcome: "no-claim-code" | "duplicate-claim-code" | "no-quality-check";
   readonly kind?: never;
   readonly obligation?: never;
   readonly observation?: never;
 }
 
-export type QualityCheckReconciliation = BothSides | MissingEvidence | ObligationNoEvidenceCanAnswer | ObservationOnly | NeitherSide;
+export type QualityCheckReconciliation = BothSides | ObligationOnly | ObligationNoObservationCanAnswer | ObservationOnly | NeitherSide;
+
+// Every Quality Check Reconciliation of a claim that asks for something, or that evidence was filed on, has a kind.
+type OfAKind = Exclude<QualityCheckReconciliation, NeitherSide>;
 
 export type Outcome = QualityCheckReconciliation["outcome"];
 
@@ -49,153 +52,148 @@ export interface ClaimReconciliation {
   readonly verdict: "balanced" | "out-of-balance";
 }
 
-type Claim = ClaimReconciliation["claim"];
-
-const codeText = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
-
-function sharedCodesOf(claims: readonly ExecutableClaim[]): Set<string> {
-  const seen = new Set<string>();
-  const shared = new Set<string>();
-  for (const { claimCode } of claims) {
-    if (claimCode === undefined) continue;
-    const text = codeText(claimCode);
-    (seen.has(text) ? shared : seen).add(text);
-  }
-  return shared;
-}
-
-type UnaskedOutcome = "not-asked-for" | "cites-unknown-claim" | "cites-no-claim";
-
-const OUTCOME_OF_RESULT = { passed: "satisfied", failed: "failing", "passed-on-error": "cannot-fail" } as const;
-
-function evidenceLine(observation: EvidenceObservation, asked: boolean, unasked: UnaskedOutcome): QualityCheckReconciliation {
-  const { kind, result } = observation;
-  if (result === "never-ran") return { outcome: "never-ran", kind, observation };
-  if (!asked) return { outcome: unasked, kind, observation };
-  return { outcome: OUTCOME_OF_RESULT[result], kind, obligation: { kind }, observation };
-}
-
-function unanswerable(claim: ExecutableClaim, outcome: "no-claim-code" | "duplicate-claim-code"): QualityCheckReconciliation[] {
-  if (claim.obligations.length === 0) return [{ outcome, obligation: {} }];
-  return claim.obligations.map((obligation) => ({ outcome, obligation, kind: obligation.kind }));
-}
-
-function executableLines(
-  claim: ExecutableClaim,
-  evidence: readonly EvidenceObservation[],
-  sharedCodes: ReadonlySet<string>,
-): QualityCheckReconciliation[] {
-  const { claimCode } = claim;
-  if (claimCode === undefined) return unanswerable(claim, "no-claim-code");
-  if (sharedCodes.has(codeText(claimCode))) return unanswerable(claim, "duplicate-claim-code");
-  // Every obligation a claim raises names its kind; only the line of a claim raising none has an obligation without one.
-  const asked = claim.obligations.map(({ kind }) => kind!);
-  const answered = evidence.map((observation) => evidenceLine(observation, asked.includes(observation.kind), "not-asked-for"));
-  const missing = asked
-    .filter((kind) => !evidence.some((observation) => observation.kind === kind && observation.result !== "never-ran"))
-    .map((kind): QualityCheckReconciliation => ({ outcome: "missing", kind, obligation: { kind } }));
-  const lines = [...answered, ...missing];
-  return lines.length > 0 ? lines : [{ outcome: "no-quality-check" }];
-}
-
-const isExecutable = (claim: Claim): claim is ExecutableClaim => "title" in claim;
-
-function linesOf(claim: Claim, evidence: readonly EvidenceObservation[], sharedCodes: ReadonlySet<string>): QualityCheckReconciliation[] {
-  if (isExecutable(claim)) return executableLines(claim, evidence, sharedCodes);
-  const unasked = claim.claimCode === undefined ? "cites-no-claim" : "cites-unknown-claim";
-  return evidence.map((observation) => evidenceLine(observation, false, unasked));
-}
-
-const KIND_RANK: Readonly<Record<QualityCheckKind, number>> = { unit: 0, integration: 1, e2e: 2, performance: 3, fitness: 4 };
-
-// A line with no kind is the only line of its claim, so it is never ranked against another.
-const kindRank = ({ kind }: QualityCheckReconciliation): number => KIND_RANK[kind!];
-
-// Everything an observation records, field by field, its cited codes one field between them, so a line citing nothing sorts before one citing a code.
-function recorded({ observation }: QualityCheckReconciliation): string[] {
-  if (observation === undefined) return [];
-  const { place, cites, name = "", message = "", result, notes } = observation;
-  return [place, cites.map(codeText).join(" "), name, message, result, ...notes];
-}
-
-const order = (a: string, b: string): number => Number(a > b) - Number(a < b);
-
-// Field by field, and a record that is the start of another sorts before it.
-function compareRecords(a: readonly string[], b: readonly string[]): number {
-  return a.map((text, at) => order(text, b[at] ?? "")).find((byField) => byField !== 0) ?? a.length - b.length;
-}
-
-function inOrder(a: QualityCheckReconciliation, b: QualityCheckReconciliation): number {
-  return kindRank(a) - kindRank(b) || compareRecords(recorded(a), recorded(b));
-}
-
-function reconciliationOf(claim: Claim, lines: readonly QualityCheckReconciliation[]): ClaimReconciliation {
-  const verdict = lines.every(({ outcome }) => outcome === "satisfied") ? "balanced" : "out-of-balance";
-  return { claim, qualityCheckReconciliations: [...lines].sort(inOrder), verdict };
-}
-
-export function claimReconciliationsOf(
-  claims: readonly ExecutableClaim[],
-  observations: readonly EvidenceObservation[],
-): ClaimReconciliation[] {
-  const posted = new Map<Claim, EvidenceObservation[]>(claims.map((claim) => [claim, []]));
-  const phantoms: PhantomClaim[] = [];
-  const unnamed: UnnamedClaim = {};
-  for (const observation of observations) {
-    const claim = filedUnder(claimPostedTo(observation, claims), phantoms, unnamed);
-    const evidence = posted.get(claim);
-    if (evidence) evidence.push(observation);
-    else posted.set(claim, [observation]);
-  }
-  const sharedCodes = sharedCodesOf(claims);
-  return [...posted].map(([claim, evidence]) => reconciliationOf(claim, linesOf(claim, evidence, sharedCodes)));
-}
-
+// The unnamed claim's evidence by kind, file and shared claim code: worked out, stored nowhere.
 export interface EvidenceGroup {
   readonly kind: QualityCheckKind;
   readonly file?: string;
   readonly claimCode?: ClaimCode;
+  readonly qualityCheckReconciliations: readonly QualityCheckReconciliation[];
   readonly ran: number;
   readonly passed: number;
   readonly failed: number;
   readonly failures: readonly string[];
 }
 
-interface GroupKey {
-  readonly kind: QualityCheckKind;
-  readonly file?: string;
-  readonly claimCode?: ClaimCode;
+export const isExecutable = (claim: ExecutableClaim | PhantomClaim | UnnamedClaim): claim is ExecutableClaim => "obligations" in claim;
+
+type RanObservation = EvidenceObservation & { readonly result: Exclude<EvidenceObservation["result"], "never-ran"> };
+
+const ran = (observation: EvidenceObservation): observation is RanObservation => observation.result !== "never-ran";
+
+const BOTH_SIDES_OUTCOME: Readonly<Record<RanObservation["result"], BothSides["outcome"]>> = {
+  passed: "satisfied",
+  failed: "failing",
+  "passed-on-error": "cannot-fail",
+};
+
+const neverRan = (observation: EvidenceObservation): ObservationOnly => ({ outcome: "never-ran", kind: observation.kind, observation });
+
+// An obligation no observation can answer: the claim has no code, or a code another claim shares.
+function unanswerable(obligations: readonly EvidenceObligation[], outcome: ObligationNoObservationCanAnswer["outcome"]): ObligationNoObservationCanAnswer[] {
+  return obligations.map((obligation) => ({ outcome, kind: obligation.kind, obligation }));
 }
 
-function groupKeyOf({ kind, place, cites }: EvidenceObservation): GroupKey {
-  const [claimCode, ...others] = cites;
+function answered(obligation: EvidenceObligation, observations: readonly EvidenceObservation[]): (BothSides | ObligationOnly)[] {
+  const ofItsKind = observations.filter(ran).filter((observation) => observation.kind === obligation.kind);
+  if (ofItsKind.length === 0) return [{ outcome: "missing", kind: obligation.kind, obligation }];
+  return ofItsKind.map((observation) => ({ outcome: BOTH_SIDES_OUTCOME[observation.result], kind: obligation.kind, obligation, observation }));
+}
+
+function executableReconciliations({ claimCode, obligations }: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): OfAKind[] {
+  if (codeShared) return unanswerable(obligations, "duplicate-claim-code");
+  if (claimCode === undefined) return unanswerable(obligations, "no-claim-code");
+  const unasked = observations
+    .filter((observation) => ran(observation) && !obligations.some(({ kind }) => kind === observation.kind))
+    .map((observation): ObservationOnly => ({ outcome: "not-asked-for", kind: observation.kind, observation }));
+  return [...obligations.flatMap((obligation) => answered(obligation, observations)), ...unasked, ...observations.filter((observation) => !ran(observation)).map(neverRan)];
+}
+
+// A claim code as one key, for sorting, grouping and filing alike.
+const written = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
+
+// What a Quality Check Reconciliation is sorted by: its kind; then a missing check before any evidence; then where its
+// test is, the codes it cites, and its message, which a test with none leaves last.
+const sortKey = ({ kind, observation }: OfAKind): readonly (number | string | undefined)[] =>
+  observation === undefined
+    ? [QUALITY_CHECK_KINDS.indexOf(kind), 0]
+    : [QUALITY_CHECK_KINDS.indexOf(kind), 1, observation.place, observation.cites.map(written).join(), observation.message];
+
+// At the first part that differs, the lower of the two as text comes first; a kind's rank is one digit.
+function inOrder(one: OfAKind, other: OfAKind): number {
+  const others = sortKey(other);
+  for (const [at, part] of sortKey(one).entries()) if (part !== others[at]) return [part, others[at]].sort()[0] === part ? -1 : 1;
+  return 0;
+}
+
+const verdictOf = (qualityCheckReconciliations: readonly QualityCheckReconciliation[]): ClaimReconciliation["verdict"] =>
+  qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied") ? "balanced" : "out-of-balance";
+
+// A claim that asks for nothing says why no evidence can answer it: a shared code, no code, or no check asked for.
+export function claimReconciliationOf(claim: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): ClaimReconciliation {
+  const reconciled = executableReconciliations(claim, observations, codeShared);
+  const qualityCheckReconciliations: QualityCheckReconciliation[] =
+    reconciled.length > 0
+      ? [...reconciled].sort(inOrder)
+      : [{ outcome: codeShared ? "duplicate-claim-code" : claim.claimCode === undefined ? "no-claim-code" : "no-quality-check" }];
+  return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
+}
+
+// Evidence on the phantom claim or the unnamed claim cites a claim no executable claim can take.
+export function citedClaimReconciliationOf(claim: PhantomClaim | UnnamedClaim, observations: readonly EvidenceObservation[]): ClaimReconciliation {
+  const outcome = claim.claimCode === undefined ? "cites-no-claim" : "cites-unknown-claim";
+  const qualityCheckReconciliations = observations.map((observation): ObservationOnly => (ran(observation) ? { outcome, kind: observation.kind, observation } : neverRan(observation))).sort(inOrder);
+  return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
+}
+
+// Each Evidence Observation goes to the one executable claim with the code it cites; to that code's phantom claim when no
+// executable claim has it; and to the unnamed claim when it cites none, several, or a code several claims share.
+export function claimReconciliationsOf(claims: readonly ExecutableClaim[], observations: readonly EvidenceObservation[]): ClaimReconciliation[] {
+  const claimsWith = new Map<string, number>();
+  for (const { claimCode } of claims) if (claimCode) claimsWith.set(written(claimCode), (claimsWith.get(written(claimCode)) ?? 0) + 1);
+  const citing = new Map<string, { readonly claimCode: ClaimCode; readonly observations: EvidenceObservation[] }>();
+  const unnamed: EvidenceObservation[] = [];
+  for (const observation of observations) {
+    const only = observation.cites.length === 1 ? observation.cites[0] : undefined;
+    const entry = only && citing.get(written(only));
+    if (only === undefined || (claimsWith.get(written(only)) ?? 0) > 1) unnamed.push(observation);
+    else if (entry) entry.observations.push(observation);
+    else citing.set(written(only), { claimCode: only, observations: [observation] });
+  }
+  // A shared code is never cited, so a claim with one is filed nothing.
+  const executable = claims.map((claim) => {
+    const filed = claim.claimCode && citing.get(written(claim.claimCode))?.observations;
+    return claimReconciliationOf(claim, filed ?? [], claim.claimCode !== undefined && claimsWith.get(written(claim.claimCode))! > 1);
+  });
+  const phantom = [...citing.values()]
+    .filter(({ claimCode }) => !claimsWith.has(written(claimCode)))
+    .map(({ claimCode, observations: filed }) => citedClaimReconciliationOf({ claimCode }, filed));
+  return [...executable, ...phantom, ...(unnamed.length > 0 ? [citedClaimReconciliationOf({}, unnamed)] : [])];
+}
+
+// A group's file is where its tests are; a fitness function's place is a CI step, so fitness groups have none.
+const fileOf = ({ kind, place }: EvidenceObservation): { readonly file?: string } => (kind === "fitness" ? {} : { file: place });
+
+// A shared claim code is the one code an observation cites; one citing several is grouped with those citing none.
+const sharedCodeOf = ({ cites }: EvidenceObservation): ClaimCode | undefined => (cites.length === 1 ? cites[0] : undefined);
+
+function groupOf(kind: QualityCheckKind, file: { readonly file?: string }, claimCode: ClaimCode | undefined, members: readonly QualityCheckReconciliation[]): EvidenceGroup {
+  const observations = members.map(({ observation }) => observation!);
+  const failed = observations.filter(({ result }) => result === "failed");
   return {
     kind,
-    ...(kind !== "fitness" && { file: place }),
-    ...(claimCode !== undefined && others.length === 0 && { claimCode }),
+    ...file,
+    ...(claimCode && { claimCode }),
+    qualityCheckReconciliations: members,
+    ran: observations.filter(ran).length,
+    passed: observations.filter(({ result }) => result === "passed" || result === "passed-on-error").length,
+    failed: failed.length,
+    failures: failed.map(({ name, place }) => name ?? place),
   };
 }
 
-function sameGroup(a: GroupKey, b: GroupKey): boolean {
-  const sameClaimCode = a.claimCode === undefined || b.claimCode === undefined ? a.claimCode === b.claimCode : sameCode(a.claimCode, b.claimCode);
-  return a.kind === b.kind && a.file === b.file && sameClaimCode;
-}
-
-function withCounts(key: GroupKey, members: readonly QualityCheckReconciliation[]): EvidenceGroup {
-  const results = members.map(({ observation }) => observation!);
-  const passed = results.filter(({ result }) => result === "passed" || result === "passed-on-error").length;
-  const failures = results.filter(({ result }) => result === "failed").map(({ name, place }) => name ?? place);
-  return { ...key, ran: passed + failures.length, passed, failed: failures.length, failures };
-}
-
-// Only the unnamed claim is grouped, and each of its lines holds an observation.
-export function groupsOf({ qualityCheckReconciliations }: ClaimReconciliation): EvidenceGroup[] {
-  const groups: { readonly key: GroupKey; readonly members: QualityCheckReconciliation[] }[] = [];
-  for (const line of qualityCheckReconciliations) {
-    const key = groupKeyOf(line.observation!);
-    const group = groups.find((existing) => sameGroup(existing.key, key));
-    if (group) group.members.push(line);
-    else groups.push({ key, members: [line] });
+// The unnamed claim's: every Quality Check Reconciliation on it has its evidence.
+export function evidenceGroupsOf({ qualityCheckReconciliations }: ClaimReconciliation): EvidenceGroup[] {
+  const groups = new Map<string, QualityCheckReconciliation[]>();
+  for (const reconciliation of qualityCheckReconciliations) {
+    const observation = reconciliation.observation!;
+    const code = sharedCodeOf(observation);
+    const key = JSON.stringify([observation.kind, fileOf(observation).file, code && written(code)]);
+    const members = groups.get(key);
+    if (members) members.push(reconciliation);
+    else groups.set(key, [reconciliation]);
   }
-  return groups.map(({ key, members }) => withCounts(key, members));
+  return [...groups.values()].map((members) => {
+    const observation = members[0]!.observation!;
+    return groupOf(observation.kind, fileOf(observation), sharedCodeOf(observation), members);
+  });
 }

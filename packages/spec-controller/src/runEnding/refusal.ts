@@ -1,43 +1,11 @@
-import { message } from "../messages/appText.js";
-import { AppMessage, type AppErrorValues, type RefusalError } from "../messages/messages.js";
-import type { RefusalLines } from "./standardError.js";
+import { textFor } from "@3f-consulting/spec-controller-core";
+import appCatalogue from "../messages/messages.en.json" with { type: "json" };
+import { USAGE_ERROR, type ExitCode } from "./codes.js";
+import type { Refusal } from "./runEnding.js";
 
-type ValuesOf<C extends RefusalError> = C extends keyof AppErrorValues ? AppErrorValues[C] : Readonly<Record<never, never>>;
+export const refusalText = ({ key, values }: Refusal): string => `[${key}] ${textFor(appCatalogue, key, values)}`;
 
-export type Refusal = {
-  readonly [C in RefusalError]: {
-    readonly code: C;
-    readonly values: ValuesOf<C>;
-    readonly pointers: readonly string[];
-  };
-}[RefusalError] &
-  RefusalLines;
-
-type RefusalFields = Omit<Refusal, keyof RefusalLines>;
-
-// A refusal's lines are its prototype's, so the refusal itself holds only its code, values and pointers.
-const PRINTED_REFUSAL: RefusalLines = {
-  // A refusal opens with the usage-error prefix of its command, or of the tool at the host's scope, and its code; its pointer lines carry none.
-  lines(this: RefusalFields, command?: string): string {
-    const opening = openingLine(this.code, words(this.code, this.values), command);
-    if (this.pointers.length === 0) return opening;
-    return message(AppMessage.PointedRefusal, { refusal: opening, pointers: this.pointers.join("\n") });
-  },
-};
-
-export function refusal<C extends RefusalError>(code: C, values: ValuesOf<C>, pointers: readonly string[] = []): Refusal {
-  return Object.assign(Object.create(PRINTED_REFUSAL) as RefusalLines, { code, values, pointers }) as Refusal;
-}
-
-// Several refusals print one after another, each opening with its own prefix and code.
-export function refusals(each: readonly Refusal[]): RefusalLines {
-  return { lines: (command) => each.map((one) => one.lines(command)).join("\n") };
-}
-
-const words = message as (code: RefusalError, values: object) => string;
-
-function openingLine(code: RefusalError, text: string, command: string | undefined): string {
-  return command === undefined
-    ? message(AppMessage.CodedHostUsageError, { code, message: text })
-    : message(AppMessage.CodedUsageError, { command, code, message: text });
+export function refusedWith(refusals: readonly Refusal[], write: (text: string) => void): ExitCode {
+  refusals.forEach((refusal) => write(`${refusalText(refusal)}\n`));
+  return USAGE_ERROR;
 }
