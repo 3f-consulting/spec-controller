@@ -220,6 +220,13 @@ describe("an input that is not valid will stop the run", () => {
     ["CLM-CLI-150", "a workflow that does not parse", { "workflows/ci.yml": "jobs: [\n" }, ["--ci", "workflows"], ["{input-workflow} workflows/ci.yml", "at line 2, column 1: jobs: [ ^\n", "[input-does-not-parse]"]],
     [
       "CLM-CLI-150",
+      "a workflow with a step with only an id",
+      { "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - id: x\n      - run: pnpm lint\n" },
+      ["--ci", "workflows"],
+      ["ci.yml", "workflow", "jobs.ci.steps[0]", "neither an action nor a command", "[input-does-not-parse]"],
+    ],
+    [
+      "CLM-CLI-150",
       "a workflow with a job written with nothing",
       { "workflows/ci.yml": "jobs:\n  ci:\n" },
       ["--ci", "workflows"],
