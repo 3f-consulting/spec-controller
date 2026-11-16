@@ -622,6 +622,13 @@ describe("balance posts a failed test with the message its report gave", () => {
 
   it.each([
     ["CLM-OBS-132", "Vitest's evidence report", "the failure message \"expected 2\"", () => failingInVitest(["expected 2"]), "expected 2"],
+    [
+      "CLM-OBS-132",
+      "JUnit's evidence report, as Surefire writes it",
+      "a failure with no message attribute, its cause in the element's text",
+      () => postedBySuite("surefire", "example.AddsTest", testCase("example.AddsTest", "[CLM-ONE-001] adds", '<failure type="java.lang.AssertionError">java.lang.AssertionError\n\tat example.AddsTest.adds(AddsTest.java:12)</failure>')),
+      "java.lang.AssertionError\n\tat example.AddsTest.adds(AddsTest.java:12)",
+    ],
     ["CLM-OBS-133", "Vitest's evidence report", "the failure messages \"first\" and \"second\"", () => failingInVitest(["first", "second"]), "first\nsecond"],
     ["CLM-OBS-134", "RSpec's evidence report", "the message \"expected 2\"", () => postedByExample(reportByExample([{ description: "[CLM-ONE-001] adds", status: "failed", message: "expected 2" }])), "expected 2"],
     [
