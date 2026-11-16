@@ -17,11 +17,23 @@ interface ObligationOnly {
   readonly observation?: never;
 }
 
-interface ObligationNoObservationCanAnswer {
+// An obligation no evidence can answer, because its claim's code is shared or missing.
+interface UnanswerableObligation {
   readonly outcome: "no-claim-code" | "duplicate-claim-code";
   readonly kind: QualityCheckKind;
   readonly obligation: EvidenceObligation;
   readonly observation?: never;
+}
+
+interface NoSides {
+  readonly kind?: never;
+  readonly obligation?: never;
+  readonly observation?: never;
+}
+
+// A claim with no code that asks for no check: debit-side still, as its code is missing, with no obligation to carry.
+interface NoCodeNothingAsked extends NoSides {
+  readonly outcome: "no-claim-code";
 }
 
 interface ObservationOnly {
@@ -31,18 +43,15 @@ interface ObservationOnly {
   readonly observation: EvidenceObservation;
 }
 
-// A claim that asks for nothing: with no code, nothing names it; with one, shared or not, it asks for no check.
-interface NeitherSide {
-  readonly outcome: "no-claim-code" | "no-quality-check";
-  readonly kind?: never;
-  readonly obligation?: never;
-  readonly observation?: never;
+// A claim with a code that asks for no check, shared or not.
+interface NeitherSide extends NoSides {
+  readonly outcome: "no-quality-check";
 }
 
-export type QualityCheckReconciliation = BothSides | ObligationOnly | ObligationNoObservationCanAnswer | ObservationOnly | NeitherSide;
+export type QualityCheckReconciliation = BothSides | ObligationOnly | UnanswerableObligation | NoCodeNothingAsked | ObservationOnly | NeitherSide;
 
 // Every Quality Check Reconciliation of a claim that asks for something, or that evidence was filed on, has a kind.
-type OfAKind = Exclude<QualityCheckReconciliation, NeitherSide>;
+type OfAKind = Extract<QualityCheckReconciliation, { readonly kind: QualityCheckKind }>;
 
 export type Outcome = QualityCheckReconciliation["outcome"];
 
@@ -79,7 +88,7 @@ const BOTH_SIDES_OUTCOME: Readonly<Record<RanObservation["result"], BothSides["o
 const neverRan = (observation: EvidenceObservation): ObservationOnly => ({ outcome: "never-ran", kind: observation.kind, observation });
 
 // An obligation no observation can answer: the claim has no code, or a code another claim shares.
-function unanswerable(obligations: readonly EvidenceObligation[], outcome: ObligationNoObservationCanAnswer["outcome"]): ObligationNoObservationCanAnswer[] {
+function unanswerable(obligations: readonly EvidenceObligation[], outcome: UnanswerableObligation["outcome"]): UnanswerableObligation[] {
   return obligations.map((obligation) => ({ outcome, kind: obligation.kind, obligation }));
 }
 
@@ -118,13 +127,13 @@ function inOrder(one: OfAKind, other: OfAKind): number {
 const verdictOf = (qualityCheckReconciliations: readonly QualityCheckReconciliation[]): ClaimReconciliation["verdict"] =>
   qualityCheckReconciliations.every(({ outcome }) => outcome === "satisfied") ? "balanced" : "out-of-balance";
 
-// A claim that asks for nothing has no code, or asks for no check, whether or not its code is shared.
+// A claim that asks for nothing reads no-claim-code with no code, else no-quality-check, whether or not its code is shared.
 export function claimReconciliationOf(claim: ExecutableClaim, observations: readonly EvidenceObservation[], codeShared: boolean): ClaimReconciliation {
   const reconciled = executableReconciliations(claim, observations, codeShared);
   const qualityCheckReconciliations: QualityCheckReconciliation[] =
     reconciled.length > 0
       ? [...reconciled].sort(inOrder)
-      : [{ outcome: claim.claimCode === undefined ? "no-claim-code" : "no-quality-check" }];
+      : [claim.claimCode === undefined ? { outcome: "no-claim-code" } : { outcome: "no-quality-check" }];
   return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
 }
 
