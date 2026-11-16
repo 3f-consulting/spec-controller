@@ -1,12 +1,13 @@
 @RPT
 Feature: Each report has the right structure, and the Markdown explains it
 
-  The tool writes what it found: JSON for programs, Markdown for people. Each has the structure
-  it promises. The JSON has every part; the Markdown leaves out a part the run had nothing for. The
-  Markdown names the run verdict in its Summary, adds the headings, labels and keys a person needs,
-  and shows every name it quotes
-  in code, so no character in it breaks a table. Whether an answer or a count is right is proved
-  where it is worked out; this file says only where each one shows.
+  The tool writes a report of what it found: the JSON report for programs and the Markdown report
+  for people. Each report has the structure it promises, and has its Claim Reconciliations even
+  when there are none. The JSON report has every part and every count, even when empty or zero.
+
+  The Markdown report leaves out a part the run had nothing for. It names the run verdict in its
+  Summary, and adds the headings, labels and keys a person needs. It shows every name it quotes in
+  code, so no character in it changes the table.
 
   Rule: each report has the structure it promises
 
@@ -28,6 +29,15 @@ Feature: Each report has the right structure, and the Markdown explains it
       given a run had something for every section
       when its Markdown report is written
       then it will open with its title, and its sections will be the provenance, the errors in the inputs, run integrity, the summary and the Claim Reconciliations, in that order
+
+  Rule: the JSON report keeps every part and every count, empty or zero
+
+    @unit @CLM-RPT-128
+    Scenario: a run of passing unit tests alone still has every part and every count in its JSON
+      given a run had only passing unit tests, each cited by a claim with a unit Evidence Obligation
+      when the JSON report is written
+      then it will have every part, the ones with nothing empty
+      and its totals will have every kind, the row with no kind, and every outcome under each, the ones with nothing at 0
 
   Rule: the Markdown adds the words a person needs to read the data
 
@@ -79,22 +89,6 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-146 | a message of three lines                            | run integrity             | the message's first line                                   |
         | CLM-RPT-169 | a message whose first line is blank, then two lines | the Claim Reconciliations | the message's first line that is not blank, and both notes |
 
-  Rule: the Markdown report's Summary names the run verdict
-
-    @unit
-    Scenario Outline: the Summary names each run verdict, and each reason a run is not reconciled
-      given a run was <run verdict>
-      when the Markdown report is written
-      then its Summary will name the run verdict <run verdict>
-
-      Examples:
-        | clm         | run verdict                                            |
-        | CLM-RPT-111 | balanced                                               |
-        | CLM-RPT-116 | out of balance                                         |
-        | CLM-RPT-117 | not reconciled, because unsound                        |
-        | CLM-RPT-118 | not reconciled, because of claim code errors           |
-        | CLM-RPT-119 | not reconciled, because there was nothing to reconcile |
-
   Rule: the provenance shows each input the run read on its own line
 
     @unit @CLM-RPT-115
@@ -143,6 +137,22 @@ Feature: Each report has the right structure, and the Markdown explains it
         | clm         | evidence                          | listed                        |
         | CLM-RPT-160 | the unit test adds in one.test.ts | unit, at one.test.ts, "adds"  |
         | CLM-RPT-161 | the step ci.yml:build:Lint        | fitness, at ci.yml:build:Lint |
+
+  Rule: the Markdown report's Summary names the run verdict
+
+    @unit
+    Scenario Outline: the Summary names each run verdict, and each reason a run is not reconciled
+      given a run was <run verdict>
+      when the Markdown report is written
+      then its Summary will name the run verdict <run verdict>
+
+      Examples:
+        | clm         | run verdict                                            |
+        | CLM-RPT-111 | balanced                                               |
+        | CLM-RPT-116 | out of balance                                         |
+        | CLM-RPT-117 | not reconciled, because unsound                        |
+        | CLM-RPT-118 | not reconciled, because of claim code errors           |
+        | CLM-RPT-119 | not reconciled, because there was nothing to reconcile |
 
   Rule: the report shows each count the run has in its cell
 
@@ -199,15 +209,6 @@ Feature: Each report has the right structure, and the Markdown explains it
         | clm         | jobs                       | total    |
         | CLM-RPT-112 | one job                    | not have |
         | CLM-RPT-113 | two jobs, in two workflows | have     |
-
-  Rule: the JSON report keeps every part and every count, empty or zero
-
-    @unit @CLM-RPT-128
-    Scenario: a run of passing unit tests alone still has every part and every count in its JSON
-      given a run had only passing unit tests, each cited by a claim with a unit Evidence Obligation
-      when the JSON report is written
-      then it will have every part, the ones with nothing empty
-      and its totals will have every kind, the row with no kind, and every outcome under each, the ones with nothing at 0
 
   Rule: every report has its Claim Reconciliations, even when there are none
 

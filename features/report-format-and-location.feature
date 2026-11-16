@@ -1,15 +1,15 @@
 @FMT
 Feature: You get each report in the format and place you asked for, and the run stops before it damages anything
 
-  The tool writes a report of what it found. You choose its format, Markdown or JSON, and where it
-  goes: standard output, standard error, or a file you name. Without a format you get Markdown; without a
-  destination, standard output.
+  The tool writes a report of what it found. You choose its format, Markdown or JSON, and its
+  destination: standard output, standard error, or a file you name. Without a format you get
+  Markdown. Without a destination you get standard output.
 
   Each report goes where you asked.
 
-  The run stops before it writes anything, and so damages nothing, when:
+  The run stops before it writes anything, so it damages nothing, when:
 
-  - it cannot write there, such as to a read-only file or a folder that does not exist
+  - it cannot write to the destination, such as a read-only file or a folder that does not exist
   - two reports would overwrite each other
   - a report would overwrite a file the run reads, such as your test results
 

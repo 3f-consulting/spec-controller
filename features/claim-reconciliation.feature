@@ -42,14 +42,15 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-002 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a failing unit test citing it                                        | one failing                       |
         | CLM-LDG-047 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a passing and a failing unit test citing it                          | one satisfied and one failing     |
         | CLM-LDG-051 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing and a failing fitness function citing it                   | one satisfied and one failing     |
+        | CLM-LDG-053 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing fitness function citing it, whose step cannot fail its job | one cannot-fail                   |
         | CLM-LDG-003 | @CLM-ONE-001                            | a unit Evidence Obligation                    | no unit test                                                         | one missing                       |
         | CLM-LDG-004 | @CLM-ONE-001                            | a unit and an integration Evidence Obligation | a failing unit test citing it                                        | one failing and one missing       |
         | CLM-LDG-052 | @CLM-ONE-001                            | a unit Evidence Obligation                    | a unit test citing it that never reached its assertions              | one missing and one never-ran     |
         | CLM-LDG-008 | @CLM-ONE-001                            | a unit Evidence Obligation                    | an e2e test citing it                                                | one missing and one not-asked-for |
         | CLM-LDG-010 | @CLM-ONE-001                            | no Evidence Obligation                        | a unit test citing it                                                | one not-asked-for                 |
         | CLM-LDG-009 | @CLM-ONE-001                            | no Evidence Obligation                        | no test citing it                                                    | one no-quality-check              |
-        | CLM-LDG-053 | @CLM-ONE-001                            | a fitness Evidence Obligation                 | a passing fitness function citing it, whose step cannot fail its job | one cannot-fail                   |
         | CLM-LDG-021 | no code                                 | a unit Evidence Obligation                    | no test                                                              | one no-claim-code                 |
+        | CLM-LDG-078 | no code                                 | no Evidence Obligation                        | no test                                                              | one no-claim-code                 |
         | CLM-LDG-054 | @CLM-ONE-001, shared with another claim | a unit Evidence Obligation                    | no test citing it                                                    | one duplicate-claim-code          |
         | CLM-LDG-077 | @CLM-ONE-001, shared with another claim | no Evidence Obligation                        | no test citing it                                                    | one no-quality-check              |
         | CLM-LDG-006 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | a unit test citing it                                                | one cites-unknown-claim           |
@@ -57,7 +58,6 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-056 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | two unit tests citing it                                             | two cites-unknown-claim           |
         | CLM-LDG-007 | the unnamed claim                       | no Evidence Obligation                        | a unit test citing no code                                           | one cites-no-claim                |
         | CLM-LDG-057 | the unnamed claim                       | no Evidence Obligation                        | a test file that never ran, citing no code                           | one never-ran                     |
-        | CLM-LDG-078 | no code                                 | no Evidence Obligation                        | no test                                                              | one no-claim-code                 |
 
   Rule: a claim is balanced only when every Quality Check Reconciliation on it is satisfied
 

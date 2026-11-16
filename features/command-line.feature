@@ -4,21 +4,23 @@ Feature: the command line reads what you give it, and says where each kind of ou
   spec-controller runs a command, balance or allocate. A command's flags go after it.
 
   Help lists the commands, or one command's flags. It runs nothing and writes nothing. Running
-  spec-controller with nothing after it also shows help. A usage error shows the help for what was
-  asked for, even beside a request for help, and exits 2.
+  spec-controller with nothing after it also shows help.
 
-  Every argument is read as what it is, or validation fails. Then the run stops with a usage error
-  before anything runs. The error names the argument and says what is wrong with it.
+  A command takes only the arguments it accepts. The tool reads every argument as what it is: a
+  flag, a value, a command or a feature code. An argument it cannot read that way fails
+  validation. An input left out takes its default. The tool validates every argument and every
+  input before anything runs, the same way whether the command line names the input or leaves it
+  to its default. An argument or input that is not valid, or an
+  input that cannot be read, stops the run with a usage error. The error names the argument or
+  input and says what is wrong with it. A usage error shows the help for what was asked for, even
+  beside a request for help. A file that fails to read after validation accepted it is an
+  unexpected error.
 
-  The tool validates each input the same way, whether the command line names it or leaves it to
-  its default. An input that cannot be read when it is validated also stops the run with a usage
-  error. A file that fails to read after validation accepted it is an unexpected error.
+  An answer goes to standard output. Anything about it goes to standard error.
 
   A run ends on an exit code: 0 if balanced, 1 if out of balance, 3 if not reconciled, 2 for a
   usage error, and 4 for an unexpected error before the run verdict. --exit-zero changes only 1 to
-  0. It never changes the code of a run that could not be reconciled.
-
-  This file covers only the command line. The feature files for each command say what it does.
+  0. It changes no other exit code.
 
   Rule: asking for help shows what can be asked for
 
@@ -187,9 +189,8 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
   Rule: a command validates every input before it does its work
 
-    A command validates every input it reads before it does its work, whether named on the command
-    line or left to its default: the evidence reports, the step record, the feature corpus, the CI
-    workflows and the manifest. An input that is well formed but empty is valid.
+    The inputs a command validates are the evidence reports, the step record, the feature corpus,
+    the CI workflows and the manifest. An input that is well formed but empty is valid.
 
     @unit @CLM-CLI-146
     Scenario: an empty evidence report will count as no evidence, not as a broken file

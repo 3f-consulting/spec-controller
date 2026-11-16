@@ -4,9 +4,9 @@ Feature: a message catalogue gives back the text for a code
   The tool's sentences for a reader are in a message catalogue, a data file apart from the code.
   Each package has one.
 
-  Asked for the text under a message code, with any values to fill in, the catalogue gives back
-  that text. A text the catalogue cannot use, or cannot fill with the values given, never stops a
-  run: what comes back names the code and its values instead.
+  Asked for the text under a message code, the catalogue gives back that text, with each value
+  given filled into its gap. When the catalogue cannot use a text, or cannot fill it with the
+  values given, it gives back the code and its values instead. This never stops a run.
 
   Rule: a code that takes no values gives back its text unchanged
 
