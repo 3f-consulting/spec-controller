@@ -4,10 +4,11 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
   balance sets a claim's Evidence Obligations against its Evidence Observations, matching them
   on their kind of quality check. Each Quality Check Reconciliation's outcome follows from which
   sides it has. With both, the evidence was satisfied, failing, or cannot-fail when it passed where
-  it could not have failed. With an Evidence Obligation alone, it is missing, or the claim has
-  no-claim-code or a duplicate-claim-code. With an Evidence Observation alone, it is not-asked-for,
-  cites-unknown-claim, cites-no-claim, or never-ran. With neither, the claim has
-  no-quality-check, or no-claim-code when it has no code.
+  it could not have failed. With an Evidence Obligation alone, it is missing, or the claim has a
+  duplicate-claim-code. A claim with no code has no-claim-code, on the Evidence Obligation side,
+  whether or not it asks for a quality check. With an Evidence Observation alone, it is
+  not-asked-for, cites-unknown-claim, cites-no-claim, or never-ran. With neither, the claim has
+  no-quality-check.
 
   balance works from both sides, the Evidence Obligations and the Evidence Observations, so every
   claim, of whichever kind, has a Claim Reconciliation.
