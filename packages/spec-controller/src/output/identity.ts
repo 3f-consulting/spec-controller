@@ -1,6 +1,6 @@
 import type { FileIdentity } from "@3f-consulting/spec-controller-core";
 import { fstatSync, lstatSync, readlinkSync, realpathSync, statSync, type BigIntStats } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve, sep } from "node:path";
 
 // A device and inode as exactly as a stream's descriptor gives them. PROBED also answers nothing there yet as undefined.
 const EXACT = { bigint: true } as const;
@@ -28,23 +28,22 @@ export const whereItWillBe = (path: string): string =>
 
 const streamNamedBy = (path: string): NamedStream["is"] | undefined => STREAM_NAMED.get(resolve(path)) ?? STREAM_NAMED.get(whereItWillBe(path));
 
-// A folder's volume folds case when the folder's own name, in capitals and in small letters, two names, is one folder.
+// A volume folds case when the nearest folder up with letters, its name in capitals and in small letters, is one folder.
 function foldsCase(folder: string): boolean {
-  const name = basename(folder);
-  if (name.toUpperCase() === name.toLowerCase()) return false;
-  const [upper, lower] = [name.toUpperCase(), name.toLowerCase()].map((spelled) => statSync(join(dirname(folder), spelled), PROBED));
-  return upper !== undefined && upper.dev === lower?.dev && upper.ino === lower.ino;
+  const names = folder.split(sep);
+  const at = names.map((name) => name.toUpperCase() !== name.toLowerCase()).lastIndexOf(true);
+  const name = names.at(at)!;
+  const [byUpper, byLower] = [name.toUpperCase(), name.toLowerCase()].map((spelled) => statSync(join(sep, ...names.slice(0, at), spelled), PROBED));
+  return byUpper !== undefined && byUpper.ino === byLower?.ino;
 }
 
 function notMadeYet(path: string): FileIdentity {
   const where = whereItWillBe(path);
-  const folder = realpathSync(dirname(where));
-  const at = join(folder, basename(where));
-  return { is: "absent", path: foldsCase(folder) ? at.toLowerCase() : at };
+  return { is: "absent", path: join(realpathSync(dirname(where)), basename(where)) };
 }
 
 // What a path names, through any link; a stream by name first, as its path reports another device than its descriptor.
-export function pathIdentity(path: string): FileIdentity {
+function identityOf(path: string): FileIdentity {
   try {
     const stream = streamNamedBy(path);
     if (stream !== undefined) return { is: stream };
@@ -55,4 +54,10 @@ export function pathIdentity(path: string): FileIdentity {
     // Names no file: a path the system cannot follow, or a new file's folder, missing or a file.
   }
   return { is: "not-a-regular-file" };
+}
+
+// A new file's path, where its folder's volume folds case, is one path under any case.
+export function pathIdentity(path: string): FileIdentity {
+  const identity = identityOf(path);
+  return identity.is === "absent" && foldsCase(dirname(identity.path)) ? { is: "absent", path: identity.path.toLowerCase() } : identity;
 }
