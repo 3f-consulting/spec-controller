@@ -29,7 +29,7 @@ export function treeLines({ in: where, top }: Standing, featureCode: string): Re
   const unreadable = UNREADABLE.exec(stderr);
   if (unreadable !== null) return { refusal: { key: "unreadable-in-tree", values: { path: unreadable[1] ?? unreadable[2]!, said: unreadable[0] } } };
   // git grep exits 1 for no line found; anything else is a failure to read.
-  if (status !== 0 && status !== 1) return { refusal: { key: "unreadable-in-tree", values: { path: top, said: stderr.trim() } } };
+  if (status !== 0 && status !== 1) return { refusal: { key: "unreadable-in-tree", values: { path: top, said: stderr } } };
   // git ends each line found with a newline and parts it with NULs; it reads no file it takes for binary, so no text has one.
   const lines = stdout.split("\n").slice(0, -1).map((record) => {
     const [path, line, text] = record.split("\0") as [string, string, string];
