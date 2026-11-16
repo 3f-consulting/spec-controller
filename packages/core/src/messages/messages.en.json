@@ -117,5 +117,6 @@
   "kind-column-performance-key": "P when the claim asks for a performance test, - when it does not; then how many of its performance tests ran, - for none.",
   "verdict-column-key": "balanced when every Quality Check Reconciliation is satisfied, out-of-balance otherwise.",
   "items-column-key": "each Quality Check Reconciliation not satisfied, as its kind and outcome, then where to look and what it said. The key to the Summary's table by kind says what each outcome means.",
-  "job-holds-no-settings": "the job at {place} holds no settings, so GitHub would not run its workflow"
+  "job-holds-no-settings": "the job at {place} holds no settings, so GitHub would not run its workflow",
+  "step-names-neither-action-nor-command": "the step at {place} names neither an action nor a command, so GitHub would not run its workflow"
 }
