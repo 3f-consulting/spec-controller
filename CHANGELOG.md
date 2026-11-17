@@ -9,3 +9,4 @@ Each line says what a change means for someone using spec-controller.
 - What balance does is unchanged: the specification's scenario on continue-on-error is now worded for a step in a workflow balance read, the only steps whose setting balance can read.
 - Each published package names its source repository, 3f-consulting/spec-controller, on npm; the link opens once the repository is public.
 - No change to the packages: the first release from spec-controller's new repository.
+- spec-controller's repository is public, with every commit of its history, and from this release on each release carries its provenance on npm.

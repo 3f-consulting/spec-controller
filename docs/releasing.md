@@ -177,10 +177,13 @@ Three measurable facts decide whether it works:
 - **Each package needs its own trusted publisher.** The exchange is per package
   (`/-/npm/v1/oidc/token/exchange/package/<name>`). So both packages carry a connection on
   npmjs.com naming the org, this repository, and `release.yml`.
+- **A connection is bound to the repository, not to its name.** A new repository that takes an
+  old one's name does not inherit its connections: npm refuses the publish with `E404` until each
+  package's connection is removed and added again.
 
-**No provenance attestation is produced, and that is not a misconfiguration.** npm enables
-provenance only when the id-token says the repository is public. While the repository is private,
-none appears, and once it is public they appear with no edit here.
+**Each release carries a provenance attestation.** npm adds one only when the id-token says the
+repository is public. The releases made while the repository was private, up to 0.1.291, carry
+none.
 
 ---
 
