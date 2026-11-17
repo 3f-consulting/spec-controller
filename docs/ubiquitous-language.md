@@ -2,7 +2,7 @@
 
 This glossary lists the words spec-controller's code, scenarios, report and help use, and what each means. It has two parts. The **domain terms** are spec-controller's own and are defined here. The terms **borrowed from 3F Consulting's delivery methodology** are named here: that methodology is not published, so they are described where [`user-guide.md`](./user-guide.md) uses them.
 
-Each definition comes from canon: the double-entry manifesto, 3F Consulting's methodology, and the scenarios the maintainer endorsed. Where this file and the code disagree, canon decides, and whichever is wrong is corrected.
+Each definition comes from the maintainers' domain model and the scenarios they endorsed, never from the code. Where this file and the code disagree, the domain model decides, and whichever is wrong is corrected.
 
 **One vocabulary across every surface**: code identifiers, JSON keys, Markdown headings, and a database schema if there ever is one. You read a machine key as much as you read prose, so it gets no private dialect.
 
