@@ -20,11 +20,11 @@ The `balance` command matches each evidence observation to the evidence obligati
 
   Node 25 and later do not bundle corepack, so if your project uses pnpm, install pnpm yourself (`npm install -g pnpm`).
 
-- **GitHub Actions.** This is the real requirement. A CI check becomes evidence through the CI run's own step record.
+- **GitHub Actions.** This is the real requirement: a CI check becomes evidence through the CI run's own step record.
 - **Your evidence, as reports.** Pass whichever of these you have: a Vitest, Jest or RSpec JSON report, a pytest or other JUnit XML report, or a Cucumber JSON report.
-- **Feature files are optional at first.** A project with no feature files still gets a report of every check its pipeline ran.
+- **Feature files, which are optional at first.** A project with no feature files still gets a report of every check its pipeline ran.
 
-See [What you need](./user-guide.md#what-you-need) for the full table of inputs and flags.
+[What you need](./user-guide.md#what-you-need) in the user guide has the full table of inputs and flags.
 
 ## Install
 
@@ -57,23 +57,25 @@ npx spec-controller balance \
 ```
 
 - **Every path you pass must exist.** Each report flag points at a file your tools have already written. Leave out any input you don't have. The command refuses a folder that does not exist, so if you have no `features/` folder yet, leave out `--features`.
-- **`--target` names the project in the report.** Without `--target`, the report uses the name of the git checkout's `origin`. If there is no `origin`, the report reads `unknown-target`.
+- **`--target` names the project in the report.** Without `--target`, the report uses the name of the git checkout's `origin`. With no `origin`, the report reads `unknown-target`.
 - **`--exit-zero` stops the build going red while you watch.** A first run against a pipeline with no citations goes red, because every fitness function (each CI step treated as a check) cites nothing. Every evidence observation then posts to the **unnamed claim**, which holds the evidence that names no scenario. Without `--exit-zero`, `balance` exits `1`. With it, you get the same report, but an out-of-balance run verdict exits `0`. Remove the flag when you are ready to gate.
 
 For the report command of every other runner, see [Every report, and the whole command](./user-guide.md#every-report-and-the-whole-command).
 
-**Before you name anything, `balance` lists what ran.** Each test and fitness function that cites no code goes to the unnamed claim. The report groups them by kind of quality check and by file. Each group says how many ran, how many passed and how many failed, and names each one that failed. A test or fitness function that cites a code no scenario has goes to a phantom claim. These steps post nothing:
+**Before you name anything, `balance` lists what ran.** Each test and fitness function that cites no code goes to the unnamed claim. The report groups them by kind of quality check and by file. Each group says how many ran, how many passed and how many failed, and names each one that failed. A test or fitness function that cites a code no scenario has goes to a phantom claim.
+
+`balance` lists every CI step as a check, except these, which post nothing:
 
 - a step that runs a declared runner;
 - GitHub's own checkout, setup, cache and artifact actions;
-- the reconciler's own steps;
+- the reconciler's own steps: the steps that write the step record and run `balance`;
 - a non-check.
 
 This list is a starting inventory. The value begins when you name the behaviours.
 
 ### Tell it which steps are your tests, and which check nothing
 
-`balance` lists every CI step as a check, with these exceptions: a declared runner, GitHub's own checkout, setup, cache and artifact actions, and the steps that write the step record and run `balance`. Two settings in `package.json` make the list shorter:
+Two settings in `package.json` make the list shorter:
 
 ```jsonc
 "specController": {
@@ -97,7 +99,7 @@ See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--run
 
 ## Cite one scenario from one test
 
-A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, and both must answer `CLM-<FFF>-<NNN>`. A `@unit` scenario needs no step definitions. Its title and its tags are the whole scenario.
+A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, and both must answer `CLM-<FFF>-<NNN>`. A `@unit` scenario needs no step definitions: its title and its tags are the whole scenario.
 
 `CLM-<FFF>-<NNN>` is the scenario's **claim code**. `<FFF>` is a feature code of two to five uppercase letters or digits. `<NNN>` is a number. Each feature file declares its feature code, `@<FFF>`, on the line above `Feature:`, and the claim codes of its scenarios must match it. A misfiled code leaves the run not reconciled. [Claim code errors](./user-guide.md#claim-code-errors) explains the feature code and the five claim code errors.
 
@@ -108,7 +110,7 @@ spec-controller allocate <FFF>
 # CLM-<FFF>-<NNN>
 ```
 
-A Vitest test cites the scenario by putting the code **in square brackets**. The code goes in the test's `it` title or in the title of an enclosing `describe`. The most specific one wins:
+A Vitest test cites the scenario by putting the code **in square brackets**, in the test's `it` title or in the title of an enclosing `describe`. The most specific one wins:
 
 ```ts
 describe("[CLM-<FFF>-<NNN>] a feature code whose highest live claim code is below a deleted one is offered one past the deleted claim code", () => {
@@ -124,7 +126,7 @@ For how each other runner cites a scenario, see [Citing a scenario from pytest](
 
 ## Turn one CI check into a fitness function
 
-A **fitness function** is a whole-system property, such as complexity, mutation score, type soundness, vocabulary or suite run time. Any check your pipeline runs, in any language, can prove one. You need only two things.
+A **fitness function** checks a whole-system property, such as complexity, mutation score, type soundness, vocabulary or suite run time. Any check your pipeline runs, in any language, can prove one. You need only two things.
 
 **1. A scenario, tagged `@fitness`, with a code.** Write it the same way as a `@unit`-only scenario: tags, a title, and no Given/When/Then. Its title is the specification.
 
@@ -142,7 +144,9 @@ A **fitness function** is a whole-system property, such as complexity, mutation 
         run: eslint
 ```
 
-The step's outcome is the evidence. The check's exit code, on its own CI step, decides that outcome. The outcome reaches `balance` only through the CI run's step record, which you pass with `--ci-steps`. Only a CI run writes that record, so a local run has none. A step the record does not name, and every step when no record is given, is posted as not recorded, citing no code. It is never reported as passed, never credited to a claim, and never posted to a phantom claim.
+The step's outcome is the evidence, and the check's exit code, on its own CI step, decides that outcome. The outcome reaches `balance` only through the CI run's step record, which you pass with `--ci-steps`. Only a CI run writes that record, so a local run has none.
+
+A step the record does not name, and every step when no record is given, is posted as not recorded, citing no code. It is never reported as passed, never credited to a claim, and never posted to a phantom claim.
 
 If no recorded step has the scenario's code, the scenario reads `missing`. A recorded step that cites a code no scenario has posts to a **phantom claim**: a claim the evidence names and nobody wrote. See [Turn a fitness function into an evidence obligation](./user-guide.md#turn-a-fitness-function-into-an-evidence-obligation).
 
@@ -171,7 +175,7 @@ If no recorded step has the scenario's code, the scenario reads `missing`. A rec
   run: printf '%s' "$STEPS_JSON" > ci-steps.json
 ```
 
-The dump must be `toJSON(steps)`, because it is the only place that has a step's `id` and its `outcome` together. Pass it to the command through an environment variable. Never put it inline in the command itself. A step's output can contain a quote, and the shell would run whatever follows that quote.
+The dump must be `toJSON(steps)`, because it is the only place that has a step's `id` and its `outcome` together. Pass it to the command through an environment variable, never inline in the command itself: a step's output can contain a quote, and the shell would run whatever follows that quote.
 
 A single Reconcile step then reads the reports and the record. It is the command from the first run, plus the step record. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page. `--format json:reconciliation.json` saves the JSON for any later step or tool:
 
@@ -193,7 +197,7 @@ A single Reconcile step then reads the reports and the record. It is the command
 
 Add `--cucumber reports/cucumber.json` if you have a Cucumber report. Drop `--ci-steps` if you have converted no check. Remove `--exit-zero` when you are ready to gate.
 
-Save the reports as build artefacts, but do not commit them, because a report lists the gaps in your codebase. See [Wiring into CI](./user-guide.md#wiring-into-ci) and [GitHub Actions — put the report on the run summary](./user-guide.md#github-actions--put-the-report-on-the-run-summary).
+Save the reports as build artefacts, but do not commit them: a report lists the gaps in your codebase. See [Wiring into CI](./user-guide.md#wiring-into-ci) and [GitHub Actions — put the report on the run summary](./user-guide.md#github-actions--put-the-report-on-the-run-summary).
 
 ## Read the report
 
@@ -214,14 +218,14 @@ See [Exit codes](./user-guide.md#exit-codes).
 The [README's sample report](../README.md) shows every kind of Claim Reconciliation in one small example. Read it as double entry:
 
 - **The run verdict**, under `## Summary`, says what the whole run comes to: balanced, out of balance, or not reconciled with its reason.
-- **A Claim Reconciliation** is the evidence reconciled for one claim. It is one row of the `## Claim Reconciliations` table. A claim is usually a scenario. The Claim Reconciliation sets the evidence the claim asks for against the results reported for it.
+- **A Claim Reconciliation** is the evidence reconciled for one claim: one row of the `## Claim Reconciliations` table. A claim is usually a scenario. The Claim Reconciliation sets the evidence the claim asks for against the results reported for it.
 - **Each Quality Check Reconciliation** pairs one evidence obligation, one evidence observation, or both, and has an outcome. `satisfied` means the evidence arrived and passed.
 - **The verdict** of a Claim Reconciliation is **balanced** or **out-of-balance**.
 - **A reconciling item** is a Quality Check Reconciliation whose outcome is not `satisfied`, such as `missing` (no proof arrived) or `failing` (the proof failed). A row lists each reconciling item with its kind of quality check, where to look, and what was said.
 - **A phantom claim** receives evidence that cites a code no scenario has. The cause is usually a typo, or the code of a deleted scenario. Each unknown code gets its own phantom claim, named by that code. The sample has one, and its row reads `cites-unknown-claim`.
 - **The unnamed claim** receives evidence that cites no code, several codes, or a code several scenarios share. It also receives each step the step record does not name, and its fitness group shows how many were not recorded.
 
-Watch for a **cannot-fail** check. A cannot-fail check is green, but its CI step or job sets `continue-on-error` to anything but `false`, so its red might not fail the CI run. It is read from the step record that `--ci-steps` passes, and the step's own outcome answers the row: a swallowed red reads `failing`, and a green still reads `cannot-fail`.
+Watch for a **cannot-fail** check. It is green, but its CI step or job sets `continue-on-error` to anything but `false`, so its red might not fail the CI run. It is read from the step record that `--ci-steps` passes, and the step's own outcome answers the row: a swallowed red reads `failing`, and a green still reads `cannot-fail`.
 
 If your first run lists many checks that cite nothing, read the report's **Step account**. It names each workflow and job, how many steps were read, and what happened to each step.
 

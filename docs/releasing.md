@@ -5,9 +5,9 @@ Two packages are released together. `@3f-consulting/spec-controller-core` is the
 
 **Nobody cuts a release.** Every push to `main` that passes CI publishes both packages, core first.
 The publish happens in the run of [`.github/workflows/release.yml`](../.github/workflows/release.yml)
-that follows that push's CI run. It uses the next counter version, and then tags what it published.
-No credential is stored anywhere. There is no release PR, nothing to promote afterwards and nothing
-to rotate.
+that follows that push's CI run. The run uses the next counter version, then tags what it
+published. No credential is stored anywhere. There is no release PR, nothing to promote afterwards
+and nothing to rotate.
 
 **Read *When a publish returns `E401`* before your first release.** It describes an authentication
 error whose cause is not authentication.
@@ -21,18 +21,19 @@ error whose cause is not authentication.
 **Every push to `main` whose CI run succeeds publishes.** `release.yml` runs when the `CI` workflow
 completes on `main`. Its `release` job goes on when that CI run succeeded and was started by a
 `push`, with no other condition. Each such run publishes the next counter version, unless a newer
-pending run cancels it (*Two merges close together*, below). This includes a merge that touches only
+pending run cancels it (*Two merges close together*, below). That includes a merge that touches only
 [`features/`](../features/), [`tests/`](../tests/), [`.github/`](../.github/) or the lockfile.
 
 A push that changes only `docs/**`, the root [`README.md`](../README.md),
 [`CONTRIBUTING.md`](../CONTRIBUTING.md) or [`LICENSE`](../LICENSE) does not run CI at all
-(`paths-ignore` in `ci.yml`). It publishes nothing.
+(`paths-ignore` in `ci.yml`), so it publishes nothing. The `README.md` entry matches the root file
+only. A push to `main` that changes `packages/*/README.md` runs CI and, if CI succeeds, a release.
 
 Each package ships its own copy of the licence, [`packages/core/LICENSE`](../packages/core/LICENSE)
 and [`packages/spec-controller/LICENSE`](../packages/spec-controller/LICENSE). A change to the
-licence edits those copies as well as the root's, which runs CI and publishes.
+licence edits those copies as well as the root's, so it runs CI and publishes.
 
-`release.yml` has no `workflow_dispatch` trigger. A CI run started any way other than a `push`
+`release.yml` has no `workflow_dispatch` trigger, and a CI run started any way other than a `push`
 releases nothing. **Nothing publishes except a push to `main`**, so every published version is one
 that `main` contained.
 
@@ -55,16 +56,16 @@ Two jobs then run on what was published:
 - The `latest` job runs [`scripts/latest-is.sh`](../scripts/latest-is.sh) for each package. It
   reds unless the `latest` dist-tag is the version just published. It waits up to `LATEST_WAIT_S`
   for the registry to serve it.
-- The `tag` job creates `v<version>` on the commit that was built. It also creates a GitHub release
-  for that tag. Its notes are the lines [`CHANGELOG.md`](../CHANGELOG.md) gained since the previous
+- The `tag` job creates `v<version>` on the commit that was built, and a GitHub release for that
+  tag. The release notes are the lines [`CHANGELOG.md`](../CHANGELOG.md) gained since the previous
   `v*` tag, each as written, or "Dependencies updated." when it gained none. Nothing from a pull
-  request's title reaches them. It is a separate job so that the
-  only token that can write to the repository never shares a runner with the build. It starts no
-  other workflow. **The tag records a release; it never causes one**, and nothing listens for tags.
+  request's title reaches them. The `tag` job is separate so that the only token that can write to
+  the repository never shares a runner with the build. It starts no other workflow. **The tag
+  records a release; it never causes one**, and nothing listens for tags.
 
-The CLI's tarball names no runtime dependency. So `npm i spec-controller` installs that one package
-and fetches nothing from core's publish. Core still publishes first, and the recovery under
-*If the run fails* follows from that order.
+The CLI's tarball names no runtime dependency (*Lockstep, `0.x` and what is published*, below), so
+`npm i spec-controller` installs that one package and fetches nothing from core's publish. Core
+still publishes first, and the recovery under *If the run fails* follows from that order.
 
 ### Two merges close together
 
@@ -92,6 +93,20 @@ beside it. Nothing is owed after the run goes green.
 
 ---
 
+## What the release checks, and what it does not
+
+`release.yml` runs only after CI succeeds on the push. So everything `ci.yml` checks gates the
+release: the build, the typecheck, both suites and every repository bar. `main`'s `strict`
+protection runs the same bars on every pull request before it can merge.
+
+The release adds one check of its own before it publishes: the clean-room install of the packed
+tarballs. It adds one after: the `latest` job.
+
+The nightly mutation sweep's verdict holds no release. A red, lapsed or unmeasured sweep stops new
+work from starting until a full sweep of `main` is green. A fix merges on its own CI.
+
+---
+
 ## Versions and dist-tags
 
 Both packages are **semver**, and both are on `0.x`.
@@ -102,7 +117,7 @@ The run takes the **line** from the committed CLI manifest: everything before it
 `0.1.0` is the line `0.1.`. The run finds the highest number already on that line across **both
 packages on the registry and the repository's `v*` tags**. It stamps the next number into both
 manifests **in the run's working copy only**. Nothing is committed back, because `main` is
-protected. So the committed manifest is not the published version: it stays where a human last put
+protected. So the committed manifest is not the published version: it stays where a person last put
 it while the registry counts on. On a stable line the counter moves the patch number and ignores
 prereleases.
 
@@ -127,7 +142,7 @@ so the run publishes exactly what you wrote. The next merge counts on from there
 ### Prerelease dist-tags
 
 **npm refuses to publish a prerelease without `--tag`:** *"You must specify a tag using --tag when
-publishing a prerelease version."* `release.yml` derives the tag from each package's own manifest
+publishing a prerelease version."* So `release.yml` derives the tag from each package's own manifest
 instead of hard-coding one. The prerelease identifier becomes the dist-tag, and a stable version
 becomes `latest`:
 
@@ -135,28 +150,12 @@ becomes `latest`:
 0.1.0-alpha.2 -> alpha    1.0.0-beta.3 -> beta    2.0.0-rc.1 -> rc    0.1.0 -> latest
 ```
 
-A hard-coded `--tag alpha` would publish the first stable release under `alpha`. That would be a
-silent fault with no guard.
+A hard-coded `--tag alpha` would publish the first stable release under `alpha`: a silent fault
+with no guard.
 
 **`latest` is never moved onto a prerelease.** The committed manifests are on the stable line
 `0.1.N`, so every release is a plain version and moves `latest` itself. A bare
 `npm i spec-controller` therefore installs the current build. The `latest` job checks that it did.
-
----
-
-## What the release checks, and what it does not
-
-`release.yml` runs only after CI succeeds on the push. So everything `ci.yml` checks gates the
-release: the build, the typecheck, both suites and every repository bar. The release adds one check
-of its own before it publishes: the clean-room install of the packed tarballs. It adds one after:
-the `latest` job.
-
-The nightly mutation sweep's verdict holds no release. A red, lapsed or unmeasured sweep stops new
-work from starting until a full sweep of `main` is green. A fix merges on its own CI.
-
-`main`'s `strict` protection runs the same bars on every pull request before it can merge. CI's
-`paths-ignore` has a `README.md` entry, but it matches the root file only. So a push to `main` that
-changes `packages/*/README.md` runs CI and, if CI succeeds, a release.
 
 ---
 
@@ -166,7 +165,7 @@ The workflow authenticates with **npm trusted publishing**. The job asks GitHub 
 OIDC id-token. npm exchanges it for a publish token scoped to the one package, and that token dies
 with the run. `permissions: id-token: write` switches it on and is the whole of the configuration.
 
-Three measurable facts decide whether it works:
+Four measurable facts decide whether it works:
 
 - **The command has to be `npm publish`.** Measured in `npm@11.19.1`: `lib/commands/publish.js:147`
   calls `oidc()` unconditionally, whatever kind of spec it was handed. That is why publishing a
@@ -175,10 +174,10 @@ Three measurable facts decide whether it works:
   `actions/setup-node` offers no way to choose an npm; it installs whatever the Node it fetches
   bundles. Node 22 bundles 10.9.x and Node 24 bundles 11.19.x, so the workflow pins Node 24.
 - **Each package needs its own trusted publisher.** The exchange is per package
-  (`/-/npm/v1/oidc/token/exchange/package/<name>`). So both packages carry a connection on
+  (`/-/npm/v1/oidc/token/exchange/package/<name>`). So each package carries a connection on
   npmjs.com naming the org, this repository, and `release.yml`.
 - **A connection is bound to the repository, not to its name.** A new repository that takes an
-  old one's name does not inherit its connections: npm refuses the publish with `E404` until each
+  old one's name does not inherit its connections. npm refuses the publish with `E404` until each
   package's connection is removed and added again.
 
 **Each release carries a provenance attestation.** npm adds one only when the id-token says the
@@ -192,19 +191,18 @@ none.
 ### The pin decides which reader judges this tree
 
 The workspace root [`package.json`](../package.json) carries `spec-controller` in
-`devDependencies` as an **exact published version**. There is no root script of that name. So
+`devDependencies` as an **exact published version**. There is no root script of that name, so
 `pnpm spec-controller …` falls through to `node_modules/.bin/spec-controller` and runs the
-*installed* package.
+*installed* package. The `ci.yml` step that invokes the tool (`Reconciliation`) goes through the
+pin. This repository is therefore an ordinary adopter of its own product, not a special case.
 
 This was measured with no such script. The report's own provenance read
 `Tool version: 0.1.0-alpha.3` and `Tool SHA: unknown (not a git checkout)`. The workspace build, run
-over the same argv, read `0.1.0-alpha.4` and this checkout's HEAD. The `ci.yml` step that invokes
-the tool (`Reconciliation`) goes through the pin. This repository is therefore an ordinary adopter
-of its own product, not a special case.
+over the same argv, read `0.1.0-alpha.4` and this checkout's HEAD.
 
 **That pin is the single declaration of which reader judges this tree.** No second "minimum
-readable version" is kept anywhere, on purpose. A second spelling of the same fact agrees with the
-first only until somebody edits one of them.
+readable version" is kept anywhere, on purpose. A second spelling of the same fact agrees with the first only
+until somebody edits one of them.
 
 ### Dependabot moves it, with no human act
 
@@ -220,15 +218,15 @@ Measured on 2026-10-28, on GitHub-hosted Actions: the self-pin merges `510f4601`
 `4d36eba3` have no `push` run of any workflow. Re-check it if GitHub changes how `GITHUB_TOKEN`
 pushes start workflows.
 
-**The schedule.** `interval: cron` with `cronjob: "30 11 * * *"`, which is 11:30 UTC on all seven
-days. `daily` is not used because it runs Monday to Friday only. Once a day is as often as GitHub
-allows: its config check rejects any `cronjob` that fires more often than every 24 hours. So a pin
-lags a publish by up to 24 hours. That lag is accepted for two reasons. Only step 3 of an
-expand/contract waits on the pin. And an adopter's own Dependabot lags the same way.
+**The schedule.** `interval: cron` with `cronjob: "30 11 * * *"`: 11:30 UTC on all seven days.
+`daily` is not used, because it runs Monday to Friday only. Once a day is as often as GitHub allows:
+its config check rejects any `cronjob` that fires more often than every 24 hours. So a pin lags a
+publish by up to 24 hours. That lag is accepted for two reasons: only step 3 of an
+expand/contract waits on the pin, and an adopter's own Dependabot lags the same way.
 
 Two other things start a run. A merge to `main` that changes
 [`.github/dependabot.yml`](../.github/dependabot.yml) starts one at once. *Check for updates* under
-Insights → Dependency graph → Dependabot runs one early, but the loop never needs it, and neither is
+Insights → Dependency graph → Dependabot runs one early. The loop never needs that, and neither is
 a hand move of the pin.
 
 **The bot sees the root pin only because [`packages/spec-controller`](../packages/spec-controller)
@@ -242,7 +240,7 @@ moves by one exact line, and core and the CLI move together in the lockfile.
 
 **The PR's lockfile carries more than the pin, and auto-merge accepts that only when the pin really
 moves.** Dependabot's pnpm path always runs
-`pnpm update <dep>@<version> --lockfile-only --no-save -r`. That also re-resolves in-range
+`pnpm update <dep>@<version> --lockfile-only --no-save -r`, which also re-resolves in-range
 transitive packages. The same command under this repository's pnpm reproduces the same churn, and no
 Dependabot key turns it off. So `dependabot-auto-merge.yml` reads what the PR changes before it arms
 anything. It refuses unless all of these hold:
@@ -282,12 +280,12 @@ the reader unpredictable. That is the failure this arrangement exists to prevent
 
 This is a convention, and no guard enforces it. A one-off
 `grep -rn devDependencies --include='*.ts'` finds no TypeScript reader of the root
-`devDependencies`. The only check that reads the pin's specifier is `dependabot-auto-merge.yml`. It
-refuses a non-exact pin on a Dependabot PR and on nothing else. So nothing reds when a person widens
-the specifier.
+`devDependencies`. The only check that reads the pin's specifier is `dependabot-auto-merge.yml`, and
+it refuses a non-exact pin on a Dependabot PR and on nothing else. So nothing reds when a person
+widens the specifier.
 
 **When the model moves and the pinned reader cannot read the tree**, the cure is the expand merge in
-*A model change the pinned reader cannot read* below. The pin is never moved by hand to reach it.
+*A model change the pinned reader cannot read*, below. The pin is never moved by hand to reach it.
 
 ### The workflows' actions move monthly, and a person merges them
 
@@ -304,23 +302,23 @@ armed, and a person merges it once `ci` is green. A green `ci` proves only the b
 - before merging a bump that touches `mutation.yml`, dispatch `mutation.yml` on the PR's branch;
 - a bump in `release.yml` is exercised by the Release run of its own merge, so read that run.
 
-actionlint is not an action. Its step downloads the official release binary. It verifies the binary
-against a SHA-256 pinned beside its version in the step's `env:`. Dependabot does not move it, so a
-person moves the version and checksum together.
+Two tools are not actions, and Dependabot moves neither:
 
-Semgrep is not an action either. `Install Semgrep` installs it with `pip --require-hashes --no-deps`
-from [`.semgrep/requirements.txt`](../.semgrep/requirements.txt). That file is a lock of
-`semgrep==<version>` and every dependency, each with its hashes. Its first line is the `pip-compile`
-command that wrote it. Dependabot does not move it. To move the version, a person regenerates the
-lock with that command, under the runner's `python3`.
+- **actionlint.** Its step downloads the official release binary and verifies it against a SHA-256
+  pinned beside its version in the step's `env:`. A person moves the version and checksum together.
+- **Semgrep.** `Install Semgrep` installs it with `pip --require-hashes --no-deps` from
+  [`.semgrep/requirements.txt`](../.semgrep/requirements.txt). That file is a lock of
+  `semgrep==<version>` and every dependency, each with its hashes. Its first line is the
+  `pip-compile` command that wrote it. To move the version, a person regenerates the lock with that
+  command, under the runner's `python3`.
 
-The installed venv is cached under a key of the runner's OS, its `python3` version and the lock's
-hash. A run whose key is cached restores the venv and installs nothing. A new lock installs afresh.
-Each rule is its own file in [`.semgrep/`](../.semgrep/), with no registry ruleset and metrics off.
-One step scans the packages with every rule in that directory. Semgrep names the rule in each
-finding. The rule that only the printer writes to standard error is in
-[`.semgrep-errors/`](../.semgrep-errors/) instead, and a step of its own scans the packages with
-it, so its fitness scenario has a step that answers it alone.
+The installed Semgrep venv is cached under a key of the runner's OS, its `python3` version and the
+lock's hash. A run whose key is cached restores the venv and installs nothing; a new lock installs
+afresh. Each rule is its own file in [`.semgrep/`](../.semgrep/), with no registry ruleset and
+metrics off. One step scans the packages with every rule in that directory, and Semgrep names the
+rule in each finding. The one exception is the rule that only the printer writes to standard error.
+It is in [`.semgrep-errors/`](../.semgrep-errors/) instead, and a step of its own scans the packages
+with it, so its fitness scenario has a step that answers it alone.
 
 ---
 
@@ -329,13 +327,13 @@ it, so its fitness scenario has a step that answers it alone.
 The reader that judges this tree is the **pinned published** spec-controller. So a change to the
 model it reads cannot land in one merge. On the branch that makes the change, the pinned reader is
 still the old one, and `Reconciliation` reds. Nothing publishes from a branch. So such a change
-lands as a **parallel change** (*expand–migrate–contract*) over three merges and a bot PR:
+lands as a **parallel change** (*expand–migrate–contract*), over three merges and a bot PR:
 
 1. **Expand.** The reader accepts both the old shape and the new one. That merge publishes, as every
    merge that passes CI does.
 2. **The bot moves the pin.** Dependabot's PR moves the root `devDependencies["spec-controller"]` to
-   the release step 1 published. `dependabot-auto-merge.yml` merges it on green, with no human act.
-   The bot runs once a day (see *Dependabot moves it*). So this lags the publish by up to 24 hours,
+   the release step 1 published, and `dependabot-auto-merge.yml` merges it on green, with no human
+   act. The bot runs once a day (*Dependabot moves it*), so this lags the publish by up to 24 hours,
    and nothing shortens that but waiting. The name-scoped `minimumReleaseAgeExclude` in
    [`pnpm-workspace.yaml`](../pnpm-workspace.yaml) is what lets its `Install dependencies` accept a
    release hours old.
@@ -352,15 +350,19 @@ read the tree, so `main` reds. If a newer reader turns the tree red, the bot's p
 red. That red is a finding about the tree. It is fixed in the tree, never by holding the pin back or
 by publishing by hand.
 
-**Worked example: retiring `specController.fitnessChecks`.** The expand merge taught the reader to
-raise a fitness obligation from the `@fitness` tag alone. It also taught the reader to accept a
-manifest still carrying `specController.fitnessChecks`, by naming it as a retired key. The migrate
-step deleted that key from this repository's own [`package.json`](../package.json). It waited until
-the bot's PR moved the pin to the expand merge's release, because the pinned reader could not read a
-tree with no list at all before then. That condition is written *at or after* that release, never as
-an equality: the pin lags and jumps. The current reader names that key as one the `specController`
-block does not read, and reads nothing from it. That does not change the ordering rule the example
-teaches: step 3 cannot merge before the pin has moved.
+**Worked example: retiring `specController.fitnessChecks`.**
+
+- The expand merge taught the reader to raise a fitness obligation from the `@fitness` tag alone.
+  It also taught the reader to accept a manifest that still carries `specController.fitnessChecks`,
+  by naming it as a retired key.
+- The migrate step deleted that key from this repository's own [`package.json`](../package.json).
+  It waited until the bot's PR moved the pin to the expand merge's release, because the pinned reader
+  could not read a tree with no list at all before then. That condition is written *at or after*
+  that release, never as an equality, because the pin lags and jumps.
+
+The current reader names that key as one the `specController` block does not read, and reads
+nothing from it. That does not change the ordering rule the example teaches: step 3 cannot merge
+before the pin has moved.
 
 ---
 
@@ -369,10 +371,10 @@ teaches: step 3 cannot merge before the pin has moved.
 ### A published version cannot be recalled
 
 npm's unpublish window does not undo a publish. Whether or not you unpublish inside the window,
-**that version number and that package name are burned**. npm will not let anyone republish them,
+**that version number and that package name are burned**: npm will not let anyone republish them,
 you included. **The merge is the point of no return.** That is why the clean-room smoke runs before
-the publish. It is also why a pull request touching a package is reviewed as a release. The question
-is not *"can I fix this later"* but *"is this the artefact"*.
+the publish, and why a pull request touching a package is reviewed as a release. The question is
+not *"can I fix this later"* but *"is this the artefact"*.
 
 ### If the run fails
 
@@ -381,8 +383,9 @@ registry. So a re-run picks a number nobody has used, once npm serves the last v
 (*After both published and the `tag` job failed*, below).
 
 A re-run needs the `built-packages` artifact from the CI run it follows. CI keeps that artifact for
-one day (`retention-days: 1`). A re-run after that cannot download it and fails. The change is still
-unreleased since the last tag, so the next push to `main` that runs CI and passes publishes it.
+one day (`retention-days: 1`), so a re-run after that cannot download it and fails. The change is
+still unreleased since the last tag, so the next push to `main` that runs CI and passes publishes
+it.
 
 - **Before anything published.** The re-run publishes the number the failed run would have. A fix
   that needs a code change is an ordinary pull request, and its merge publishes.
@@ -395,9 +398,9 @@ unreleased since the last tag, so the next push to `main` that runs CI and passe
   published version is the fault the job exists to catch.
 - **After both published and the `tag` job failed.** The release happened, but the newest `v*` tag
   is still the one before it. The counter reads the registry, so no number is reused once npm serves
-  the version. That can take 20 to 40 minutes. A push inside that window can mint the same number
-  and fail with E403. The next push to `main` that passes CI publishes the number after it. Create
-  the tag by hand on the commit the run built:
+  the version. That can take 20 to 40 minutes, and a push inside that window can mint the same
+  number and fail with E403. The next push to `main` that passes CI publishes the number after it.
+  Create the tag by hand on the commit the run built:
   `gh api repos/{owner}/{repo}/git/refs -f ref=refs/tags/v<version> -f sha=<sha>`.
 
 ### When a publish returns `E401`, read it as the trusted publisher
@@ -414,7 +417,7 @@ npm error Unable to authenticate
 ```
 
 **Nothing in the log says an exchange was attempted at all.** It reads like a missing secret. There
-is no secret. It is the trusted publisher.
+is no secret: it is the trusted publisher.
 
 **`--loglevel=verbose` shows why**: the `oidc` lines name which check failed. Then compare the
 connection on npmjs.com against the run:
@@ -427,5 +430,5 @@ connection on npmjs.com against the run:
 | Environment name | **blank** — this job declares no environment |
 | Allow npm publish | **ticked** |
 
-npm does not validate any of these when the connection is saved. So a wrong one is only ever
+npm does not validate any of these when the connection is saved, so a wrong one is only ever
 discovered here.
