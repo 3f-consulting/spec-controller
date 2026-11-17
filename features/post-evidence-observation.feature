@@ -221,7 +221,7 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-159 | with no id              | was not set       | a step record was given                                            |
 
     @unit
-    Scenario Outline: balance posts a recorded success as passed-on-error only when its workflow sets continue-on-error to anything but false
+    Scenario Outline: balance posts a recorded success in a workflow as passed-on-error only when that workflow sets continue-on-error to anything but false
       given the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded
       and ci.yml set continue-on-error on <where> to <value>
       when balance posts the evidence

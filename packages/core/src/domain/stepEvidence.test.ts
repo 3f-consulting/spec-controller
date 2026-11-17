@@ -151,7 +151,7 @@ describe("balance posts a fitness function's step the step record does not name 
   });
 });
 
-describe("balance posts a recorded success as passed-on-error only when its workflow sets continue-on-error to anything but false", () => {
+describe("balance posts a recorded success in a workflow as passed-on-error only when that workflow sets continue-on-error to anything but false", () => {
   const postedWith = (onStep: unknown, onJob: unknown) => {
     const steps = workflowOf({ ci: { "continue-on-error": onJob, steps: [{ id: "CLM-ONE-001", run: "pnpm lint", "continue-on-error": onStep }] } });
     const record = stepRecordFrom({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
