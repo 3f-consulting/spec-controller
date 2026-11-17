@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -319,6 +320,52 @@ jobs:
         id: CLM-FIT-030
         if: always()
         run: pnpm docs:interface-mechanic
+
+      # Off a pull request, the pull request carrying the commit is the one that merged it; a commit pushed straight to main
+      # has none, so its pushed range is read instead.
+      - name: Every pull request Dependabot did not open adds a line to the changelog
+        id: CLM-FIT-082
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            pr=$PR_NUMBER
+          else
+            # GitHub links a merge commit to its pull request shortly after the merge, so an empty answer is read three times.
+            for attempt in 1 2 3; do
+              pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[0].number // empty')
+              if [ -n "$pr" ] || [ "$attempt" -eq 3 ]; then break; fi
+              sleep 10
+            done
+          fi
+          if [ -n "$pr" ]; then
+            author=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr" --jq .user.login)
+            if [ "$author" = "dependabot[bot]" ]; then
+              echo "Pull request #$pr was opened by Dependabot, whose updates add no line to CHANGELOG.md"
+              exit 0
+            fi
+            change="Pull request #$pr"
+            added=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$pr/files" --jq '.[] | select(.filename == "CHANGELOG.md") | .additions' | awk '{ s += $1 } END { print s + 0 }')
+          elif [ "$GITHUB_EVENT_NAME" = push ]; then
+            if ! git cat-file -e "$PUSH_BEFORE^{commit}"; then
+              echo "No pull request carries $GITHUB_SHA, and the pushed range from '$PUSH_BEFORE' cannot be read"
+              exit 1
+            fi
+            change="The push $PUSH_BEFORE..$GITHUB_SHA"
+            added=$(git diff --numstat "$PUSH_BEFORE" "$GITHUB_SHA" -- CHANGELOG.md | awk '{ s += $1 } END { print s + 0 }')
+          else
+            echo "No pull request carries $GITHUB_SHA, and a $GITHUB_EVENT_NAME run has no pushed range to read"
+            exit 1
+          fi
+          if [ "$added" -eq 0 ]; then
+            echo "$change adds no line to CHANGELOG.md: add one saying what it changes for someone using spec-controller"
+            exit 1
+          fi
+          echo "$change adds $added line(s) to CHANGELOG.md"
 
       - name: Dump this run's step record
         if: always()

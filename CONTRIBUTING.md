@@ -16,6 +16,8 @@ pnpm cucumber    # integration and end-to-end scenarios (Cucumber)
 
 Open a pull request against `main`. It merges when CI is green.
 
+A pull request adds a line to [`CHANGELOG.md`](CHANGELOG.md) saying what it changes for someone using spec-controller, unless Dependabot opened it.
+
 Name a test file for the behaviour it proves, and put the code of the scenario it proves in its test titles, in brackets: `[CLM-<FFF>-<NNN>]`.
 
 To see a scenario's tests fail before its code is written, run the *Red proof* workflow by hand on your branch, with the scenario's code and its evidence layer.

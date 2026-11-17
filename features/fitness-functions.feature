@@ -161,6 +161,14 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       when CI runs the fitness function over its declarations
       then they will resolve for every consumer the package says it serves
 
+  Rule: every change but a Dependabot update is told in the changelog
+
+    @fitness @CLM-FIT-082
+    Scenario: every pull request Dependabot did not open adds a line to the changelog
+      given a pull request was opened by anyone but Dependabot
+      when CI runs the fitness function over the pull request
+      then CHANGELOG.md will have gained a line
+
   Rule: this repository's workflows are valid and safe
 
     @fitness @CLM-FIT-020
