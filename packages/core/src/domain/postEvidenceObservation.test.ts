@@ -660,7 +660,7 @@ const passedCitingOne001: Readonly<Record<string, () => EvidenceObservation[]>> 
   fitness: () =>
     fitnessObservationsOf(
       workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] } } })),
-      [],
+      [{ key: "CLM-ONE-001", outcome: "success" }],
       { runners: {}, nonChecks: [], deferralTags: [] },
       {},
       shellAnswers,

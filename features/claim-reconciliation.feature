@@ -58,6 +58,7 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-056 | @CLM-ONE-999, on no executable claim    | no Evidence Obligation                        | two unit tests citing it                                             | two cites-unknown-claim           |
         | CLM-LDG-007 | the unnamed claim                       | no Evidence Obligation                        | a unit test citing no code                                           | one cites-no-claim                |
         | CLM-LDG-057 | the unnamed claim                       | no Evidence Obligation                        | a test file that never ran, citing no code                           | one never-ran                     |
+        | CLM-LDG-081 | the unnamed claim                       | no Evidence Obligation                        | a fitness function posted as not recorded, citing no code            | one cites-no-claim                |
 
   Rule: a claim is balanced only when every Quality Check Reconciliation on it is satisfied
 
@@ -108,6 +109,7 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
         | CLM-LDG-072 | a passing test and a failing test "b"                             | 2   | 1      | 1      | the test b |
         | CLM-LDG-074 | a passing fitness function whose step cannot fail its job         | 1   | 1      | 0      | no test    |
         | CLM-LDG-075 | a passing test in a.test.ts, and a.test.ts's tests that never ran | 1   | 1      | 0      | no test    |
+        | CLM-LDG-082 | a fitness function posted as not recorded                         | 0   | 0      | 0      | no test    |
 
   Rule: a Claim Reconciliation sorts its Quality Check Reconciliations, so two runs over the same evidence list them in the same order
 

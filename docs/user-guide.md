@@ -502,7 +502,7 @@ Name the runner in the `specController` block as `"unit": "rspec"` (see [Naming 
 
 A **fitness function** checks a whole-system property, such as complexity, mutation score, type soundness, vocabulary or suite run time.
 
-A fitness function is **converted** when its CI step carries its `@fitness` scenario's claim code as its `id:`. `balance` then credits its result to that scenario. A fitness function whose CI step has no claim code as its `id:` is **unconverted**. `balance` still reads its step, and its result lands on the unnamed claim.
+A fitness function is **converted** when its CI step carries its `@fitness` scenario's claim code as its `id:`. `balance` then credits its result, read from the step record, to that scenario. A fitness function whose CI step has no claim code as its `id:` is **unconverted**. Its result lands on the unnamed claim: read from the step record when its step has an `id:`, and posted as not recorded when it has none, since the step record names steps by their `id:`.
 
 ### Turn a fitness function into an evidence obligation
 
@@ -530,9 +530,10 @@ To convert a fitness function, you write two artefacts and no third. Neither is 
 
 **Neither artefact is derived from the other, on purpose.** So the two can disagree, and the run reports each disagreement as a fault:
 
-- A `@fitness` scenario whose claim code no CI step states reconciles as **missing**, and the run is out of balance. This is exactly what happens to a `@unit` scenario with no test.
-- A step that states a claim code no scenario carries posts to a **phantom claim**.
+- A `@fitness` scenario whose claim code no recorded CI step states reconciles as **missing**, and the run is out of balance. This is exactly what happens to a `@unit` scenario with no test.
+- A recorded step that states a claim code no scenario carries posts to a **phantom claim**.
 - A step that states no claim code posts to the **unnamed claim**.
+- A step the step record does not name, and every step when no step record is given, is posted as **not recorded**, citing no code. It posts to the unnamed claim, whatever its `id:`. It is never reported as passed, never credited to a scenario, and never posted to a phantom claim.
 
 **`balance` does not read `specController.fitnessChecks`.** The report names it in `## Errors in the inputs` as `configuration-unknown-key`. It does the same for a misspelling, and for any other key that this tool does not read (see [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped)).
 
@@ -815,7 +816,7 @@ The Markdown leaves out a kind that no claim asks for and no evidence answers, a
 - **The verdict**: **balanced** or **out-of-balance**.
 - **The reconciling items**: each **Quality Check Reconciliation** whose **outcome** is not `satisfied`. Each shows its kind of quality check and outcome, then where to look and what it said, or `—` for none. Where to look is the file or CI step that the evidence came from, and the test's name where it has one. What it said is the first line of its message, and every note that `balance` added.
 
-On the unnamed claim's row, each reconciling item is a group of its evidence, by kind of quality check, file and shared claim code. The group shows how many ran, passed and failed, and the name of each that failed. So you can tell which file to fix.
+On the unnamed claim's row, each reconciling item is a group of its evidence, by kind of quality check, file and shared claim code. The group shows how many ran, passed and failed, how many were not recorded where any were, and the name of each that failed. So you can tell which file to fix.
 
 The report quotes text that the inputs gave, such as a title or a path, as written, in a code span. So an odd character breaks no table.
 
@@ -835,13 +836,15 @@ Both reports name each outcome by its handle.
 | `duplicate-claim-code` | the claim's claim code is carried by another claim | see below |
 | `no-quality-check` | the claim asks for no quality check, and nothing cites it | |
 | `cites-unknown-claim` | the evidence cites a code no executable claim carries: a **phantom claim** | |
-| `cites-no-claim` | the evidence cites no single claim: the **unnamed claim** | this includes evidence citing no code, several codes, or a code several scenarios share |
+| `cites-no-claim` | the evidence cites no single claim: the **unnamed claim** | this includes evidence citing no code, several codes, or a code several scenarios share, and each step the step record does not name, posted as not recorded |
 
 Evidence that never ran lands on the unnamed claim when it names no claim, or names a claim code that several scenarios share. Evidence that never ran and names one scenario's claim code lands on that scenario's Claim Reconciliation. There it reads `never-ran`. The evidence obligation it would have answered reads `missing`, unless other evidence of its kind ran.
 
+A step the step record does not name lands on the unnamed claim as not recorded, whatever its `id:`. The evidence obligation it would have answered reads `missing`, unless other evidence of its kind credits it. Evidence that was not recorded is no failure, and does not make the run `unsound`.
+
 ### Passes that cannot fail
 
-The outcome to watch for is **cannot-fail**. It marks a fitness function that passes, but whose CI step or job sets `continue-on-error: true`, so its red might not fail the CI run. A green CI run then does not mean that the check passed. Given the run's step record (`--ci-steps`), the step's own outcome decides the row: a swallowed red reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
+The outcome to watch for is **cannot-fail**. It marks a fitness function that passes, but whose CI step or job sets `continue-on-error` to anything but `false`, so its red might not fail the CI run. A green CI run then does not mean that the check passed. The row is read from the run's step record (`--ci-steps`), and the step's own outcome decides it: a swallowed red reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
 
 ### What counts as a claim code
 
@@ -1061,7 +1064,7 @@ The tool writes the code under `CLM`. Its number is one past the highest number 
 
 **A `@unit` scenario reads `missing` while its test passes.** First check the square brackets around the claim code in the test title. See [Only these four forms are read](#only-these-four-forms-are-read).
 
-**A fitness function shows `missing` or `cannot-fail` when you didn't expect it.** `missing` means that no CI step carries that scenario's claim code as its `id:`. `package.json` scripts play no part in it. `cannot-fail` means that the step that cites it, or its job, runs under `continue-on-error: true`, and the step passed. Both are real findings, not tool errors.
+**A fitness function shows `missing` or `cannot-fail` when you didn't expect it.** `missing` means that no CI step the step record names carries that scenario's claim code as its `id:`. A step the step record does not name is posted as not recorded, to the unnamed claim, and credits nothing. `package.json` scripts play no part in it. `cannot-fail` means that the step that cites it, or its job, sets `continue-on-error` to anything but `false`, and the step passed. Both are real findings, not tool errors.
 
 **My first run fails with many checks that cite nothing.** This is expected, not a misconfiguration. Every step of the workflows that `--ci` names is a fitness function until something says otherwise. A fitness function that cites no claim posts to the unnamed claim, so `balance` exits `1`.
 

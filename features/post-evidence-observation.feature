@@ -12,7 +12,7 @@ Feature: Evidence Observations are posted, each to its claim
   function.
 
   Next, balance writes each Evidence Observation. It says which claim it cites, whether it
-  passed, failed or never ran, its kind of quality check, and where to look.
+  passed, failed, never ran or was not recorded, its kind of quality check, and where to look.
 
   Last, balance posts each one. One that cites one executable claim goes to that claim. One that
   cites a claim nobody wrote goes to a phantom claim. One that cites none, or could mean more than
@@ -109,9 +109,8 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-031 | Cucumber's evidence report          | the tag @CLM-ONE-001                                          | every step passed                                            | passed           | CLM-ONE-001   |
         | CLM-OBS-032 | Cucumber's evidence report          | the tag @CLM-ONE-001                                          | one step failed and the next was skipped                     | failed           | CLM-ONE-001   |
         | CLM-OBS-121 | Cucumber's evidence report          | the tag @CLM-ONE-001                                          | every step passed, after a Background and a hook that passed | passed           | CLM-ONE-001   |
-        | CLM-OBS-033 | the step record                     | the id CLM-ONE-001                                            | it succeeded                                                 | passed           | CLM-ONE-001   |
-        | CLM-OBS-034 | the step record                     | the id CLM-ONE-001                                            | it failed                                                    | failed           | CLM-ONE-001   |
-        | CLM-OBS-035 | the step record                     | the id CLM-ONE-001                                            | it failed, and continue-on-error hid it                      | failed           | CLM-ONE-001   |
+        | CLM-OBS-034 | the step record                     | the id CLM-ONE-001, on a step in ci.yml                       | it failed                                                    | failed           | CLM-ONE-001   |
+        | CLM-OBS-035 | the step record                     | the id CLM-ONE-001, on a step in ci.yml                       | it failed, and continue-on-error hid it                      | failed           | CLM-ONE-001   |
         | CLM-OBS-136 | the step record                     | the id audit, on a step in ci.yml running pnpm audit-the-tree | it succeeded                                                 | passed           | no claim code |
         | CLM-OBS-123 | the step record                     | the id audit, on a step in ci.yml running pnpm audit-the-tree | it failed                                                    | failed           | no claim code |
         | CLM-OBS-143 | the step record                     | the ids CLM-ONE-001 and CLM-ONE-002, on two steps in ci.yml   | each succeeded                                               | passed, for each | its own code  |
@@ -184,9 +183,9 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-051 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched two definitions                             | CLM-ONE-001   | the step "Given one adds one" |
         | CLM-OBS-052 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched no definition                               | CLM-ONE-001   | the step "Given one adds one" |
         | CLM-OBS-110 | Cucumber's evidence report        | a scenario tagged @CLM-ONE-001 had a step that failed, and the step "one adds one" that matched no definition | CLM-ONE-001   | the step "Given one adds one" |
-        | CLM-OBS-053 | the step record                   | a fitness function's step with the id CLM-ONE-001 was skipped                                                 | CLM-ONE-001   | that step                     |
+        | CLM-OBS-053 | the step record                   | a fitness function's step with the id CLM-ONE-001, in ci.yml, was skipped                                     | CLM-ONE-001   | that step                     |
         | CLM-OBS-137 | the step record                   | a fitness function's step with the id audit, in ci.yml running pnpm audit-the-tree, was skipped               | no claim code | that step                     |
-        | CLM-OBS-054 | the step record                   | a fitness function's step with the id CLM-ONE-001 had a status balance does not know                          | CLM-ONE-001   | that step                     |
+        | CLM-OBS-054 | the step record                   | a fitness function's step with the id CLM-ONE-001, in ci.yml, had a status balance does not know              | CLM-ONE-001   | that step                     |
 
     @unit @CLM-OBS-055
     Scenario: balance posts a Kotlin class whose setup failed as one failed Evidence Observation, citing no claim code
@@ -208,17 +207,31 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-135 | Cucumber's evidence report | the failed step's message "expected 2"    | "expected 2"                          |
 
     @unit
-    Scenario Outline: balance posts a fitness function known only from its workflow as passed, or as passed-on-error when its failure is allowed
-      given the only evidence of a fitness function with the id CLM-ONE-001 was its step in a workflow
-      and continue-on-error was <continue-on-error>
+    Scenario Outline: balance posts a fitness function's step the step record does not name as not recorded
+      given a workflow had a fitness function's step <identity>, and continue-on-error <continue-on-error>
+      and <step record>
+      when balance posts the evidence
+      then an Evidence Observation will be posted, as not recorded
+
+      Examples:
+        | clm         | identity                | continue-on-error | step record                                                        |
+        | CLM-OBS-056 | with the id CLM-ONE-001 | was not set       | no step record was given                                           |
+        | CLM-OBS-157 | with the id CLM-ONE-001 | was not set       | the step record had entries for other steps and none for that step |
+        | CLM-OBS-158 | with the id CLM-ONE-001 | was true on it    | no step record was given                                           |
+        | CLM-OBS-159 | with no id              | was not set       | a step record was given                                            |
+
+    @unit
+    Scenario Outline: balance posts a recorded success as passed-on-error only when its workflow sets continue-on-error to anything but false
+      given the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded
+      and ci.yml set continue-on-error on <where> to <value>
       when balance posts the evidence
       then an Evidence Observation will be posted, as <result>, citing CLM-ONE-001
 
       Examples:
-        | clm         | continue-on-error | result          |
-        | CLM-OBS-056 | not set           | passed          |
-        | CLM-OBS-057 | true on its step  | passed-on-error |
-        | CLM-OBS-058 | true on its job   | passed-on-error |
+        | clm         | where           | value | result          |
+        | CLM-OBS-057 | that step       | true  | passed-on-error |
+        | CLM-OBS-058 | that step's job | true  | passed-on-error |
+        | CLM-OBS-160 | that step       | false | passed          |
 
     @unit
     Scenario Outline: balance posts a recorded step that no workflow has only when its id is a claim code
@@ -280,6 +293,14 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-107 | two.feature     | CLM-TWO-001 |
         | CLM-OBS-138 | sub/one.feature | CLM-SUB-001 |
 
+    @unit @CLM-OBS-161
+    Scenario: balance posts a fitness function's step the step record does not name citing no claim code
+      given a workflow had a fitness function's step with the id CLM-ONE-001
+      and an executable claim carried CLM-ONE-001
+      and the step record had entries for other steps and none for that step
+      when balance posts the evidence
+      then an Evidence Observation will be posted, citing no claim code
+
   Rule: an Evidence Observation says where to look
 
     @unit
@@ -335,7 +356,6 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-084 | Vitest's evidence report          | no claim code in its title                                                | no claim code               |
         | CLM-OBS-085 | Vitest's evidence report          | [CLM-ABCDEF-001] in its title                                             | no claim code               |
         | CLM-OBS-086 | Vitest's evidence report          | CLM-ONE-999 in its title, with no brackets                                | no claim code               |
-        | CLM-OBS-087 | the step record                   | no id                                                                     | no claim code               |
         | CLM-OBS-105 | pytest's evidence report          | the clm property CLM-A-001, which is not a claim code                     | no claim code               |
         | CLM-OBS-128 | pytest's evidence report          | the ticket property CLM-ONE-002, not a clm property                       | no claim code               |
         | CLM-OBS-144 | Cucumber's evidence report        | a scenario of a feature file balance did not read, with no claim-code tag | no claim code               |

@@ -1,0 +1,10 @@
+{
+  "CLM-OBS-057": {
+    "class": "continue-on-error set on a step to anything but false",
+    "variants": [true, "${{ matrix.experimental }}"]
+  },
+  "CLM-OBS-058": {
+    "class": "continue-on-error set on a job to anything but false",
+    "variants": [true, "${{ matrix.experimental }}"]
+  }
+}

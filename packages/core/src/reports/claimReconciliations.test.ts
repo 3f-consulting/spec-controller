@@ -137,3 +137,9 @@ describe("the unnamed claim's fitness evidence shows as one group with no file",
     expect(cellUnder("Reconciling items", claimTable([], [["fitness", "passed", undefined, "ci.yml:build:Lint"]]))).toBe("fitness: cites-no-claim — 1 ran, 1 passed, 0 failed");
   });
 });
+
+describe("the unnamed claim's fitness group shows how many of its fitness functions were not recorded", () => {
+  it("[CLM-RPT-170] the step ci.yml:build:Lint posted as not recorded, citing no claim, shows as one fitness group with 0 ran, 0 passed, 0 failed and 1 not recorded", () => {
+    expect(cellUnder("Reconciling items", claimTable([], [["fitness", "not-recorded", undefined, "ci.yml:build:Lint"]]))).toBe("fitness: cites-no-claim — 0 ran, 0 passed, 0 failed, 1 not recorded");
+  });
+});

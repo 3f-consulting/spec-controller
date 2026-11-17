@@ -142,9 +142,9 @@ A **fitness function** is a whole-system property, such as complexity, mutation 
         run: eslint
 ```
 
-The step's outcome is the evidence. The check's exit code, on its own CI step, decides that outcome. The outcome reaches `balance` only through the CI run's step record, which you pass with `--ci-steps`. Only a CI run writes that record, so a local run has none. Without the record, `balance` reads the step from the workflow alone. It posts the step as passed, or as passed-on-error when the step or its job sets `continue-on-error: true`.
+The step's outcome is the evidence. The check's exit code, on its own CI step, decides that outcome. The outcome reaches `balance` only through the CI run's step record, which you pass with `--ci-steps`. Only a CI run writes that record, so a local run has none. A step the record does not name, and every step when no record is given, is posted as not recorded, citing no code. It is never reported as passed, never credited to a claim, and never posted to a phantom claim.
 
-If no step has the scenario's code, the scenario reads `missing`. A step that cites a code no scenario has posts to a **phantom claim**: a claim the evidence names and nobody wrote. See [Turn a fitness function into an evidence obligation](./user-guide.md#turn-a-fitness-function-into-an-evidence-obligation).
+If no recorded step has the scenario's code, the scenario reads `missing`. A recorded step that cites a code no scenario has posts to a **phantom claim**: a claim the evidence names and nobody wrote. See [Turn a fitness function into an evidence obligation](./user-guide.md#turn-a-fitness-function-into-an-evidence-obligation).
 
 ## Wire the run into CI
 
@@ -219,9 +219,9 @@ The [README's sample report](../README.md) shows every kind of Claim Reconciliat
 - **The verdict** of a Claim Reconciliation is **balanced** or **out-of-balance**.
 - **A reconciling item** is a Quality Check Reconciliation whose outcome is not `satisfied`, such as `missing` (no proof arrived) or `failing` (the proof failed). A row lists each reconciling item with its kind of quality check, where to look, and what was said.
 - **A phantom claim** receives evidence that cites a code no scenario has. The cause is usually a typo, or the code of a deleted scenario. Each unknown code gets its own phantom claim, named by that code. The sample has one, and its row reads `cites-unknown-claim`.
-- **The unnamed claim** receives evidence that cites no code, several codes, or a code several scenarios share.
+- **The unnamed claim** receives evidence that cites no code, several codes, or a code several scenarios share. It also receives each step the step record does not name, and its fitness group shows how many were not recorded.
 
-Watch for a **cannot-fail** check. A cannot-fail check is green, but its CI step or job sets `continue-on-error: true`, so its red might not fail the CI run. Given `--ci-steps`, the step's own outcome answers the row: a swallowed red reads `failing`, and a green still reads `cannot-fail`.
+Watch for a **cannot-fail** check. A cannot-fail check is green, but its CI step or job sets `continue-on-error` to anything but `false`, so its red might not fail the CI run. It is read from the step record that `--ci-steps` passes, and the step's own outcome answers the row: a swallowed red reads `failing`, and a green still reads `cannot-fail`.
 
 If your first run lists many checks that cite nothing, read the report's **Step account**. It names each workflow and job, how many steps were read, and what happened to each step.
 

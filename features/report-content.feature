@@ -306,3 +306,9 @@ Feature: Each report has the right structure, and the Markdown explains it
       given a run had the step ci.yml:build:Lint passing, citing no claim
       when its Markdown report is written
       then the unnamed claim will show one fitness group, with no file, 1 ran, 1 passed and 0 failed
+
+    @unit @CLM-RPT-170
+    Scenario: the unnamed claim's fitness group shows how many of its fitness functions were not recorded
+      given a run had the step ci.yml:build:Lint posted as not recorded, citing no claim
+      when its Markdown report is written
+      then the unnamed claim will show one fitness group, with 0 ran, 0 passed, 0 failed and 1 not recorded

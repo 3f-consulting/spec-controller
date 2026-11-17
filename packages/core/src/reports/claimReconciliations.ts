@@ -52,11 +52,11 @@ const itemOf = (reconciliation: QualityCheckReconciliation): string =>
   `${reconciliation.kind === undefined ? "" : `${reconciliation.kind}: `}${reconciliation.outcome}${whereToLook(reconciliation)}${saidBy(reconciliation)}`;
 
 // The unnamed claim's evidence, in groups by kind, file and shared code, each with its file and code where it has them,
-// then how many ran, passed and failed.
+// then how many ran, passed and failed, and how many were not recorded where any were.
 function groupItemsOf(claimReconciliation: ClaimReconciliation): string[] {
-  return evidenceGroupsOf(claimReconciliation).map(({ kind, file, claimCode, qualityCheckReconciliations, ran, passed, failed, failures }) => {
+  return evidenceGroupsOf(claimReconciliation).map(({ kind, file, claimCode, qualityCheckReconciliations, ran, passed, failed, notRecorded, failures }) => {
     const where = [...(file === undefined ? [] : [inCell(file)]), ...(claimCode === undefined ? [] : [writtenClaimCode(claimCode)])];
-    return `${kind}: ${qualityCheckReconciliations[0]!.outcome}${where.length === 0 ? "" : ` (${where.join(", ")})`} — ${coreText("group-counts", { ran, passed, failed })}${failures.length === 0 ? "" : `: ${failures.map(inCell).join(", ")}`}`;
+    return `${kind}: ${qualityCheckReconciliations[0]!.outcome}${where.length === 0 ? "" : ` (${where.join(", ")})`} — ${notRecorded === 0 ? coreText("group-counts", { ran, passed, failed }) : coreText("group-counts-not-recorded", { ran, passed, failed, notRecorded })}${failures.length === 0 ? "" : `: ${failures.map(inCell).join(", ")}`}`;
   });
 }
 

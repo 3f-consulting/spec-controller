@@ -5,9 +5,9 @@ import { stepRecordFrom } from "../inputs/stepRecord.js";
 import shellVariants from "../inputs/shell.variants.json" with { type: "json" };
 import workflowsVariants from "../inputs/workflows.variants.json" with { type: "json" };
 import { workflowStepsFrom } from "../inputs/workflows.js";
-import { claimReconciliationsOf } from "./claimReconciliation.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
+import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 // A step named in notChecks, if any; a unit layer that has no runner is set to null.
 const configurationNaming = (notCheck: string | undefined): TargetConfiguration => ({
@@ -91,11 +91,10 @@ describe("a step using a plumbing action is plumbing", () => {
 
 describe("balance reads a result as passed or failed, citing the code it names", () => {
   it.each([
-    ["CLM-OBS-033", "CLM-ONE-001", "pnpm lint", "it succeeded", { outcome: "success", conclusion: "success" }, false, "passed", [ONE_001]],
-    ["CLM-OBS-034", "CLM-ONE-001", "pnpm lint", "it failed", { outcome: "failure", conclusion: "failure" }, false, "failed", [ONE_001]],
+    ["CLM-OBS-034", "CLM-ONE-001", "pnpm lint", "it failed", { outcome: "failure", conclusion: "failure" }, undefined, "failed", [ONE_001]],
     ["CLM-OBS-035", "CLM-ONE-001", "pnpm lint", "it failed, and continue-on-error hid it", { outcome: "failure", conclusion: "success" }, true, "failed", [ONE_001]],
-    ["CLM-OBS-136", "audit", "pnpm audit-the-tree", "it succeeded", { outcome: "success", conclusion: "success" }, false, "passed", []],
-    ["CLM-OBS-123", "audit", "pnpm audit-the-tree", "it failed", { outcome: "failure", conclusion: "failure" }, false, "failed", []],
+    ["CLM-OBS-136", "audit", "pnpm audit-the-tree", "it succeeded", { outcome: "success", conclusion: "success" }, undefined, "passed", []],
+    ["CLM-OBS-123", "audit", "pnpm audit-the-tree", "it failed", { outcome: "failure", conclusion: "failure" }, undefined, "failed", []],
   ] as const)("[%s] the step record had a result with the id %s, on a step running %s, and %s: it is read as its result, citing the code it has", (_clm, id, run, _how, entry, continueOnError, result, cites) => {
     const steps = workflowOf({ ci: { steps: [{ id, run, "continue-on-error": continueOnError }] } });
 
@@ -117,10 +116,10 @@ describe("balance reads a result as passed or failed, citing the code it names",
 
 describe("balance posts what could not run as never ran", () => {
   it.each([
-    ["CLM-OBS-053", "CLM-ONE-001", "was skipped", { name: "Lint", run: "pnpm lint" }, "skipped", [ONE_001], "ci.yml:ci:Lint"],
-    ["CLM-OBS-054", "CLM-ONE-001", "had a status balance does not know", { name: "Lint", run: "pnpm lint" }, "neutral", [ONE_001], "ci.yml:ci:Lint"],
-    ["CLM-OBS-137", "audit", "was skipped", { run: "pnpm audit-the-tree" }, "skipped", [], "ci.yml:ci:pnpm audit-the-tree"],
-  ] as const)("[%s] the step record said a fitness function's step with the id %s %s: it is posted as never-ran, citing the code it has and naming that step", (_clm, id, _what, step, outcome, cites, place) => {
+    ["CLM-OBS-053", "CLM-ONE-001", "in ci.yml, was skipped", { name: "Lint", run: "pnpm lint" }, "skipped", [ONE_001], "ci.yml:ci:Lint"],
+    ["CLM-OBS-054", "CLM-ONE-001", "in ci.yml, had a status balance does not know", { name: "Lint", run: "pnpm lint" }, "neutral", [ONE_001], "ci.yml:ci:Lint"],
+    ["CLM-OBS-137", "audit", "in ci.yml running pnpm audit-the-tree, was skipped", { run: "pnpm audit-the-tree" }, "skipped", [], "ci.yml:ci:pnpm audit-the-tree"],
+  ] as const)("[%s] the step record said a fitness function's step with the id %s, %s: it is posted as never-ran, citing the code it has and naming that step", (_clm, id, _what, step, outcome, cites, place) => {
     const steps = workflowOf({ ci: { steps: [{ id, ...step }] } });
 
     expect(
@@ -129,15 +128,46 @@ describe("balance posts what could not run as never ran", () => {
   });
 });
 
-describe("balance posts a fitness function known only from its workflow as passed, or as passed-on-error when its failure is allowed", () => {
-  it.each([
-    ["CLM-OBS-056", "not set", undefined, undefined, "passed"],
-    ["CLM-OBS-057", "true on its step", true, undefined, "passed-on-error"],
-    ["CLM-OBS-058", "true on its job", undefined, true, "passed-on-error"],
-  ] as const)("[%s] the only evidence of a fitness function with the id CLM-ONE-001 was its step, with continue-on-error %s: it is posted as its result, citing CLM-ONE-001", (_clm, _set, onStep, onJob, result) => {
-    const steps = workflowOf({ ci: { "continue-on-error": onJob, steps: [{ id: "CLM-ONE-001", run: "pnpm lint", "continue-on-error": onStep }] } });
+describe("balance posts a fitness function's step the step record does not name as not recorded", () => {
+  const plumbing = [{ id: "checkout", uses: "actions/checkout@v4" }, { id: "node", uses: "actions/setup-node@v4" }];
+  const succeeded = { outcome: "success", conclusion: "success" };
 
-    expect(fitnessObservationsOf(steps, [], NO_SETTING, {}, shellAnswers).map(({ result, cites }) => ({ result, cites }))).toEqual([{ result, cites: [ONE_001] }]);
+  it.each([
+    ["CLM-OBS-056", "with the id CLM-ONE-001", "was not set", "no step record was given", { id: "CLM-ONE-001", run: "pnpm lint" }, {}],
+    ["CLM-OBS-157", "with the id CLM-ONE-001", "was not set", "the step record had entries for other steps and none for that step", { id: "CLM-ONE-001", run: "pnpm lint" }, { checkout: succeeded, node: succeeded }],
+    ["CLM-OBS-158", "with the id CLM-ONE-001", "was true on it", "no step record was given", { id: "CLM-ONE-001", run: "pnpm lint", "continue-on-error": true }, {}],
+    ["CLM-OBS-159", "with no id", "was not set", "a step record was given", { run: "pnpm lint" }, { checkout: succeeded }],
+  ] as const)("[%s] a workflow had a fitness function's step %s, and continue-on-error %s, and %s: it is posted as not recorded", (_clm, _identity, _set, _record, step, record) => {
+    const steps = workflowOf({ ci: { steps: [...plumbing, step] } });
+
+    expect(fitnessObservationsOf(steps, stepRecordFrom(record), NO_SETTING, {}, shellAnswers).map(({ result }) => result)).toEqual(["not-recorded"]);
+  });
+
+  // Posting reads no claim, so the executable claim needs no input here.
+  it("[CLM-OBS-161] a workflow had a fitness function's step with the id CLM-ONE-001, an executable claim carried CLM-ONE-001, and the step record had entries for other steps and none for that step: it is posted citing no claim code", () => {
+    const steps = workflowOf({ ci: { steps: [...plumbing, { id: "CLM-ONE-001", run: "pnpm lint" }] } });
+
+    expect(fitnessObservationsOf(steps, stepRecordFrom({ checkout: succeeded, node: succeeded }), NO_SETTING, {}, shellAnswers).map(({ cites }) => cites)).toEqual([[]]);
+  });
+});
+
+describe("balance posts a recorded success as passed-on-error only when its workflow sets continue-on-error to anything but false", () => {
+  const postedWith = (onStep: unknown, onJob: unknown) => {
+    const steps = workflowOf({ ci: { "continue-on-error": onJob, steps: [{ id: "CLM-ONE-001", run: "pnpm lint", "continue-on-error": onStep }] } });
+    const record = stepRecordFrom({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
+    return fitnessObservationsOf(steps, record, NO_SETTING, {}, shellAnswers).map(({ result, cites }) => ({ result, cites }));
+  };
+
+  it.each(postEvidenceObservationVariants["CLM-OBS-057"].variants)("[CLM-OBS-057] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
+    expect(postedWith(value, undefined)).toEqual([{ result: "passed-on-error", cites: [ONE_001] }]);
+  });
+
+  it.each(postEvidenceObservationVariants["CLM-OBS-058"].variants)("[CLM-OBS-058] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step's job to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
+    expect(postedWith(undefined, value)).toEqual([{ result: "passed-on-error", cites: [ONE_001] }]);
+  });
+
+  it("[CLM-OBS-160] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step to false: it is posted as passed, citing CLM-ONE-001", () => {
+    expect(postedWith(false, undefined)).toEqual([{ result: "passed", cites: [ONE_001] }]);
   });
 });
 
@@ -160,16 +190,6 @@ describe("a recorded step no workflow has, and a step whose id is not a claim co
     const observations = fitnessObservationsOf(steps, stepRecordFrom({ audit: { outcome: "success", conclusion: "success" } }), NO_SETTING, {}, shellAnswers);
 
     expect(observations.map(({ kind, cites }) => ({ kind, cites }))).toEqual([{ kind: "fitness", cites: [] }]);
-  });
-
-  it("[CLM-OBS-087] the step record had a passing fitness function with no id: it is posted to the unnamed claim, naming no claim code", () => {
-    const steps = workflowOf({ ci: { steps: [{ run: "pnpm lint" }] } });
-
-    const reconciliations = claimReconciliationsOf([], fitnessObservationsOf(steps, [], NO_SETTING, {}, shellAnswers));
-
-    expect(reconciliations.map(({ claim, qualityCheckReconciliations }) => ({ claim, cites: qualityCheckReconciliations.map(({ observation }) => observation?.cites) }))).toEqual([
-      { claim: {}, cites: [[]] },
-    ]);
   });
 });
 

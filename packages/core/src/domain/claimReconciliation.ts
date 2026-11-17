@@ -70,14 +70,18 @@ export interface EvidenceGroup {
   readonly ran: number;
   readonly passed: number;
   readonly failed: number;
+  readonly notRecorded: number;
   readonly failures: readonly string[];
 }
 
 export const isExecutable = (claim: ExecutableClaim | PhantomClaim | UnnamedClaim): claim is ExecutableClaim => "obligations" in claim;
 
-type RanObservation = EvidenceObservation & { readonly result: Exclude<EvidenceObservation["result"], "never-ran"> };
+type RanObservation = EvidenceObservation & { readonly result: Exclude<EvidenceObservation["result"], "never-ran" | "not-recorded"> };
 
-const ran = (observation: EvidenceObservation): observation is RanObservation => observation.result !== "never-ran";
+// A step the record does not name did not run, as far as balance knows, and is no sign that anything failed to.
+const ran = (observation: EvidenceObservation): observation is RanObservation => observation.result !== "never-ran" && observation.result !== "not-recorded";
+
+const isNeverRan = ({ result }: EvidenceObservation): boolean => result === "never-ran";
 
 const BOTH_SIDES_OUTCOME: Readonly<Record<RanObservation["result"], BothSides["outcome"]>> = {
   passed: "satisfied",
@@ -104,7 +108,7 @@ function executableReconciliations({ claimCode, obligations }: ExecutableClaim, 
   const unasked = observations
     .filter((observation) => ran(observation) && !obligations.some(({ kind }) => kind === observation.kind))
     .map((observation): ObservationOnly => ({ outcome: "not-asked-for", kind: observation.kind, observation }));
-  return [...obligations.flatMap((obligation) => answered(obligation, observations)), ...unasked, ...observations.filter((observation) => !ran(observation)).map(neverRan)];
+  return [...obligations.flatMap((obligation) => answered(obligation, observations)), ...unasked, ...observations.filter(isNeverRan).map(neverRan)];
 }
 
 // A claim code as one key, for sorting, grouping and filing alike.
@@ -140,7 +144,7 @@ export function claimReconciliationOf(claim: ExecutableClaim, observations: read
 // Evidence on the phantom claim or the unnamed claim cites a claim no executable claim can take.
 export function citedClaimReconciliationOf(claim: PhantomClaim | UnnamedClaim, observations: readonly EvidenceObservation[]): ClaimReconciliation {
   const outcome = claim.claimCode === undefined ? "cites-no-claim" : "cites-unknown-claim";
-  const qualityCheckReconciliations = observations.map((observation): ObservationOnly => (ran(observation) ? { outcome, kind: observation.kind, observation } : neverRan(observation))).sort(inOrder);
+  const qualityCheckReconciliations = observations.map((observation): ObservationOnly => (isNeverRan(observation) ? neverRan(observation) : { outcome, kind: observation.kind, observation })).sort(inOrder);
   return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
 }
 
@@ -186,6 +190,7 @@ function groupOf(kind: QualityCheckKind, file: { readonly file?: string }, claim
     ran: observations.filter(ran).length,
     passed: observations.filter(({ result }) => result === "passed" || result === "passed-on-error").length,
     failed: failed.length,
+    notRecorded: observations.filter(({ result }) => result === "not-recorded").length,
     failures: failed.map(({ name, place }) => name ?? place),
   };
 }

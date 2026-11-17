@@ -63,6 +63,7 @@ describe("a Quality Check Reconciliation's outcome follows from the sides it has
     ["CLM-LDG-056", "phantom", [], [["unit", "passed"], ["unit", "passed"]], ["cites-unknown-claim", "cites-unknown-claim"]],
     ["CLM-LDG-007", "unnamed", [], [["unit", "passed"]], ["cites-no-claim"]],
     ["CLM-LDG-057", "unnamed", [], [["unit", "never-ran"]], ["never-ran"]],
+    ["CLM-LDG-081", "unnamed", [], [["fitness", "not-recorded"]], ["cites-no-claim"]],
     ["CLM-LDG-078", "with no code", [], [], ["no-claim-code"]],
   ])("[%s] balance gives each Quality Check Reconciliation on a claim %s its outcome from its two sides", (_clm, read, kinds, observations, outcomes) => {
     const filed = observations.map((observation) => observationOf(read, observation));
@@ -233,6 +234,7 @@ describe("balance counts a group's results and names those that failed", () => {
     ["CLM-LDG-072", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "failed", "a.test.ts", [], "b"]], 2, 1, 1, ["b"]],
     ["CLM-LDG-074", [["fitness", "passed-on-error", "ci / Lint", [], "Lint"]], 1, 1, 0, []],
     ["CLM-LDG-075", [["unit", "passed", "a.test.ts", [], "a"], ["unit", "never-ran", "a.test.ts", [], "b"]], 1, 1, 0, []],
+    ["CLM-LDG-082", [["fitness", "not-recorded", "ci / Lint", [], "Lint"]], 0, 0, 0, []],
   ])("[%s] a group on the unnamed claim counts what ran, passed and failed, naming the failures", (_clm, evidence, ran, passed, failed, failures) => {
     expect(groupsOn(evidence).map((group) => ({ ran: group.ran, passed: group.passed, failed: group.failed, failures: group.failures }))).toEqual([
       { ran, passed, failed, failures },

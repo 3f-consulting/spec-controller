@@ -4,7 +4,8 @@ import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligatio
 import { shownFromTarget } from "./targetPath.js";
 import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
 
-export type Result = "passed" | "passed-on-error" | "failed" | "never-ran";
+// not-recorded is a step a workflow has that the step record does not name: balance has no word on how it went.
+export type Result = "passed" | "passed-on-error" | "failed" | "never-ran" | "not-recorded";
 
 // place is a file or a CI step; name is a test's title where it has one. A report joins them to say where to look.
 // notes are what balance adds to what the evidence said, when it adds anything.
@@ -275,16 +276,19 @@ export function stepDispositionOf(
 // The step record says how a step went by its outcome, read before continue-on-error turns a failure into success.
 const resultFrom = (outcome: string): Result => (outcome === "success" ? "passed" : outcome === "failure" ? "failed" : "never-ran");
 
-const allowsFailure = ({ continueOnError, jobContinueOnError }: WorkflowStepAsWritten): boolean => continueOnError === true || jobContinueOnError === true;
+// continue-on-error allows failure when it is set to anything but false: an expression is decided by the run, so it may allow it.
+const allows = (continueOnError: unknown): boolean => continueOnError !== undefined && continueOnError !== false;
+
+const allowsFailure = ({ continueOnError, jobContinueOnError }: WorkflowStepAsWritten): boolean => allows(continueOnError) || allows(jobContinueOnError);
 
 const placeOf = (step: WorkflowStepAsWritten): string => `${step.workflow}:${step.job}:${stepIdentityOf(step)}`;
 
 function observationOf(step: WorkflowStepAsWritten, steps: readonly WorkflowStepAsWritten[], entry: StepRecordEntryAsWritten | undefined): EvidenceObservation {
   const claimCode = claimCodeFrom(step.id);
-  const result = entry === undefined ? "passed" : resultFrom(entry.outcome);
+  const result = entry === undefined ? "not-recorded" : resultFrom(entry.outcome);
   const jobsRecorded = new Set(steps.filter(({ id }) => entry !== undefined && id === entry.key).map(({ workflow, job }) => `${workflow}:${job}`));
   return {
-    cites: claimCode === undefined ? [] : [claimCode],
+    cites: claimCode === undefined || result === "not-recorded" ? [] : [claimCode],
     result: result === "passed" && allowsFailure(step) ? "passed-on-error" : result,
     kind: "fitness",
     place: jobsRecorded.size > 1 ? entry!.key : placeOf(step)
