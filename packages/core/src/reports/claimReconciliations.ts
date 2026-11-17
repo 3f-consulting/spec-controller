@@ -42,11 +42,9 @@ function nameOf({ claim }: ClaimReconciliation, sharedCodes: ReadonlySet<string>
 const whereToLook = ({ observation }: QualityCheckReconciliation): string =>
   observation === undefined ? "" : ` (${[observation.place, ...(observation.name === undefined ? [] : [observation.name])].map(inCell).join(": ")})`;
 
-// What the evidence said: its message's first line, then every note balance added.
-const saidBy = ({ observation }: QualityCheckReconciliation): string => {
-  const said = [...(observation?.message === undefined ? [] : [firstLineOf(observation.message)]), ...(observation?.notes ?? [])];
-  return said.length === 0 ? "" : ` — ${said.map(inCell).join(", ")}`;
-};
+// What the evidence said: its message's first line.
+const saidBy = ({ observation }: QualityCheckReconciliation): string =>
+  observation?.message === undefined ? "" : ` — ${inCell(firstLineOf(observation.message))}`;
 
 const itemOf = (reconciliation: QualityCheckReconciliation): string =>
   `${reconciliation.kind === undefined ? "" : `${reconciliation.kind}: `}${reconciliation.outcome}${whereToLook(reconciliation)}${saidBy(reconciliation)}`;

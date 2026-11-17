@@ -190,7 +190,7 @@ The report uses these exact terms:
 - A *Claim Reconciliation* is the evidence reconciled for one claim. It is one row of the table. A claim is usually a scenario. The Claim Reconciliation sets the evidence the claim asks for, if any (its *Evidence Obligations*), against the results reported for it (its *Evidence Observations*). Each pairing is a *Quality Check Reconciliation*, with its own outcome. The row lists each one that is not `satisfied` as a reconciling item.
 - A *phantom claim* comes from a test that names a scenario which does not exist. The usual cause is a typo or a deleted scenario.
 - The *unnamed claim* takes any test that names no scenario at all, several scenarios, or a code that several scenarios share.
-- A *cannot-fail* check is one that passes, but whose CI step or job sets `continue-on-error`. So its red might not fail the CI run.
+- A *cannot-fail* check is one that passes, but whose red might not fail the CI run: its CI step or job sets `continue-on-error`, or `balance` did not read its workflow, so cannot tell whether it does.
 - The *run verdict* is `balanced`, `out-of-balance`, or `not-reconciled`. A `not-reconciled` verdict gives the reason the run could not be relied on: `unsound`, `claim-code-errors` or `nothing-to-reconcile`.
 
 [`docs/ubiquitous-language.md`](./docs/ubiquitous-language.md) has the rest.

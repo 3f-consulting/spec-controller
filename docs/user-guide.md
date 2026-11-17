@@ -534,6 +534,7 @@ To convert a fitness function, you write two artefacts and no third. Neither is 
 - A recorded step that states a claim code no scenario carries posts to a **phantom claim**.
 - A step that states no claim code posts to the **unnamed claim**.
 - A step the step record does not name, and every step when no step record is given, is posted as **not recorded**, citing no code. It posts to the unnamed claim, whatever its `id:`. It is never reported as passed, never credited to a scenario, and never posted to a phantom claim.
+- A step the step record names and no workflow `balance` read has is posted with the result its record gives, placed at the `id:` the step record names it by: a failure as failed, a skipped step as never ran, and a success as passed-on-error, since without the workflow `balance` cannot read whether failure was allowed. It cites that `id:` when it is a claim code, and no code otherwise.
 
 **`balance` does not read `specController.fitnessChecks`.** The report names it in `## Errors in the inputs` as `configuration-unknown-key`. It does the same for a misspelling, and for any other key that this tool does not read (see [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped)).
 
@@ -829,7 +830,7 @@ Both reports name each outcome by its handle.
 | `satisfied` | the evidence asked for arrived, and passed | |
 | `missing` | no evidence that ran answers the obligation | |
 | `failing` | the evidence asked for arrived, and failed | a swallowed red also reads `failing`, given `--ci-steps` |
-| `cannot-fail` | the evidence passed, but its CI step or its job sets `continue-on-error`, so its red might not fail the build | see below |
+| `cannot-fail` | the evidence passed, but its CI step or its job sets `continue-on-error`, or `balance` cannot read whether it does, so its red might not fail the build | see below |
 | `not-asked-for` | the evidence is of a kind of quality check its claim did not ask for | see [When a row reads `not-asked-for`](#when-a-row-reads-not-asked-for) |
 | `never-ran` | the evidence never reached its assertions | the run is not reconciled, as `unsound`, and the evidence is listed under `## Run integrity` too |
 | `no-claim-code` | the claim has no claim code for evidence to cite | |
@@ -844,7 +845,7 @@ A step the step record does not name lands on the unnamed claim as not recorded,
 
 ### Passes that cannot fail
 
-The outcome to watch for is **cannot-fail**. It marks a fitness function that passes, but whose CI step or job sets `continue-on-error` to anything but `false`, so its red might not fail the CI run. A green CI run then does not mean that the check passed. The row is read from the run's step record (`--ci-steps`), and the step's own outcome decides it: a swallowed red reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
+The outcome to watch for is **cannot-fail**. It marks a fitness function that passes, but whose CI step or job sets `continue-on-error` to anything but `false`, or whose step no workflow `balance` read has, so its red might not fail the CI run. A green CI run then does not mean that the check passed. The row is read from the run's step record (`--ci-steps`), and the step's own outcome decides it: a swallowed red reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
 
 ### What counts as a claim code
 
@@ -1064,7 +1065,7 @@ The tool writes the code under `CLM`. Its number is one past the highest number 
 
 **A `@unit` scenario reads `missing` while its test passes.** First check the square brackets around the claim code in the test title. See [Only these four forms are read](#only-these-four-forms-are-read).
 
-**A fitness function shows `missing` or `cannot-fail` when you didn't expect it.** `missing` means that no CI step the step record names carries that scenario's claim code as its `id:`. A step the step record does not name is posted as not recorded, to the unnamed claim, and credits nothing. `package.json` scripts play no part in it. `cannot-fail` means that the step that cites it, or its job, sets `continue-on-error` to anything but `false`, and the step passed. Both are real findings, not tool errors.
+**A fitness function shows `missing` or `cannot-fail` when you didn't expect it.** `missing` means that no CI step the step record names carries that scenario's claim code as its `id:`. A step the step record does not name is posted as not recorded, to the unnamed claim, and credits nothing. `package.json` scripts play no part in it. `cannot-fail` means that the step that cites it, or its job, sets `continue-on-error` to anything but `false`, or no workflow `balance` read has that step, and the step passed. Both are real findings, not tool errors.
 
 **My first run fails with many checks that cite nothing.** This is expected, not a misconfiguration. Every step of the workflows that `--ci` names is a fitness function until something says otherwise. A fitness function that cites no claim posts to the unnamed claim, so `balance` exits `1`.
 

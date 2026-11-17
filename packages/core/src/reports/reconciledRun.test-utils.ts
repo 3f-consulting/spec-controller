@@ -24,7 +24,6 @@ const unitTestOf = ([result, code]: readonly [Result, string?]): EvidenceObserva
   kind: "unit",
   place: "one.test.ts",
   name: "a test",
-  notes: [],
 });
 
 // The run read and reconciled as balance does, from one.feature, its feature code ONE.
@@ -47,14 +46,13 @@ export function reconciled({ scenarios, unitTests, configurationErrors = [], ste
 // A feature file as literals: its name, its feature code, and each scenario's tags and title.
 export type FileHas = readonly [string, string, readonly (readonly [string, string])[]];
 
-// Evidence as literals: its kind, result, the code it cites if any, where it is and its name, what it said and the notes
-// balance added, when given.
-export type EvidenceHas = readonly [EvidenceObservation["kind"], Result, string?, string?, string?, string?, ...string[]];
+// Evidence as literals: its kind, result, the code it cites if any, where it is and its name, and what it said, when given.
+export type EvidenceHas = readonly [EvidenceObservation["kind"], Result, string?, string?, string?, string?];
 
 // A fitness function is a CI step, which has no name.
-const evidenceOf = ([kind, result, code, place = "one.test.ts", name = "a test", message, ...notes]: EvidenceHas): EvidenceObservation => {
+const evidenceOf = ([kind, result, code, place = "one.test.ts", name = "a test", message]: EvidenceHas): EvidenceObservation => {
   const { name: _testName, ...unitTest } = unitTestOf([result, code]);
-  return { ...unitTest, kind, place, ...(kind === "fitness" ? {} : { name }), ...(message === undefined ? {} : { message }), notes };
+  return { ...unitTest, kind, place, ...(kind === "fitness" ? {} : { name }), ...(message === undefined ? {} : { message }) };
 };
 
 // A run of the feature files and evidence given, read and reconciled as balance does.

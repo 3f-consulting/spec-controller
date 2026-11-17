@@ -234,16 +234,18 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-160 | that step       | false | passed          |
 
     @unit
-    Scenario Outline: balance posts a recorded step that no workflow has only when its id is a claim code
-      given the step record had an entry for <id> that was skipped
+    Scenario Outline: balance posts a recorded step that no workflow has with the result its step record gives
+      given the step record had an entry for <id> that <outcome>
       and no workflow balance read had a step with the id <id>
       when balance posts the evidence
-      then <posted>
+      then a fitness Evidence Observation will be posted, as <result>, citing <cited>, placed at <id>
 
       Examples:
-        | clm         | id          | posted                                                                                                                      |
-        | CLM-OBS-096 | CLM-ONE-001 | one never-ran fitness Evidence Observation will be posted, citing CLM-ONE-001, placed at CLM-ONE-001, with the note skipped |
-        | CLM-OBS-148 | audit       | nothing will be posted                                                                                                      |
+        | clm         | id          | outcome     | result          | cited         |
+        | CLM-OBS-096 | CLM-ONE-001 | was skipped | never-ran       | CLM-ONE-001   |
+        | CLM-OBS-162 | CLM-ONE-001 | succeeded   | passed-on-error | CLM-ONE-001   |
+        | CLM-OBS-163 | CLM-ONE-001 | failed      | failed          | CLM-ONE-001   |
+        | CLM-OBS-148 | audit       | succeeded   | passed-on-error | no claim code |
 
     @unit @CLM-OBS-097
     Scenario: balance posts a fitness function whose id is not a claim code once, citing no claim code

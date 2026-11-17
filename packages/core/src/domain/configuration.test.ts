@@ -110,7 +110,7 @@ describe("the run will still reach its run verdict, using the configuration sett
       deferralTags: configuration.deferralTags,
       strict: false,
     });
-    const passingUnitTest = { cites: [{ featureCode: "ONE", number: "001" }], result: "passed", kind: "unit", place: "one.test.ts", notes: [] } as const;
+    const passingUnitTest = { cites: [{ featureCode: "ONE", number: "001" }], result: "passed", kind: "unit", place: "one.test.ts" } as const;
 
     const runVerdict = runVerdictOf(claimReconciliationsOf(claims, [passingUnitTest, ...fitnessObservationsOf(steps, [], configuration, {}, shellAnswers)]), []);
 

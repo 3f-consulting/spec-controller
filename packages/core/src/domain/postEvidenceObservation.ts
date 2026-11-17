@@ -8,7 +8,6 @@ import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran" | "not-recorded";
 
 // place is a file or a CI step; name is a test's title where it has one. A report joins them to say where to look.
-// notes are what balance adds to what the evidence said, when it adds anything.
 export interface EvidenceObservation {
   readonly cites: readonly ClaimCode[];
   readonly result: Result;
@@ -16,7 +15,6 @@ export interface EvidenceObservation {
   readonly place: string;
   readonly name?: string;
   readonly message?: string;
-  readonly notes?: readonly string[];
 }
 
 export interface PhantomClaim {
@@ -295,14 +293,13 @@ function observationOf(step: WorkflowStepAsWritten, steps: readonly WorkflowStep
   };
 }
 
-// A recorded entry no step carries never ran where the workflows say; it is placed at its code, with the record's word.
-const unheldObservationOf = ({ key, outcome }: StepRecordEntryAsWritten, claimCode: ClaimCode): EvidenceObservation => ({
-  cites: [claimCode],
-  result: "never-ran",
-  kind: "fitness",
-  place: key,
-  notes: [outcome],
-});
+// A recorded entry no step carries is posted as its record says, at its id. Without the step, continue-on-error cannot be
+// read, so a success may have hidden a failure: it fails closed, as passed-on-error.
+const unheldObservationOf = ({ key, outcome }: StepRecordEntryAsWritten): EvidenceObservation => {
+  const claimCode = claimCodeFrom(key);
+  const result = resultFrom(outcome);
+  return { cites: claimCode === undefined ? [] : [claimCode], result: result === "passed" ? "passed-on-error" : result, kind: "fitness", place: key };
+};
 
 export function fitnessObservationsOf(
   steps: readonly WorkflowStepAsWritten[],
@@ -316,9 +313,6 @@ export function fitnessObservationsOf(
   const postedOnce = posting.filter((step, at) => entryFor(step) === undefined || posting.findIndex(({ id }) => id === step.id) === at);
   return [
     ...postedOnce.map((step) => observationOf(step, posting, entryFor(step))),
-    ...record.flatMap((entry) => {
-      const claimCode = claimCodeFrom(entry.key);
-      return claimCode === undefined || steps.some(({ id }) => id === entry.key) ? [] : [unheldObservationOf(entry, claimCode)];
-    }),
+    ...record.filter(({ key }) => !steps.some(({ id }) => id === key)).map(unheldObservationOf),
   ];
 }

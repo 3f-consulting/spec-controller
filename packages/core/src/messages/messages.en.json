@@ -87,7 +87,7 @@
   "summary-evidence-observations-key": "the results of tests and fitness functions reported.",
   "outcome-satisfied-key": "an Evidence Obligation answered by an Evidence Observation that passed.",
   "outcome-failing-key": "an Evidence Obligation answered by an Evidence Observation that failed.",
-  "outcome-cannot-fail-key": "an Evidence Obligation answered by an Evidence Observation that passed in a CI step or job that sets continue-on-error, so its red might not fail the build.",
+  "outcome-cannot-fail-key": "an Evidence Obligation answered by an Evidence Observation that passed in a CI step or job that sets continue-on-error, or whose continue-on-error balance cannot read, so its red might not fail the build.",
   "outcome-missing-key": "an Evidence Obligation no Evidence Observation that ran answers.",
   "outcome-no-claim-code-key": "an Evidence Obligation of a scenario with no claim code, which no evidence can cite.",
   "outcome-duplicate-claim-code-key": "an Evidence Obligation of a scenario whose claim code another scenario shares, so no evidence can answer it.",

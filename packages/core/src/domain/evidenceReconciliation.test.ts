@@ -18,7 +18,6 @@ const observationOf = ([kind, result, code]: Observed): EvidenceObservation => (
   kind,
   place: "one.test.ts",
   name: "a test",
-  notes: [],
 });
 
 // one.feature, its feature code ONE, with a scenario under each set of tags given, exactly as given.

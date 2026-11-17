@@ -34,7 +34,6 @@ const observationOf = (read: ClaimRead, [kind, result]: ObservationRead): Eviden
   result,
   kind,
   place: "one.test.ts",
-  notes: [],
 });
 
 describe("a Quality Check Reconciliation's outcome follows from the sides it has", () => {
@@ -104,7 +103,6 @@ const placedObservation = ([kind, result, place, cites, named]: Placed): Evidenc
   result,
   kind,
   place,
-  notes: [],
   ...(named === "" ? {} : { message: named, ...(kind === "fitness" ? {} : { name: named }) }),
 });
 
@@ -115,7 +113,7 @@ describe("a deferred scenario's code is read by no executable claim", () => {
   it("[CLM-LDG-055] @CLM-ONE-002, on a deferred scenario, with no Evidence Obligation and a unit test citing it, is out of balance with one cites-unknown-claim", () => {
     const deferred = featureAsWrittenFrom("one.feature", "@ONE\nFeature: one\n\n  @wip @unit @CLM-ONE-002\n  Scenario: a scenario\n    Given a step\n");
     const [reconciliation] = claimReconciliationsOf(executableClaimsOf([deferred], { deferralTags: [], strict: false }), [
-      { cites: [{ featureCode: "ONE", number: "002" }], result: "passed", kind: "unit", place: "one.test.ts", name: "a test", notes: [] },
+      { cites: [{ featureCode: "ONE", number: "002" }], result: "passed", kind: "unit", place: "one.test.ts", name: "a test" },
     ]);
 
     expect({ claim: reconciliation?.claim, outcomes: reconciliation?.qualityCheckReconciliations.map(({ outcome }) => outcome) }).toEqual({

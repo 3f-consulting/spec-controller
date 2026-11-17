@@ -172,17 +172,15 @@ describe("balance posts a recorded success as passed-on-error only when its work
 });
 
 describe("a recorded step no workflow has, and a step whose id is not a claim code", () => {
-  it("[CLM-OBS-096] balance posts a recorded step that no workflow has at its claim code, as never ran, with the note the record gave", () => {
-    const steps = workflowOf({ ci: { steps: [{ id: "CLM-ONE-002", run: "pnpm lint" }] } });
-    const observations = fitnessObservationsOf(steps, stepRecordFrom({ "CLM-ONE-001": { outcome: "skipped", conclusion: "skipped" } }), NO_SETTING, {}, shellAnswers);
+  it.each([
+    ["CLM-OBS-096", "CLM-ONE-001", "was skipped", "skipped", "never-ran", [ONE_001]],
+    ["CLM-OBS-162", "CLM-ONE-001", "succeeded", "success", "passed-on-error", [ONE_001]],
+    ["CLM-OBS-163", "CLM-ONE-001", "failed", "failure", "failed", [ONE_001]],
+    ["CLM-OBS-148", "audit", "succeeded", "success", "passed-on-error", []],
+  ] as const)("[%s] the step record had an entry for %s that %s, and no workflow had a step with that id: a fitness Evidence Observation is posted, as its result, citing the code it has, placed at its id", (_clm, id, _how, outcome, result, cites) => {
+    const steps = workflowOf({ ci: { steps: [{ id: "checkout", uses: "actions/checkout@v4" }] } });
 
-    expect(observations.filter(({ result }) => result === "never-ran")).toEqual([{ cites: [ONE_001], result: "never-ran", kind: "fitness", place: "CLM-ONE-001", notes: ["skipped"] }]);
-  });
-
-  it("[CLM-OBS-148] balance posts nothing for a recorded step that no workflow has, when its id is not a claim code", () => {
-    const steps = workflowOf({ ci: { steps: [{ id: "lint", uses: "actions/checkout@v4" }] } });
-
-    expect(fitnessObservationsOf(steps, stepRecordFrom({ audit: { outcome: "skipped", conclusion: "skipped" } }), NO_SETTING, {}, shellAnswers)).toEqual([]);
+    expect(fitnessObservationsOf(steps, stepRecordFrom({ [id]: { outcome, conclusion: outcome } }), NO_SETTING, {}, shellAnswers)).toEqual([{ kind: "fitness", result, cites, place: id }]);
   });
 
   it("[CLM-OBS-097] balance posts a fitness function whose id is not a claim code once, citing no claim code", () => {
