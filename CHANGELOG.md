@@ -8,3 +8,4 @@ Each line says what a change means for someone using spec-controller.
 - balance posts a step-record entry that no workflow has with the result its record gives: a failure as failed, a skipped step as never ran, and a success as passed-on-error, since without the workflow it cannot read whether failure was allowed. A report now gives such a step its result alone, and the JSON report's Evidence Observations have no `notes` field.
 - What balance does is unchanged: the specification's scenario on continue-on-error is now worded for a step in a workflow balance read, the only steps whose setting balance can read.
 - Each published package names its source repository, 3f-consulting/spec-controller, on npm; the link opens once the repository is public.
+- No change to the packages: the first release from spec-controller's new repository.
