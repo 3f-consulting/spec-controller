@@ -32,6 +32,33 @@ A review checks spec-controller against [`docs/ubiquitous-language.md`](docs/ubi
 
 How a release goes out is [`docs/releasing.md`](docs/releasing.md).
 
+## Who maintains spec-controller, and how a change is reviewed
+
+spec-controller is maintained by Steven Thomas at 3F Consulting. It is written with Claude Code, by a maintainer who does not write TypeScript, so every change below is an agent's, and this is how it is checked before it merges.
+
+1. **The maintainer decides what is built.** Each change starts as a scenario, or a set of them, that the maintainer reads and endorses before any code is written.
+2. **The agent proves each scenario red, then green.** Each scenario's tests are committed failing first, then the code that makes them pass. CI on the pull request must be green to merge.
+3. **The agent reviews its own diff,** and fixes or records what that review finds.
+4. **A second agent session reviews the delivery** against the scenarios the maintainer endorsed. It reads the merged code, not the agent's report of it, and takes anything that departs from what was endorsed back to the maintainer.
+
+Branch names, pull-request titles and commit titles carry an ID in the form `[KEY-123]`. It refers to the maintainers' private tracker, which links the work to its ticket. You will not be able to open it.
+
+The repository follows the discipline it asks of you. Its own CI reconciles its own scenarios with `balance` on every run. It also gates on:
+
+- every production source file being in a mutation scope (a scheduled sweep runs the mutation tests, not each CI run);
+- cognitive complexity, function length and CRAP;
+- duplication and unused code;
+- dependency boundaries;
+- published-package checks (publint, attw);
+- workflow linting and security (actionlint, zizmor);
+- code-level security, by this repository's own Semgrep rules;
+- a ceiling on test code against production code;
+- a line in [`CHANGELOG.md`](./CHANGELOG.md) for every pull request Dependabot did not open.
+
+**Why these gates:** each fitness function this repository runs in CI is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature). Its Rule says what it checks and why. Some of these gates are meant to take over the routine feedback a technical lead gives in code review. A reviewer's attention can then go to design and intent. The rest guard the method itself.
+
+The agent has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. This is the first limit in [*What double entry buys*](./docs/how-it-works.md#what-double-entry-buys-a-change-becomes-deliberate), in practice: a change made in both places balances, and review is what judges it.
+
 ## Report a problem
 
 Open an issue at https://github.com/3f-consulting/spec-controller/issues. Say what you ran, what you expected and what happened. If `balance` produced a report, attach it.
