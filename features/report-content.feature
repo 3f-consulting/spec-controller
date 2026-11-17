@@ -62,33 +62,6 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-052 | step account              |
         | CLM-RPT-006 | out of balance by feature |
 
-  Rule: the Markdown report shows each name it quotes in code, so no character in it changes the table
-
-    @unit
-    Scenario Outline: a name will show in code, and every row will have the same columns
-      given a run reported the name <name>
-      when its Markdown report is written
-      then its table will show the name in code as <shown in code as>, and every row will have the same columns
-
-      Examples:
-        | clm         | name               | shown in code as |
-        | CLM-RPT-084 | a\|b               | a\|b             |
-        | CLM-RPT-107 | a, a line break, b | "a\nb"           |
-
-  Rule: a Markdown report shortens a long message to its first line
-
-    @unit
-    Scenario Outline: a section showing a never-ran test's message quotes its first line
-      given a test that never ran had <message>
-      when its Markdown report is written
-      then <where> will quote <what>
-
-      Examples:
-        | clm         | message                                             | where                     | what                                       |
-        | CLM-RPT-085 | a message of three lines                            | the Claim Reconciliations | the message's first line                   |
-        | CLM-RPT-146 | a message of three lines                            | run integrity             | the message's first line                   |
-        | CLM-RPT-169 | a message whose first line is blank, then two lines | the Claim Reconciliations | the message's first line that is not blank |
-
   Rule: the provenance shows each input the run read on its own line
 
     @unit @CLM-RPT-115
@@ -312,3 +285,30 @@ Feature: Each report has the right structure, and the Markdown explains it
       given a run had the step ci.yml:build:Lint posted as not recorded, citing no claim
       when its Markdown report is written
       then the unnamed claim will show one fitness group, with 0 ran, 0 passed, 0 failed and 1 not recorded
+
+  Rule: the Markdown report shows each name it quotes in code, so no character in it changes the table
+
+    @unit
+    Scenario Outline: a name will show in code, and every row will have the same columns
+      given a run reported the name <name>
+      when its Markdown report is written
+      then its table will show the name in code as <shown in code as>, and every row will have the same columns
+
+      Examples:
+        | clm         | name               | shown in code as |
+        | CLM-RPT-084 | a\|b               | a\|b             |
+        | CLM-RPT-107 | a, a line break, b | "a\nb"           |
+
+  Rule: a Markdown report shortens a long message to its first line
+
+    @unit
+    Scenario Outline: a section showing a never-ran test's message quotes its first line
+      given a test that never ran had <message>
+      when its Markdown report is written
+      then <where> will quote <what>
+
+      Examples:
+        | clm         | message                                             | where                     | what                                       |
+        | CLM-RPT-085 | a message of three lines                            | the Claim Reconciliations | the message's first line                   |
+        | CLM-RPT-146 | a message of three lines                            | run integrity             | the message's first line                   |
+        | CLM-RPT-169 | a message whose first line is blank, then two lines | the Claim Reconciliations | the message's first line that is not blank |

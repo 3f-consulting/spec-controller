@@ -2,24 +2,27 @@
 Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its Evidence Observations
 
   balance sets a claim's Evidence Obligations against its Evidence Observations, matching them
-  on their kind of quality check. Each Quality Check Reconciliation's outcome follows from which
-  sides it has. With both, the evidence was satisfied, failing, or cannot-fail when it passed where
-  it could not have failed. With an Evidence Obligation alone, it is missing, or the claim has a
-  duplicate-claim-code. A claim with no code has no-claim-code, on the Evidence Obligation side,
-  whether or not it asks for a quality check. With an Evidence Observation alone, it is
-  not-asked-for, cites-unknown-claim, cites-no-claim, or never-ran. With neither, the claim has
-  no-quality-check.
+  on their kind of quality check. balance works from both sides, so every claim, of whichever
+  kind, has a Claim Reconciliation.
 
-  balance works from both sides, the Evidence Obligations and the Evidence Observations, so every
-  claim, of whichever kind, has a Claim Reconciliation.
+  A Quality Check Reconciliation's outcome follows from the sides it has:
+  - With both, it is satisfied, failing, or cannot-fail when it passed where it could not have
+    failed.
+  - With an Evidence Obligation alone, it is missing or duplicate-claim-code.
+  - With an Evidence Observation alone, it is not-asked-for, cites-unknown-claim, cites-no-claim
+    or never-ran.
+  - With neither, it is no-quality-check.
+  A claim with no claim code reads no-claim-code on the Evidence Obligation side, whether or not
+  it asks for a quality check.
 
   A claim's verdict has two values. It is balanced when every Quality Check Reconciliation on it
   is satisfied. Otherwise it is out of balance, and it lists every reconciling item, each with its
   outcome.
 
   Evidence no single executable claim can take is posted to the unnamed claim. balance groups it
-  there by kind of quality check, file and shared claim code, and counts each group. Each Claim
-  Reconciliation lists its Quality Check Reconciliations in one fixed order.
+  there by kind of quality check, file and shared claim code, and counts each group's results.
+
+  Each Claim Reconciliation lists its Quality Check Reconciliations in one fixed order.
 
   Rule: a Quality Check Reconciliation's outcome follows from the sides it has
 
