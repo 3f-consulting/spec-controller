@@ -51,7 +51,7 @@ If your project uses pnpm, install pnpm yourself (`npm install -g pnpm`). Node 2
 | A Jest JSON report, written by `jest --json --outputFile=<path>` | runtime test evidence | `--jest` |
 | A JUnit XML report from any other runner, such as Go's, written by `gotestsum --junitfile <path>` | runtime test evidence | `--junit` |
 | An RSpec JSON report, written by `rspec --format json --out <path>` | runtime test evidence | `--rspec` |
-| Your CI run's own step record: the `toJSON(steps)` dump your pipeline writes | evidence for every converted fitness function (see [Wiring into CI](#wiring-into-ci)) | `--ci-steps` |
+| Your CI run's own step record: the `toJSON(steps)` dump your pipeline writes | evidence for every fitness function whose step's `id:` is its claim code (see [Wiring into CI](#wiring-into-ci)) | `--ci-steps` |
 | Your CI config (`ci.yml`) | the scope discovery ranges over | `--ci` |
 | `package.json` | its `scripts`, which runner recognition follows, and your configuration | `--package-json` |
 
@@ -138,7 +138,7 @@ The row means that a test cites a scenario, and the scenario asks for no evidenc
 
 A scenario's tag line says what the scenario needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, and both answer `CLM-<FFF>-<NNN>`. A kind-of-quality-check tag says which kind of run answers the evidence obligation. The test, not the tag, decides whether that run really is end-to-end.
 
-A feature file has a header code on the line above `Feature:`, then its Rules and scenarios. Each scenario carries its own claim code:
+A feature file declares its feature code on the line above `Feature:`, then its Rules and scenarios. Each scenario carries its own claim code:
 
 ```gherkin
 @<FFF>
@@ -653,7 +653,7 @@ None of these codes refuses the run. Each is a line in `## Errors in the inputs`
 
 ### A whole workflow
 
-This workflow has one job, for a project with Vitest tests and one converted fitness function. The sections below explain each part. `mkdir -p reports` makes the folder that the report is written to, so the step does not depend on the test runner to create it.
+This workflow has one job, for a project with Vitest tests and one fitness function whose step's `id:` is its claim code. The sections below explain each part. `mkdir -p reports` makes the folder that the report is written to, so the step does not depend on the test runner to create it.
 
 ```yaml
 name: ci
@@ -875,8 +875,8 @@ When Cucumber runs an Outline with a `clm` column, Cucumber's own result for eac
 | Handle | The fault | The fix |
 | --- | --- | --- |
 | `foreign-claim-code` | a scenario's code names a feature its file does not carry, e.g. `@CLM-<FFF>-<NNN>` in a file headed with a code other than `@<FFF>` | re-code the scenario for its file, or move it to the file whose header carries the code its id names, when exactly one does; the line names the files with that feature code, or none |
-| `no-feature-code` | a feature file carries no header code while its scenarios carry claim codes (a header longer than five characters is no header code) | give the file a header code, and code its scenarios for it |
-| `duplicate-feature-code` | two feature files carry one header code | give one of them a code of its own |
+| `no-feature-code` | a feature file declares no feature code while its scenarios carry claim codes (a code longer than five characters is no feature code) | give the file a feature code, and code its scenarios for it |
+| `duplicate-feature-code` | two feature files declare one feature code | give one of them a code of its own |
 | `several-claim-codes` | one scenario carries more than one distinct claim code, so it opens no account under any of them, and a test citing one of them cites a code no scenario carries | give the scenario one code |
 | `claim-code-beside-clm-column` | an Outline carries a claim code, on its own tag line or an Examples block's, and has a `clm` column, so it opens no account under its code or any row's | take the code off the Outline, or drop its `clm` column |
 
@@ -981,7 +981,7 @@ Run `spec-controller --help`, or `-h`, for the top-level summary of the commands
 | `--cucumber <report.json>` | A Cucumber JSON report: runtime test evidence. |
 | `--ci <workflow.yml\|dir>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where a check step's `id:` supplies the claim code that its result cites. |
 | `--package-json <path>` | The target's `package.json`: its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see [Configuration](#configuration--the-speccontroller-block)). A fitness function is named by its `@fitness` scenario and by the CI step whose `id:` is that scenario's claim code; no manifest key names one. Defaults to `package.json` in the working directory. |
-| `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did: the `toJSON(steps)` dump, which is the evidence for converted fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. |
+| `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did: the `toJSON(steps)` dump, which is the evidence for fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance: the project this run reconciled. |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See [`--format`](#--format--routing-the-output). |
@@ -1075,7 +1075,7 @@ The tool writes the code under `CLM`. Its number is one past the highest number 
 
 **A step I know is my test suite is reported as a check.** Runner recognition did not reach it. `balance` recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script that the step invokes. It does not reach these: a suite run through a `uses:` action, one started by a launcher not on the list (`tox`, `nox`), one run as a project script (`hatch run test`), one with an option between a launcher and the runner (`uv run --frozen pytest`), one behind a wrapper not on the list (`nice`, or `timeout` with no duration), or one whose output is piped into another command (`pnpm test | tee test.log`). Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
 
-**The run verdict reads *not reconciled, for claim code errors*.** One of these holds: the corpus files a claim code under the wrong feature file, or in a file with no header code; two files share one header code; a scenario carries more than one claim code; or an Outline carries a claim code beside a `clm` column. `## Errors in the inputs` names each error by its handle and the files it is about. A misfiled code leaves every Claim Reconciliation reconciling, so the rest of the report is as it would be. A scenario that carries several claim codes, or an Outline that carries a claim code beside a `clm` column, has no Claim Reconciliation under any of them. The run exits `3` until the codes are filed correctly. See [Claim code errors](#claim-code-errors).
+**The run verdict reads *not reconciled, for claim code errors*.** One of these holds: the corpus files a claim code under the wrong feature file, or in a file that declares no feature code; two files declare one feature code; a scenario carries more than one claim code; or an Outline carries a claim code beside a `clm` column. `## Errors in the inputs` names each error by its handle and the files it is about. A misfiled code leaves every Claim Reconciliation reconciling, so the rest of the report is as it would be. A scenario that carries several claim codes, or an Outline that carries a claim code beside a `clm` column, has no Claim Reconciliation under any of them. The run exits `3` until the codes are filed correctly. See [Claim code errors](#claim-code-errors).
 
 **A row reads `duplicate-claim-code`.** Two scenarios carry that claim code. Each has a Claim Reconciliation of its own, and its row is named by the code and its feature file. Give one of them a code of its own. While two scenarios share the code, the run exits `1`.
 

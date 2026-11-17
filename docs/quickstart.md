@@ -99,7 +99,7 @@ See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--run
 
 A scenario's tag line says what it needs proved. `@CLM-<FFF>-<NNN> @unit @e2e` asks for a unit test and an end-to-end run, and both must answer `CLM-<FFF>-<NNN>`. A `@unit` scenario needs no step definitions. Its title and its tags are the whole scenario.
 
-`CLM-<FFF>-<NNN>` is the scenario's **claim code**. `<FFF>` is a feature code of two to five uppercase letters or digits. `<NNN>` is a number. Each feature file has a header code, `@<FFF>`, and the claim codes of its scenarios must match it. A misfiled code leaves the run not reconciled. [Claim code errors](./user-guide.md#claim-code-errors) explains the header code and the five claim code errors.
+`CLM-<FFF>-<NNN>` is the scenario's **claim code**. `<FFF>` is a feature code of two to five uppercase letters or digits. `<NNN>` is a number. Each feature file declares its feature code, `@<FFF>`, on the line above `Feature:`, and the claim codes of its scenarios must match it. A misfiled code leaves the run not reconciled. [Claim code errors](./user-guide.md#claim-code-errors) explains the feature code and the five claim code errors.
 
 Ask the tool for each code. Do not invent one. The tool knows a feature code only when a feature file in `features/`, at the top of the repository, is headed with that code. So in a project with no feature files yet, run `allocate` with `--new` to get your first code. After that, `allocate <FFF>` gives the next one:
 

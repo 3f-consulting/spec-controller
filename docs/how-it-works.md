@@ -25,7 +25,7 @@ Every outcome except `satisfied` turns the build red:
 | Tag a scenario `@wip` while its tests still cite it | the scenario is put off, so it asks for nothing, and its tests' evidence lands on a phantom claim (`cites-unknown-claim`) |
 | Write a scenario's tags but no claim code | `no-claim-code`: nothing can cite it |
 | Remove the tags naming a scenario's kinds of quality check while nothing cites it | `no-quality-check`: it asks for nothing, and nothing answers |
-| Leave a test file that fails before any of its tests runs | `never-ran`, on the unnamed claim: its proof never ran, and the run is `not-reconciled`, as `unsound` |
+| Leave a test file that fails before any of its tests runs | `never-ran`, on the unnamed claim: its evidence never ran, and the run is `not-reconciled`, as `unsound` |
 
 To remove a behaviour cleanly, you change both the scenario and its evidence. That change shows in the diff, and review judges it there.
 
