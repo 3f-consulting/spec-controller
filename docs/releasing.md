@@ -56,7 +56,9 @@ Two jobs then run on what was published:
   reds unless the `latest` dist-tag is the version just published. It waits up to `LATEST_WAIT_S`
   for the registry to serve it.
 - The `tag` job creates `v<version>` on the commit that was built. It also creates a GitHub release
-  for that tag, with notes generated from the merged pull requests. It is a separate job so that the
+  for that tag. Its notes are the lines [`CHANGELOG.md`](../CHANGELOG.md) gained since the previous
+  `v*` tag, each as written, or "Dependencies updated." when it gained none. Nothing from a pull
+  request's title reaches them. It is a separate job so that the
   only token that can write to the repository never shares a runner with the build. It starts no
   other workflow. **The tag records a release; it never causes one**, and nothing listens for tags.
 

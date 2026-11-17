@@ -163,8 +163,33 @@ jobs:
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/v$VERSION" -f sha="$HEAD_SHA"
 
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The previous release is the newest v* tag below this one, its own tag set aside, so a merge that published nothing has its line carried into the next release.
+      - name: Write the release notes from the changelog
+        shell: bash
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          earlier="$(git tag -l 'v*' --merged "$HEAD_SHA" | { grep -vx "v$VERSION" || true; })"
+          if [ -n "$earlier" ]; then
+            prev="$(git describe --tags --abbrev=0 --match 'v*' --exclude "v$VERSION" "$HEAD_SHA")"
+          else
+            prev="$(git hash-object -t tree /dev/null)"
+          fi
+          git diff --unified=0 --no-color "$prev" "$HEAD_SHA" -- CHANGELOG.md \
+            | awk '/^\+\+\+ /{ next } /^\+/{ line = substr($0, 2); if (line ~ /[^[:space:]]/) print line }' > "$RUNNER_TEMP/notes.md"
+          if [ ! -s "$RUNNER_TEMP/notes.md" ]; then echo "Dependencies updated." > "$RUNNER_TEMP/notes.md"; fi
+          echo "notes for v$VERSION, from $prev:"
+          cat "$RUNNER_TEMP/notes.md"
+
       - name: Publish the release notes for the tag
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.release.outputs.version }}
-        run: gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --title "v$VERSION"
+        run: gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag --notes-file "$RUNNER_TEMP/notes.md" --title "v$VERSION"
