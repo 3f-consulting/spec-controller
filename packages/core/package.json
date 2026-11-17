@@ -45,5 +45,10 @@
         "default": "./dist/index.js"
       }
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3f-consulting/spec-controller.git",
+    "directory": "packages/core"
   }
 }
