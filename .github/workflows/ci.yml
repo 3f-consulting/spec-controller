@@ -367,6 +367,70 @@ jobs:
           fi
           echo "$change adds $added line(s) to CHANGELOG.md"
 
+      # The schema is the one the Cucumber step's build generated. A push to main is read against the commit it moved main from; a pull request, against the commit on its base branch it grew from; a dispatched run, against main.
+      - name: A change to the JSON report's schema raises the schema's version
+        id: CLM-FIT-083
+        if: always()
+        shell: bash
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+          BASE_BRANCH: ${{ github.base_ref || 'main' }}
+          BUILT: packages/spec-controller/dist/spec-reconciliation.schema.json
+          TRACKED: schema/spec-reconciliation.schema.json
+        run: |
+          version_of() { jq -e '.definitions.JsonReport.properties.schemaVersion.const | select(type == "number" and . == floor)'; }
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            base=$PUSH_BEFORE
+          elif ! base=$(git merge-base "origin/$BASE_BRANCH" HEAD); then
+            echo "The commit this change grew from on $BASE_BRANCH cannot be found"
+            exit 1
+          elif [ "$base" = "$(git rev-parse HEAD)" ] && ! base=$(git rev-parse --verify --quiet HEAD^); then
+            echo "$BASE_BRANCH's own commit has no parent to compare with"
+            exit 1
+          fi
+          if ! git cat-file -e "$base^{commit}"; then
+            echo "The base commit '$base' cannot be read"
+            exit 1
+          fi
+          if ! built=$(jq -S . "$BUILT"); then
+            echo "No schema could be read at $BUILT: the build did not generate one"
+            exit 1
+          fi
+          if ! version=$(version_of <<< "$built"); then
+            echo "The built schema names no version"
+            exit 1
+          fi
+          if ! tracked=$(jq -S . "$TRACKED") || [ "$built" != "$tracked" ]; then
+            echo "$TRACKED is not the schema the build generates: copy $BUILT over it"
+            exit 1
+          fi
+          if ! git cat-file -e "$base:$TRACKED" 2>/dev/null; then
+            if [ "$version" -eq 1 ]; then
+              echo "The change adds $TRACKED, which $base did not have, at version 1"
+              exit 0
+            fi
+            echo "The change adds $TRACKED, which $base did not have, so its version must be 1, not $version"
+            exit 1
+          fi
+          if ! before=$(git show "$base:$TRACKED" | jq -S .); then
+            echo "$TRACKED at $base is not readable JSON"
+            exit 1
+          fi
+          if [ "$built" = "$before" ]; then
+            echo "The schema is unchanged since $base, at version $version"
+            exit 0
+          fi
+          if ! before_version=$(version_of <<< "$before"); then
+            echo "$TRACKED at $base names no version"
+            exit 1
+          fi
+          if [ "$version" -gt "$before_version" ]; then
+            echo "The schema changed since $base, and its version rose from $before_version to $version"
+            exit 0
+          fi
+          echo "The schema changed since $base, but its version, $version, is not above $before_version: raise schemaVersion"
+          exit 1
+
       - name: Dump this run's step record
         if: always()
         env:

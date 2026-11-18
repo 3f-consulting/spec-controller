@@ -161,6 +161,12 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       when CI runs the fitness function over its declarations
       then they will resolve for every consumer the package says it serves
 
+    @fitness @CLM-FIT-083
+    Scenario: a change to the JSON report's schema raises the schema's version
+      given a change altered the JSON report's schema
+      when CI runs the fitness function over the change
+      then the change will have raised the schema's version
+
   Rule: every change but a Dependabot update is told in the changelog
 
     @fitness @CLM-FIT-082

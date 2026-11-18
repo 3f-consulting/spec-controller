@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { jsonReportOf } from "./json.js";
@@ -25,5 +26,16 @@ describe("the JSON report keeps every part and every count, empty or zero", () =
       failing: byKind.find(({ kind }) => kind === "unit")?.byOutcome.failing,
       performance: byKind.find(({ kind }) => kind === "performance")?.evidenceObligations,
     }).toEqual({ kinds: new Set(KINDS), outcomes: [OUTCOMES, OUTCOMES, OUTCOMES, OUTCOMES, OUTCOMES, OUTCOMES], failing: 0, performance: 0 });
+  });
+});
+
+describe("each report has the structure it promises", () => {
+  it("[CLM-RPT-171] the JSON report names the version of the schema the package publishes", () => {
+    const run = reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]] });
+    const schema = JSON.parse(readFileSync(new URL("../../../../schema/spec-reconciliation.schema.json", import.meta.url), "utf8")) as {
+      definitions: { JsonReport: { properties: { schemaVersion: { const: unknown } } } };
+    };
+
+    expect((JSON.parse(jsonReportOf(run)) as { schemaVersion?: unknown }).schemaVersion).toBe(schema.definitions.JsonReport.properties.schemaVersion.const);
   });
 });
