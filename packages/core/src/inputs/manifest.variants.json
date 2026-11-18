@@ -7,6 +7,14 @@
     "class": "a notChecks entry with a line break before it or after it",
     "variants": ["a line break before it", "a line break after it"]
   },
+  "CLM-CFG-004": {
+    "class": "a layer's runner entry that does not name its runner and the file names of its reports",
+    "variants": ["an entry with no runner", "an entry with no reports", "an entry whose reports are not a list", "an entry whose reports hold something other than a file name"]
+  },
+  "CLM-CFG-025": {
+    "class": "a report name in a runner entry that matches the file name of no evidence report the run read",
+    "variants": ["a report name with a folder in it"]
+  },
   "CLM-CFG-018": {
     "class": "a runners setting that is not an object",
     "variants": ["null", "a number", "a string", "a list"]

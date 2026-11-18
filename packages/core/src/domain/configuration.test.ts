@@ -17,6 +17,12 @@ describe("balance takes each configuration setting it can use as the runner, non
     ["CLM-CFG-008", '"unit": "vitest" under runners', { runners: { unit: "vitest" } }, { ...NONE, runners: { unit: "vitest" } }],
     ["CLM-CFG-009", '"performance": null under runners', { runners: { performance: null } }, { ...NONE, runners: { performance: null } }],
     [
+      "CLM-CFG-024",
+      '"e2e": { "runner": "playwright", "reports": ["playwright.xml"] } under runners',
+      { runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } },
+      { ...NONE, runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } },
+    ],
+    [
       "CLM-CFG-011",
       '"nightly:build.yml:ci:Install dependencies" in notChecks',
       { notChecks: ["nightly:build.yml:ci:Install dependencies"] },
@@ -27,7 +33,14 @@ describe("balance takes each configuration setting it can use as the runner, non
     ["CLM-CFG-014", '" deferred " in deferralTags', { deferralTags: [" deferred "] }, { ...NONE, deferralTags: ["deferred"] }],
     ["CLM-CFG-006", "nothing", undefined, NONE],
   ] as const)("[%s] a specController block with %s is taken as what it sets", (_clm, _setting, block, configuration) => {
-    expect(targetConfigurationFrom(block === undefined ? {} : { specController: block }, [])).toEqual({ configuration, errors: [] });
+    expect(targetConfigurationFrom(block === undefined ? {} : { specController: block }, [], ["playwright.xml"])).toEqual({ configuration, errors: [] });
+  });
+
+  it('[CLM-CFG-024] a specController block with "e2e": { "runner": "playwright", "reports": ["playwright.xml"] } under runners takes playwright as the e2e layer\'s runner, so a step running it is a runner', () => {
+    const { configuration } = targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } } }, [], ["playwright.xml"]);
+    const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: playwright test\n");
+
+    expect(stepDispositionOf(steps[0]!, configuration, {}, shellAnswers)).toBe("runner");
   });
 
   it('[CLM-CFG-010] a specController block with "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies, takes that step as a non-check', () => {
@@ -36,7 +49,7 @@ describe("balance takes each configuration setting it can use as the runner, non
       { workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false },
     ];
 
-    expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yml:ci:Install dependencies"] } }, ciRead)).toEqual({
+    expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yml:ci:Install dependencies"] } }, ciRead, [])).toEqual({
       configuration: { ...NONE, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }] },
       errors: [],
     });
@@ -45,7 +58,7 @@ describe("balance takes each configuration setting it can use as the runner, non
   it('[CLM-CFG-010] a specController block with "ci.yaml:ci:Install dependencies" in notChecks, with ci.yaml read, whose job ci had the step Install dependencies, takes that step as a non-check', () => {
     const ciRead = [{ workflow: "ci.yaml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
-    expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yaml:ci:Install dependencies"] } }, ciRead)).toEqual({
+    expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yaml:ci:Install dependencies"] } }, ciRead, [])).toEqual({
       configuration: { ...NONE, nonChecks: [{ workflow: "ci.yaml", job: "ci", step: "Install dependencies" }] },
       errors: [],
     });
@@ -54,7 +67,7 @@ describe("balance takes each configuration setting it can use as the runner, non
   it('[CLM-CFG-023] a specController block with "nightly.yml:ci:Install dependencies" in notChecks, with only ci.yml read, takes that step as a non-check', () => {
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
-    expect(targetConfigurationFrom({ specController: { notChecks: ["nightly.yml:ci:Install dependencies"] } }, ciRead)).toEqual({
+    expect(targetConfigurationFrom({ specController: { notChecks: ["nightly.yml:ci:Install dependencies"] } }, ciRead, [])).toEqual({
       configuration: { ...NONE, nonChecks: [{ workflow: "nightly.yml", job: "ci", step: "Install dependencies" }] },
       errors: [],
     });
@@ -84,7 +97,45 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
   ] as const)("[%s] a specController block with %s leaves it out, finding its error naming the setting", (_clm, _setting, block, error) => {
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
-    expect(targetConfigurationFrom({ specController: block }, ciRead)).toEqual({ configuration: NONE, errors: [error] });
+    expect(targetConfigurationFrom({ specController: block }, ciRead, [])).toEqual({ configuration: NONE, errors: [error] });
+  });
+
+  // Each variant of a malformed runner entry, as the entry is written.
+  const malformedEntry: Readonly<Record<string, unknown>> = {
+    "an entry with no runner": { reports: ["playwright.xml"] },
+    "an entry with no reports": { runner: "playwright" },
+    "an entry whose reports are not a list": { runner: "playwright", reports: "playwright.xml" },
+    "an entry whose reports hold something other than a file name": { runner: "playwright", reports: ["playwright.xml", 3] },
+  };
+
+  it.each(manifestVariants["CLM-CFG-004"].variants)("[CLM-CFG-004] a specController block with %s as the e2e runner leaves it out, finding its error naming the setting", (variant) => {
+    expect(targetConfigurationFrom({ specController: { runners: { e2e: malformedEntry[variant] } } }, [], ["playwright.xml"])).toEqual({
+      configuration: NONE,
+      errors: [{ kind: "configuration-wrong-kind", entry: "runners.e2e" }],
+    });
+  });
+
+  it('[CLM-CFG-025] a specController block with "e2e": { "runner": "playwright", "reports": ["playwright.xml"] } under runners, with no report named playwright.xml read, leaves the report name out, finding its error naming it, and keeps the runner', () => {
+    const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: playwright test\n");
+    const { configuration, errors } = targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } } }, [], ["junit.xml"]);
+
+    expect({ configuration, errors, playwrightStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({
+      configuration: { ...NONE, runners: { e2e: { runner: "playwright", reports: [] } } },
+      errors: [{ kind: "runner-report-not-read", entry: "playwright.xml" }],
+      playwrightStep: "runner",
+    });
+  });
+
+  // Each variant of a report name that matches no report's file name, as the entry writes it.
+  const unreadReport: Readonly<Record<string, string>> = { "a report name with a folder in it": "out/playwright.xml" };
+
+  it.each(manifestVariants["CLM-CFG-025"].variants)("[CLM-CFG-025] a specController block naming %s as the e2e runner's report, with playwright.xml read, leaves the report name out, finding its error naming it", (variant) => {
+    const report = unreadReport[variant]!;
+
+    expect(targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: [report] } } } }, [], ["playwright.xml"])).toEqual({
+      configuration: { ...NONE, runners: { e2e: { runner: "playwright", reports: [] } } },
+      errors: [{ kind: "runner-report-not-read", entry: report }],
+    });
   });
 
   // Each variant of a notChecks entry beside a line break, as the entry is written.
@@ -97,14 +148,14 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     const entry = withALineBreak[variant]!;
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
-    expect(targetConfigurationFrom({ specController: { notChecks: [entry] } }, ciRead)).toEqual({ configuration: NONE, errors: [{ kind: "not-checks-entry-not-a-step-name", entry }] });
+    expect(targetConfigurationFrom({ specController: { notChecks: [entry] } }, ciRead, [])).toEqual({ configuration: NONE, errors: [{ kind: "not-checks-entry-not-a-step-name", entry }] });
   });
 });
 
 describe("the run will still reach its run verdict, using the configuration settings it could use", () => {
   it('[CLM-CFG-017] a specController block with "unit": 3 and "integration": "cucumber-js" under runners reaches its run verdict, cucumber-js running the integration layer', () => {
     const manifest = { specController: { runners: { unit: 3, integration: "cucumber-js" } } };
-    const { configuration } = targetConfigurationFrom(manifest, []);
+    const { configuration } = targetConfigurationFrom(manifest, [], []);
     const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: cucumber-js\n");
     const claims = executableClaimsOf([featureAsWrittenFrom("one.feature", "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: s\n    Given a step\n")], {
       deferralTags: configuration.deferralTags,
@@ -127,7 +178,7 @@ const notAnObject: Readonly<Record<string, unknown>> = { null: null, "a number":
 
 describe("a runners setting that is not an object is left out", () => {
   it.each(manifestVariants["CLM-CFG-018"].variants)("[CLM-CFG-018] a specController block whose runners is %s leaves runners out, as the wrong kind", (variant) => {
-    expect(targetConfigurationFrom({ specController: { runners: notAnObject[variant] } }, [])).toEqual({ configuration: NONE, errors: [{ kind: "configuration-wrong-kind", entry: "runners" }] });
+    expect(targetConfigurationFrom({ specController: { runners: notAnObject[variant] } }, [], [])).toEqual({ configuration: NONE, errors: [{ kind: "configuration-wrong-kind", entry: "runners" }] });
   });
 });
 

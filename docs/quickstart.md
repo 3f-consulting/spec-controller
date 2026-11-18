@@ -81,8 +81,8 @@ Two settings in `package.json` make the list shorter:
 "specController": {
   "runners": {
     "unit": "vitest",             // the command your CI runs for @unit
-    "integration": "cucumber-js", // for @integration
-    "e2e": "cucumber-js",         // two layers, one runner, which is normal
+    "integration": { "runner": "cucumber-js", "reports": ["cucumber.json"] }, // its runner, and the report it writes
+    "e2e": { "runner": "cucumber-js", "reports": ["cucumber.json"] },         // two layers, one runner, which is normal
     "performance": null           // we have no performance runner
   },
   "notChecks": [
@@ -92,7 +92,7 @@ Two settings in `package.json` make the list shorter:
 }
 ```
 
-- **`runners`** declares the command that runs each layer of tests. `balance` then reads that step as your test suite, not as a check. `null` means *we have no runner for this layer*.
+- **`runners`** declares the command that runs each layer of tests. `balance` then reads that step as your test suite, not as a check. An entry may also name the reports the runner writes, by file name: each result in such a report is evidence of that layer. A report no entry names is unit evidence, or integration evidence for a Cucumber report. `null` means *we have no runner for this layer*.
 - **`notChecks`** lists steps that do work but check nothing, such as publishing. Each entry is `<workflow file>:<job id>:<step name>`, and must match exactly.
 
 See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--runners) and [Naming your non-checks — `notChecks`](./user-guide.md#naming-your-non-checks--notchecks).

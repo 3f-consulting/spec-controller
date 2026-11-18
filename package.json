@@ -29,8 +29,8 @@
   "specController": {
     "runners": {
       "unit": "vitest",
-      "integration": "cucumber-js",
-      "e2e": "cucumber-js",
+      "integration": { "runner": "cucumber-js", "reports": ["cucumber.json"] },
+      "e2e": { "runner": "cucumber-js", "reports": ["cucumber.json"] },
       "performance": null
     },
     "notChecks": [

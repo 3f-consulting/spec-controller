@@ -161,7 +161,7 @@ Each evidence observation names the scenario it answers **in the one form its ru
 | `@unit` | a JUnit 5 test in Kotlin | `[CLM-…]` in square brackets in the test's `@DisplayName`, which Gradle writes into the report (see [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin)) |
 | `@unit` | an RSpec example | `[CLM-…]` in square brackets in the example's description, given to `it`, or in an enclosing `describe` or `context` description (see [Citing a scenario from RSpec](#citing-a-scenario-from-rspec)) |
 | `@unit` | a pytest test | one claim code in a `clm` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.clm("CLM-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
-| `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario | nothing to add: the Cucumber report carries the scenario's own claim code, and a row of an Outline with a `clm` column is credited by Cucumber's result for that row |
+| `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario, or a test in any report the layer's `runners` entry names | for Cucumber, nothing to add: the report carries the scenario's own claim code, and a row of an Outline with a `clm` column is credited by Cucumber's result for that row. For any other runner, the test cites the code as that runner's format does (above). Name the report under the layer's runner (see [Naming your runners](#naming-your-runners--runners)) |
 | `@fitness` | a CI step | the step's `id:` is the code (see [Fitness functions](#fitness-functions)) |
 
 A Vitest citation:
@@ -556,8 +556,8 @@ All configuration sits under `specController` in the target's `package.json`. `-
 "specController": {
   "runners": {
     "unit": "vitest",             // the command your CI runs for @unit
-    "integration": "cucumber-js", // for @integration
-    "e2e": "cucumber-js",         // two layers, one runner, which is normal
+    "integration": { "runner": "cucumber-js", "reports": ["cucumber.json"] }, // its runner, and the report it writes
+    "e2e": { "runner": "cucumber-js", "reports": ["cucumber.json"] },         // two layers, one runner, which is normal
     "performance": null           // we have no performance runner
   },
   "notChecks": [
@@ -576,7 +576,12 @@ Discovery does not depend on Node: it does not match `package.json` script names
 ### Naming your runners — `runners`
 
 - **`runners` is keyed by the four layers and nothing else:** `unit`, `integration`, `e2e`, `performance`.
-- **A value is a runner's name or `null`.** `null` is a statement, not a blank: it says *we have no runner for this layer*. A key you leave out says nothing about its layer.
+- **A value is a runner's name, `null`, or the runner with the reports it writes:** `{ "runner": "playwright", "reports": ["playwright.xml"] }`. `null` is a statement, not a blank: it says *we have no runner for this layer*. A key you leave out says nothing about its layer.
+- **A report's results are evidence of the layer whose entry names it.** A report is matched by its file name, wherever the run read it from, so a report written outside the target, or one file of a `--junit` folder, is matched as well. A Playwright or Cypress suite's JUnit report named under `e2e` answers `@e2e` claims.
+- **One report may serve several layers.** Name it under each. A Cucumber result then takes the layers among them that its scenario's tags name, or every one when its tags name none; a result from any other report takes every one.
+- **A report no entry names takes its format's default:** a Cucumber report is integration evidence, whatever its scenarios' tags, and every other report is unit evidence. So name your Cucumber report under each layer it serves.
+- **A report name that matches no report the run read** is named in `## Errors in the inputs` as `runner-report-not-read`. The name is left out; the runner is kept, so its step is still a runner.
+- **An entry with no runner, no `reports`, or `reports` that is not a list of file names** is read as absent, and named as `configuration-wrong-kind`.
 - **A key outside the four** is named in `## Errors in the inputs` as `runner-key-not-a-layer`. It excludes nothing, and it does not stop the run.
 - **No `runners` block at all is not an error.** Every step that is not a reconciler step, a non-check or a plumbing step becomes a fitness function. That is the zero-annotation report.
 - **`balance` recognises a runner only as the command a step runs**: the command a line of the step opens with, or a command after `&&` or `;` in that line, past any `NAME=value` settings. So a runner is recognised after a line that sets a variable, after a shell function's definition, and after an `if … fi` block. A runner named anywhere else, as an argument or a path, leaves the step a check. So does a step that pipes the runner's output onward, into another command or into a compound command such as a `while` loop, an `if` block or a subshell.
@@ -633,6 +638,7 @@ A run names each configuration entry it cannot use, with one of these codes:
 | `configuration-wrong-kind` | an entry of a kind its reader does not take (a `notChecks` written as one string, a runner written as a number) is read as absent |
 | `configuration-unknown-key` | a key the block does not read at all (a misspelling, or a key an older version read) is passed over |
 | `runner-key-not-a-layer` | a `runners` key that is not one of the four layers excludes nothing |
+| `runner-report-not-read` | a report name in a `runners` entry that matches no report the run read is left out, and its runner kept |
 | `not-checks-entry-matches-no-step` | a `notChecks` entry that matches no step of a workflow the run read makes no step a non-check |
 | `not-checks-entry-not-a-step-name` | a `notChecks` entry that does not name a step as `<workflow file>:<job id>:<step name>` makes no step a non-check |
 

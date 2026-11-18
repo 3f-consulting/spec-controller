@@ -28,6 +28,12 @@ import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import type { Refusal } from "../runEnding/runEnding.js";
 import type { InputFault, InputRead } from "./inputRead.js";
 
+// A JUnit evidence report read, with the file name it was read from: a folder's files are read one by one.
+interface JunitReportRead {
+  readonly report: string;
+  readonly suites: readonly ResultsBySuiteAsWritten[];
+}
+
 // Every input the run read, each as its reader reports it; an input not read is absent.
 export interface InputsRead {
   readonly features: readonly FeatureAsWritten[];
@@ -35,7 +41,7 @@ export interface InputsRead {
   readonly vitest?: readonly ResultsByFileAsWritten[];
   readonly jest?: readonly ResultsByFileAsWritten[];
   readonly pytest?: readonly ResultsBySuiteAsWritten[];
-  readonly junit?: readonly ResultsBySuiteAsWritten[];
+  readonly junit?: readonly JunitReportRead[];
   readonly rspec?: ResultsByExampleAsWritten;
   readonly cucumber?: ScenarioResultAsWritten[];
   readonly stepRecord?: readonly StepRecordEntryAsWritten[];
@@ -110,7 +116,10 @@ function jsonRead<Contents>(file: FileText, whereItBreaks: (report: unknown) => 
 function xmlRead(file: FileText, from: "junit" | "pytest"): InputRead<Partial<InputsRead>> {
   const wrong = whyXmlDoesNotParse(file.text);
   if (wrong !== undefined) return failed(file.shown, "does-not-parse", wrong);
-  return readInItsShape(file, file.text, whereSuitesBreak, (xml) => ({ [from]: resultsBySuiteFrom(xml, from) }));
+  return readInItsShape(file, file.text, whereSuitesBreak, (xml) => {
+    const suites = resultsBySuiteFrom(xml, from);
+    return from === "pytest" ? { pytest: suites } : { junit: [{ report: file.name, suites }] };
+  });
 }
 
 interface InputReader {

@@ -25,8 +25,9 @@ export const whereManifestBreaks = (manifest: unknown): string | undefined =>
 export function targetConfigurationFrom(
   manifest: unknown,
   steps: readonly WorkflowStepAsWritten[],
+  reportsRead: readonly string[],
 ): { readonly configuration: TargetConfiguration; readonly errors: readonly ConfigurationError[] } {
-  return targetConfigurationOf(isRecord(manifest) ? manifest.specController : undefined, steps, settingSpellings);
+  return targetConfigurationOf(isRecord(manifest) ? manifest.specController : undefined, steps, reportsRead, settingSpellings);
 }
 
 // The scripts a manifest names, each as the command it runs.
