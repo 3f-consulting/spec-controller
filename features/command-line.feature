@@ -187,6 +187,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance writes its report
       then the report's step account will count two steps
 
+    @unit @CLM-CLI-209
+    Scenario: balance matches each evidence report it read to the runners entry naming its file name, wherever the run read it from
+      given the target's configuration named playwright as the e2e runner, writing playwright.xml
+      and the run read a JUnit evidence report at out/reports/playwright.xml, with one result citing CLM-ONE-001
+      when balance reconciles the target
+      then that result will be e2e evidence for CLM-ONE-001
+
   Rule: a command validates every input before it does its work
 
     The inputs a command validates are the evidence reports, the step record, the feature corpus,
