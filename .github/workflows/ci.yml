@@ -384,6 +384,9 @@ jobs:
           elif ! base=$(git merge-base "origin/$BASE_BRANCH" HEAD); then
             echo "The commit this change grew from on $BASE_BRANCH cannot be found"
             exit 1
+          elif [ "$base" = "$(git rev-parse HEAD)" ] && ! base=$(git rev-parse --verify --quiet HEAD^); then
+            echo "$BASE_BRANCH's own commit has no parent to compare with"
+            exit 1
           fi
           if ! git cat-file -e "$base^{commit}"; then
             echo "The base commit '$base' cannot be read"

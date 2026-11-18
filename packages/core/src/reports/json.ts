@@ -1,6 +1,7 @@
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 
-// The JSON report's own shape, the contract its readers hold, so a change in the domain reaches them only through jsonReportFrom.
+// The JSON report's own shape, the contract its readers hold. Each field keeps its domain type, so a domain change that
+// alters one changes the schema, and the schema check then needs schemaVersion raised.
 export interface JsonReport {
   // Raised whenever the report's structure changes, so a reader can tell which contract a report follows.
   readonly schemaVersion: 1;
