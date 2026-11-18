@@ -21,7 +21,7 @@ import {
   type DebitJournal,
   type ProvenanceInput,
   type StepAccount,
-  type StepRecordEntryAsWritten,
+  type RecordedStep,
   type TargetConfiguration,
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
@@ -43,7 +43,7 @@ const NONE: readonly never[] = [];
 // Each workflow step the run read, counted by what it is; a run that read none has an empty step account.
 function stepAccountFor(
   steps: readonly WorkflowStepAsWritten[],
-  record: readonly StepRecordEntryAsWritten[],
+  record: readonly RecordedStep[],
   configuration: TargetConfiguration,
   scripts: Readonly<Record<string, string>>,
 ): StepAccount {

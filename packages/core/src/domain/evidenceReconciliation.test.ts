@@ -7,7 +7,7 @@ import { claimCodeErrorsOf } from "./claimCodes.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
 import { runVerdictOf, stepAccountOf, totalsOf } from "./evidenceReconciliation.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
-import { stepDispositionOf, type EvidenceObservation, type Result, type StepRecordEntryAsWritten } from "./postEvidenceObservation.js";
+import { stepDispositionOf, type EvidenceObservation, type Result, type RecordedStep } from "./postEvidenceObservation.js";
 
 // Evidence as a row gives it: its kind, its result, and the code it cites, such as ONE-001, if any.
 type Observed = readonly [EvidenceObservation["kind"], Result, string?];
@@ -209,7 +209,7 @@ describe("a claim code in a scenario's title, with punctuation stuck to its end,
 
 describe("balance accounts for every step it reads", () => {
   // Steps disposed of under a configuration whose one non-check is the Install step of the job given.
-  const disposed = (steps: ReturnType<typeof workflowStepsFrom>, install: { readonly workflow: string; readonly job: string }, runners: Readonly<Record<string, string>> = {}, record: readonly StepRecordEntryAsWritten[] = []) =>
+  const disposed = (steps: ReturnType<typeof workflowStepsFrom>, install: { readonly workflow: string; readonly job: string }, runners: Readonly<Record<string, string>> = {}, record: readonly RecordedStep[] = []) =>
     steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners, nonChecks: [{ ...install, step: "Install" }], deferralTags: [] }, {}, shellAnswers, record) }));
   const BUILD = [{ uses: "actions/checkout@v4" }, { run: "pnpm lint" }, { run: "spec-controller balance" }];
   const INSTALL = [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }];
@@ -220,7 +220,7 @@ describe("balance accounts for every step it reads", () => {
 
   it.each([
     ["in one workflow, with no step record", ["ci.yml", "ci.yml"], ["build", "test"], []],
-    ["of one name, in two workflows, with a step record of another step", ["ci.yml", "nightly.yml"], ["build", "build"], [{ key: "lint", outcome: "success", conclusion: "success" }]],
+    ["of one name, in two workflows, with a step record of another step", ["ci.yml", "nightly.yml"], ["build", "build"], [{ key: "lint", result: "passed" }]],
   ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, [first, second], [build, test], record) => {
     const steps = [...workflowStepsFrom(first, JSON.stringify({ jobs: { [build]: { steps: [...BUILD, UNIT] } } })), ...workflowStepsFrom(second, JSON.stringify({ jobs: { [test]: { steps: INSTALL } } }))];
     const { jobs } = stepAccountOf(disposed(steps, { workflow: second, job: test }, { unit: "vitest" }, record));

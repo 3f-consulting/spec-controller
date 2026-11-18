@@ -19,7 +19,7 @@ import {
   type ResultsByFileAsWritten,
   type ResultsBySuiteAsWritten,
   type ScenarioResultAsWritten,
-  type StepRecordEntryAsWritten,
+  type RecordedStep,
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
 import { readdirSync, readFileSync, statSync, type Stats } from "node:fs";
@@ -46,7 +46,7 @@ export interface InputsRead {
   readonly junit?: readonly ReportRead<readonly ResultsBySuiteAsWritten[]>[];
   readonly rspec?: readonly ReportRead<ResultsByExampleAsWritten>[];
   readonly cucumber?: readonly ReportRead<ScenarioResultAsWritten[]>[];
-  readonly stepRecord?: readonly StepRecordEntryAsWritten[];
+  readonly stepRecord?: readonly RecordedStep[];
   readonly manifest?: unknown;
   // Every file read, so no report lands on one.
   readonly filesRead: readonly string[];

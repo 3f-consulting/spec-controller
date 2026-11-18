@@ -88,10 +88,10 @@ export interface ScenarioResultAsWritten {
   readonly steps: readonly { readonly keyword: string; readonly text?: string; readonly status: string; readonly message?: string }[];
 }
 
-// An entry of the step record, keyed by the step's id.
-export interface StepRecordEntryAsWritten {
+// A step the CI run recorded, keyed by the step's id, with how it went before continue-on-error turns a failure into success.
+export interface RecordedStep {
   readonly key: string;
-  readonly outcome: string;
+  readonly result: Extract<Result, "passed" | "failed" | "never-ran">;
 }
 
 // The shell reader's two answers, handed to the domain so it decides which question serves which step.
@@ -281,7 +281,7 @@ export function stepDispositionOf(
   configuration: TargetConfiguration,
   scripts: Scripts,
   shell: ShellAnswers,
-  record: readonly StepRecordEntryAsWritten[] = [],
+  record: readonly RecordedStep[] = [],
 ): StepDisposition {
   if (step.writesStepRecord || (step.run !== undefined && shell.invokesAnywhere(step.run, RECONCILER))) return "reconciler";
   if (isNamedIn(step, configuration)) return "nonCheck";
@@ -292,9 +292,6 @@ export function stepDispositionOf(
   return "fitnessFunction";
 }
 
-// The step record says how a step went by its outcome, read before continue-on-error turns a failure into success.
-const resultFrom = (outcome: string): Result => (outcome === "success" ? "passed" : outcome === "failure" ? "failed" : "never-ran");
-
 // continue-on-error allows failure when it is set to anything but false: an expression is decided by the run, so it may allow it.
 const allows = (continueOnError: unknown): boolean => continueOnError !== undefined && continueOnError !== false;
 
@@ -302,9 +299,9 @@ const allowsFailure = ({ continueOnError, jobContinueOnError }: WorkflowStepAsWr
 
 const placeOf = (step: WorkflowStepAsWritten): string => `${step.workflow}:${step.job}:${stepIdentityOf(step)}`;
 
-function observationOf(step: WorkflowStepAsWritten, steps: readonly WorkflowStepAsWritten[], entry: StepRecordEntryAsWritten | undefined): EvidenceObservation {
+function observationOf(step: WorkflowStepAsWritten, steps: readonly WorkflowStepAsWritten[], entry: RecordedStep | undefined): EvidenceObservation {
   const claimCode = claimCodeFrom(step.id);
-  const result = entry === undefined ? "not-recorded" : resultFrom(entry.outcome);
+  const result = entry === undefined ? "not-recorded" : entry.result;
   const jobsRecorded = new Set(steps.filter(({ id }) => entry !== undefined && id === entry.key).map(({ workflow, job }) => `${workflow}:${job}`));
   return {
     cites: claimCode === undefined || result === "not-recorded" ? [] : [claimCode],
@@ -316,15 +313,14 @@ function observationOf(step: WorkflowStepAsWritten, steps: readonly WorkflowStep
 
 // A recorded entry no step carries is posted as its record says, at its id. Without the step, continue-on-error cannot be
 // read, so a success may have hidden a failure: it fails closed, as passed-on-error.
-const unheldObservationOf = ({ key, outcome }: StepRecordEntryAsWritten): EvidenceObservation => {
+const unheldObservationOf = ({ key, result }: RecordedStep): EvidenceObservation => {
   const claimCode = claimCodeFrom(key);
-  const result = resultFrom(outcome);
   return { cites: claimCode === undefined ? [] : [claimCode], result: result === "passed" ? "passed-on-error" : result, kind: "fitness", place: key };
 };
 
 export function fitnessObservationsOf(
   steps: readonly WorkflowStepAsWritten[],
-  record: readonly StepRecordEntryAsWritten[],
+  record: readonly RecordedStep[],
   configuration: TargetConfiguration,
   scripts: Scripts,
   shell: ShellAnswers,
