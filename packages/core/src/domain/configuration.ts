@@ -29,6 +29,7 @@ export interface ConfigurationError {
     | "configuration-wrong-kind"
     | "configuration-unknown-key"
     | "runner-key-not-a-layer"
+    | "runner-report-not-read"
     | "not-checks-entry-matches-no-step"
     | "not-checks-entry-not-a-step-name";
   readonly entry: string;
@@ -62,15 +63,29 @@ const isRunnerEntry = (runner: unknown): runner is RunnerEntry =>
 // A layer's runner: its name, null for none, or an entry naming it with the reports it writes.
 const isRunner = (runner: unknown): runner is TargetConfiguration["runners"][Layer] => typeof runner === "string" || runner === null || isRunnerEntry(runner);
 
-function runnersRead(runners: unknown, name: string): Read<TargetConfiguration["runners"]> {
+// A runner entry keeps the reports the run read, matched by file name; each other report name is left out with an
+// error naming it, and the runner stays.
+function runnerRead(runner: TargetConfiguration["runners"][Layer], reportsRead: readonly string[]): Read<TargetConfiguration["runners"][Layer]> {
+  if (!isRunnerEntry(runner)) return { value: runner, errors: [] };
+  const read = (report: string): boolean => reportsRead.includes(report);
+  return {
+    value: { runner: runner.runner, reports: runner.reports.filter(read) },
+    errors: runner.reports.filter((report) => !read(report)).map((report) => ({ kind: "runner-report-not-read", entry: report })),
+  };
+}
+
+function runnersRead(runners: unknown, name: string, reportsRead: readonly string[]): Read<TargetConfiguration["runners"]> {
   if (runners === undefined) return { value: {}, errors: [] };
   if (!isRecord(runners)) return { value: {}, errors: [wrongKind(name)] };
-  const entries = Object.entries(runners);
-  const errors = entries.flatMap(([layer, runner]): ConfigurationError[] => {
-    if (!LAYERS.includes(layer)) return [{ kind: "runner-key-not-a-layer", entry: `${name}.${layer}` }];
-    return isRunner(runner) ? [] : [wrongKind(`${name}.${layer}`)];
+  const read = Object.entries(runners).map(([layer, runner]): [string, Read<TargetConfiguration["runners"][Layer]> | ConfigurationError] => {
+    if (!LAYERS.includes(layer)) return [layer, { kind: "runner-key-not-a-layer", entry: `${name}.${layer}` }];
+    return [layer, isRunner(runner) ? runnerRead(runner, reportsRead) : wrongKind(`${name}.${layer}`)];
   });
-  return { value: Object.fromEntries(entries.filter(([layer, runner]) => LAYERS.includes(layer) && isRunner(runner))), errors };
+  const isError = (entry: Read<TargetConfiguration["runners"][Layer]> | ConfigurationError): entry is ConfigurationError => "kind" in entry;
+  return {
+    value: Object.fromEntries(read.flatMap(([layer, entry]) => (isError(entry) ? [] : [[layer, entry.value]]))),
+    errors: read.flatMap(([, entry]) => (isError(entry) ? [entry] : entry.errors)),
+  };
 }
 
 // The name of the program a layer's runner runs, when it has one.
@@ -107,7 +122,7 @@ export function targetConfigurationOf(
   if (block === undefined) return { configuration: NO_SETTING, errors: [] };
   const settings = block as Readonly<Record<string, unknown>>;
   const { keyOf } = spellings;
-  const runners = runnersRead(settings[keyOf.runners], keyOf.runners);
+  const runners = runnersRead(settings[keyOf.runners], keyOf.runners, reportsRead);
   const nonChecks = listRead(settings[keyOf.nonChecks], keyOf.nonChecks, (entry) => nonCheckOf(entry, steps, spellings));
   const deferralTags = listRead(settings[keyOf.deferralTags], keyOf.deferralTags, spellings.tagOf);
   const known = Object.values(keyOf);

@@ -59,6 +59,21 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
   return corpus === undefined ? undefined : resolve(folder, corpus.path);
 };
 
+// The inputs each read from one evidence report, whose file name a runners entry may name.
+const ONE_REPORT_INPUTS = ["vitest", "jest", "pytest", "rspec", "cucumber"] as const;
+
+// The file name of the evidence report an input names, when the run read one.
+const reportNameOf = (read: InputsRead, kind: (typeof ONE_REPORT_INPUTS)[number]): string | undefined => {
+  const path = read.pathsRead[kind];
+  return path === undefined ? undefined : basename(path);
+};
+
+// The file name of every evidence report the run read, a JUnit folder's files one by one.
+const reportsReadIn = (read: InputsRead): string[] => [
+  ...ONE_REPORT_INPUTS.flatMap((kind) => reportNameOf(read, kind) ?? []),
+  ...(read.junit ?? NONE).map(({ report }) => report),
+];
+
 // The credit journal: each runner's results as Evidence Observations, beside the fitness functions' from the CI steps.
 function creditJournalOf(
   read: InputsRead,
@@ -68,9 +83,9 @@ function creditJournalOf(
   targetFolder: string,
 ): CreditJournal {
   // The layers the report an input names serves, by its file name.
-  const servedBy = (kind: string): ReturnType<typeof layersServing> => {
-    const path = read.pathsRead[kind];
-    return path === undefined ? [] : layersServing(basename(path), configuration.runners);
+  const servedBy = (kind: (typeof ONE_REPORT_INPUTS)[number]): ReturnType<typeof layersServing> => {
+    const report = reportNameOf(read, kind);
+    return report === undefined ? [] : layersServing(report, configuration.runners);
   };
   return [
     ...observationsByFile(read.vitest ?? NONE, targetFolder, servedBy("vitest")),
@@ -95,7 +110,7 @@ export function balance(
   const read = inputsReadFor(inputs, folder);
   if ("refusals" in read) return refusedWith(read.refusals, streams.error.write);
   const steps = read.workflowSteps ?? NONE;
-  const { configuration, errors } = targetConfigurationFrom(read.manifest, steps);
+  const { configuration, errors } = targetConfigurationFrom(read.manifest, steps, reportsReadIn(read));
   const scripts = scriptsFrom(read.manifest);
   // git gives its top level with every link followed, so the folders and paths it is compared with follow theirs too.
   const targetFolder = realpathSync(targetFolderOf({ workingFolder: folder, corpus: corpus && realpathSync(corpus), gitTopLevel: identity.gitTopLevel }));
