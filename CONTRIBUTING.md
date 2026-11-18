@@ -20,6 +20,8 @@ A pull request adds a line to [`CHANGELOG.md`](CHANGELOG.md) saying what it chan
 
 Name a test file for the behaviour it proves, and put the code of the scenario it proves in its test titles, in brackets: `[CLM-<FFF>-<NNN>]`.
 
+If your change alters the JSON report's schema, raise `schemaVersion` in [`packages/core/src/reports/json.ts`](packages/core/src/reports/json.ts), run `pnpm build`, and copy `packages/spec-controller/dist/spec-reconciliation.schema.json` over [`schema/spec-reconciliation.schema.json`](schema/spec-reconciliation.schema.json). CI fails a schema change that does neither.
+
 To see a scenario's tests fail before its code is written, run the *Red proof* workflow by hand on your branch, with the scenario's code and its evidence layer.
 
 Put a helper that more than one unit test file uses in a `*.test-utils.ts` file beside them. Do not copy it into each file. No check refuses a copied helper; review finds it.
@@ -50,6 +52,8 @@ The repository follows the discipline it asks of you. Its own CI reconciles its 
 - duplication and unused code;
 - dependency boundaries;
 - published-package checks (publint, attw);
+- every TypeScript example in the READMEs type-checking;
+- a raised schema version for every change to the JSON report's schema;
 - workflow linting and security (actionlint, zizmor);
 - code-level security, by this repository's own Semgrep rules;
 - a ceiling on test code against production code;
