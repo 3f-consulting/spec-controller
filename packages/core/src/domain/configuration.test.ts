@@ -100,6 +100,21 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     expect(targetConfigurationFrom({ specController: block }, ciRead)).toEqual({ configuration: NONE, errors: [error] });
   });
 
+  // Each variant of a malformed runner entry, as the entry is written.
+  const malformedEntry: Readonly<Record<string, unknown>> = {
+    "an entry with no runner": { reports: ["playwright.xml"] },
+    "an entry with no reports": { runner: "playwright" },
+    "an entry whose reports are not a list": { runner: "playwright", reports: "playwright.xml" },
+    "an entry whose reports hold something other than a file name": { runner: "playwright", reports: ["playwright.xml", 3] },
+  };
+
+  it.each(manifestVariants["CLM-CFG-004"].variants)("[CLM-CFG-004] a specController block with %s as the e2e runner leaves it out, finding its error naming the setting", (variant) => {
+    expect(targetConfigurationFrom({ specController: { runners: { e2e: malformedEntry[variant] } } }, [])).toEqual({
+      configuration: NONE,
+      errors: [{ kind: "configuration-wrong-kind", entry: "runners.e2e" }],
+    });
+  });
+
   // Each variant of a notChecks entry beside a line break, as the entry is written.
   const withALineBreak: Readonly<Record<string, string>> = {
     "a line break before it": "\nci.yml:ci:Install dependencies",
