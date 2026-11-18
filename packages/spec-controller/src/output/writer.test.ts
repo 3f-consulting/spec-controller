@@ -1,6 +1,6 @@
 import { chmodSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, readlinkSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { evidenceReconciliationOf, stepAccountOf, textFor, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
+import { evidenceReconciliationOf, jsonReportFrom, stepAccountOf, textFor, type EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { inputsReadFor } from "../inputs/inputsRead.js";
 import { temporaryDirectory } from "../temporaryDirectory.test-utils.js";
@@ -66,7 +66,7 @@ describe("you will get the report format you ask for", () => {
     writeReports(outputsAskedFor(args), [], reconciliation(), streams, AS_ASKED);
 
     const written = output.join("");
-    expect(report === "JSON" ? JSON.parse(written) : opensAsMarkdown(written)).toEqual(report === "JSON" ? reconciliation() : true);
+    expect(report === "JSON" ? JSON.parse(written) : opensAsMarkdown(written)).toEqual(report === "JSON" ? jsonReportFrom(reconciliation()) : true);
   });
 });
 
