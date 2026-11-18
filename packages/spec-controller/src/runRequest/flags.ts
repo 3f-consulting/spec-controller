@@ -19,12 +19,12 @@ const HELP: Flag = { name: "help", short: "h" };
 
 const BALANCE_FLAGS: readonly Flag[] = [
   { name: "features", value: "<dir>", input: "features", byDefault: "features" },
-  { name: "vitest", value: "<report.json>", input: "vitest" },
-  { name: "jest", value: "<report.json>", input: "jest" },
-  { name: "pytest", value: "<report.xml>", input: "pytest" },
-  { name: "junit", value: "<report.xml|dir>", input: "junit" },
-  { name: "rspec", value: "<report.json>", input: "rspec" },
-  { name: "cucumber", value: "<report.json>", input: "cucumber" },
+  { name: "vitest", value: "<report.json>", input: "vitest", repeats: true },
+  { name: "jest", value: "<report.json>", input: "jest", repeats: true },
+  { name: "pytest", value: "<report.xml>", input: "pytest", repeats: true },
+  { name: "junit", value: "<report.xml|dir>", input: "junit", repeats: true },
+  { name: "rspec", value: "<report.json>", input: "rspec", repeats: true },
+  { name: "cucumber", value: "<report.json>", input: "cucumber", repeats: true },
   { name: "ci", value: "<workflow.yml|dir>", input: "workflows", byDefault: ".github/workflows" },
   { name: "ci-steps", value: "<record.json>", input: "stepRecord" },
   { name: "package-json", value: "<path>", input: "manifest", byDefault: "package.json" },

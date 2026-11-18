@@ -236,7 +236,7 @@ describe("balance matches each evidence report it read to the runners entry nami
 
 interface ResultsByClaimReported {
   readonly claimReconciliations: readonly {
-    readonly claim: { readonly claimCode?: { readonly number: number } };
+    readonly claim: { readonly claimCode?: { readonly number: string } };
     readonly qualityCheckReconciliations: readonly { readonly observation?: { readonly result: string } }[];
   }[];
 }
@@ -261,8 +261,8 @@ describe("balance posts the results of every evidence report the run names for o
     expect({ error, posted }).toEqual({
       error: "",
       posted: [
-        [1, ["passed"]],
-        [2, ["passed"]],
+        ["001", ["passed"]],
+        ["002", ["passed"]],
       ],
     });
   });

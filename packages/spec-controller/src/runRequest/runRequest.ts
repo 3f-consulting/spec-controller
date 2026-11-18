@@ -115,12 +115,12 @@ function outputsOf(formats: readonly string[]): OutputRequest<ReportFormat>[] | 
   return outputs.length === 0 ? [DEFAULT_OUTPUT] : outputs;
 }
 
-// Each input in the order balance's flags list them: as named, or at its default path.
+// Each input in the order balance's flags list them, one for each value its flag was given in the order given, or at its default path.
 const inputsOf = ({ values }: FlagsRead): InputRequest[] =>
   COMMANDS.balance.flatMap(({ name, input, byDefault }): InputRequest[] => {
     if (input === undefined) return [];
-    const named = values.get(name)?.[0];
-    if (named !== undefined) return [{ kind: input, path: named, byDefault: false }];
+    const named = values.get(name) ?? [];
+    if (named.length > 0) return named.map((path) => ({ kind: input, path, byDefault: false }));
     return byDefault === undefined ? [] : [{ kind: input, path: byDefault, byDefault: true }];
   });
 
