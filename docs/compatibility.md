@@ -14,7 +14,7 @@ Two things make a fitness function an evidence obligation: a `@fitness` scenario
 
 A pytest test cites its claim code with a `clm` property, which `@pytest.mark.clm` writes. A row of an Outline cites its claim code from the Outline's `clm` column.
 
-The tool reads no load runner's report. So only a Cucumber report of a scenario that carries the `@performance` tag answers a `@performance` evidence obligation.
+A `@performance` evidence obligation is answered by any report, in one of these formats, that the `performance` runner's entry names, so a load runner that writes JUnit XML can answer it. A Cucumber report answers it only when that entry names it: a Cucumber report no entry names is integration evidence.
 
 **Any other key in the `specController` block is not read.** The report names that key under `### Configuration errors`. It uses the same words whatever the key is. The run reconciles exactly as it would without the key.
 
