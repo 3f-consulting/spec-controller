@@ -132,6 +132,8 @@ function rowCodesOf(features: readonly FeatureFile[]): (file: string, line: numb
 // What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a fitness function.
 export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "fitnessFunction";
 
+export type DisposedStep = { readonly step: CiStep; readonly disposition: StepDisposition };
+
 const isNamedIn = (step: CiStep, { nonChecks }: TargetConfiguration): boolean =>
   nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === stepIdentityOf(step));
 
@@ -187,18 +189,23 @@ const unheldObservationOf = ({ key, result }: RecordedStep): EvidenceObservation
   return { cites: claimCode === undefined ? [] : [claimCode], result: result === "passed" ? "passed-on-error" : result, kind: "fitness", place: key };
 };
 
-export function fitnessObservationsOf(
+// The one place a run's steps are disposed: each step with what it is, in the order read.
+export function disposedStepsOf(
   steps: readonly CiStep[],
-  record: readonly RecordedStep[],
   configuration: TargetConfiguration,
   scripts: Scripts,
   shell: ShellAnswers,
-): EvidenceObservation[] {
+  record: readonly RecordedStep[] = [],
+): DisposedStep[] {
+  return steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shell, record) }));
+}
+
+export function fitnessObservationsOf(disposedSteps: readonly DisposedStep[], record: readonly RecordedStep[]): EvidenceObservation[] {
   const entryFor = ({ id }: CiStep) => record.find(({ key }) => key === id);
-  const posting = steps.filter((step) => stepDispositionOf(step, configuration, scripts, shell, record) === "fitnessFunction");
+  const posting = disposedSteps.filter(({ disposition }) => disposition === "fitnessFunction").map(({ step }) => step);
   const postedOnce = posting.filter((step, at) => entryFor(step) === undefined || posting.findIndex(({ id }) => id === step.id) === at);
   return [
     ...postedOnce.map((step) => observationOf(step, posting, entryFor(step))),
-    ...record.filter(({ key }) => !steps.some(({ id }) => id === key)).map(unheldObservationOf),
+    ...record.filter(({ key }) => !disposedSteps.some(({ step: { id } }) => id === key)).map(unheldObservationOf),
   ];
 }

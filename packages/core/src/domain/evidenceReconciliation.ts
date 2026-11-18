@@ -2,7 +2,7 @@ import type { ClaimCodeError } from "./claimCodes.js";
 import { isExecutable, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import type { ConfigurationError } from "./configuration.js";
 import { QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
-import type { EvidenceObservation, StepDisposition } from "./postEvidenceObservation.js";
+import type { DisposedStep, EvidenceObservation, StepDisposition } from "./postEvidenceObservation.js";
 import type { CiStep } from "./workflowSteps.js";
 import { claimCodeFrom } from "./claimCodes.js";
 import type { Provenance } from "./provenance.js";
@@ -98,8 +98,6 @@ const countedIn = (counts: StepCounts, disposition: StepDisposition): StepCounts
   stepsRead: counts.stepsRead + 1,
   [COUNTED[disposition]]: counts[COUNTED[disposition]] + 1,
 });
-
-type DisposedStep = { readonly step: CiStep; readonly disposition: StepDisposition };
 
 const countsOf = (steps: readonly DisposedStep[]): StepCounts => steps.reduce((counts, { disposition }) => countedIn(counts, disposition), NONE);
 

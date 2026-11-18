@@ -10,7 +10,7 @@ import type { ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
-import { fitnessObservationsOf, layersServing, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { disposedStepsOf, fitnessObservationsOf, layersServing, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
@@ -688,11 +688,14 @@ const passedCitingOne001: Readonly<Record<string, () => EvidenceObservation[]>> 
   performance: () => postedByScenario(reportByScenario("features/one.feature", [{ tags: ["CLM-ONE-001", "performance"], steps: [PASSED] }]), [], ["performance"]),
   fitness: () =>
     fitnessObservationsOf(
-      workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] } } })),
+      disposedStepsOf(
+        workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] } } })),
+        { runners: {}, nonChecks: [], deferralTags: [] },
+        {},
+        shellAnswers,
+        [{ key: "CLM-ONE-001", result: "passed" }],
+      ),
       [{ key: "CLM-ONE-001", result: "passed" }],
-      { runners: {}, nonChecks: [], deferralTags: [] },
-      {},
-      shellAnswers,
     ),
 };
 
