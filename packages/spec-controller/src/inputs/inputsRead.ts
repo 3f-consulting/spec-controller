@@ -88,14 +88,16 @@ const parsed = <Contents>(file: FileText, read: (text: string) => Contents): Inp
   }
 };
 
-// A report that holds its reader's shape, and is read. Whatever its reader cannot read, it says, and the report is not in
-// its shape.
+// A reader that throws on a report in its shape names no place in it, so the complaint names the report as a whole.
+const WHOLE_REPORT = "$";
+
+// A report that holds its reader's shape, and is read. A report its reader cannot read is not in its shape.
 function readInItsShape<Report, Contents>(file: FileText, report: Report, whereItBreaks: (report: Report) => string | undefined, read: (report: Report) => Contents): InputRead<Contents> {
   try {
     const breaks = whereItBreaks(report);
     return breaks === undefined ? { ok: true, contents: read(report) } : failed(file.shown, "not-in-its-shape", breaks);
-  } catch (error) {
-    return failed(file.shown, "not-in-its-shape", saidOf(error));
+  } catch {
+    return failed(file.shown, "not-in-its-shape", WHOLE_REPORT);
   }
 }
 

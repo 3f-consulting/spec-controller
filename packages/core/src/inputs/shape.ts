@@ -1,6 +1,7 @@
-// What a report holds where its reader reads it: text, a word of a set, a list of one shape, a record of one, or fields.
+// What a report holds where its reader reads it: text, a whole number, a word of a set, a list or record of one shape, or fields.
 export type Shape =
   | "text"
+  | "count"
   | { readonly eachOf: Shape }
   | { readonly oneOf: readonly string[] }
   | { readonly entriesOf: Shape }
@@ -16,6 +17,7 @@ const holdsText = (value: unknown, shape: "text" | { readonly oneOf: readonly st
 
 // Where the value first breaks its shape, as a path from the report's top with each list entry's index; nothing when it holds.
 export function whereShapeBreaks(value: unknown, shape: Shape, at = TOP): string | undefined {
+  if (shape === "count") return Number.isInteger(value) ? undefined : at;
   if (shape === "text" || "oneOf" in shape) return holdsText(value, shape) ? undefined : at;
   if ("eachOf" in shape) return Array.isArray(value) ? firstOf(value.map((entry: unknown, index) => whereShapeBreaks(entry, shape.eachOf, `${at}[${index}]`))) : at;
   if (!isRecord(value)) return at;
