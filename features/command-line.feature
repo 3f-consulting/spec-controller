@@ -194,6 +194,12 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reconciles the target
       then that result will be e2e evidence for CLM-ONE-001
 
+    @unit @CLM-CLI-210
+    Scenario: balance posts the results of every evidence report the run names for one runner
+      given the run named two Vitest evidence reports, each with one result citing a different claim
+      when balance reads its inputs
+      then it will post both results
+
   Rule: a command validates every input before it does its work
 
     The inputs a command validates are the evidence reports, the step record, the feature corpus,

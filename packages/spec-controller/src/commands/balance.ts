@@ -25,7 +25,7 @@ import {
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
 import { realpathSync } from "node:fs";
-import { basename, resolve } from "node:path";
+import { resolve } from "node:path";
 import { inputsReadFor, type InputsRead } from "../inputs/inputsRead.js";
 import type { StandardStreams } from "../output/streams.js";
 import type { Complain } from "../runEnding/crashGuards.js";
@@ -49,9 +49,12 @@ function stepAccountFor(
   return stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers, record) })));
 }
 
-// Every input the run could read, each with the path it read, its links followed, when it read one.
+// Every input the run could read, once for each path it read, its links followed, or once with no path when it read none.
 const provenanceInputsOf = ({ pathsRead }: InputsRead, folder: string): ProvenanceInput[] =>
-  INPUT_KINDS.map((kind) => ({ name: kind, path: pathsRead[kind] && realpathSync(resolve(folder, pathsRead[kind])) }));
+  INPUT_KINDS.flatMap((kind): ProvenanceInput[] => {
+    const paths = pathsRead[kind] ?? NONE;
+    return paths.length === 0 ? [{ name: kind, path: undefined }] : paths.map((path) => ({ name: kind, path: realpathSync(resolve(folder, path)) }));
+  });
 
 // A corpus the command line named is where the target is; with none named, it is where the run started.
 const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | undefined => {
@@ -59,20 +62,18 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
   return corpus === undefined ? undefined : resolve(folder, corpus.path);
 };
 
-// The inputs each read from one evidence report, whose file name a runners entry may name.
-const ONE_REPORT_INPUTS = ["vitest", "jest", "pytest", "rspec", "cucumber"] as const;
-
-// The file name of the evidence report an input names, when the run read one.
-const reportNameOf = (read: InputsRead, kind: (typeof ONE_REPORT_INPUTS)[number]): string | undefined => {
-  const path = read.pathsRead[kind];
-  return path === undefined ? undefined : basename(path);
-};
+// Every evidence report the run read, of each kind.
+const reportsOf = (read: InputsRead) => ({
+  vitest: read.vitest ?? NONE,
+  jest: read.jest ?? NONE,
+  pytest: read.pytest ?? NONE,
+  junit: read.junit ?? NONE,
+  rspec: read.rspec ?? NONE,
+  cucumber: read.cucumber ?? NONE,
+});
 
 // The file name of every evidence report the run read, a JUnit folder's files one by one.
-const reportsReadIn = (read: InputsRead): string[] => [
-  ...ONE_REPORT_INPUTS.flatMap((kind) => reportNameOf(read, kind) ?? []),
-  ...(read.junit ?? NONE).map(({ report }) => report),
-];
+const reportsReadIn = (read: InputsRead): string[] => Object.values(reportsOf(read)).flatMap((reports) => reports.map(({ report }) => report));
 
 // The credit journal: each runner's results as Evidence Observations, beside the fitness functions' from the CI steps.
 function creditJournalOf(
@@ -82,18 +83,16 @@ function creditJournalOf(
   scripts: Readonly<Record<string, string>>,
   targetFolder: string,
 ): CreditJournal {
-  // The layers the report an input names serves, by its file name.
-  const servedBy = (kind: (typeof ONE_REPORT_INPUTS)[number]): ReturnType<typeof layersServing> => {
-    const report = reportNameOf(read, kind);
-    return report === undefined ? [] : layersServing(report, configuration.runners);
-  };
+  const { vitest, jest, pytest, junit, rspec, cucumber } = reportsOf(read);
+  // The layers a report serves, by its file name.
+  const servedBy = ({ report }: { readonly report: string }): ReturnType<typeof layersServing> => layersServing(report, configuration.runners);
   return [
-    ...observationsByFile(read.vitest ?? NONE, targetFolder, servedBy("vitest")),
-    ...observationsByFile(read.jest ?? NONE, targetFolder, servedBy("jest")),
-    ...observationsBySuite(read.pytest ?? NONE, targetFolder, servedBy("pytest")),
-    ...(read.junit ?? NONE).flatMap(({ report, suites }) => observationsBySuite(suites, targetFolder, layersServing(report, configuration.runners))),
-    ...(read.rspec === undefined ? [] : observationsByExample(read.rspec, targetFolder, servedBy("rspec"))),
-    ...(read.cucumber === undefined ? [] : observationsOfScenarios(read.cucumber, read.features, targetFolder, servedBy("cucumber"))),
+    ...vitest.flatMap((each) => observationsByFile(each.results, targetFolder, servedBy(each))),
+    ...jest.flatMap((each) => observationsByFile(each.results, targetFolder, servedBy(each))),
+    ...pytest.flatMap((each) => observationsBySuite(each.results, targetFolder, servedBy(each))),
+    ...junit.flatMap((each) => observationsBySuite(each.results, targetFolder, servedBy(each))),
+    ...rspec.flatMap((each) => observationsByExample(each.results, targetFolder, servedBy(each))),
+    ...cucumber.flatMap((each) => observationsOfScenarios(each.results, read.features, targetFolder, servedBy(each))),
     ...fitnessObservationsOf(steps, read.stepRecord ?? NONE, configuration, scripts, shellAnswers),
   ];
 }

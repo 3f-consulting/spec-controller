@@ -76,6 +76,12 @@ Feature: Each report has the right structure, and the Markdown explains it
       when the Markdown report is written
       then the provenance will have a line for the CI workflows
 
+    @unit @CLM-RPT-172
+    Scenario: the provenance has a line for each evidence report of one kind the run read
+      given a run read two Vitest evidence reports
+      when the Markdown report is written
+      then the provenance will have a line for each
+
     @unit
     Scenario Outline: the provenance shows the tool SHA only when there is one
       given a run's provenance had <tool SHA>
