@@ -20,7 +20,7 @@ A pull request adds a line to [`CHANGELOG.md`](CHANGELOG.md) saying what it chan
 
 Name a test file for the behaviour it proves, and put the code of the scenario it proves in its test titles, in brackets: `[CLM-<FFF>-<NNN>]`.
 
-If your change alters the JSON report's schema, raise `schemaVersion` in [`packages/core/src/reports/json.ts`](packages/core/src/reports/json.ts), run `pnpm build`, and copy `packages/spec-controller/dist/spec-reconciliation.schema.json` over [`schema/spec-reconciliation.schema.json`](schema/spec-reconciliation.schema.json). CI fails a schema change that does neither.
+If your change alters the JSON report's schema, raise `schemaVersion` in [`packages/core/src/reports/json.ts`](packages/core/src/reports/json.ts), run `pnpm build`, and copy the schema the build generates in the `spec-controller` package's build output over [`schema/spec-reconciliation.schema.json`](schema/spec-reconciliation.schema.json). CI fails a schema change that does neither.
 
 To see a scenario's tests fail before its code is written, run the *Red proof* workflow by hand on your branch, with the scenario's code and its evidence layer.
 
