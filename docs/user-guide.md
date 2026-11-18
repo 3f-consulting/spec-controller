@@ -1106,3 +1106,4 @@ Add the step to `specController.notChecks`. The failure direction is deliberate:
 **A title can stop matching its check. spec-controller states this gap and does not solve it.** Where the runner is not Cucumber (usually for `@unit`, `@performance` and `@fitness`), a scenario carries no Given/When/Then, so no unexecuted step reads as a test. But its title is still prose that nothing reads against the check that answers it. The title and the check can come to say different things, and nothing goes red. The report proves that a scenario is linked to evidence and that the evidence passed. **It does not prove that the evidence tests what the title says.**
 
 **It keeps a reconciled codebase reconciled.** Getting a codebase with no scenarios to that point is not part of this package.
+
