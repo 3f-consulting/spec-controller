@@ -1,5 +1,5 @@
-import { writtenClaimCode } from "../domain/claimCodes.js";
-import { evidenceGroupsOf, isExecutable, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
+import { writtenClaimCode, type ClaimCode } from "../domain/claimCodes.js";
+import { evidenceGroupsOf, isExecutable, ranOf, sharedCodeAmong, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
 import { QUALITY_CHECK_KINDS, type QualityCheckKind } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import { firstLineOf, inCell } from "./quoted.js";
@@ -10,33 +10,21 @@ const kindsIn = (claimReconciliations: readonly ClaimReconciliation[]): QualityC
   QUALITY_CHECK_KINDS.filter((kind) => claimReconciliations.some(({ qualityCheckReconciliations }) => qualityCheckReconciliations.some((reconciliation) => reconciliation.kind === kind)));
 
 // Whether the claim asks for the kind, by its letter or -, then how many of its tests of that kind ran, or -.
-function cellOf({ claim, qualityCheckReconciliations }: ClaimReconciliation, kind: QualityCheckKind): string {
+function cellOf(claimReconciliation: ClaimReconciliation, kind: QualityCheckKind): string {
+  const { claim, qualityCheckReconciliations } = claimReconciliation;
   if (!isExecutable(claim)) return "—";
   const asked = claim.obligations.some((obligation) => obligation.kind === kind);
-  const observed = qualityCheckReconciliations.flatMap(({ observation }) => (observation?.kind === kind ? [observation] : []));
-  if (!asked && observed.length === 0) return "";
-  const ran = observed.filter(({ result }) => result !== "never-ran").length;
+  if (!asked && !qualityCheckReconciliations.some(({ observation }) => observation?.kind === kind)) return "";
+  const ran = ranOf(claimReconciliation, kind);
   return `${asked ? kind[0]!.toUpperCase() : "-"}/${ran > 0 ? ran : "-"}`;
 }
 
-// The codes more than one executable claim carries.
-function sharedCodesIn(claimReconciliations: readonly ClaimReconciliation[]): ReadonlySet<string> {
-  const seen = new Set<string>();
-  const shared = new Set<string>();
-  for (const { claim } of claimReconciliations) {
-    if (!isExecutable(claim) || claim.claimCode === undefined) continue;
-    const code = writtenClaimCode(claim.claimCode);
-    (seen.has(code) ? shared : seen).add(code);
-  }
-  return shared;
-}
-
 // A claim is named by its code; by its code and file when another claim shares it; by its file and title when it has none.
-function nameOf({ claim }: ClaimReconciliation, sharedCodes: ReadonlySet<string>): string {
+function nameOf({ claim }: ClaimReconciliation, shared: (claimCode: ClaimCode) => boolean): string {
   if (!isExecutable(claim)) return claim.claimCode === undefined ? coreText("unnamed-claim") : writtenClaimCode(claim.claimCode);
   if (claim.claimCode === undefined) return `${inCell(claim.file)} : ${inCell(claim.title)}`;
   const code = writtenClaimCode(claim.claimCode);
-  return sharedCodes.has(code) ? `${code} (${inCell(claim.file)})` : code;
+  return shared(claim.claimCode) ? `${code} (${inCell(claim.file)})` : code;
 }
 
 const whereToLook = ({ observation }: QualityCheckReconciliation): string =>
@@ -68,13 +56,13 @@ export function claimReconciliationsSection(claimReconciliations: readonly Claim
   const heading = [`## ${coreText("claim-reconciliations-heading")}`, ""];
   if (claimReconciliations.length === 0) return [...heading, coreText("claim-reconciliations-none")];
   const kinds = kindsIn(claimReconciliations);
-  const sharedCodes = sharedCodesIn(claimReconciliations);
+  const shared = sharedCodeAmong(claimReconciliations.map(({ claim }) => claim).filter(isExecutable));
   return [
     ...heading,
     ...tableOf(
       ["claim-column", ...kinds.map((kind) => `kind-column-${kind}`), "verdict-column", "items-column"],
       claimReconciliations.map((claimReconciliation) => [
-        nameOf(claimReconciliation, sharedCodes),
+        nameOf(claimReconciliation, shared),
         ...kinds.map((kind) => cellOf(claimReconciliation, kind)),
         claimReconciliation.verdict,
         itemsOf(claimReconciliation),
