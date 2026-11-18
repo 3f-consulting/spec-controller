@@ -1,9 +1,9 @@
 import type { ClaimCodeError } from "./claimCodes.js";
 import { isExecutable, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import type { ConfigurationError } from "./configuration.js";
-import { QUALITY_CHECK_KINDS, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
+import { QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import type { EvidenceObservation, StepDisposition } from "./postEvidenceObservation.js";
-import type { WorkflowStepAsWritten } from "./workflowSteps.js";
+import type { CiStep } from "./workflowSteps.js";
 import { claimCodeFrom } from "./claimCodes.js";
 import type { Provenance } from "./provenance.js";
 
@@ -99,11 +99,11 @@ const countedIn = (counts: StepCounts, disposition: StepDisposition): StepCounts
   [COUNTED[disposition]]: counts[COUNTED[disposition]] + 1,
 });
 
-type DisposedStep = { readonly step: WorkflowStepAsWritten; readonly disposition: StepDisposition };
+type DisposedStep = { readonly step: CiStep; readonly disposition: StepDisposition };
 
 const countsOf = (steps: readonly DisposedStep[]): StepCounts => steps.reduce((counts, { disposition }) => countedIn(counts, disposition), NONE);
 
-const sameJob = (one: WorkflowStepAsWritten, other: WorkflowStepAsWritten): boolean => one.workflow === other.workflow && one.job === other.job;
+const sameJob = (one: CiStep, other: CiStep): boolean => one.workflow === other.workflow && one.job === other.job;
 
 // A row for each workflow and job, in the order read, and a total over them. Every step read has one disposition.
 export function stepAccountOf(steps: readonly DisposedStep[]): StepAccount {
@@ -186,12 +186,12 @@ function outOfBalanceByFeatureOf(claimReconciliations: readonly ClaimReconciliat
 
 // A claim code written as a tag anywhere but on a scenario is read by no claim: in a title, a step, a description or a comment.
 // Punctuation stuck to its end, as in a list, leaves it a claim code.
-function excludedClaimCodeOccurrencesOf(features: readonly FeatureAsWritten[]): number {
+function excludedClaimCodeOccurrencesOf(features: readonly FeatureFile[]): number {
   const claimCodesIn = (words: readonly string[]): number => words.filter((word) => claimCodeFrom(word.replace(/\p{P}+$/u, "")) !== undefined).length;
   return features.reduce((sum, { wordsWrittenAsTags, scenarios }) => sum + claimCodesIn(wordsWrittenAsTags) - claimCodesIn(scenarios.flatMap(({ tags }) => tags)), 0);
 }
 
-export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], features: readonly FeatureAsWritten[]): Totals {
+export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], features: readonly FeatureFile[]): Totals {
   const balanced = claimReconciliations.filter(({ verdict }) => verdict === "balanced").length;
   return {
     claimReconciliations: { total: claimReconciliations.length, balanced, outOfBalance: claimReconciliations.length - balanced },
@@ -207,7 +207,7 @@ export interface RunReconciled {
   readonly claimReconciliations: readonly ClaimReconciliation[];
   readonly claimCodeErrors: readonly ClaimCodeError[];
   readonly configurationErrors: readonly ConfigurationError[];
-  readonly features: readonly FeatureAsWritten[];
+  readonly features: readonly FeatureFile[];
   readonly stepAccount: StepAccount;
   readonly provenance: Provenance;
 }

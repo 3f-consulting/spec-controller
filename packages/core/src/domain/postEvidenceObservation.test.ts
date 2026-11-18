@@ -9,8 +9,8 @@ import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
-import { executableClaimsOf, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
-import { fitnessObservationsOf, layersServing, observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
+import { fitnessObservationsOf, layersServing, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
@@ -40,7 +40,7 @@ const reportByFile = (file: string, tests: readonly TestByFile[], fileStatus = "
   ],
 });
 
-const postedByFile = (report: unknown, targetFolder = "/work"): EvidenceObservation[] => observationsByFile(resultsByFileFrom(report), targetFolder);
+const postedByFile = (report: unknown, targetFolder = "/work"): EvidenceObservation[] => observationsOfTestResults(resultsByFileFrom(report), targetFolder);
 
 // A file that could not run, as Jest words it: under its own heading, the error indented beneath.
 const jestSuiteFailure = (error: string): string => `  \u25cf Test suite failed to run\n\n    ${error}\n`;
@@ -100,7 +100,7 @@ const testCase = (className: string, name: string, inside = ""): string => `<tes
 const CLM_PROPERTY = '<properties><property name="clm" value="CLM-ONE-001" /></properties>';
 
 const postedBySuite = (writer: SuiteWriter, suite: string, testCases: string): EvidenceObservation[] =>
-  observationsBySuite(resultsBySuiteFrom(reportBySuite(writer, suite, testCases), writer === "pytest" ? "pytest" : "junit"), "/work");
+  observationsOfTestResults(resultsBySuiteFrom(reportBySuite(writer, suite, testCases), writer === "pytest" ? "pytest" : "junit"), "/work");
 
 // What a row checks of each Evidence Observation posted.
 const resultAndCitations = ({ result, cites }: EvidenceObservation): { result: string; cites: readonly ClaimCode[] } => ({ result, cites });
@@ -136,7 +136,7 @@ const reportByExample = (examples: readonly Example[], errorsOutsideExamples: re
   };
 };
 
-const postedByExample = (report: unknown): EvidenceObservation[] => observationsByExample(resultsByExampleFrom(report), "/work");
+const postedByExample = (report: unknown): EvidenceObservation[] => observationsOfTestResults(resultsByExampleFrom(report), "/work");
 
 // A step as Cucumber's JSON evidence report records it: its keyword, its text and its status.
 type StepRun = readonly [keyword: string, text: string, status: string, errorMessage?: string];
@@ -174,8 +174,8 @@ const reportByScenario = (uri: string, scenarios: readonly ScenarioRun[]): unkno
   },
 ];
 
-const postedByScenario = (report: unknown, features: readonly FeatureAsWritten[] = [], served: readonly QualityCheckKind[] = []): EvidenceObservation[] =>
-  observationsOfScenarios(scenarioResultsFrom(report), features, "/work", served);
+const postedByScenario = (report: unknown, features: readonly FeatureFile[] = [], served: readonly QualityCheckKind[] = []): EvidenceObservation[] =>
+  observationsOfTestResults(scenarioResultsFrom(report), "/work", served, features);
 
 const PASSED: StepRun = ["Given ", "one adds one", "passed"];
 
@@ -419,15 +419,15 @@ const UNTAGGED_FORMATS = {
   JUnit: {
     report: "playwright.xml",
     posted: (served: readonly QualityCheckKind[]) =>
-      observationsBySuite(resultsBySuiteFrom(reportBySuite("surefire", "example.AddsTest", testCase("example.AddsTest", "[CLM-ONE-001] adds one")), "junit"), "/work", served),
+      observationsOfTestResults(resultsBySuiteFrom(reportBySuite("surefire", "example.AddsTest", testCase("example.AddsTest", "[CLM-ONE-001] adds one")), "junit"), "/work", served),
   },
-  Vitest: { report: "vitest.json", posted: (served: readonly QualityCheckKind[]) => observationsByFile(resultsByFileFrom(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
-  Jest: { report: "jest.json", posted: (served: readonly QualityCheckKind[]) => observationsByFile(resultsByFileFrom(jestReportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
+  Vitest: { report: "vitest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
+  Jest: { report: "jest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(jestReportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
   pytest: {
     report: "pytest.xml",
-    posted: (served: readonly QualityCheckKind[]) => observationsBySuite(resultsBySuiteFrom(reportBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)), "pytest"), "/work", served),
+    posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsBySuiteFrom(reportBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)), "pytest"), "/work", served),
   },
-  RSpec: { report: "rspec.json", posted: (served: readonly QualityCheckKind[]) => observationsByExample(resultsByExampleFrom(reportByExample([{ description: "[CLM-ONE-001] adds one", status: "passed" }])), "/work", served) },
+  RSpec: { report: "rspec.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByExampleFrom(reportByExample([{ description: "[CLM-ONE-001] adds one", status: "passed" }])), "/work", served) },
 } as const;
 
 type UntaggedFormat = keyof typeof UNTAGGED_FORMATS;
@@ -689,7 +689,7 @@ const passedCitingOne001: Readonly<Record<string, () => EvidenceObservation[]>> 
   fitness: () =>
     fitnessObservationsOf(
       workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] } } })),
-      [{ key: "CLM-ONE-001", outcome: "success" }],
+      [{ key: "CLM-ONE-001", result: "passed" }],
       { runners: {}, nonChecks: [], deferralTags: [] },
       {},
       shellAnswers,

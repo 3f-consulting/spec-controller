@@ -75,10 +75,7 @@ export const isFeatureCode = (word: string): boolean => FEATURE_CODE.test(word);
 export const featureCodeOfFile = ({ fileTags }: { readonly fileTags: readonly string[] }): string | undefined => fileTags.find(isFeatureCode);
 
 // An Outline whose Examples have a clm column is one claim for each row, named by its clm cell.
-export const CLM_COLUMN = "clm";
-
-export const hasClmColumn = (examples: readonly { readonly columns: readonly string[] }[]): boolean =>
-  examples.some(({ columns }) => columns.includes(CLM_COLUMN));
+export const anyClmColumn = (examples: readonly { readonly hasClmColumn: boolean }[]): boolean => examples.some(({ hasClmColumn }) => hasClmColumn);
 
 const sameCode = (one: ClaimCode, other: ClaimCode): boolean => one.featureCode === other.featureCode && one.number === other.number;
 
@@ -91,8 +88,8 @@ interface FileToCheck {
     readonly title: string;
     readonly examples: readonly {
       readonly tags: readonly string[];
-      readonly columns: readonly string[];
-      readonly rows: readonly { readonly cells: readonly string[] }[];
+      readonly hasClmColumn: boolean;
+      readonly rows: readonly { readonly clmCell?: string }[];
     }[];
   }[];
 }
@@ -111,12 +108,8 @@ function filesByFeatureCode(features: readonly FileToCheck[]): ReadonlyMap<strin
   return files;
 }
 
-// The cells of each Examples block's clm column: a block with none gives none, as a slice from -1 to 0 is empty.
-const clmCellsIn = ({ examples }: ScenarioToCheck): string[] =>
-  examples.flatMap(({ columns, rows }) => {
-    const at = columns.indexOf(CLM_COLUMN);
-    return rows.flatMap(({ cells }) => cells.slice(at, at + 1));
-  });
+// The cells of each Examples block's clm column: a block with none gives none.
+const clmCellsIn = ({ examples }: ScenarioToCheck): string[] => examples.flatMap(({ rows }) => rows.flatMap(({ clmCell }) => clmCell ?? []));
 
 // A claim code is carried by a scenario's tags or its clm cells, and belongs to its file's feature code either way.
 function misfiledCodes(feature: FileToCheck, filesByCode: ReadonlyMap<string, readonly string[]>): ClaimCodeError[] {
@@ -129,7 +122,7 @@ function misfiledCodes(feature: FileToCheck, filesByCode: ReadonlyMap<string, re
 }
 
 function codesOnOneScenario(file: string, { tags, title, examples }: ScenarioToCheck): ClaimCodeError[] {
-  if (hasClmColumn(examples)) {
+  if (anyClmColumn(examples)) {
     return codesIn([...tags, ...examples.flatMap((block) => block.tags)]).map((claimCode) => ({ kind: "claim-code-beside-clm-column", file, title, claimCode }));
   }
   const claimCodes = codesIn(tags);

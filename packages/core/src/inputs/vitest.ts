@@ -1,4 +1,4 @@
-import type { ResultsByFileAsWritten } from "../domain/postEvidenceObservation.js";
+import type { TestResult } from "../domain/postEvidenceObservation.js";
 import { whereShapeBreaks, type Shape } from "./shape.js";
 
 // Jest's JSON evidence report, which Vitest also writes, as far as its reader reads it.
@@ -27,15 +27,20 @@ const REPORT: Shape = {
 
 export const whereResultsByFileBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
-export function resultsByFileFrom(report: unknown): ResultsByFileAsWritten[] {
-  return (report as JestJsonReport).testResults.map(({ name, message, assertionResults }) => ({
-    file: name,
-    message,
-    results: assertionResults.map(({ ancestorTitles, title, status: resultStatus, failureMessages }) => ({
-      ancestorTitles,
-      title,
-      status: resultStatus,
-      failureMessages,
-    })),
-  }));
+// Every other status is a test that did not run its assertions, and is posted as nothing.
+const RESULT_BY_STATUS: Readonly<Record<string, TestResult["result"]>> = { passed: "passed", failed: "failed" };
+
+// A file with no results is one that could not run: each writes such a file as failed.
+export function resultsByFileFrom(report: unknown): TestResult[] {
+  return (report as JestJsonReport).testResults.flatMap(({ name: file, message, assertionResults }): TestResult[] => {
+    if (assertionResults.length === 0) {
+      return [{ place: { file }, result: "never-ran", ...(message !== undefined && { message }), cites: { titles: [] } }];
+    }
+    return assertionResults.flatMap(({ ancestorTitles, title, status, failureMessages }): TestResult[] => {
+      const result = RESULT_BY_STATUS[status];
+      if (result === undefined) return [];
+      const failure = failureMessages.join("\n");
+      return [{ place: { file }, name: title, result, ...(failure && { message: failure }), cites: { titles: [...ancestorTitles, title] } }];
+    });
+  });
 }

@@ -14,13 +14,10 @@ import {
   whereSuitesBreak,
   whyXmlDoesNotParse,
   workflowStepsFrom,
-  type FeatureAsWritten,
-  type ResultsByExampleAsWritten,
-  type ResultsByFileAsWritten,
-  type ResultsBySuiteAsWritten,
-  type ScenarioResultAsWritten,
-  type StepRecordEntryAsWritten,
-  type WorkflowStepAsWritten,
+  type FeatureFile,
+  type TestResult,
+  type RecordedStep,
+  type CiStep,
 } from "@3f-consulting/spec-controller-core";
 import { readdirSync, readFileSync, statSync, type Stats } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
@@ -38,15 +35,15 @@ interface ReportRead<Results> {
 
 // Every input the run read, each as its reader reports it; an input not read is absent.
 export interface InputsRead {
-  readonly features: readonly FeatureAsWritten[];
-  readonly workflowSteps?: readonly WorkflowStepAsWritten[];
-  readonly vitest?: readonly ReportRead<readonly ResultsByFileAsWritten[]>[];
-  readonly jest?: readonly ReportRead<readonly ResultsByFileAsWritten[]>[];
-  readonly pytest?: readonly ReportRead<readonly ResultsBySuiteAsWritten[]>[];
-  readonly junit?: readonly ReportRead<readonly ResultsBySuiteAsWritten[]>[];
-  readonly rspec?: readonly ReportRead<ResultsByExampleAsWritten>[];
-  readonly cucumber?: readonly ReportRead<ScenarioResultAsWritten[]>[];
-  readonly stepRecord?: readonly StepRecordEntryAsWritten[];
+  readonly features: readonly FeatureFile[];
+  readonly workflowSteps?: readonly CiStep[];
+  readonly vitest?: readonly ReportRead<readonly TestResult[]>[];
+  readonly jest?: readonly ReportRead<readonly TestResult[]>[];
+  readonly pytest?: readonly ReportRead<readonly TestResult[]>[];
+  readonly junit?: readonly ReportRead<readonly TestResult[]>[];
+  readonly rspec?: readonly ReportRead<readonly TestResult[]>[];
+  readonly cucumber?: readonly ReportRead<readonly TestResult[]>[];
+  readonly stepRecord?: readonly RecordedStep[];
   readonly manifest?: unknown;
   // Every file read, so no report lands on one.
   readonly filesRead: readonly string[];

@@ -5,10 +5,7 @@ import {
   executableClaimsOf,
   fitnessObservationsOf,
   layersServing,
-  observationsByExample,
-  observationsByFile,
-  observationsBySuite,
-  observationsOfScenarios,
+  observationsOfTestResults,
   provenanceOf,
   repositoryOfOrigin,
   shellAnswers,
@@ -21,9 +18,9 @@ import {
   type DebitJournal,
   type ProvenanceInput,
   type StepAccount,
-  type StepRecordEntryAsWritten,
+  type RecordedStep,
   type TargetConfiguration,
-  type WorkflowStepAsWritten,
+  type CiStep,
 } from "@3f-consulting/spec-controller-core";
 import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
@@ -42,8 +39,8 @@ const NONE: readonly never[] = [];
 
 // Each workflow step the run read, counted by what it is; a run that read none has an empty step account.
 function stepAccountFor(
-  steps: readonly WorkflowStepAsWritten[],
-  record: readonly StepRecordEntryAsWritten[],
+  steps: readonly CiStep[],
+  record: readonly RecordedStep[],
   configuration: TargetConfiguration,
   scripts: Readonly<Record<string, string>>,
 ): StepAccount {
@@ -79,7 +76,7 @@ const reportsReadIn = (read: InputsRead): string[] => Object.values(reportsOf(re
 // The credit journal: each runner's results as Evidence Observations, beside the fitness functions' from the CI steps.
 function creditJournalOf(
   read: InputsRead,
-  steps: readonly WorkflowStepAsWritten[],
+  steps: readonly CiStep[],
   configuration: TargetConfiguration,
   scripts: Readonly<Record<string, string>>,
   targetFolder: string,
@@ -88,12 +85,12 @@ function creditJournalOf(
   // The layers a report serves, by its file name.
   const servedBy = ({ report }: { readonly report: string }): ReturnType<typeof layersServing> => layersServing(report, configuration.runners);
   return [
-    ...vitest.flatMap((each) => observationsByFile(each.results, targetFolder, servedBy(each))),
-    ...jest.flatMap((each) => observationsByFile(each.results, targetFolder, servedBy(each))),
-    ...pytest.flatMap((each) => observationsBySuite(each.results, targetFolder, servedBy(each))),
-    ...junit.flatMap((each) => observationsBySuite(each.results, targetFolder, servedBy(each))),
-    ...rspec.flatMap((each) => observationsByExample(each.results, targetFolder, servedBy(each))),
-    ...cucumber.flatMap((each) => observationsOfScenarios(each.results, read.features, targetFolder, servedBy(each))),
+    ...vitest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
+    ...jest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
+    ...pytest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
+    ...junit.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
+    ...rspec.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
+    ...cucumber.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each), read.features)),
     ...fitnessObservationsOf(steps, read.stepRecord ?? NONE, configuration, scripts, shellAnswers),
   ];
 }

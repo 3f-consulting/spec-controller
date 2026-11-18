@@ -1,4 +1,4 @@
-import type { ScenarioResultAsWritten } from "../domain/postEvidenceObservation.js";
+import type { TestResult } from "../domain/postEvidenceObservation.js";
 import { whereShapeBreaks, type Shape } from "./shape.js";
 
 // A feature of Cucumber's JSON evidence report, as far as its reader reads it. A hook is written as a step with no name.
@@ -36,23 +36,30 @@ const REPORT: Shape = { eachOf: { fields: { uri: "text", elements: { eachOf: ELE
 
 export const whereScenarioResultsBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
-// A feature with no elements written has no scenarios.
-export function scenarioResultsFrom(report: unknown): ScenarioResultAsWritten[] {
-  return (report as readonly CucumberJsonFeature[]).flatMap(
-    ({ uri, elements }) =>
-      elements
-        ?.filter(({ type }) => type === "scenario")
-        .map(({ name, line, tags = [], steps = [] }) => ({
-          file: uri,
-          line,
-          title: name,
-          tags: tags.map(({ name: tag }) => tag.slice(1)),
-          steps: steps.map(({ keyword, name: text, result: { status, error_message } }) => ({
-            keyword,
-            text,
-            status,
-            message: error_message,
-          })),
-        })) ?? [],
+type StepAsWritten = NonNullable<NonNullable<CucumberJsonFeature["elements"]>[number]["steps"]>[number];
+
+const asWritten = ({ keyword, name }: StepAsWritten): string => `${keyword.trim()} ${name}`;
+
+// A step that matched no definition, or more than one, kept the scenario from running, whatever else its steps did. A
+// scenario passed when every step passed, its hooks among them, and it had a step of its own. Anything else is left out.
+function resultOfSteps(steps: readonly StepAsWritten[]): Pick<TestResult, "result" | "message"> | undefined {
+  const unmatched = steps.find(({ result: { status } }) => status === "undefined" || status === "ambiguous");
+  if (unmatched) return { result: "never-ran", message: asWritten(unmatched) };
+  const failed = steps.find(({ result: { status } }) => status === "failed");
+  if (failed) return { result: "failed", ...(failed.result.error_message !== undefined && { message: failed.result.error_message }) };
+  return steps.some(({ name }) => name !== undefined) && steps.every(({ result: { status } }) => status === "passed") ? { result: "passed" } : undefined;
+}
+
+// A feature with no elements written has no scenarios. A scenario is placed at its file, named by its title, and cites
+// its tags, or failing those the row at its line.
+export function scenarioResultsFrom(report: unknown): TestResult[] {
+  return (report as readonly CucumberJsonFeature[]).flatMap(({ uri, elements = [] }) =>
+    elements
+      .filter(({ type }) => type === "scenario")
+      .flatMap(({ name, line, tags = [], steps = [] }): TestResult[] => {
+        const outcome = resultOfSteps(steps);
+        const scenarioTags = tags.map(({ name: tag }) => tag.slice(1));
+        return outcome === undefined ? [] : [{ place: { file: uri }, name, ...outcome, cites: { scenarioTags, file: uri, line } }];
+      }),
   );
 }

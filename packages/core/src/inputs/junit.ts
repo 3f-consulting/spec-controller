@@ -1,5 +1,5 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
-import type { FailureAsWritten, ResultInSuiteAsWritten, ResultsBySuiteAsWritten } from "../domain/postEvidenceObservation.js";
+import type { TestResult } from "../domain/postEvidenceObservation.js";
 import { TOP } from "./shape.js";
 
 // A JUnit XML evidence report, as far as its reader reads it: suites, nested or not, each holding its test cases.
@@ -25,24 +25,47 @@ const parser = new XMLParser({
 const elementsIn = (element: Element, name: string): Element[] => (element[name] as Element[] | undefined) ?? [];
 
 // An outcome element says what went wrong, or why the test was skipped, in its message attribute, or else in its text.
-function failureAsWritten(outcome: unknown): FailureAsWritten {
-  const message = ((outcome as Element)["@message"] ?? (outcome as Element)["#text"]) as string | undefined;
+function messageOf(testCase: Element, outcome: Outcome | undefined): { message?: string } {
+  if (outcome === undefined) return {};
+  const element = (testCase[outcome] as Element[])[0]!;
+  const message = (element["@message"] ?? element["#text"]) as string | undefined;
   return message ? { message } : {};
 }
 
-function resultAsWritten(testCase: Element): ResultInSuiteAsWritten {
-  const outcome = OUTCOMES.find((name) => testCase[name] !== undefined);
-  const clmProperties = elementsIn((testCase["properties"] as Element | undefined) ?? {}, "property")
+type Outcome = (typeof OUTCOMES)[number];
+
+// A test case with no outcome element is one that passed.
+const outcomeOf = (testCase: Element): Outcome | undefined => OUTCOMES.find((name) => testCase[name] !== undefined);
+
+const clmPropertiesOf = (testCase: Element): string[] =>
+  elementsIn((testCase["properties"] as Element | undefined) ?? {}, "property")
     .filter((property) => property["@name"] === "clm")
     .map((property) => property["@value"] as string);
-  return {
-    className: testCase["@classname"] as string | undefined,
-    name: testCase["@name"] as string,
-    clmProperties,
-    // A test case with no outcome element is one that passed; its outcome is written as an empty string.
-    outcome: outcome ?? "",
-    ...(outcome && { failure: failureAsWritten((testCase[outcome] as unknown[])[0]) }),
-  };
+
+// pytest writes an error only for a test that never reached its assertions, and no class name for a file never collected.
+function pytestResultOf(testCase: Element): TestResult[] {
+  const outcome = outcomeOf(testCase);
+  if (outcome === "skipped") return [];
+  const className = testCase["@classname"] as string | undefined;
+  const name = testCase["@name"] as string;
+  const collected = Boolean(className);
+  const result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
+  return [{ place: { file: collected ? className! : name }, ...(collected && { name }), result, ...messageOf(testCase, outcome), cites: { codes: collected ? clmPropertiesOf(testCase) : [] } }];
+}
+
+// A nested class's name holds its outer classes' display names first, each opening with its citation when it has one.
+const classesIn = (className: string): string[] => className.split(/(?=\[CLM-)/);
+
+// JUnit writes an error for a test that failed. A case with no class name is its suite's own failure, such as a package that
+// did not build; one with no name is its class's, such as a failed setup. Neither ran a test, nor is written for a pass.
+function junitResultOf(suiteName: string, testCase: Element): TestResult[] {
+  const outcome = outcomeOf(testCase);
+  if (outcome === "skipped") return [];
+  const className = testCase["@classname"] as string | undefined;
+  const name = testCase["@name"] as string;
+  if (!className || name === "") return [{ place: { named: className || suiteName }, result: "never-ran", ...messageOf(testCase, outcome), cites: { codes: [] } }];
+  const titles = [...classesIn(className), ...name.split("/")];
+  return [{ place: { file: className }, name, result: outcome === undefined ? "passed" : "failed", ...messageOf(testCase, outcome), cites: { titles } }];
 }
 
 const suitesIn = (element: Element): Element[] => elementsIn(element, "testsuite").flatMap((suite) => [suite, ...suitesIn(suite)]);
@@ -62,11 +85,8 @@ export const whereSuitesBreak = (xml: string): string | undefined => {
   return unnamed ? "$..testcase" : undefined;
 };
 
-export function resultsBySuiteFrom(xml: string, from: "junit" | "pytest"): ResultsBySuiteAsWritten[] {
-  return suitesOf(parser.parse(xml) as Element).map((suite) => ({
-    // pytest writes an error only for a test that never reached its assertions; JUnit writes one for a test that failed.
-    errorMeansNeverRan: from === "pytest",
-    name: suite["@name"] as string,
-    results: elementsIn(suite, "testcase").map(resultAsWritten),
-  }));
+export function resultsBySuiteFrom(xml: string, from: "junit" | "pytest"): TestResult[] {
+  return suitesOf(parser.parse(xml) as Element).flatMap((suite) =>
+    elementsIn(suite, "testcase").flatMap((testCase) => (from === "pytest" ? pytestResultOf(testCase) : junitResultOf(suite["@name"] as string, testCase))),
+  );
 }
