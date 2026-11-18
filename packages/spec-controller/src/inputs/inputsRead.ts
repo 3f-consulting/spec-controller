@@ -88,19 +88,27 @@ const parsed = <Contents>(file: FileText, read: (text: string) => Contents): Inp
   }
 };
 
+// A report that holds its reader's shape, and is read. Whatever its reader cannot read, it says, and the report is not in
+// its shape.
+function readInItsShape<Report, Contents>(file: FileText, report: Report, whereItBreaks: (report: Report) => string | undefined, read: (report: Report) => Contents): InputRead<Contents> {
+  try {
+    const breaks = whereItBreaks(report);
+    return breaks === undefined ? { ok: true, contents: read(report) } : failed(file.shown, "not-in-its-shape", breaks);
+  } catch (error) {
+    return failed(file.shown, "not-in-its-shape", saidOf(error));
+  }
+}
+
 // A JSON report that parses, holds its reader's shape, and is read.
 function jsonRead<Contents>(file: FileText, whereItBreaks: (report: unknown) => string | undefined, read: (report: unknown) => Contents): InputRead<Contents> {
   const report = parsed(file, (text) => JSON.parse(text) as unknown);
-  if (!report.ok) return report;
-  const breaks = whereItBreaks(report.contents);
-  return breaks === undefined ? { ok: true, contents: read(report.contents) } : failed(file.shown, "not-in-its-shape", breaks);
+  return report.ok ? readInItsShape(file, report.contents, whereItBreaks, read) : report;
 }
 
 function xmlRead(file: FileText, from: "junit" | "pytest"): InputRead<Partial<InputsRead>> {
   const wrong = whyXmlDoesNotParse(file.text);
   if (wrong !== undefined) return failed(file.shown, "does-not-parse", wrong);
-  const breaks = whereSuitesBreak(file.text);
-  return breaks === undefined ? { ok: true, contents: { [from]: resultsBySuiteFrom(file.text, from) } } : failed(file.shown, "not-in-its-shape", breaks);
+  return readInItsShape(file, file.text, whereSuitesBreak, (xml) => ({ [from]: resultsBySuiteFrom(xml, from) }));
 }
 
 interface InputReader {

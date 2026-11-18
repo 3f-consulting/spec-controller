@@ -14,8 +14,8 @@ interface RspecJsonReport {
   readonly summary: { readonly errors_outside_of_examples_count?: number };
 }
 
-// A record of its examples, a list, and its summary, a record.
-const REPORT: Shape = { fields: { examples: "list", summary: { fields: {} } } };
+// A record of its examples, each a record with a status, and its summary, a record.
+const REPORT: Shape = { fields: { examples: { eachOf: { fields: { status: "text" } } }, summary: { fields: {} } } };
 
 export const whereResultsByExampleBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 

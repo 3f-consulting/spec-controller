@@ -17,8 +17,21 @@ interface CucumberJsonFeature {
   }[];
 }
 
-// A list of features.
-const REPORT: Shape = "list";
+// A list of features, each a record whose elements, if written, each is a record whose tags, if written, each has a name, and
+// whose steps, if written, each has a result.
+const REPORT: Shape = {
+  eachOf: {
+    fields: {
+      elements: {
+        eachOf: {
+          fields: { tags: { eachOf: { fields: { name: "text" } } }, steps: { eachOf: { fields: { result: { fields: {} } } } } },
+          optional: ["tags", "steps"],
+        },
+      },
+    },
+    optional: ["elements"],
+  },
+};
 
 export const whereScenarioResultsBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 
