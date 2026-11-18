@@ -2,6 +2,9 @@ import { QUALITY_CHECK_KINDS, type EvidenceObligation, type ExecutableClaim, typ
 import type { ClaimCode } from "./claimCodes.js";
 import type { EvidenceObservation, PhantomClaim, UnnamedClaim } from "./postEvidenceObservation.js";
 
+// The credit journal: the Evidence Observations read from a run's reports, before posting carries each to its claim.
+export type CreditJournal = readonly EvidenceObservation[];
+
 // Each shape names the sides it does not have as never, so an outcome on the wrong shape does not compile.
 interface BothSides {
   readonly outcome: "satisfied" | "failing" | "cannot-fail";
@@ -148,14 +151,14 @@ export function citedClaimReconciliationOf(claim: PhantomClaim | UnnamedClaim, o
   return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
 }
 
-// Each Evidence Observation goes to the one executable claim with the code it cites; to that code's phantom claim when no
+// Each Evidence Observation in the credit journal goes to the one executable claim with the code it cites; to that code's phantom claim when no
 // executable claim has it; and to the unnamed claim when it cites none, several, or a code several claims share.
-export function claimReconciliationsOf(claims: readonly ExecutableClaim[], observations: readonly EvidenceObservation[]): ClaimReconciliation[] {
+export function claimReconciliationsOf(claims: readonly ExecutableClaim[], creditJournal: CreditJournal): ClaimReconciliation[] {
   const claimsWith = new Map<string, number>();
   for (const { claimCode } of claims) if (claimCode) claimsWith.set(written(claimCode), (claimsWith.get(written(claimCode)) ?? 0) + 1);
   const citing = new Map<string, { readonly claimCode: ClaimCode; readonly observations: EvidenceObservation[] }>();
   const unnamed: EvidenceObservation[] = [];
-  for (const observation of observations) {
+  for (const observation of creditJournal) {
     const only = observation.cites.length === 1 ? observation.cites[0] : undefined;
     const entry = only && citing.get(written(only));
     if (only === undefined || (claimsWith.get(written(only)) ?? 0) > 1) unnamed.push(observation);

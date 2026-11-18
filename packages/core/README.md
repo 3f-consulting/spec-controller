@@ -36,10 +36,10 @@ import {
 const targetFolder = "/work/shop";
 const features = [featureAsWrittenFrom("checkout.feature", featureSource)];
 const claims = executableClaimsOf(features, { deferralTags: [], strict: false });
-const observations = observationsByFile(resultsByFileFrom(vitestReport), targetFolder);
+const creditJournal = observationsByFile(resultsByFileFrom(vitestReport), targetFolder);
 
 const evidenceReconciliation = evidenceReconciliationOf({
-  claimReconciliations: claimReconciliationsOf(claims, observations),
+  claimReconciliations: claimReconciliationsOf(claims, creditJournal),
   claimCodeErrors: claimCodeErrorsOf(features),
   configurationErrors: [],
   features,
@@ -59,7 +59,7 @@ markdownReportOf(evidenceReconciliation);
 - `featureAsWrittenFrom` reads one feature file as written: its tags, and each scenario's tags, title and Examples. It throws on a file the Gherkin parser rejects.
 - `executableClaimsOf` reads the executable claims off the feature files, and the **Evidence Obligations** each claim's tags raise, under the deferral tags you configure and whether the run is strict.
 - `resultsByFileFrom` reads a Vitest or Jest JSON report as written, and `observationsByFile` posts its results as **Evidence Observations**. Each cites the claim codes its test cites, and is placed relative to the target's folder.
-- `claimReconciliationsOf` files each Evidence Observation under its claim, a phantom claim or the unnamed claim, and reconciles each claim into a **Claim Reconciliation**.
+- `claimReconciliationsOf` takes the Evidence Observations as the **credit journal**, files each under its claim, a phantom claim or the unnamed claim, and reconciles each claim into a **Claim Reconciliation**.
 - `evidenceReconciliationOf` gives the whole: the Claim Reconciliations, the run verdict, the totals, the provenance, and the step account, the errors in the inputs and the run integrity when the run has them. With no CI, the step account is empty, as here: `stepAccountOf([])`.
 
 Everything else the package exports is a variation on these steps.
