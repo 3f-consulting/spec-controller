@@ -1,6 +1,7 @@
 import { parse } from "yaml";
 import type { CiStep, ContinueOnError } from "../domain/workflowSteps.js";
 import { coreText } from "../messages/catalogue.js";
+import { isRecord } from "./shape.js";
 import workflowsVariants from "./workflows.variants.json" with { type: "json" };
 
 // Which steps only set the job up is the reader's to say, from its list of the actions that do, by owner and
@@ -15,7 +16,6 @@ const WRITES_STEP_RECORD = "toJSON(steps)";
 
 type Mapping = Readonly<Record<string, unknown>>;
 
-const isMapping = (value: unknown): value is Mapping => typeof value === "object" && value !== null && !Array.isArray(value);
 const text = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
 // A step's name as written, a number among them: YAML reads a bare 3 as a number.
 const nameText = (value: unknown): string | undefined => (typeof value === "number" ? String(value) : text(value));
@@ -24,7 +24,7 @@ const mappingsIn = (value: unknown): Mapping[] => (Array.isArray(value) ? value 
 // What a step holds in each place it can write the step record from: its command, or its env: values.
 const HELD_IN: Readonly<Record<string, (step: Mapping) => readonly unknown[]>> = {
   "run:": (step) => [step["run"]],
-  "env:": (step) => Object.values(isMapping(step["env"]) ? step["env"] : {}),
+  "env:": (step) => Object.values(isRecord(step["env"]) ? step["env"] : {}),
 };
 const writesStepRecord = (step: Mapping): boolean =>
   workflowsVariants["CLM-OBS-013"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
@@ -51,10 +51,10 @@ function ciStepOf(workflow: string, job: string, jobContinueOnError: ContinueOnE
 
 export function workflowStepsFrom(workflow: string, source: string): CiStep[] {
   const document: unknown = parse(source);
-  const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
+  const jobs = isRecord(document) && isRecord(document["jobs"]) ? document["jobs"] : {};
   // GitHub runs no workflow whose job is not a mapping, or whose step names neither an action nor a command.
   return Object.entries(jobs).flatMap(([job, definition]) => {
-    if (!isMapping(definition)) throw new TypeError(coreText("job-holds-no-settings", { place: `jobs.${job}` }));
+    if (!isRecord(definition)) throw new TypeError(coreText("job-holds-no-settings", { place: `jobs.${job}` }));
     return mappingsIn(definition["steps"]).map((step, at) => {
       if (text(step["uses"]) === undefined && text(step["run"]) === undefined) {
         throw new TypeError(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
