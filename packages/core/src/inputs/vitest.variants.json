@@ -1,0 +1,86 @@
+{
+  "CLM-CLI-151": {
+    "class": "a Vitest evidence report broken at one entry",
+    "variants": [
+      {
+        "given": "a test result entry that is null",
+        "report": { "testResults": [{ "name": "/repo/one.test.ts", "message": "", "assertionResults": [] }, null] },
+        "breaks": "$.testResults[1]"
+      },
+      {
+        "given": "an assertion result with no status",
+        "report": {
+          "testResults": [
+            {
+              "name": "/repo/one.test.ts",
+              "message": "",
+              "assertionResults": [
+                { "ancestorTitles": [], "title": "one", "status": "passed", "failureMessages": [] },
+                { "ancestorTitles": [], "title": "two", "failureMessages": [] }
+              ]
+            }
+          ]
+        },
+        "breaks": "$.testResults[0].assertionResults[1].status"
+      },
+      {
+        "given": "an assertion result with a status neither Vitest nor Jest writes",
+        "report": {
+          "testResults": [
+            {
+              "name": "/repo/one.test.ts",
+              "message": "",
+              "assertionResults": [
+                { "ancestorTitles": [], "title": "one", "status": "passed", "failureMessages": [] },
+                { "ancestorTitles": [], "title": "two", "status": "passing", "failureMessages": [] }
+              ]
+            }
+          ]
+        },
+        "breaks": "$.testResults[0].assertionResults[1].status"
+      }
+    ]
+  },
+  "CLM-CLI-153": {
+    "class": "a Jest evidence report broken at one entry",
+    "variants": [
+      {
+        "given": "a test result entry that is null",
+        "report": { "testResults": [{ "name": "/repo/one.test.js", "message": "", "assertionResults": [] }, null] },
+        "breaks": "$.testResults[1]"
+      },
+      {
+        "given": "an assertion result with no status",
+        "report": {
+          "testResults": [
+            {
+              "name": "/repo/one.test.js",
+              "message": "",
+              "assertionResults": [
+                { "ancestorTitles": [], "title": "one", "status": "passed", "failureMessages": [] },
+                { "ancestorTitles": [], "title": "two", "failureMessages": [] }
+              ]
+            }
+          ]
+        },
+        "breaks": "$.testResults[0].assertionResults[1].status"
+      },
+      {
+        "given": "an assertion result with a status neither Vitest nor Jest writes",
+        "report": {
+          "testResults": [
+            {
+              "name": "/repo/one.test.js",
+              "message": "",
+              "assertionResults": [
+                { "ancestorTitles": [], "title": "one", "status": "passed", "failureMessages": [] },
+                { "ancestorTitles": [], "title": "two", "status": "errored", "failureMessages": [] }
+              ]
+            }
+          ]
+        },
+        "breaks": "$.testResults[0].assertionResults[1].status"
+      }
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "CLM-CLI-152": {
+    "class": "a Cucumber evidence report broken at one entry",
+    "variants": [
+      {
+        "given": "a step with no result",
+        "report": [
+          {
+            "uri": "features/one.feature",
+            "elements": [
+              {
+                "type": "scenario",
+                "name": "one",
+                "line": 3,
+                "tags": [{ "name": "@CLM-ONE-001" }],
+                "steps": [
+                  { "keyword": "Given ", "name": "a thing", "result": { "status": "passed" } },
+                  { "keyword": "Then ", "name": "it holds" }
+                ]
+              }
+            ]
+          }
+        ],
+        "breaks": "$[0].elements[0].steps[1].result"
+      },
+      {
+        "given": "a tag with no name",
+        "report": [
+          {
+            "uri": "features/one.feature",
+            "elements": [
+              {
+                "type": "scenario",
+                "name": "one",
+                "line": 3,
+                "tags": [{ "name": "@CLM-ONE-001" }, { "line": 2 }],
+                "steps": [{ "keyword": "Given ", "name": "a thing", "result": { "status": "passed" } }]
+              }
+            ]
+          }
+        ],
+        "breaks": "$[0].elements[0].tags[1].name"
+      }
+    ]
+  }
+}

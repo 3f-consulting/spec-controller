@@ -92,3 +92,13 @@ describe("balance reads the feature corpus in path order", () => {
     expect("refusals" in inputs ? inputs.refusals.map(({ key }) => key) : inputs.features.map(({ file }) => file)).toEqual(["a/x.feature", "b.feature"]);
   });
 });
+
+describe("an input that is not valid will stop the run", () => {
+  it("[CLM-CLI-157] an RSpec evidence report in its shape whose messages are a number, which its reader cannot read: it is refused as not in RSpec's shape, naming the report", () => {
+    const folder = temporaryDirectory("reader-throws-");
+    writeFileSync(join(folder, "rspec.json"), '{"examples":[],"summary":{"errors_outside_of_examples_count":1},"messages":5}');
+    const inputs = inputsReadFor([{ kind: "rspec", path: "rspec.json", byDefault: false }], folder);
+
+    expect("refusals" in inputs ? inputs.refusals.map(({ key, values: { path } }) => ({ key, path })) : inputs.rspec).toEqual([{ key: "input-not-in-its-shape", path: "rspec.json" }]);
+  });
+});

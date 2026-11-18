@@ -1,0 +1,26 @@
+{
+  "CLM-CLI-157": {
+    "class": "an RSpec evidence report broken at one entry",
+    "variants": [
+      {
+        "given": "an example that is null",
+        "report": {
+          "examples": [{ "description": "one", "full_description": "one", "status": "passed", "file_path": "./spec/one_spec.rb", "pending_message": null }, null],
+          "summary": {}
+        },
+        "breaks": "$.examples[1]"
+      },
+      {
+        "given": "an example with no status",
+        "report": {
+          "examples": [
+            { "description": "one", "full_description": "one", "status": "passed", "file_path": "./spec/one_spec.rb", "pending_message": null },
+            { "description": "two", "full_description": "two", "file_path": "./spec/one_spec.rb", "pending_message": null }
+          ],
+          "summary": {}
+        },
+        "breaks": "$.examples[1].status"
+      }
+    ]
+  }
+}
