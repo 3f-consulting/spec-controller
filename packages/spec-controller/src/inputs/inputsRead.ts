@@ -30,7 +30,7 @@ import type { InputFault, InputRead } from "./inputRead.js";
 
 // One evidence report read: its file name, which a runners entry may name; its path as given, a folder's file as the
 // folder's path joined with its name; and its results as its reader reports them.
-export interface ReportRead<Results> {
+interface ReportRead<Results> {
   readonly report: string;
   readonly path: string;
   readonly results: Results;
