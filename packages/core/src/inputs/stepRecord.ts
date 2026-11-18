@@ -4,7 +4,6 @@ import { whereShapeBreaks } from "./shape.js";
 export const whereStepRecordBreaks = (record: unknown): string | undefined =>
   whereShapeBreaks(record, { entriesOf: { fields: {} } });
 
-// A step's outcome, read before continue-on-error turns a failure into success: anything but success or failure never ran.
 const resultFrom = (outcome: unknown): RecordedStep["result"] => (outcome === "success" ? "passed" : outcome === "failure" ? "failed" : "never-ran");
 
 // The CI run's own record of its steps, keyed by each step's id, as toJSON(steps) writes it.
