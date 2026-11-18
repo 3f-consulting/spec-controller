@@ -234,6 +234,40 @@ describe("balance matches each evidence report it read to the runners entry nami
   });
 });
 
+interface ResultsByClaimReported {
+  readonly claimReconciliations: readonly {
+    readonly claim: { readonly claimCode?: { readonly number: number } };
+    readonly qualityCheckReconciliations: readonly { readonly observation?: { readonly result: string } }[];
+  }[];
+}
+
+const TWO_CLAIMS = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n\n  @unit @CLM-ONE-002\n  Scenario: two\n";
+
+describe("balance posts the results of every evidence report the run names for one runner", () => {
+  it.each([
+    ["--vitest", BY_FILE_PASSING],
+    ["--jest", BY_FILE_PASSING],
+    ["--pytest", PYTEST_PASSING],
+    ["--junit", JUNIT_PASSING],
+    ["--rspec", RSPEC_PASSING],
+    ["--cucumber", CUCUMBER_PASSING],
+  ] as const)("[CLM-CLI-210] %s given twice, naming two reports of one passing result each, citing CLM-ONE-001 and CLM-ONE-002: both results are posted", (flag, report) => {
+    const folder = folderWith({ "features/one.feature": TWO_CLAIMS, "first.report": report, "second.report": report.replaceAll("CLM-ONE-001", "CLM-ONE-002") });
+
+    const { output, error } = ran(["balance", flag, "first.report", flag, "second.report", "--format", "json"], folder);
+
+    const { claimReconciliations } = (output === "" ? { claimReconciliations: [] } : JSON.parse(output)) as ResultsByClaimReported;
+    const posted = claimReconciliations.map(({ claim, qualityCheckReconciliations }) => [claim.claimCode?.number, qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.result] : []))]);
+    expect({ error, posted }).toEqual({
+      error: "",
+      posted: [
+        [1, ["passed"]],
+        [2, ["passed"]],
+      ],
+    });
+  });
+});
+
 describe("an input that is not valid will stop the run", () => {
   it.each([
     ["CLM-CLI-147", "a named input that does not exist", {}, ["--vitest", "absent.json"], ["absent.json", "Vitest evidence report", "[input-absent]"]],
