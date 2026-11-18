@@ -5,7 +5,6 @@ import {
   executableClaimsOf,
   fitnessObservationsOf,
   layersServing,
-  observationsOfScenarios,
   observationsOfTestResults,
   provenanceOf,
   repositoryOfOrigin,
@@ -91,7 +90,7 @@ function creditJournalOf(
     ...pytest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
     ...junit.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
     ...rspec.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
-    ...cucumber.flatMap((each) => observationsOfScenarios(each.results, read.features, targetFolder, servedBy(each))),
+    ...cucumber.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each), read.features)),
     ...fitnessObservationsOf(steps, read.stepRecord ?? NONE, configuration, scripts, shellAnswers),
   ];
 }

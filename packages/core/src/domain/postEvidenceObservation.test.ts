@@ -10,7 +10,7 @@ import type { ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
-import { fitnessObservationsOf, layersServing, observationsOfScenarios, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { fitnessObservationsOf, layersServing, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
@@ -175,7 +175,7 @@ const reportByScenario = (uri: string, scenarios: readonly ScenarioRun[]): unkno
 ];
 
 const postedByScenario = (report: unknown, features: readonly FeatureFile[] = [], served: readonly QualityCheckKind[] = []): EvidenceObservation[] =>
-  observationsOfScenarios(scenarioResultsFrom(report), features, "/work", served);
+  observationsOfTestResults(scenarioResultsFrom(report), "/work", served, features);
 
 const PASSED: StepRun = ["Given ", "one adds one", "passed"];
 

@@ -45,18 +45,6 @@ export interface TestResult {
   readonly cites: TestCitation;
 }
 
-// What each reader reports, as written. Which result each status means is the domain's. report, where kept, is the
-// evidence report it came from, as its reader names it, since what a status means can differ between them.
-
-// A report of scenario runs: one entry per scenario or Outline row that ran. A hook is a step with no text.
-export interface ScenarioResultAsWritten {
-  readonly file: string;
-  readonly line: number;
-  readonly title: string;
-  readonly tags: readonly string[];
-  readonly steps: readonly { readonly keyword: string; readonly text?: string; readonly status: string; readonly message?: string }[];
-}
-
 // A step the CI run recorded, keyed by the step's id, with how it went before continue-on-error turns a failure into success.
 export interface RecordedStep {
   readonly key: string;
@@ -122,20 +110,6 @@ function kindsOf(tags: readonly string[], served: readonly QualityCheckKind[]): 
   return named.length > 0 ? named : layers;
 }
 
-type StepAsWritten = ScenarioResultAsWritten["steps"][number];
-
-const asWritten = ({ keyword, text }: StepAsWritten): string => `${keyword.trim()} ${text}`;
-
-// A step that matched no definition, or more than one, kept the scenario from running, whatever else its steps did. A
-// scenario passed when every step passed, its hooks among them, and it had a step of its own.
-function resultOfSteps(steps: readonly StepAsWritten[]): Pick<TestResult, "result" | "message"> | undefined {
-  const unmatched = steps.find(({ status }) => status === "undefined" || status === "ambiguous");
-  if (unmatched) return { result: "never-ran", message: asWritten(unmatched) };
-  const failed = steps.find(({ status }) => status === "failed");
-  if (failed) return { result: "failed", ...(failed.message !== undefined && { message: failed.message }) };
-  return steps.some(({ text }) => text !== undefined) && steps.every(({ status }) => status === "passed") ? { result: "passed" } : undefined;
-}
-
 // An Outline row's code is its clm cell, in the feature file at the end of the result's path, at the row's line.
 function rowCodesOf(features: readonly FeatureFile[]): (file: string, line: number) => ClaimCode[] {
   const byFile = new Map<string, ReadonlyMap<number, ClaimCode | undefined>>();
@@ -153,21 +127,6 @@ function rowCodesOf(features: readonly FeatureFile[]): (file: string, line: numb
     const code = featureFile === undefined ? undefined : byFile.get(featureFile)!.get(line);
     return code ? [code] : [];
   };
-}
-
-// Results kept by scenario: Cucumber's. features is the corpus as written, where an Outline row's claim code is; served
-// is the layers the report serves.
-export function observationsOfScenarios(
-  results: readonly ScenarioResultAsWritten[],
-  features: readonly FeatureFile[],
-  targetFolder: string,
-  served: readonly QualityCheckKind[] = [],
-): EvidenceObservation[] {
-  const testResults = results.flatMap(({ file, line, title, tags, steps }): TestResult[] => {
-    const outcome = resultOfSteps(steps);
-    return outcome === undefined ? [] : [{ place: { file }, name: title, ...outcome, cites: { scenarioTags: tags, file, line } }];
-  });
-  return observationsOfTestResults(testResults, targetFolder, served, features);
 }
 
 // What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a fitness function.

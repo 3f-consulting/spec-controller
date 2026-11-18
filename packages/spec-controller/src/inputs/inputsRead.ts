@@ -16,7 +16,6 @@ import {
   workflowStepsFrom,
   type FeatureFile,
   type TestResult,
-  type ScenarioResultAsWritten,
   type RecordedStep,
   type CiStep,
 } from "@3f-consulting/spec-controller-core";
@@ -43,7 +42,7 @@ export interface InputsRead {
   readonly pytest?: readonly ReportRead<readonly TestResult[]>[];
   readonly junit?: readonly ReportRead<readonly TestResult[]>[];
   readonly rspec?: readonly ReportRead<readonly TestResult[]>[];
-  readonly cucumber?: readonly ReportRead<ScenarioResultAsWritten[]>[];
+  readonly cucumber?: readonly ReportRead<readonly TestResult[]>[];
   readonly stepRecord?: readonly RecordedStep[];
   readonly manifest?: unknown;
   // Every file read, so no report lands on one.
