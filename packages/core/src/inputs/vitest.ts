@@ -15,8 +15,15 @@ interface JestJsonReport {
   }[];
 }
 
-// A record whose testResults is a list.
-const REPORT: Shape = { fields: { testResults: "list" } };
+// The statuses Jest writes, of which Vitest writes all but focused; one reader reads both.
+const STATUSES = ["passed", "failed", "skipped", "pending", "todo", "disabled", "focused"];
+
+const ASSERTION_RESULT: Shape = { fields: { ancestorTitles: { eachOf: "text" }, title: "text", status: { oneOf: STATUSES }, failureMessages: { eachOf: "text" } } };
+
+// Every field the reader reads; a file's message only when written.
+const REPORT: Shape = {
+  fields: { testResults: { eachOf: { fields: { name: "text", message: "text", assertionResults: { eachOf: ASSERTION_RESULT } }, optional: ["message"] } } },
+};
 
 export const whereResultsByFileBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 

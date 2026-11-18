@@ -17,8 +17,22 @@ interface CucumberJsonFeature {
   }[];
 }
 
-// A list of features.
-const REPORT: Shape = "list";
+// The statuses Cucumber writes for a step's result.
+const STATUSES = ["passed", "failed", "skipped", "pending", "undefined", "ambiguous", "unknown"];
+
+const STEP: Shape = {
+  fields: { keyword: "text", name: "text", result: { fields: { status: { oneOf: STATUSES }, error_message: "text" }, optional: ["error_message"] } },
+  optional: ["name"],
+};
+
+const ELEMENT: Shape = {
+  fields: { type: "text", name: "text", line: "count", tags: { eachOf: { fields: { name: "text" } } }, steps: { eachOf: STEP } },
+  optional: ["tags", "steps"],
+};
+
+// Every field the reader reads; the lists Cucumber leaves out when empty, a hook step's name and an error message only when
+// written.
+const REPORT: Shape = { eachOf: { fields: { uri: "text", elements: { eachOf: ELEMENT } }, optional: ["elements"] } };
 
 export const whereScenarioResultsBreak = (report: unknown): string | undefined => whereShapeBreaks(report, REPORT);
 

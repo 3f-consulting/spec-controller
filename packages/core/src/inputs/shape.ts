@@ -1,6 +1,9 @@
-// What a report holds where its reader reads it: a list, a record of one kind of entry, or named fields.
+// What a report holds where its reader reads it: text, a whole number, a word of a set, a list or record of one shape, or fields.
 export type Shape =
-  | "list"
+  | "text"
+  | "count"
+  | { readonly eachOf: Shape }
+  | { readonly oneOf: readonly string[] }
   | { readonly entriesOf: Shape }
   | { readonly fields: Readonly<Record<string, Shape>>; readonly optional?: readonly string[] };
 
@@ -10,9 +13,13 @@ const firstOf = (breaks: readonly (string | undefined)[]): string | undefined =>
 
 export const TOP = "$";
 
-// Where the value first breaks its shape, as a path from the report's top; nothing when it holds.
+const holdsText = (value: unknown, shape: "text" | { readonly oneOf: readonly string[] }): boolean => typeof value === "string" && (shape === "text" || shape.oneOf.includes(value));
+
+// Where the value first breaks its shape, as a path from the report's top with each list entry's index; nothing when it holds.
 export function whereShapeBreaks(value: unknown, shape: Shape, at = TOP): string | undefined {
-  if (shape === "list") return Array.isArray(value) ? undefined : at;
+  if (shape === "count") return Number.isInteger(value) ? undefined : at;
+  if (shape === "text" || "oneOf" in shape) return holdsText(value, shape) ? undefined : at;
+  if ("eachOf" in shape) return Array.isArray(value) ? firstOf(value.map((entry: unknown, index) => whereShapeBreaks(entry, shape.eachOf, `${at}[${index}]`))) : at;
   if (!isRecord(value)) return at;
   if ("entriesOf" in shape) return firstOf(Object.entries(value).map(([key, entry]) => whereShapeBreaks(entry, shape.entriesOf, `${at}.${key}`)));
   return firstOf(
