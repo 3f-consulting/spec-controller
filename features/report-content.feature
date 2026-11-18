@@ -24,6 +24,12 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-103 | a JSON report with a part the schema does not name   | refused  |
         | CLM-RPT-104 | a JSON report with text where a count goes           | refused  |
 
+    @unit @CLM-RPT-171
+    Scenario: the JSON report names the version of the schema it follows
+      given a run was reconciled
+      when the JSON report is written
+      then it will name the version of the schema the package publishes
+
     @unit @CLM-RPT-009
     Scenario: the Markdown report's sections will come in a fixed order
       given a run had something for every section
