@@ -32,6 +32,9 @@
         },
         "runIntegrity": {
           "$ref": "#/definitions/RunIntegrity"
+        },
+        "plantedField": {
+          "type": "string"
         }
       },
       "required": [
