@@ -59,7 +59,7 @@ evidenceReconciliation.runVerdict; // { verdict: "balanced" } while every claim'
 markdownReportOf(evidenceReconciliation);
 ```
 
-- `featureAsWrittenFrom` reads one feature file as written: its tags, and each scenario's tags, title and Examples. It throws on a file the Gherkin parser rejects.
+- `featureAsWrittenFrom` reads one feature file into its scenarios: its tags, and each scenario's tags, title and Examples, with each Outline row's `clm` cell. It throws on a file the Gherkin parser rejects.
 - `executableClaimsOf` reads the executable claims off the feature files, and the **Evidence Obligations** each claim's tags raise, under the deferral tags you configure and whether the run is strict.
 - `resultsByFileFrom` reads a Vitest or Jest JSON report as its test results, and `observationsOfTestResults` posts them as **Evidence Observations**. Each cites the claim codes its test cites, and is placed relative to the target's folder.
 - `claimReconciliationsOf` takes the executable claims as the debit journal and the Evidence Observations as the credit journal, posts each observation to its claim, a phantom claim or the unnamed claim, and reconciles each claim into a **Claim Reconciliation**.
@@ -71,12 +71,12 @@ Everything else the package exports is a variation on these steps.
 
 The package publishes exactly one entrypoint. It is a barrel that exports the following.
 
-- **Read the inputs as written.** Each reader returns what its input says. Each report's reader has a `where…Break` beside it, which says where the report first breaks the shape its tool writes, or nothing when it holds:
+- **Read the inputs.** Each reader translates its tool's format into the domain's words: a test's status into passed, failed or never ran, a CI step's `continue-on-error` into whether the run may allow its failure, the step record's outcomes into each step's result. Each report's reader has a `where…Break` beside it, which says where the report first breaks the shape its tool writes, or nothing when it holds:
   - feature files: `featureAsWrittenFrom`;
   - test reports: `resultsByFileFrom` (Vitest and Jest JSON), `resultsBySuiteFrom` (JUnit XML, from pytest, gotestsum, Maven Surefire or Gradle, given as text, with `whyXmlDoesNotParse`), `resultsByExampleFrom` (RSpec JSON) and `scenarioResultsFrom` (Cucumber JSON);
   - CI: `workflowStepsFrom`, which reads one workflow's steps, and `stepRecordFrom`, which reads a run's `toJSON(steps)` record;
   - the target's `package.json`: `targetConfigurationFrom`, which reads its `specController` block, and `scriptsFrom`, its scripts;
-  - `shellAnswers`, which says whether a step's command runs a given command, and `repositoryOfOrigin`, which names the repository a git origin points to.
+  - `shellAnswers`, which says whether a step's command runs a runner, through the target's scripts, and whether it runs `spec-controller balance`, and `repositoryOfOrigin`, which names the repository a git origin points to.
 
   `resultsBySuiteFrom` takes which tool wrote the report. The two differ in one way: how an `<error>` on an ordinary test reads. From JUnit it posts as failed. From pytest it posts as never ran, because pytest writes an `<error>` for an error in a test's setup or teardown.
 - **Post the claims and the evidence**: `executableClaimsOf`; `observationsOfTestResults`, which posts a report's test results, a Cucumber report's with the feature files where an Outline row's claim code is; and `fitnessObservationsOf`, which posts the CI steps that are fitness functions. `stepDispositionOf` says what a CI step is: the reconciler, a non-check, plumbing, a runner or a fitness function.
