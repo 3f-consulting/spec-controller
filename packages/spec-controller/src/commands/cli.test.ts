@@ -86,35 +86,23 @@ describe("each run verdict will have its exit code", () => {
 });
 
 describe("an unexpected error will stop the run with no verdict and exit 4, naming the error", () => {
-  it("[CLM-CLI-179] an error while the program loads, run from the command line: the run stops, no verdict, exit 4, and a complaint with the error", async () => {
+  it.each([
+    ["the program", "./main.js", "main"],
+    ["the part that reports an unexpected error", "../runEnding/crashGuards.js", "complainerTo"],
+  ] as const)("[CLM-CLI-179] an error while %s loads, run from the command line: the run stops, no verdict, exit 4, and a complaint with the error", async (_part, module, exported) => {
     // A module whose evaluation throws, met as the bin reads what it exports.
-    vi.doMock("./main.js", () => ({
-      get main(): never {
-        throw new Error("a module could not load");
-      },
-    }));
+    vi.doMock(module, () =>
+      Object.defineProperty({}, exported, {
+        enumerable: true,
+        get: (): never => {
+          throw new Error(`${module} could not load`);
+        },
+      }),
+    );
 
     const run = await binRun(["balance"], folderOutOfBalance());
 
-    expect({ exitCode: run.exitCode, output: run.output, complaints: run.complaints().map((line) => line.includes("Error: a module could not load")) }).toEqual({
-      exitCode: 4,
-      output: "",
-      complaints: [true],
-    });
-  });
-});
-
-describe("an unexpected error will stop the run with no verdict and exit 4, naming the error", () => {
-  it("[CLM-CLI-179] an error while the part that reports an unexpected error loads, run from the command line: the run stops, no verdict, exit 4, and a complaint with the error", async () => {
-    vi.doMock("../runEnding/crashGuards.js", () => ({
-      get complainerTo(): never {
-        throw new Error("the crash guards could not load");
-      },
-    }));
-
-    const run = await binRun(["balance"], folderOutOfBalance());
-
-    expect({ exitCode: run.exitCode, output: run.output, complaints: run.complaints().map((line) => line.includes("Error: the crash guards could not load")) }).toEqual({
+    expect({ exitCode: run.exitCode, output: run.output, complaints: run.complaints().map((line) => line.includes(`Error: ${module} could not load`)) }).toEqual({
       exitCode: 4,
       output: "",
       complaints: [true],
