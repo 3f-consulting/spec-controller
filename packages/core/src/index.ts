@@ -1,5 +1,5 @@
 export type { Allocation, AllocationAsked, ClaimCodeOccurrence, HistoryBoundary } from "./domain/claimCodes.js";
-export type { CreditJournal } from "./domain/claimReconciliation.js";
+export type { CreditJournal, DebitJournal } from "./domain/claimReconciliation.js";
 export type { FeatureAsWritten } from "./domain/postEvidenceObligation.js";
 export type { EvidenceObservation, ResultsByExampleAsWritten, ResultsByFileAsWritten, ResultsBySuiteAsWritten, ScenarioResultAsWritten, StepRecordEntryAsWritten } from "./domain/postEvidenceObservation.js";
 export type { WorkflowStepAsWritten } from "./domain/workflowSteps.js";

@@ -18,6 +18,7 @@ import {
   scriptsFrom,
   targetConfigurationFrom,
   type CreditJournal,
+  type DebitJournal,
   type ProvenanceInput,
   type StepAccount,
   type StepRecordEntryAsWritten,
@@ -113,8 +114,8 @@ export function balance(
   const scripts = scriptsFrom(read.manifest);
   // git gives its top level with every link followed, so the folders and paths it is compared with follow theirs too.
   const targetFolder = realpathSync(targetFolderOf({ workingFolder: folder, corpus: corpus && realpathSync(corpus), gitTopLevel: identity.gitTopLevel }));
-  const claims = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
-  const claimReconciliations = claimReconciliationsOf(claims, creditJournalOf(read, steps, configuration, scripts, targetFolder));
+  const debitJournal: DebitJournal = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
+  const claimReconciliations = claimReconciliationsOf(debitJournal, creditJournalOf(read, steps, configuration, scripts, targetFolder));
   const provenance = provenanceOf(identity, provenanceInputsOf(read, folder), targetFolder, repositoryOfOrigin);
   const reconciliation = evidenceReconciliationOf({
     claimReconciliations,
