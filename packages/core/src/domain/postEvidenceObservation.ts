@@ -195,7 +195,7 @@ export function disposedStepsOf(
   configuration: TargetConfiguration,
   scripts: Scripts,
   shell: ShellAnswers,
-  record: readonly RecordedStep[] = [],
+  record: readonly RecordedStep[],
 ): DisposedStep[] {
   return steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shell, record) }));
 }
