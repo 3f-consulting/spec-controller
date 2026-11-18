@@ -22,7 +22,15 @@ import { it } from "vitest";
 it("[CLM-CHK-001] refuses an empty basket", () => { /* … */ });
 ```
 
-The `@unit` tag says this behaviour needs a unit test. A scenario like this needs no step definitions and no Cucumber: its title and tags are all there is to it. Delete that test, and the run is out of balance and exits `1`. Its row says a unit test was asked for (`U/-`) and none answered:
+The `@unit` tag says this behaviour needs a unit test. A scenario like this needs no step definitions and no Cucumber: its title and tags are all there is to it. With the test, the row balances: a unit test was asked for and one answered (`U/1`):
+
+```markdown
+| Claim | Unit | Verdict | Reconciling items |
+| --- | --- | --- | --- |
+| CLM-CHK-001 | U/1 | balanced | — |
+```
+
+Delete that test, and the run is out of balance and exits `1`. The row says a unit test was asked for (`U/-`) and none answered:
 
 ```markdown
 | Claim | Unit | Verdict | Reconciling items |
@@ -60,8 +68,12 @@ With no scenarios yet, the report lists every test that ran, and `--exit-zero` k
 
 At `0.x`, nothing is promised between versions ([`docs/compatibility.md`](./docs/compatibility.md)). Pin an exact version.
 
-## Who maintains it
+## Built with Claude Code, and kept honest
 
-spec-controller is maintained by Steven Thomas at 3F Consulting and written with Claude Code. [`CONTRIBUTING.md`](./CONTRIBUTING.md) says how each change an agent writes is reviewed before it merges, and how to report a problem.
+spec-controller is maintained by Steven Thomas at 3F Consulting, who does not write TypeScript. Claude Code writes the code. The maintainer endorses each change's scenarios before any code is written, and each scenario is proved red, then green.
+
+The repository holds itself to the discipline it asks of you. Its own CI reconciles its own scenarios with `balance` on every run, and gates on dependency boundaries, complexity, duplication, package and workflow security, and a ceiling on test code against production code; a nightly mutation sweep stops new work when any scope falls below 95%. Each gate is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), whose Rule says what it checks and why.
+
+The agent has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. [`CONTRIBUTING.md`](./CONTRIBUTING.md) says how to build, make a change and report a problem.
 
 MIT licence, see [`LICENSE`](./LICENSE). © 2026 3F Consulting Ltd.
