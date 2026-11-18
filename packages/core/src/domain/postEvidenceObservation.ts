@@ -1,6 +1,6 @@
-import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
+import { claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
 import { reportsOf, runnerNameOf, type TargetConfiguration } from "./configuration.js";
-import { QUALITY_CHECK_KINDS, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
+import { QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
 import { stepIdentityOf, type CiStep, type ContinueOnError } from "./workflowSteps.js";
 
@@ -221,12 +221,12 @@ function resultOfSteps(steps: readonly StepAsWritten[]): { readonly result: Resu
 }
 
 // An Outline row's code is its clm cell, in the feature file at the end of the result's path, at the row's line.
-function rowCodesOf(features: readonly FeatureAsWritten[]): (file: string, line: number) => ClaimCode[] {
+function rowCodesOf(features: readonly FeatureFile[]): (file: string, line: number) => ClaimCode[] {
   const byFile = new Map<string, ReadonlyMap<number, ClaimCode | undefined>>();
   for (const { file, scenarios } of features) {
     const byLine = new Map<number, ClaimCode | undefined>();
-    for (const { columns, rows } of scenarios.flatMap(({ examples }) => examples)) {
-      for (const { line, cells } of rows) byLine.set(line, claimCodeFrom(cells[columns.indexOf(CLM_COLUMN)]));
+    for (const { rows } of scenarios.flatMap(({ examples }) => examples)) {
+      for (const { line, clmCell } of rows) byLine.set(line, claimCodeFrom(clmCell));
     }
     byFile.set(file, byLine);
   }
@@ -243,7 +243,7 @@ function rowCodesOf(features: readonly FeatureAsWritten[]): (file: string, line:
 // is the layers the report serves.
 export function observationsOfScenarios(
   results: readonly ScenarioResultAsWritten[],
-  features: readonly FeatureAsWritten[],
+  features: readonly FeatureFile[],
   targetFolder: string,
   served: readonly QualityCheckKind[] = [],
 ): EvidenceObservation[] {

@@ -9,7 +9,7 @@ import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
-import { executableClaimsOf, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
+import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { fitnessObservationsOf, layersServing, observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, type EvidenceObservation } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
@@ -174,7 +174,7 @@ const reportByScenario = (uri: string, scenarios: readonly ScenarioRun[]): unkno
   },
 ];
 
-const postedByScenario = (report: unknown, features: readonly FeatureAsWritten[] = [], served: readonly QualityCheckKind[] = []): EvidenceObservation[] =>
+const postedByScenario = (report: unknown, features: readonly FeatureFile[] = [], served: readonly QualityCheckKind[] = []): EvidenceObservation[] =>
   observationsOfScenarios(scenarioResultsFrom(report), features, "/work", served);
 
 const PASSED: StepRun = ["Given ", "one adds one", "passed"];

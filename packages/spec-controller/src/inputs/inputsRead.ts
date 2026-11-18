@@ -14,7 +14,7 @@ import {
   whereSuitesBreak,
   whyXmlDoesNotParse,
   workflowStepsFrom,
-  type FeatureAsWritten,
+  type FeatureFile,
   type ResultsByExampleAsWritten,
   type ResultsByFileAsWritten,
   type ResultsBySuiteAsWritten,
@@ -38,7 +38,7 @@ interface ReportRead<Results> {
 
 // Every input the run read, each as its reader reports it; an input not read is absent.
 export interface InputsRead {
-  readonly features: readonly FeatureAsWritten[];
+  readonly features: readonly FeatureFile[];
   readonly workflowSteps?: readonly CiStep[];
   readonly vitest?: readonly ReportRead<readonly ResultsByFileAsWritten[]>[];
   readonly jest?: readonly ReportRead<readonly ResultsByFileAsWritten[]>[];
