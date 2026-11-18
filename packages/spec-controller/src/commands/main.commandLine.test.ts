@@ -214,16 +214,18 @@ interface KindsReported {
 }
 
 const PLAYWRIGHT_AS_E2E_RUNNER = '{"name":"acme","specController":{"runners":{"e2e":{"runner":"playwright","reports":["playwright.xml"]}}}}';
+const VITEST_AS_E2E_RUNNER = '{"name":"acme","specController":{"runners":{"e2e":{"runner":"vitest","reports":["vitest.json"]}}}}';
 const E2E_CLAIM = "@ONE\nFeature: one\n\n  @e2e @CLM-ONE-001\n  Scenario: one\n";
 const JUNIT_PASSING = '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="one" tests="1" errors="0" skipped="0" failures="0">\n  <testcase name="[CLM-ONE-001] one" classname="one" time="0.001"/>\n</testsuite>\n';
 
 describe("balance matches each evidence report it read to the runners entry naming its file name, wherever the run read it from", () => {
   it.each([
-    ["at out/reports/playwright.xml", { "package.json": PLAYWRIGHT_AS_E2E_RUNNER, "features/one.feature": E2E_CLAIM }, ["--junit", "out/reports/playwright.xml"]],
-    ["outside the target's folder", { "package.json": PLAYWRIGHT_AS_E2E_RUNNER, "target/features/one.feature": E2E_CLAIM }, ["--features", "target/features", "--junit", "out/reports/playwright.xml"]],
-    ["as one file of a --junit folder", { "package.json": PLAYWRIGHT_AS_E2E_RUNNER, "features/one.feature": E2E_CLAIM }, ["--junit", "out/reports"]],
-  ] as const)("[CLM-CLI-209] playwright as the e2e runner, writing playwright.xml, and a JUnit report read %s with one result citing CLM-ONE-001: that result is e2e evidence for CLM-ONE-001", (_where, files, args) => {
-    const folder = folderWith({ ...files, "out/reports/playwright.xml": JUNIT_PASSING });
+    ["playwright as the e2e runner, writing playwright.xml, and a JUnit report read at out/reports/playwright.xml", { "package.json": PLAYWRIGHT_AS_E2E_RUNNER, "features/one.feature": E2E_CLAIM }, ["--junit", "out/reports/playwright.xml"]],
+    ["playwright as the e2e runner, writing playwright.xml, and a JUnit report read outside the target's folder", { "package.json": PLAYWRIGHT_AS_E2E_RUNNER, "target/features/one.feature": E2E_CLAIM }, ["--features", "target/features", "--junit", "out/reports/playwright.xml"]],
+    ["playwright as the e2e runner, writing playwright.xml, and a JUnit report read as one file of a --junit folder", { "package.json": PLAYWRIGHT_AS_E2E_RUNNER, "features/one.feature": E2E_CLAIM }, ["--junit", "out/reports"]],
+    ["vitest as the e2e runner, writing vitest.json, and a Vitest report read at out/reports/vitest.json", { "package.json": VITEST_AS_E2E_RUNNER, "features/one.feature": E2E_CLAIM }, ["--vitest", "out/reports/vitest.json"]],
+  ] as const)("[CLM-CLI-209] %s, with one result citing CLM-ONE-001: that result is e2e evidence for CLM-ONE-001", (_where, files, args) => {
+    const folder = folderWith({ ...files, "out/reports/playwright.xml": JUNIT_PASSING, "out/reports/vitest.json": BY_FILE_PASSING });
 
     const { output } = ran(["balance", ...args, "--format", "json"], folder);
 
