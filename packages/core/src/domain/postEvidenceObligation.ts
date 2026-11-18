@@ -59,7 +59,7 @@ function clmCellsOf({ examples }: ScenarioAsWritten): (string | undefined)[] | u
   if (!hasClmColumn(examples)) return undefined;
   return examples.flatMap(({ columns, rows }) => {
     const at = columns.indexOf(CLM_COLUMN);
-    return rows.map(({ cells }) => (at === -1 ? undefined : cells[at]));
+    return rows.map(({ cells }): string | undefined => cells[at]);
   });
 }
 
