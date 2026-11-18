@@ -2,9 +2,9 @@
 
 **Your build goes red when a behaviour you named has no passing proof.**
 
-You name each behaviour of your software as a scenario in a Gherkin `.feature` file, with a claim code of the form `@CLM-<FFF>-<NNN>`. Each test, and each CI check, cites the code of the behaviour it proves. On every CI run, `spec-controller balance` reads the reports your tools already write and checks every named behaviour against them. Each proof it asks for must have run, passed, and been able to fail, which a CI step set to `continue-on-error` cannot. If not, the build goes red.
+You name each behaviour of your software as a scenario in a Gherkin `.feature` file, with a claim code of the form `@CLM-<FFF>-<NNN>`. Each test and each CI check cites the code of the behaviour it proves. On every CI run, `spec-controller balance` reads the reports your tools already write and checks every named behaviour against them. Each proof it asks for must have run, passed and been able to fail. A CI step set to `continue-on-error` cannot fail. If a proof falls short, the build goes red.
 
-So a test an agent deletes to make CI pass, or a lint step quietly set to never fail, shows up as a red build, not a quiet green.
+So when an agent deletes a test to make CI pass, or a lint step is quietly set never to fail, the build goes red instead of staying quietly green.
 
 <div class="sample-report">
 
@@ -22,7 +22,7 @@ import { it } from "vitest";
 it("[CLM-CHK-001] refuses an empty basket", () => { /* … */ });
 ```
 
-The `@unit` tag says this behaviour needs a unit test. A scenario like this needs no step definitions and no Cucumber: its title and tags are the whole of it. Delete that test, and the run is out of balance and exits `1`, its row saying a unit test was asked for (`U/-`) and none answered:
+The `@unit` tag says this behaviour needs a unit test. A scenario like this needs no step definitions and no Cucumber: its title and tags are all there is to it. Delete that test, and the run is out of balance and exits `1`. Its row says a unit test was asked for (`U/-`) and none answered:
 
 ```markdown
 | Claim | Unit | Verdict | Reconciling items |
@@ -46,9 +46,9 @@ npm install --save-dev spec-controller@<version>
 npx spec-controller balance --vitest ./vitest-report.json --exit-zero
 ```
 
-Use `--jest`, `--pytest`, `--junit`, `--rspec` or `--cucumber` for your own test reports.
+For other test reports, use `--jest`, `--pytest`, `--junit`, `--rspec` or `--cucumber`.
 
-With no scenarios yet, the report lists every test that ran, and `--exit-zero` keeps your build green. Give it your workflow and the run's step record (GitHub Actions' own record of how each step ended), as the quickstart shows, and it lists your CI checks too. Then name a few behaviours, cite them from their tests, and watch those rows balance. When the ones you care about balance, remove `--exit-zero`, and `balance` gates your build.
+With no scenarios yet, the report lists every test that ran, and `--exit-zero` keeps your build green. Give it your workflow and the run's step record (GitHub Actions' own record of how each step ended), as the quickstart shows, and it lists your CI checks too. Then name a few behaviours, cite them from their tests, and watch those rows balance. When the ones you care about balance, remove `--exit-zero`. `balance` then gates your build.
 
 [`docs/quickstart.md`](./docs/quickstart.md) takes you from here to a first run in CI. [`docs/user-guide.md`](./docs/user-guide.md) has every flag and runner.
 
@@ -62,6 +62,6 @@ At `0.x`, nothing is promised between versions ([`docs/compatibility.md`](./docs
 
 ## Who maintains it
 
-spec-controller is maintained by Steven Thomas at 3F Consulting, and written with Claude Code. [`CONTRIBUTING.md`](./CONTRIBUTING.md) says how each change an agent writes is reviewed before it merges, and how to report a problem.
+spec-controller is maintained by Steven Thomas at 3F Consulting and written with Claude Code. [`CONTRIBUTING.md`](./CONTRIBUTING.md) says how each change an agent writes is reviewed before it merges, and how to report a problem.
 
 MIT licence, see [`LICENSE`](./LICENSE). © 2026 3F Consulting Ltd.
