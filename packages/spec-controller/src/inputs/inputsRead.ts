@@ -1,5 +1,6 @@
 import {
   featureAsWrittenFrom,
+  InputDoesNotParse,
   resultsByExampleFrom,
   resultsByFileFrom,
   resultsBySuiteFrom,
@@ -88,25 +89,22 @@ function filesIn(shown: string, path: string, endings: readonly string[], atAnyD
 // The one report a file holds, read.
 const reportOf = <Results>(file: FileText, results: Results): readonly ReportRead<Results>[] => [{ report: file.name, path: file.shown, results }];
 
+// An input its reader cannot take, or JSON that does not parse, is refused; anything else thrown is a fault in the reader,
+// and ends the run as an unexpected error.
 const parsed = <Contents>(file: FileText, read: (text: string) => Contents): InputRead<Contents> => {
   try {
     return { ok: true, contents: read(file.text) };
   } catch (error) {
-    return failed(file.shown, "does-not-parse", saidOf(error));
+    if (error instanceof InputDoesNotParse || error instanceof SyntaxError) return failed(file.shown, "does-not-parse", saidOf(error));
+    throw error;
   }
 };
 
-// A reader that throws on a report in its shape names no place in it, so the complaint names the report as a whole.
-const WHOLE_REPORT = "$";
-
-// A report that holds its reader's shape, and is read. A report its reader cannot read is not in its shape.
+// A report that holds its reader's shape, and is read. Its shape is checked before it is read, so the reader cannot throw
+// on it.
 function readInItsShape<Report, Contents>(file: FileText, report: Report, whereItBreaks: (report: Report) => string | undefined, read: (report: Report) => Contents): InputRead<Contents> {
-  try {
-    const breaks = whereItBreaks(report);
-    return breaks === undefined ? { ok: true, contents: read(report) } : failed(file.shown, "not-in-its-shape", breaks);
-  } catch {
-    return failed(file.shown, "not-in-its-shape", WHOLE_REPORT);
-  }
+  const breaks = whereItBreaks(report);
+  return breaks === undefined ? { ok: true, contents: read(report) } : failed(file.shown, "not-in-its-shape", breaks);
 }
 
 // A JSON report that parses, holds its reader's shape, and is read.

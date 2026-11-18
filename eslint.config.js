@@ -476,7 +476,8 @@ export default [
 
   {
     files: [PRODUCTION_FILES],
-    ignores: [...TEST_FILES, "packages/spec-controller/src/runEnding/exitCode.ts"],
+    // The bin sets the exit code itself only when the modules that end a run could not load, so there is no guard to read it.
+    ignores: [...TEST_FILES, "packages/spec-controller/src/runEnding/exitCode.ts", "packages/spec-controller/src/commands/cli.ts"],
     languageOptions: tsLanguageOptions,
     rules: {
       "exitCode/no-restricted-syntax": [

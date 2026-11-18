@@ -1,6 +1,7 @@
 import { parse } from "yaml";
 import type { CiStep, ContinueOnError } from "../domain/workflowSteps.js";
 import { coreText } from "../messages/catalogue.js";
+import { InputDoesNotParse } from "./inputDoesNotParse.js";
 import { isRecord } from "./shape.js";
 import workflowsVariants from "./workflows.variants.json" with { type: "json" };
 
@@ -49,15 +50,23 @@ function ciStepOf(workflow: string, job: string, jobContinueOnError: ContinueOnE
   };
 }
 
+function documentOf(source: string): unknown {
+  try {
+    return parse(source);
+  } catch (error) {
+    throw new InputDoesNotParse((error as Error).message);
+  }
+}
+
 export function workflowStepsFrom(workflow: string, source: string): CiStep[] {
-  const document: unknown = parse(source);
+  const document = documentOf(source);
   const jobs = isRecord(document) && isRecord(document["jobs"]) ? document["jobs"] : {};
   // GitHub runs no workflow whose job is not a mapping, or whose step names neither an action nor a command.
   return Object.entries(jobs).flatMap(([job, definition]) => {
-    if (!isRecord(definition)) throw new TypeError(coreText("job-holds-no-settings", { place: `jobs.${job}` }));
+    if (!isRecord(definition)) throw new InputDoesNotParse(coreText("job-holds-no-settings", { place: `jobs.${job}` }));
     return entriesIn(definition["steps"]).map((step, at) => {
       if (!isRecord(step) || (text(step["uses"]) === undefined && text(step["run"]) === undefined)) {
-        throw new TypeError(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
+        throw new InputDoesNotParse(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
       }
       return ciStepOf(workflow, job, continueOnErrorOf(definition["continue-on-error"]), step);
     });

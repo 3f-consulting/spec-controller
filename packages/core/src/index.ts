@@ -17,6 +17,7 @@ export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
 export { provenanceOf } from "./domain/provenance.js";
 export { disposedStepsOf, fitnessObservationsOf, layersServing, observationsOfTestResults, stepDispositionOf } from "./domain/postEvidenceObservation.js";
 export { featureAsWrittenFrom } from "./inputs/gherkin.js";
+export { InputDoesNotParse } from "./inputs/inputDoesNotParse.js";
 export { scriptsFrom, targetConfigurationFrom, whereManifestBreaks } from "./inputs/manifest.js";
 export { repositoryOfOrigin } from "./inputs/origin.js";
 export { shellAnswers } from "./inputs/shell.js";
