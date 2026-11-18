@@ -23,7 +23,8 @@
     "docs:code-identifier": "vale --config=.vale/descriptions.ini --filter='.Name == \"Descriptions.CodeIdentifier\"' features",
     "docs:interface-mechanic": "vale --config=.vale/steps.ini features",
     "docs:references": "bash -o pipefail -c 'git ls-files -z -- \"*.md\" \"features/*.feature\" | xargs -0 remark --no-config --no-stdout --frail --quiet --use ./scripts/remark-feature-prose.mjs --use remark-validate-links'",
-    "docs:file-links": "bash -o pipefail -c 'git ls-files -z -- \"*.md\" \"features/*.feature\" | xargs -0 vale --config=.vale/references.ini'"
+    "docs:file-links": "bash -o pipefail -c 'git ls-files -z -- \"*.md\" \"features/*.feature\" | xargs -0 vale --config=.vale/references.ini'",
+    "docs:readme-examples": "bash -o pipefail -c 'kiira check --entry README.md --entry \"packages/*/README.md\" --reporter json | jq -er --argjson files \"$(git ls-files README.md \"packages/*/README.md\" | wc -l)\" \"(.diagnostics[] | \\\"\\(.markdownFile):\\(.markdownRange.start.line):\\(.markdownRange.start.character) \\(.severity) \\(.source) \\(.code) \\(.message)\\\"), if .stats.markdownFiles != \\$files or .stats.checked == 0 or .stats.errors > 0 or .stats.ignored > 0 then error(\\\"read \\(.stats.markdownFiles) of \\(\\$files) READMEs; \\(.stats.checked) examples checked; \\(.stats.errors) type errors; \\(.stats.ignored) examples left unchecked by a fence flagged ignore or validate=none\\\") else \\\"\\(.stats.checked) examples in \\(.stats.markdownFiles) READMEs type-check\\\" end\"'"
   },
   "specController": {
     "runners": {
@@ -59,6 +60,7 @@
     "eslint-plugin-sonarjs": "^4.2.1",
     "globals": "17.12.0",
     "jscpd": "5.4.0",
+    "kiira": "0.7.1",
     "knip": "6.39.0",
     "publint": "0.3.24",
     "remark-cli": "12.0.1",
