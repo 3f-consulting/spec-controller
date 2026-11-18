@@ -101,6 +101,7 @@ function nonCheckOf(entry: string, steps: readonly WorkflowStepAsWritten[], { st
 export function targetConfigurationOf(
   block: unknown,
   steps: readonly WorkflowStepAsWritten[],
+  reportsRead: readonly string[],
   spellings: SettingSpellings,
 ): { readonly configuration: TargetConfiguration; readonly errors: readonly ConfigurationError[] } {
   if (block === undefined) return { configuration: NO_SETTING, errors: [] };
