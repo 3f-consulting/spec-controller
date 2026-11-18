@@ -10,7 +10,7 @@ import type { ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
-import { fitnessObservationsOf, layersServing, observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { fitnessObservationsOf, layersServing, observationsByExample, observationsBySuite, observationsOfScenarios, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
@@ -40,7 +40,7 @@ const reportByFile = (file: string, tests: readonly TestByFile[], fileStatus = "
   ],
 });
 
-const postedByFile = (report: unknown, targetFolder = "/work"): EvidenceObservation[] => observationsByFile(resultsByFileFrom(report), targetFolder);
+const postedByFile = (report: unknown, targetFolder = "/work"): EvidenceObservation[] => observationsOfTestResults(resultsByFileFrom(report), targetFolder);
 
 // A file that could not run, as Jest words it: under its own heading, the error indented beneath.
 const jestSuiteFailure = (error: string): string => `  \u25cf Test suite failed to run\n\n    ${error}\n`;
@@ -421,8 +421,8 @@ const UNTAGGED_FORMATS = {
     posted: (served: readonly QualityCheckKind[]) =>
       observationsBySuite(resultsBySuiteFrom(reportBySuite("surefire", "example.AddsTest", testCase("example.AddsTest", "[CLM-ONE-001] adds one")), "junit"), "/work", served),
   },
-  Vitest: { report: "vitest.json", posted: (served: readonly QualityCheckKind[]) => observationsByFile(resultsByFileFrom(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
-  Jest: { report: "jest.json", posted: (served: readonly QualityCheckKind[]) => observationsByFile(resultsByFileFrom(jestReportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
+  Vitest: { report: "vitest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
+  Jest: { report: "jest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(jestReportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
   pytest: {
     report: "pytest.xml",
     posted: (served: readonly QualityCheckKind[]) => observationsBySuite(resultsBySuiteFrom(reportBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)), "pytest"), "/work", served),

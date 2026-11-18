@@ -16,7 +16,7 @@ import {
   workflowStepsFrom,
   type FeatureFile,
   type ResultsByExampleAsWritten,
-  type ResultsByFileAsWritten,
+  type TestResult,
   type ResultsBySuiteAsWritten,
   type ScenarioResultAsWritten,
   type RecordedStep,
@@ -40,8 +40,8 @@ interface ReportRead<Results> {
 export interface InputsRead {
   readonly features: readonly FeatureFile[];
   readonly workflowSteps?: readonly CiStep[];
-  readonly vitest?: readonly ReportRead<readonly ResultsByFileAsWritten[]>[];
-  readonly jest?: readonly ReportRead<readonly ResultsByFileAsWritten[]>[];
+  readonly vitest?: readonly ReportRead<readonly TestResult[]>[];
+  readonly jest?: readonly ReportRead<readonly TestResult[]>[];
   readonly pytest?: readonly ReportRead<readonly ResultsBySuiteAsWritten[]>[];
   readonly junit?: readonly ReportRead<readonly ResultsBySuiteAsWritten[]>[];
   readonly rspec?: readonly ReportRead<ResultsByExampleAsWritten>[];

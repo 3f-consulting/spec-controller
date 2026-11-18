@@ -6,9 +6,9 @@ import {
   fitnessObservationsOf,
   layersServing,
   observationsByExample,
-  observationsByFile,
   observationsBySuite,
   observationsOfScenarios,
+  observationsOfTestResults,
   provenanceOf,
   repositoryOfOrigin,
   shellAnswers,
@@ -88,8 +88,8 @@ function creditJournalOf(
   // The layers a report serves, by its file name.
   const servedBy = ({ report }: { readonly report: string }): ReturnType<typeof layersServing> => layersServing(report, configuration.runners);
   return [
-    ...vitest.flatMap((each) => observationsByFile(each.results, targetFolder, servedBy(each))),
-    ...jest.flatMap((each) => observationsByFile(each.results, targetFolder, servedBy(each))),
+    ...vitest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
+    ...jest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
     ...pytest.flatMap((each) => observationsBySuite(each.results, targetFolder, servedBy(each))),
     ...junit.flatMap((each) => observationsBySuite(each.results, targetFolder, servedBy(each))),
     ...rspec.flatMap((each) => observationsByExample(each.results, targetFolder, servedBy(each))),

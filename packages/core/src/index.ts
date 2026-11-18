@@ -1,7 +1,7 @@
 export type { Allocation, AllocationAsked, ClaimCodeOccurrence, HistoryBoundary } from "./domain/claimCodes.js";
 export type { CreditJournal, DebitJournal } from "./domain/claimReconciliation.js";
 export type { FeatureFile } from "./domain/postEvidenceObligation.js";
-export type { EvidenceObservation, ResultsByExampleAsWritten, ResultsByFileAsWritten, ResultsBySuiteAsWritten, ScenarioResultAsWritten, RecordedStep } from "./domain/postEvidenceObservation.js";
+export type { EvidenceObservation, ResultsByExampleAsWritten, ResultsBySuiteAsWritten, ScenarioResultAsWritten, RecordedStep, TestCitation, TestPlace, TestResult } from "./domain/postEvidenceObservation.js";
 export type { CiStep } from "./domain/workflowSteps.js";
 export type { EvidenceReconciliation, RunVerdict, StepAccount } from "./domain/evidenceReconciliation.js";
 export type { JsonReport } from "./reports/json.js";
@@ -15,7 +15,7 @@ export { outputPlanOf } from "./domain/outputPlan.js";
 export { targetFolderOf } from "./domain/targetPath.js";
 export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
 export { provenanceOf } from "./domain/provenance.js";
-export { fitnessObservationsOf, layersServing, observationsByExample, observationsByFile, observationsBySuite, observationsOfScenarios, stepDispositionOf } from "./domain/postEvidenceObservation.js";
+export { fitnessObservationsOf, layersServing, observationsByExample, observationsBySuite, observationsOfScenarios, observationsOfTestResults, stepDispositionOf } from "./domain/postEvidenceObservation.js";
 export { featureAsWrittenFrom } from "./inputs/gherkin.js";
 export { scriptsFrom, targetConfigurationFrom, whereManifestBreaks } from "./inputs/manifest.js";
 export { repositoryOfOrigin } from "./inputs/origin.js";
