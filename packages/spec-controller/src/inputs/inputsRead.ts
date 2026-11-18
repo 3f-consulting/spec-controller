@@ -15,7 +15,6 @@ import {
   whyXmlDoesNotParse,
   workflowStepsFrom,
   type FeatureFile,
-  type ResultsByExampleAsWritten,
   type TestResult,
   type ScenarioResultAsWritten,
   type RecordedStep,
@@ -43,7 +42,7 @@ export interface InputsRead {
   readonly jest?: readonly ReportRead<readonly TestResult[]>[];
   readonly pytest?: readonly ReportRead<readonly TestResult[]>[];
   readonly junit?: readonly ReportRead<readonly TestResult[]>[];
-  readonly rspec?: readonly ReportRead<ResultsByExampleAsWritten>[];
+  readonly rspec?: readonly ReportRead<readonly TestResult[]>[];
   readonly cucumber?: readonly ReportRead<ScenarioResultAsWritten[]>[];
   readonly stepRecord?: readonly RecordedStep[];
   readonly manifest?: unknown;

@@ -48,21 +48,6 @@ export interface TestResult {
 // What each reader reports, as written. Which result each status means is the domain's. report, where kept, is the
 // evidence report it came from, as its reader names it, since what a status means can differ between them.
 
-// A report of test results kept by example, each nested in its groups.
-export interface ResultsByExampleAsWritten {
-  readonly examples: readonly ExampleResultAsWritten[];
-  readonly loadErrors: readonly { readonly file?: string; readonly message: string }[];
-}
-
-interface ExampleResultAsWritten {
-  readonly file: string;
-  // Its groups' descriptions, then its own.
-  readonly fullDescription: string;
-  readonly description: string;
-  readonly status: string;
-  readonly message?: string;
-}
-
 // A report of scenario runs: one entry per scenario or Outline row that ran. A hook is a step with no text.
 export interface ScenarioResultAsWritten {
   readonly file: string;
@@ -87,8 +72,6 @@ export interface ShellAnswers {
 // The codes a test cites: its own, or else those of its nearest parent that cites any. The chain runs outermost first.
 const nearestCitations = (chain: readonly string[]): ClaimCode[] =>
   chain.reduceRight<ClaimCode[]>((found, title) => (found.length > 0 ? found : claimCodeCitationsIn(title)), []);
-
-const RESULT_BY_STATUS: Readonly<Record<string, TestResult["result"]>> = { passed: "passed", failed: "failed" };
 
 const UNIT: readonly QualityCheckKind[] = ["unit"];
 
@@ -122,24 +105,6 @@ export function observationsOfTestResults(
     };
     return layersOf(cites, served).map((kind): EvidenceObservation => ({ ...observation, kind }));
   });
-}
-
-// Results kept by example: RSpec's, each example nested in its groups. An error outside any example kept the examples
-// after it from running: it is placed at the spec file it names, or at none.
-export function observationsByExample({ examples, loadErrors }: ResultsByExampleAsWritten, targetFolder: string, served: readonly QualityCheckKind[] = []): EvidenceObservation[] {
-  const ran = examples.flatMap(({ file, fullDescription, description, status, message }): TestResult[] => {
-    const result = RESULT_BY_STATUS[status];
-    if (result === undefined) return [];
-    // Its own description cites first; failing that, its groups' do, in its full description.
-    return [{ place: { file }, name: description, result, ...(message !== undefined && { message }), cites: { titles: [fullDescription, description] } }];
-  });
-  const neverRan = loadErrors.map(({ file, message }): TestResult => ({
-    place: file === undefined ? { named: "" } : { file },
-    result: "never-ran",
-    message,
-    cites: { codes: [] },
-  }));
-  return observationsOfTestResults([...ran, ...neverRan], targetFolder, served);
 }
 
 // The layers whose runner entry names the report's file name, in the order the layers run; none when no entry does.

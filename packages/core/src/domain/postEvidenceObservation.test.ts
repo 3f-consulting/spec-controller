@@ -10,7 +10,7 @@ import type { ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
-import { fitnessObservationsOf, layersServing, observationsByExample, observationsOfScenarios, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { fitnessObservationsOf, layersServing, observationsOfScenarios, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
@@ -136,7 +136,7 @@ const reportByExample = (examples: readonly Example[], errorsOutsideExamples: re
   };
 };
 
-const postedByExample = (report: unknown): EvidenceObservation[] => observationsByExample(resultsByExampleFrom(report), "/work");
+const postedByExample = (report: unknown): EvidenceObservation[] => observationsOfTestResults(resultsByExampleFrom(report), "/work");
 
 // A step as Cucumber's JSON evidence report records it: its keyword, its text and its status.
 type StepRun = readonly [keyword: string, text: string, status: string, errorMessage?: string];
@@ -427,7 +427,7 @@ const UNTAGGED_FORMATS = {
     report: "pytest.xml",
     posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsBySuiteFrom(reportBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)), "pytest"), "/work", served),
   },
-  RSpec: { report: "rspec.json", posted: (served: readonly QualityCheckKind[]) => observationsByExample(resultsByExampleFrom(reportByExample([{ description: "[CLM-ONE-001] adds one", status: "passed" }])), "/work", served) },
+  RSpec: { report: "rspec.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByExampleFrom(reportByExample([{ description: "[CLM-ONE-001] adds one", status: "passed" }])), "/work", served) },
 } as const;
 
 type UntaggedFormat = keyof typeof UNTAGGED_FORMATS;
