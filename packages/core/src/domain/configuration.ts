@@ -56,16 +56,25 @@ const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
 
 const wrongKind = (entry: string): ConfigurationError => ({ kind: "configuration-wrong-kind", entry });
 
+const isRunnerEntry = (runner: unknown): runner is RunnerEntry =>
+  isRecord(runner) && typeof runner.runner === "string" && Array.isArray(runner.reports) && runner.reports.every((report) => typeof report === "string");
+
+// A layer's runner: its name, null for none, or an entry naming it with the reports it writes.
+const isRunner = (runner: unknown): runner is TargetConfiguration["runners"][Layer] => typeof runner === "string" || runner === null || isRunnerEntry(runner);
+
 function runnersRead(runners: unknown, name: string): Read<TargetConfiguration["runners"]> {
   if (runners === undefined) return { value: {}, errors: [] };
   if (!isRecord(runners)) return { value: {}, errors: [wrongKind(name)] };
   const entries = Object.entries(runners);
   const errors = entries.flatMap(([layer, runner]): ConfigurationError[] => {
     if (!LAYERS.includes(layer)) return [{ kind: "runner-key-not-a-layer", entry: `${name}.${layer}` }];
-    return typeof runner === "string" || runner === null ? [] : [wrongKind(`${name}.${layer}`)];
+    return isRunner(runner) ? [] : [wrongKind(`${name}.${layer}`)];
   });
-  return { value: Object.fromEntries(entries.filter(([layer, runner]) => LAYERS.includes(layer) && (typeof runner === "string" || runner === null))), errors };
+  return { value: Object.fromEntries(entries.filter(([layer, runner]) => LAYERS.includes(layer) && isRunner(runner))), errors };
 }
+
+// The name of the program a layer's runner runs, when it has one.
+export const runnerNameOf = (runner: TargetConfiguration["runners"][Layer]): string | undefined => (isRunnerEntry(runner) ? runner.runner : (runner ?? undefined));
 
 // A list setting: each text entry read, or an error naming the entry; anything but a list is the wrong kind.
 function listRead<Value>(list: unknown, name: string, readEntry: (entry: string) => Value | ConfigurationError): Read<Value[]> {

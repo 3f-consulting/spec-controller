@@ -1,5 +1,5 @@
 import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
-import type { TargetConfiguration } from "./configuration.js";
+import { runnerNameOf, type TargetConfiguration } from "./configuration.js";
 import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
 import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
@@ -250,7 +250,10 @@ const isNamedIn = (step: WorkflowStepAsWritten, { nonChecks }: TargetConfigurati
 
 // The reconciler is recognised in any command of the step, a runner only as the command the step runs, through its scripts.
 const runsARunner = (run: string, { runners }: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): boolean =>
-  Object.values(runners).some((runner) => typeof runner === "string" && shell.invokesAsCommand(run, runner, scripts));
+  Object.values(runners).some((runner) => {
+    const name = runnerNameOf(runner);
+    return name !== undefined && shell.invokesAsCommand(run, name, scripts);
+  });
 
 export type Scripts = Readonly<Record<string, string>>;
 
