@@ -54,12 +54,12 @@ const isDeferred = (tags: readonly string[], { deferralTags, strict }: ClaimRead
 const obligationsOf = (tags: readonly string[], strict: boolean): EvidenceObligation[] =>
   QUALITY_CHECK_KINDS.filter((kind) => tags.includes(kind) || (strict && tags.includes(`${kind}pending`))).map((kind) => ({ kind }));
 
-// Each row's clm cell, across every Examples block, when any block has a clm column; a block without one gives no cell.
-function clmCellsOf({ examples }: ScenarioAsWritten): string[] | undefined {
+// Each row's clm cell, across every Examples block, when any block has a clm column; a row of a block without one has no cell.
+function clmCellsOf({ examples }: ScenarioAsWritten): (string | undefined)[] | undefined {
   if (!hasClmColumn(examples)) return undefined;
   return examples.flatMap(({ columns, rows }) => {
     const at = columns.indexOf(CLM_COLUMN);
-    return rows.flatMap(({ cells }) => cells.slice(at, at + 1));
+    return rows.map(({ cells }): string | undefined => cells[at]);
   });
 }
 
