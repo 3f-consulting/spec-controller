@@ -48,26 +48,6 @@ export interface TestResult {
 // What each reader reports, as written. Which result each status means is the domain's. report, where kept, is the
 // evidence report it came from, as its reader names it, since what a status means can differ between them.
 
-// A report of test results kept by suite, each result with its properties. errorMeansNeverRan is the reader's to say: a
-// report that writes an error only for a test that never reached its assertions, and cites in its properties.
-export interface ResultsBySuiteAsWritten {
-  readonly errorMeansNeverRan: boolean;
-  readonly name: string;
-  readonly results: readonly ResultInSuiteAsWritten[];
-}
-
-export interface ResultInSuiteAsWritten {
-  readonly className?: string;
-  readonly name: string;
-  readonly clmProperties: readonly string[];
-  readonly outcome: string;
-  readonly failure?: FailureAsWritten;
-}
-
-export interface FailureAsWritten {
-  readonly message?: string;
-}
-
 // A report of test results kept by example, each nested in its groups.
 export interface ResultsByExampleAsWritten {
   readonly examples: readonly ExampleResultAsWritten[];
@@ -108,9 +88,6 @@ export interface ShellAnswers {
 const nearestCitations = (chain: readonly string[]): ClaimCode[] =>
   chain.reduceRight<ClaimCode[]>((found, title) => (found.length > 0 ? found : claimCodeCitationsIn(title)), []);
 
-// A nested class's name holds its outer classes' display names first, each opening with its citation when it has one.
-const classesIn = (className: string): string[] => className.split(/(?=\[CLM-)/);
-
 const RESULT_BY_STATUS: Readonly<Record<string, TestResult["result"]>> = { passed: "passed", failed: "failed" };
 
 const UNIT: readonly QualityCheckKind[] = ["unit"];
@@ -145,37 +122,6 @@ export function observationsOfTestResults(
     };
     return layersOf(cites, served).map((kind): EvidenceObservation => ({ ...observation, kind }));
   });
-}
-
-const saidBy = (failure: FailureAsWritten | undefined): { message?: string } =>
-  failure?.message === undefined ? {} : { message: failure.message };
-
-// An error is a test that never reached its assertions; with no class name, a file that was never collected.
-function testResultWhereErrorsNeverRan({ className, name, clmProperties, outcome, failure }: ResultInSuiteAsWritten): TestResult[] {
-  if (outcome === "skipped") return [];
-  const collected = Boolean(className);
-  const result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
-  return [{ place: { file: collected ? className! : name }, ...(collected && { name }), result, ...saidBy(failure), cites: { codes: collected ? clmProperties : [] } }];
-}
-
-// A case with no class name is its suite's own failure, such as a package that did not build; one with no name is its
-// class's, such as a class whose setup before all its tests failed. Neither reached a test's assertions, and no report
-// writes either for a test that passed.
-function testResultWhereErrorsFailed(suite: ResultsBySuiteAsWritten, { className, name, outcome, failure }: ResultInSuiteAsWritten): TestResult[] {
-  if (outcome === "skipped") return [];
-  if (!className || name === "") {
-    return [{ place: { named: className || suite.name }, result: "never-ran", ...saidBy(failure), cites: { codes: [] } }];
-  }
-  const titles = [...classesIn(className), ...name.split("/")];
-  return [{ place: { file: className }, name, result: outcome === "" ? "passed" : "failed", ...saidBy(failure), cites: { titles } }];
-}
-
-// Results kept by suite, each case in its suite.
-export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], targetFolder: string, served: readonly QualityCheckKind[] = []): EvidenceObservation[] {
-  const results = suites.flatMap((suite) =>
-    suite.results.flatMap((result) => (suite.errorMeansNeverRan ? testResultWhereErrorsNeverRan(result) : testResultWhereErrorsFailed(suite, result))),
-  );
-  return observationsOfTestResults(results, targetFolder, served);
 }
 
 // Results kept by example: RSpec's, each example nested in its groups. An error outside any example kept the examples

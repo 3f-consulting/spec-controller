@@ -10,7 +10,7 @@ import type { ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
-import { fitnessObservationsOf, layersServing, observationsByExample, observationsBySuite, observationsOfScenarios, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { fitnessObservationsOf, layersServing, observationsByExample, observationsOfScenarios, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
@@ -100,7 +100,7 @@ const testCase = (className: string, name: string, inside = ""): string => `<tes
 const CLM_PROPERTY = '<properties><property name="clm" value="CLM-ONE-001" /></properties>';
 
 const postedBySuite = (writer: SuiteWriter, suite: string, testCases: string): EvidenceObservation[] =>
-  observationsBySuite(resultsBySuiteFrom(reportBySuite(writer, suite, testCases), writer === "pytest" ? "pytest" : "junit"), "/work");
+  observationsOfTestResults(resultsBySuiteFrom(reportBySuite(writer, suite, testCases), writer === "pytest" ? "pytest" : "junit"), "/work");
 
 // What a row checks of each Evidence Observation posted.
 const resultAndCitations = ({ result, cites }: EvidenceObservation): { result: string; cites: readonly ClaimCode[] } => ({ result, cites });
@@ -419,13 +419,13 @@ const UNTAGGED_FORMATS = {
   JUnit: {
     report: "playwright.xml",
     posted: (served: readonly QualityCheckKind[]) =>
-      observationsBySuite(resultsBySuiteFrom(reportBySuite("surefire", "example.AddsTest", testCase("example.AddsTest", "[CLM-ONE-001] adds one")), "junit"), "/work", served),
+      observationsOfTestResults(resultsBySuiteFrom(reportBySuite("surefire", "example.AddsTest", testCase("example.AddsTest", "[CLM-ONE-001] adds one")), "junit"), "/work", served),
   },
   Vitest: { report: "vitest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
   Jest: { report: "jest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(jestReportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
   pytest: {
     report: "pytest.xml",
-    posted: (served: readonly QualityCheckKind[]) => observationsBySuite(resultsBySuiteFrom(reportBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)), "pytest"), "/work", served),
+    posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsBySuiteFrom(reportBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)), "pytest"), "/work", served),
   },
   RSpec: { report: "rspec.json", posted: (served: readonly QualityCheckKind[]) => observationsByExample(resultsByExampleFrom(reportByExample([{ description: "[CLM-ONE-001] adds one", status: "passed" }])), "/work", served) },
 } as const;

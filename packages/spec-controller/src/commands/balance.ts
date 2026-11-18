@@ -6,7 +6,6 @@ import {
   fitnessObservationsOf,
   layersServing,
   observationsByExample,
-  observationsBySuite,
   observationsOfScenarios,
   observationsOfTestResults,
   provenanceOf,
@@ -90,8 +89,8 @@ function creditJournalOf(
   return [
     ...vitest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
     ...jest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
-    ...pytest.flatMap((each) => observationsBySuite(each.results, targetFolder, servedBy(each))),
-    ...junit.flatMap((each) => observationsBySuite(each.results, targetFolder, servedBy(each))),
+    ...pytest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
+    ...junit.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
     ...rspec.flatMap((each) => observationsByExample(each.results, targetFolder, servedBy(each))),
     ...cucumber.flatMap((each) => observationsOfScenarios(each.results, read.features, targetFolder, servedBy(each))),
     ...fitnessObservationsOf(steps, read.stepRecord ?? NONE, configuration, scripts, shellAnswers),
