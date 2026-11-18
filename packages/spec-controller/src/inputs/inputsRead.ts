@@ -29,7 +29,7 @@ import type { Refusal } from "../runEnding/runEnding.js";
 import type { InputFault, InputRead } from "./inputRead.js";
 
 // A JUnit evidence report read, with the file name it was read from: a folder's files are read one by one.
-export interface JunitReportRead {
+interface JunitReportRead {
   readonly report: string;
   readonly suites: readonly ResultsBySuiteAsWritten[];
 }

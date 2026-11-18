@@ -413,7 +413,7 @@ describe("balance posts what could not run as never ran, from a report kept by s
   });
 });
 
-// Each format with no kind tags: the file name its report is written to, and its one passing result citing CLM-ONE-001,
+// Each format with no kind tags: the file name its report is written to, and its one passing result,
 // posted as evidence of the layers given.
 const UNTAGGED_FORMATS = {
   JUnit: {
