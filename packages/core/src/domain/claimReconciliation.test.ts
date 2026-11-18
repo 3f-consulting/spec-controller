@@ -95,15 +95,16 @@ describe("each executable claim sharing a claim code will have its own Claim Rec
 });
 
 // An Evidence Observation as a row writes it: its kind, result, place, the codes it cites, and the name and message it
-// has, if any. A fitness function is a CI step, which has no name.
-type Placed = readonly [kind: QualityCheckKind, result: Result, place: string, cites: readonly ("001" | "002")[], named: string];
+// has, if any; a title given apart from the message names it instead. A fitness function is a CI step, which has no name.
+type Placed = readonly [kind: QualityCheckKind, result: Result, place: string, cites: readonly ("001" | "002")[], named: string, titled?: string];
 
-const placedObservation = ([kind, result, place, cites, named]: Placed): EvidenceObservation => ({
+const placedObservation = ([kind, result, place, cites, named, titled]: Placed): EvidenceObservation => ({
   cites: cites.map((number) => ({ featureCode: "ONE", number })),
   result,
   kind,
   place,
   ...(named === "" ? {} : { message: named, ...(kind === "fitness" ? {} : { name: named }) }),
+  ...(titled === undefined ? {} : { name: titled }),
 });
 
 const sortedAs = ({ kind, observation }: { kind?: QualityCheckKind; observation?: EvidenceObservation }): string =>
@@ -177,6 +178,17 @@ describe("balance will list a claim's Quality Check Reconciliations in the same 
     const reconciliation = reconciledAlone(claimOf(read, kinds), observations.map(placedObservation));
 
     expect(reconciliation.qualityCheckReconciliations.map(sortedAs)).toEqual(sorted);
+  });
+
+  it('[CLM-LDG-083] a unit Evidence Obligation under @CLM-ONE-001, and a passing unit test in a.test.ts citing it titled "b", then one titled "a", neither with a message, are in the order "a" then "b"', () => {
+    const titledB: Placed = ["unit", "passed", "a.test.ts", ["001"], "", "b"];
+    const titledA: Placed = ["unit", "passed", "a.test.ts", ["001"], "", "a"];
+    const reconciliation = reconciledAlone(claimOf("under its code", ["unit"]), [titledB, titledA].map(placedObservation));
+
+    expect(reconciliation.qualityCheckReconciliations.map(({ observation }) => [observation?.place, observation?.message, observation?.name])).toEqual([
+      ["a.test.ts", undefined, "a"],
+      ["a.test.ts", undefined, "b"],
+    ]);
   });
 
   it("[CLM-LDG-076] a unit and a fitness Evidence Obligation under @CLM-ONE-001, and a unit test in a.test.ts citing it that never ran, are in the order unit missing, the unit test in a.test.ts that never ran, then fitness missing", () => {
