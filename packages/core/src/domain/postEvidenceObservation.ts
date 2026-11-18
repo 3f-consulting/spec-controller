@@ -184,10 +184,13 @@ export function observationsByExample({ examples, loadErrors }: ResultsByExample
 
 const BEHAVIOURAL_KINDS: readonly QualityCheckKind[] = ["integration", "e2e", "performance"];
 
-// A scenario is evidence of each behavioural kind its tags name, and of integration where they name none.
-function kindsOf(tags: readonly string[]): readonly QualityCheckKind[] {
-  const named = BEHAVIOURAL_KINDS.filter((kind) => tags.includes(kind));
-  return named.length > 0 ? named : ["integration"];
+// A scenario is evidence of each layer its report serves that its tags name, and of every one where they name none. A
+// report serving none serves integration and each behavioural kind its scenarios' tags name.
+function kindsOf(tags: readonly string[], served: readonly QualityCheckKind[]): readonly QualityCheckKind[] {
+  const layers = served.length > 0 ? served : BEHAVIOURAL_KINDS;
+  const named = layers.filter((kind) => tags.includes(kind));
+  if (named.length > 0) return named;
+  return served.length > 0 ? served : ["integration"];
 }
 
 type StepAsWritten = ScenarioResultAsWritten["steps"][number];
@@ -223,11 +226,13 @@ function rowCodesOf(features: readonly FeatureAsWritten[]): (file: string, line:
   };
 }
 
-// Results kept by scenario: Cucumber's. features is the corpus as written, where an Outline row's claim code is.
+// Results kept by scenario: Cucumber's. features is the corpus as written, where an Outline row's claim code is; served
+// is the layers the report serves.
 export function observationsOfScenarios(
   results: readonly ScenarioResultAsWritten[],
   features: readonly FeatureAsWritten[],
   targetFolder: string,
+  served: readonly QualityCheckKind[] = [],
 ): EvidenceObservation[] {
   const rowCodeOf = rowCodesOf(features);
   return results.flatMap(({ file, line, title, tags, steps }) => {
@@ -236,7 +241,7 @@ export function observationsOfScenarios(
     const tagged = tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
     const cites = tagged.length > 0 ? tagged : rowCodeOf(file, line);
     const place = shownFromTarget(file, targetFolder);
-    return kindsOf(tags).map((kind): EvidenceObservation => ({ cites, ...outcome, kind, place, name: title }));
+    return kindsOf(tags, served).map((kind): EvidenceObservation => ({ cites, ...outcome, kind, place, name: title }));
   });
 }
 
