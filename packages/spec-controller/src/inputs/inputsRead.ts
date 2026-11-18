@@ -89,13 +89,13 @@ function filesIn(shown: string, path: string, endings: readonly string[], atAnyD
 // The one report a file holds, read.
 const reportOf = <Results>(file: FileText, results: Results): readonly ReportRead<Results>[] => [{ report: file.name, path: file.shown, results }];
 
-// An input its reader cannot take, or JSON that does not parse, is refused; anything else thrown is a fault in the reader,
-// and ends the run as an unexpected error.
+// An input its reader cannot take is refused; anything else thrown is a fault in the reader, and ends the run as an
+// unexpected error.
 const parsed = <Contents>(file: FileText, read: (text: string) => Contents): InputRead<Contents> => {
   try {
     return { ok: true, contents: read(file.text) };
   } catch (error) {
-    if (error instanceof InputDoesNotParse || error instanceof SyntaxError) return failed(file.shown, "does-not-parse", saidOf(error));
+    if (error instanceof InputDoesNotParse) return failed(file.shown, "does-not-parse", saidOf(error));
     throw error;
   }
 };
@@ -109,7 +109,13 @@ function readInItsShape<Report, Contents>(file: FileText, report: Report, whereI
 
 // A JSON report that parses, holds its reader's shape, and is read.
 function jsonRead<Contents>(file: FileText, whereItBreaks: (report: unknown) => string | undefined, read: (report: unknown) => Contents): InputRead<Contents> {
-  const report = parsed(file, (text) => JSON.parse(text) as unknown);
+  const report = parsed(file, (text) => {
+    try {
+      return JSON.parse(text) as unknown;
+    } catch (error) {
+      throw error instanceof SyntaxError ? new InputDoesNotParse(error.message, { cause: error }) : error;
+    }
+  });
   return report.ok ? readInItsShape(file, report.contents, whereItBreaks, read) : report;
 }
 

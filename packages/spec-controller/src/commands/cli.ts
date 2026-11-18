@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-import appCatalogue from "../messages/messages.en.json" with { type: "json" };
+import { complaintOf } from "../runEnding/complaint.js";
 import { endRunOn, endRunUnlessEnded, UNEXPECTED_ERROR } from "../runEnding/exitCode.js";
 import { writeToStandardError } from "../runEnding/standardError.js";
 
 // The crash guards load under a catch of their own, since they cannot report their own failure to load. What that catch
-// uses, the catalogue, the exit code and standard error, runs nothing as it loads.
+// uses, the complaint's line, the exit code and standard error, runs nothing as it loads.
 const guards = await import("../runEnding/crashGuards.js")
   .then(({ complainerTo, loadGuarded }) => ({ complainerTo, loadGuarded }))
   .catch((error: unknown) => {
-    writeToStandardError(`[unexpected-error] ${appCatalogue["unexpected-error"]}: ${String(error)}\n`);
+    writeToStandardError(complaintOf(error));
     endRunOn(UNEXPECTED_ERROR);
     return undefined;
   });
