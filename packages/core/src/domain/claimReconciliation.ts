@@ -155,27 +155,35 @@ export function citedClaimReconciliationOf(claim: PhantomClaim | UnnamedClaim, o
   return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
 }
 
+// Whether a claim code is one several of the executable claims share.
+export function sharedCodeAmong(claims: readonly ExecutableClaim[]): (claimCode: ClaimCode) => boolean {
+  const seen = new Set<string>();
+  const shared = new Set<string>();
+  for (const { claimCode } of claims) if (claimCode) (seen.has(written(claimCode)) ? shared : seen).add(written(claimCode));
+  return (claimCode) => shared.has(written(claimCode));
+}
+
 // Each Evidence Observation in the credit journal goes to the one executable claim with the code it cites; to that code's
 // phantom claim when no executable claim has it; and to the unnamed claim when it cites none, several, or a code several claims share.
 export function claimReconciliationsOf(claims: readonly ExecutableClaim[], creditJournal: CreditJournal): ClaimReconciliation[] {
-  const claimsWith = new Map<string, number>();
-  for (const { claimCode } of claims) if (claimCode) claimsWith.set(written(claimCode), (claimsWith.get(written(claimCode)) ?? 0) + 1);
+  const shared = sharedCodeAmong(claims);
+  const carried = new Set(claims.flatMap(({ claimCode }) => (claimCode ? [written(claimCode)] : [])));
   const citing = new Map<string, { readonly claimCode: ClaimCode; readonly observations: EvidenceObservation[] }>();
   const unnamed: EvidenceObservation[] = [];
   for (const observation of creditJournal) {
     const only = observation.cites.length === 1 ? observation.cites[0] : undefined;
     const entry = only && citing.get(written(only));
-    if (only === undefined || (claimsWith.get(written(only)) ?? 0) > 1) unnamed.push(observation);
+    if (only === undefined || shared(only)) unnamed.push(observation);
     else if (entry) entry.observations.push(observation);
     else citing.set(written(only), { claimCode: only, observations: [observation] });
   }
   // A shared code is never cited, so a claim with one is filed nothing.
   const executable = claims.map((claim) => {
     const filed = claim.claimCode && citing.get(written(claim.claimCode))?.observations;
-    return claimReconciliationOf(claim, filed ?? [], claim.claimCode !== undefined && claimsWith.get(written(claim.claimCode))! > 1);
+    return claimReconciliationOf(claim, filed ?? [], claim.claimCode !== undefined && shared(claim.claimCode));
   });
   const phantom = [...citing.values()]
-    .filter(({ claimCode }) => !claimsWith.has(written(claimCode)))
+    .filter(({ claimCode }) => !carried.has(written(claimCode)))
     .map(({ claimCode, observations: filed }) => citedClaimReconciliationOf({ claimCode }, filed));
   return [...executable, ...phantom, ...(unnamed.length > 0 ? [citedClaimReconciliationOf({}, unnamed)] : [])];
 }
