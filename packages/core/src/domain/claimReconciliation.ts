@@ -84,6 +84,10 @@ type RanObservation = EvidenceObservation & { readonly result: Exclude<EvidenceO
 // A step the record does not name did not run, as far as balance knows, and is no sign that anything failed to.
 const ran = (observation: EvidenceObservation): observation is RanObservation => observation.result !== "never-ran" && observation.result !== "not-recorded";
 
+// How many of a claim's Evidence Observations of a kind ran.
+export const ranOf = ({ qualityCheckReconciliations }: ClaimReconciliation, kind: QualityCheckKind): number =>
+  qualityCheckReconciliations.filter(({ observation }) => observation?.kind === kind && ran(observation)).length;
+
 const isNeverRan = ({ result }: EvidenceObservation): boolean => result === "never-ran";
 
 const BOTH_SIDES_OUTCOME: Readonly<Record<RanObservation["result"], BothSides["outcome"]>> = {

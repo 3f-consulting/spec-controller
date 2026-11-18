@@ -1,5 +1,5 @@
 import { writtenClaimCode } from "../domain/claimCodes.js";
-import { evidenceGroupsOf, isExecutable, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
+import { evidenceGroupsOf, isExecutable, ranOf, type ClaimReconciliation, type QualityCheckReconciliation } from "../domain/claimReconciliation.js";
 import { QUALITY_CHECK_KINDS, type QualityCheckKind } from "../domain/postEvidenceObligation.js";
 import { coreText } from "../messages/catalogue.js";
 import { firstLineOf, inCell } from "./quoted.js";
@@ -10,12 +10,12 @@ const kindsIn = (claimReconciliations: readonly ClaimReconciliation[]): QualityC
   QUALITY_CHECK_KINDS.filter((kind) => claimReconciliations.some(({ qualityCheckReconciliations }) => qualityCheckReconciliations.some((reconciliation) => reconciliation.kind === kind)));
 
 // Whether the claim asks for the kind, by its letter or -, then how many of its tests of that kind ran, or -.
-function cellOf({ claim, qualityCheckReconciliations }: ClaimReconciliation, kind: QualityCheckKind): string {
+function cellOf(claimReconciliation: ClaimReconciliation, kind: QualityCheckKind): string {
+  const { claim, qualityCheckReconciliations } = claimReconciliation;
   if (!isExecutable(claim)) return "—";
   const asked = claim.obligations.some((obligation) => obligation.kind === kind);
-  const observed = qualityCheckReconciliations.flatMap(({ observation }) => (observation?.kind === kind ? [observation] : []));
-  if (!asked && observed.length === 0) return "";
-  const ran = observed.filter(({ result }) => result !== "never-ran").length;
+  if (!asked && !qualityCheckReconciliations.some(({ observation }) => observation?.kind === kind)) return "";
+  const ran = ranOf(claimReconciliation, kind);
   return `${asked ? kind[0]!.toUpperCase() : "-"}/${ran > 0 ? ran : "-"}`;
 }
 
