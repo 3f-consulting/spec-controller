@@ -4,6 +4,7 @@ import {
   evidenceReconciliationOf,
   executableClaimsOf,
   fitnessObservationsOf,
+  layersServing,
   observationsByExample,
   observationsByFile,
   observationsBySuite,
@@ -24,7 +25,7 @@ import {
   type WorkflowStepAsWritten,
 } from "@3f-consulting/spec-controller-core";
 import { realpathSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { inputsReadFor, type InputsRead } from "../inputs/inputsRead.js";
 import type { StandardStreams } from "../output/streams.js";
 import type { Complain } from "../runEnding/crashGuards.js";
@@ -66,11 +67,18 @@ function creditJournalOf(
   scripts: Readonly<Record<string, string>>,
   targetFolder: string,
 ): CreditJournal {
+  // The layers the report an input names serves, by its file name.
+  const servedBy = (kind: string): ReturnType<typeof layersServing> => {
+    const path = read.pathsRead[kind];
+    return path === undefined ? [] : layersServing(basename(path), configuration.runners);
+  };
   return [
-    ...observationsByFile([...(read.vitest ?? []), ...(read.jest ?? [])], targetFolder),
-    ...observationsBySuite([...(read.pytest ?? []), ...(read.junit ?? [])], targetFolder),
-    ...(read.rspec === undefined ? [] : observationsByExample(read.rspec, targetFolder)),
-    ...(read.cucumber === undefined ? [] : observationsOfScenarios(read.cucumber, read.features, targetFolder)),
+    ...observationsByFile(read.vitest ?? NONE, targetFolder, servedBy("vitest")),
+    ...observationsByFile(read.jest ?? NONE, targetFolder, servedBy("jest")),
+    ...observationsBySuite(read.pytest ?? NONE, targetFolder, servedBy("pytest")),
+    ...(read.junit ?? NONE).flatMap(({ report, suites }) => observationsBySuite(suites, targetFolder, layersServing(report, configuration.runners))),
+    ...(read.rspec === undefined ? [] : observationsByExample(read.rspec, targetFolder, servedBy("rspec"))),
+    ...(read.cucumber === undefined ? [] : observationsOfScenarios(read.cucumber, read.features, targetFolder, servedBy("cucumber"))),
     ...fitnessObservationsOf(steps, read.stepRecord ?? NONE, configuration, scripts, shellAnswers),
   ];
 }

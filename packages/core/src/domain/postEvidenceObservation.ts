@@ -1,6 +1,6 @@
 import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
-import { runnerNameOf, type TargetConfiguration } from "./configuration.js";
-import type { FeatureAsWritten, QualityCheckKind } from "./postEvidenceObligation.js";
+import { reportsOf, runnerNameOf, type TargetConfiguration } from "./configuration.js";
+import { QUALITY_CHECK_KINDS, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
 import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
 
@@ -109,22 +109,29 @@ const classesIn = (className: string): string[] => className.split(/(?=\[CLM-)/)
 
 const RESULT_BY_STATUS: Readonly<Record<string, Result>> = { passed: "passed", failed: "failed" };
 
-// A test report's result is unit evidence, whatever its source.
-const unitObservation = (observation: Omit<EvidenceObservation, "kind">): EvidenceObservation => ({ ...observation, kind: "unit" });
+// A result in a report kept by file, suite or example is evidence of each layer its report serves; a report no runner
+// entry names serves unit.
+const postedAs =
+  (served: readonly QualityCheckKind[]) =>
+  (observation: Omit<EvidenceObservation, "kind">): EvidenceObservation[] =>
+    (served.length > 0 ? served : UNIT).map((kind) => ({ ...observation, kind }));
+
+const UNIT: readonly QualityCheckKind[] = ["unit"];
 
 // Results kept by test file: Vitest's and Jest's. A file with no results is one that could not run: each writes such a
 // file as failed.
 export function observationsByFile(results: readonly ResultsByFileAsWritten[], targetFolder: string, served: readonly QualityCheckKind[] = []): EvidenceObservation[] {
+  const posted = postedAs(served);
   return results.flatMap(({ file, message, results: inFile }): EvidenceObservation[] => {
     const place = shownFromTarget(file, targetFolder);
     if (inFile.length === 0) {
-      return [unitObservation({ cites: [], result: "never-ran", place, message })];
+      return posted({ cites: [], result: "never-ran", place, message });
     }
     return inFile.flatMap(({ ancestorTitles, title, status: resultStatus, failureMessages }) => {
       const result = RESULT_BY_STATUS[resultStatus];
       if (result === undefined) return [];
       const failure = failureMessages.join("\n");
-      return [unitObservation({ cites: nearestCitations([...ancestorTitles, title]), result, place, name: title, ...(failure && { message: failure }) })];
+      return posted({ cites: nearestCitations([...ancestorTitles, title]), result, place, name: title, ...(failure && { message: failure }) });
     });
   });
 }
@@ -133,35 +140,36 @@ const saidBy = (failure: FailureAsWritten | undefined): { message?: string } =>
   failure?.message === undefined ? {} : { message: failure.message };
 
 // An error is a test that never reached its assertions; with no class name, a file that was never collected.
-function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
+function observationWhereErrorsNeverRan(result: ResultInSuiteAsWritten, targetFolder: string, posted: ReturnType<typeof postedAs>): EvidenceObservation[] {
   const { className, name, clmProperties, outcome, failure } = result;
   if (outcome === "skipped") return [];
   const collected = Boolean(className);
   const cites = collected ? [...new Set(clmProperties)].flatMap((property) => claimCodeFrom(property) ?? []) : [];
   const resultOf: Result = outcome === "error" ? "never-ran" : outcome === "failure" ? "failed" : "passed";
   const place = shownFromTarget(collected ? className! : name, targetFolder);
-  return [unitObservation({ cites, result: resultOf, place, ...(collected && { name }), ...saidBy(failure) })];
+  return posted({ cites, result: resultOf, place, ...(collected && { name }), ...saidBy(failure) });
 }
 
 // A case with no class name is its suite's own failure, such as a package that did not build; one with no name is its
 // class's, such as a class whose setup before all its tests failed. Neither reached a test's assertions, and no report
 // writes either for a test that passed.
-function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: ResultInSuiteAsWritten, targetFolder: string): EvidenceObservation[] {
+function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: ResultInSuiteAsWritten, targetFolder: string, posted: ReturnType<typeof postedAs>): EvidenceObservation[] {
   const { className, name, outcome, failure } = result;
   if (outcome === "skipped") return [];
   if (!className || name === "") {
-    return [unitObservation({ cites: [], result: "never-ran", place: className || suite.name, ...saidBy(failure) })];
+    return posted({ cites: [], result: "never-ran", place: className || suite.name, ...saidBy(failure) });
   }
   const cites = nearestCitations([...classesIn(className), ...name.split("/")]);
   const place = shownFromTarget(className, targetFolder);
-  return [unitObservation({ cites, result: outcome === "" ? "passed" : "failed", place, name, ...saidBy(failure) })];
+  return posted({ cites, result: outcome === "" ? "passed" : "failed", place, name, ...saidBy(failure) });
 }
 
 // Results kept by suite, each case in its suite.
 export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], targetFolder: string, served: readonly QualityCheckKind[] = []): EvidenceObservation[] {
+  const posted = postedAs(served);
   return suites.flatMap((suite) =>
-    suite.results.flatMap((result) => 
-      suite.errorMeansNeverRan ? observationWhereErrorsNeverRan(result, targetFolder) : observationWhereErrorsFailed(suite, result, targetFolder),
+    suite.results.flatMap((result) =>
+      suite.errorMeansNeverRan ? observationWhereErrorsNeverRan(result, targetFolder, posted) : observationWhereErrorsFailed(suite, result, targetFolder, posted),
     ),
   );
 }
@@ -169,32 +177,33 @@ export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], 
 // Results kept by example: RSpec's, each example nested in its groups. An error outside any example kept the examples
 // after it from running: it is placed at the spec file it names, or at none.
 export function observationsByExample({ examples, loadErrors }: ResultsByExampleAsWritten, targetFolder: string, served: readonly QualityCheckKind[] = []): EvidenceObservation[] {
+  const posted = postedAs(served);
   const ran = examples.flatMap(({ file, fullDescription, description, status, message }): EvidenceObservation[] => {
     const result = RESULT_BY_STATUS[status];
     if (result === undefined) return [];
     // Its own description cites first; failing that, its groups' do, in its full description.
     const cites = nearestCitations([fullDescription, description]);
-    return [unitObservation({ cites, result, place: shownFromTarget(file, targetFolder), name: description, message })];
+    return posted({ cites, result, place: shownFromTarget(file, targetFolder), name: description, message });
   });
-  const neverRan = loadErrors.map(({ file, message }) =>
-    unitObservation({ cites: [], result: "never-ran", place: file === undefined ? "" : shownFromTarget(file, targetFolder), message }),
+  const neverRan = loadErrors.flatMap(({ file, message }) =>
+    posted({ cites: [], result: "never-ran", place: file === undefined ? "" : shownFromTarget(file, targetFolder), message }),
   );
   return [...ran, ...neverRan];
 }
 
+// The layers whose runner entry names the report's file name, in the order the layers run; none when no entry does.
 export function layersServing(report: string, runners: TargetConfiguration["runners"]): QualityCheckKind[] {
-  return [];
+  return QUALITY_CHECK_KINDS.filter((kind) => kind !== "fitness" && reportsOf(runners[kind]).includes(report));
 }
 
-const BEHAVIOURAL_KINDS: readonly QualityCheckKind[] = ["integration", "e2e", "performance"];
+const INTEGRATION: readonly QualityCheckKind[] = ["integration"];
 
 // A scenario is evidence of each layer its report serves that its tags name, and of every one where they name none. A
-// report serving none serves integration and each behavioural kind its scenarios' tags name.
+// report no runner entry names serves integration.
 function kindsOf(tags: readonly string[], served: readonly QualityCheckKind[]): readonly QualityCheckKind[] {
-  const layers = served.length > 0 ? served : BEHAVIOURAL_KINDS;
+  const layers = served.length > 0 ? served : INTEGRATION;
   const named = layers.filter((kind) => tags.includes(kind));
-  if (named.length > 0) return named;
-  return served.length > 0 ? served : ["integration"];
+  return named.length > 0 ? named : layers;
 }
 
 type StepAsWritten = ScenarioResultAsWritten["steps"][number];

@@ -76,6 +76,9 @@ function runnersRead(runners: unknown, name: string): Read<TargetConfiguration["
 // The name of the program a layer's runner runs, when it has one.
 export const runnerNameOf = (runner: TargetConfiguration["runners"][Layer]): string | undefined => (isRunnerEntry(runner) ? runner.runner : (runner ?? undefined));
 
+// The file names of the evidence reports a layer's runner writes, as its entry names them.
+export const reportsOf = (runner: TargetConfiguration["runners"][Layer]): readonly string[] => (isRunnerEntry(runner) ? runner.reports : []);
+
 // A list setting: each text entry read, or an error naming the entry; anything but a list is the wrong kind.
 function listRead<Value>(list: unknown, name: string, readEntry: (entry: string) => Value | ConfigurationError): Read<Value[]> {
   if (list === undefined) return { value: [], errors: [] };
