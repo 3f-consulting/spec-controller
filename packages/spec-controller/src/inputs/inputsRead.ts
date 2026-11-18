@@ -28,28 +28,30 @@ import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import type { Refusal } from "../runEnding/runEnding.js";
 import type { InputFault, InputRead } from "./inputRead.js";
 
-// A JUnit evidence report read, with the file name it was read from: a folder's files are read one by one.
-interface JunitReportRead {
+// One evidence report read: its file name, which a runners entry may name; its path as given, a folder's file as the
+// folder's path joined with its name; and its results as its reader reports them.
+export interface ReportRead<Results> {
   readonly report: string;
-  readonly suites: readonly ResultsBySuiteAsWritten[];
+  readonly path: string;
+  readonly results: Results;
 }
 
 // Every input the run read, each as its reader reports it; an input not read is absent.
 export interface InputsRead {
   readonly features: readonly FeatureAsWritten[];
   readonly workflowSteps?: readonly WorkflowStepAsWritten[];
-  readonly vitest?: readonly ResultsByFileAsWritten[];
-  readonly jest?: readonly ResultsByFileAsWritten[];
-  readonly pytest?: readonly ResultsBySuiteAsWritten[];
-  readonly junit?: readonly JunitReportRead[];
-  readonly rspec?: ResultsByExampleAsWritten;
-  readonly cucumber?: ScenarioResultAsWritten[];
+  readonly vitest?: readonly ReportRead<readonly ResultsByFileAsWritten[]>[];
+  readonly jest?: readonly ReportRead<readonly ResultsByFileAsWritten[]>[];
+  readonly pytest?: readonly ReportRead<readonly ResultsBySuiteAsWritten[]>[];
+  readonly junit?: readonly ReportRead<readonly ResultsBySuiteAsWritten[]>[];
+  readonly rspec?: readonly ReportRead<ResultsByExampleAsWritten>[];
+  readonly cucumber?: readonly ReportRead<ScenarioResultAsWritten[]>[];
   readonly stepRecord?: readonly StepRecordEntryAsWritten[];
   readonly manifest?: unknown;
   // Every file read, so no report lands on one.
   readonly filesRead: readonly string[];
-  // Each input read, at its path as given.
-  readonly pathsRead: Readonly<Partial<Record<string, string>>>;
+  // Every path given for each input read, in order.
+  readonly pathsRead: Readonly<Partial<Record<InputKind, readonly string[]>>>;
 }
 
 // One file the run read: its path within the folder named, where it is as given and on disk, and its text.
@@ -86,6 +88,9 @@ function filesIn(shown: string, path: string, endings: readonly string[], atAnyD
   return names.sort().map((name) => textAt(name, join(shown, name), join(path, name)));
 }
 
+// The one report a file holds, read.
+const reportOf = <Results>(file: FileText, results: Results): readonly ReportRead<Results>[] => [{ report: file.name, path: file.shown, results }];
+
 const parsed = <Contents>(file: FileText, read: (text: string) => Contents): InputRead<Contents> => {
   try {
     return { ok: true, contents: read(file.text) };
@@ -118,7 +123,7 @@ function xmlRead(file: FileText, from: "junit" | "pytest"): InputRead<Partial<In
   if (wrong !== undefined) return failed(file.shown, "does-not-parse", wrong);
   return readInItsShape(file, file.text, whereSuitesBreak, (xml) => {
     const suites = resultsBySuiteFrom(xml, from);
-    return from === "pytest" ? { pytest: suites } : { junit: [{ report: file.name, suites }] };
+    return from === "pytest" ? { pytest: reportOf(file, suites) } : { junit: reportOf(file, suites) };
   });
 }
 
@@ -147,12 +152,12 @@ const READERS = {
     fileIs: "input-workflow",
     read: (files) => each(files, (file) => parsed(file, (text) => ({ workflowSteps: workflowStepsFrom(file.name, text) }))),
   },
-  vitest: { read: (files) => each(files, (file) => jsonRead(file, whereResultsByFileBreak, (report) => ({ vitest: resultsByFileFrom(report) }))) },
-  jest: { read: (files) => each(files, (file) => jsonRead(file, whereResultsByFileBreak, (report) => ({ jest: resultsByFileFrom(report) }))) },
+  vitest: { read: (files) => each(files, (file) => jsonRead(file, whereResultsByFileBreak, (report) => ({ vitest: reportOf(file, resultsByFileFrom(report)) }))) },
+  jest: { read: (files) => each(files, (file) => jsonRead(file, whereResultsByFileBreak, (report) => ({ jest: reportOf(file, resultsByFileFrom(report)) }))) },
   pytest: { read: (files) => each(files, (file) => xmlRead(file, "pytest")) },
   junit: { endings: [".xml"], fileIs: "input-junit-folder-file", read: (files) => each(files, (file) => xmlRead(file, "junit")) },
-  rspec: { read: (files) => each(files, (file) => jsonRead(file, whereResultsByExampleBreak, (report) => ({ rspec: resultsByExampleFrom(report) }))) },
-  cucumber: { read: (files) => each(files, (file) => jsonRead(file, whereScenarioResultsBreak, (report) => ({ cucumber: scenarioResultsFrom(report) }))) },
+  rspec: { read: (files) => each(files, (file) => jsonRead(file, whereResultsByExampleBreak, (report) => ({ rspec: reportOf(file, resultsByExampleFrom(report)) }))) },
+  cucumber: { read: (files) => each(files, (file) => jsonRead(file, whereScenarioResultsBreak, (report) => ({ cucumber: reportOf(file, scenarioResultsFrom(report)) }))) },
   stepRecord: { read: (files) => each(files, (file) => jsonRead(file, whereStepRecordBreaks, (record) => ({ stepRecord: stepRecordFrom(record) }))) },
   manifest: { read: (files) => each(files, (file) => jsonRead(file, whereManifestBreaks, (manifest) => ({ manifest }))) },
 } satisfies Readonly<Record<string, InputReader>>;
@@ -201,9 +206,17 @@ function refusalOf(request: InputNamed, read: Extract<InputRead<unknown>, { ok: 
   return { key: `input-${read.fault}`, values: { input, path: read.path, detail: read.detail, shape: text(`shape-${request.kind}`) } };
 }
 
+// The inputs read as a list, each read's list joined to the ones before it.
+const LIST_INPUTS = ["workflowSteps", "vitest", "jest", "pytest", "junit", "rspec", "cucumber"] as const satisfies readonly (keyof InputsRead)[];
+
 const merged = (reads: readonly Partial<InputsRead>[]): Partial<InputsRead> =>
   reads.reduce<Partial<InputsRead>>(
-    (all, read) => ({ ...all, ...read, features: [...(all.features ?? []), ...(read.features ?? [])], ...(read.workflowSteps && { workflowSteps: [...(all.workflowSteps ?? []), ...read.workflowSteps] }), ...(read.junit && { junit: [...(all.junit ?? []), ...read.junit] }) }),
+    (all, read) => ({
+      ...all,
+      ...read,
+      features: [...(all.features ?? []), ...(read.features ?? [])],
+      ...Object.fromEntries(LIST_INPUTS.flatMap((input) => (read[input] === undefined ? [] : [[input, [...(all[input] ?? []), ...read[input]]]]))),
+    }),
     {},
   );
 
@@ -212,11 +225,11 @@ export function inputsReadFor(inputs: readonly InputNamed[], folder: string): In
   const refusals: Refusal[] = [];
   const reads: Partial<InputsRead>[] = [];
   const filesRead: string[] = [];
-  const pathsRead: Record<string, string> = {};
+  const pathsRead: Partial<Record<InputKind, string[]>> = {};
   for (const request of inputs) {
     const named = filesOf(request, folder);
     if (named === undefined) continue;
-    pathsRead[request.kind] = request.path;
+    pathsRead[request.kind] = [...(pathsRead[request.kind] ?? []), request.path];
     const texts = named.flatMap((file) => (file.ok ? [file.contents] : []));
     filesRead.push(...texts.map(({ path }) => path));
     const read = [...named.filter((file) => !file.ok), ...READERS[request.kind].read(texts)];
