@@ -13,7 +13,6 @@ exceptions:
   - claimReconciliations
   - errorsInTheInputs
   - outOfBalance
-  - qualityCheckKind
   - qualityCheckReconciliations
   # The keys an adopter writes in package.json.
   - specController
