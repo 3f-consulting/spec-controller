@@ -18,7 +18,7 @@ Each link between them needs something to hold it:
 | document specification ↔ checks | **Nothing but care.** The document specification says one thing, the checks prove another, and nothing notices when they drift |
 | document specification ↔ application | only through the other two |
 
-Today's mechanism holds the checks ↔ application link well at the unit layer. `balance` makes that link hold for every kind of quality check: each named behaviour must be answered by a check that ran against the application, passed and could have failed.
+Today's mechanism holds the checks ↔ application link well at the unit layer. `balance` makes that link hold for every kind of quality check: each named behaviour must be answered by a check that ran against the application and passed, and a CI check must have been able to fail its build.
 
 `balance` never reads your document specification. Whether the checks say what it says is a judgement, not a reconciliation.
 
@@ -55,7 +55,7 @@ This matters most when an agent writes the code. An agent asked to make failing 
 - **A change inside one check is one entry, and `balance` does not see it.** A row reads the step record: your CI run's own record of whether the step ran and what it reported. It does not read what the tool examined. So a lint step narrowed to match no files still exits 0, and its row reads satisfied. And because the row reads the step record, a red that `continue-on-error` swallowed still turns its row red.
 - **Delete a scenario but keep its step definitions**, and Cucumber runs nothing and reports nothing. With no result reported, `balance` cannot see it. A check for unused step definitions catches this, and this repository runs one.
 - **No named behaviours, no second entry, no protection.** Code that arrives with no scenario gives `balance` nothing to reconcile.
-- **Whether a test is a good test is assumed.** A balanced row means the evidence exists, passes and could have failed. It does not mean the test checks what its title says.
+- **Whether a test is a good test is assumed.** A balanced row means the evidence exists and passes, and that a CI check's failure would have failed its build. It does not mean the test checks what its title says, or checks anything at all.
 
 ## Reading the full report
 
