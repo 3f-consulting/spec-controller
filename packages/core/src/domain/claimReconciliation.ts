@@ -118,11 +118,11 @@ function executableReconciliations({ claimCode, obligations }: ExecutableClaim, 
 const written = ({ featureCode, number }: ClaimCode): string => `${featureCode}-${number}`;
 
 // What a Quality Check Reconciliation is sorted by: its kind; then a missing check before any evidence; then where its
-// test is, the codes it cites, and its message, which a test with none leaves last.
+// test is, the codes it cites, its message, then its test's title; a test with no message or no title is left last.
 const sortKey = ({ kind, observation }: OfAKind): readonly (number | string | undefined)[] =>
   observation === undefined
     ? [QUALITY_CHECK_KINDS.indexOf(kind), 0]
-    : [QUALITY_CHECK_KINDS.indexOf(kind), 1, observation.place, observation.cites.map(written).join(), observation.message];
+    : [QUALITY_CHECK_KINDS.indexOf(kind), 1, observation.place, observation.cites.map(written).join(), observation.message, observation.name];
 
 // At the first part that differs, the lower of the two as text comes first; a kind's rank is one digit.
 function inOrder(one: OfAKind, other: OfAKind): number {
