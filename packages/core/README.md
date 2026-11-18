@@ -17,6 +17,7 @@ npm install @3f-consulting/spec-controller-core
 ## Your first call
 
 ```ts
+import { readFileSync } from "node:fs";
 import {
   featureAsWrittenFrom,
   resultsByFileFrom,
@@ -31,9 +32,11 @@ import {
   stepAccountOf,
 } from "@3f-consulting/spec-controller-core";
 
-// One feature file's text, and one Vitest JSON report already parsed from its text.
+// One feature file's text, and one Vitest JSON report parsed from its text, both read from the target's folder.
 // The target's folder: a path the report records below it is shown relative to it.
 const targetFolder = "/work/shop";
+const featureSource = readFileSync(`${targetFolder}/features/checkout.feature`, "utf8");
+const vitestReport: unknown = JSON.parse(readFileSync(`${targetFolder}/vitest-report.json`, "utf8"));
 const features = [featureAsWrittenFrom("checkout.feature", featureSource)];
 const claims = executableClaimsOf(features, { deferralTags: [], strict: false });
 const creditJournal = observationsByFile(resultsByFileFrom(vitestReport), targetFolder);

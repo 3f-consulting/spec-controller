@@ -17,6 +17,8 @@ Feature: Checkout
 ```
 
 ```ts
+import { it } from "vitest";
+
 it("[CLM-CHK-001] refuses an empty basket", () => { /* … */ });
 ```
 
