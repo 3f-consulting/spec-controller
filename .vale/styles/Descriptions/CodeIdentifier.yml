@@ -12,16 +12,12 @@ exceptions:
   - claimCodes
   - claimReconciliations
   - errorsInTheInputs
-  - missingByQualityCheckKind
   - outOfBalance
   - qualityCheckKind
   - qualityCheckReconciliations
-  - reconciliationLines
-  - runProvenance
-  # The keys an adopter writes in package.json; checkRegistry is a retired one the report names as not read.
+  # The keys an adopter writes in package.json.
   - specController
   - notChecks
-  - checkRegistry
   # The published API's type, which a package consumer reads off the v1 barrel, and GitHub and TypeScript, names that belong to others.
   - QualityCheckReconciliation
   - GitHub

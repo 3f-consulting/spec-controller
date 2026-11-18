@@ -508,11 +508,14 @@ A fitness function is **converted** when its CI step carries its `@fitness` scen
 
 To convert a fitness function, you write two artefacts and no third. Neither is a Cucumber step definition. There is no fitness profile to configure, no manifest list and no step definition to write.
 
-**1. A scenario, tagged `@fitness`, carrying a claim code.** Write it exactly as you write a scenario tagged only `@unit`: a kind-of-quality-check tag, a title, and no Given/When/Then, because Cucumber does not select it. Its title is the specification. The command your CI already runs is the evidence.
+**1. A scenario, tagged `@fitness`, carrying a claim code.** Write it exactly as you write a scenario tagged only `@unit`: a kind-of-quality-check tag, a title, and its given, when and then in lowercase. Cucumber does not select it, so its steps are description that no step definition answers. Its title and steps are the specification. The command your CI already runs is the evidence.
 
 ```gherkin
   @fitness @CLM-<FFF>-<NNN>
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
+    given the push touched functions
+    when CI runs the fitness function over them
+    then each will measure inside the external complexity standard, and no dead suppression will survive
 ```
 
 **2. That scenario's claim code as the `id:` of the CI step that already runs the check.** The check stays exactly where it is in your pipeline. You add only a citation.
@@ -1109,6 +1112,6 @@ Add the step to `specController.notChecks`. The failure direction is deliberate:
 
 **spec-controller assumes that each test is valid.** It reconciles a result to the test that claimed it. You make sure the test reflects the behaviour the business wants, as you do under CI, TDD and BDD. The tool does not try to establish that a test is a good test.
 
-**A title can stop matching its check. spec-controller states this gap and does not solve it.** Where the runner is not Cucumber (usually for `@unit`, `@performance` and `@fitness`), a scenario carries no Given/When/Then, so no unexecuted step reads as a test. But its title is still prose that nothing reads against the check that answers it. The title and the check can come to say different things, and nothing goes red. The report proves that a scenario is linked to evidence and that the evidence passed. **It does not prove that the evidence tests what the title says.**
+**A title can stop matching its check. spec-controller states this gap and does not solve it.** Where the runner is not Cucumber (usually for `@unit`, `@performance` and `@fitness`), a scenario's given, when and then are lowercase description that no runner executes, so no unexecuted step reads as a test. But its title is still prose that nothing reads against the check that answers it. The title and the check can come to say different things, and nothing goes red. The report proves that a scenario is linked to evidence and that the evidence passed. **It does not prove that the evidence tests what the title says.**
 
 **It keeps a reconciled codebase reconciled.** Getting a codebase with no scenarios to that point is not part of this package.

@@ -128,11 +128,14 @@ For how each other runner cites a scenario, see [Citing a scenario from pytest](
 
 A **fitness function** checks a whole-system property, such as complexity, mutation score, type soundness, vocabulary or suite run time. Any check your pipeline runs, in any language, can prove one. You need only two things.
 
-**1. A scenario, tagged `@fitness`, with a code.** Write it the same way as a `@unit`-only scenario: tags, a title, and no Given/When/Then. Its title is the specification.
+**1. A scenario, tagged `@fitness`, with a code.** Write it the same way as a `@unit`-only scenario: tags, a title, and its given, when and then in lowercase, as description no step definition answers. Its title and steps are the specification.
 
 ```gherkin
   @fitness @CLM-<FFF>-<NNN>
   Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
+    given the push touched functions
+    when CI runs the fitness function over them
+    then each will measure inside the external complexity standard, and no dead suppression will survive
 ```
 
 **2. That code as the `id:` of the CI step that already runs the check.** The check stays where it is. You add only a citation.

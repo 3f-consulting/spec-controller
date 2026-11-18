@@ -118,7 +118,7 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
 
     They are sorted by kind of quality check: unit, integration, e2e, performance, then fitness.
     Within a kind, a missing one comes first, then they are sorted by where their tests are, then
-    by the code each cites, then by everything else each records.
+    by the code each cites, then by its message, then by its title.
 
     @unit
     Scenario Outline: balance will list a claim's Quality Check Reconciliations in the same order whatever order the evidence came in

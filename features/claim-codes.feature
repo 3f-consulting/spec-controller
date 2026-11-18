@@ -5,7 +5,8 @@ Feature: every claim code is well formed, filed under its file's code, and never
   and a number of any width: CLM-<FFF>-<NNN>. A retired scenario code has the same form under SCN.
   balance reads every id by this one form. An id in any other form is not a claim code.
 
-  A feature file's header code is the feature code its scenarios' claim codes are filed under.
+  A feature file declares its feature code on the line above Feature:, and its scenarios' claim
+  codes are filed under it.
   Before it reconciles, balance checks where each claim code is written. It finds a claim code
   error for a claim code that is misplaced or clashes.
 
