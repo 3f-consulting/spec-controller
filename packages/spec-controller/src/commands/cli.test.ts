@@ -29,6 +29,7 @@ afterEach(() => {
   guardsAdded().forEach((added, at) => added.forEach((guard) => events.off(EVENTS[at]!, guard)));
   vi.restoreAllMocks();
   vi.doUnmock("./main.js");
+  vi.doUnmock("../runEnding/crashGuards.js");
   process.exitCode = exitCodeBefore;
 });
 
@@ -96,6 +97,24 @@ describe("an unexpected error will stop the run with no verdict and exit 4, nami
     const run = await binRun(["balance"], folderOutOfBalance());
 
     expect({ exitCode: run.exitCode, output: run.output, complaints: run.complaints().map((line) => line.includes("Error: a module could not load")) }).toEqual({
+      exitCode: 4,
+      output: "",
+      complaints: [true],
+    });
+  });
+});
+
+describe("an unexpected error will stop the run with no verdict and exit 4, naming the error", () => {
+  it("[CLM-CLI-179] an error while the part that reports an unexpected error loads, run from the command line: the run stops, no verdict, exit 4, and a complaint with the error", async () => {
+    vi.doMock("../runEnding/crashGuards.js", () => ({
+      get complainerTo(): never {
+        throw new Error("the crash guards could not load");
+      },
+    }));
+
+    const run = await binRun(["balance"], folderOutOfBalance());
+
+    expect({ exitCode: run.exitCode, output: run.output, complaints: run.complaints().map((line) => line.includes("Error: the crash guards could not load")) }).toEqual({
       exitCode: 4,
       output: "",
       complaints: [true],
