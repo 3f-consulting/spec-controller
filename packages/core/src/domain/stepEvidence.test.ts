@@ -6,7 +6,7 @@ import shellVariants from "../inputs/shell.variants.json" with { type: "json" };
 import workflowsVariants from "../inputs/workflows.variants.json" with { type: "json" };
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { TargetConfiguration } from "./configuration.js";
-import { fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
+import { disposedStepsOf, fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 // A step named in notChecks, if any; a unit layer that has no runner is set to null.
@@ -29,7 +29,7 @@ describe("balance identifies each result's kind of quality check", () => {
     ["CLM-OBS-014", "named Install, in notChecks, will not be", { name: "Install", run: "pnpm install" }, "Install", 0],
     ["CLM-OBS-016", "using actions/checkout, in notChecks, will not be", { uses: "actions/checkout@v4" }, "actions/checkout@v4", 0],
   ] as const)("[%s] a step %s a fitness function", (_clm, _described, step, notCheck, posted) => {
-    expect(fitnessObservationsOf(stepsOf(step), [], configurationNaming(notCheck), {}, shellAnswers).filter(({ kind }) => kind === "fitness").length).toBe(posted);
+    expect(fitnessObservationsOf(disposedStepsOf(stepsOf(step), configurationNaming(notCheck), {}, shellAnswers, []), []).filter(({ kind }) => kind === "fitness").length).toBe(posted);
   });
 });
 
@@ -46,14 +46,14 @@ describe("balance identifies whether a CI step is a fitness function", () => {
     const steps = [...installIn("ci.yml", "ci"), ...step()];
     const counted = steps.slice(1).map((one) => stepDispositionOf(one, notCheckingCiInstall, {}, shellAnswers));
 
-    expect({ counted, posted: fitnessObservationsOf(steps, [], notCheckingCiInstall, {}, shellAnswers).length }).toEqual({ counted: ["fitnessFunction"], posted: 1 });
+    expect({ counted, posted: fitnessObservationsOf(disposedStepsOf(steps, notCheckingCiInstall, {}, shellAnswers, []), []).length }).toEqual({ counted: ["fitnessFunction"], posted: 1 });
   });
 
   it("[CLM-OBS-141] a step using actions/dependency-review-action, with vitest as its unit runner, will be a fitness function", () => {
     const steps = stepsOf({ uses: "actions/dependency-review-action@v4" });
     const configuration: TargetConfiguration = { runners: { unit: "vitest" }, nonChecks: [], deferralTags: [] };
 
-    expect({ counted: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers), posted: fitnessObservationsOf(steps, [], configuration, {}, shellAnswers).length }).toEqual({
+    expect({ counted: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers), posted: fitnessObservationsOf(disposedStepsOf(steps, configuration, {}, shellAnswers, []), []).length }).toEqual({
       counted: "fitnessFunction",
       posted: 1,
     });
@@ -70,13 +70,13 @@ const writingTheStepRecord: Readonly<Record<string, object>> = {
 
 describe("a step writing out the step record is the reconciler's", () => {
   it.each(workflowsVariants["CLM-OBS-013"].variants)("[CLM-OBS-013] a step writing out the step record through %s will not be a fitness function", (variant) => {
-    expect(fitnessObservationsOf(stepsOf(writingTheStepRecord[variant]!), [], NO_SETTING, {}, shellAnswers)).toEqual([]);
+    expect(fitnessObservationsOf(disposedStepsOf(stepsOf(writingTheStepRecord[variant]!), NO_SETTING, {}, shellAnswers, []), [])).toEqual([]);
   });
 });
 
 describe("a step using a plumbing action is plumbing", () => {
   it.each(workflowsVariants["CLM-OBS-015"].variants)("[CLM-OBS-015] a step using %s will not be a fitness function", (action) => {
-    expect(fitnessObservationsOf(stepsOf({ uses: `${action.replace("*", "node")}@v4` }), [], NO_SETTING, {}, shellAnswers)).toEqual([]);
+    expect(fitnessObservationsOf(disposedStepsOf(stepsOf({ uses: `${action.replace("*", "node")}@v4` }), NO_SETTING, {}, shellAnswers, []), [])).toEqual([]);
   });
 
   it.each(["actions/cache/save", "actions/upload-artifact/merge"])("[CLM-OBS-015] a step using %s, an action in a plumbing action's repository, will not be a fitness function", (action) => {
@@ -84,7 +84,7 @@ describe("a step using a plumbing action is plumbing", () => {
 
     expect({
       countedAs: stepDispositionOf(steps[0]!, NO_SETTING, {}, shellAnswers),
-      posted: fitnessObservationsOf(steps, [], NO_SETTING, {}, shellAnswers).length,
+      posted: fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, []), []).length,
     }).toEqual({ countedAs: "plumbing", posted: 0 });
   });
 });
@@ -98,7 +98,7 @@ describe("balance reads a result as passed or failed, citing the code it names",
   ] as const)("[%s] the step record had a result with the id %s, on a step running %s, and %s: it is read as its result, citing the code it has", (_clm, id, run, _how, entry, continueOnError, result, cites) => {
     const steps = workflowOf({ ci: { steps: [{ id, run, "continue-on-error": continueOnError }] } });
 
-    expect(fitnessObservationsOf(steps, stepRecordFrom({ [id]: entry }), NO_SETTING, {}, shellAnswers).map(({ result: posted, cites: cited }) => ({ result: posted, cites: cited }))).toEqual([
+    expect(fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, stepRecordFrom({ [id]: entry })), stepRecordFrom({ [id]: entry })).map(({ result: posted, cites: cited }) => ({ result: posted, cites: cited }))).toEqual([
       { result, cites },
     ]);
   });
@@ -107,7 +107,7 @@ describe("balance reads a result as passed or failed, citing the code it names",
     const steps = workflowOf({ ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }, { id: "CLM-ONE-002", run: "pnpm audit-the-tree" }] } });
     const record = stepRecordFrom({ "CLM-ONE-001": { outcome: "success", conclusion: "success" }, "CLM-ONE-002": { outcome: "success", conclusion: "success" } });
 
-    expect(fitnessObservationsOf(steps, record, NO_SETTING, {}, shellAnswers).map(({ result, cites }) => ({ result, cites }))).toEqual([
+    expect(fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, record), record).map(({ result, cites }) => ({ result, cites }))).toEqual([
       { result: "passed", cites: [ONE_001] },
       { result: "passed", cites: [{ featureCode: "ONE", number: "002" }] },
     ]);
@@ -123,7 +123,7 @@ describe("balance posts what could not run as never ran", () => {
     const steps = workflowOf({ ci: { steps: [{ id, ...step }] } });
 
     expect(
-      fitnessObservationsOf(steps, stepRecordFrom({ [id]: { outcome, conclusion: outcome } }), NO_SETTING, {}, shellAnswers).map(({ result, cites: cited, place: placed }) => ({ result, cites: cited, place: placed })),
+      fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, stepRecordFrom({ [id]: { outcome, conclusion: outcome } })), stepRecordFrom({ [id]: { outcome, conclusion: outcome } })).map(({ result, cites: cited, place: placed }) => ({ result, cites: cited, place: placed })),
     ).toEqual([{ result: "never-ran", cites, place }]);
   });
 });
@@ -140,14 +140,14 @@ describe("balance posts a fitness function's step the step record does not name 
   ] as const)("[%s] a workflow had a fitness function's step %s, and continue-on-error %s, and %s: it is posted as not recorded", (_clm, _identity, _set, _record, step, record) => {
     const steps = workflowOf({ ci: { steps: [...plumbing, step] } });
 
-    expect(fitnessObservationsOf(steps, stepRecordFrom(record), NO_SETTING, {}, shellAnswers).map(({ result }) => result)).toEqual(["not-recorded"]);
+    expect(fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, stepRecordFrom(record)), stepRecordFrom(record)).map(({ result }) => result)).toEqual(["not-recorded"]);
   });
 
   // Posting reads no claim, so the executable claim needs no input here.
   it("[CLM-OBS-161] a workflow had a fitness function's step with the id CLM-ONE-001, an executable claim carried CLM-ONE-001, and the step record had entries for other steps and none for that step: it is posted citing no claim code", () => {
     const steps = workflowOf({ ci: { steps: [...plumbing, { id: "CLM-ONE-001", run: "pnpm lint" }] } });
 
-    expect(fitnessObservationsOf(steps, stepRecordFrom({ checkout: succeeded, node: succeeded }), NO_SETTING, {}, shellAnswers).map(({ cites }) => cites)).toEqual([[]]);
+    expect(fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, stepRecordFrom({ checkout: succeeded, node: succeeded })), stepRecordFrom({ checkout: succeeded, node: succeeded })).map(({ cites }) => cites)).toEqual([[]]);
   });
 });
 
@@ -155,7 +155,7 @@ describe("balance posts a recorded success in a workflow as passed-on-error only
   const postedWith = (onStep: unknown, onJob: unknown) => {
     const steps = workflowOf({ ci: { "continue-on-error": onJob, steps: [{ id: "CLM-ONE-001", run: "pnpm lint", "continue-on-error": onStep }] } });
     const record = stepRecordFrom({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
-    return fitnessObservationsOf(steps, record, NO_SETTING, {}, shellAnswers).map(({ result, cites }) => ({ result, cites }));
+    return fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, record), record).map(({ result, cites }) => ({ result, cites }));
   };
 
   it.each(postEvidenceObservationVariants["CLM-OBS-057"].variants)("[CLM-OBS-057] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
@@ -180,12 +180,12 @@ describe("a recorded step no workflow has, and a step whose id is not a claim co
   ] as const)("[%s] the step record had an entry for %s that %s, and no workflow had a step with that id: a fitness Evidence Observation is posted, as its result, citing the code it has, placed at its id", (_clm, id, _how, outcome, result, cites) => {
     const steps = workflowOf({ ci: { steps: [{ id: "checkout", uses: "actions/checkout@v4" }] } });
 
-    expect(fitnessObservationsOf(steps, stepRecordFrom({ [id]: { outcome, conclusion: outcome } }), NO_SETTING, {}, shellAnswers)).toEqual([{ kind: "fitness", result, cites, place: id }]);
+    expect(fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, stepRecordFrom({ [id]: { outcome, conclusion: outcome } })), stepRecordFrom({ [id]: { outcome, conclusion: outcome } }))).toEqual([{ kind: "fitness", result, cites, place: id }]);
   });
 
   it("[CLM-OBS-097] balance posts a fitness function whose id is not a claim code once, citing no claim code", () => {
     const steps = workflowOf({ ci: { steps: [{ id: "audit", run: "pnpm audit-the-tree" }] } });
-    const observations = fitnessObservationsOf(steps, stepRecordFrom({ audit: { outcome: "success", conclusion: "success" } }), NO_SETTING, {}, shellAnswers);
+    const observations = fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, stepRecordFrom({ audit: { outcome: "success", conclusion: "success" } })), stepRecordFrom({ audit: { outcome: "success", conclusion: "success" } }));
 
     expect(observations.map(({ kind, cites }) => ({ kind, cites }))).toEqual([{ kind: "fitness", cites: [] }]);
   });
@@ -207,7 +207,7 @@ describe("an Evidence Observation says where to look", () => {
   ] as const)("[%s] the step record had a passing fitness result, %s of ci.yml, citing CLM-ONE-001: it says where to look", (_clm, _step, jobs, place) => {
     const record = stepRecordFrom({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
 
-    const citing = fitnessObservationsOf(workflowOf(jobs), record, NO_SETTING, {}, shellAnswers).filter(({ cites }) => cites.length > 0);
+    const citing = fitnessObservationsOf(disposedStepsOf(workflowOf(jobs), NO_SETTING, {}, shellAnswers, record), record).filter(({ cites }) => cites.length > 0);
 
     expect(citing.map((observation) => observation.place)).toEqual([place]);
   });
@@ -215,7 +215,7 @@ describe("an Evidence Observation says where to look", () => {
 
 const unitRunner = (runner: string): TargetConfiguration => ({ runners: { unit: runner }, nonChecks: [], deferralTags: [] });
 const isFitnessFunction = (run: string, runner: string, scripts: Readonly<Record<string, string>> = {}) =>
-  fitnessObservationsOf(stepsOf({ run }), [], unitRunner(runner), scripts, shellAnswers).length > 0;
+  fitnessObservationsOf(disposedStepsOf(stepsOf({ run }), unitRunner(runner), scripts, shellAnswers, []), []).length > 0;
 
 describe("a runner is recognised only as the command a step runs", () => {
   it.each([
@@ -307,7 +307,7 @@ describe("a runner is recognised only as the command a step runs", () => {
     const steps = workflowOf({ ci: { steps: [{ id: "CLM-ONE-001", run: "vitest run" }] } });
     const record = stepRecordFrom({ "CLM-ONE-001": { outcome: "failure", conclusion: "failure" } });
 
-    expect(fitnessObservationsOf(steps, record, unitRunner("vitest"), {}, shellAnswers).map(({ kind }) => kind)).toEqual(["fitness"]);
+    expect(fitnessObservationsOf(disposedStepsOf(steps, unitRunner("vitest"), {}, shellAnswers, record), record).map(({ kind }) => kind)).toEqual(["fitness"]);
   });
 
   it.each([
@@ -331,7 +331,7 @@ describe("a runner is recognised only as the command a step runs", () => {
     const configuration = countedAs === "plumbing" ? NO_SETTING : unitRunner("vitest");
 
     for (const record of records) {
-      expect(fitnessObservationsOf(steps, stepRecordFrom(record), configuration, {}, shellAnswers)).toEqual([]);
+      expect(fitnessObservationsOf(disposedStepsOf(steps, configuration, {}, shellAnswers, stepRecordFrom(record)), stepRecordFrom(record))).toEqual([]);
     }
   });
 });

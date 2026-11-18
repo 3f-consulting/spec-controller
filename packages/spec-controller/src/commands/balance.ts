@@ -1,6 +1,7 @@
 import {
   claimCodeErrorsOf,
   claimReconciliationsOf,
+  disposedStepsOf,
   evidenceReconciliationOf,
   executableClaimsOf,
   fitnessObservationsOf,
@@ -11,16 +12,14 @@ import {
   shellAnswers,
   stepAccountOf,
   targetFolderOf,
-  stepDispositionOf,
   scriptsFrom,
   targetConfigurationFrom,
   type CreditJournal,
   type DebitJournal,
   type ProvenanceInput,
-  type StepAccount,
+  type DisposedStep,
   type RecordedStep,
   type TargetConfiguration,
-  type CiStep,
 } from "@3f-consulting/spec-controller-core";
 import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
@@ -36,16 +35,6 @@ import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/r
 
 // A run has no step and no step record of an input it did not read.
 const NONE: readonly never[] = [];
-
-// Each workflow step the run read, counted by what it is; a run that read none has an empty step account.
-function stepAccountFor(
-  steps: readonly CiStep[],
-  record: readonly RecordedStep[],
-  configuration: TargetConfiguration,
-  scripts: Readonly<Record<string, string>>,
-): StepAccount {
-  return stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers, record) })));
-}
 
 // Every input the run could read, once for each path it read, its links followed, or once with no path when it read none.
 const provenanceInputsOf = ({ pathsRead }: InputsRead, folder: string): ProvenanceInput[] =>
@@ -76,9 +65,9 @@ const reportsReadIn = (read: InputsRead): string[] => Object.values(reportsOf(re
 // The credit journal: each runner's results as Evidence Observations, beside the fitness functions' from the CI steps.
 function creditJournalOf(
   read: InputsRead,
-  steps: readonly CiStep[],
+  disposedSteps: readonly DisposedStep[],
+  record: readonly RecordedStep[],
   configuration: TargetConfiguration,
-  scripts: Readonly<Record<string, string>>,
   targetFolder: string,
 ): CreditJournal {
   const { vitest, jest, pytest, junit, rspec, cucumber } = reportsOf(read);
@@ -91,7 +80,7 @@ function creditJournalOf(
     ...junit.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
     ...rspec.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
     ...cucumber.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each), read.features)),
-    ...fitnessObservationsOf(steps, read.stepRecord ?? NONE, configuration, scripts, shellAnswers),
+    ...fitnessObservationsOf(disposedSteps, record),
   ];
 }
 
@@ -108,18 +97,20 @@ export function balance(
   if ("refusals" in read) return refusedWith(read.refusals, streams.error.write);
   const steps = read.workflowSteps ?? NONE;
   const { configuration, errors } = targetConfigurationFrom(read.manifest, steps, reportsReadIn(read));
-  const scripts = scriptsFrom(read.manifest);
+  const record = read.stepRecord ?? NONE;
+  // Each workflow step the run read, with what it is: posting and the step account both take it, and posting the same record.
+  const disposedSteps = disposedStepsOf(steps, configuration, scriptsFrom(read.manifest), shellAnswers, record);
   // git gives its top level with every link followed, so the folders and paths it is compared with follow theirs too.
   const targetFolder = realpathSync(targetFolderOf({ workingFolder: folder, corpus: corpus && realpathSync(corpus), gitTopLevel: identity.gitTopLevel }));
   const debitJournal: DebitJournal = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
-  const claimReconciliations = claimReconciliationsOf(debitJournal, creditJournalOf(read, steps, configuration, scripts, targetFolder));
+  const claimReconciliations = claimReconciliationsOf(debitJournal, creditJournalOf(read, disposedSteps, record, configuration, targetFolder));
   const provenance = provenanceOf(identity, provenanceInputsOf(read, folder), targetFolder, repositoryOfOrigin);
   const reconciliation = evidenceReconciliationOf({
     claimReconciliations,
     claimCodeErrors: claimCodeErrorsOf(read.features),
     configurationErrors: errors,
     features: read.features,
-    stepAccount: stepAccountFor(steps, read.stepRecord ?? NONE, configuration, scripts),
+    stepAccount: stepAccountOf(disposedSteps),
     provenance,
   });
   try {
