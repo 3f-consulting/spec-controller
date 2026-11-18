@@ -6,5 +6,29 @@
   "CLM-OBS-058": {
     "class": "continue-on-error set on a job to anything but false",
     "variants": [true, "${{ matrix.experimental }}"]
+  },
+  "CLM-OBS-164": {
+    "class": "a report in a format with no kind tags, its file name in the reports of a layer other than unit",
+    "variants": [
+      "JUnit, under integration",
+      "JUnit, under e2e",
+      "JUnit, under performance",
+      "Vitest, under integration",
+      "Vitest, under e2e",
+      "Vitest, under performance",
+      "Jest, under integration",
+      "Jest, under e2e",
+      "Jest, under performance",
+      "pytest, under integration",
+      "pytest, under e2e",
+      "pytest, under performance",
+      "RSpec, under integration",
+      "RSpec, under e2e",
+      "RSpec, under performance"
+    ]
+  },
+  "CLM-OBS-059": {
+    "class": "a report in a format with no kind tags, its file name in no runners entry",
+    "variants": ["JUnit", "Vitest", "Jest", "pytest", "RSpec"]
   }
 }

@@ -114,7 +114,7 @@ const unitObservation = (observation: Omit<EvidenceObservation, "kind">): Eviden
 
 // Results kept by test file: Vitest's and Jest's. A file with no results is one that could not run: each writes such a
 // file as failed.
-export function observationsByFile(results: readonly ResultsByFileAsWritten[], targetFolder: string): EvidenceObservation[] {
+export function observationsByFile(results: readonly ResultsByFileAsWritten[], targetFolder: string, served: readonly QualityCheckKind[] = []): EvidenceObservation[] {
   return results.flatMap(({ file, message, results: inFile }): EvidenceObservation[] => {
     const place = shownFromTarget(file, targetFolder);
     if (inFile.length === 0) {
@@ -158,7 +158,7 @@ function observationWhereErrorsFailed(suite: ResultsBySuiteAsWritten, result: Re
 }
 
 // Results kept by suite, each case in its suite.
-export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], targetFolder: string): EvidenceObservation[] {
+export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], targetFolder: string, served: readonly QualityCheckKind[] = []): EvidenceObservation[] {
   return suites.flatMap((suite) =>
     suite.results.flatMap((result) => 
       suite.errorMeansNeverRan ? observationWhereErrorsNeverRan(result, targetFolder) : observationWhereErrorsFailed(suite, result, targetFolder),
@@ -168,7 +168,7 @@ export function observationsBySuite(suites: readonly ResultsBySuiteAsWritten[], 
 
 // Results kept by example: RSpec's, each example nested in its groups. An error outside any example kept the examples
 // after it from running: it is placed at the spec file it names, or at none.
-export function observationsByExample({ examples, loadErrors }: ResultsByExampleAsWritten, targetFolder: string): EvidenceObservation[] {
+export function observationsByExample({ examples, loadErrors }: ResultsByExampleAsWritten, targetFolder: string, served: readonly QualityCheckKind[] = []): EvidenceObservation[] {
   const ran = examples.flatMap(({ file, fullDescription, description, status, message }): EvidenceObservation[] => {
     const result = RESULT_BY_STATUS[status];
     if (result === undefined) return [];
@@ -180,6 +180,10 @@ export function observationsByExample({ examples, loadErrors }: ResultsByExample
     unitObservation({ cites: [], result: "never-ran", place: file === undefined ? "" : shownFromTarget(file, targetFolder), message }),
   );
   return [...ran, ...neverRan];
+}
+
+export function layersServing(report: string, runners: TargetConfiguration["runners"]): QualityCheckKind[] {
+  return [];
 }
 
 const BEHAVIOURAL_KINDS: readonly QualityCheckKind[] = ["integration", "e2e", "performance"];

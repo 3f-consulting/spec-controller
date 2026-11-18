@@ -67,20 +67,22 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-147 | a step using actions/checkout, with the id CLM-ONE-001, whose outcome the step record has             | no setting for it              | will not be      |
 
     @unit
-    Scenario Outline: balance identifies a result's kind of quality check from its source and its tags
-      given <source> had a result citing a scenario tagged <tags>
+    Scenario Outline: balance identifies a result's kind of quality check as the layer its report's runner serves
+      given the target's configuration named <runners>
+      and <result>
       when balance reads the evidence
       then the result will be <kind of quality check> evidence
 
       Examples:
-        | clm         | source                                                    | tags                                  | kind of quality check |
-        | CLM-OBS-059 | Vitest's evidence report                                  | any tags                              | unit                  |
-        | CLM-OBS-060 | pytest's evidence report                                  | any tags                              | unit                  |
-        | CLM-OBS-061 | Cucumber's evidence report                                | no @integration, @e2e or @performance | integration           |
-        | CLM-OBS-062 | Cucumber's evidence report                                | @e2e                                  | e2e                   |
-        | CLM-OBS-063 | Cucumber's evidence report                                | @performance                          | performance           |
-        | CLM-OBS-064 | Cucumber's evidence report                                | @integration @e2e                     | integration and e2e   |
-        | CLM-OBS-111 | Cucumber's evidence report, for a scenario that never ran | @integration @e2e                     | integration and e2e   |
+        | clm         | runners                                                              | result                                                                 | kind of quality check |
+        | CLM-OBS-164 | playwright as the e2e runner, writing playwright.xml                 | playwright.xml had a result                                            | e2e                   |
+        | CLM-OBS-059 | no runner writing a Vitest evidence report                           | that report had a result                                               | unit                  |
+        | CLM-OBS-061 | no runner writing a Cucumber evidence report                         | that report had a result for a scenario tagged @e2e                    | integration           |
+        | CLM-OBS-063 | cucumber-js as the performance runner, writing cucumber.json         | cucumber.json had a result for a scenario with no kind tag             | performance           |
+        | CLM-OBS-062 | cucumber-js as the integration and e2e runner, writing cucumber.json | cucumber.json had a result for a scenario tagged @e2e                  | e2e                   |
+        | CLM-OBS-064 | cucumber-js as the integration and e2e runner, writing cucumber.json | cucumber.json had a result for a scenario tagged @integration @e2e     | integration and e2e   |
+        | CLM-OBS-111 | cucumber-js as the integration and e2e runner, writing cucumber.json | cucumber.json had a scenario tagged @integration @e2e that never ran   | integration and e2e   |
+        | CLM-OBS-165 | cucumber-js as the integration and e2e runner, writing cucumber.json | cucumber.json had a result for a scenario with no kind tag             | integration and e2e   |
 
   Rule: balance reads each result as passed or failed, however its source writes it
 
