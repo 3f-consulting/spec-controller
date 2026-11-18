@@ -151,8 +151,8 @@ export function citedClaimReconciliationOf(claim: PhantomClaim | UnnamedClaim, o
   return { claim, qualityCheckReconciliations, verdict: verdictOf(qualityCheckReconciliations) };
 }
 
-// Each Evidence Observation in the credit journal goes to the one executable claim with the code it cites; to that code's phantom claim when no
-// executable claim has it; and to the unnamed claim when it cites none, several, or a code several claims share.
+// Each Evidence Observation in the credit journal goes to the one executable claim with the code it cites; to that code's
+// phantom claim when no executable claim has it; and to the unnamed claim when it cites none, several, or a code several claims share.
 export function claimReconciliationsOf(claims: readonly ExecutableClaim[], creditJournal: CreditJournal): ClaimReconciliation[] {
   const claimsWith = new Map<string, number>();
   for (const { claimCode } of claims) if (claimCode) claimsWith.set(written(claimCode), (claimsWith.get(written(claimCode)) ?? 0) + 1);
