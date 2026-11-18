@@ -44,14 +44,14 @@ Correctness is the agreement of two independent records. The debit side is the `
 
 | Term | Meaning | Bookkeeping term | Double-check |
 |---|---|---|---|
-| `Test Specification` | The **`executable specifications`** taken together: feature files (`@`-tags), step definitions and test code. It is the record of the **behaviours** to be proved and the `Evidence Obligations` for each. | Debit journal — the book of original entry for debits | |
+| `Test Specification` | The **`executable specifications`** taken together: feature files (`@`-tags), step definitions and test code. It is the record of the **behaviours** to be proved and the `Evidence Obligations` for each. | Source documents for debits — what the debit journal is read from | |
 | `Evidence Obligation` | An `executable claim` raises one for each `kind-of-quality-check tag` that applies to it, to be met by `Evidence Observations`. The `@`-tags on the scenario name those kinds: the `layers` `@unit`, `@integration`, `@e2e` and `@performance`, and `@fitness`. A row of an Outline takes its Outline's tags. A deferred scenario raises none. | Debit — the entry for what an account requires | demand, declare, require, insist, expect — every inflection (demanded, demander, declared, undeclared, required, requirement, …); obligation (bare); the `Declared` prefix |
 
 #### The credit side
 
 | Term | Meaning | Bookkeeping term | Double-check |
 |---|---|---|---|
-| Test run reports | The reports the runners of the behavioural quality checks write, such as Vitest's and Cucumber's: reality's record. A fitness function's record is the CI run's `step record`. | Credit journal — the book of original entry for credits | |
+| Test run reports | The reports the runners of the behavioural quality checks write, such as Vitest's and Cucumber's: reality's record. A fitness function's record is the CI run's `step record`. | Source documents for credits — what the credit journal is read from | |
 | `Evidence Observation` | One reported result of a test or a fitness function, of one shape whatever its source: the codes it cites, its result (passed, failed, passed-on-error, never-ran or not recorded), its `kind of quality check`, where to look, and what it said. It is posted by the code it cites: to the one `executable claim` that carries the code, to a `phantom claim` when no `executable claim` carries it, and otherwise to the `unnamed claim`. One that never reached its assertions is `never-ran`: it was reported, but did not run to a result. One whose CI step the step record does not name is not recorded: `balance` has no word on how it went, so it is never passed and never credits a claim. | Credit — the entry for what an account is provided | observation (bare); credit, credit side (in a sentence that names no debit); supply; execution; declared (for evidence) |
 
 #### Posting
