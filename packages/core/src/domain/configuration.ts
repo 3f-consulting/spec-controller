@@ -38,7 +38,6 @@ export interface ConfigurationError {
   readonly entry: string;
 }
 
-// A non-check the settings name: the entry that names it, and the step it names.
 export interface NonCheck {
   readonly entry: string;
   readonly address: StepAddress;
@@ -47,8 +46,7 @@ export interface NonCheck {
 // One part of a setting, in the order it is written: what the settings' reader took from it, or the error that left it out.
 export type SettingPart<Value> = { readonly taken: Value } | { readonly error: ConfigurationError };
 
-// A target's settings as its reader took them, before they are checked against the run: each layer's runner, each
-// non-check and each deferral tag, and an error for each key the settings do not read.
+// A target's settings as its reader took them, before they are checked against the run.
 export interface ConfigurationSettings {
   readonly runners: readonly SettingPart<readonly [Layer, Runner]>[];
   readonly nonChecks: readonly SettingPart<NonCheck>[];
@@ -60,13 +58,11 @@ export const NO_SETTINGS: ConfigurationSettings = { runners: [], nonChecks: [], 
 
 const isEntry = (runner: Runner | undefined): runner is RunnerEntry => typeof runner === "object" && runner !== null;
 
-// A setting as checked: what of it can be used, and an error for each part left out.
 interface Checked<Value> {
   readonly value: Value;
   readonly errors: readonly ConfigurationError[];
 }
 
-// Each part of a setting the reader took is checked against the run; each part it left out keeps its error, in place.
 function checked<Taken, Value>(parts: readonly SettingPart<Taken>[], check: (taken: Taken) => Checked<Value | undefined>): Checked<Value[]> {
   const each = parts.map((part): Checked<Value | undefined> => ("error" in part ? { value: undefined, errors: [part.error] } : check(part.taken)));
   return { value: each.flatMap(({ value }) => (value === undefined ? [] : [value])), errors: each.flatMap(({ errors }) => errors) };
