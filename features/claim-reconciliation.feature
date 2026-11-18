@@ -2,8 +2,7 @@
 Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its Evidence Observations
 
   balance sets a claim's Evidence Obligations against its Evidence Observations, matching them
-  on their kind of quality check. balance works from both sides, so every claim, of whichever
-  kind, has a Claim Reconciliation.
+  on their kind of quality check. Every claim, of whichever kind, has a Claim Reconciliation.
 
   A Quality Check Reconciliation's outcome follows from the sides it has:
   - With both, it is satisfied, failing, or cannot-fail when it passed where it could not have
@@ -15,14 +14,13 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
   A claim with no claim code reads no-claim-code on the Evidence Obligation side, whether or not
   it asks for a quality check.
 
-  A claim's verdict has two values. It is balanced when every Quality Check Reconciliation on it
-  is satisfied. Otherwise it is out of balance, and it lists every reconciling item, each with its
-  outcome.
+  A claim is balanced when every Quality Check Reconciliation on it is satisfied. Otherwise it is
+  out of balance, and lists every reconciling item with its outcome.
 
   Evidence no single executable claim can take is posted to the unnamed claim. balance groups it
   there by kind of quality check, file and shared claim code, and counts each group's results.
 
-  Each Claim Reconciliation lists its Quality Check Reconciliations in one fixed order.
+  Each Claim Reconciliation lists its Quality Check Reconciliations in a fixed order.
 
   Rule: a Quality Check Reconciliation's outcome follows from the sides it has
 
@@ -117,8 +115,8 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
   Rule: a Claim Reconciliation sorts its Quality Check Reconciliations, so two runs over the same evidence list them in the same order
 
     They are sorted by kind of quality check: unit, integration, e2e, performance, then fitness.
-    Within a kind, a missing one comes first, then they are sorted by where their tests are, then
-    by the code each cites, then by its message, then by its title.
+    Within a kind, a missing one comes first, then they are sorted by where their tests are, by
+    the code each cites, by message, then by title.
 
     @unit
     Scenario Outline: balance will list a claim's Quality Check Reconciliations in the same order whatever order the evidence came in

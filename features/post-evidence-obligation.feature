@@ -1,20 +1,19 @@
 @OBL
 Feature: Evidence Obligations are raised, one for each kind of quality check
 
-  Your project's feature files make claims. balance reads them and raises the Evidence Obligations
-  each claim asks for. This is the debit side.
+  balance reads your project's feature files and raises the Evidence Obligations each claim asks
+  for. This is the debit side.
 
-  First, balance finds the executable claims. A scenario is one executable claim, and so is each
-  row of an Outline with a clm column. A scenario with a deferral tag, such as @wip, on the
-  scenario, its Rule or its Feature, is not an executable claim.
+  A scenario is one executable claim, and so is each row of an Outline with a clm column. A
+  scenario with a deferral tag, such as @wip, on the scenario, its Rule or its Feature, is not an
+  executable claim.
 
-  Next, balance raises an Evidence Obligation for each kind-of-quality-check tag on the executable claim.
-  A row of an Outline takes its Outline's tags. A tag such as @integrationpending is ignored, so
-  it raises nothing. In a strict run, a deferral tag is ignored, and @integrationpending is read
-  as @integration.
+  An executable claim raises an Evidence Obligation for each kind-of-quality-check tag on it. A
+  row of an Outline takes its Outline's tags. A tag such as @integrationpending raises nothing.
+  In a strict run, a deferral tag is ignored, and @integrationpending is read as @integration.
 
-  Last, balance reads the claim's code. A claim that cannot be mapped to a single claim code raises
-  its Evidence Obligations with no claim code.
+  A claim that cannot be mapped to a single claim code raises its Evidence Obligations with no
+  claim code.
 
   Rule: an executable claim is a scenario, or a row of an Outline with a clm column
 

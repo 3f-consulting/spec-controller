@@ -4,15 +4,15 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
   balance reconciles each executable claim against the test and CI evidence, and writes the
   Evidence Reconciliation: the Claim Reconciliations and the Summary over them.
 
-  A run verdict is what the whole run comes to: balanced, out of balance, or not reconciled. A
-  run is not reconciled when balance cannot rely on what it read, and the verdict names why:
-  unsound, when some evidence never ran; claim code errors, when a claim code is misfiled; or
-  nothing to reconcile, when there are no Claim Reconciliations.
+  The run verdict is balanced, out of balance, or not reconciled. A run is not reconciled when
+  balance cannot rely on what it read, and the verdict names why: unsound, when some evidence
+  never ran; claim code errors, when a claim code is misfiled; or nothing to reconcile, when there
+  are no Claim Reconciliations.
 
   The totals count the Claim Reconciliations, the Quality Check Reconciliations by kind and
   outcome, and where each Evidence Observation was filed. The step account accounts for every CI
-  step balance read. The provenance says what the run used: the target, the source SHA, the tool,
-  each input and when it started.
+  step balance read. The provenance names the target, the source SHA, the tool, each input and
+  when the run started.
 
   Rule: a run is balanced only when all its Claim Reconciliations are
 

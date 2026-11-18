@@ -1,22 +1,21 @@
 @OBS
 Feature: Evidence Observations are posted, each to its claim
 
-  Your project makes claims. Running your tests and your CI produces evidence. balance turns that
-  evidence into Evidence Observations and posts each one to its claim.
+  balance turns the evidence from your tests and your CI into Evidence Observations and posts each
+  one to its claim.
 
   Evidence comes from two places: the evidence report a test runner writes, and the steps your CI
   ran.
 
-  First, balance decides what counts as evidence. A CI step that proves nothing, such as checking
-  out the code, posts nothing. Nor does a step balance recognises as running your tests. Any other step is a fitness
-  function.
+  A CI step that proves nothing, such as checking out the code, posts nothing. Nor does a step
+  balance recognises as running your tests. Any other step is a fitness function.
 
-  Next, balance writes each Evidence Observation. It says which claim it cites, whether it
-  passed, failed, never ran or was not recorded, its kind of quality check, and where to look.
+  Each Evidence Observation says which claim it cites, whether it passed, failed, never ran or
+  was not recorded, its kind of quality check, and where to look.
 
-  Last, balance posts each one. One that cites one executable claim goes to that claim. One that
-  cites a claim nobody wrote goes to a phantom claim. One that cites none, or could mean more than
-  one, goes to the unnamed claim.
+  An Evidence Observation that cites one executable claim is posted to that claim. One that cites
+  a claim nobody wrote is posted to a phantom claim. One that cites none, or could mean more than
+  one, is posted to the unnamed claim.
 
   Rule: balance identifies each result's kind of quality check
 
