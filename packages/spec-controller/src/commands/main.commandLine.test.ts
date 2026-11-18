@@ -286,6 +286,13 @@ describe("an input that is not valid will stop the run", () => {
     ["CLM-CLI-160", "a folder named as the Vitest evidence report", { "vitest/a.json": VITEST_SHAPED }, ["--vitest", "vitest"], ["{input-vitest} vitest is not {path-file}", "[input-wrong-kind-of-path]"]],
     ["CLM-CLI-148", "a JSON evidence report that does not parse", { "vitest.json": "{" }, ["--vitest", "vitest.json"], ["vitest.json", "JSON", "[input-does-not-parse]"]],
     ["CLM-CLI-186", "a JUnit evidence report that does not parse", { "junit.xml": "<testsuite" }, ["--junit", "junit.xml"], ["junit.xml", "JUnit evidence report", "[input-does-not-parse]"]],
+    [
+      "CLM-CLI-186",
+      "a JUnit evidence report its parser refuses, declaring an external entity",
+      { "junit.xml": '<?xml version="1.0"?>\n<!DOCTYPE testsuite [<!ENTITY x SYSTEM "file:///etc/passwd">]>\n<testsuite name="s"><testcase name="t"/></testsuite>\n' },
+      ["--junit", "junit.xml"],
+      ["junit.xml", "JUnit evidence report", "External entities are not supported", "[input-does-not-parse]"],
+    ],
     ["CLM-CLI-149", "a feature file that does not parse", { "features/bad.feature": "not Gherkin\n" }, ["--features", "features"], ["bad.feature", "feature file", "[input-does-not-parse]"]],
     ["CLM-CLI-150", "a workflow that does not parse", { "workflows/ci.yml": "jobs: [\n" }, ["--ci", "workflows"], ["{input-workflow} workflows/ci.yml", "at line 2, column 1: jobs: [ ^\n", "[input-does-not-parse]"]],
     [
@@ -294,6 +301,20 @@ describe("an input that is not valid will stop the run", () => {
       { "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - id: x\n      - run: pnpm lint\n" },
       ["--ci", "workflows"],
       ["ci.yml", "workflow", "jobs.ci.steps[0]", "neither an action nor a command", "[input-does-not-parse]"],
+    ],
+    [
+      "CLM-CLI-150",
+      "a workflow with a step written as nothing",
+      { "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: pnpm lint\n      -\n" },
+      ["--ci", "workflows"],
+      ["ci.yml", "workflow", "jobs.ci.steps[1]", "neither an action nor a command", "[input-does-not-parse]"],
+    ],
+    [
+      "CLM-CLI-150",
+      "a workflow with an alias to an anchor it does not set",
+      { "workflows/ci.yml": "jobs:\n  ci:\n    steps: *missing\n" },
+      ["--ci", "workflows"],
+      ["ci.yml", "workflow", "Unresolved alias", "missing", "[input-does-not-parse]"],
     ],
     [
       "CLM-CLI-150",
