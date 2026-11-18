@@ -1,4 +1,3 @@
-// A report broken at one entry, and where its reader should find it first breaks.
 interface ReportVariant {
   readonly given: string;
   readonly report: unknown;
