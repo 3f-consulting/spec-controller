@@ -16,7 +16,7 @@ import {
   stepDispositionOf,
   scriptsFrom,
   targetConfigurationFrom,
-  type EvidenceObservation,
+  type CreditJournal,
   type ProvenanceInput,
   type StepAccount,
   type StepRecordEntryAsWritten,
@@ -58,14 +58,14 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
   return corpus === undefined ? undefined : resolve(folder, corpus.path);
 };
 
-// Each runner's results posted as Evidence Observations, beside the fitness functions' from the CI steps.
-function observationsOf(
+// The credit journal: each runner's results as Evidence Observations, beside the fitness functions' from the CI steps.
+function creditJournalOf(
   read: InputsRead,
   steps: readonly WorkflowStepAsWritten[],
   configuration: TargetConfiguration,
   scripts: Readonly<Record<string, string>>,
   targetFolder: string,
-): EvidenceObservation[] {
+): CreditJournal {
   return [
     ...observationsByFile([...(read.vitest ?? []), ...(read.jest ?? [])], targetFolder),
     ...observationsBySuite([...(read.pytest ?? []), ...(read.junit ?? [])], targetFolder),
@@ -92,7 +92,7 @@ export function balance(
   // git gives its top level with every link followed, so the folders and paths it is compared with follow theirs too.
   const targetFolder = realpathSync(targetFolderOf({ workingFolder: folder, corpus: corpus && realpathSync(corpus), gitTopLevel: identity.gitTopLevel }));
   const claims = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
-  const claimReconciliations = claimReconciliationsOf(claims, observationsOf(read, steps, configuration, scripts, targetFolder));
+  const claimReconciliations = claimReconciliationsOf(claims, creditJournalOf(read, steps, configuration, scripts, targetFolder));
   const provenance = provenanceOf(identity, provenanceInputsOf(read, folder), targetFolder, repositoryOfOrigin);
   const reconciliation = evidenceReconciliationOf({
     claimReconciliations,
