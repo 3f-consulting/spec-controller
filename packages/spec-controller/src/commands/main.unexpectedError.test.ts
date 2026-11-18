@@ -74,7 +74,7 @@ const WORKFLOW = "jobs:\n  ci:\n    steps:\n      - run: pnpm test\n";
 
 // The command run over valid inputs, in a folder outside git holding a feature file of one claim and the files given,
 // with the core function named throwing as the run reaches it.
-function ranBreaking(at: string, args: readonly string[], files: Readonly<Record<string, string>>): Ended {
+async function ranBreaking(at: string, args: readonly string[], files: Readonly<Record<string, string>>): Promise<Ended> {
   const folder = temporaryDirectory("unexpected-");
   mkdirSync(join(folder, "features"));
   writeFileSync(join(folder, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n");
@@ -83,9 +83,12 @@ function ranBreaking(at: string, args: readonly string[], files: Readonly<Record
     writeFileSync(join(folder, path), text);
   });
   BREAKING.at = at;
+  // Loaded afresh, so the reader reached is the one this file breaks, whatever another file loaded before it.
+  vi.resetModules();
+  const { main: mainLoaded } = await import("./main.js");
   let output = "";
   let error = "";
-  const exitCode = main(args, folder, { output: { fd: 1, write: (text) => (output += text) }, error: { fd: 2, write: (text) => (error += text) } });
+  const exitCode = mainLoaded(args, folder, { output: { fd: 1, write: (text) => (output += text) }, error: { fd: 2, write: (text) => (error += text) } });
   return { exitCode, output, complaints: error.split("\n").filter((line) => line.startsWith("[")) };
 }
 
@@ -112,8 +115,8 @@ describe("an unexpected error will stop the run with no verdict and exit 4, nami
     ["the feature-file reader", "featureAsWrittenFrom", ["balance"], {}],
     ["the workflow reader", "workflowStepsFrom", ["balance", "--ci", "workflows"], { "workflows/ci.yml": WORKFLOW }],
     ["allocate reading a feature file's code", "featureCodeOfFile", ["allocate", "ONE"], {}],
-  ] as const)("[CLM-CLI-176] an error nothing else handles, in %s while it reads a valid input: the run stops, no verdict, exit 4, and a complaint with the error, under its error code", (_place, at, args, files) => {
-    const { exitCode, output, complaints } = ranBreaking(at, args, files);
+  ] as const)("[CLM-CLI-176] an error nothing else handles, in %s while it reads a valid input: the run stops, no verdict, exit 4, and a complaint with the error, under its error code", async (_place, at, args, files) => {
+    const { exitCode, output, complaints } = await ranBreaking(at, args, files);
 
     expect({ exitCode, output, complaints: complaints.map((line) => line.startsWith("[unexpected-error] ") && line.includes(`Error: a bug in ${at}`)) }).toEqual({
       exitCode: 4,

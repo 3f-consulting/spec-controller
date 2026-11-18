@@ -1,31 +1,21 @@
 #!/usr/bin/env node
-
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
+import { endRunOn, endRunUnlessEnded, UNEXPECTED_ERROR } from "../runEnding/exitCode.js";
+import { writeToStandardError } from "../runEnding/standardError.js";
 
-// What reports an unexpected error and ends the run on it, loaded before the program and before anything that runs code as it
-// loads.
-async function guardsLoaded() {
-  const [{ UNEXPECTED_ERROR }, { complainerTo, loadGuarded }, { endRunOn, endRunUnlessEnded }, { writeToStandardError }] = await Promise.all([
-    import("../runEnding/codes.js"),
-    import("../runEnding/crashGuards.js"),
-    import("../runEnding/exitCode.js"),
-    import("../runEnding/standardError.js"),
-  ]);
-  return { UNEXPECTED_ERROR, complainerTo, loadGuarded, endRunOn, endRunUnlessEnded, writeToStandardError };
-}
-
-// What reports an unexpected error cannot report its own failure to load, so the bin writes the complaint and its exit code
-// itself, from the catalogue, which is data and runs nothing as it loads.
-const guards = await guardsLoaded().catch((error: unknown) => {
-  process.stderr.write(`[unexpected-error] ${appCatalogue["unexpected-error"]}: ${String(error)}\n`);
-  process.exitCode = 4;
-  return undefined;
-});
+// The crash guards load under a catch of their own, since they cannot report their own failure to load. What that catch
+// uses, the catalogue, the exit code and standard error, runs nothing as it loads.
+const guards = await import("../runEnding/crashGuards.js")
+  .then(({ complainerTo, loadGuarded }) => ({ complainerTo, loadGuarded }))
+  .catch((error: unknown) => {
+    writeToStandardError(`[unexpected-error] ${appCatalogue["unexpected-error"]}: ${String(error)}\n`);
+    endRunOn(UNEXPECTED_ERROR);
+    return undefined;
+  });
 
 if (guards !== undefined) {
-  const { UNEXPECTED_ERROR, complainerTo, loadGuarded, endRunOn, endRunUnlessEnded, writeToStandardError } = guards;
   // The guards are in place before the program loads, so an error while it loads, or one nothing catches, ends at 4 a run not yet ended.
-  const complain = complainerTo(writeToStandardError);
+  const complain = guards.complainerTo(writeToStandardError);
   const guard = (error: unknown): void => {
     complain(error);
     endRunUnlessEnded(UNEXPECTED_ERROR);
@@ -33,7 +23,7 @@ if (guards !== undefined) {
   process.on("uncaughtException", guard);
   process.on("unhandledRejection", guard);
 
-  const program = await loadGuarded(
+  const program = await guards.loadGuarded(
     async () => ({ ...(await import("./main.js")), ...(await import("../output/streams.js")) }),
     complain,
     endRunUnlessEnded,
