@@ -2,6 +2,8 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 
 // The JSON report's own shape, the contract its readers hold, so a change in the domain reaches them only through jsonReportFrom.
 export interface JsonReport {
+  // Raised whenever the report's structure changes, so a reader can tell which contract a report follows.
+  readonly schemaVersion: 1;
   readonly claimReconciliations: EvidenceReconciliation["claimReconciliations"];
   readonly runVerdict: EvidenceReconciliation["runVerdict"];
   readonly totals: EvidenceReconciliation["totals"];
@@ -12,6 +14,7 @@ export interface JsonReport {
 }
 
 export const jsonReportFrom = ({ claimReconciliations, runVerdict, totals, stepAccount, provenance, errorsInTheInputs, runIntegrity }: EvidenceReconciliation): JsonReport => ({
+  schemaVersion: 1,
   claimReconciliations,
   runVerdict,
   totals,

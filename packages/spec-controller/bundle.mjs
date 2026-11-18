@@ -73,16 +73,16 @@ const bundleTheCommand = async () => {
   writeFileSync(join(dist, "THIRD-PARTY-NOTICES.txt"), notices.join("\n\n" + "-".repeat(72) + "\n\n") + "\n");
 };
 
-// The JSON report is the report type serialised as it is, so its schema is generated from that type and never written by hand.
+// The JSON report is its own type serialised as it is, so its schema is generated from that type and never written by hand.
 const writeTheReportSchema = () => {
   const core = resolve(here, "../core");
   const schema = createGenerator({
-    path: join(core, "src", "domain", "evidenceReconciliation.ts"),
+    path: join(core, "src", "reports", "json.ts"),
     tsconfig: join(core, "tsconfig.build.json"),
-    type: "EvidenceReconciliation",
+    type: "JsonReport",
     additionalProperties: false,
     skipTypeCheck: true,
-  }).createSchema("EvidenceReconciliation");
+  }).createSchema("JsonReport");
   writeFileSync(join(dist, "spec-reconciliation.schema.json"), `${JSON.stringify(schema, null, 2)}\n`);
 };
 

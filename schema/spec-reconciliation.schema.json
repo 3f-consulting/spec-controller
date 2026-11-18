@@ -1,0 +1,956 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/JsonReport",
+  "definitions": {
+    "JsonReport": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "claimReconciliations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ClaimReconciliation"
+          }
+        },
+        "runVerdict": {
+          "$ref": "#/definitions/RunVerdict"
+        },
+        "totals": {
+          "$ref": "#/definitions/Totals"
+        },
+        "stepAccount": {
+          "$ref": "#/definitions/StepAccount"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "errorsInTheInputs": {
+          "$ref": "#/definitions/ErrorsInTheInputs"
+        },
+        "runIntegrity": {
+          "$ref": "#/definitions/RunIntegrity"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "claimReconciliations",
+        "runVerdict",
+        "totals",
+        "stepAccount",
+        "provenance",
+        "errorsInTheInputs",
+        "runIntegrity"
+      ],
+      "additionalProperties": false
+    },
+    "ClaimReconciliation": {
+      "type": "object",
+      "properties": {
+        "claim": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ExecutableClaim"
+            },
+            {
+              "$ref": "#/definitions/PhantomClaim"
+            },
+            {
+              "$ref": "#/definitions/UnnamedClaim"
+            }
+          ]
+        },
+        "qualityCheckReconciliations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QualityCheckReconciliation"
+          }
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "balanced",
+            "out-of-balance"
+          ]
+        }
+      },
+      "required": [
+        "claim",
+        "qualityCheckReconciliations",
+        "verdict"
+      ],
+      "additionalProperties": false
+    },
+    "ExecutableClaim": {
+      "type": "object",
+      "properties": {
+        "claimCode": {
+          "$ref": "#/definitions/ClaimCode"
+        },
+        "file": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "obligations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EvidenceObligation"
+          }
+        }
+      },
+      "required": [
+        "file",
+        "title",
+        "obligations"
+      ],
+      "additionalProperties": false
+    },
+    "ClaimCode": {
+      "type": "object",
+      "properties": {
+        "featureCode": {
+          "type": "string"
+        },
+        "number": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "featureCode",
+        "number"
+      ],
+      "additionalProperties": false
+    },
+    "EvidenceObligation": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/QualityCheckKind"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "QualityCheckKind": {
+      "type": "string",
+      "enum": [
+        "fitness",
+        "unit",
+        "integration",
+        "e2e",
+        "performance"
+      ]
+    },
+    "PhantomClaim": {
+      "type": "object",
+      "properties": {
+        "claimCode": {
+          "$ref": "#/definitions/ClaimCode"
+        }
+      },
+      "required": [
+        "claimCode"
+      ],
+      "additionalProperties": false
+    },
+    "UnnamedClaim": {
+      "type": "object",
+      "additionalProperties": false
+    },
+    "QualityCheckReconciliation": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "satisfied",
+                "failing",
+                "cannot-fail"
+              ]
+            },
+            "kind": {
+              "$ref": "#/definitions/QualityCheckKind"
+            },
+            "obligation": {
+              "$ref": "#/definitions/EvidenceObligation"
+            },
+            "observation": {
+              "$ref": "#/definitions/EvidenceObservation"
+            }
+          },
+          "required": [
+            "outcome",
+            "kind",
+            "obligation",
+            "observation"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "const": "missing"
+            },
+            "kind": {
+              "$ref": "#/definitions/QualityCheckKind"
+            },
+            "obligation": {
+              "$ref": "#/definitions/EvidenceObligation"
+            }
+          },
+          "required": [
+            "outcome",
+            "kind",
+            "obligation"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "no-claim-code",
+                "duplicate-claim-code"
+              ]
+            },
+            "kind": {
+              "$ref": "#/definitions/QualityCheckKind"
+            },
+            "obligation": {
+              "$ref": "#/definitions/EvidenceObligation"
+            }
+          },
+          "required": [
+            "outcome",
+            "kind",
+            "obligation"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "const": "no-claim-code"
+            }
+          },
+          "required": [
+            "outcome"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "not-asked-for",
+                "cites-unknown-claim",
+                "cites-no-claim",
+                "never-ran"
+              ]
+            },
+            "kind": {
+              "$ref": "#/definitions/QualityCheckKind"
+            },
+            "observation": {
+              "$ref": "#/definitions/EvidenceObservation"
+            }
+          },
+          "required": [
+            "outcome",
+            "kind",
+            "observation"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "outcome": {
+              "type": "string",
+              "const": "no-quality-check"
+            }
+          },
+          "required": [
+            "outcome"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "EvidenceObservation": {
+      "type": "object",
+      "properties": {
+        "cites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ClaimCode"
+          }
+        },
+        "result": {
+          "$ref": "#/definitions/Result"
+        },
+        "kind": {
+          "$ref": "#/definitions/QualityCheckKind"
+        },
+        "place": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "cites",
+        "result",
+        "kind",
+        "place"
+      ],
+      "additionalProperties": false
+    },
+    "Result": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "passed-on-error",
+        "failed",
+        "never-ran",
+        "not-recorded"
+      ]
+    },
+    "RunVerdict": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "verdict": {
+              "type": "string",
+              "const": "balanced"
+            }
+          },
+          "required": [
+            "verdict"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "verdict": {
+              "type": "string",
+              "const": "out-of-balance"
+            }
+          },
+          "required": [
+            "verdict"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "verdict": {
+              "type": "string",
+              "const": "not-reconciled"
+            },
+            "why": {
+              "type": "string",
+              "enum": [
+                "unsound",
+                "claim-code-errors",
+                "nothing-to-reconcile"
+              ]
+            }
+          },
+          "required": [
+            "verdict",
+            "why"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Totals": {
+      "type": "object",
+      "properties": {
+        "claimReconciliations": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "number"
+            },
+            "balanced": {
+              "type": "number"
+            },
+            "outOfBalance": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "total",
+            "balanced",
+            "outOfBalance"
+          ],
+          "additionalProperties": false
+        },
+        "qualityCheckReconciliations": {
+          "type": "object",
+          "properties": {
+            "byKind": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "evidenceObligations": {
+                    "type": "number"
+                  },
+                  "evidenceObservations": {
+                    "type": "number"
+                  },
+                  "byOutcome": {
+                    "type": "object",
+                    "properties": {
+                      "satisfied": {
+                        "type": "number"
+                      },
+                      "failing": {
+                        "type": "number"
+                      },
+                      "cannot-fail": {
+                        "type": "number"
+                      },
+                      "missing": {
+                        "type": "number"
+                      },
+                      "no-claim-code": {
+                        "type": "number"
+                      },
+                      "duplicate-claim-code": {
+                        "type": "number"
+                      },
+                      "not-asked-for": {
+                        "type": "number"
+                      },
+                      "cites-unknown-claim": {
+                        "type": "number"
+                      },
+                      "cites-no-claim": {
+                        "type": "number"
+                      },
+                      "never-ran": {
+                        "type": "number"
+                      },
+                      "no-quality-check": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "satisfied",
+                      "failing",
+                      "cannot-fail",
+                      "missing",
+                      "no-claim-code",
+                      "duplicate-claim-code",
+                      "not-asked-for",
+                      "cites-unknown-claim",
+                      "cites-no-claim",
+                      "never-ran",
+                      "no-quality-check"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "kind": {
+                    "$ref": "#/definitions/QualityCheckKind"
+                  }
+                },
+                "required": [
+                  "byOutcome",
+                  "evidenceObligations",
+                  "evidenceObservations",
+                  "kind"
+                ]
+              }
+            },
+            "noKind": {
+              "$ref": "#/definitions/QualityCheckCounts"
+            },
+            "all": {
+              "$ref": "#/definitions/QualityCheckCounts"
+            }
+          },
+          "required": [
+            "byKind",
+            "noKind",
+            "all"
+          ],
+          "additionalProperties": false
+        },
+        "evidenceObservations": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "number"
+            },
+            "onExecutableClaim": {
+              "type": "number"
+            },
+            "onPhantomClaim": {
+              "type": "number"
+            },
+            "onUnnamedClaim": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "total",
+            "onExecutableClaim",
+            "onPhantomClaim",
+            "onUnnamedClaim"
+          ],
+          "additionalProperties": false
+        },
+        "outOfBalanceByFeature": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "count": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "file",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "excludedClaimCodeOccurrences": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "claimReconciliations",
+        "qualityCheckReconciliations",
+        "evidenceObservations",
+        "outOfBalanceByFeature",
+        "excludedClaimCodeOccurrences"
+      ],
+      "additionalProperties": false
+    },
+    "QualityCheckCounts": {
+      "type": "object",
+      "properties": {
+        "evidenceObligations": {
+          "type": "number"
+        },
+        "evidenceObservations": {
+          "type": "number"
+        },
+        "byOutcome": {
+          "type": "object",
+          "properties": {
+            "satisfied": {
+              "type": "number"
+            },
+            "failing": {
+              "type": "number"
+            },
+            "cannot-fail": {
+              "type": "number"
+            },
+            "missing": {
+              "type": "number"
+            },
+            "no-claim-code": {
+              "type": "number"
+            },
+            "duplicate-claim-code": {
+              "type": "number"
+            },
+            "not-asked-for": {
+              "type": "number"
+            },
+            "cites-unknown-claim": {
+              "type": "number"
+            },
+            "cites-no-claim": {
+              "type": "number"
+            },
+            "never-ran": {
+              "type": "number"
+            },
+            "no-quality-check": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "satisfied",
+            "failing",
+            "cannot-fail",
+            "missing",
+            "no-claim-code",
+            "duplicate-claim-code",
+            "not-asked-for",
+            "cites-unknown-claim",
+            "cites-no-claim",
+            "never-ran",
+            "no-quality-check"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "evidenceObligations",
+        "evidenceObservations",
+        "byOutcome"
+      ],
+      "additionalProperties": false
+    },
+    "StepAccount": {
+      "type": "object",
+      "properties": {
+        "jobs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stepsRead": {
+                "type": "number"
+              },
+              "runners": {
+                "type": "number"
+              },
+              "reconcilerSteps": {
+                "type": "number"
+              },
+              "nonChecks": {
+                "type": "number"
+              },
+              "plumbing": {
+                "type": "number"
+              },
+              "fitnessFunctions": {
+                "type": "number"
+              },
+              "workflow": {
+                "type": "string"
+              },
+              "job": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "fitnessFunctions",
+              "job",
+              "nonChecks",
+              "plumbing",
+              "reconcilerSteps",
+              "runners",
+              "stepsRead",
+              "workflow"
+            ]
+          }
+        },
+        "total": {
+          "$ref": "#/definitions/StepCounts"
+        }
+      },
+      "required": [
+        "jobs",
+        "total"
+      ],
+      "additionalProperties": false
+    },
+    "StepCounts": {
+      "type": "object",
+      "properties": {
+        "stepsRead": {
+          "type": "number"
+        },
+        "runners": {
+          "type": "number"
+        },
+        "reconcilerSteps": {
+          "type": "number"
+        },
+        "nonChecks": {
+          "type": "number"
+        },
+        "plumbing": {
+          "type": "number"
+        },
+        "fitnessFunctions": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "stepsRead",
+        "runners",
+        "reconcilerSteps",
+        "nonChecks",
+        "plumbing",
+        "fitnessFunctions"
+      ],
+      "additionalProperties": false
+    },
+    "Provenance": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "sourceSha": {
+          "type": "string"
+        },
+        "toolSha": {
+          "type": "string"
+        },
+        "toolVersion": {
+          "type": "string"
+        },
+        "runTime": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProvenanceInput"
+          }
+        }
+      },
+      "required": [
+        "target",
+        "sourceSha",
+        "toolVersion",
+        "runTime",
+        "inputs"
+      ],
+      "additionalProperties": false
+    },
+    "ProvenanceInput": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "ErrorsInTheInputs": {
+      "type": "object",
+      "properties": {
+        "claimCodeErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ClaimCodeError"
+          }
+        },
+        "configurationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ConfigurationError"
+          }
+        }
+      },
+      "required": [
+        "claimCodeErrors",
+        "configurationErrors"
+      ],
+      "additionalProperties": false
+    },
+    "ClaimCodeError": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "foreign-claim-code"
+            },
+            "claimCode": {
+              "$ref": "#/definitions/ClaimCode"
+            },
+            "file": {
+              "type": "string"
+            },
+            "filesWithItsFeatureCode": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "claimCode",
+            "file",
+            "filesWithItsFeatureCode"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "no-feature-code"
+            },
+            "file": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "file"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "duplicate-feature-code"
+            },
+            "featureCode": {
+              "type": "string"
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "featureCode",
+            "files"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "several-claim-codes"
+            },
+            "file": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "claimCodes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ClaimCode"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "file",
+            "title",
+            "claimCodes"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "claim-code-beside-clm-column"
+            },
+            "file": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "claimCode": {
+              "$ref": "#/definitions/ClaimCode"
+            }
+          },
+          "required": [
+            "kind",
+            "file",
+            "title",
+            "claimCode"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ConfigurationError": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "configuration-wrong-kind",
+            "configuration-unknown-key",
+            "runner-key-not-a-layer",
+            "not-checks-entry-matches-no-step",
+            "not-checks-entry-not-a-step-name"
+          ]
+        },
+        "entry": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "entry"
+      ],
+      "additionalProperties": false
+    },
+    "RunIntegrity": {
+      "type": "object",
+      "properties": {
+        "neverRan": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EvidenceObservation"
+          }
+        }
+      },
+      "required": [
+        "neverRan"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
