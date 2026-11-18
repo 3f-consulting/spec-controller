@@ -1,5 +1,5 @@
 import { parse } from "yaml";
-import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
+import type { CiStep, ContinueOnError } from "../domain/workflowSteps.js";
 import { coreText } from "../messages/catalogue.js";
 import workflowsVariants from "./workflows.variants.json" with { type: "json" };
 
@@ -29,7 +29,11 @@ const HELD_IN: Readonly<Record<string, (step: Mapping) => readonly unknown[]>> =
 const writesStepRecord = (step: Mapping): boolean =>
   workflowsVariants["CLM-OBS-013"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
 
-function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknown, step: Mapping): WorkflowStepAsWritten {
+// continue-on-error as the domain reads it: true or false as written, and anything else an expression the run decides.
+const continueOnErrorOf = (value: unknown): ContinueOnError | undefined =>
+  value === undefined || typeof value === "boolean" ? value : "decided-by-the-run";
+
+function ciStepOf(workflow: string, job: string, jobContinueOnError: ContinueOnError | undefined, step: Mapping): CiStep {
   const uses = text(step["uses"]);
   return {
     workflow,
@@ -39,13 +43,13 @@ function stepAsWritten(workflow: string, job: string, jobContinueOnError: unknow
     uses,
     run: text(step["run"]),
     id: text(step["id"]),
-    continueOnError: step["continue-on-error"],
+    continueOnError: continueOnErrorOf(step["continue-on-error"]),
     plumbing: uses !== undefined && isPlumbing(uses),
     writesStepRecord: writesStepRecord(step),
   };
 }
 
-export function workflowStepsFrom(workflow: string, source: string): WorkflowStepAsWritten[] {
+export function workflowStepsFrom(workflow: string, source: string): CiStep[] {
   const document: unknown = parse(source);
   const jobs = isMapping(document) && isMapping(document["jobs"]) ? document["jobs"] : {};
   // GitHub runs no workflow whose job is not a mapping, or whose step names neither an action nor a command.
@@ -55,7 +59,7 @@ export function workflowStepsFrom(workflow: string, source: string): WorkflowSte
       if (text(step["uses"]) === undefined && text(step["run"]) === undefined) {
         throw new TypeError(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
       }
-      return stepAsWritten(workflow, job, definition["continue-on-error"], step);
+      return ciStepOf(workflow, job, continueOnErrorOf(definition["continue-on-error"]), step);
     });
   });
 }

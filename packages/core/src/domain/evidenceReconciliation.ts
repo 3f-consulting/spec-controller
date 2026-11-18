@@ -3,7 +3,7 @@ import { isExecutable, type ClaimReconciliation, type Outcome, type QualityCheck
 import type { ConfigurationError } from "./configuration.js";
 import { QUALITY_CHECK_KINDS, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import type { EvidenceObservation, StepDisposition } from "./postEvidenceObservation.js";
-import type { WorkflowStepAsWritten } from "./workflowSteps.js";
+import type { CiStep } from "./workflowSteps.js";
 import { claimCodeFrom } from "./claimCodes.js";
 import type { Provenance } from "./provenance.js";
 
@@ -99,11 +99,11 @@ const countedIn = (counts: StepCounts, disposition: StepDisposition): StepCounts
   [COUNTED[disposition]]: counts[COUNTED[disposition]] + 1,
 });
 
-type DisposedStep = { readonly step: WorkflowStepAsWritten; readonly disposition: StepDisposition };
+type DisposedStep = { readonly step: CiStep; readonly disposition: StepDisposition };
 
 const countsOf = (steps: readonly DisposedStep[]): StepCounts => steps.reduce((counts, { disposition }) => countedIn(counts, disposition), NONE);
 
-const sameJob = (one: WorkflowStepAsWritten, other: WorkflowStepAsWritten): boolean => one.workflow === other.workflow && one.job === other.job;
+const sameJob = (one: CiStep, other: CiStep): boolean => one.workflow === other.workflow && one.job === other.job;
 
 // A row for each workflow and job, in the order read, and a total over them. Every step read has one disposition.
 export function stepAccountOf(steps: readonly DisposedStep[]): StepAccount {

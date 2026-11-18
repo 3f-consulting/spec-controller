@@ -20,7 +20,7 @@ import {
   type ResultsBySuiteAsWritten,
   type ScenarioResultAsWritten,
   type RecordedStep,
-  type WorkflowStepAsWritten,
+  type CiStep,
 } from "@3f-consulting/spec-controller-core";
 import { readdirSync, readFileSync, statSync, type Stats } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
@@ -39,7 +39,7 @@ interface ReportRead<Results> {
 // Every input the run read, each as its reader reports it; an input not read is absent.
 export interface InputsRead {
   readonly features: readonly FeatureAsWritten[];
-  readonly workflowSteps?: readonly WorkflowStepAsWritten[];
+  readonly workflowSteps?: readonly CiStep[];
   readonly vitest?: readonly ReportRead<readonly ResultsByFileAsWritten[]>[];
   readonly jest?: readonly ReportRead<readonly ResultsByFileAsWritten[]>[];
   readonly pytest?: readonly ReportRead<readonly ResultsBySuiteAsWritten[]>[];

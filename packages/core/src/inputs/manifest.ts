@@ -1,5 +1,5 @@
 import { targetConfigurationOf, type ConfigurationError, type SettingSpellings, type TargetConfiguration } from "../domain/configuration.js";
-import type { WorkflowStepAsWritten } from "../domain/workflowSteps.js";
+import type { CiStep } from "../domain/workflowSteps.js";
 import { isRecord, whereShapeBreaks } from "./shape.js";
 
 // A step as notChecks writes it: its workflow, which ends .yml or .yaml and may hold a colon, its job, and its step.
@@ -24,7 +24,7 @@ export const whereManifestBreaks = (manifest: unknown): string | undefined =>
 
 export function targetConfigurationFrom(
   manifest: unknown,
-  steps: readonly WorkflowStepAsWritten[],
+  steps: readonly CiStep[],
   reportsRead: readonly string[],
 ): { readonly configuration: TargetConfiguration; readonly errors: readonly ConfigurationError[] } {
   return targetConfigurationOf(isRecord(manifest) ? manifest.specController : undefined, steps, reportsRead, settingSpellings);

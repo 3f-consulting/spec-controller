@@ -68,11 +68,13 @@ function invokesThrough(commandLine: string, program: readonly string[], scripts
   });
 }
 
+const RECONCILER = wordsIn("spec-controller balance");
+
 // The reconciler is found in any command of the line, through launchers and wrappers, never through a script.
-const invokesAnywhere = (commandLine: string, program: string): boolean =>
-  pipelinesOf(parse(commandLine).commands).some((stages) => stages.some((stage) => isCommand(stage) && runs(wordsOf(stage), wordsIn(program), {}, new Set())));
+const invokesTheReconciler = (commandLine: string): boolean =>
+  pipelinesOf(parse(commandLine).commands).some((stages) => stages.some((stage) => isCommand(stage) && runs(wordsOf(stage), RECONCILER, {}, new Set())));
 
 // A runner is found only as the last command of a pipeline, through launchers, wrappers and the target's scripts.
 const invokesAsCommand = (commandLine: string, program: string, scripts: Scripts): boolean => invokesThrough(commandLine, wordsIn(program), scripts, new Set());
 
-export const shellAnswers: ShellAnswers = { invokesAnywhere, invokesAsCommand };
+export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand };

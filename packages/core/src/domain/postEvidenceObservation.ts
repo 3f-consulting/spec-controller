@@ -2,7 +2,7 @@ import { CLM_COLUMN, claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from 
 import { reportsOf, runnerNameOf, type TargetConfiguration } from "./configuration.js";
 import { QUALITY_CHECK_KINDS, type FeatureAsWritten, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
-import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
+import { stepIdentityOf, type CiStep, type ContinueOnError } from "./workflowSteps.js";
 
 // not-recorded is a step a workflow has that the step record does not name: balance has no word on how it went.
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran" | "not-recorded";
@@ -96,7 +96,7 @@ export interface RecordedStep {
 
 // The shell reader's two answers, handed to the domain so it decides which question serves which step.
 export interface ShellAnswers {
-  readonly invokesAnywhere: (commandLine: string, program: string) => boolean;
+  readonly invokesTheReconciler: (commandLine: string) => boolean;
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
 }
 
@@ -261,9 +261,7 @@ export function observationsOfScenarios(
 // What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a fitness function.
 export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "fitnessFunction";
 
-const RECONCILER = "spec-controller balance";
-
-const isNamedIn = (step: WorkflowStepAsWritten, { nonChecks }: TargetConfiguration): boolean =>
+const isNamedIn = (step: CiStep, { nonChecks }: TargetConfiguration): boolean =>
   nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === stepIdentityOf(step));
 
 // The reconciler is recognised in any command of the step, a runner only as the command the step runs, through its scripts.
@@ -277,13 +275,13 @@ export type Scripts = Readonly<Record<string, string>>;
 
 // A runner is a fitness function of its own when its id is a claim code the step record holds.
 export function stepDispositionOf(
-  step: WorkflowStepAsWritten,
+  step: CiStep,
   configuration: TargetConfiguration,
   scripts: Scripts,
   shell: ShellAnswers,
   record: readonly RecordedStep[] = [],
 ): StepDisposition {
-  if (step.writesStepRecord || (step.run !== undefined && shell.invokesAnywhere(step.run, RECONCILER))) return "reconciler";
+  if (step.writesStepRecord || (step.run !== undefined && shell.invokesTheReconciler(step.run))) return "reconciler";
   if (isNamedIn(step, configuration)) return "nonCheck";
   if (step.plumbing) return "plumbing";
   if (step.run !== undefined && runsARunner(step.run, configuration, scripts, shell)) {
@@ -293,13 +291,13 @@ export function stepDispositionOf(
 }
 
 // continue-on-error allows failure when it is set to anything but false: an expression is decided by the run, so it may allow it.
-const allows = (continueOnError: unknown): boolean => continueOnError !== undefined && continueOnError !== false;
+const allows = (continueOnError: ContinueOnError | undefined): boolean => continueOnError !== undefined && continueOnError !== false;
 
-const allowsFailure = ({ continueOnError, jobContinueOnError }: WorkflowStepAsWritten): boolean => allows(continueOnError) || allows(jobContinueOnError);
+const allowsFailure = ({ continueOnError, jobContinueOnError }: CiStep): boolean => allows(continueOnError) || allows(jobContinueOnError);
 
-const placeOf = (step: WorkflowStepAsWritten): string => `${step.workflow}:${step.job}:${stepIdentityOf(step)}`;
+const placeOf = (step: CiStep): string => `${step.workflow}:${step.job}:${stepIdentityOf(step)}`;
 
-function observationOf(step: WorkflowStepAsWritten, steps: readonly WorkflowStepAsWritten[], entry: RecordedStep | undefined): EvidenceObservation {
+function observationOf(step: CiStep, steps: readonly CiStep[], entry: RecordedStep | undefined): EvidenceObservation {
   const claimCode = claimCodeFrom(step.id);
   const result = entry === undefined ? "not-recorded" : entry.result;
   const jobsRecorded = new Set(steps.filter(({ id }) => entry !== undefined && id === entry.key).map(({ workflow, job }) => `${workflow}:${job}`));
@@ -319,13 +317,13 @@ const unheldObservationOf = ({ key, result }: RecordedStep): EvidenceObservation
 };
 
 export function fitnessObservationsOf(
-  steps: readonly WorkflowStepAsWritten[],
+  steps: readonly CiStep[],
   record: readonly RecordedStep[],
   configuration: TargetConfiguration,
   scripts: Scripts,
   shell: ShellAnswers,
 ): EvidenceObservation[] {
-  const entryFor = ({ id }: WorkflowStepAsWritten) => record.find(({ key }) => key === id);
+  const entryFor = ({ id }: CiStep) => record.find(({ key }) => key === id);
   const posting = steps.filter((step) => stepDispositionOf(step, configuration, scripts, shell, record) === "fitnessFunction");
   const postedOnce = posting.filter((step, at) => entryFor(step) === undefined || posting.findIndex(({ id }) => id === step.id) === at);
   return [

@@ -1,5 +1,5 @@
 import type { QualityCheckKind } from "./postEvidenceObligation.js";
-import { stepIdentityOf, type WorkflowStepAsWritten } from "./workflowSteps.js";
+import { stepIdentityOf, type CiStep } from "./workflowSteps.js";
 
 type Layer = Exclude<QualityCheckKind, "fitness">;
 
@@ -104,7 +104,7 @@ function listRead<Value>(list: unknown, name: string, readEntry: (entry: string)
 }
 
 // A non-check names a step; one in a workflow that was read must be a step in it.
-function nonCheckOf(entry: string, steps: readonly WorkflowStepAsWritten[], { stepAddressOf }: SettingSpellings): StepAddress | ConfigurationError {
+function nonCheckOf(entry: string, steps: readonly CiStep[], { stepAddressOf }: SettingSpellings): StepAddress | ConfigurationError {
   const address = stepAddressOf(entry);
   if (address === undefined) return { kind: "not-checks-entry-not-a-step-name", entry };
   const inItsWorkflow = steps.filter(({ workflow }) => workflow === address.workflow);
@@ -115,7 +115,7 @@ function nonCheckOf(entry: string, steps: readonly WorkflowStepAsWritten[], { st
 // Each setting is read under the key it is written under, and named by it.
 export function targetConfigurationOf(
   block: unknown,
-  steps: readonly WorkflowStepAsWritten[],
+  steps: readonly CiStep[],
   reportsRead: readonly string[],
   spellings: SettingSpellings,
 ): { readonly configuration: TargetConfiguration; readonly errors: readonly ConfigurationError[] } {

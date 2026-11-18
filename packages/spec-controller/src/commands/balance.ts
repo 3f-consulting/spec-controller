@@ -23,7 +23,7 @@ import {
   type StepAccount,
   type RecordedStep,
   type TargetConfiguration,
-  type WorkflowStepAsWritten,
+  type CiStep,
 } from "@3f-consulting/spec-controller-core";
 import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
@@ -42,7 +42,7 @@ const NONE: readonly never[] = [];
 
 // Each workflow step the run read, counted by what it is; a run that read none has an empty step account.
 function stepAccountFor(
-  steps: readonly WorkflowStepAsWritten[],
+  steps: readonly CiStep[],
   record: readonly RecordedStep[],
   configuration: TargetConfiguration,
   scripts: Readonly<Record<string, string>>,
@@ -79,7 +79,7 @@ const reportsReadIn = (read: InputsRead): string[] => Object.values(reportsOf(re
 // The credit journal: each runner's results as Evidence Observations, beside the fitness functions' from the CI steps.
 function creditJournalOf(
   read: InputsRead,
-  steps: readonly WorkflowStepAsWritten[],
+  steps: readonly CiStep[],
   configuration: TargetConfiguration,
   scripts: Readonly<Record<string, string>>,
   targetFolder: string,
