@@ -46,23 +46,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when its help is shown
       then each flag will be on a line of its own, followed by its description
 
-  Rule: a usage error shows the help for what was asked for
-
-    @unit
-    Scenario Outline: a usage error will be followed by the help for what was asked for
-      given a command line had <given>
-      when it is read
-      then the run will stop, give no verdict and exit 2
-      and the complaint will be followed by <help>
-
-      Examples:
-        | clm         | given                                                                 | help            |
-        | CLM-CLI-187 | a flag balance does not take                                          | balance's help  |
-        | CLM-CLI-188 | a flag before the command                                             | the commands    |
-        | CLM-CLI-114 | a command the tool does not have, and a request for help after it     | the commands    |
-        | CLM-CLI-112 | a request for balance's help beside an argument that fails validation | balance's help  |
-        | CLM-CLI-113 | allocate's help beside a flag allocate does not take                  | allocate's help |
-
   Rule: a command accepts only the arguments it takes
 
     @unit
@@ -99,6 +82,23 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-134 | no feature code given to allocate                      | that it needs a feature code            |
         | CLM-CLI-135 | two feature codes given to allocate                    | the argument past what it takes         |
         | CLM-CLI-208 | something given to allocate that is not a feature code | the argument, as not a feature code     |
+
+  Rule: a usage error shows the help for what was asked for
+
+    @unit
+    Scenario Outline: a usage error will be followed by the help for what was asked for
+      given a command line had <given>
+      when it is read
+      then the run will stop, give no verdict and exit 2
+      and the complaint will be followed by <help>
+
+      Examples:
+        | clm         | given                                                                 | help            |
+        | CLM-CLI-187 | a flag balance does not take                                          | balance's help  |
+        | CLM-CLI-188 | a flag before the command                                             | the commands    |
+        | CLM-CLI-114 | a command the tool does not have, and a request for help after it     | the commands    |
+        | CLM-CLI-112 | a request for balance's help beside an argument that fails validation | balance's help  |
+        | CLM-CLI-113 | allocate's help beside a flag allocate does not take                  | allocate's help |
 
   Rule: an input left out takes its default
 
