@@ -1,25 +1,120 @@
 {
   "CLM-CLI-157": {
-    "class": "an RSpec evidence report broken at one entry",
+    "class": "an RSpec evidence report with one field its reader reads missing, null or of the wrong kind, or a status RSpec never writes",
+    "report": {
+      "messages": [
+        "Run options: exclude {:slow=>true}"
+      ],
+      "examples": [
+        {
+          "description": "one",
+          "full_description": "checkout one",
+          "status": "failed",
+          "file_path": "./spec/one_spec.rb",
+          "pending_message": null,
+          "exception": {
+            "message": "expected 1"
+          }
+        }
+      ],
+      "summary": {
+        "errors_outside_of_examples_count": 0
+      }
+    },
     "variants": [
       {
+        "given": "a report that is not a record",
+        "at": "$",
+        "set": []
+      },
+      {
+        "given": "messages that are not a list",
+        "at": "$.messages",
+        "set": 5
+      },
+      {
+        "given": "a message that is not text",
+        "at": "$.messages[0]",
+        "set": 3
+      },
+      {
+        "given": "a report with no examples",
+        "at": "$.examples"
+      },
+      {
+        "given": "examples that are not a list",
+        "at": "$.examples",
+        "set": {}
+      },
+      {
         "given": "an example that is null",
-        "report": {
-          "examples": [{ "description": "one", "full_description": "one", "status": "passed", "file_path": "./spec/one_spec.rb", "pending_message": null }, null],
-          "summary": {}
-        },
-        "breaks": "$.examples[1]"
+        "at": "$.examples[0]",
+        "set": null
+      },
+      {
+        "given": "an example with no description",
+        "at": "$.examples[0].description"
+      },
+      {
+        "given": "a description that is not text",
+        "at": "$.examples[0].description",
+        "set": 3
+      },
+      {
+        "given": "an example with no full description",
+        "at": "$.examples[0].full_description"
+      },
+      {
+        "given": "a full description that is not text",
+        "at": "$.examples[0].full_description",
+        "set": 3
       },
       {
         "given": "an example with no status",
-        "report": {
-          "examples": [
-            { "description": "one", "full_description": "one", "status": "passed", "file_path": "./spec/one_spec.rb", "pending_message": null },
-            { "description": "two", "full_description": "two", "file_path": "./spec/one_spec.rb", "pending_message": null }
-          ],
-          "summary": {}
-        },
-        "breaks": "$.examples[1].status"
+        "at": "$.examples[0].status"
+      },
+      {
+        "given": "a status that is not text",
+        "at": "$.examples[0].status",
+        "set": 3
+      },
+      {
+        "given": "a status RSpec never writes",
+        "at": "$.examples[0].status",
+        "set": "errored"
+      },
+      {
+        "given": "an example with no file path",
+        "at": "$.examples[0].file_path"
+      },
+      {
+        "given": "a file path that is not text",
+        "at": "$.examples[0].file_path",
+        "set": 3
+      },
+      {
+        "given": "an exception that is not a record",
+        "at": "$.examples[0].exception",
+        "set": "expected 1"
+      },
+      {
+        "given": "an exception message that is not text",
+        "at": "$.examples[0].exception.message",
+        "set": 3
+      },
+      {
+        "given": "a report with no summary",
+        "at": "$.summary"
+      },
+      {
+        "given": "a summary that is not a record",
+        "at": "$.summary",
+        "set": []
+      },
+      {
+        "given": "a count of errors outside examples that is not a whole number",
+        "at": "$.summary.errors_outside_of_examples_count",
+        "set": "0"
       }
     ]
   }

@@ -9,14 +9,22 @@ const reportWithStatus = (status: string) => ({
 });
 
 describe("an input that is not valid will stop the run", () => {
-  it("[CLM-CLI-151] each Vitest evidence report broken at one entry is not in Vitest's shape, and breaks where it is broken", () => {
-    const { found, listed } = breaksFound(vitestVariants["CLM-CLI-151"].variants, whereResultsByFileBreak);
+  it("[CLM-CLI-151] the Vitest evidence report each of those is edited from is in Vitest's shape", () => {
+    expect(whereResultsByFileBreak(vitestVariants["CLM-CLI-151"].report)).toBeUndefined();
+  });
+
+  it("[CLM-CLI-151] each Vitest evidence report with one field its reader reads missing, null or of the wrong kind, or a status Vitest never writes, is not in Vitest's shape, and breaks at that field", () => {
+    const { found, listed } = breaksFound(vitestVariants["CLM-CLI-151"], whereResultsByFileBreak);
 
     expect(found).toEqual(listed);
   });
 
-  it("[CLM-CLI-153] each Jest evidence report broken at one entry is not in Jest's shape, and breaks where it is broken", () => {
-    const { found, listed } = breaksFound(vitestVariants["CLM-CLI-153"].variants, whereResultsByFileBreak);
+  it("[CLM-CLI-153] the Jest evidence report each of those is edited from is in Jest's shape", () => {
+    expect(whereResultsByFileBreak(vitestVariants["CLM-CLI-153"].report)).toBeUndefined();
+  });
+
+  it("[CLM-CLI-153] each Jest evidence report with one field its reader reads missing, null or of the wrong kind, or a status Jest never writes, is not in Jest's shape, and breaks at that field", () => {
+    const { found, listed } = breaksFound(vitestVariants["CLM-CLI-153"], whereResultsByFileBreak);
 
     expect(found).toEqual(listed);
   });

@@ -1,45 +1,160 @@
 {
   "CLM-CLI-152": {
-    "class": "a Cucumber evidence report broken at one entry",
-    "variants": [
+    "class": "a Cucumber evidence report with one field its reader reads missing, null or of the wrong kind, or a status Cucumber never writes",
+    "report": [
       {
-        "given": "a step with no result",
-        "report": [
+        "uri": "features/one.feature",
+        "elements": [
           {
-            "uri": "features/one.feature",
-            "elements": [
+            "type": "scenario",
+            "name": "one",
+            "line": 3,
+            "tags": [
               {
-                "type": "scenario",
-                "name": "one",
-                "line": 3,
-                "tags": [{ "name": "@CLM-ONE-001" }],
-                "steps": [
-                  { "keyword": "Given ", "name": "a thing", "result": { "status": "passed" } },
-                  { "keyword": "Then ", "name": "it holds" }
-                ]
+                "name": "@CLM-ONE-001"
+              }
+            ],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "name": "a thing",
+                "result": {
+                  "status": "failed",
+                  "error_message": "expected 1"
+                }
               }
             ]
           }
-        ],
-        "breaks": "$[0].elements[0].steps[1].result"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "given": "a report that is not a list",
+        "at": "$",
+        "set": {}
+      },
+      {
+        "given": "a feature that is null",
+        "at": "$[0]",
+        "set": null
+      },
+      {
+        "given": "a feature with no file path",
+        "at": "$[0].uri"
+      },
+      {
+        "given": "a file path that is not text",
+        "at": "$[0].uri",
+        "set": 3
+      },
+      {
+        "given": "elements that are not a list",
+        "at": "$[0].elements",
+        "set": {}
+      },
+      {
+        "given": "an element that is null",
+        "at": "$[0].elements[0]",
+        "set": null
+      },
+      {
+        "given": "an element with no type",
+        "at": "$[0].elements[0].type"
+      },
+      {
+        "given": "a type that is not text",
+        "at": "$[0].elements[0].type",
+        "set": 3
+      },
+      {
+        "given": "an element with no name",
+        "at": "$[0].elements[0].name"
+      },
+      {
+        "given": "a name that is not text",
+        "at": "$[0].elements[0].name",
+        "set": 3
+      },
+      {
+        "given": "an element with no line",
+        "at": "$[0].elements[0].line"
+      },
+      {
+        "given": "a line that is not a whole number",
+        "at": "$[0].elements[0].line",
+        "set": "3"
+      },
+      {
+        "given": "tags that are not a list",
+        "at": "$[0].elements[0].tags",
+        "set": null
+      },
+      {
+        "given": "a tag that is null",
+        "at": "$[0].elements[0].tags[0]",
+        "set": null
       },
       {
         "given": "a tag with no name",
-        "report": [
-          {
-            "uri": "features/one.feature",
-            "elements": [
-              {
-                "type": "scenario",
-                "name": "one",
-                "line": 3,
-                "tags": [{ "name": "@CLM-ONE-001" }, { "line": 2 }],
-                "steps": [{ "keyword": "Given ", "name": "a thing", "result": { "status": "passed" } }]
-              }
-            ]
-          }
-        ],
-        "breaks": "$[0].elements[0].tags[1].name"
+        "at": "$[0].elements[0].tags[0].name"
+      },
+      {
+        "given": "a tag name that is not text",
+        "at": "$[0].elements[0].tags[0].name",
+        "set": 3
+      },
+      {
+        "given": "steps that are not a list",
+        "at": "$[0].elements[0].steps",
+        "set": {}
+      },
+      {
+        "given": "a step that is null",
+        "at": "$[0].elements[0].steps[0]",
+        "set": null
+      },
+      {
+        "given": "a step with no keyword",
+        "at": "$[0].elements[0].steps[0].keyword"
+      },
+      {
+        "given": "a keyword that is not text",
+        "at": "$[0].elements[0].steps[0].keyword",
+        "set": 3
+      },
+      {
+        "given": "a step name that is not text",
+        "at": "$[0].elements[0].steps[0].name",
+        "set": null
+      },
+      {
+        "given": "a step with no result",
+        "at": "$[0].elements[0].steps[0].result"
+      },
+      {
+        "given": "a result that is not a record",
+        "at": "$[0].elements[0].steps[0].result",
+        "set": "failed"
+      },
+      {
+        "given": "a result with no status",
+        "at": "$[0].elements[0].steps[0].result.status"
+      },
+      {
+        "given": "a status that is not text",
+        "at": "$[0].elements[0].steps[0].result.status",
+        "set": 3
+      },
+      {
+        "given": "a status Cucumber never writes",
+        "at": "$[0].elements[0].steps[0].result.status",
+        "set": "errored"
+      },
+      {
+        "given": "an error message that is not text",
+        "at": "$[0].elements[0].steps[0].result.error_message",
+        "set": 3
       }
     ]
   }

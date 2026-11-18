@@ -1,85 +1,247 @@
 {
   "CLM-CLI-151": {
-    "class": "a Vitest evidence report broken at one entry",
+    "class": "a Vitest evidence report with one field its reader reads missing, null or of the wrong kind, or a status Vitest never writes",
+    "report": {
+      "testResults": [
+        {
+          "name": "/repo/one.test.ts",
+          "message": "",
+          "assertionResults": [
+            {
+              "ancestorTitles": [
+                "checkout"
+              ],
+              "title": "one",
+              "status": "failed",
+              "failureMessages": [
+                "expected 1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
     "variants": [
       {
-        "given": "a test result entry that is null",
-        "report": { "testResults": [{ "name": "/repo/one.test.ts", "message": "", "assertionResults": [] }, null] },
-        "breaks": "$.testResults[1]"
+        "given": "a report that is not a record",
+        "at": "$",
+        "set": []
+      },
+      {
+        "given": "a report with no test results",
+        "at": "$.testResults"
+      },
+      {
+        "given": "test results that are not a list",
+        "at": "$.testResults",
+        "set": {}
+      },
+      {
+        "given": "a test result that is null",
+        "at": "$.testResults[0]",
+        "set": null
+      },
+      {
+        "given": "a test result with no file name",
+        "at": "$.testResults[0].name"
+      },
+      {
+        "given": "a test result whose file name is not text",
+        "at": "$.testResults[0].name",
+        "set": 3
+      },
+      {
+        "given": "a test result whose message is not text",
+        "at": "$.testResults[0].message",
+        "set": null
+      },
+      {
+        "given": "a test result with no assertion results",
+        "at": "$.testResults[0].assertionResults"
+      },
+      {
+        "given": "assertion results that are not a list",
+        "at": "$.testResults[0].assertionResults",
+        "set": "none"
+      },
+      {
+        "given": "an assertion result that is null",
+        "at": "$.testResults[0].assertionResults[0]",
+        "set": null
+      },
+      {
+        "given": "an assertion result with no ancestor titles",
+        "at": "$.testResults[0].assertionResults[0].ancestorTitles"
+      },
+      {
+        "given": "ancestor titles that are not a list",
+        "at": "$.testResults[0].assertionResults[0].ancestorTitles",
+        "set": "checkout"
+      },
+      {
+        "given": "an ancestor title that is not text",
+        "at": "$.testResults[0].assertionResults[0].ancestorTitles[0]",
+        "set": 3
+      },
+      {
+        "given": "an assertion result with no title",
+        "at": "$.testResults[0].assertionResults[0].title"
+      },
+      {
+        "given": "a title that is not text",
+        "at": "$.testResults[0].assertionResults[0].title",
+        "set": 3
       },
       {
         "given": "an assertion result with no status",
-        "report": {
-          "testResults": [
-            {
-              "name": "/repo/one.test.ts",
-              "message": "",
-              "assertionResults": [
-                { "ancestorTitles": [], "title": "one", "status": "passed", "failureMessages": [] },
-                { "ancestorTitles": [], "title": "two", "failureMessages": [] }
-              ]
-            }
-          ]
-        },
-        "breaks": "$.testResults[0].assertionResults[1].status"
+        "at": "$.testResults[0].assertionResults[0].status"
       },
       {
-        "given": "an assertion result with a status neither Vitest nor Jest writes",
-        "report": {
-          "testResults": [
-            {
-              "name": "/repo/one.test.ts",
-              "message": "",
-              "assertionResults": [
-                { "ancestorTitles": [], "title": "one", "status": "passed", "failureMessages": [] },
-                { "ancestorTitles": [], "title": "two", "status": "passing", "failureMessages": [] }
-              ]
-            }
-          ]
-        },
-        "breaks": "$.testResults[0].assertionResults[1].status"
+        "given": "a status that is not text",
+        "at": "$.testResults[0].assertionResults[0].status",
+        "set": 3
+      },
+      {
+        "given": "a status neither Vitest nor Jest writes",
+        "at": "$.testResults[0].assertionResults[0].status",
+        "set": "errored"
+      },
+      {
+        "given": "an assertion result with no failure messages",
+        "at": "$.testResults[0].assertionResults[0].failureMessages"
+      },
+      {
+        "given": "failure messages that are not a list",
+        "at": "$.testResults[0].assertionResults[0].failureMessages",
+        "set": "expected 1"
+      },
+      {
+        "given": "a failure message that is not text",
+        "at": "$.testResults[0].assertionResults[0].failureMessages[0]",
+        "set": 3
       }
     ]
   },
   "CLM-CLI-153": {
-    "class": "a Jest evidence report broken at one entry",
+    "class": "a Jest evidence report with one field its reader reads missing, null or of the wrong kind, or a status Jest never writes",
+    "report": {
+      "testResults": [
+        {
+          "name": "/repo/one.test.js",
+          "message": "",
+          "assertionResults": [
+            {
+              "ancestorTitles": [
+                "checkout"
+              ],
+              "title": "one",
+              "status": "failed",
+              "failureMessages": [
+                "expected 1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
     "variants": [
       {
-        "given": "a test result entry that is null",
-        "report": { "testResults": [{ "name": "/repo/one.test.js", "message": "", "assertionResults": [] }, null] },
-        "breaks": "$.testResults[1]"
+        "given": "a report that is not a record",
+        "at": "$",
+        "set": []
+      },
+      {
+        "given": "a report with no test results",
+        "at": "$.testResults"
+      },
+      {
+        "given": "test results that are not a list",
+        "at": "$.testResults",
+        "set": {}
+      },
+      {
+        "given": "a test result that is null",
+        "at": "$.testResults[0]",
+        "set": null
+      },
+      {
+        "given": "a test result with no file name",
+        "at": "$.testResults[0].name"
+      },
+      {
+        "given": "a test result whose file name is not text",
+        "at": "$.testResults[0].name",
+        "set": 3
+      },
+      {
+        "given": "a test result whose message is not text",
+        "at": "$.testResults[0].message",
+        "set": null
+      },
+      {
+        "given": "a test result with no assertion results",
+        "at": "$.testResults[0].assertionResults"
+      },
+      {
+        "given": "assertion results that are not a list",
+        "at": "$.testResults[0].assertionResults",
+        "set": "none"
+      },
+      {
+        "given": "an assertion result that is null",
+        "at": "$.testResults[0].assertionResults[0]",
+        "set": null
+      },
+      {
+        "given": "an assertion result with no ancestor titles",
+        "at": "$.testResults[0].assertionResults[0].ancestorTitles"
+      },
+      {
+        "given": "ancestor titles that are not a list",
+        "at": "$.testResults[0].assertionResults[0].ancestorTitles",
+        "set": "checkout"
+      },
+      {
+        "given": "an ancestor title that is not text",
+        "at": "$.testResults[0].assertionResults[0].ancestorTitles[0]",
+        "set": 3
+      },
+      {
+        "given": "an assertion result with no title",
+        "at": "$.testResults[0].assertionResults[0].title"
+      },
+      {
+        "given": "a title that is not text",
+        "at": "$.testResults[0].assertionResults[0].title",
+        "set": 3
       },
       {
         "given": "an assertion result with no status",
-        "report": {
-          "testResults": [
-            {
-              "name": "/repo/one.test.js",
-              "message": "",
-              "assertionResults": [
-                { "ancestorTitles": [], "title": "one", "status": "passed", "failureMessages": [] },
-                { "ancestorTitles": [], "title": "two", "failureMessages": [] }
-              ]
-            }
-          ]
-        },
-        "breaks": "$.testResults[0].assertionResults[1].status"
+        "at": "$.testResults[0].assertionResults[0].status"
       },
       {
-        "given": "an assertion result with a status neither Vitest nor Jest writes",
-        "report": {
-          "testResults": [
-            {
-              "name": "/repo/one.test.js",
-              "message": "",
-              "assertionResults": [
-                { "ancestorTitles": [], "title": "one", "status": "passed", "failureMessages": [] },
-                { "ancestorTitles": [], "title": "two", "status": "errored", "failureMessages": [] }
-              ]
-            }
-          ]
-        },
-        "breaks": "$.testResults[0].assertionResults[1].status"
+        "given": "a status that is not text",
+        "at": "$.testResults[0].assertionResults[0].status",
+        "set": 3
+      },
+      {
+        "given": "a status neither Vitest nor Jest writes",
+        "at": "$.testResults[0].assertionResults[0].status",
+        "set": "errored"
+      },
+      {
+        "given": "an assertion result with no failure messages",
+        "at": "$.testResults[0].assertionResults[0].failureMessages"
+      },
+      {
+        "given": "failure messages that are not a list",
+        "at": "$.testResults[0].assertionResults[0].failureMessages",
+        "set": "expected 1"
+      },
+      {
+        "given": "a failure message that is not text",
+        "at": "$.testResults[0].assertionResults[0].failureMessages[0]",
+        "set": 3
       }
     ]
   }
