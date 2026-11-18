@@ -2,6 +2,9 @@ import { QUALITY_CHECK_KINDS, type EvidenceObligation, type ExecutableClaim, typ
 import type { ClaimCode } from "./claimCodes.js";
 import type { EvidenceObservation, PhantomClaim, UnnamedClaim } from "./postEvidenceObservation.js";
 
+// The debit journal: the executable claims read from a run's feature files, each with its Evidence Obligations, before posting.
+export type DebitJournal = readonly ExecutableClaim[];
+
 // The credit journal: the Evidence Observations read from a run's reports, before posting carries each to its claim.
 export type CreditJournal = readonly EvidenceObservation[];
 
@@ -163,11 +166,11 @@ export function sharedCodeAmong(claims: readonly ExecutableClaim[]): (claimCode:
   return (claimCode) => shared.has(written(claimCode));
 }
 
-// Each Evidence Observation in the credit journal goes to the one executable claim with the code it cites; to that code's
-// phantom claim when no executable claim has it; and to the unnamed claim when it cites none, several, or a code several claims share.
-export function claimReconciliationsOf(claims: readonly ExecutableClaim[], creditJournal: CreditJournal): ClaimReconciliation[] {
-  const shared = sharedCodeAmong(claims);
-  const carried = new Set(claims.flatMap(({ claimCode }) => (claimCode ? [written(claimCode)] : [])));
+// Each Evidence Observation in the credit journal goes to the one executable claim in the debit journal with the code it cites;
+// to that code's phantom claim when no executable claim has it; and to the unnamed claim when it cites none, several, or a code several claims share.
+export function claimReconciliationsOf(debitJournal: DebitJournal, creditJournal: CreditJournal): ClaimReconciliation[] {
+  const shared = sharedCodeAmong(debitJournal);
+  const carried = new Set(debitJournal.flatMap(({ claimCode }) => (claimCode ? [written(claimCode)] : [])));
   const citing = new Map<string, { readonly claimCode: ClaimCode; readonly observations: EvidenceObservation[] }>();
   const unnamed: EvidenceObservation[] = [];
   for (const observation of creditJournal) {
@@ -178,7 +181,7 @@ export function claimReconciliationsOf(claims: readonly ExecutableClaim[], credi
     else citing.set(written(only), { claimCode: only, observations: [observation] });
   }
   // A shared code is never cited, so a claim with one is filed nothing.
-  const executable = claims.map((claim) => {
+  const executable = debitJournal.map((claim) => {
     const filed = claim.claimCode && citing.get(written(claim.claimCode))?.observations;
     return claimReconciliationOf(claim, filed ?? [], claim.claimCode !== undefined && shared(claim.claimCode));
   });
