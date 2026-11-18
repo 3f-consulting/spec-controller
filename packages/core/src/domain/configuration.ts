@@ -10,9 +10,15 @@ interface StepAddress {
   readonly step: string;
 }
 
+// A runner named with the evidence reports it writes, each by its file name.
+export interface RunnerEntry {
+  readonly runner: string;
+  readonly reports: readonly string[];
+}
+
 // null under runners: the target has no runner for that kind.
 export interface TargetConfiguration {
-  readonly runners: Readonly<Partial<Record<Layer, string | null>>>;
+  readonly runners: Readonly<Partial<Record<Layer, string | null | RunnerEntry>>>;
   readonly nonChecks: readonly StepAddress[];
   readonly deferralTags: readonly string[];
 }

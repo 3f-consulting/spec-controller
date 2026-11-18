@@ -17,6 +17,12 @@ describe("balance takes each configuration setting it can use as the runner, non
     ["CLM-CFG-008", '"unit": "vitest" under runners', { runners: { unit: "vitest" } }, { ...NONE, runners: { unit: "vitest" } }],
     ["CLM-CFG-009", '"performance": null under runners', { runners: { performance: null } }, { ...NONE, runners: { performance: null } }],
     [
+      "CLM-CFG-024",
+      '"e2e": { "runner": "playwright", "reports": ["playwright.xml"] } under runners',
+      { runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } },
+      { ...NONE, runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } },
+    ],
+    [
       "CLM-CFG-011",
       '"nightly:build.yml:ci:Install dependencies" in notChecks',
       { notChecks: ["nightly:build.yml:ci:Install dependencies"] },
@@ -28,6 +34,13 @@ describe("balance takes each configuration setting it can use as the runner, non
     ["CLM-CFG-006", "nothing", undefined, NONE],
   ] as const)("[%s] a specController block with %s is taken as what it sets", (_clm, _setting, block, configuration) => {
     expect(targetConfigurationFrom(block === undefined ? {} : { specController: block }, [])).toEqual({ configuration, errors: [] });
+  });
+
+  it('[CLM-CFG-024] a specController block with "e2e": { "runner": "playwright", "reports": ["playwright.xml"] } under runners takes playwright as the e2e layer\'s runner, so a step running it is a runner', () => {
+    const { configuration } = targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } } }, []);
+    const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: playwright test\n");
+
+    expect(stepDispositionOf(steps[0]!, configuration, {}, shellAnswers)).toBe("runner");
   });
 
   it('[CLM-CFG-010] a specController block with "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies, takes that step as a non-check', () => {

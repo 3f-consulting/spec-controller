@@ -6,7 +6,7 @@ export type { WorkflowStepAsWritten } from "./domain/workflowSteps.js";
 export type { EvidenceReconciliation, RunVerdict, StepAccount } from "./domain/evidenceReconciliation.js";
 export type { JsonReport } from "./reports/json.js";
 export type { RunIdentity, ProvenanceInput } from "./domain/provenance.js";
-export type { TargetConfiguration } from "./domain/configuration.js";
+export type { RunnerEntry, TargetConfiguration } from "./domain/configuration.js";
 export type { FileIdentity, OutputRefusal, OutputRequest } from "./domain/outputPlan.js";
 export { allocationOf, claimCodeErrorsOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from "./domain/claimCodes.js";
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";
