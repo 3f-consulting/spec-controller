@@ -49,11 +49,11 @@ function stepAccountFor(
   return stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shellAnswers, record) })));
 }
 
-// Every input the run could read, each with the first path it read, its links followed, when it read one.
+// Every input the run could read, once for each path it read, its links followed, or once with no path when it read none.
 const provenanceInputsOf = ({ pathsRead }: InputsRead, folder: string): ProvenanceInput[] =>
-  INPUT_KINDS.map((kind) => {
-    const path = pathsRead[kind]?.[0];
-    return { name: kind, path: path && realpathSync(resolve(folder, path)) };
+  INPUT_KINDS.flatMap((kind): ProvenanceInput[] => {
+    const paths = pathsRead[kind] ?? NONE;
+    return paths.length === 0 ? [{ name: kind, path: undefined }] : paths.map((path) => ({ name: kind, path: realpathSync(resolve(folder, path)) }));
   });
 
 // A corpus the command line named is where the target is; with none named, it is where the run started.
