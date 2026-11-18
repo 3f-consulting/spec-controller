@@ -119,6 +119,12 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       when CI runs the fitness function over those documents
       then every file, heading and path they cite will exist
 
+    @fitness @CLM-FIT-084
+    Scenario: every TypeScript example in the repository's README and its packages' READMEs type-checks
+      given the repository had TypeScript examples in its README and its packages' READMEs
+      when CI runs the fitness function over them
+      then there will be no type error
+
   Rule: a feature file states behaviour in the reader's words
 
     @fitness @CLM-FIT-038

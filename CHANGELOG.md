@@ -13,3 +13,4 @@ Each line says what a change means for someone using spec-controller.
 - What balance does is unchanged: two specification files read more plainly, one describing reconciliation in fewer words and one with its Rules in the order the report shows them.
 - @3f-consulting/spec-controller-core exports `CreditJournal`, the Evidence Observations read from a run's reports that `claimReconciliationsOf` posts; nothing balance does changes.
 - The JSON report names the version of its schema in `schemaVersion`, and the version rises whenever the report's structure changes; @3f-consulting/spec-controller-core exports the report's type, `JsonReport`, and `jsonReportFrom`, which builds it from a reconciliation.
+- Every TypeScript example in the READMEs is written whole, with its imports and declarations, and type-checks, so an example copied from a README compiles.

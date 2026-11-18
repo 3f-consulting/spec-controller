@@ -22,6 +22,7 @@ exceptions:
   - specController
   - notChecks
   - checkRegistry
-  # The published API's type, which a package consumer reads off the v1 barrel, and GitHub, a name that belongs to others.
+  # The published API's type, which a package consumer reads off the v1 barrel, and GitHub and TypeScript, names that belong to others.
   - QualityCheckReconciliation
   - GitHub
+  - TypeScript

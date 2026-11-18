@@ -236,6 +236,11 @@ jobs:
         if: always()
         run: pnpm typecheck --incremental --tsBuildInfoFile "$RUNNER_TEMP/tool-cache/tsc/typecheck.tsbuildinfo"
 
+      - name: README examples
+        id: CLM-FIT-084
+        if: always()
+        run: pnpm docs:readme-examples
+
       - name: Published packages
         id: CLM-FIT-018
         if: always()
