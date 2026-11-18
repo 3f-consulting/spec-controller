@@ -28,6 +28,13 @@ describe("an Outline will be one executable claim for each row only when it has 
       "      | clm         | x |\n      | CLM-ONE-001 | a |\n\n      Examples:\n",
       ["CLM-ONE-001"],
     ],
+    [
+      "CLM-OBL-036",
+      "an Examples block with CLM-ONE-001 in its clm column, and an Examples block with two rows and no clm column",
+      "@unit",
+      "      | clm         | x |\n      | CLM-ONE-001 | a |\n\n      Examples:\n      | x |\n      | b |\n      | c |\n",
+      ["CLM-ONE-001", undefined, undefined],
+    ],
   ])("[%s] a Scenario Outline with %s has its executable claims", (_clm, _shape, tags, examples, codes) => {
     expect(claimsIn(outline(tags, examples)).map(({ claimCode }) => written(claimCode))).toEqual(codes);
   });
