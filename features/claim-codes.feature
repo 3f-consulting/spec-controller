@@ -6,9 +6,8 @@ Feature: every claim code is well formed, filed under its file's code, and never
   balance reads every id by this one form. An id in any other form is not a claim code.
 
   A feature file declares its feature code on the line above Feature:, and its scenarios' claim
-  codes are filed under it.
-  Before it reconciles, balance checks where each claim code is written. It finds a claim code
-  error for a claim code that is misplaced or clashes.
+  codes are filed under it. Before it reconciles, balance checks where each claim code is
+  written. It finds a claim code error for a claim code that is misplaced or clashes.
 
   allocate gives the next claim code for a feature code. Its answer is the code alone. When there
   is no repository, or the repository is a shallow clone, allocate notes the history it did not

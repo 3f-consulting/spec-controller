@@ -6,15 +6,16 @@ Feature: the command line reads what you give it, and says where each kind of ou
   Help lists the commands, or one command's flags. It runs nothing and writes nothing. Running
   spec-controller with nothing after it also shows help.
 
-  A command takes only the arguments it accepts. The tool reads every argument as what it is: a
-  flag, a value, a command or a feature code. An argument it cannot read that way fails
-  validation. An input left out takes its default. The tool validates every argument and every
-  input before anything runs, the same way whether the command line names the input or leaves it
-  to its default. An argument or input that is not valid, or an
-  input that cannot be read, stops the run with a usage error. The error names the argument or
-  input and says what is wrong with it. A usage error shows the help for what was asked for, even
-  beside a request for help. A file that fails to read after validation accepted it is an
-  unexpected error.
+  A command takes only the arguments it accepts. The tool reads every argument as a flag, a
+  value, a command or a feature code. An argument it cannot read that way fails validation. An
+  input left out takes its default.
+
+  The tool validates every argument and every input before anything runs, the same way whether
+  the command line names the input or leaves it to its default. An argument or input that is not
+  valid, or an input that cannot be read, stops the run with a usage error. The error names the
+  argument or input and says what is wrong with it. A usage error shows the help for what was
+  asked for, even beside a request for help. A file that fails to read after validation accepted
+  it is an unexpected error.
 
   An answer goes to standard output. Anything about it goes to standard error.
 
