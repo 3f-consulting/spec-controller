@@ -2,6 +2,7 @@ import {
   allocationOf,
   featureAsWrittenFrom,
   featureCodeOfFile,
+  InputDoesNotParse,
   writtenClaimCode,
   type Allocation,
   type AllocationAsked,
@@ -33,7 +34,8 @@ function featureCodesUnder(top: string): Read<string[]> {
     try {
       const featureCode = featureCodeOfFile(featureAsWrittenFrom(file, source));
       if (featureCode !== undefined) featureCodes.push(featureCode);
-    } catch {
+    } catch (error) {
+      if (!(error instanceof InputDoesNotParse)) throw error;
       return { refusal: { key: "feature-file-does-not-parse", values: { file: relative(top, file) } } };
     }
   }

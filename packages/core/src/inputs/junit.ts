@@ -70,9 +70,16 @@ function junitResultOf(suiteName: string, testCase: Element): TestResult[] {
 
 const suitesIn = (element: Element): Element[] => elementsIn(element, "testsuite").flatMap((suite) => [suite, ...suitesIn(suite)]);
 
+// XML the validator accepts can still be refused by the parser, such as XML that declares an external entity.
 export function whyXmlDoesNotParse(xml: string): string | undefined {
   const valid = XMLValidator.validate(xml);
-  return valid === true ? undefined : valid.err.msg;
+  if (valid !== true) return valid.err.msg;
+  try {
+    parser.parse(xml);
+    return undefined;
+  } catch (error) {
+    return (error as Error).message;
+  }
 }
 
 const suitesOf = (document: Element): Element[] => [...suitesIn(document), ...suitesIn((document["testsuites"] as Element | undefined) ?? {})];

@@ -1,21 +1,32 @@
 #!/usr/bin/env node
-import { UNEXPECTED_ERROR } from "../runEnding/codes.js";
-import { complainerTo, loadGuarded } from "../runEnding/crashGuards.js";
-import { endRunOn, endRunUnlessEnded } from "../runEnding/exitCode.js";
+import { complaintOf } from "../runEnding/complaint.js";
+import { endRunOn, endRunUnlessEnded, UNEXPECTED_ERROR } from "../runEnding/exitCode.js";
 import { writeToStandardError } from "../runEnding/standardError.js";
 
-// The guards are in place before the program loads, so an error while it loads, or one nothing catches, ends at 4 a run not yet ended.
-const complain = complainerTo(writeToStandardError);
-const guard = (error: unknown): void => {
-  complain(error);
-  endRunUnlessEnded(UNEXPECTED_ERROR);
-};
-process.on("uncaughtException", guard);
-process.on("unhandledRejection", guard);
+// The crash guards load under a catch of their own, since they cannot report their own failure to load. What that catch
+// uses, the complaint's line, the exit code and standard error, runs nothing as it loads.
+const guards = await import("../runEnding/crashGuards.js")
+  .then(({ complainerTo, loadGuarded }) => ({ complainerTo, loadGuarded }))
+  .catch((error: unknown) => {
+    writeToStandardError(complaintOf(error));
+    endRunOn(UNEXPECTED_ERROR);
+    return undefined;
+  });
 
-const program = await loadGuarded(
-  async () => ({ ...(await import("./main.js")), ...(await import("../output/streams.js")) }),
-  complain,
-  endRunUnlessEnded,
-);
-if (program !== undefined) endRunOn(program.main(process.argv.slice(2), process.cwd(), program.processStreams, { complain }));
+if (guards !== undefined) {
+  // The guards are in place before the program loads, so an error while it loads, or one nothing catches, ends at 4 a run not yet ended.
+  const complain = guards.complainerTo(writeToStandardError);
+  const guard = (error: unknown): void => {
+    complain(error);
+    endRunUnlessEnded(UNEXPECTED_ERROR);
+  };
+  process.on("uncaughtException", guard);
+  process.on("unhandledRejection", guard);
+
+  const program = await guards.loadGuarded(
+    async () => ({ ...(await import("./main.js")), ...(await import("../output/streams.js")) }),
+    complain,
+    endRunUnlessEnded,
+  );
+  if (program !== undefined) endRunOn(program.main(process.argv.slice(2), process.cwd(), program.processStreams, { complain }));
+}

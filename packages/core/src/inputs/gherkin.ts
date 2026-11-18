@@ -1,6 +1,7 @@
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { IdGenerator, type Examples, type FeatureChild, type Scenario } from "@cucumber/messages";
 import type { ExamplesBlock, FeatureFile, FeatureScenario } from "../domain/postEvidenceObligation.js";
+import { parsedBy } from "./inputDoesNotParse.js";
 
 const withoutAtSign = ({ name }: { readonly name: string }): string => name.slice(1);
 
@@ -40,7 +41,7 @@ const WORD_AS_TAG = /@([^\s@]+)/g;
 const wordsWrittenAsTagsIn = (source: string): string[] => [...source.matchAll(WORD_AS_TAG)].map((word) => word[1]!);
 
 export function featureAsWrittenFrom(file: string, source: string): FeatureFile {
-  const features = noneOrOne(new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher()).parse(source).feature);
+  const features = noneOrOne(parsedBy(() => new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher()).parse(source)).feature);
   return {
     file,
     fileTags: features.flatMap(({ tags }) => tags.map(withoutAtSign)),
