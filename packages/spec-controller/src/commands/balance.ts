@@ -81,7 +81,7 @@ export function balance(
   const targetFolder = realpathSync(targetFolderOf({ workingFolder: folder, corpus: corpus && realpathSync(corpus), gitTopLevel: identity.gitTopLevel }));
   // A report a step writes is found from the steps and scripts read, and read from the target's folder, where the step ran.
   const scripts = scriptsFrom(read.manifest);
-  const settingsLocated = reportsLocatedOf(named, read.workflowSteps ?? NONE, scripts, shellAnswers.reportsNamed);
+  const settingsLocated = reportsLocatedOf(named, read.workflowSteps ?? NONE, scripts, shellAnswers.reportsNamed, shellAnswers.defaultReportsOf);
   const located = reportsLocatedBy(settingsLocated);
   const found = inputsReadFor(locatedInputs(located.filter(({ report }) => !longForms.some((longForm) => longForm.report === report))), targetFolder);
   if ("refusals" in found) return refusedWith(found.refusals, streams.error.write);

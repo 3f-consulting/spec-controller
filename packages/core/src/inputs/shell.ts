@@ -2,7 +2,7 @@ import { parse } from "unbash";
 import type { Command, CommandNode, Statement, Word } from "unbash";
 import type { ReportLocation } from "../domain/configuration.js";
 import type { Scripts, ShellAnswers } from "../domain/postEvidenceObservation.js";
-import { reportsIn } from "./runners.js";
+import { defaultLocationsOf, reportsIn } from "./runners.js";
 import shellVariants from "./shell.variants.json" with { type: "json" };
 
 const { "script-runs": scriptRuns, launchers, wrappers } = shellVariants;
@@ -84,4 +84,8 @@ const reportsNamed = (commandLine: string, runner: string, scripts: Scripts, env
     .flatMap((args) => reportsIn(runner, args, environment))
     .filter((report, at, all) => all.findIndex(({ path }) => path === report.path) === at);
 
-export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed };
+// A runner's default report locations, for a command that runs it.
+const defaultReportsOf = (commandLine: string, runner: string, scripts: Scripts): ReportLocation[] =>
+  invokesAsCommand(commandLine, runner, scripts) ? defaultLocationsOf(runner) : [];
+
+export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed, defaultReportsOf };

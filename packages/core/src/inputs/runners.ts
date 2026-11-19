@@ -61,3 +61,7 @@ export const reportsIn = (runner: string, args: readonly string[], environment: 
   REPORT_OPTIONS.filter((report) => report.runner === runner).flatMap(({ format, ...report }) =>
     pathsNamed(args, environment, { format, ...report }).flatMap((path) => (readable(path) ? [{ path, format }] : [])),
   );
+
+// Where a runner writes its evidence reports when its command names none.
+export const defaultLocationsOf = (runner: string): ReportLocation[] =>
+  runnersVariants["default-locations"].variants.filter((location) => location.runner === runner).map(({ path, format }) => ({ path, format }));
