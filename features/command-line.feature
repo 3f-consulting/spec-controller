@@ -201,6 +201,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads its inputs
       then it will post both results
 
+    @unit @CLM-CLI-211
+    Scenario: balance posts the steps of every step record the run names
+      given a workflow had a step with the id CLM-ONE-001 in one job and a step with the id CLM-ONE-002 in another
+      and the run named two step records, one in which CLM-ONE-001 succeeded and one in which CLM-ONE-002 succeeded
+      when balance reads its inputs
+      then it will post both steps, each citing its own code
+
   Rule: a command validates every input before it does its work
 
     The inputs a command validates are the evidence reports, the step record, the feature corpus,

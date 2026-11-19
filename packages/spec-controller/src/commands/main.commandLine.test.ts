@@ -268,6 +268,32 @@ describe("balance posts the results of every evidence report the run names for o
   });
 });
 
+const TWO_FITNESS_CLAIMS = "@ONE\nFeature: one\n\n  @fitness @CLM-ONE-001\n  Scenario: one\n\n  @fitness @CLM-ONE-002\n  Scenario: two\n";
+const TWO_JOBS = "jobs:\n  first:\n    steps:\n      - id: CLM-ONE-001\n        run: pnpm one\n  second:\n    steps:\n      - id: CLM-ONE-002\n        run: pnpm two\n";
+
+describe("balance posts the steps of every step record the run names", () => {
+  it("[CLM-CLI-211] --ci-steps given twice, naming one job's record in which CLM-ONE-001 succeeded and another job's in which CLM-ONE-002 succeeded: both steps are posted, each citing its own code", () => {
+    const folder = folderWith({
+      "features/one.feature": TWO_FITNESS_CLAIMS,
+      "workflows/ci.yml": TWO_JOBS,
+      "first/steps.json": '{"CLM-ONE-001":{"outcome":"success","conclusion":"success"}}',
+      "second/steps.json": '{"CLM-ONE-002":{"outcome":"success","conclusion":"success"}}',
+    });
+
+    const { output, error } = ran(["balance", "--ci", "workflows", "--ci-steps", "first/steps.json", "--ci-steps", "second/steps.json", "--format", "json"], folder);
+
+    const { claimReconciliations } = (output === "" ? { claimReconciliations: [] } : JSON.parse(output)) as ResultsByClaimReported;
+    const posted = claimReconciliations.map(({ claim, qualityCheckReconciliations }) => [claim.claimCode?.number, qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.result] : []))]);
+    expect({ error, posted }).toEqual({
+      error: "",
+      posted: [
+        ["001", ["passed"]],
+        ["002", ["passed"]],
+      ],
+    });
+  });
+});
+
 describe("the provenance shows each input the run read on its own line", () => {
   it.each([
     ["CLM-RPT-172", "--vitest", "a/vitest.json", "b/vitest.json", BY_FILE_PASSING],
