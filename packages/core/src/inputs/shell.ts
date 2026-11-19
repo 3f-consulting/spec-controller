@@ -31,13 +31,13 @@ const wordsOf = ({ name, args }: Command): string[] => [name, ...args].filter((w
 
 const opensWith = (words: readonly string[], opening: readonly string[]): boolean => opening.every((word, at) => words[at] === word);
 
-// The script a command runs in one of its package manager's variants, when the target has one by that name. Every
-// variant's last word names its script: its <script> gap, or, as npm test's, the script itself.
-function scriptRun(words: readonly string[], scripts: Scripts): string | undefined {
+// The script a command runs in one of its package manager's variants, when the target has one by that name, with the words
+// after it, which its last command takes. Every variant's last word names its script: its <script> gap, or the script itself, as in npm test.
+function scriptRun(words: readonly string[], scripts: Scripts): { readonly script: string; readonly after: readonly string[] } | undefined {
   for (const variant of SCRIPT_VARIANTS) {
     const named = variant.every((word, at) => word === "<script>" || word === "<name>" || word === words[at]);
     const script = words[variant.length - 1];
-    if (named && Object.hasOwn(scripts, String(script))) return script;
+    if (named && Object.hasOwn(scripts, String(script))) return { script: script!, after: words.slice(variant.length) };
   }
   return undefined;
 }
@@ -55,19 +55,20 @@ function handedOn(words: readonly string[]): readonly string[] | undefined {
 // The arguments of each time the words run the program: after the program's own words, through launchers, wrappers and the target's scripts.
 function invocationsIn(words: readonly string[], program: readonly string[], scripts: Scripts, followed: Set<string>): (readonly string[])[] {
   if (opensWith(words, program)) return [words.slice(program.length)];
-  const script = scriptRun(words, scripts);
-  if (script !== undefined && !followed.has(script)) {
-    followed.add(script);
-    return invocationsThrough(scripts[script]!, program, scripts, followed);
+  const run = scriptRun(words, scripts);
+  if (run !== undefined && !followed.has(run.script)) {
+    followed.add(run.script);
+    return invocationsThrough(scripts[run.script]!, program, scripts, followed, run.after);
   }
   const rest = handedOn(words);
   return rest === undefined ? [] : invocationsIn(rest, program, scripts, followed);
 }
 
-function invocationsThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: Set<string>): (readonly string[])[] {
-  return pipelinesOf(parse(commandLine).commands).flatMap((stages) => {
+function invocationsThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: Set<string>, after: readonly string[] = []): (readonly string[])[] {
+  const pipelines = pipelinesOf(parse(commandLine).commands);
+  return pipelines.flatMap((stages, at) => {
     const last = stages.at(-1);
-    return isCommand(last) ? invocationsIn(wordsOf(last), program, scripts, followed) : [];
+    return isCommand(last) ? invocationsIn([...wordsOf(last), ...(at === pipelines.length - 1 ? after : [])], program, scripts, followed) : [];
   });
 }
 
@@ -80,7 +81,7 @@ const invokesTheReconciler = (commandLine: string): boolean =>
 // A runner is found only as the last command of a pipeline, through launchers, wrappers and the target's scripts.
 const invokesAsCommand = (commandLine: string, program: string, scripts: Scripts): boolean => invocationsThrough(commandLine, wordsIn(program), scripts, new Set()).length > 0;
 
-const reportsNamed = (commandLine: string, runner: string, scripts: Scripts): ReportLocation[] =>
-  invocationsThrough(commandLine, wordsIn(runner), scripts, new Set()).flatMap((args) => reportsIn(runner, args));
+const reportsNamed = (commandLine: string, runner: string, scripts: Scripts, environment: Readonly<Record<string, string>>): ReportLocation[] =>
+  invocationsThrough(commandLine, wordsIn(runner), scripts, new Set()).flatMap((args) => reportsIn(runner, args, environment));
 
 export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed };

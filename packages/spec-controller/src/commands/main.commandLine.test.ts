@@ -288,7 +288,7 @@ describe("an evidence report the run names for a runner, with no file at its pat
 const ONE_UNIT_CLAIM = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n";
 const STEP_WRITING_VITEST = "vitest run --reporter=json --outputFile=out/vitest.json";
 
-// The report at its path read in its runner's format, its one result posted as unit evidence for CLM-ONE-001.
+// The report at its path read in its runner's format, its one result posted as unit evidence.
 function postedFromTheStep(runner: string, workflow: string, path: string, report: string): { readonly error: string; readonly posted: unknown } {
   const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "workflows/ci.yml": workflow, [path]: report });
 
