@@ -111,12 +111,15 @@ export function targetConfigurationOf(
   };
 }
 
+// A path holding a variable or an expression is not one balance can read, since it cannot know its value.
+export const readable = (path: string): boolean => path !== "" && !path.includes("$");
+
 // A path a step's command writes, from the target's folder: joined to the step's working directory, unless it is absolute.
 const fromTarget = (path: string, workingDirectory: string | undefined): string =>
   workingDirectory === undefined || path.startsWith("/") ? path : `${workingDirectory}/${path}`;
 
-// Where each runner's evidence reports are, before the configuration is checked: a long form's report, else every report
-// a step running the runner names, else none, which the check names as not named.
+// Where each runner's evidence reports are, before the configuration is checked: a long form's report, else every readable
+// report a step running the runner names, from the target's folder, else none, which the check names as not named.
 export function reportsLocatedOf(
   settings: ConfigurationSettings,
   steps: readonly CiStep[],
@@ -128,7 +131,7 @@ export function reportsLocatedOf(
     const [layer, { name }] = part.taken;
     const reports = steps.flatMap(({ command, workingDirectory, environment = {} }) =>
       command === undefined ? [] : reportsNamed(command, name, scripts, environment).map(({ path, format }) => ({ path: fromTarget(path, workingDirectory), format })),
-    );
+    ).filter(({ path }) => readable(path));
     return reports.length === 0 ? [part] : reports.map((report) => ({ taken: [layer, { name, report }] }));
   });
   return { ...settings, runners };

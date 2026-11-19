@@ -1,4 +1,4 @@
-import type { ReportLocation } from "../domain/configuration.js";
+import { readable, type ReportLocation } from "../domain/configuration.js";
 import runnersVariants from "./runners.variants.json" with { type: "json" };
 
 const PATH = "<path>";
@@ -37,9 +37,6 @@ function reportOptionOf({ runner, options, format, environment, "applies-to": ap
 }
 
 const REPORT_OPTIONS = (runnersVariants["report-options"].variants as readonly Variant[]).map(reportOptionOf);
-
-// A path holding a variable or an expression is not one balance can read, since it cannot know its value.
-const readable = (path: string): boolean => path !== "" && !path.includes("$");
 
 // Each path the option names in the arguments, with where its option is.
 const pathsAfter = (args: readonly string[], option: string, separate: boolean | undefined): { readonly path: string; readonly at: number }[] =>
