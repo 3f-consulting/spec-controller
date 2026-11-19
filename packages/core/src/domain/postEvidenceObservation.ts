@@ -167,15 +167,19 @@ const allows = (failureAllowed: FailureAllowed | undefined): boolean => failureA
 
 const failureAllowedFor = ({ allowsFailure, jobAllowsFailure }: CiStep): boolean => allows(allowsFailure) || allows(jobAllowsFailure);
 
+// A success fails closed: it may have hidden a failure when any step carrying its id, in any job or workflow, allows failure.
+const anyAllowsFailure = (id: string | undefined, steps: readonly CiStep[]): boolean =>
+  steps.some((step) => step.id === id && failureAllowedFor(step));
+
 const placeOf = (step: CiStep): string => `${step.workflow}:${step.job}:${step.identity}`;
 
-function observationOf(step: CiStep, steps: readonly CiStep[], entry: RecordedStep | undefined): EvidenceObservation {
+function observationOf(step: CiStep, steps: readonly CiStep[], allSteps: readonly CiStep[], entry: RecordedStep | undefined): EvidenceObservation {
   const claimCode = claimCodeFrom(step.id);
   const result = entry === undefined ? "not-recorded" : entry.result;
   const jobsRecorded = new Set(steps.filter(({ id }) => entry !== undefined && id === entry.key).map(({ workflow, job }) => `${workflow}:${job}`));
   return {
     cites: claimCode === undefined || result === "not-recorded" ? [] : [claimCode],
-    result: result === "passed" && failureAllowedFor(step) ? "passed-on-error" : result,
+    result: result === "passed" && anyAllowsFailure(step.id, allSteps) ? "passed-on-error" : result,
     kind: "fitness",
     place: jobsRecorded.size > 1 ? entry!.key : placeOf(step)
   };
@@ -201,12 +205,13 @@ export function disposedStepsOf(
 
 export function fitnessObservationsOf(disposedSteps: readonly DisposedStep[], record: readonly RecordedStep[]): EvidenceObservation[] {
   const entriesFor = ({ id }: CiStep) => record.filter(({ key }) => key === id);
+  const allSteps = disposedSteps.map(({ step }) => step);
   const posting = disposedSteps.filter(({ disposition }) => disposition === "fitnessFunction").map(({ step }) => step);
   const postedOnce = posting.filter((step, at) => entriesFor(step).length === 0 || posting.findIndex(({ id }) => id === step.id) === at);
   return [
     ...postedOnce.flatMap((step) => {
       const entries = entriesFor(step);
-      return (entries.length === 0 ? [undefined] : entries).map((entry) => observationOf(step, posting, entry));
+      return (entries.length === 0 ? [undefined] : entries).map((entry) => observationOf(step, posting, allSteps, entry));
     }),
     ...record.filter(({ key }) => !disposedSteps.some(({ step: { id } }) => id === key)).map(unheldObservationOf),
   ];
