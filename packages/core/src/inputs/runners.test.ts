@@ -56,6 +56,16 @@ describe("balance reads the evidence report a named runner's CI step writes, in 
     ["vitest", "vitest run --reporter=json --outputFile=/work/out/vitest.json", NO_SCRIPTS, NO_ENVIRONMENT, [{ path: "/work/out/vitest.json", format: "vitest" }]],
     ["vitest", 'vitest run --reporter=json --outputFile="$OUT/vitest.json"', NO_SCRIPTS, NO_ENVIRONMENT, []],
     ["vitest", 'npm test -- --reporter=json "--outputFile=out/a b.json"', { test: "vitest run" }, NO_ENVIRONMENT, [{ path: "out/a b.json", format: "vitest" }]],
+    [
+      "vitest",
+      "pnpm unit --reporter=json --outputFile=out/a.json && pnpm unit --reporter=json --outputFile=out/b.json",
+      { unit: "vitest run" },
+      NO_ENVIRONMENT,
+      [
+        { path: "out/a.json", format: "vitest" },
+        { path: "out/b.json", format: "vitest" },
+      ],
+    ],
   ])("[CLM-CLI-214] a step running %s as %j, with the scripts %j and the environment %j, names the reports %j", (runner, command, scripts, environment, reports) => {
     expect(shellAnswers.reportsNamed(command, runner, scripts, environment)).toEqual(reports);
   });
