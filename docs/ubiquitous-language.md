@@ -92,7 +92,7 @@ Correctness is the agreement of two independent records. The debit side is the `
 | Term | Meaning |
 |---|---|
 | `balance` | spec-controller's command that reconciles a target. It reads the target's `executable claims` from its feature files, and its evidence from the `test run reports` and the CI `step records`. It reconciles them into an `Evidence Reconciliation` and writes the report from it. It ends with its `run verdict`'s exit code: `0` balanced, `1` out of balance, `3` not reconciled; or `2` for a usage error and `4` for an unexpected error. |
-| `allocate` | The command that prints the next claim code for a feature code: one past the highest claim code the repository has ever contained. |
+| `allocate` | The command that prints the next claim code for a feature code: one past the highest number a claim code under that feature code has ever had in the repository. |
 | evidence report | A report a test runner writes, which `balance` reads as runtime test evidence: the Vitest, Cucumber, pytest, Jest, JUnit or RSpec report. Each is named by its own flag. |
 | report of test results | An evidence report of tests that are not scenarios run step by step: the Vitest, Jest, pytest, JUnit or RSpec report. Its fallback is `unit`. |
 | report of scenario runs | An evidence report of Gherkin scenarios run step by step: the Cucumber report. Its fallback is `integration`. |
