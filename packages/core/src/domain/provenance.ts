@@ -19,11 +19,9 @@ export interface Provenance {
   readonly toolVersion: string;
   readonly runTime: string;
   readonly inputs: readonly ProvenanceInput[];
-  // Whether the run verdict counted the executable claims alone, leaving out the phantom claims and the unnamed claim.
   readonly countedOnlyExecutableClaims: boolean;
 }
 
-// The provenance as the run's identity and inputs give it, before the run verdict's setting is recorded on it.
 export type ProvenanceOfInputs = Omit<Provenance, "countedOnlyExecutableClaims">;
 
 // What the Run identity port reads from git, the install and the clock, as written. Which wins is the domain's.
