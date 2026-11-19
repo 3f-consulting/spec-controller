@@ -77,4 +77,4 @@ const invokesTheReconciler = (commandLine: string): boolean =>
 // A runner is found only as the last command of a pipeline, through launchers, wrappers and the target's scripts.
 const invokesAsCommand = (commandLine: string, program: string, scripts: Scripts): boolean => invokesThrough(commandLine, wordsIn(program), scripts, new Set());
 
-export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand };
+export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed: () => [] };

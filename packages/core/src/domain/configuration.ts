@@ -16,6 +16,9 @@ export interface ReportLocation {
   readonly format: string;
 }
 
+// The shell reader's answer of the evidence reports a step's command names for a runner, each path as the command writes it.
+export type ReportsNamed = (commandLine: string, runner: string, scripts: Readonly<Record<string, string>>) => readonly ReportLocation[];
+
 // A layer's runner: the program it runs, with the evidence report the run names for it.
 export interface Runner {
   readonly name: string;
@@ -100,4 +103,9 @@ export function targetConfigurationOf(
     configuration: { runners: runnersByLayer(runners.value), nonChecks: nonChecks.value, deferralTags: deferralTags.value },
     errors: [...runners.errors, ...nonChecks.errors, ...deferralTags.errors],
   };
+}
+
+// Where each runner's evidence reports are, before the configuration is checked.
+export function reportsLocatedOf(settings: ConfigurationSettings, _steps: readonly CiStep[], _scripts: Readonly<Record<string, string>>, _reportsNamed: ReportsNamed): ConfigurationSettings {
+  return settings;
 }

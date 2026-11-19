@@ -5,7 +5,7 @@ import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
-import { targetConfigurationOf, type ConfigurationError, type TargetConfiguration } from "./configuration.js";
+import { reportsLocatedOf, targetConfigurationOf, type ConfigurationError, type TargetConfiguration } from "./configuration.js";
 import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { runVerdictOf } from "./evidenceReconciliation.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
@@ -130,13 +130,6 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     expect(checkedFrom(named)).toEqual({ configuration: NONE, errors: [{ kind: "configuration-wrong-kind", entry }] });
   });
 
-  it("[CLM-CFG-025] a run named --e2e playwright:junit:out/playwright.xml, with no file at out/playwright.xml, leaves the report out, finding its error naming its path, and keeps the runner", () => {
-    expect(checkedFrom({ runners: { e2e: ["playwright:junit:out/playwright.xml"] } }, ["out/playwright.xml"])).toEqual({
-      configuration: { ...NONE, runners: { ...NO_RUNNERS, e2e: [{ name: "playwright" }] } },
-      errors: [{ kind: "runner-report-not-read", entry: "out/playwright.xml" }],
-    });
-  });
-
   // Each variant of a non-check beside a line break, as the run names it.
   const withALineBreak: Readonly<Record<string, string>> = {
     "a line break before it": "\nci.yml:ci:Install dependencies",
@@ -147,6 +140,96 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     const entry = withALineBreak[variant]!;
 
     expect(checkedFrom({ nonChecks: [entry] })).toEqual({ configuration: NONE, errors: [{ kind: "not-checks-entry-not-a-step-name", entry }] });
+  });
+});
+
+// The configuration and the errors balance finds for a run naming one unit runner, with the steps of ci.yml as given and no file at each report path given.
+const locatedFrom = (runner: string, ciYml: string, reportsNotFound: readonly string[]) => {
+  const steps = workflowStepsFrom("ci.yml", ciYml);
+  const settings = reportsLocatedOf(configurationSettingsNamed({ runners: { unit: [runner] }, nonChecks: [], deferralTags: [] }), steps, {}, shellAnswers.reportsNamed);
+  return targetConfigurationOf(settings, steps, reportsNotFound);
+};
+
+describe("balance reads no evidence report for a runner whose report it cannot find, naming the error", () => {
+  it.each<[string, string, string, string, readonly string[], ConfigurationError]>([
+    [
+      "CLM-CFG-025",
+      "playwright, with out/playwright.xml as its JUnit evidence report, and no file at out/playwright.xml",
+      "playwright:junit:out/playwright.xml",
+      "jobs:\n  ci:\n    steps:\n      - run: playwright test\n",
+      ["out/playwright.xml"],
+      { kind: "runner-report-not-read", entry: "out/playwright.xml" },
+    ],
+    [
+      "CLM-CFG-027",
+      "vitest, where a step ran vitest run --reporter=json --outputFile=out/vitest.json, and no file was at out/vitest.json",
+      "vitest",
+      "jobs:\n  ci:\n    steps:\n      - run: vitest run --reporter=json --outputFile=out/vitest.json\n",
+      ["out/vitest.json"],
+      { kind: "runner-report-not-read", entry: "out/vitest.json" },
+    ],
+    [
+      "CLM-CFG-027",
+      "vitest, where a step of another job wrote out/vitest.json, which the run did not download to the same path",
+      "vitest",
+      "jobs:\n  test:\n    steps:\n      - run: vitest run --reporter=json --outputFile=out/vitest.json\n  balance:\n    steps:\n      - run: spec-controller balance --unit vitest\n",
+      ["out/vitest.json"],
+      { kind: "runner-report-not-read", entry: "out/vitest.json" },
+    ],
+    [
+      "CLM-CFG-028",
+      "my-tool, a runner balance does not know, where a step ran my-tool",
+      "my-tool",
+      "jobs:\n  ci:\n    steps:\n      - run: my-tool --reporter=json --outputFile=out/my-tool.json\n",
+      [],
+      { kind: "runner-report-not-named", entry: "my-tool" },
+    ],
+    ["CLM-CFG-029", "vitest, where a step ran vitest run, naming no report", "vitest", "jobs:\n  ci:\n    steps:\n      - run: vitest run\n", [], { kind: "runner-report-not-named", entry: "vitest" }],
+    [
+      "CLM-CFG-029",
+      "vitest, where a step ran vitest run, its report named only in vitest.config.ts",
+      "vitest",
+      "jobs:\n  ci:\n    steps:\n      - run: vitest run --config vitest.config.ts\n",
+      [],
+      { kind: "runner-report-not-named", entry: "vitest" },
+    ],
+    [
+      "CLM-CFG-029",
+      "vitest, where a step ran vitest run --reporter=json --outputFile=${{ env.OUT }}/vitest.json",
+      "vitest",
+      "jobs:\n  ci:\n    steps:\n      - run: vitest run --reporter=json --outputFile=${{ env.OUT }}/vitest.json\n",
+      [],
+      { kind: "runner-report-not-named", entry: "vitest" },
+    ],
+    [
+      "CLM-CFG-029",
+      "vitest, where a step ran vitest run --outputFile=out/vitest.json, naming no reporter",
+      "vitest",
+      "jobs:\n  ci:\n    steps:\n      - run: vitest run --outputFile=out/vitest.json\n",
+      [],
+      { kind: "runner-report-not-named", entry: "vitest" },
+    ],
+    [
+      "CLM-CFG-029",
+      "vitest, where a step ran vitest run --reporter=json --outputFile=, naming an empty path",
+      "vitest",
+      "jobs:\n  ci:\n    steps:\n      - run: vitest run --reporter=json --outputFile=\n",
+      [],
+      { kind: "runner-report-not-named", entry: "vitest" },
+    ],
+    [
+      "CLM-CFG-030",
+      "vitest, where no step ran vitest, though one wrote out/vitest.json",
+      "vitest",
+      "jobs:\n  ci:\n    steps:\n      - run: my-tool --reporter=json --outputFile=out/vitest.json\n",
+      [],
+      { kind: "runner-report-not-named", entry: "vitest" },
+    ],
+  ])("[%s] a run named %s reads no evidence report for it, finding its error naming it, and keeps the runner", (_clm, _named, runner, ciYml, reportsNotFound, error) => {
+    expect(locatedFrom(runner, ciYml, reportsNotFound)).toEqual({
+      configuration: { ...NONE, runners: { ...NO_RUNNERS, unit: [{ name: runner.split(":")[0] }] } },
+      errors: [error],
+    });
   });
 });
 

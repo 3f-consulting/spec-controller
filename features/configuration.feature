@@ -39,10 +39,25 @@ Feature: balance reads and validates the configuration settings the run names
       Examples:
         | clm         | configuration setting                                                                                                                      | error                            | naming                           |
         | CLM-CFG-004 | --unit vitest:vitest, a long form with no report                                                                                           | configuration-wrong-kind         | vitest:vitest                    |
-        | CLM-CFG-025 | --e2e playwright:junit:out/playwright.xml, with no file at out/playwright.xml                                                              | runner-report-not-read           | out/playwright.xml               |
         | CLM-CFG-015 | --not-check ci.yml:ci:No such step, with ci.yml read                                                                                       | not-checks-entry-matches-no-step | ci.yml:ci:No such step           |
         | CLM-CFG-022 | --not-check ci.yml:lint:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies and whose job lint had none | not-checks-entry-matches-no-step | ci.yml:lint:Install dependencies |
         | CLM-CFG-016 | --not-check Install dependencies                                                                                                           | not-checks-entry-not-a-step-name | Install dependencies             |
+
+    @unit
+    Scenario Outline: balance reads no evidence report for a runner whose report it cannot find, naming the error
+      given the run named <runner> as the unit runner
+      and <where its report was>
+      when balance reads its inputs
+      then it will read no evidence report for <runner>
+      and balance will find the error <error>, naming <named>
+
+      Examples:
+        | clm         | runner                                                           | where its report was                                                                                   | error                   | named              |
+        | CLM-CFG-025 | playwright, with out/playwright.xml as its JUnit evidence report | no file was at out/playwright.xml                                                                      | runner-report-not-read  | out/playwright.xml |
+        | CLM-CFG-027 | vitest                                                           | a step ran vitest run --reporter=json --outputFile=out/vitest.json, and no file was at out/vitest.json | runner-report-not-read  | out/vitest.json    |
+        | CLM-CFG-028 | my-tool, a runner balance does not know                          | a step ran my-tool                                                                                     | runner-report-not-named | my-tool            |
+        | CLM-CFG-029 | vitest                                                           | a step ran vitest run, naming no report                                                                | runner-report-not-named | vitest             |
+        | CLM-CFG-030 | vitest                                                           | no step ran vitest                                                                                     | runner-report-not-named | vitest             |
 
     @unit @CLM-CFG-017
     Scenario: the run will still reach its run verdict, using the configuration settings it could use
