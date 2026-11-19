@@ -34,17 +34,24 @@ const writesStepRecord = (step: Mapping): boolean =>
 const continueOnErrorOf = (value: unknown): ContinueOnError | undefined =>
   value === undefined || typeof value === "boolean" ? value : "decided-by-the-run";
 
+// A step is known by its name, else the action it uses, else the first line of its command: a step with no action has one.
+const identityOf = (name: string | undefined, uses: string | undefined, run: string | undefined): string =>
+  name ?? uses ?? run!.split("\n").map((line) => line.trim()).find((line) => line !== "") ?? "";
+
 function ciStepOf(workflow: string, job: string, jobContinueOnError: ContinueOnError | undefined, step: Mapping): CiStep {
+  const name = nameText(step["name"]);
   const uses = text(step["uses"]);
+  const run = text(step["run"]);
   return {
     workflow,
     job,
     jobContinueOnError,
-    name: nameText(step["name"]),
+    name,
     uses,
-    run: text(step["run"]),
+    run,
     id: text(step["id"]),
     continueOnError: continueOnErrorOf(step["continue-on-error"]),
+    identity: identityOf(name, uses, run),
     plumbing: uses !== undefined && isPlumbing(uses),
     writesStepRecord: writesStepRecord(step),
   };

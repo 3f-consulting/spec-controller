@@ -45,8 +45,8 @@ describe("balance takes each configuration setting it can use as the runner, non
 
   it('[CLM-CFG-010] a specController block with "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies, takes that step as a non-check', () => {
     const ciRead = [
-      { workflow: "ci.yml", job: "ci", name: "Build", plumbing: false, writesStepRecord: false },
-      { workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false },
+      { workflow: "ci.yml", job: "ci", name: "Build", identity: "Build", plumbing: false, writesStepRecord: false },
+      { workflow: "ci.yml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false },
     ];
 
     expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yml:ci:Install dependencies"] } }, ciRead, [])).toEqual({
@@ -56,7 +56,7 @@ describe("balance takes each configuration setting it can use as the runner, non
   });
 
   it('[CLM-CFG-010] a specController block with "ci.yaml:ci:Install dependencies" in notChecks, with ci.yaml read, whose job ci had the step Install dependencies, takes that step as a non-check', () => {
-    const ciRead = [{ workflow: "ci.yaml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
+    const ciRead = [{ workflow: "ci.yaml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
     expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yaml:ci:Install dependencies"] } }, ciRead, [])).toEqual({
       configuration: { ...NONE, nonChecks: [{ workflow: "ci.yaml", job: "ci", step: "Install dependencies" }] },
@@ -65,7 +65,7 @@ describe("balance takes each configuration setting it can use as the runner, non
   });
 
   it('[CLM-CFG-023] a specController block with "nightly.yml:ci:Install dependencies" in notChecks, with only ci.yml read, takes that step as a non-check', () => {
-    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
+    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
     expect(targetConfigurationFrom({ specController: { notChecks: ["nightly.yml:ci:Install dependencies"] } }, ciRead, [])).toEqual({
       configuration: { ...NONE, nonChecks: [{ workflow: "nightly.yml", job: "ci", step: "Install dependencies" }] },
@@ -95,7 +95,7 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     ["CLM-CFG-019", '"notChecks": "Install"', { notChecks: "Install" }, { kind: "configuration-wrong-kind", entry: "notChecks" }],
     ["CLM-CFG-020", "3 in deferralTags", { deferralTags: [3] }, { kind: "configuration-wrong-kind", entry: "deferralTags[0]" }],
   ] as const)("[%s] a specController block with %s leaves it out, finding its error naming the setting", (_clm, _setting, block, error) => {
-    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
+    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
     expect(targetConfigurationFrom({ specController: block }, ciRead, [])).toEqual({ configuration: NONE, errors: [error] });
   });
@@ -146,7 +146,7 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
 
   it.each(manifestVariants["line-breaks-around-a-non-check"].variants)('[CLM-CFG-016] a specController block with "ci.yml:ci:Install dependencies" with %s in notChecks leaves it out, finding its error naming the entry', (variant) => {
     const entry = withALineBreak[variant]!;
-    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
+    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
     expect(targetConfigurationFrom({ specController: { notChecks: [entry] } }, ciRead, [])).toEqual({ configuration: NONE, errors: [{ kind: "not-checks-entry-not-a-step-name", entry }] });
   });

@@ -2,7 +2,7 @@ import { claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCode
 import { reportsOf, runnerNameOf, type TargetConfiguration } from "./configuration.js";
 import { QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
-import { stepIdentityOf, type CiStep, type ContinueOnError } from "./workflowSteps.js";
+import type { CiStep, ContinueOnError } from "./workflowSteps.js";
 
 // not-recorded is a step a workflow has that no step record names: balance has no word on how it went.
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran" | "not-recorded";
@@ -135,7 +135,7 @@ export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" 
 export type DisposedStep = { readonly step: CiStep; readonly disposition: StepDisposition };
 
 const isNamedIn = (step: CiStep, { nonChecks }: TargetConfiguration): boolean =>
-  nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === stepIdentityOf(step));
+  nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === step.identity);
 
 // The reconciler is recognised in any command of the step, a runner only as the command the step runs, through its scripts.
 const runsARunner = (run: string, { runners }: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): boolean =>
@@ -168,7 +168,7 @@ const allows = (continueOnError: ContinueOnError | undefined): boolean => contin
 
 const allowsFailure = ({ continueOnError, jobContinueOnError }: CiStep): boolean => allows(continueOnError) || allows(jobContinueOnError);
 
-const placeOf = (step: CiStep): string => `${step.workflow}:${step.job}:${stepIdentityOf(step)}`;
+const placeOf = (step: CiStep): string => `${step.workflow}:${step.job}:${step.identity}`;
 
 function observationOf(step: CiStep, steps: readonly CiStep[], entry: RecordedStep | undefined): EvidenceObservation {
   const claimCode = claimCodeFrom(step.id);

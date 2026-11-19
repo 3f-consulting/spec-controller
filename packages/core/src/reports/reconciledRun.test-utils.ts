@@ -31,7 +31,7 @@ export function reconciled({ scenarios, unitTests, configurationErrors = [], ste
   const source = `@ONE\nFeature: one\n${scenarios.map((tags, at) => `\n  ${tags}\n  Scenario: scenario ${at}\n    Given a step\n`).join("")}`;
   const features = scenarios.length === 0 ? [] : [featureAsWrittenFrom("one.feature", source)];
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), unitTests.map(unitTestOf));
-  const step = { workflow: "ci.yml", job: "build", plumbing: false, writesStepRecord: false, run: "pnpm lint" };
+  const step = { workflow: "ci.yml", job: "build", plumbing: false, writesStepRecord: false, run: "pnpm lint", identity: "pnpm lint" };
   return evidenceReconciliationOf({
     claimReconciliations,
     claimCodeErrors: claimCodeErrorsOf(features),

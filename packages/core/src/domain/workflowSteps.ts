@@ -1,6 +1,6 @@
 export type ContinueOnError = boolean | "decided-by-the-run";
 
-// A step of a CI workflow. plumbing and writesStepRecord are the reader's to say.
+// A step of a CI workflow. identity, plumbing and writesStepRecord are the reader's to say.
 export interface CiStep {
   readonly workflow: string;
   readonly job: string;
@@ -10,11 +10,8 @@ export interface CiStep {
   readonly run?: string;
   readonly id?: string;
   readonly continueOnError?: ContinueOnError;
+  // What the step is known by in its workflow, which a non-check names and an observation's place carries.
+  readonly identity: string;
   readonly plumbing: boolean;
   readonly writesStepRecord: boolean;
-}
-
-// A step is known by its name, else the action it uses, else the first line of its command: a step with no action has one.
-export function stepIdentityOf({ name, uses, run }: CiStep): string {
-  return name ?? uses ?? run!.split("\n").map((line) => line.trim()).find((line) => line !== "") ?? "";
 }
