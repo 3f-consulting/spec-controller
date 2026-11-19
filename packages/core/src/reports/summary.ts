@@ -8,10 +8,11 @@ const verdictWords = (runVerdict: RunVerdict): string => coreText(`verdict-${run
 
 const group = (heading: string, lines: readonly string[]): string[] => ["", `### ${coreText(heading)}`, "", ...lines];
 
-function claimReconciliationsGroup({ claimReconciliations: { total, balanced, outOfBalance }, excludedClaimCodeOccurrences }: Totals): string[] {
+function claimReconciliationsGroup({ claimReconciliations: { total, balanced, outOfBalance }, excludedClaimCodeOccurrences, deferredScenarios }: Totals): string[] {
   return group("summary-claim-reconciliations", [
     ...tableOf(["summary-total", "summary-balanced", "summary-out-of-balance"], [[total, balanced, outOfBalance]]),
     ...(excludedClaimCodeOccurrences === 0 ? [] : ["", coreText("summary-excluded", { count: excludedClaimCodeOccurrences })]),
+    ...(deferredScenarios === 0 ? [] : ["", coreText("summary-deferred", { count: deferredScenarios })]),
   ]);
 }
 

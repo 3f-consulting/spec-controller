@@ -179,14 +179,16 @@ Feature: Each report has the right structure, and the Markdown explains it
       then the Summary will <show> the <row or column>
 
       Examples:
-        | clm         | counts                                            | show     | row or column                                   |
-        | CLM-RPT-120 | no failing Quality Check Reconciliation           | not have | Failing column of its totals by kind            |
-        | CLM-RPT-121 | one failing Quality Check Reconciliation          | have     | Failing column of its totals by kind            |
-        | CLM-RPT-122 | no no-quality-check Quality Check Reconciliation  | not have | no-quality-check row of its totals by kind      |
-        | CLM-RPT-123 | one no-quality-check Quality Check Reconciliation | have     | no-quality-check row of its totals by kind      |
-        | CLM-RPT-124 | no performance Evidence Obligation or Observation | not have | performance row of its totals by kind           |
-        | CLM-RPT-125 | no Evidence Observation on a phantom claim        | not have | phantom claims row of its totals by where filed |
-        | CLM-RPT-126 | one Evidence Observation on a phantom claim       | have     | phantom claims row of its totals by where filed |
+        | clm         | counts                                            | show     | row or column                                        |
+        | CLM-RPT-120 | no failing Quality Check Reconciliation           | not have | Failing column of its totals by kind                 |
+        | CLM-RPT-121 | one failing Quality Check Reconciliation          | have     | Failing column of its totals by kind                 |
+        | CLM-RPT-122 | no no-quality-check Quality Check Reconciliation  | not have | no-quality-check row of its totals by kind           |
+        | CLM-RPT-123 | one no-quality-check Quality Check Reconciliation | have     | no-quality-check row of its totals by kind           |
+        | CLM-RPT-124 | no performance Evidence Obligation or Observation | not have | performance row of its totals by kind                |
+        | CLM-RPT-125 | no Evidence Observation on a phantom claim        | not have | phantom claims row of its totals by where filed      |
+        | CLM-RPT-126 | one Evidence Observation on a phantom claim       | have     | phantom claims row of its totals by where filed      |
+        | CLM-RPT-174 | no scenario set aside by a deferral tag           | not have | line counting the scenarios a deferral tag set aside |
+        | CLM-RPT-175 | one scenario set aside by a deferral tag          | have     | line counting the scenarios a deferral tag set aside |
 
   Rule: the step account totals its jobs only when it has more than one
 

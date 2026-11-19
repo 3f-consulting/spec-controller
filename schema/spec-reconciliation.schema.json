@@ -7,7 +7,7 @@
       "properties": {
         "schemaVersion": {
           "type": "number",
-          "const": 2
+          "const": 3
         },
         "claimReconciliations": {
           "type": "array",
@@ -549,6 +549,9 @@
         },
         "excludedClaimCodeOccurrences": {
           "type": "number"
+        },
+        "deferredScenarios": {
+          "type": "number"
         }
       },
       "required": [
@@ -556,7 +559,8 @@
         "qualityCheckReconciliations",
         "evidenceObservations",
         "outOfBalanceByFeature",
-        "excludedClaimCodeOccurrences"
+        "excludedClaimCodeOccurrences",
+        "deferredScenarios"
       ],
       "additionalProperties": false
     },

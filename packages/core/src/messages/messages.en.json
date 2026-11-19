@@ -43,6 +43,7 @@
   "summary-balanced": "Balanced",
   "summary-out-of-balance": "Out of balance",
   "summary-excluded": "{count} claim codes are written in a title, a step or a comment, where no claim reads them.",
+  "summary-deferred": "Scenarios a deferral tag set aside, so none of them is an executable claim: {count}.",
   "summary-by-kind": "Quality Check Reconciliations, by kind",
   "summary-kind": "Kind",
   "summary-evidence-obligations": "Evidence Obligations",

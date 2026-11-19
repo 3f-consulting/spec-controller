@@ -19,7 +19,8 @@ describe("the JSON report keeps every part and every count, empty or zero", () =
       runIntegrity: json.runIntegrity,
       stepAccount: json.stepAccount?.jobs,
       outOfBalanceByFeature: json.totals.outOfBalanceByFeature,
-    }).toEqual({ errorsInTheInputs: { claimCodeErrors: [], configurationErrors: [] }, runIntegrity: { neverRan: [] }, stepAccount: [], outOfBalanceByFeature: [] });
+      deferredScenarios: json.totals.deferredScenarios,
+    }).toEqual({ errorsInTheInputs: { claimCodeErrors: [], configurationErrors: [] }, runIntegrity: { neverRan: [] }, stepAccount: [], outOfBalanceByFeature: [], deferredScenarios: 0 });
     expect({
       kinds: new Set(byKind.map(({ kind }) => kind)),
       outcomes: [...byKind, noKind].map(({ byOutcome }) => Object.keys(byOutcome)),

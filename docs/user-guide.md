@@ -810,7 +810,7 @@ The package ships a JSON Schema that states the JSON's structure: `dist/spec-rec
 
 The totals follow, in groups:
 
-- **`### Claim Reconciliations`**: the total, balanced and out of balance. When some claim codes are written where no claim reads them, in a title, a step or a comment, a line under the table counts them.
+- **`### Claim Reconciliations`**: the total, balanced and out of balance. When some claim codes are written where no claim reads them, in a title, a step or a comment, a line under the table counts them. When a deferral tag sets some scenarios aside, a line under the table counts them, after the line for claim codes when both are shown.
 - **`### Quality Check Reconciliations, by kind`**: a row for each kind of quality check, with its Evidence Obligations, its Evidence Observations, and a column for each outcome. A row with no kind counts what a scenario that asks for no kind of quality check gives. The *All* row sums every row. The columns of a row do not add up: one evidence obligation answered by two passing tests counts as 1 Evidence Obligation, 2 Evidence Observations and 2 *Satisfied*.
 - **`### Evidence Observations, by where they were filed`**: how many evidence observations landed on an executable claim, on a phantom claim and on the unnamed claim, and their total.
 - **`### Out of balance by feature`**, when any claim is out of balance: each feature file with an out-of-balance claim, and how many it has. A phantom claim and the unnamed claim are counted in the totals, on no feature's row.

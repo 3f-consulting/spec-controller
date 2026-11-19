@@ -17,6 +17,7 @@ const reconciliation = (): EvidenceReconciliation => ({
     claimCodeErrors: [],
     configurationErrors: [],
     features: [],
+    claimReading: { deferralTags: [], strict: false },
     stepAccount: stepAccountOf([]),
     provenance: { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] },
   }),

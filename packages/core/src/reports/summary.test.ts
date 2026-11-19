@@ -35,6 +35,17 @@ describe("the Summary will show a row or column only when it has a count above z
 
     expect({ table: header.length > 0, shown: firstCells(rows).includes("On a phantom claim") }).toEqual({ table: true, shown });
   });
+
+  it.each([
+    ["CLM-RPT-174", 0, "not have", false],
+    ["CLM-RPT-175", 1, "have", true],
+  ] as const)("[%s] totals with %i scenarios set aside by a deferral tag will %s the Claim Reconciliations line counting them", (_clm, count, _show, shown) => {
+    const run = reconciled({ scenarios: ["@unit @CLM-ONE-001"], unitTests: [["passed", "ONE-001"]] });
+    const markdown = markdownReportOf({ ...run, totals: { ...run.totals, deferredScenarios: count } });
+    const group = markdown.slice(markdown.indexOf(`### ${coreText("summary-claim-reconciliations")}`), markdown.indexOf(`### ${coreText("summary-by-kind")}`));
+
+    expect({ group: group.startsWith(`### ${coreText("summary-claim-reconciliations")}`), line: group.split("\n").includes(coreText("summary-deferred", { count })) }).toEqual({ group: true, line: shown });
+  });
 });
 
 describe("the Markdown has a line of claim codes no claim reads only when there are some", () => {
