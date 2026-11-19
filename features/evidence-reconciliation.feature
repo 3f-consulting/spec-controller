@@ -133,6 +133,18 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-031 | a cell of a clm column                            | 0        |
         | CLM-EVR-070 | a word with a comma after it, in an Examples cell | 1        |
 
+    @unit
+    Scenario Outline: Total of the scenarios a deferral tag set aside
+      given a run had <what the run had>
+      when balance reconciles it <how>
+      then the totals will have <count> scenarios set aside by a deferral tag
+
+      Examples:
+        | clm         | what the run had                                                              | how             | count |
+        | CLM-EVR-081 | two scenarios tagged @wip, and one with no deferral tag                       |                 | 2     |
+        | CLM-EVR-082 | an Outline tagged @wip with three rows, and one scenario with no deferral tag |                 | 1     |
+        | CLM-EVR-083 | two scenarios tagged @wip, and one with no deferral tag                       | in a strict run | 0     |
+
   Rule: balance accounts for every step it reads
 
     @unit @CLM-EVR-032

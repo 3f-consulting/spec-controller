@@ -49,6 +49,8 @@ export interface Totals {
   };
   readonly outOfBalanceByFeature: readonly { readonly file: string; readonly count: number }[];
   readonly excludedClaimCodeOccurrences: number;
+  // The scenarios a deferral tag set aside, an Outline counted once.
+  readonly deferredScenarios: number;
 }
 
 export interface StepCounts {

@@ -6,8 +6,8 @@ import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimCodeErrorsOf } from "./claimCodes.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
 import { NO_SETTINGS } from "./configuration.js";
-import { reconcile, runVerdictOf, stepAccountOf, totalsOf, type RunVerdict } from "./evidenceReconciliation.js";
-import { executableClaimsOf } from "./postEvidenceObligation.js";
+import { reconcile, runVerdictOf, stepAccountOf, totalsOf, type EvidenceReconciliation, type RunVerdict } from "./evidenceReconciliation.js";
+import { executableClaimsOf, type FeatureFile } from "./postEvidenceObligation.js";
 import { stepDispositionOf, type EvidenceObservation, type Result, type RecordedStep, type TestResult } from "./postEvidenceObservation.js";
 
 // Evidence as a row gives it: its kind, its result, and the code it cites, such as ONE-001, if any.
@@ -41,10 +41,19 @@ const testResultOf = ([, result, code]: readonly [EvidenceObservation["kind"], T
   cites: { titles: code === undefined ? ["a test"] : [`[CLM-${code}] a test`] },
 });
 
-// The run verdict of the corpus and evidence given, as reconcile gives it from what the readers would give: each test's
-// result in a report of its own kind, and no CI step, settings or scripts.
+// The run verdict of the corpus and evidence given, as reconcile gives it from what the readers would give.
 function reconciledRunVerdictOf(corpus: readonly string[], observed: readonly (readonly [EvidenceObservation["kind"], TestResult["result"], string?])[]): RunVerdict {
   const features = corpus.map((entry, at) => featureAsWrittenFrom(`f${at}.feature`, entry.includes("Feature:") ? entry : scenariosTagged(`@unit ${entry}`)));
+  return reconciledFrom(features, observed, false).runVerdict;
+}
+
+// What reconcile gives from the feature files and evidence given, each test's result in a report of its own kind, and no
+// CI step, settings or scripts.
+function reconciledFrom(
+  features: readonly FeatureFile[],
+  observed: readonly (readonly [EvidenceObservation["kind"], TestResult["result"], string?])[],
+  strict: boolean,
+): EvidenceReconciliation {
   return reconcile({
     features,
     reports: observed.map((evidence) => ({ report: "report.json", results: [testResultOf(evidence)], defaultLayer: evidence[0], needsFeatures: false })),
@@ -57,8 +66,8 @@ function reconciledRunVerdictOf(corpus: readonly string[], observed: readonly (r
     identity: { runTime: "2026-01-01T00:00:00.000Z" },
     provenanceInputs: [],
     targetFolder: "/target",
-    strict: false,
-  }).runVerdict;
+    strict,
+  });
 }
 
 describe("the run will be balanced or out of balance, as its Claim Reconciliations call for", () => {
@@ -239,6 +248,29 @@ describe("a claim code in a scenario's title, with punctuation stuck to its end,
     const source = `@ONE\nFeature: one\n\n  @unit\n  Scenario: adds one, as @CLM-ONE-001${punctuation} says\n    Given a step\n`;
 
     expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)]).excludedClaimCodeOccurrences).toBe(1);
+  });
+});
+
+describe("Total of the scenarios a deferral tag set aside", () => {
+  const twoDeferredAndOneNot = (): string => scenariosTagged("@unit @wip", "@unit @wip", "@unit");
+  const anOutlineDeferredAndOneNot = (): string => `${scenariosTagged("@unit")}
+  @unit @wip
+  Scenario Outline: adds <x>
+    Given <x>
+
+    Examples:
+      | x     |
+      | one   |
+      | two   |
+      | three |
+`;
+
+  it.each([
+    ["CLM-EVR-081", "two scenarios tagged @wip, and one with no deferral tag", twoDeferredAndOneNot, false, 2],
+    ["CLM-EVR-082", "an Outline tagged @wip with three rows, and one scenario with no deferral tag", anOutlineDeferredAndOneNot, false, 1],
+    ["CLM-EVR-083", "two scenarios tagged @wip, and one with no deferral tag, in a strict run", twoDeferredAndOneNot, true, 0],
+  ] as const)("[%s] a run with %s has the scenarios a deferral tag set aside counted", (_clm, _what, source, strict, count) => {
+    expect(reconciledFrom([featureAsWrittenFrom("one.feature", source())], [], strict).totals.deferredScenarios).toBe(count);
   });
 });
 
