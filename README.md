@@ -54,7 +54,7 @@ npm install --save-dev spec-controller@<version>
 npx spec-controller balance --unit vitest:vitest:./vitest-report.json --exit-zero
 ```
 
-`--unit vitest:vitest:./vitest-report.json` names the unit layer's runner, the format of the report it writes, and that report's path. For other test reports, give the format `jest`, `pytest`, `junit`, `rspec` or `cucumber`, under the flag of the layer the runner serves: `--unit`, `--integration`, `--e2e` or `--performance`.
+`--unit vitest:vitest:./vitest-report.json` names the unit layer's runner, the format of the report it writes, and that report's path. For other test reports, give the format `jest`, `pytest`, `junit`, `rspec` or `cucumber`, under the flag of the layer the runner serves: `--unit`, `--integration`, `--e2e` or `--performance`. When the CI step that runs the runner writes its report, name the runner alone, as `--unit vitest`: `balance` finds the report from that step.
 
 With no scenarios yet, the report lists every test that ran, and `--exit-zero` keeps your build green. Give it your workflow and the run's step record (GitHub Actions' own record of how each step ended), as the quickstart shows, and it lists your CI checks too. Then name a few behaviours, cite them from their tests, and watch those rows balance. When the ones you care about balance, remove `--exit-zero`. `balance` then gates your build.
 

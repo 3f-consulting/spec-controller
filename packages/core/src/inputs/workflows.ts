@@ -38,14 +38,25 @@ const failureAllowedOf = (value: unknown): FailureAllowed | undefined =>
 const identityOf = (name: string | undefined, action: string | undefined, command: string | undefined): string =>
   name ?? action ?? command!.split("\n").map((line) => line.trim()).find((line) => line !== "") ?? "";
 
-function ciStepOf(workflow: string, job: string, jobAllowsFailure: FailureAllowed | undefined, step: Mapping): CiStep {
+// The variables a step sets to text: one set to nothing, or to an empty string, is not set.
+const environmentOf = (env: unknown): Readonly<Record<string, string>> | undefined =>
+  isRecord(env) ? Object.fromEntries(Object.entries(env).filter((entry): entry is [string, string] => text(entry[1]) !== undefined && entry[1] !== "")) : undefined;
+
+// The folder a job's steps run in unless a step names its own.
+const jobWorkingDirectoryOf = (definition: Mapping): string | undefined => {
+  const defaults = definition["defaults"];
+  const run = isRecord(defaults) ? defaults["run"] : undefined;
+  return isRecord(run) ? text(run["working-directory"]) : undefined;
+};
+
+function ciStepOf(workflow: string, job: string, definition: Mapping, step: Mapping): CiStep {
   const name = nameText(step["name"]);
   const action = text(step["uses"]);
   const command = text(step["run"]);
   return {
     workflow,
     job,
-    jobAllowsFailure,
+    jobAllowsFailure: failureAllowedOf(definition["continue-on-error"]),
     name,
     action,
     command,
@@ -54,6 +65,8 @@ function ciStepOf(workflow: string, job: string, jobAllowsFailure: FailureAllowe
     identity: identityOf(name, action, command),
     plumbing: action !== undefined && isPlumbing(action),
     writesStepRecord: writesStepRecord(step),
+    workingDirectory: text(step["working-directory"]) ?? jobWorkingDirectoryOf(definition),
+    environment: environmentOf(step["env"]),
   };
 }
 
@@ -67,7 +80,7 @@ export function workflowStepsFrom(workflow: string, source: string): CiStep[] {
       if (!isRecord(step) || (text(step["uses"]) === undefined && text(step["run"]) === undefined)) {
         throw new InputDoesNotParse(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
       }
-      return ciStepOf(workflow, job, failureAllowedOf(definition["continue-on-error"]), step);
+      return ciStepOf(workflow, job, definition, step);
     });
   });
 }

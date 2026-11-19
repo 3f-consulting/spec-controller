@@ -291,6 +291,10 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(isFitnessFunction(variant.replace("<script>", script).replace("<name>", "app"), "vitest", { [script]: "vitest run" })).toBe(false);
   });
 
+  it('[CLM-OBS-009] a step running npm test -- -t "a|b", whose script runs vitest, passing it a quoted pattern holding a pipe, will not be a fitness function', () => {
+    expect(isFitnessFunction('npm test -- -t "a|b"', "vitest", { test: "vitest run" })).toBe(false);
+  });
+
   it("[CLM-OBS-114] a step running pnpm test, whose script runs another script, whose script runs vitest, will not be a fitness function", () => {
     expect(isFitnessFunction("pnpm test", "vitest", scriptsFrom({ scripts: { test: "pnpm unit", unit: "vitest run" } }))).toBe(false);
   });

@@ -40,17 +40,17 @@ node --version   # must be v22.12 or higher
 
 If your project uses pnpm, install pnpm yourself (`npm install -g pnpm`). Node 25 and later do not bundle corepack.
 
-**Your evidence, as reports.** Before you run `balance`, generate whichever of these reports apply to your project. Step 1 of [Every report, and the whole command](#every-report-and-the-whole-command) gives the command that writes each one. You name each report in the long form of the runner that writes it, `<runner>:<format>:<report>`, under the flag of the layer that runner serves: `--unit`, `--integration`, `--e2e` or `--performance`.
+**Your evidence, as reports.** Before you run `balance`, generate whichever of these reports apply to your project. Step 1 of [Every report, and the whole command](#every-report-and-the-whole-command) gives the command that writes each one. You name each runner under the flag of the layer it serves: `--unit`, `--integration`, `--e2e` or `--performance`. Named alone, as `--unit vitest`, a runner has its report found from the CI step that runs it. A report `balance` cannot find that way, you name in the runner's long form, `<runner>:<format>:<report>` (see [Naming your runners](#naming-your-runners)).
 
 | Input | What it is | Flag |
 |---|---|---|
 | Gherkin `.feature` files | your scenarios and their evidence-obligation tags | `--features` |
-| A Vitest JSON report | runtime test evidence | `--<layer> <runner>:vitest:<report>` |
-| A Cucumber JSON report | runtime test evidence | `--<layer> <runner>:cucumber:<report>` |
-| A pytest JUnit XML report, written by `pytest --junitxml` | runtime test evidence | `--<layer> <runner>:pytest:<report>` |
-| A Jest JSON report, written by `jest --json --outputFile=<path>` | runtime test evidence | `--<layer> <runner>:jest:<report>` |
-| A JUnit XML report, or a folder of them, from any other runner, such as Go's, written by `gotestsum --junitfile <path>` | runtime test evidence | `--<layer> <runner>:junit:<report>` |
-| An RSpec JSON report, written by `rspec --format json --out <path>` | runtime test evidence | `--<layer> <runner>:rspec:<report>` |
+| A Vitest JSON report | runtime test evidence | `--<layer> vitest`, or `--<layer> <runner>:vitest:<report>` |
+| A Cucumber JSON report | runtime test evidence | `--<layer> cucumber-js`, or `--<layer> <runner>:cucumber:<report>` |
+| A pytest JUnit XML report, written by `pytest --junitxml` | runtime test evidence | `--<layer> pytest`, or `--<layer> <runner>:pytest:<report>` |
+| A Jest JSON report, written by `jest --json --outputFile=<path>` | runtime test evidence | `--<layer> jest`, or `--<layer> <runner>:jest:<report>` |
+| A JUnit XML report, or a folder of them, from any other runner, such as Go's, written by `gotestsum --junitfile <path>` | runtime test evidence | `--<layer> gotestsum` or `--<layer> playwright`, or `--<layer> <runner>:junit:<report>` |
+| An RSpec JSON report, written by `rspec --format json --out <path>` | runtime test evidence | `--<layer> rspec`, or `--<layer> <runner>:rspec:<report>` |
 | Each CI job's step record: the `toJSON(steps)` dump that job writes | evidence for every fitness function whose step's `id:` is its claim code (see [Wiring into CI](#wiring-into-ci)) | `--ci-steps` |
 | Your CI config (`ci.yml`) | the scope discovery ranges over | `--ci` |
 | `package.json` | its `scripts`, which runner recognition follows; nothing else in it is read | `--package-json` |
@@ -101,7 +101,7 @@ npx spec-controller balance \
 ```
 
 - **Leave out any input you don't have.**
-- **Each runner flag names a layer's runner and the report it writes**, as `<runner>:<format>:<report>`. `balance` reads the step that runs the runner as that layer's suite, and each result in the report as evidence of that layer. See [Naming your runners](#naming-your-runners).
+- **Each runner flag names a layer's runner.** `balance` reads the step that runs the runner as that layer's suite, and each result in the runner's report as evidence of that layer. Here each runner is in its long form, `<runner>:<format>:<report>`, which names the report wherever it was written. When the step of `ci.yml` that runs a runner writes its report with the options of step 1, name the runner alone, as `--unit vitest`: `balance` finds the report from that step. See [Naming your runners](#naming-your-runners).
 - **`--target` names the project in the report.** Without `--target`, when the project is a git checkout with an `origin` remote, the report names the target by that origin, as in `owner/repo`. Otherwise the report reads `unknown-target`. When the name comes from the origin:
   - It leaves out any user, password, token, query or fragment in the remote.
   - An `https` or `ssh` URL is named `owner/repo`, and so is an scp remote such as `git@github.com:owner/repo.git`.
@@ -159,7 +159,7 @@ Each evidence observation names the scenario it answers **in the one form its ru
 | `@unit` | a JUnit 5 test in Kotlin | `[CLM-…]` in square brackets in the test's `@DisplayName`, which Gradle writes into the report (see [Citing a scenario from Kotlin](#citing-a-scenario-from-kotlin)) |
 | `@unit` | an RSpec example | `[CLM-…]` in square brackets in the example's description, given to `it`, or in an enclosing `describe` or `context` description (see [Citing a scenario from RSpec](#citing-a-scenario-from-rspec)) |
 | `@unit` | a pytest test | one claim code in a `clm` property on its `<testcase>` in the JUnit XML report, written by `@pytest.mark.clm("CLM-…")` (see [Citing a scenario from pytest](#citing-a-scenario-from-pytest)) |
-| `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario, or a test in any report a runner of that layer names | for Cucumber, nothing to add: the report carries the scenario's own claim code, and a row of an Outline with a `clm` column is credited by Cucumber's result for that row. For any other runner, the test cites the code as that runner's format does (above). Name the report, a Cucumber report too, in the long form of each layer's runner (see [Naming your runners](#naming-your-runners)) |
+| `@integration`, `@e2e`, `@performance` | a Cucumber run of the scenario, or a test in any report a runner of that layer names | for Cucumber, nothing to add: the report carries the scenario's own claim code, and a row of an Outline with a `clm` column is credited by Cucumber's result for that row. For any other runner, the test cites the code as that runner's format does (above). Name each layer's runner, a Cucumber runner too, under that layer's flag (see [Naming your runners](#naming-your-runners)) |
 | `@fitness` | a CI step | the step's `id:` is the code (see [Fitness functions](#fitness-functions)) |
 
 A Vitest citation:
@@ -197,12 +197,18 @@ A test that names nothing still runs, and `balance` still reports it. It lands o
 
 ### Citing a scenario from pytest
 
-A pytest test's name is a Python function name, and a function name cannot hold `[CLM-…]`. So a pytest test cites its scenario with a marker, and a hook you add once copies the marker into the report. Name the report in the runner's long form:
+A pytest test's name is a Python function name, and a function name cannot hold `[CLM-…]`. So a pytest test cites its scenario with a marker, and a hook you add once copies the marker into the report. When the CI step that runs pytest writes the report, name the runner alone:
+
+```yaml
+- name: Unit tests
+  run: python -m pytest --junitxml=reports/pytest.xml
+```
 
 ```sh
-pytest --junitxml=reports/pytest.xml
-spec-controller balance --unit pytest:pytest:reports/pytest.xml
+spec-controller balance --unit pytest
 ```
+
+`balance` reads the report the step's `--junitxml` or `--junit-xml` names. A report the step does not name, name in the runner's long form: `--unit pytest:pytest:reports/pytest.xml`.
 
 **1. Add the hook once**, in `conftest.py` beside your tests:
 
@@ -253,12 +259,18 @@ def test_offers_the_next_code():
 
 ### Citing a scenario from Jest
 
-A Jest test cites its scenario exactly as a Vitest test does: with the claim code in square brackets in its title. Jest's own JSON report records each test's title, so you need no reporter package and no setup file. Name the report in the runner's long form:
+A Jest test cites its scenario exactly as a Vitest test does: with the claim code in square brackets in its title. Jest's own JSON report records each test's title, so you need no reporter package and no setup file. When the CI step that runs Jest writes the report, name the runner alone:
+
+```yaml
+- name: Unit tests
+  run: npx jest --json --outputFile=reports/jest.json
+```
 
 ```sh
-npx jest --json --outputFile=reports/jest.json
-spec-controller balance --unit jest:jest:reports/jest.json
+spec-controller balance --unit jest
 ```
+
+`balance` reads the report the step's `--json --outputFile=<path>` names. A report the step does not name, name in the runner's long form: `--unit jest:jest:reports/jest.json`.
 
 A complete test file:
 
@@ -297,13 +309,20 @@ describe("allocating the next number", () => {
 
 ### Citing a scenario from Go
 
-A Go function name cannot hold brackets. So a Go test cites its scenario through a **subtest**: the claim code goes in square brackets in the name passed to `t.Run`. Run the suite through [gotestsum](https://github.com/gotestyourself/gotestsum), which writes a JUnit XML report, and name the report in the runner's long form, in the `junit` format:
+A Go function name cannot hold brackets. So a Go test cites its scenario through a **subtest**: the claim code goes in square brackets in the name passed to `t.Run`. Run the suite through [gotestsum](https://github.com/gotestyourself/gotestsum), which writes a JUnit XML report. When the CI step that runs gotestsum writes the report, name the runner alone:
+
+```yaml
+- name: Install gotestsum
+  run: go install gotest.tools/gotestsum@v1.13.0
+- name: Unit tests
+  run: gotestsum --junitfile reports/go.xml ./...
+```
 
 ```sh
-go install gotest.tools/gotestsum@v1.13.0
-gotestsum --junitfile reports/go.xml ./...
-spec-controller balance --unit gotestsum:junit:reports/go.xml
+spec-controller balance --unit gotestsum
 ```
+
+`balance` reads the report the step's `--junitfile` names, or the step's `env` names as `GOTESTSUM_JUNITFILE`. A report the step does not name, name in the runner's long form, in the `junit` format: `--unit gotestsum:junit:reports/go.xml`.
 
 A complete test file:
 
@@ -341,7 +360,7 @@ A nested subtest's name also includes the name of every enclosing subtest. `bala
 
 ### Citing a scenario from Java
 
-A Java method name cannot hold brackets. So a JUnit 5 test cites its scenario through its **display name**: the claim code goes in square brackets in `@DisplayName`. Run the suite with Maven, and name the directory Maven Surefire writes its reports into, in the runner's long form, in the `junit` format:
+A Java method name cannot hold brackets. So a JUnit 5 test cites its scenario through its **display name**: the claim code goes in square brackets in `@DisplayName`. Run the suite with Maven, and name the directory Maven Surefire writes its reports into, in the runner's long form, in the `junit` format. `balance` finds no report from a Maven step, so a Maven runner named alone reads `runner-report-not-named`:
 
 ```sh
 mvn clean test
@@ -401,7 +420,7 @@ Name the runner with its test task, in the words your pipeline's test step opens
 
 ### Citing a scenario from Kotlin
 
-A JUnit 5 test in Kotlin cites its scenario as a Java test does: with the claim code in square brackets in `@DisplayName`. A backticked function name cannot carry the claim code, because the JVM forbids brackets in a name and the build fails with *Name contains illegal characters*. Run the suite with Gradle, and name the directory its test task writes its reports into, in the runner's long form, in the `junit` format:
+A JUnit 5 test in Kotlin cites its scenario as a Java test does: with the claim code in square brackets in `@DisplayName`. A backticked function name cannot carry the claim code, because the JVM forbids brackets in a name and the build fails with *Name contains illegal characters*. Run the suite with Gradle, and name the directory its test task writes its reports into, in the runner's long form, in the `junit` format. `balance` finds no report from a Gradle step, so a Gradle runner named alone reads `runner-report-not-named`:
 
 ```sh
 ./gradlew test
@@ -446,14 +465,18 @@ Name the runner with its test task, in the words your pipeline's test step opens
 
 ### Citing a scenario from RSpec
 
-An RSpec example cites its scenario with the claim code in square brackets in its description, the string passed to `it`. RSpec's own JSON formatter keeps each example's description apart from its groups' descriptions, so you need no extra gem and no `spec_helper` change. Name the report in the runner's long form:
+An RSpec example cites its scenario with the claim code in square brackets in its description, the string passed to `it`. RSpec's own JSON formatter keeps each example's description apart from its groups' descriptions, so you need no extra gem and no `spec_helper` change. When the CI step that runs RSpec writes the report, name the runner alone:
 
-```sh
-bundle exec rspec --format progress --format json --out reports/rspec.json
-spec-controller balance --unit rspec:rspec:reports/rspec.json
+```yaml
+- name: Unit tests
+  run: bundle exec rspec --format progress --format json --out reports/rspec.json
 ```
 
-The first `--format` keeps RSpec's usual console output. The second writes the JSON report to the file `--out` names.
+```sh
+spec-controller balance --unit rspec
+```
+
+The first `--format` keeps RSpec's usual console output. The second writes the JSON report to the file `--out` names: an `--out` applies to the `--format` before it, and `balance` reads the path of the `--out` that follows `--format json`. A report the step does not name, name in the runner's long form: `--unit rspec:rspec:reports/rspec.json`.
 
 A complete spec file:
 
@@ -553,15 +576,17 @@ The scenario and the `id:` make the run **observable**: the report can say that 
 
 ```sh
 npx spec-controller balance \
-  --unit vitest:vitest:reports/vitest.json \
-  --integration cucumber-js:cucumber:reports/cucumber.json \
-  --e2e cucumber-js:cucumber:reports/cucumber.json \
+  --unit vitest \
+  --integration cucumber-js \
+  --e2e cucumber-js \
   --not-check "ci.yml:build:Install dependencies" \
   --not-check "ci.yml:build:Publish the package" \
   --deferral-tag deferred
 ```
 
-`package.json` is read only for its `scripts`, which runner recognition follows. `--package-json` points at it, and defaults to `package.json` in the working directory. A `specController` block in it is not read.
+Each runner here is named alone, so `balance` finds the report it writes from the CI step that runs it (see [Naming your runners](#naming-your-runners)).
+
+`package.json` is read only for its `scripts`, which runner recognition and report finding follow. `--package-json` points at it, and defaults to `package.json` in the working directory. A `specController` block in it is not read.
 
 ### How discovery works
 
@@ -572,10 +597,25 @@ Discovery does not depend on Node: it does not match `package.json` script names
 ### Naming your runners
 
 - **Each layer has its own flag:** `--unit`, `--integration`, `--e2e` and `--performance`. Each names a runner of that layer, and may repeat, so one layer may have several runners. A layer you name no runner for has none.
-- **The long form names the runner's report:** `<runner>:<format>:<report>`, as in `--e2e playwright:junit:out/playwright.xml`. It splits at its first two colons, so the report's path may hold a colon. The format is one of `vitest`, `jest`, `pytest`, `junit`, `rspec` and `cucumber`; a `junit` report may be a folder of JUnit XML files. `balance` reads the report at that path in that format, and each result in it is evidence of the runner's layer. So a Playwright or Cypress suite's JUnit report named under `--e2e` answers `@e2e` claims.
-- **One report may serve several layers.** Name it in the long form of each layer's runner; `balance` reads it once. A Cucumber result then takes the layers among them that its scenario's tags name, or every one when its tags name none; a result from any other report takes every one.
-- **A runner named alone, `<runner>`, names no report.** The report names it in `## Errors in the inputs` as `runner-report-not-named`. The runner is kept, so its step is still a runner, but no result of it is read. Name each runner in its long form.
-- **A long form whose report has no file at its path** is named in `## Errors in the inputs` as `runner-report-not-read`, with the path. The run goes on: the runner is kept, so its step is still a runner, and no result of it is read. Any other report that cannot be read, such as one that does not parse, refuses the run at exit `2`.
+- **A runner named alone, as `--unit vitest`, has its report found from the CI step that runs it.** `balance` reads the step's command for the option that names the report, in the spellings below. A step that runs a `package.json` script is read through the script, and any words after the script's name count as the words of the script's last command. Scripts come only from the `--package-json` file; a script in a subfolder's `package.json` is not followed. Each result in the report is evidence of the runner's layer.
+- **A path a step names is read from the step's folder:** the target's folder, the top of its git repository, joined with the step's `working-directory`, or else its job's `defaults.run.working-directory`. An absolute path is read as written.
+- **Every step that runs the runner names a report**, whatever else the step is, so a step whose `id:` is a claim code counts too. A runner that several steps run has a report from each, and `balance` reads every one. A report written in another job must be downloaded to the same path before `balance` runs.
+- **These are the spellings `balance` reads:**
+
+  | Runner | The step names its report with | Format |
+  |---|---|---|
+  | `vitest` | `--reporter=json --outputFile=<path>`, or `--reporter=json --outputFile.json=<path>` | `vitest` |
+  | `jest` | `--json --outputFile=<path>` | `jest` |
+  | `pytest` | `--junitxml=<path>` or `--junit-xml=<path>` | `pytest` |
+  | `cucumber-js` | `--format json:<path>` or `-f json:<path>` | `cucumber` |
+  | `rspec` | `--format json --out <path>`, where `--out` applies to the `--format` before it | `rspec` |
+  | `playwright` | `--reporter=junit`, with the step's `env` setting `PLAYWRIGHT_JUNIT_OUTPUT_FILE`, or `PLAYWRIGHT_JUNIT_OUTPUT_DIR` and `PLAYWRIGHT_JUNIT_OUTPUT_NAME`, or `PLAYWRIGHT_JUNIT_OUTPUT_NAME` alone | `junit` |
+  | `gotestsum` | `--junitfile <path>`, or the step's `env` setting `GOTESTSUM_JUNITFILE` | `junit` |
+
+- **The long form names the runner's report itself:** `<runner>:<format>:<report>`, as in `--e2e cypress:junit:out/cypress.xml`. `balance` then looks no further. Use it for a report `balance` cannot find from a step, such as Maven's or Gradle's. It splits at its first two colons, so the report's path may hold a colon. The format is one of `vitest`, `jest`, `pytest`, `junit`, `rspec` and `cucumber`; a `junit` report may be a folder of JUnit XML files. `balance` reads the report at that path, from where it runs, in that format, and each result in it is evidence of the runner's layer. So a Cypress suite's JUnit report named under `--e2e` answers `@e2e` claims.
+- **One report may serve several layers.** Name its runner under each layer's flag; `balance` reads the report once. A Cucumber result then takes the layers among them that its scenario's tags name, or every one when its tags name none; a result from any other report takes every one.
+- **A runner named alone whose report `balance` cannot find** is named in `## Errors in the inputs` as `runner-report-not-named`. That is a runner `balance` has no spelling for, a runner whose steps name no report, or a runner no step runs. A step names no report when the report is set only in the runner's own configuration file, or by an expression such as `${{ env.OUT }}/x.json`. The runner is kept, so its step is still a runner, but no result of it is read. Name its report in the long form.
+- **A report with no file at its path**, a long form's or a step's, is named in `## Errors in the inputs` as `runner-report-not-read`, with the path. The run goes on: the runner is kept, so its step is still a runner, and no result of that report is read. Any other report that cannot be read, such as one that does not parse, refuses the run at exit `2`.
 - **A runner `balance` cannot read** is left out, and named as `configuration-wrong-kind`: an empty one, or a long form with no runner, no report, or a format `balance` does not read.
 - **No runner at all is not an error.** Every step that is not a reconciler step, a non-check or a plumbing step becomes a fitness function. That is the zero-annotation report.
 - **`balance` recognises a runner only as the command a step runs**: the command a line of the step opens with, or a command after `&&` or `;` in that line, past any `NAME=value` settings. So a runner is recognised after a line that sets a variable, after a shell function's definition, and after an `if … fi` block. A runner named anywhere else, as an argument or a path, leaves the step a check. So does a step that pipes the runner's output onward, into another command or into a compound command such as a `while` loop, an `if` block or a subshell.
@@ -584,7 +624,7 @@ Discovery does not depend on Node: it does not match `package.json` script names
 - **A runner named in several words is recognised where a command opens with all of those words.** This covers `mvn test`, `./mvnw test`, `./gradlew test`, `./gradlew check`, `./gradlew :app:test` and `gotestsum`. A build tool runs more than its tests, so name it with its test task. Then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: `rspec` covers `bundle exec rspec`.
 - **Any other variant is a check.** A launcher, script runner or wrapper not listed here leaves the step a check that runs the runner. Name such a step with `--not-check`, or run the runner in one of the variants above.
 
-These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json). [Naming your non-checks](#naming-your-non-checks) lists them and says how they are matched.
+These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The spellings that name a runner's report are listed in [`runners.variants.json`](../packages/core/src/inputs/runners.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json). [Naming your non-checks](#naming-your-non-checks) lists them and says how they are matched.
 
 ### Naming your non-checks
 
@@ -628,8 +668,8 @@ A run names each configuration setting it cannot use, with one of these codes:
 | Code | The setting |
 | --- | --- |
 | `configuration-wrong-kind` | a setting in a form its flag does not take (an empty runner, non-check or deferral tag, or a runner with a colon that is not a long form naming a runner, a format `balance` reads and a report) is left out |
-| `runner-report-not-named` | a runner named alone, with no report, is kept, so its step is still a runner, but no result of it is read |
-| `runner-report-not-read` | a long form whose report has no file at its path keeps its runner, and no result of it is read |
+| `runner-report-not-named` | a runner named alone whose report no step names is kept, so its step is still a runner, but no result of it is read |
+| `runner-report-not-read` | a report, named in a long form or by a step, that has no file at its path keeps its runner, and no result of that report is read |
 | `not-checks-entry-matches-no-step` | a `--not-check` that matches no step of a workflow the run read makes no step a non-check |
 | `not-checks-entry-not-a-step-name` | a `--not-check` that does not name a step as `<workflow file>:<job id>:<step name>` makes no step a non-check |
 
@@ -684,7 +724,7 @@ jobs:
           npx spec-controller balance \
             --target your-project \
             --features features \
-            --unit vitest:vitest:reports/vitest.json \
+            --unit vitest \
             --not-check "ci.yml:build:Install dependencies" \
             --ci-steps ci-steps.json \
             --ci .github/workflows/ci.yml \
@@ -693,7 +733,7 @@ jobs:
             --exit-zero
 ```
 
-`--unit vitest:vitest:reports/vitest.json` makes the Test step your unit suite, and `--not-check` makes the install a step that is not a check. Checkout and setup-node are GitHub's own setup actions. The last two steps are the reconciler's own. The Complexity step is the one fitness function. In your own repository, pin the actions to commit SHAs, and pin spec-controller to an exact version.
+`--unit vitest` makes the Test step your unit suite, and `balance` reads the report that step's `--outputFile` names, `reports/vitest.json`; `--not-check` makes the install a step that is not a check. Checkout and setup-node are GitHub's own setup actions. The last two steps are the reconciler's own. The Complexity step is the one fitness function. In your own repository, pin the actions to commit SHAs, and pin spec-controller to an exact version.
 
 ### If you have converted any fitness function
 
@@ -722,11 +762,11 @@ Each check step carries its claim code as its `id:`, and the job ends with one d
 One `balance` run reads the test reports and the CI step records together.
 
 ```sh
-# after your test steps have written vitest-report.json / cucumber-report.json,
+# after your test steps have written their reports,
 # and the dump step has written ci-steps.json
 spec-controller balance --features ./features \
-  --unit vitest:vitest:./vitest-report.json \
-  --integration cucumber-js:cucumber:./cucumber-report.json \
+  --unit vitest \
+  --integration cucumber-js \
   --ci-steps ./ci-steps.json \
   --ci ./.github/workflows/ci.yml \
   --package-json ./package.json \
@@ -734,7 +774,7 @@ spec-controller balance --features ./features \
   --format json:reconciliation.json
 ```
 
-Drop `--ci-steps` if you have converted nothing.
+Drop `--ci-steps` if you have converted nothing. `balance` reads each runner's report at the path its test step names. When a test step runs in another job, download its report to that path before `balance` runs.
 
 **Keep the reports as build artefacts, but do not commit them to the repository.** An Evidence Reconciliation lists a codebase's gaps, phantom claims and passes that cannot fail. That makes it more sensitive than the code itself, so it belongs outside version control.
 
@@ -962,7 +1002,7 @@ An unexpected error is not a refusal, but its line carries the code `unexpected-
 
 ```sh
 spec-controller balance --features ./features \
-  --unit vitest:vitest:./vitest-report.json \
+  --unit vitest \
   --integration cucumber-js:cucumber:./cucumber-report.json
 ```
 
@@ -975,14 +1015,14 @@ Help answers only when nothing else on the command line is refused. A usage erro
 | Flag | Purpose |
 |---|---|
 | `--features <dir>` | A directory of Gherkin `.feature` files: the scenarios. The tool reads every `.feature` file under it, at any depth, and names each one in the report by its path within the directory. |
-| `--unit <runner>[:<format>:<report>]` | A unit runner. In its long form, the format of the report it writes, one of `vitest`, `jest`, `pytest`, `junit`, `rspec` and `cucumber`, and the report's path: a `junit` report may be a folder of JUnit XML files. `balance` reads that report, and each result in it is unit evidence. Named alone, the runner names no report (`runner-report-not-named`). Repeatable. See [Naming your runners](#naming-your-runners). |
+| `--unit <runner>[:<format>:<report>]` | A unit runner. Named alone, the runner has its report found from the CI step that runs it, and reads `runner-report-not-named` when no step names one. In its long form, the format of the report it writes, one of `vitest`, `jest`, `pytest`, `junit`, `rspec` and `cucumber`, and the report's path: a `junit` report may be a folder of JUnit XML files. `balance` reads each report the runner has, and each result in it is unit evidence. Repeatable. See [Naming your runners](#naming-your-runners). |
 | `--integration <runner>[:<format>:<report>]` | An integration runner, as `--unit` names a unit one. Repeatable. |
 | `--e2e <runner>[:<format>:<report>]` | An e2e runner, as `--unit` names a unit one. Repeatable. |
 | `--performance <runner>[:<format>:<report>]` | A performance runner, as `--unit` names a unit one. Repeatable. |
 | `--not-check <workflow>:<job>:<step>` | A CI step that is not a check, as its workflow file, job id and step name. Repeatable. See [Naming your non-checks](#naming-your-non-checks). |
 | `--deferral-tag <tag>` | A tag that defers the scenarios it is on, beside the built-in set. Repeatable. See [Deferring a scenario](#deferring-a-scenario). |
-| `--ci <workflow.yml\|dir>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where a check step's `id:` supplies the claim code its result cites. |
-| `--package-json <path>` | The target's `package.json`, read only for its `scripts`, which runner recognition follows (see [Configuration](#configuration--runners-non-checks-and-deferral-tags)). A fitness function is named by its `@fitness` scenario and by the CI step whose `id:` is that scenario's claim code; no setting names one. Defaults to `package.json` in the working directory. |
+| `--ci <workflow.yml\|dir>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where a check step's `id:` supplies the claim code its result cites, and where a runner named alone has its report found. |
+| `--package-json <path>` | The target's `package.json`, read only for its `scripts`, which runner recognition and report finding follow (see [Configuration](#configuration--runners-non-checks-and-deferral-tags)). A fitness function is named by its `@fitness` scenario and by the CI step whose `id:` is that scenario's claim code; no setting names one. Defaults to `package.json` in the working directory. |
 | `--ci-steps <record.json>` | A CI job's record of what each of its steps did: the `toJSON(steps)` dump, which is the evidence for fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. Repeatable: `balance` reads every record you name. |
 | `--target <name>` | A name recorded verbatim in the report's provenance: the project this run reconciled. |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
@@ -1007,7 +1047,7 @@ Help answers only when nothing else on the command line is refused. A usage erro
 
 **No output may land on a file the run reads.** The run reads these files:
 
-- each report a runner's long form names, and each report in a `junit` folder it names;
+- each report a runner's long form names, or a step names for a runner named alone, and each report in a `junit` folder it names;
 - the `--ci-steps` or `--package-json` file;
 - the `package.json` read by default;
 - any feature file of the `--features` corpus, or of the `features/` read by default;

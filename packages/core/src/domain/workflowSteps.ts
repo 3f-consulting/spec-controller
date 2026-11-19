@@ -14,4 +14,6 @@ export interface CiStep {
   readonly identity: string;
   readonly plumbing: boolean;
   readonly writesStepRecord: boolean;
+  readonly workingDirectory?: string;
+  readonly environment?: Readonly<Record<string, string>>;
 }

@@ -56,7 +56,7 @@ spec-controller balance \
   --integration cucumber-js:cucumber:./cucumber-report.json
 ```
 
-`--unit` and `--integration` each name a runner of that layer, in the long form `<runner>:<format>:<report>`: the runner, the format of the report it writes, and the report's path. Each result in the report is evidence of the runner's layer.
+`--unit` and `--integration` each name a runner of that layer, in the long form `<runner>:<format>:<report>`: the runner, the format of the report it writes, and the report's path. Each result in the report is evidence of the runner's layer. When the CI step that runs the runner writes its report, name the runner alone, as `--unit vitest`: `balance` finds the report from that step, in the workflows in `.github/workflows` or the ones `--ci` names.
 
 A scenario tagged `@unit` raises an evidence obligation: a unit test must exist and pass. The evidence answers it by citing the scenario's claim code in its test name. Where the two agree, the Claim Reconciliation is **balanced**. Where they do not, it says how: evidence missing, evidence failing, or evidence that cites a scenario nobody wrote.
 
@@ -83,7 +83,7 @@ The tool writes the whole report before it sets the exit code. So a failing run 
 - an unparseable report, or a report that parses but is not in the shape its runner writes;
 - a corpus the Gherkin parser rejects.
 
-The refusal names the input, the path, and what was wrong with it. A well-formed report with nothing in it is read, not refused. A report a runner's long form names, with no file at its path, is not refused either: the report names the path under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on. An example is a Vitest run that matched no test file.
+The refusal names the input, the path, and what was wrong with it. A well-formed report with nothing in it is read, not refused. A runner's report with no file at its path, named in a long form or by the CI step that runs the runner, is not refused either: the report names the path under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on. An example is a Vitest run that matched no test file.
 
 **An output location it cannot write is also `2`.** This covers a `--format` path that is read-only, is a directory, is under a regular file, or is in a directory that does not exist. The tool refuses it before it prints any report. The refusal names the location and the reason.
 

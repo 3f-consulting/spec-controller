@@ -189,8 +189,9 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then the report's step account will count two steps
 
     @unit @CLM-CLI-210
-    Scenario: balance posts the results of every evidence report the run names for one runner
-      given the run named two Vitest evidence reports, each with one result citing a different claim
+    Scenario: balance posts the results of every evidence report a runner's steps write
+      given the run named vitest as the unit runner
+      and a workflow had two steps running vitest, one writing out/a.json and one writing out/b.json, each with one result citing a different claim
       when balance reads its inputs
       then it will post both results
 
@@ -214,6 +215,18 @@ Feature: the command line reads what you give it, and says where each kind of ou
       and no file was at out/playwright.xml
       when balance reads its inputs
       then the run will not stop
+
+    @unit
+    Scenario Outline: balance reads the evidence report a named runner's CI step writes, in that runner's format
+      given the run named <runner> as the unit runner
+      and a workflow had a step running <command>, in the working directory <working directory>
+      when balance reads its inputs
+      then it will read <report> as <format>
+
+      Examples:
+        | clm         | runner | command                                                 | working directory | report              | format                   |
+        | CLM-CLI-214 | vitest | vitest run --reporter=json --outputFile=out/vitest.json | the target's      | out/vitest.json     | a Vitest evidence report |
+        | CLM-CLI-215 | vitest | vitest run --reporter=json --outputFile=out/vitest.json | web               | web/out/vitest.json | a Vitest evidence report |
 
   Rule: a command validates every input before it does its work
 
