@@ -787,6 +787,8 @@ Both include a **provenance** that records what was reconciled: the target, the 
 
 The package ships a JSON Schema that states the JSON's structure: `dist/spec-reconciliation.schema.json` inside the installed `spec-controller` package (in a local install, `node_modules/spec-controller/dist/`). The schema names every key the JSON may carry and refuses any other. The report names the version of the schema it follows in `schemaVersion`, and a change to the JSON's structure raises it. Validate a report you are handed against the schema of the version that wrote it, which the report's provenance names.
 
+**The JSON speaks the glossary's words, on purpose.** It is the Evidence Reconciliation written out, so its keys and values are the terms of [`ubiquitous-language.md`](./ubiquitous-language.md), as the Markdown's headings are. When a term changes, the JSON changes with it, and its schema's version rises: CI refuses any change to the schema that does not raise `schemaVersion`. Read a report against the schema its version names.
+
 ### How a run works
 
 1. It reads your Gherkin scenarios and their `@`-tags into **evidence obligations**: the debit side, what is specified.
