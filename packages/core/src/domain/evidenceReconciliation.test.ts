@@ -135,6 +135,22 @@ describe("a run counting only the executable claims is balanced or out of balanc
   });
 });
 
+describe("a run counting only the executable claims is not reconciled for a reason an executable claim gives, or for having none", () => {
+  const rows = [
+    ["CLM-EVR-093", "a claim asking for unit evidence, whose unit test never ran", ["@CLM-ONE-001"], [["unit", "never-ran", "ONE-001"]], "unsound"],
+    ["CLM-EVR-094", "no executable claim, and a passing unit test citing no code", [], [["unit", "passed"]], "nothing-to-reconcile"],
+    ["CLM-EVR-095", "no executable claim, and a unit test citing a code no claim has, which never ran", [], [["unit", "never-ran", "ONE-002"]], "nothing-to-reconcile"],
+  ] as const;
+
+  it.each(rows)("[%s] a run with %s, counting only the executable claims, is not reconciled, naming why", (_clm, _what, corpus, evidence, why) => {
+    expect(runVerdictOfRun(corpus, evidence, true)).toEqual({ verdict: "not-reconciled", why });
+  });
+
+  it.each(rows)("[%s] a run with %s, reconciled in one call counting only the executable claims, is not reconciled, naming why", (_clm, _what, corpus, evidence, why) => {
+    expect(reconciledRunVerdictOf(corpus, evidence, true)).toEqual({ verdict: "not-reconciled", why });
+  });
+});
+
 describe("when several reasons apply, the run verdict follows a fixed order among them", () => {
   it.each([
     ["CLM-EVR-009", "evidence that never ran and a claim out of balance", ["@CLM-ONE-001"], [["unit", "never-ran", "ONE-009"]], "unsound"],
