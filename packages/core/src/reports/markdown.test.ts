@@ -37,6 +37,18 @@ describe("the provenance shows each input the run read on its own line", () => {
   });
 });
 
+describe("a reader can tell when the run verdict left out the phantom claims and the unnamed claim", () => {
+  it.each([
+    ["CLM-RPT-176", "counted only the executable claims", "will say", true, 1],
+    ["CLM-RPT-177", "counted every claim", "will not say", false, 0],
+  ] as const)("[%s] a run that %s has a Markdown provenance that %s that the run verdict counted only the executable claims", (_clm, _how, _says, countedOnlyExecutableClaims, lines) => {
+    const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: { ...PROVENANCE, countedOnlyExecutableClaims } }));
+    const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
+
+    expect(provenance.filter((line) => line === `- ${coreText("provenance-counted-only-executable-claims")}`)).toHaveLength(lines);
+  });
+});
+
 describe("the step account totals its jobs only when it has more than one", () => {
   const counts: StepCounts = { stepsRead: 2, runners: 0, reconcilerSteps: 1, nonChecks: 0, plumbing: 0, fitnessFunctions: 1 };
 
