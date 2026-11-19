@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.foo.FooTest" tests="1" skipped="0" failures="0" errors="0" timestamp="1970-01-01T00:00:00Z" hostname="localhost" time="1.0">
+  <properties/>
+  <testcase name="test-case" classname="com.foo.FooTest" time="1.0">
+    <system-out><![CDATA[test-out]]></system-out>
+    <system-err><![CDATA[test-err]]></system-err>
+  </testcase>
+  <system-out><![CDATA[suite-out]]></system-out>
+  <system-err><![CDATA[suite-err]]></system-err>
+</testsuite>
