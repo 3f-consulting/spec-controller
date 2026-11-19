@@ -10,6 +10,7 @@ import {
   targetFolderOf,
   type ConfigurationSettings,
   type EvidenceReportKind,
+  type ReadersGave,
   type ReportGiven,
   type ReportLocation,
 } from "@3f-consulting/spec-controller-core";
@@ -27,6 +28,9 @@ import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/r
 
 // A run has no step and no step record of an input it did not read.
 const NONE: readonly never[] = [];
+
+// The shell and git, as every run asks them.
+const ASKED: Pick<ReadersGave, "shell" | "repositoryOf"> = { shell: shellAnswers, repositoryOf: repositoryOfOrigin };
 
 // Every input kind the run could read, with each path it read for it, its links followed: the inputs from where the run
 // started, and the reports its steps write from the target's folder.
@@ -93,8 +97,7 @@ export function balance(
     settings: settingsLocated,
     reportsNotFound: [...(read.reportsNotFound ?? NONE), ...(found.reportsNotFound ?? NONE)],
     scripts,
-    shell: shellAnswers,
-    repositoryOf: repositoryOfOrigin,
+    ...ASKED,
     identity,
     provenanceInputs: provenanceInputsOf(inputPathsOf(read, folder, found, targetFolder)),
     targetFolder,
