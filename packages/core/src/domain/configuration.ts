@@ -3,7 +3,7 @@ import type { CiStep } from "./workflowSteps.js";
 
 export type Layer = Exclude<QualityCheckKind, "fitness">;
 
-// A step named in notChecks: its workflow, job and step name.
+// A step a non-check names: its workflow, job and step name.
 interface StepAddress {
   readonly workflow: string;
   readonly job: string;
@@ -29,7 +29,7 @@ export interface TargetConfiguration {
   readonly deferralTags: readonly string[];
 }
 
-// entry is the setting as written, such as runners.unit or deferralTags[0].
+// entry is the setting as written, such as a runner's long form or a deferral tag; for a report error, the runner or the report's path.
 export interface ConfigurationError {
   readonly kind:
     | "configuration-wrong-kind"
@@ -48,7 +48,7 @@ export interface NonCheck {
 // One part of a setting, in the order it is written: what the settings' reader took from it, or the error that left it out.
 export type SettingPart<Value> = { readonly taken: Value } | { readonly error: ConfigurationError };
 
-// A target's settings as its reader took them, before they are checked against the run.
+// The settings a run names, as their reader took them, before they are checked against the run.
 export interface ConfigurationSettings {
   readonly runners: readonly SettingPart<readonly [Layer, Runner]>[];
   readonly nonChecks: readonly SettingPart<NonCheck>[];
@@ -87,7 +87,7 @@ function nonCheckChecked({ entry, address }: NonCheck, steps: readonly CiStep[])
   return inItsWorkflow.length === 0 || named ? { value: address, errors: [] } : { value: undefined, errors: [{ kind: "not-checks-entry-matches-no-step", entry }] };
 }
 
-// The target's configuration: the settings checked against the steps and the report paths with no file, with every error.
+// The target's configuration: the settings the run names, checked against the steps and the report paths with no file, with every error.
 export function targetConfigurationOf(
   settings: ConfigurationSettings,
   steps: readonly CiStep[],

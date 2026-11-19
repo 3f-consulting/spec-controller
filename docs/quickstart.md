@@ -50,13 +50,14 @@ Then reconcile it:
 npx spec-controller balance \
   --target your-project \
   --features features \
-  --vitest reports/vitest.json \
+  --unit vitest:vitest:reports/vitest.json \
   --ci .github/workflows/ci.yml \
   --package-json package.json \
   --exit-zero
 ```
 
-- **Every path you pass must exist.** Each report flag points at a file your tools have already written. Leave out any input you don't have. The command refuses a folder that does not exist, so if you have no `features/` folder yet, leave out `--features`.
+- **`--unit vitest:vitest:reports/vitest.json` names your unit runner and its report:** the runner, the format of the report it writes, and the report's path. `balance` reads that report, and each result in it is unit evidence.
+- **Every path you pass must exist.** A report's path names a file your tools have already written. A report with no file at its path is named under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on without it. Leave out any input you don't have. The command refuses a folder that does not exist, so if you have no `features/` folder yet, leave out `--features`.
 - **`--target` names the project in the report.** Without `--target`, the report uses the name of the git checkout's `origin`. With no `origin`, the report reads `unknown-target`.
 - **`--exit-zero` stops the build going red while you watch.** A first run against a pipeline with no citations goes red, because every fitness function (each CI step treated as a check) cites nothing. Every evidence observation then posts to the **unnamed claim**, which collects the evidence that names no scenario. Without `--exit-zero`, `balance` exits `1`. With it, you get the same report, but an out-of-balance run verdict exits `0`. Remove the flag when you are ready to gate.
 
@@ -66,7 +67,7 @@ For the report command of every other runner, see [Every report, and the whole c
 
 `balance` lists every CI step as a check, except these, which post nothing:
 
-- a step that runs a declared runner;
+- a step that runs a runner you name;
 - GitHub's own checkout, setup, cache and artifact actions;
 - the reconciler's own steps: the steps that write the step record and run `balance`;
 - a non-check.
@@ -75,27 +76,26 @@ This list is a starting inventory. The value begins when you name the behaviours
 
 ### Tell it which steps are your tests, and which check nothing
 
-Two settings in `package.json` make the list shorter:
+More flags make the list shorter. Each may repeat:
 
-```jsonc
-"specController": {
-  "runners": {
-    "unit": "vitest",             // the command your CI runs for @unit
-    "integration": { "runner": "cucumber-js", "reports": ["cucumber.json"] }, // its runner, and the report it writes
-    "e2e": { "runner": "cucumber-js", "reports": ["cucumber.json"] },         // two layers, one runner, which is normal
-    "performance": null           // we have no performance runner
-  },
-  "notChecks": [
-    "ci.yml:build:Install dependencies",
-    "ci.yml:build:Publish the package"
-  ]
-}
+```sh
+npx spec-controller balance \
+  --target your-project \
+  --features features \
+  --unit vitest:vitest:reports/vitest.json \
+  --integration cucumber-js:cucumber:reports/cucumber.json \
+  --e2e cucumber-js:cucumber:reports/cucumber.json \
+  --not-check "ci.yml:build:Install dependencies" \
+  --not-check "ci.yml:build:Publish the package" \
+  --ci .github/workflows/ci.yml \
+  --package-json package.json \
+  --exit-zero
 ```
 
-- **`runners`** declares the command that runs each layer of tests. `balance` then reads that step as your test suite, not as a check. An entry may also name, by file name, the reports the runner writes. Each result in such a report is evidence of that layer. A report no entry names is unit evidence, or integration evidence for a Cucumber report. `null` means *we have no runner for this layer*.
-- **`notChecks`** lists steps that do work but check nothing, such as publishing. Each entry is `<workflow file>:<job id>:<step name>`, and must match exactly.
+- **`--unit`, `--integration`, `--e2e` and `--performance`** each name a runner of that layer, in the long form `<runner>:<format>:<report>`. `balance` then reads the step that runs the runner as your test suite, not as a check, and each result in the runner's report as evidence of that layer. One runner may serve two layers, as `cucumber-js` does here: name it under each, with the same report. A layer you name no runner for has none.
+- **`--not-check`** names a step that does work but checks nothing, such as publishing. It is written `<workflow file>:<job id>:<step name>`, and must match exactly.
 
-See [Naming your runners — `runners`](./user-guide.md#naming-your-runners--runners) and [Naming your non-checks — `notChecks`](./user-guide.md#naming-your-non-checks--notchecks).
+See [Naming your runners](./user-guide.md#naming-your-runners) and [Naming your non-checks](./user-guide.md#naming-your-non-checks).
 
 ## Cite one scenario from one test
 
@@ -189,7 +189,7 @@ A single Reconcile step then reads the reports and the record. It runs the comma
     npx spec-controller balance \
       --target your-project \
       --features features \
-      --vitest reports/vitest.json \
+      --unit vitest:vitest:reports/vitest.json \
       --ci-steps ci-steps.json \
       --ci .github/workflows/ci.yml \
       --package-json package.json \
@@ -198,7 +198,7 @@ A single Reconcile step then reads the reports and the record. It runs the comma
       --exit-zero
 ```
 
-Add `--cucumber reports/cucumber.json` if you have a Cucumber report. Drop `--ci-steps` if you have converted no check. Remove `--exit-zero` when you are ready to gate.
+Add the other runners and the non-checks you named, such as `--integration cucumber-js:cucumber:reports/cucumber.json` for a Cucumber report. Drop `--ci-steps` if you have converted no check. Remove `--exit-zero` when you are ready to gate.
 
 Save the reports as build artefacts, but do not commit them: a report lists the gaps in your codebase. See [Wiring into CI](./user-guide.md#wiring-into-ci) and [GitHub Actions — put the report on the run summary](./user-guide.md#github-actions--put-the-report-on-the-run-summary).
 
@@ -237,5 +237,5 @@ See [Reading the report](./user-guide.md#reading-the-report), [Report rows to kn
 ## Where to go next
 
 - Every flag: [Command reference — `balance`](./user-guide.md#command-reference--balance).
-- All configuration: [Configuration — the `specController` block](./user-guide.md#configuration--the-speccontroller-block).
+- All configuration: [Configuration — runners, non-checks and deferral tags](./user-guide.md#configuration--runners-non-checks-and-deferral-tags).
 - When something reads wrong: [Troubleshooting](./user-guide.md#troubleshooting).
