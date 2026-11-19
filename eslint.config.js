@@ -203,7 +203,10 @@ if (CONCEPT_CODES.length === 0) {
 }
 
 const TEST_TITLE = vitestCall("describe|it|test");
+// A table's rows fill a title's placeholders, so a code written in a row is cited by the title it fills.
+const TEST_TABLE = `${TEST_TITLE}[callee.property.name=/^(each|for)$/]`;
 const CONCEPT_CITATION = `/\\[CLM-(${CONCEPT_CODES.join("|")})-\\d+\\]/`;
+const CONCEPT_CODE = `/^CLM-(${CONCEPT_CODES.join("|")})-\\d+$/`;
 const MISPLACED_TEST =
   "A test citing a domain concept's scenario tests a rule of core's domain. Move it to packages/core/src/domain/.";
 const DOMAIN_TEST_SELECTORS = [
@@ -212,6 +215,7 @@ const DOMAIN_TEST_SELECTORS = [
     selector: `${TEST_TITLE} > TemplateLiteral.arguments:first-child > TemplateElement[value.raw=${CONCEPT_CITATION}]`,
     message: MISPLACED_TEST,
   },
+  { selector: `${TEST_TABLE} Literal[value=${CONCEPT_CODE}]`, message: MISPLACED_TEST },
 ];
 
 // A driven adapter's folder whose tests run a domain claim's examples through that real adapter, citing the claim.

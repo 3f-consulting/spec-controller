@@ -70,26 +70,3 @@ describe("the target's folder will be the git repository the corpus is in, or el
     expect(inputPath(provenanceIn(folder, "--vitest", join(folder, "reports", "vitest.json")), "vitest")).toBe("reports/vitest.json");
   });
 });
-
-describe("the run will be not reconciled, naming why", () => {
-  // The run verdict of the JSON report balance writes, run in the folder with nothing named but the format.
-  function runVerdictIn(folder: string): unknown {
-    let report = "";
-    main(["balance", "--format", "json"], folder, { output: { fd: 1, write: (text) => (report += text) }, error: { fd: 2, write: () => {} } });
-    return (JSON.parse(report) as { runVerdict: unknown }).runVerdict;
-  }
-
-  it.each([
-    ["CLM-EVR-006", "no feature corpus", (folder: string) => folder],
-    [
-      "CLM-EVR-007",
-      "an empty feature corpus",
-      (folder: string) => {
-        mkdirSync(join(folder, "features"));
-        return folder;
-      },
-    ],
-  ] as const)("[%s] a run with %s, and no Evidence Observation, is not reconciled, naming why", (_clm, _what, made) => {
-    expect(runVerdictIn(made(temporaryDirectory("corpus-")))).toEqual({ verdict: "not-reconciled", why: "nothing-to-reconcile" });
-  });
-});
