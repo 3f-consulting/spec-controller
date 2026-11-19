@@ -266,6 +266,27 @@ describe("balance reads the evidence report the run names for a runner, at that 
   });
 });
 
+interface VerdictReported {
+  readonly runVerdict: { readonly verdict: string };
+  readonly errorsInTheInputs: { readonly configurationErrors: readonly { readonly entry: string }[] };
+}
+
+describe("an evidence report the run names for a runner, with no file at its path, will not stop the run", () => {
+  it("[CLM-CLI-213] --e2e playwright:junit:out/playwright.xml, with no file at out/playwright.xml: the run reaches its verdict with nothing on standard error, its report naming out/playwright.xml among the errors in the inputs", () => {
+    const folder = folderWith({ "features/one.feature": ONE_E2E_CLAIM });
+
+    const { exitCode, output, error } = ran(["balance", "--e2e", "playwright:junit:out/playwright.xml", "--format", "json"], folder);
+
+    const reported = (output === "" ? undefined : JSON.parse(output)) as VerdictReported | undefined;
+    expect({ exitCode, error, verdict: reported?.runVerdict.verdict, named: reported?.errorsInTheInputs.configurationErrors.map(({ entry }) => entry) }).toEqual({
+      exitCode: 1,
+      error: "",
+      verdict: "out-of-balance",
+      named: ["out/playwright.xml"],
+    });
+  });
+});
+
 const TWO_FITNESS_CLAIMS = "@ONE\nFeature: one\n\n  @fitness @CLM-ONE-001\n  Scenario: one\n\n  @fitness @CLM-ONE-002\n  Scenario: two\n";
 const TWO_JOBS = "jobs:\n  first:\n    steps:\n      - id: CLM-ONE-001\n        run: pnpm one\n  second:\n    steps:\n      - id: CLM-ONE-002\n        run: pnpm two\n";
 

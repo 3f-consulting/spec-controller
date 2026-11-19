@@ -208,6 +208,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads its inputs
       then it will read out/playwright.xml as e2e evidence
 
+    @unit @CLM-CLI-213
+    Scenario: an evidence report the run names for a runner, with no file at its path, will not stop the run
+      given the run named playwright as the e2e runner, with out/playwright.xml as its JUnit evidence report
+      and no file was at out/playwright.xml
+      when balance reads its inputs
+      then the run will not stop
+
   Rule: a command validates every input before it does its work
 
     The inputs a command validates are each evidence report, each step record, the feature corpus,
