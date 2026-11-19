@@ -5,9 +5,10 @@ import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimCodeErrorsOf } from "./claimCodes.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
-import { runVerdictOf, stepAccountOf, totalsOf } from "./evidenceReconciliation.js";
+import { NO_SETTINGS } from "./configuration.js";
+import { reconcile, runVerdictOf, stepAccountOf, totalsOf, type RunVerdict } from "./evidenceReconciliation.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
-import { stepDispositionOf, type EvidenceObservation, type Result, type RecordedStep } from "./postEvidenceObservation.js";
+import { stepDispositionOf, type EvidenceObservation, type Result, type RecordedStep, type TestResult } from "./postEvidenceObservation.js";
 
 // Evidence as a row gives it: its kind, its result, and the code it cites, such as ONE-001, if any.
 type Observed = readonly [EvidenceObservation["kind"], Result, string?];
@@ -32,8 +33,36 @@ function runVerdictOfRun(corpus: readonly string[], observed: readonly Observed[
   return runVerdictOf(claimReconciliations, claimCodeErrorsOf(features));
 }
 
+// Evidence as a reader gives it: one test's result in one.test.ts, citing the code given, if any, in its title.
+const testResultOf = ([, result, code]: readonly [EvidenceObservation["kind"], TestResult["result"], string?]): TestResult => ({
+  place: { file: "/target/one.test.ts" },
+  name: "a test",
+  result,
+  cites: { titles: code === undefined ? ["a test"] : [`[CLM-${code}] a test`] },
+});
+
+// The run verdict of the corpus and evidence given, as reconcile gives it from what the readers would give: each test's
+// result in a report of its own kind, and no CI step, settings or scripts.
+function reconciledRunVerdictOf(corpus: readonly string[], observed: readonly (readonly [EvidenceObservation["kind"], TestResult["result"], string?])[]): RunVerdict {
+  const features = corpus.map((entry, at) => featureAsWrittenFrom(`f${at}.feature`, entry.includes("Feature:") ? entry : scenariosTagged(`@unit ${entry}`)));
+  return reconcile({
+    features,
+    reports: observed.map((evidence) => ({ report: "report.json", results: [testResultOf(evidence)], defaultLayer: evidence[0], needsFeatures: false })),
+    steps: [],
+    stepRecord: [],
+    settings: NO_SETTINGS,
+    scripts: {},
+    shell: shellAnswers,
+    repositoryOf: () => undefined,
+    identity: { runTime: "2026-01-01T00:00:00.000Z" },
+    provenanceInputs: [],
+    targetFolder: "/target",
+    strict: false,
+  }).runVerdict;
+}
+
 describe("the run will be balanced or out of balance, as its Claim Reconciliations call for", () => {
-  it.each([
+  const rows = [
     ["CLM-EVR-001", "only balanced Claim Reconciliations", ["@CLM-ONE-001"], [["unit", "passed", "ONE-001"]], "balanced"],
     [
       "CLM-EVR-002",
@@ -46,8 +75,14 @@ describe("the run will be balanced or out of balance, as its Claim Reconciliatio
       "out-of-balance",
     ],
     ["CLM-EVR-003", "no feature corpus, and Evidence Observations citing no claim code", [], [["unit", "passed"]], "out-of-balance"],
-  ] as const)("[%s] a run with %s has its run verdict", (_clm, _what, corpus, evidence, verdict) => {
+  ] as const;
+
+  it.each(rows)("[%s] a run with %s has its run verdict", (_clm, _what, corpus, evidence, verdict) => {
     expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict });
+  });
+
+  it.each(rows)("[%s] a run with %s, reconciled in one call from what the readers gave, has its run verdict", (_clm, _what, corpus, evidence, verdict) => {
+    expect(reconciledRunVerdictOf(corpus, evidence)).toEqual({ verdict });
   });
 });
 
