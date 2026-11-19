@@ -208,7 +208,7 @@ function refusalOf(request: InputNamed, read: Extract<InputRead<unknown>, { ok: 
 }
 
 // The inputs read as a list, each read's list joined to the ones before it.
-const LIST_INPUTS = ["workflowSteps", "vitest", "jest", "pytest", "junit", "rspec", "cucumber"] as const satisfies readonly (keyof InputsRead)[];
+const LIST_INPUTS = ["workflowSteps", "stepRecord", "vitest", "jest", "pytest", "junit", "rspec", "cucumber"] as const satisfies readonly (keyof InputsRead)[];
 
 const merged = (reads: readonly Partial<InputsRead>[]): Partial<InputsRead> =>
   reads.reduce<Partial<InputsRead>>(

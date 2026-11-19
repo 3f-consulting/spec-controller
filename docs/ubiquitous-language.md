@@ -91,7 +91,7 @@ Correctness is the agreement of two independent records. The debit side is the `
 
 | Term | Meaning |
 |---|---|
-| `balance` | spec-controller's command that reconciles a target. It reads the target's `executable claims` from its feature files, and its evidence from the `test run reports` and the CI `step record`. It reconciles them into an `Evidence Reconciliation` and writes the report from it. It ends with its `run verdict`'s exit code: `0` balanced, `1` out of balance, `3` not reconciled; or `2` for a usage error and `4` for an unexpected error. |
+| `balance` | spec-controller's command that reconciles a target. It reads the target's `executable claims` from its feature files, and its evidence from the `test run reports` and the CI `step records`. It reconciles them into an `Evidence Reconciliation` and writes the report from it. It ends with its `run verdict`'s exit code: `0` balanced, `1` out of balance, `3` not reconciled; or `2` for a usage error and `4` for an unexpected error. |
 | `allocate` | The command that prints the next claim code for a feature code: one past the highest code the repository has ever contained, whether written under `CLM` or under the retired `SCN`. |
 | evidence report | A report a test runner writes, which `balance` reads as runtime test evidence: the Vitest, Cucumber, pytest, Jest, JUnit or RSpec report. Each is named by its own flag. |
 | report of test results | An evidence report of tests that are not scenarios run step by step: the Vitest, Jest, pytest, JUnit or RSpec report. Its fallback is `unit`. |
@@ -122,7 +122,7 @@ Correctness is the agreement of two independent records. The debit side is the `
 | step account | The report's account of the CI steps the run read: `## Step account` (`stepAccount` in the JSON). The Markdown prints it when the run read a CI workflow step, so that every step read is accounted for. The JSON always includes it, with no rows when no step was read. It has one row per workflow and job. Each row counts the steps read, then the steps by disposition (runners, reconciler steps, non-checks, plumbing, fitness functions). A total over the rows follows, which the Markdown prints when there is more than one job. A step the run read counts as a fitness function when it is not a declared runner, the reconciler, a non-check or a plumbing step. It also counts as one when it is a runner step whose `id:` is a claim code the step record has. |
 | check step | The CI step that already runs a check, with the check's claim code as its `id:`. |
 | citation | An `evidence observation`'s naming of its claim's code, in the form its runner writes. One citation names one claim. The user guide gives each runner's form, and what is not read → [*How your evidence finds its scenario*](./user-guide.md#how-your-evidence-finds-its-scenario). |
-| step record | The CI run's own record of what each of its steps did: the `toJSON(steps)` dump `--ci-steps` reads. |
+| step record | One job's record of how each of its steps ended, written by `toJSON(steps)` and named with `--ci-steps`. balance reads every one the run names. |
 
 ### Configuration
 
