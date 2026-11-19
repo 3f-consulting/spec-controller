@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { breaksFound } from "./reportVariants.test-utils.js";
 import vitestVariants from "./vitest.variants.json" with { type: "json" };
@@ -17,6 +18,12 @@ describe("an input that is not valid will stop the run", () => {
     const { found, listed } = breaksFound(vitestVariants["broken-vitest-reports"], whereResultsByFileBreak);
 
     expect(found).toEqual(listed);
+  });
+
+  it.each(["json-reporter.json"])("[CLM-CLI-151] a Vitest evidence report Vitest's own JSON reporter wrote, %s, is in Vitest's shape", (name) => {
+    const report: unknown = JSON.parse(readFileSync(new URL(`./real-reports/vitest/${name}`, import.meta.url), "utf8"));
+
+    expect(whereResultsByFileBreak(report)).toBeUndefined();
   });
 
   it("[CLM-CLI-153] the Jest evidence report each of those is edited from is in Jest's shape", () => {

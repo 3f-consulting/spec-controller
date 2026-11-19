@@ -1,0 +1,149 @@
+{
+  "numFailedTestSuites": 1,
+  "numFailedTests": 1,
+  "numPassedTestSuites": 1,
+  "numPassedTests": 6,
+  "numPendingTestSuites": 0,
+  "numPendingTests": 1,
+  "numTodoTests": 1,
+  "numTotalTestSuites": 2,
+  "numTotalTests": 9,
+  "snapshot": {
+    "_test": true,
+    "added": 100
+  },
+  "startTime": 1642587001759,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "suite"
+          ],
+          "benchmarks": [],
+          "duration": 1.4422860145568848,
+          "failureMessages": [
+            "AssertionError: expected 2.23606797749979 to equal 2\n    at /vitest/test/unit/test/basic.test.ts:8:32\n    at /vitest/packages/vitest/dist/vi-ac0504aa.js:73:26\n    at runTest (/vitest/packages/vitest/dist/entry.js:1689:40)\n    at async runSuite (/vitest/packages/vitest/dist/entry.js:1741:13)\n    at async runSuites (/vitest/packages/vitest/dist/entry.js:1769:5)\n    at async startTests (/vitest/packages/vitest/dist/entry.js:1774:3)\n    at async /vitest/packages/vitest/dist/entry.js:1798:7\n    at async withEnv (/vitest/packages/vitest/dist/entry.js:1481:5)\n    at async run (/vitest/packages/vitest/dist/entry.js:1797:5)\n    at async file:///vitest/node_modules/.pnpm/tinypool@0.1.1/node_modules/tinypool/dist/esm/worker.js:96:20"
+          ],
+          "fullName": "suite Math.sqrt()",
+          "location": {
+            "column": 32,
+            "line": 8
+          },
+          "meta": {},
+          "status": "failed",
+          "tags": [],
+          "title": "Math.sqrt()"
+        },
+        {
+          "ancestorTitles": [
+            "suite"
+          ],
+          "benchmarks": [],
+          "duration": 1.0237109661102295,
+          "failureMessages": [],
+          "fullName": "suite JSON",
+          "meta": {},
+          "status": "passed",
+          "tags": [],
+          "title": "JSON"
+        },
+        {
+          "ancestorTitles": [
+            "suite"
+          ],
+          "benchmarks": [],
+          "failureMessages": [],
+          "fullName": "suite async with timeout",
+          "meta": {},
+          "status": "skipped",
+          "tags": [],
+          "title": "async with timeout"
+        },
+        {
+          "ancestorTitles": [
+            "suite"
+          ],
+          "benchmarks": [],
+          "duration": 100.50598406791687,
+          "failureMessages": [],
+          "fullName": "suite timeout",
+          "meta": {},
+          "status": "passed",
+          "tags": [],
+          "title": "timeout"
+        },
+        {
+          "ancestorTitles": [
+            "suite"
+          ],
+          "benchmarks": [],
+          "duration": 20.184875011444092,
+          "failureMessages": [],
+          "fullName": "suite callback setup success ",
+          "meta": {},
+          "status": "passed",
+          "tags": [],
+          "title": "callback setup success "
+        },
+        {
+          "ancestorTitles": [
+            "suite"
+          ],
+          "benchmarks": [],
+          "duration": 0.33245420455932617,
+          "failureMessages": [],
+          "fullName": "suite callback test success ",
+          "meta": {},
+          "status": "passed",
+          "tags": [],
+          "title": "callback test success "
+        },
+        {
+          "ancestorTitles": [
+            "suite"
+          ],
+          "benchmarks": [],
+          "duration": 19.738605976104736,
+          "failureMessages": [],
+          "fullName": "suite callback setup success done(false)",
+          "meta": {},
+          "status": "passed",
+          "tags": [],
+          "title": "callback setup success done(false)"
+        },
+        {
+          "ancestorTitles": [
+            "suite"
+          ],
+          "benchmarks": [],
+          "duration": 0.1923508644104004,
+          "failureMessages": [],
+          "fullName": "suite callback test success done(false)",
+          "meta": {},
+          "status": "passed",
+          "tags": [],
+          "title": "callback test success done(false)"
+        },
+        {
+          "ancestorTitles": [
+            "suite"
+          ],
+          "benchmarks": [],
+          "failureMessages": [],
+          "fullName": "suite todo test",
+          "meta": {},
+          "status": "todo",
+          "tags": [],
+          "title": "todo test"
+        }
+      ],
+      "endTime": 1642587001759,
+      "message": "",
+      "name": "/vitest/test/unit/test/basic.test.ts",
+      "startTime": 1642587001759,
+      "status": "failed"
+    }
+  ]
+}
