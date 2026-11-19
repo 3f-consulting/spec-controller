@@ -119,7 +119,7 @@ describe("when several reasons apply, the run verdict follows a fixed order amon
 // The totals of the corpus and evidence given, read and reconciled as balance does.
 function totalsOfRun(corpus: readonly string[], observed: readonly Observed[]): ReturnType<typeof totalsOf> {
   const features = corpus.map((source, at) => featureAsWrittenFrom(`f${at}.feature`, source));
-  return totalsOf(claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observed.map(observationOf)), features);
+  return totalsOf(claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observed.map(observationOf)), features, 0);
 }
 
 describe("Total of the Claim Reconciliations", () => {
@@ -214,7 +214,7 @@ describe("Total of the out-of-balance Claim Reconciliations, by feature file", (
     ["CLM-EVR-026", "the unnamed claim", "none", "", [["unit", "passed"]], []],
   ] as const)("[%s] a Claim Reconciliation out of balance, for %s, is counted under its feature file", (_clm, _claim, file, source, observed, byFeature) => {
     const features = source === "" ? [] : [featureAsWrittenFrom(file, source)];
-    const totals = totalsOf(claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observed.map(observationOf)), features);
+    const totals = totalsOf(claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observed.map(observationOf)), features, 0);
 
     expect({ outOfBalance: totals.claimReconciliations.outOfBalance, byFeature: totals.outOfBalanceByFeature }).toEqual({ outOfBalance: 1, byFeature });
   });
@@ -239,7 +239,7 @@ describe("Total of the excluded claim code occurrences", () => {
       1,
     ],
   ] as const)("[%s] a feature file with the claim code CLM-ONE-001 as %s has its excluded claim code occurrences counted", (_clm, _written, source, excluded) => {
-    expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)]).excludedClaimCodeOccurrences).toBe(excluded);
+    expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)], 0).excludedClaimCodeOccurrences).toBe(excluded);
   });
 });
 
@@ -247,7 +247,7 @@ describe("a claim code in a scenario's title, with punctuation stuck to its end,
   it.each(evidenceReconciliationVariants["punctuation-after-a-claim-code"].variants)("[CLM-EVR-028] a feature file with the claim code CLM-ONE-001%s as a word in a scenario's title has one excluded claim code occurrence", (punctuation) => {
     const source = `@ONE\nFeature: one\n\n  @unit\n  Scenario: adds one, as @CLM-ONE-001${punctuation} says\n    Given a step\n`;
 
-    expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)]).excludedClaimCodeOccurrences).toBe(1);
+    expect(totalsOf([], [featureAsWrittenFrom("one.feature", source)], 0).excludedClaimCodeOccurrences).toBe(1);
   });
 });
 

@@ -7,7 +7,7 @@ import { PROVENANCE } from "./reconciledRun.test-utils.js";
 // A run with nothing reconciled, and the parts given.
 const runWith = (parts: Pick<EvidenceReconciliation, "runVerdict" | "provenance"> & Partial<EvidenceReconciliation>): EvidenceReconciliation => ({
   claimReconciliations: [],
-  totals: totalsOf([], []),
+  totals: totalsOf([], [], 0),
   stepAccount: stepAccountOf([]),
   errorsInTheInputs: { claimCodeErrors: [], configurationErrors: [] },
   runIntegrity: { neverRan: [] },

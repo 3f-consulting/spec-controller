@@ -59,9 +59,14 @@ const obligationsOf = (tags: readonly string[], strict: boolean): EvidenceObliga
 const clmCellsOf = ({ examples }: FeatureScenario): (string | undefined)[] | undefined =>
   anyClmColumn(examples) ? examples.flatMap(({ rows }) => rows.map(({ clmCell }) => clmCell)) : undefined;
 
-// A deferral tag on the scenario, its Rule or its file defers it; only its own tags raise obligations.
-function claimsOf({ file, fileTags }: FeatureFile, scenario: FeatureScenario, settings: ClaimReadingSettings): ExecutableClaim[] {
-  if (isDeferred([...scenario.tags, ...scenario.ruleTags, ...fileTags], settings)) return [];
+// A deferral tag on the scenario, its Rule or its file defers it.
+const isScenarioDeferred = ({ fileTags }: FeatureFile, { tags, ruleTags }: FeatureScenario, settings: ClaimReadingSettings): boolean =>
+  isDeferred([...tags, ...ruleTags, ...fileTags], settings);
+
+// Only a scenario's own tags raise obligations.
+function claimsOf(feature: FeatureFile, scenario: FeatureScenario, settings: ClaimReadingSettings): ExecutableClaim[] {
+  if (isScenarioDeferred(feature, scenario, settings)) return [];
+  const { file } = feature;
   const obligations = obligationsOf(scenario.tags, settings.strict);
   const tagged = scenario.tags.flatMap((tag) => claimCodeFrom(tag) ?? []);
   const claim = (claimCode: ClaimCode | undefined): ExecutableClaim => ({ file, title: scenario.title, obligations, ...(claimCode && { claimCode }) });
@@ -72,4 +77,9 @@ function claimsOf({ file, fileTags }: FeatureFile, scenario: FeatureScenario, se
 
 export function executableClaimsOf(features: readonly FeatureFile[], settings: ClaimReadingSettings): ExecutableClaim[] {
   return features.flatMap((feature) => feature.scenarios.flatMap((scenario) => claimsOf(feature, scenario, settings)));
+}
+
+// The scenarios a deferral tag sets aside, by the reading that raises no claim for them: an Outline is one scenario.
+export function deferredScenariosOf(features: readonly FeatureFile[], settings: ClaimReadingSettings): number {
+  return features.reduce((sum, feature) => sum + feature.scenarios.filter((scenario) => isScenarioDeferred(feature, scenario, settings)).length, 0);
 }

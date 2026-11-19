@@ -1,7 +1,7 @@
 import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, isExecutable, type ClaimReconciliation, type CreditJournal, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import { targetConfigurationOf, type ConfigurationError, type ConfigurationSettings, type TargetConfiguration } from "./configuration.js";
-import { executableClaimsOf, QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
+import { deferredScenariosOf, executableClaimsOf, QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import {
   disposedStepsOf,
   fitnessObservationsOf,
@@ -202,7 +202,7 @@ function excludedClaimCodeOccurrencesOf(features: readonly FeatureFile[]): numbe
   return features.reduce((sum, { wordsWrittenAsTags, scenarios }) => sum + claimCodesIn(wordsWrittenAsTags) - claimCodesIn(scenarios.flatMap(({ tags }) => tags)), 0);
 }
 
-export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], features: readonly FeatureFile[]): Totals {
+export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], features: readonly FeatureFile[], deferredScenarios: number): Totals {
   const balanced = claimReconciliations.filter(({ verdict }) => verdict === "balanced").length;
   return {
     claimReconciliations: { total: claimReconciliations.length, balanced, outOfBalance: claimReconciliations.length - balanced },
@@ -210,6 +210,7 @@ export function totalsOf(claimReconciliations: readonly ClaimReconciliation[], f
     evidenceObservations: whereFiledOf(claimReconciliations),
     outOfBalanceByFeature: outOfBalanceByFeatureOf(claimReconciliations),
     excludedClaimCodeOccurrences: excludedClaimCodeOccurrencesOf(features),
+    deferredScenarios,
   };
 }
 
@@ -219,19 +220,21 @@ export interface RunReconciled {
   readonly claimCodeErrors: readonly ClaimCodeError[];
   readonly configurationErrors: readonly ConfigurationError[];
   readonly features: readonly FeatureFile[];
+  // The scenarios a deferral tag set aside, which raise no claim.
+  readonly deferredScenarios: number;
   readonly stepAccount: StepAccount;
   readonly provenance: Provenance;
 }
 
 // The Evidence Reconciliation assembled from its parts: every part is present, empty when the run had nothing for it.
-export function evidenceReconciliationOf({ claimReconciliations, claimCodeErrors, configurationErrors, features, stepAccount, provenance }: RunReconciled): EvidenceReconciliation {
+export function evidenceReconciliationOf({ claimReconciliations, claimCodeErrors, configurationErrors, features, deferredScenarios, stepAccount, provenance }: RunReconciled): EvidenceReconciliation {
   const neverRan = claimReconciliations.flatMap(({ qualityCheckReconciliations }) =>
     qualityCheckReconciliations.flatMap((reconciliation) => (reconciliation.outcome === "never-ran" ? [reconciliation.observation] : [])),
   );
   return {
     claimReconciliations,
     runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors),
-    totals: totalsOf(claimReconciliations, features),
+    totals: totalsOf(claimReconciliations, features, deferredScenarios),
     stepAccount,
     provenance,
     errorsInTheInputs: { claimCodeErrors, configurationErrors },
@@ -288,12 +291,14 @@ export function reconcile(given: ReadersGave): EvidenceReconciliation {
   const { configuration, errors } = targetConfigurationOf(settings, steps, reports.map(({ report }) => report));
   // Each step with what it is: posting and the step account both take it, and posting the same record.
   const disposedSteps = disposedStepsOf(steps, configuration, scripts, shell, stepRecord);
-  const debitJournal = executableClaimsOf(features, { deferralTags: configuration.deferralTags, strict });
+  const claimReading = { deferralTags: configuration.deferralTags, strict };
+  const debitJournal = executableClaimsOf(features, claimReading);
   return evidenceReconciliationOf({
     claimReconciliations: claimReconciliationsOf(debitJournal, creditJournalOf(given, configuration, disposedSteps)),
     claimCodeErrors: claimCodeErrorsOf(features),
     configurationErrors: errors,
     features,
+    deferredScenarios: deferredScenariosOf(features, claimReading),
     stepAccount: stepAccountOf(disposedSteps),
     provenance: provenanceOf(identity, provenanceInputs, targetFolder, repositoryOf),
   });
