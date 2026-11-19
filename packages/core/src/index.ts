@@ -1,13 +1,13 @@
 export type { Allocation, AllocationAsked, ClaimCodeOccurrence, HistoryBoundary } from "./domain/claimCodes.js";
 export type { CreditJournal, DebitJournal } from "./domain/claimReconciliation.js";
-export type { FeatureFile } from "./domain/postEvidenceObligation.js";
-export type { DisposedStep, EvidenceObservation, RecordedStep, TestCitation, TestPlace, TestResult } from "./domain/postEvidenceObservation.js";
+export type { FeatureFile, QualityCheckKind } from "./domain/postEvidenceObligation.js";
+export type { DisposedStep, EvidenceObservation, RecordedStep, Scripts, ShellAnswers, TestCitation, TestPlace, TestResult } from "./domain/postEvidenceObservation.js";
 export type { CiStep } from "./domain/workflowSteps.js";
 export type { EvidenceReportFormat, EvidenceReportKind } from "./inputs/evidenceReportFormats.js";
 export type { EvidenceReconciliation, ReadersGave, ReportGiven, RunVerdict, StepAccount } from "./domain/evidenceReconciliation.js";
 export type { JsonReport } from "./reports/json.js";
-export type { RunIdentity, ProvenanceInput } from "./domain/provenance.js";
-export type { RunnerEntry, TargetConfiguration } from "./domain/configuration.js";
+export type { RunIdentity, ProvenanceInput, RepositoryOfOrigin } from "./domain/provenance.js";
+export type { ConfigurationSettings, RunnerEntry, TargetConfiguration } from "./domain/configuration.js";
 export type { FileIdentity, OutputRefusal, OutputRequest } from "./domain/outputPlan.js";
 export { allocationOf, claimCodeErrorsOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from "./domain/claimCodes.js";
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";

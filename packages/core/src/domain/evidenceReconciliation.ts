@@ -1,4 +1,4 @@
-import { claimCodeErrorsOf, type ClaimCodeError } from "./claimCodes.js";
+import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, isExecutable, type ClaimReconciliation, type CreditJournal, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import { targetConfigurationOf, type ConfigurationError, type ConfigurationSettings, type TargetConfiguration } from "./configuration.js";
 import { executableClaimsOf, QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
@@ -16,7 +16,6 @@ import {
   type TestResult,
 } from "./postEvidenceObservation.js";
 import type { CiStep } from "./workflowSteps.js";
-import { claimCodeFrom } from "./claimCodes.js";
 import { provenanceOf, type Provenance, type ProvenanceInput, type RepositoryOfOrigin, type RunIdentity } from "./provenance.js";
 
 export type RunVerdict =
