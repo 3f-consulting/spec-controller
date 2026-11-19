@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { configurationSettingsNamed, type SettingsNamed } from "../inputs/commandLineSettings.js";
+import commandLineSettingsVariants from "../inputs/commandLineSettings.variants.json" with { type: "json" };
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { targetConfigurationFrom, whereManifestBreaks } from "../inputs/manifest.js";
 import manifestVariants from "../inputs/manifest.variants.json" with { type: "json" };
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
-import { targetConfigurationOf, type TargetConfiguration } from "./configuration.js";
+import { targetConfigurationOf, type ConfigurationError, type TargetConfiguration } from "./configuration.js";
 import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { runVerdictOf } from "./evidenceReconciliation.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
@@ -96,81 +97,71 @@ describe("balance takes each configuration setting it can use as the runner, non
   });
 });
 
+// Install dependencies, in job ci, in ci.yml: the one step read.
+const CI_READ: readonly CiStep[] = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false }];
+
+// The configuration and the errors balance finds in the settings a run names, with ci.yml read and no file at each report path given.
+const checkedFrom = (named: Partial<SettingsNamed>, reportsNotFound: readonly string[] = []) =>
+  targetConfigurationOf(configurationSettingsNamed({ runners: {}, nonChecks: [], deferralTags: [], ...named }), CI_READ, [], reportsNotFound);
+
 describe("balance leaves out a configuration setting it cannot use, naming the error", () => {
-  it.each([
-    ["CLM-CFG-004", '"unit": 3 under runners', { runners: { unit: 3 } }, { kind: "configuration-wrong-kind", entry: "runners.unit" }],
-    ["CLM-CFG-003", '"unittest": "vitest" under runners', { runners: { unittest: "vitest" } }, { kind: "runner-key-not-a-layer", entry: "runners.unittest" }],
-    ["CLM-CFG-005", '"runer": {} beside runners', { runners: {}, runer: {} }, { kind: "configuration-unknown-key", entry: "runer" }],
-    [
-      "CLM-CFG-015",
-      '"ci.yml:ci:No such step" in notChecks, with ci.yml read',
-      { notChecks: ["ci.yml:ci:No such step"] },
-      { kind: "not-checks-entry-matches-no-step", entry: "ci.yml:ci:No such step" },
-    ],
+  it.each<[string, string, Partial<SettingsNamed>, ConfigurationError]>([
+    ["CLM-CFG-004", "--unit vitest:vitest, a long form with no report", { runners: { unit: ["vitest:vitest"] } }, { kind: "configuration-wrong-kind", entry: "vitest:vitest" }],
+    ["CLM-CFG-015", "--not-check ci.yml:ci:No such step, with ci.yml read", { nonChecks: ["ci.yml:ci:No such step"] }, { kind: "not-checks-entry-matches-no-step", entry: "ci.yml:ci:No such step" }],
     [
       "CLM-CFG-022",
-      '"ci.yml:lint:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies and whose job lint had none',
-      { notChecks: ["ci.yml:lint:Install dependencies"] },
+      "--not-check ci.yml:lint:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies and whose job lint had none",
+      { nonChecks: ["ci.yml:lint:Install dependencies"] },
       { kind: "not-checks-entry-matches-no-step", entry: "ci.yml:lint:Install dependencies" },
     ],
-    ["CLM-CFG-016", '"Install dependencies" in notChecks', { notChecks: ["Install dependencies"] }, { kind: "not-checks-entry-not-a-step-name", entry: "Install dependencies" }],
+    ["CLM-CFG-016", "--not-check Install dependencies", { nonChecks: ["Install dependencies"] }, { kind: "not-checks-entry-not-a-step-name", entry: "Install dependencies" }],
+  ])("[%s] a run named %s leaves it out, finding its error naming it", (_clm, _named, named, error) => {
+    expect(checkedFrom(named)).toEqual({ configuration: NONE, errors: [error] });
+  });
+
+  it.each([
+    ["CLM-CFG-003", '"unittest": "vitest" under runners', { runners: { unittest: "vitest" } }, { kind: "runner-key-not-a-layer", entry: "runners.unittest" }],
+    ["CLM-CFG-005", '"runer": {} beside runners', { runners: {}, runer: {} }, { kind: "configuration-unknown-key", entry: "runer" }],
     ["CLM-CFG-019", '"notChecks": "Install"', { notChecks: "Install" }, { kind: "configuration-wrong-kind", entry: "notChecks" }],
     ["CLM-CFG-020", "3 in deferralTags", { deferralTags: [3] }, { kind: "configuration-wrong-kind", entry: "deferralTags[0]" }],
   ] as const)("[%s] a specController block with %s leaves it out, finding its error naming the setting", (_clm, _setting, block, error) => {
-    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false }];
-
-    expect(targetConfigurationFrom({ specController: block }, ciRead, [])).toEqual({ configuration: NONE, errors: [error] });
+    expect(targetConfigurationFrom({ specController: block }, CI_READ, [])).toEqual({ configuration: NONE, errors: [error] });
   });
 
-  // Each variant of a malformed runner entry, as the entry is written.
-  const malformedEntry: Readonly<Record<string, unknown>> = {
-    "an entry with no runner": { reports: ["playwright.xml"] },
-    "an entry with no reports": { runner: "playwright" },
-    "an entry whose reports are not a list": { runner: "playwright", reports: "playwright.xml" },
-    "an entry whose reports hold something other than a file name": { runner: "playwright", reports: ["playwright.xml", 3] },
+  // Each variant of a setting balance cannot use, as the run names it, with the value its error names.
+  const cannotUse: Readonly<Record<string, readonly [Partial<SettingsNamed>, string]>> = {
+    "a long form whose format is not one balance reads": [{ runners: { unit: ["vitest:tap:out/vitest.tap"] } }, "vitest:tap:out/vitest.tap"],
+    "a long form with no runner": [{ runners: { e2e: [":junit:out/playwright.xml"] } }, ":junit:out/playwright.xml"],
+    "a long form with an empty report": [{ runners: { unit: ["vitest:vitest:"] } }, "vitest:vitest:"],
+    "an empty runner": [{ runners: { unit: [""] } }, ""],
+    "an empty non-check": [{ nonChecks: [""] }, ""],
+    "an empty deferral tag": [{ deferralTags: [""] }, ""],
+    "a deferral tag that is @ alone": [{ deferralTags: ["@"] }, "@"],
   };
 
-  it.each(manifestVariants["malformed-runner-entries"].variants)("[CLM-CFG-004] a specController block with %s as the e2e runner leaves it out, finding its error naming the setting", (variant) => {
-    expect(targetConfigurationFrom({ specController: { runners: { e2e: malformedEntry[variant] } } }, [], ["playwright.xml"])).toEqual({
-      configuration: NONE,
-      errors: [{ kind: "configuration-wrong-kind", entry: "runners.e2e" }],
+  it.each(commandLineSettingsVariants["settings-it-cannot-use"].variants)("[CLM-CFG-004] a run naming %s leaves it out, finding the error configuration-wrong-kind naming it as written", (variant) => {
+    const [named, entry] = cannotUse[variant]!;
+
+    expect(checkedFrom(named)).toEqual({ configuration: NONE, errors: [{ kind: "configuration-wrong-kind", entry }] });
+  });
+
+  it("[CLM-CFG-025] a run named --e2e playwright:junit:out/playwright.xml, with no file at out/playwright.xml, leaves the report out, finding its error naming its path, and keeps the runner", () => {
+    expect(checkedFrom({ runners: { e2e: ["playwright:junit:out/playwright.xml"] } }, ["out/playwright.xml"])).toEqual({
+      configuration: { ...NONE, runners: { ...NO_RUNNERS, e2e: [{ name: "playwright" }] } },
+      errors: [{ kind: "runner-report-not-read", entry: "out/playwright.xml" }],
     });
   });
 
-  it('[CLM-CFG-025] a specController block with "e2e": { "runner": "playwright", "reports": ["playwright.xml"] } under runners, with no report named playwright.xml read, leaves the report name out, finding its error naming it, and keeps the runner', () => {
-    const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: playwright test\n");
-    const { configuration, errors } = targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } } }, [], ["junit.xml"]);
-
-    expect({ configuration, errors, playwrightStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({
-      configuration: { ...NONE, runners: { ...NO_RUNNERS, e2e: [{ name: "playwright", reports: [] }] } },
-      errors: [{ kind: "runner-report-not-read", entry: "playwright.xml" }],
-      playwrightStep: "runner",
-    });
-  });
-
-  // Each variant of a report name that matches no report's file name, as the entry writes it.
-  const unreadReport: Readonly<Record<string, string>> = { "a report name with a folder in it": "out/playwright.xml" };
-
-  it.each(manifestVariants["report-names-matching-no-report-read"].variants)("[CLM-CFG-025] a specController block naming %s as the e2e runner's report, with playwright.xml read, leaves the report name out, finding its error naming it", (variant) => {
-    const report = unreadReport[variant]!;
-
-    expect(targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: [report] } } } }, [], ["playwright.xml"])).toEqual({
-      configuration: { ...NONE, runners: { ...NO_RUNNERS, e2e: [{ name: "playwright", reports: [] }] } },
-      errors: [{ kind: "runner-report-not-read", entry: report }],
-    });
-  });
-
-  // Each variant of a notChecks entry beside a line break, as the entry is written.
+  // Each variant of a non-check beside a line break, as the run names it.
   const withALineBreak: Readonly<Record<string, string>> = {
     "a line break before it": "\nci.yml:ci:Install dependencies",
     "a line break after it": "ci.yml:ci:Install dependencies\n",
   };
 
-  it.each(manifestVariants["line-breaks-around-a-non-check"].variants)('[CLM-CFG-016] a specController block with "ci.yml:ci:Install dependencies" with %s in notChecks leaves it out, finding its error naming the entry', (variant) => {
+  it.each(commandLineSettingsVariants["line-breaks-around-a-non-check"].variants)("[CLM-CFG-016] a run named --not-check ci.yml:ci:Install dependencies with %s leaves it out, finding its error naming the non-check", (variant) => {
     const entry = withALineBreak[variant]!;
-    const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
-    expect(targetConfigurationFrom({ specController: { notChecks: [entry] } }, ciRead, [])).toEqual({ configuration: NONE, errors: [{ kind: "not-checks-entry-not-a-step-name", entry }] });
+    expect(checkedFrom({ nonChecks: [entry] })).toEqual({ configuration: NONE, errors: [{ kind: "not-checks-entry-not-a-step-name", entry }] });
   });
 });
 

@@ -3,18 +3,6 @@
     "claim": "CLM-CFG-021",
     "variants": ["null", "a number", "a string", "a list"]
   },
-  "line-breaks-around-a-non-check": {
-    "claim": "CLM-CFG-016",
-    "variants": ["a line break before it", "a line break after it"]
-  },
-  "malformed-runner-entries": {
-    "claim": "CLM-CFG-004",
-    "variants": ["an entry with no runner", "an entry with no reports", "an entry whose reports are not a list", "an entry whose reports hold something other than a file name"]
-  },
-  "report-names-matching-no-report-read": {
-    "claim": "CLM-CFG-025",
-    "variants": ["a report name with a folder in it"]
-  },
   "runners-settings-not-objects": {
     "claim": "CLM-CFG-018",
     "variants": ["null", "a number", "a string", "a list"]

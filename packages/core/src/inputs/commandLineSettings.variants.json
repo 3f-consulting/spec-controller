@@ -1,0 +1,18 @@
+{
+  "settings-it-cannot-use": {
+    "claim": "CLM-CFG-004",
+    "variants": [
+      "a long form whose format is not one balance reads",
+      "a long form with no runner",
+      "a long form with an empty report",
+      "an empty runner",
+      "an empty non-check",
+      "an empty deferral tag",
+      "a deferral tag that is @ alone"
+    ]
+  },
+  "line-breaks-around-a-non-check": {
+    "claim": "CLM-CFG-016",
+    "variants": ["a line break before it", "a line break after it"]
+  }
+}

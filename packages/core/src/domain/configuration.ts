@@ -109,6 +109,7 @@ export function targetConfigurationOf(
   settings: ConfigurationSettings,
   steps: readonly CiStep[],
   reportsRead: readonly string[],
+  reportsNotFound?: readonly string[],
 ): { readonly configuration: TargetConfiguration; readonly errors: readonly ConfigurationError[] } {
   const runners = checked(settings.runners, (runner) => runnerChecked(runner, reportsRead));
   const nonChecks = checked(settings.nonChecks, (nonCheck) => nonCheckChecked(nonCheck, steps));

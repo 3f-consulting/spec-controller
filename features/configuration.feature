@@ -34,23 +34,23 @@ Feature: balance reads and validates the configuration settings the run names
 
     @unit
     Scenario Outline: balance leaves out a configuration setting it cannot use, naming the error
-      given the specController block had <configuration setting>
+      given the run named <configuration setting>
       when balance validates it
       then the run will not use it
-      and balance will find the error <error>, naming <setting>
+      and balance will find the error <error>, naming <naming>
 
       Examples:
-        | clm         | configuration setting                                                                                                                         | error                            | setting                          |
-        | CLM-CFG-004 | "unit": 3 under runners                                                                                                                       | configuration-wrong-kind         | runners.unit                     |
-        | CLM-CFG-003 | "unittest": "vitest" under runners                                                                                                            | runner-key-not-a-layer           | runners.unittest                 |
-        | CLM-CFG-018 | "runners": null                                                                                                                               | configuration-wrong-kind         | runners                          |
-        | CLM-CFG-025 | "e2e": { "runner": "playwright", "reports": ["playwright.xml"] } under runners, with no report named playwright.xml read                      | runner-report-not-read           | playwright.xml                   |
-        | CLM-CFG-005 | "runer": {} beside runners                                                                                                                    | configuration-unknown-key        | runer                            |
-        | CLM-CFG-015 | "ci.yml:ci:No such step" in notChecks, with ci.yml read                                                                                       | not-checks-entry-matches-no-step | ci.yml:ci:No such step           |
-        | CLM-CFG-022 | "ci.yml:lint:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies and whose job lint had none | not-checks-entry-matches-no-step | ci.yml:lint:Install dependencies |
-        | CLM-CFG-016 | "Install dependencies" in notChecks                                                                                                           | not-checks-entry-not-a-step-name | Install dependencies             |
-        | CLM-CFG-019 | "notChecks": "Install"                                                                                                                        | configuration-wrong-kind         | notChecks                        |
-        | CLM-CFG-020 | 3 in deferralTags                                                                                                                             | configuration-wrong-kind         | deferralTags[0]                  |
+        | clm         | configuration setting                                                                                                                      | error                            | naming                           |
+        | CLM-CFG-004 | --unit vitest:vitest, a long form with no report                                                                                           | configuration-wrong-kind         | vitest:vitest                    |
+        | CLM-CFG-003 | a specController block with "unittest": "vitest" under runners                                                                             | runner-key-not-a-layer           | runners.unittest                 |
+        | CLM-CFG-018 | a specController block with "runners": null                                                                                                | configuration-wrong-kind         | runners                          |
+        | CLM-CFG-025 | --e2e playwright:junit:out/playwright.xml, with no file at out/playwright.xml                                                              | runner-report-not-read           | out/playwright.xml               |
+        | CLM-CFG-005 | a specController block with "runer": {} beside runners                                                                                     | configuration-unknown-key        | runer                            |
+        | CLM-CFG-015 | --not-check ci.yml:ci:No such step, with ci.yml read                                                                                       | not-checks-entry-matches-no-step | ci.yml:ci:No such step           |
+        | CLM-CFG-022 | --not-check ci.yml:lint:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies and whose job lint had none | not-checks-entry-matches-no-step | ci.yml:lint:Install dependencies |
+        | CLM-CFG-016 | --not-check Install dependencies                                                                                                           | not-checks-entry-not-a-step-name | Install dependencies             |
+        | CLM-CFG-019 | a specController block with "notChecks": "Install"                                                                                         | configuration-wrong-kind         | notChecks                        |
+        | CLM-CFG-020 | a specController block with 3 in deferralTags                                                                                              | configuration-wrong-kind         | deferralTags[0]                  |
 
     @unit @CLM-CFG-017
     Scenario: the run will still reach its run verdict, using the configuration settings it could use
