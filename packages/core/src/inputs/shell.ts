@@ -58,16 +58,19 @@ function invocationsIn(words: readonly string[], program: readonly string[], scr
   const run = scriptRun(words, scripts);
   if (run !== undefined && !followed.has(run.script)) {
     followed.add(run.script);
-    return invocationsThrough([scripts[run.script]!, ...run.after].join(" "), program, scripts, followed);
+    return invocationsThrough(scripts[run.script]!, program, scripts, followed, run.after);
   }
   const rest = handedOn(words);
   return rest === undefined ? [] : invocationsIn(rest, program, scripts, followed);
 }
 
-function invocationsThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: Set<string>): (readonly string[])[] {
-  return pipelinesOf(parse(commandLine).commands).flatMap((stages) => {
+// The words after a script's name, as the step's command line parsed them, are its last command's own.
+function invocationsThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: Set<string>, after: readonly string[] = []): (readonly string[])[] {
+  const pipelines = pipelinesOf(parse(commandLine).commands);
+  return pipelines.flatMap((stages, at) => {
     const last = stages.at(-1);
-    return isCommand(last) ? invocationsIn(wordsOf(last), program, scripts, followed) : [];
+    const passed = at === pipelines.length - 1 ? after : [];
+    return isCommand(last) ? invocationsIn([...wordsOf(last), ...passed], program, scripts, followed) : [];
   });
 }
 
