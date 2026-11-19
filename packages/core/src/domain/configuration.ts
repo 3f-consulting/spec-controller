@@ -25,6 +25,9 @@ export type ReportsNamed = (
   environment: Readonly<Record<string, string>>,
 ) => readonly ReportLocation[];
 
+// The shell reader's answer of where a runner writes its evidence reports when told nowhere, for a step's command that runs it.
+export type DefaultReportsOf = (commandLine: string, runner: string, scripts: Readonly<Record<string, string>>) => readonly ReportLocation[];
+
 // A layer's runner: the program it runs, with the evidence report the run names for it.
 export interface Runner {
   readonly name: string;
@@ -119,19 +122,26 @@ const fromTarget = (path: string, workingDirectory: string | undefined): string 
   workingDirectory === undefined || path.startsWith("/") ? path : `${workingDirectory}/${path}`;
 
 // Where each runner's evidence reports are, before the configuration is checked: a long form's report, else every readable
-// report a step running the runner names, from the target's folder, else none, which the check names as not named.
+// report a step running the runner names, from the target's folder, else every readable place a step running it writes
+// its reports by default, else none, which the check names as not named.
 export function reportsLocatedOf(
   settings: ConfigurationSettings,
   steps: readonly CiStep[],
   scripts: Readonly<Record<string, string>>,
   reportsNamed: ReportsNamed,
+  defaultReportsOf: DefaultReportsOf,
 ): ConfigurationSettings {
   const runners = settings.runners.flatMap((part): SettingPart<readonly [Layer, Runner]>[] => {
     if ("error" in part || part.taken[1].report !== undefined) return [part];
     const [layer, { name }] = part.taken;
-    const reports = steps.flatMap(({ command, workingDirectory, environment = {} }) =>
-      command === undefined ? [] : reportsNamed(command, name, scripts, environment).map(({ path, format }) => ({ path: fromTarget(path, workingDirectory), format })),
-    ).filter(({ path }) => readable(path));
+    const fromSteps = (reportsOf: (command: string, environment: Readonly<Record<string, string>>) => readonly ReportLocation[]): ReportLocation[] =>
+      steps
+        .flatMap(({ command, workingDirectory, environment = {} }) =>
+          command === undefined ? [] : reportsOf(command, environment).map(({ path, format }) => ({ path: fromTarget(path, workingDirectory), format })),
+        )
+        .filter(({ path }) => readable(path));
+    const named = fromSteps((command, environment) => reportsNamed(command, name, scripts, environment));
+    const reports = named.length > 0 ? named : fromSteps((command) => defaultReportsOf(command, name, scripts));
     return reports.length === 0 ? [part] : reports.map((report) => ({ taken: [layer, { name, report }] }));
   });
   return { ...settings, runners };

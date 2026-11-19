@@ -10,7 +10,7 @@ At `1.0`, this page will become a promise, written from the mechanisms that reac
 
 Two things make a fitness function an evidence obligation: a `@fitness` scenario, and that scenario's claim code as the `id:` of the CI step that runs the check. See *Wiring into CI* in the user guide.
 
-**The test reports it reads.** The tool reads these test reports, each found from the CI step of the runner that writes it, or named in that runner's long form: the JSON of Vitest and Jest, the JUnit XML of pytest and other runners, the JSON of RSpec and the JSON of Cucumber.
+**The test reports it reads.** The tool reads these test reports, each found from the CI step of the runner that writes it, read from where Maven or Gradle writes it by default, or named in that runner's long form: the JSON of Vitest and Jest, the JUnit XML of pytest and other runners, the JSON of RSpec and the JSON of Cucumber.
 
 A pytest test cites its claim code with a `clm` property, which `@pytest.mark.clm` writes. A row of an Outline cites its claim code from the Outline's `clm` column.
 

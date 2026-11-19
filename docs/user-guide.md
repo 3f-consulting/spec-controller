@@ -360,14 +360,16 @@ A nested subtest's name also includes the name of every enclosing subtest. `bala
 
 ### Citing a scenario from Java
 
-A Java method name cannot hold brackets. So a JUnit 5 test cites its scenario through its **display name**: the claim code goes in square brackets in `@DisplayName`. Run the suite with Maven, and name the directory Maven Surefire writes its reports into, in the runner's long form, in the `junit` format. `balance` finds no report from a Maven step, so a Maven runner named alone reads `runner-report-not-named`:
+A Java method name cannot hold brackets. So a JUnit 5 test cites its scenario through its **display name**: the claim code goes in square brackets in `@DisplayName`. Run the suite with Maven, and name the runner alone, as `mvn test`. `balance` reads the reports from where Maven Surefire writes them by default, `target/surefire-reports`, joined with the working directory of the CI step that runs `mvn test`, as a folder of JUnit XML reports:
 
 ```sh
-mvn clean test
-spec-controller balance --unit "mvn clean test:junit:target/surefire-reports"
+mvn test
+spec-controller balance --unit "mvn test"
 ```
 
 `balance` reads every `.xml` file at the top of that directory, one `TEST-*.xml` for each test class, and ignores the `.txt` summaries beside them. You can give a single report file instead.
+
+In a build with several modules, each module writes its own `target/surefire-reports/`, and `balance` reads only the one at the step's working directory. A step that moves Maven to another folder, with `-pl` or `-f`, still has `balance` look at the step's own `target/surefire-reports`, where Maven writes none, and a step that puts an option before `test`, as `mvn -B test`, does not run the runner `mvn test` at all. Name each module's directory in a long form of its own, as `--unit "mvn test:junit:app/target/surefire-reports"`, and `balance` reads every one.
 
 **Surefire drops the display name by default.** It writes the method name into the report, so no test cites anything: every test lands on the unnamed claim, and every `@unit` scenario reads `missing`. Surefire's phrased reporter writes the display name instead. Set it on the Surefire plugin in your `pom.xml`:
 
@@ -414,17 +416,17 @@ Surefire writes that test into `TEST-example.allocate.NextNumberTest.xml` under 
 <testcase name="[CLM-&lt;FFF&gt;-&lt;NNN&gt;] offers one past the highest number already used" classname="example.allocate.NextNumberTest" time="0.004"/>
 ```
 
-Name the runner with its test task, in the words your pipeline's test step opens with: `mvn clean test`, as above, the command recommended below, `mvn test` if the step runs `mvn test`, or `./mvnw clean test` for the Maven wrapper (see [Naming your runners](#naming-your-runners)). If you name the runner as `mvn` alone, `balance` recognises it in every step that runs Maven. It would then take a `mvn checkstyle:check` step for the test suite, instead of reporting that step as a check.
+Name the runner with its test task, in the words your pipeline's test step opens with: `mvn test`, as above, or `./mvnw test` for the Maven wrapper (see [Naming your runners](#naming-your-runners)). Only these two take Surefire's default directory. A step that runs another task, such as `mvn verify` or `mvn clean test`, or a Surefire configured to write elsewhere, takes the long form, naming the directory in the `junit` format: `--unit "mvn verify:junit:target/surefire-reports"`. If you name the runner as `mvn` alone, `balance` recognises it in every step that runs Maven. It would then take a `mvn checkstyle:check` step for the test suite, instead of reporting that step as a check.
 
-**`balance` reads old reports as well.** Surefire does not clear the directory before a run, so `balance` reads a report an earlier run left in an uncleaned `target/` beside the new ones. Run `mvn clean test` in CI, or start from a fresh checkout. A test that does not compile stops the build before Surefire writes any report. When the directory is missing, `balance` names its path under `## Errors in the inputs` as `runner-report-not-read`, and reads no result for that runner.
+**`balance` reads old reports as well.** Surefire does not clear the directory before a run, so `balance` reads a report an earlier run left in an uncleaned `target/` beside the new ones. Run `mvn test` from a fresh checkout, as a CI job does, or run `mvn clean` before it, as `mvn clean && mvn test`. A test that does not compile stops the build before Surefire writes any report. When the directory is missing, `balance` names its path under `## Errors in the inputs` as `runner-report-not-read`, and reads no result for that runner.
 
 ### Citing a scenario from Kotlin
 
-A JUnit 5 test in Kotlin cites its scenario as a Java test does: with the claim code in square brackets in `@DisplayName`. A backticked function name cannot carry the claim code, because the JVM forbids brackets in a name and the build fails with *Name contains illegal characters*. Run the suite with Gradle, and name the directory its test task writes its reports into, in the runner's long form, in the `junit` format. `balance` finds no report from a Gradle step, so a Gradle runner named alone reads `runner-report-not-named`:
+A JUnit 5 test in Kotlin cites its scenario as a Java test does: with the claim code in square brackets in `@DisplayName`. A backticked function name cannot carry the claim code, because the JVM forbids brackets in a name and the build fails with *Name contains illegal characters*. Run the suite with Gradle, and name the runner alone, as `./gradlew test`. `balance` reads the reports from where Gradle's `test` task writes them by default, `build/test-results/test`, joined with the working directory of the CI step that runs `./gradlew test`, as a folder of JUnit XML reports:
 
 ```sh
 ./gradlew test
-spec-controller balance --unit "./gradlew test:junit:build/test-results/test"
+spec-controller balance --unit "./gradlew test"
 ```
 
 Gradle writes the display name into the report with no configuration (measured with Gradle 9.8.1 and JUnit Jupiter 5.11.4). `balance` reads every `.xml` file at the top of that directory, one `TEST-*.xml` for each test class, and ignores the `binary/` directory beside them.
@@ -459,9 +461,9 @@ Gradle's report differs from Surefire's in two ways:
 - **A class's display name cites nothing.** Gradle writes the class's own name as the test's `classname`, so a claim code in a class's `@DisplayName` never reaches a test. Cite the scenario on each test.
 - **A class whose setup before all its tests fails posts a failing evidence observation that cites no claim.** Gradle writes the failure as one test named `initializationError`, and the class's own tests do not appear. The evidence observation lands on the unnamed claim, and the scenarios the class's tests cite read `missing`. `balance` does not mark the run unsound.
 
-In a build with several modules, each module writes its own `build/test-results/test/`. Name each one in a long form of its own, and `balance` reads every one.
+In a build with several modules, each module writes its own `build/test-results/test/`, and `balance` reads only the one at the step's working directory. Name each module's directory in a long form of its own, as `--unit "./gradlew test:junit:app/build/test-results/test"`, and `balance` reads every one.
 
-Name the runner with its test task, in the words your pipeline's test step opens with: `./gradlew test`, as above, or `gradle test` if your pipeline runs Gradle directly (see [Naming your runners](#naming-your-runners)). If you name the runner as `./gradlew` alone, `balance` recognises it in every step that runs the wrapper. It would then take a `./gradlew detekt` step for the test suite, instead of reporting that step as a check.
+Name the runner with its test task, in the words your pipeline's test step opens with: `./gradlew test`, as above, or `gradle test` if your pipeline runs Gradle directly (see [Naming your runners](#naming-your-runners)). Only these two take the `test` task's default directory. A step that runs another task, such as `./gradlew check` or `./gradlew :app:test`, takes the long form, naming the directory in the `junit` format. If you name the runner as `./gradlew` alone, `balance` recognises it in every step that runs the wrapper. It would then take a `./gradlew detekt` step for the test suite, instead of reporting that step as a check.
 
 ### Citing a scenario from RSpec
 
@@ -599,6 +601,14 @@ Discovery does not depend on Node: it does not match `package.json` script names
 - **Each layer has its own flag:** `--unit`, `--integration`, `--e2e` and `--performance`. Each names a runner of that layer, and may repeat, so one layer may have several runners. A layer you name no runner for has none.
 - **A runner named alone, as `--unit vitest`, has its report found from the CI step that runs it.** `balance` reads the step's command for the option that names the report, in the spellings below. A step that runs a `package.json` script is read through the script, and any words after the script's name count as the words of the script's last command. Scripts come only from the `--package-json` file; a script in a subfolder's `package.json` is not followed. Each result in the report is evidence of the runner's layer.
 - **A path a step names is read from the step's folder:** the target's folder, the top of its git repository, joined with the step's `working-directory`, or else its job's `defaults.run.working-directory`. An absolute path is read as written.
+- **Where no step that runs the runner names a report, `balance` reads where the runner writes its reports by default**, joined with the step's working directory as a named path is. Only these runners have one, each read as a folder of JUnit XML reports:
+
+  | Runner | Its default location | Format |
+  |---|---|---|
+  | `mvn test`, `./mvnw test` | `target/surefire-reports` | `junit` |
+  | `gradle test`, `./gradlew test` | `build/test-results/test` | `junit` |
+
+  Any other task of the build tool, such as `mvn verify`, `./gradlew check` or `./gradlew :app:test`, has no default location. A default location with no folder at it is named as `runner-report-not-read`, with the path.
 - **Every step that runs the runner names a report**, whatever else the step is, so a step whose `id:` is a claim code counts too. A runner that several steps run has a report from each, and `balance` reads every one. A report written in another job must be downloaded to the same path before `balance` runs.
 - **These are the spellings `balance` reads:**
 
@@ -612,10 +622,10 @@ Discovery does not depend on Node: it does not match `package.json` script names
   | `playwright` | `--reporter=junit`, with the step's `env` setting `PLAYWRIGHT_JUNIT_OUTPUT_FILE`, or `PLAYWRIGHT_JUNIT_OUTPUT_DIR` and `PLAYWRIGHT_JUNIT_OUTPUT_NAME`, or `PLAYWRIGHT_JUNIT_OUTPUT_NAME` alone | `junit` |
   | `gotestsum` | `--junitfile <path>`, or the step's `env` setting `GOTESTSUM_JUNITFILE` | `junit` |
 
-- **The long form names the runner's report itself:** `<runner>:<format>:<report>`, as in `--e2e cypress:junit:out/cypress.xml`. `balance` then looks no further. Use it for a report `balance` cannot find from a step, such as Maven's or Gradle's. It splits at its first two colons, so the report's path may hold a colon. The format is one of `vitest`, `jest`, `pytest`, `junit`, `rspec` and `cucumber`; a `junit` report may be a folder of JUnit XML files. `balance` reads the report at that path, from where it runs, in that format, and each result in it is evidence of the runner's layer. So a Cypress suite's JUnit report named under `--e2e` answers `@e2e` claims.
+- **The long form names the runner's report itself:** `<runner>:<format>:<report>`, as in `--e2e cypress:junit:out/cypress.xml`. `balance` then looks no further. Use it for a report `balance` cannot find from a step or a default location, such as one a build tool's other task writes, or one written to a folder moved from its default. It splits at its first two colons, so the report's path may hold a colon. The format is one of `vitest`, `jest`, `pytest`, `junit`, `rspec` and `cucumber`; a `junit` report may be a folder of JUnit XML files. `balance` reads the report at that path, from where it runs, in that format, and each result in it is evidence of the runner's layer. So a Cypress suite's JUnit report named under `--e2e` answers `@e2e` claims.
 - **One report may serve several layers.** Name its runner under each layer's flag; `balance` reads the report once. A Cucumber result then takes the layers among them that its scenario's tags name, or every one when its tags name none; a result from any other report takes every one.
-- **A runner named alone whose report `balance` cannot find** is named in `## Errors in the inputs` as `runner-report-not-named`. That is a runner `balance` has no spelling for, a runner whose steps name no report, or a runner no step runs. A step names no report when the report is set only in the runner's own configuration file, or by an expression such as `${{ env.OUT }}/x.json`. The runner is kept, so its step is still a runner, but no result of it is read. Name its report in the long form.
-- **A report with no file at its path**, a long form's or a step's, is named in `## Errors in the inputs` as `runner-report-not-read`, with the path. The run goes on: the runner is kept, so its step is still a runner, and no result of that report is read. Any other report that cannot be read, such as one that does not parse, refuses the run at exit `2`.
+- **A runner named alone whose report `balance` cannot find** is named in `## Errors in the inputs` as `runner-report-not-named`. That is a runner `balance` has no spelling and no default location for, a runner whose steps name no report and that has no default location, or a runner no step runs. A step names no report when the report is set only in the runner's own configuration file, or by an expression such as `${{ env.OUT }}/x.json`. The runner is kept, so its step is still a runner, but no result of it is read. Name its report in the long form.
+- **A report with no file at its path**, a long form's, a step's or a default location, is named in `## Errors in the inputs` as `runner-report-not-read`, with the path. The run goes on: the runner is kept, so its step is still a runner, and no result of that report is read. Any other report that cannot be read, such as one that does not parse, refuses the run at exit `2`.
 - **A runner `balance` cannot read** is left out, and named as `configuration-wrong-kind`: an empty one, or a long form with no runner, no report, or a format `balance` does not read.
 - **No runner at all is not an error.** Every step that is not a reconciler step, a non-check or a plumbing step becomes a fitness function. That is the zero-annotation report.
 - **`balance` recognises a runner only as the command a step runs**: the command a line of the step opens with, or a command after `&&` or `;` in that line, past any `NAME=value` settings. So a runner is recognised after a line that sets a variable, after a shell function's definition, and after an `if … fi` block. A runner named anywhere else, as an argument or a path, leaves the step a check. So does a step that pipes the runner's output onward, into another command or into a compound command such as a `while` loop, an `if` block or a subshell.
@@ -668,8 +678,8 @@ A run names each configuration setting it cannot use, with one of these codes:
 | Code | The setting |
 | --- | --- |
 | `configuration-wrong-kind` | a setting in a form its flag does not take (an empty runner, non-check or deferral tag, or a runner with a colon that is not a long form naming a runner, a format `balance` reads and a report) is left out |
-| `runner-report-not-named` | a runner named alone whose report no step names is kept, so its step is still a runner, but no result of it is read |
-| `runner-report-not-read` | a report, named in a long form or by a step, that has no file at its path keeps its runner, and no result of that report is read |
+| `runner-report-not-named` | a runner named alone whose report no step names, and that has no default location, is kept, so its step is still a runner, but no result of it is read |
+| `runner-report-not-read` | a report, named in a long form or by a step, or a default location, that has no file at its path keeps its runner, and no result of that report is read |
 | `not-checks-entry-matches-no-step` | a `--not-check` that matches no step of a workflow the run read makes no step a non-check |
 | `not-checks-entry-not-a-step-name` | a `--not-check` that does not name a step as `<workflow file>:<job id>:<step name>` makes no step a non-check |
 
@@ -1015,7 +1025,7 @@ Help answers only when nothing else on the command line is refused. A usage erro
 | Flag | Purpose |
 |---|---|
 | `--features <dir>` | A directory of Gherkin `.feature` files: the scenarios. The tool reads every `.feature` file under it, at any depth, and names each one in the report by its path within the directory. |
-| `--unit <runner>[:<format>:<report>]` | A unit runner. Named alone, the runner has its report found from the CI step that runs it, and reads `runner-report-not-named` when no step names one. In its long form, the format of the report it writes, one of `vitest`, `jest`, `pytest`, `junit`, `rspec` and `cucumber`, and the report's path: a `junit` report may be a folder of JUnit XML files. `balance` reads each report the runner has, and each result in it is unit evidence. Repeatable. See [Naming your runners](#naming-your-runners). |
+| `--unit <runner>[:<format>:<report>]` | A unit runner. Named alone, the runner has its report found from the CI step that runs it, else read from where the runner writes it by default (Maven's and Gradle's `test`), and reads `runner-report-not-named` when it has neither. In its long form, the format of the report it writes, one of `vitest`, `jest`, `pytest`, `junit`, `rspec` and `cucumber`, and the report's path: a `junit` report may be a folder of JUnit XML files. `balance` reads each report the runner has, and each result in it is unit evidence. Repeatable. See [Naming your runners](#naming-your-runners). |
 | `--integration <runner>[:<format>:<report>]` | An integration runner, as `--unit` names a unit one. Repeatable. |
 | `--e2e <runner>[:<format>:<report>]` | An e2e runner, as `--unit` names a unit one. Repeatable. |
 | `--performance <runner>[:<format>:<report>]` | A performance runner, as `--unit` names a unit one. Repeatable. |

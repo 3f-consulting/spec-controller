@@ -19,5 +19,14 @@
       { "runner": "gotestsum", "options": "--junitfile <path>", "format": "junit" },
       { "runner": "gotestsum", "options": "", "environment": ["GOTESTSUM_JUNITFILE"], "format": "junit" }
     ]
+  },
+  "default-locations": {
+    "claim": "CLM-CLI-216",
+    "variants": [
+      { "runner": "mvn test", "path": "target/surefire-reports", "format": "junit" },
+      { "runner": "./mvnw test", "path": "target/surefire-reports", "format": "junit" },
+      { "runner": "gradle test", "path": "build/test-results/test", "format": "junit" },
+      { "runner": "./gradlew test", "path": "build/test-results/test", "format": "junit" }
+    ]
   }
 }
