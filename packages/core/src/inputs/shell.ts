@@ -85,7 +85,9 @@ const reportsNamed = (commandLine: string, runner: string, scripts: Scripts, env
     .filter((report, at, all) => all.findIndex(({ path }) => path === report.path) === at);
 
 // A runner's default report locations, for a command that runs it.
-const defaultReportsOf = (commandLine: string, runner: string, scripts: Scripts): ReportLocation[] =>
-  invokesAsCommand(commandLine, runner, scripts) ? defaultLocationsOf(runner) : [];
+const defaultReportsOf = (commandLine: string, runner: string, scripts: Scripts): ReportLocation[] => {
+  const locations = defaultLocationsOf(runner);
+  return locations.length > 0 && invokesAsCommand(commandLine, runner, scripts) ? locations : [];
+};
 
 export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed, defaultReportsOf };
