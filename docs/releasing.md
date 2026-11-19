@@ -51,8 +51,8 @@ The `release` job:
 3. **Stamps the next counter version** on both manifests in the working copy.
 4. **Reads the version heading the merge adds**: the heading lines
    [`CHANGELOG.md`](../CHANGELOG.md) gained since the commit the previous publish was built from.
-   If there are none, the merge publishes under `next`. If there is one version heading, it names
-   the version this run publishes, and at least one line sits under it, the merge publishes under
+   If there are none, the merge publishes under `next`. If there is one version heading, naming
+   the version this run publishes, with at least one line under it, the merge publishes under
    `latest` and releases. Anything else fails the run here, before anything is published, and the
    failure names the numbers. That covers two headings, a heading line that is not a version
    heading, and a number other than the counter's.
