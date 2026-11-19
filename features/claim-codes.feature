@@ -12,7 +12,7 @@ Feature: every claim code is well formed, filed under its file's code, and never
   allocate gives the next claim code for a feature code. Its answer is the code alone. When there
   is no repository, or the repository is a shallow clone, allocate notes the history it did not
   read beside the answer, never in it. When something it must read cannot be read, allocate stops
-  and gives no code. It never gives a code worked out without what it could not read.
+  and gives no code.
 
   @unit
   Scenario Outline: an id is a feature code or a claim code only in that form
@@ -74,10 +74,11 @@ Feature: every claim code is well formed, filed under its file's code, and never
 
   Rule: allocate's next code is one past the highest code that has ever been in the repository
 
-    allocate takes feature codes from the feature files. It takes numbers from every file git lists
-    in the tree, except the files git ignores, and from every line the repository's reachable
-    history has contained. It counts a code written under CLM. It never gives out again a number
-    a claim code has had.
+    allocate takes feature codes from the feature files at any depth in the features folder: the
+    repository's features folder, or the folder the developer names. It takes numbers from every
+    file git lists in the tree, except the files git ignores, and from every line the repository's
+    reachable history has contained. It counts a code written under CLM. It never gives out again
+    a number a claim code has had.
 
     @unit
     Scenario Outline: the answer is one past the highest code in the feature file, a tracked file or history

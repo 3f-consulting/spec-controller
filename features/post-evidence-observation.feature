@@ -4,14 +4,16 @@ Feature: Evidence Observations are posted, each to its claim
   balance turns the evidence from your tests and your CI into Evidence Observations and posts each
   one to its claim.
 
-  Evidence comes from two places: the evidence report a test runner writes, and the steps your CI
-  ran.
+  Evidence comes from two places: the evidence reports your test runners write, and the step
+  records of the steps your CI ran. balance reads every step record the run names.
 
   A CI step that proves nothing, such as checking out the code, posts nothing. Nor does a step
   balance recognises as running your tests. Any other step is a fitness function.
 
-  Each Evidence Observation says which claim it cites, whether it passed, failed, never ran or
-  was not recorded, its kind of quality check, and where to look.
+  Each Evidence Observation says which claim it cites, whether it passed, passed-on-error,
+  failed, never ran or was not recorded, its kind of quality check, and where to look. A recorded
+  success is passed-on-error when continue-on-error is anything but false on any step carrying its
+  id or on that step's job, or when no workflow has its step.
 
   An Evidence Observation that cites one executable claim is posted to that claim. One that cites
   a claim nobody wrote is posted to a phantom claim. One that cites none, or could mean more than

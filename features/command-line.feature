@@ -10,18 +10,18 @@ Feature: the command line reads what you give it, and says where each kind of ou
   value, a command or a feature code. An argument it cannot read that way fails validation. An
   input left out takes its default.
 
-  The tool validates every argument and every input before anything runs, the same way whether
-  the command line names the input or leaves it to its default. An argument or input that is not
-  valid, or an input that cannot be read, stops the run with a usage error. The error names the
-  argument or input and says what is wrong with it. A usage error shows the help for what was
-  asked for, even beside a request for help. A file that fails to read after validation accepted
-  it is an unexpected error.
+  The tool validates every argument and every input before anything runs. An argument or input
+  that is not valid, or an input that cannot be read, stops the run with a usage error. A named
+  input that does not exist is not valid; an input left to its default that does not exist counts
+  as none. The error names the argument or input and says what is wrong with it. A usage error
+  shows the help for what was asked for, even beside a request for help. A file that fails to
+  read after validation accepted it is an unexpected error.
 
   An answer goes to standard output. Anything about it goes to standard error.
 
   A run ends on an exit code: 0 if balanced, 1 if out of balance, 3 if not reconciled, 2 for a
   usage error, and 4 for an unexpected error before the run verdict. --exit-zero changes only 1 to
-  0. It changes no other exit code.
+  0.
 
   Rule: asking for help shows what can be asked for
 
@@ -210,7 +210,7 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
   Rule: a command validates every input before it does its work
 
-    The inputs a command validates are the evidence reports, the step records, the feature corpus,
+    The inputs a command validates are each evidence report, each step record, the feature corpus,
     the CI workflows and the manifest. An input that is well formed but empty is valid.
 
     @unit @CLM-CLI-146
