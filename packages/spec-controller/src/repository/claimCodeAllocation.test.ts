@@ -4,6 +4,7 @@ import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { allocate, type AllocateOutcome } from "../commands/allocate.js";
 import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import { noteText } from "../output/allocateNotes.js";
+import { runRequestOf, type RunRequest } from "../runRequest/runRequest.js";
 import { featureFile, folderForTest, nestedCheckoutIn, repositoryForTest, shallowCloneOf } from "./repository.test-utils.js";
 
 const answerAndHighest = (outcome: AllocateOutcome) =>
@@ -197,6 +198,17 @@ describe("allocate gives a code only under a feature code a feature file has, un
     repository.commit("first");
 
     expect(answerAndHighest(allocate({ featureCode: "NEST", asNewFeatureCode: false }, repository.top))).toMatchObject({ answer: "CLM-NEST-005" });
+  });
+
+  it.each([
+    ["inside git", repositoryForTest],
+    ["outside git", folderForTest],
+  ] as const)("[CLM-STG-099] %s, with no features folder and a feature file tagged @ONE in specs: the next code for ONE, naming specs as the features folder, is CLM-ONE-001, and nothing else", (_where, copyForTest) => {
+    const copy = copyForTest();
+    copy.write("specs/one.feature", "@ONE\nFeature: one\n");
+    const asked = runRequestOf(["allocate", "ONE", "--features", "specs"]) as Extract<RunRequest, { command: "allocate" }>;
+
+    expect(answerAndHighest(allocate(asked, copy.top))).toEqual({ answer: "CLM-ONE-001", highest: undefined });
   });
 
   it.each([
