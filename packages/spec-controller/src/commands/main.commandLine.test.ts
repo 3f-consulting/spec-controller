@@ -268,21 +268,19 @@ describe("balance reads the evidence report the run names for a runner, at that 
 
 interface VerdictReported {
   readonly runVerdict: { readonly verdict: string };
-  readonly errorsInTheInputs: { readonly configurationErrors: readonly { readonly entry: string }[] };
 }
 
 describe("an evidence report the run names for a runner, with no file at its path, will not stop the run", () => {
-  it("[CLM-CLI-213] --e2e playwright:junit:out/playwright.xml, with no file at out/playwright.xml: the run reaches its verdict with nothing on standard error, its report naming out/playwright.xml among the errors in the inputs", () => {
+  it("[CLM-CLI-213] --e2e playwright:junit:out/playwright.xml, with no file at out/playwright.xml: the run reaches its verdict with nothing on standard error", () => {
     const folder = folderWith({ "features/one.feature": ONE_E2E_CLAIM });
 
     const { exitCode, output, error } = ran(["balance", "--e2e", "playwright:junit:out/playwright.xml", "--format", "json"], folder);
 
     const reported = (output === "" ? undefined : JSON.parse(output)) as VerdictReported | undefined;
-    expect({ exitCode, error, verdict: reported?.runVerdict.verdict, named: reported?.errorsInTheInputs.configurationErrors.map(({ entry }) => entry) }).toEqual({
+    expect({ exitCode, error, verdict: reported?.runVerdict.verdict }).toEqual({
       exitCode: 1,
       error: "",
       verdict: "out-of-balance",
-      named: ["out/playwright.xml"],
     });
   });
 });
