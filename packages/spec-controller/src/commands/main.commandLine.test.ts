@@ -270,10 +270,10 @@ describe("balance posts the results of every evidence report the run names for o
 
 describe("the provenance shows each input the run read on its own line", () => {
   it.each([
-    ["CLM-RPT-172", "--vitest", "a/vitest.json", "b/vitest.json", BY_FILE_PASSING, BY_FILE_PASSING.replaceAll("CLM-ONE-001", "CLM-ONE-002")],
-    ["CLM-RPT-173", "--ci-steps", "a/steps.json", "b/steps.json", '{"lint":{"outcome":"success","conclusion":"success"}}', '{"test":{"outcome":"success","conclusion":"success"}}'],
-  ] as const)("[%s] %s given twice, naming %s and %s: the Markdown report's provenance has a line for each", (_code, flag, first, second, firstContent, secondContent) => {
-    const folder = folderWith({ "features/one.feature": TWO_CLAIMS, [first]: firstContent, [second]: secondContent });
+    ["CLM-RPT-172", "--vitest", "a/vitest.json", "b/vitest.json", BY_FILE_PASSING],
+    ["CLM-RPT-173", "--ci-steps", "a/steps.json", "b/steps.json", '{"CLM-ONE-001":{"outcome":"success","conclusion":"success"}}'],
+  ] as const)("[%s] %s given twice, naming %s and %s: the Markdown report's provenance has a line for each", (_code, flag, first, second, citingOne) => {
+    const folder = folderWith({ "features/one.feature": TWO_CLAIMS, [first]: citingOne, [second]: citingOne.replaceAll("CLM-ONE-001", "CLM-ONE-002") });
 
     const { output } = ran(["balance", flag, first, flag, second, "--format", "md"], folder);
 
