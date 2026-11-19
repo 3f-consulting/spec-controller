@@ -93,7 +93,7 @@ export function runVerdictOf(claimReconciliations: readonly ClaimReconciliation[
   const neverRan = counted.some(({ qualityCheckReconciliations }) => qualityCheckReconciliations.some(({ outcome }) => outcome === "never-ran"));
   if (neverRan) return { verdict: "not-reconciled", why: "unsound" };
   if (claimCodeErrors.length > 0) return { verdict: "not-reconciled", why: "claim-code-errors" };
-  if (claimReconciliations.length === 0) return { verdict: "not-reconciled", why: "nothing-to-reconcile" };
+  if (counted.length === 0) return { verdict: "not-reconciled", why: "nothing-to-reconcile" };
   return { verdict: counted.every(({ verdict }) => verdict === "balanced") ? "balanced" : "out-of-balance" };
 }
 
