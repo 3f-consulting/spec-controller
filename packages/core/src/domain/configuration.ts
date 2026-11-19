@@ -105,7 +105,19 @@ export function targetConfigurationOf(
   };
 }
 
-// Where each runner's evidence reports are, before the configuration is checked.
-export function reportsLocatedOf(settings: ConfigurationSettings, _steps: readonly CiStep[], _scripts: Readonly<Record<string, string>>, _reportsNamed: ReportsNamed): ConfigurationSettings {
-  return settings;
+// Where each runner's evidence reports are, before the configuration is checked: a long form's report, else every report
+// a step running the runner names, else none, which the check names as not named.
+export function reportsLocatedOf(
+  settings: ConfigurationSettings,
+  steps: readonly CiStep[],
+  scripts: Readonly<Record<string, string>>,
+  reportsNamed: ReportsNamed,
+): ConfigurationSettings {
+  const runners = settings.runners.flatMap((part): SettingPart<readonly [Layer, Runner]>[] => {
+    if ("error" in part || part.taken[1].report !== undefined) return [part];
+    const [layer, { name }] = part.taken;
+    const reports = steps.flatMap(({ command }) => (command === undefined ? [] : reportsNamed(command, name, scripts)));
+    return reports.length === 0 ? [part] : reports.map((report) => ({ taken: [layer, { name, report }] }));
+  });
+  return { ...settings, runners };
 }

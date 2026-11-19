@@ -219,9 +219,9 @@ describe("balance reads no evidence report for a runner whose report it cannot f
     ],
     [
       "CLM-CFG-030",
-      "vitest, where no step ran vitest, though one wrote out/vitest.json",
+      "vitest, where no step ran vitest, though one wrote out/vitest.json and another ran an action",
       "vitest",
-      "jobs:\n  ci:\n    steps:\n      - run: my-tool --reporter=json --outputFile=out/vitest.json\n",
+      "jobs:\n  ci:\n    steps:\n      - uses: actions/checkout@v4\n      - run: my-tool --reporter=json --outputFile=out/vitest.json\n",
       [],
       { kind: "runner-report-not-named", entry: "vitest" },
     ],

@@ -1,6 +1,8 @@
 import { parse } from "unbash";
 import type { Command, CommandNode, Statement, Word } from "unbash";
+import type { ReportLocation } from "../domain/configuration.js";
 import type { Scripts, ShellAnswers } from "../domain/postEvidenceObservation.js";
+import { reportsIn } from "./runners.js";
 import shellVariants from "./shell.variants.json" with { type: "json" };
 
 const { "script-runs": scriptRuns, launchers, wrappers } = shellVariants;
@@ -50,21 +52,22 @@ function handedOn(words: readonly string[]): readonly string[] | undefined {
   return words.slice(at + wrapper.length - 1);
 }
 
-function runs(words: readonly string[], program: readonly string[], scripts: Scripts, followed: Set<string>): boolean {
-  if (opensWith(words, program)) return true;
+// The arguments of each time the words run the program: after the program's own words, through launchers, wrappers and the target's scripts.
+function invocationsIn(words: readonly string[], program: readonly string[], scripts: Scripts, followed: Set<string>): (readonly string[])[] {
+  if (opensWith(words, program)) return [words.slice(program.length)];
   const script = scriptRun(words, scripts);
   if (script !== undefined && !followed.has(script)) {
     followed.add(script);
-    return invokesThrough(scripts[script]!, program, scripts, followed);
+    return invocationsThrough(scripts[script]!, program, scripts, followed);
   }
   const rest = handedOn(words);
-  return rest !== undefined && runs(rest, program, scripts, followed);
+  return rest === undefined ? [] : invocationsIn(rest, program, scripts, followed);
 }
 
-function invokesThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: Set<string>): boolean {
-  return pipelinesOf(parse(commandLine).commands).some((stages) => {
+function invocationsThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: Set<string>): (readonly string[])[] {
+  return pipelinesOf(parse(commandLine).commands).flatMap((stages) => {
     const last = stages.at(-1);
-    return isCommand(last) && runs(wordsOf(last), program, scripts, followed);
+    return isCommand(last) ? invocationsIn(wordsOf(last), program, scripts, followed) : [];
   });
 }
 
@@ -72,9 +75,13 @@ const RECONCILER = wordsIn("spec-controller balance");
 
 // The reconciler is found in any command of the line, through launchers and wrappers, never through a script.
 const invokesTheReconciler = (commandLine: string): boolean =>
-  pipelinesOf(parse(commandLine).commands).some((stages) => stages.some((stage) => isCommand(stage) && runs(wordsOf(stage), RECONCILER, {}, new Set())));
+  pipelinesOf(parse(commandLine).commands).some((stages) => stages.some((stage) => isCommand(stage) && invocationsIn(wordsOf(stage), RECONCILER, {}, new Set()).length > 0));
 
 // A runner is found only as the last command of a pipeline, through launchers, wrappers and the target's scripts.
-const invokesAsCommand = (commandLine: string, program: string, scripts: Scripts): boolean => invokesThrough(commandLine, wordsIn(program), scripts, new Set());
+const invokesAsCommand = (commandLine: string, program: string, scripts: Scripts): boolean => invocationsThrough(commandLine, wordsIn(program), scripts, new Set()).length > 0;
 
-export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed: () => [] };
+// The reports a command names for a runner, read from the arguments of each time it runs the runner.
+const reportsNamed = (commandLine: string, runner: string, scripts: Scripts): ReportLocation[] =>
+  invocationsThrough(commandLine, wordsIn(runner), scripts, new Set()).flatMap((args) => reportsIn(runner, args));
+
+export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed };

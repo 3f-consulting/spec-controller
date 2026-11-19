@@ -1,0 +1,6 @@
+{
+  "report-options": {
+    "claim": "CLM-CLI-214",
+    "variants": [{ "runner": "vitest", "options": "--reporter=json --outputFile=<path>", "format": "vitest" }]
+  }
+}
