@@ -81,7 +81,10 @@ const invokesTheReconciler = (commandLine: string): boolean =>
 // A runner is found only as the last command of a pipeline, through launchers, wrappers and the target's scripts.
 const invokesAsCommand = (commandLine: string, program: string, scripts: Scripts): boolean => invocationsThrough(commandLine, wordsIn(program), scripts, new Set()).length > 0;
 
+// A path is one report, however many of the runner's spellings name it.
 const reportsNamed = (commandLine: string, runner: string, scripts: Scripts, environment: Readonly<Record<string, string>>): ReportLocation[] =>
-  invocationsThrough(commandLine, wordsIn(runner), scripts, new Set()).flatMap((args) => reportsIn(runner, args, environment));
+  invocationsThrough(commandLine, wordsIn(runner), scripts, new Set())
+    .flatMap((args) => reportsIn(runner, args, environment))
+    .filter((report, at, all) => all.findIndex(({ path }) => path === report.path) === at);
 
 export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed };
