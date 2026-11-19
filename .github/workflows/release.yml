@@ -100,9 +100,11 @@ jobs:
           echo "line ${prefix}N, highest published ${n:-none}, releasing $v"
           (cd packages/core && npm pkg set version="$v")
           (cd packages/spec-controller && npm pkg set version="$v")
-          echo "version=$v" >> "$GITHUB_OUTPUT"
-          echo "previous=${n:+$prefix$n}" >> "$GITHUB_OUTPUT"
-          echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$v"
+            echo "previous=${n:+$prefix$n}"
+            echo "prefix=$prefix"
+          } >> "$GITHUB_OUTPUT"
 
       # A merge releases when the changelog has gained a version heading since the previous publish, and only when the
       # heading names the version this merge publishes; anything else fails here, before anything is published.
