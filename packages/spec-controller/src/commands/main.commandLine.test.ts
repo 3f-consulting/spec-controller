@@ -207,6 +207,17 @@ describe("balance posts the result in the evidence report each runner's flag nam
     const { claimReconciliations } = JSON.parse(output) as ClaimsReported;
     expect(claimReconciliations.flatMap(({ qualityCheckReconciliations }) => qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.result] : [])))).toEqual(["passed"]);
   });
+
+  it("[CLM-CLI-201] --cucumber naming a report of one passing result for the Outline row citing CLM-ONE-001: that result is posted on CLM-ONE-001", () => {
+    const outline = "@ONE\nFeature: one\n\n  @unit\n  Scenario Outline: adds <n>\n    Given one adds <n>\n\n    Examples:\n      | clm | n |\n      | CLM-ONE-001 | 1 |\n";
+    const rowPassing = '[{"uri":"features/one.feature","name":"one","elements":[{"keyword":"Scenario Outline","name":"adds 1","type":"scenario","line":10,"tags":[{"name":"@unit"}],"steps":[{"keyword":"Given ","name":"one adds 1","result":{"status":"passed"}}]}]}]';
+    const folder = folderWith({ "features/one.feature": outline, "report.json": rowPassing });
+
+    const { output } = ran(["balance", "--cucumber", "report.json", "--format", "json"], folder);
+
+    const { claimReconciliations } = JSON.parse(output) as ResultsByClaimReported;
+    expect(claimReconciliations.map(({ claim, qualityCheckReconciliations }) => [claim.claimCode?.number, qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.result] : []))])).toEqual([["001", ["passed"]]]);
+  });
 });
 
 interface KindsReported {
