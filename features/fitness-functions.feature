@@ -173,6 +173,15 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       when CI runs the fitness function over the change
       then the change will have raised the schema's version
 
+  Rule: a release that adds a version heading publishes only the version that heading names
+
+    @fitness @CLM-FIT-085
+    Scenario: a release publishes nothing when its version heading names another version
+      given the release was to publish 0.1.400
+      and the changelog gained the version heading "## 0.1.399 — 2026-11-19 — An increment"
+      when the release runs
+      then nothing will be published
+
   Rule: every change but a Dependabot update is told in the changelog
 
     @fitness @CLM-FIT-082

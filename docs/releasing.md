@@ -55,7 +55,8 @@ The `release` job:
    the version this run publishes, with at least one line under it, the merge publishes under
    `latest` and releases. Anything else fails the run here, before anything is published, and the
    failure names the numbers. That covers two headings, a heading line that is not a version
-   heading, and a number other than the counter's.
+   heading, and a number other than the counter's. The step runs
+   [`scripts/release-heading.sh`](../scripts/release-heading.sh).
 5. **Packs both packages, once.** Every later step reads those same two files.
 6. **Smokes them in a clean room.** It installs the tarballs into a directory outside the workspace
    that holds nothing else of this repository, and starts the command there.
@@ -137,7 +138,10 @@ release: the build, the typecheck, both suites and every repository bar. `main`'
 protection runs the same bars on every pull request before it can merge.
 
 The release adds two checks of its own before it publishes: the version heading it reads, and the
-clean-room install of the packed tarballs. It adds one after: the `dist-tag` job.
+clean-room install of the packed tarballs. It adds one after: the `dist-tag` job. CI runs the
+release's heading check too, [`scripts/release-heading.sh`](../scripts/release-heading.sh), over
+a scratch repository on every run: a heading naming another number, or a prefix of the version,
+must publish nothing, and the matching heading must release.
 
 The nightly mutation sweep's verdict holds no release. A red, lapsed or unmeasured sweep stops new
 work from starting until a full sweep of `main` is green. A fix merges on its own CI.

@@ -436,6 +436,49 @@ jobs:
           echo "The schema changed since $base, but its version, $version, is not above $before_version: raise schemaVersion"
           exit 1
 
+      # The release's own heading check runs in a scratch repository whose last commit adds one version heading. With no
+      # previous publish it reads back to that commit's parent, so it calls no API.
+      - name: A release publishes nothing when its version heading names another version
+        id: CLM-FIT-085
+        if: always()
+        shell: bash
+        env:
+          SCRIPT: ${{ github.workspace }}/scripts/release-heading.sh
+        run: |
+          held=0
+          for case in 0.1.399:refused 0.1.40:refused 0.1.400:released; do
+            named=${case%%:*}
+            expected=${case#*:}
+            work=$(mktemp -d "$RUNNER_TEMP/fit-085.XXXXXX")
+            repo="$work/repo"
+            git init -q "$repo"
+            printf '## 0.1.300 — 2026-11-01 — An earlier increment\n\n- An earlier change.\n' > "$repo/CHANGELOG.md"
+            git -C "$repo" add CHANGELOG.md
+            git -C "$repo" -c user.name=ci -c user.email=ci@localhost commit -q -m before
+            { printf '## %s — 2026-11-19 — An increment\n\n- A change.\n\n' "$named"; git -C "$repo" show HEAD:CHANGELOG.md; } > "$work/after.md"
+            mv "$work/after.md" "$repo/CHANGELOG.md"
+            git -C "$repo" -c user.name=ci -c user.email=ci@localhost commit -q -a -m after
+            : > "$work/output"
+            code=0
+            (cd "$repo" && VERSION=0.1.400 PREVIOUS="" PREFIX=0.1. HEAD_SHA="$(git rev-parse HEAD)" GITHUB_OUTPUT="$work/output" RUNNER_TEMP="$work" "$SCRIPT") > "$work/log" 2>&1 || code=$?
+            # Refused means the run failed on the version comparison itself and chose no dist-tag, so nothing publishes.
+            if [ "$code" -eq 0 ] && grep -qx 'dist-tag=latest' "$work/output"; then
+              got=released
+            elif [ "$code" -ne 0 ] && ! grep -q '^dist-tag=' "$work/output" && grep -qF "the version heading names $named, but this merge publishes 0.1.400" "$work/log"; then
+              got=refused
+            else
+              got="neither released nor refused on the version"
+            fi
+            echo "The heading naming $named, with 0.1.400 to publish: exit $code, $got ($expected expected)"
+            sed 's/^/  /' "$work/log"
+            if [ "$got" != "$expected" ]; then held=1; fi
+          done
+          if [ "$held" -ne 0 ]; then
+            echo "The release's heading check did not refuse every heading naming another version and release the matching one"
+            exit 1
+          fi
+          echo "The release's heading check refused 0.1.399 and 0.1.40 and released 0.1.400"
+
       - name: Dump this run's step record
         if: always()
         env:
