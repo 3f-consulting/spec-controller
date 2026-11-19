@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.foo.FooTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2012-11-19T17:09:28.049Z" hostname="localhost" time="0.3">
+  <properties/>
+  <testcase name="some test" classname="com.foo.FooTest" time="0.1">
+    <system-out><![CDATA[
+[[ATTACHMENT|sub/sub/test.file]]
+]]></system-out>
+  </testcase>
+  <system-out><![CDATA[
+[[ATTACHMENT|sub/class.file]]
+]]></system-out>
+  <system-err><![CDATA[err]]></system-err>
+</testsuite>

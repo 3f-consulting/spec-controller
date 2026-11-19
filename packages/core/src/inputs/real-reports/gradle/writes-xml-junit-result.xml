@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.foo.FooTest" tests="5" skipped="2" failures="1" errors="0" timestamp="2012-11-19T17:09:28.049Z" hostname="localhost" time="0.05">
+  <properties/>
+  <testcase name="some test" classname="com.foo.FooTest" time="0.015"/>
+  <testcase name="some test two" classname="com.foo.FooTest" time="0.015"/>
+  <testcase name="some failing test" classname="com.foo.FooTest" time="0.01">
+    <failure message="failure message" type="ExceptionType">[stack-trace]</failure>
+  </testcase>
+  <testcase name="some skipped test" classname="com.foo.FooTest" time="0.01">
+    <skipped/>
+  </testcase>
+  <testcase name="some assumption failure test" classname="com.foo.FooTest" time="0.01">
+    <skipped message="assumption failed" type="AssumptionViolationException">[assumption-failure-stack-trace]</skipped>
+  </testcase>
+  <system-out><![CDATA[1st output message
+2nd output message
+]]></system-out>
+  <system-err><![CDATA[err]]></system-err>
+</testsuite>
