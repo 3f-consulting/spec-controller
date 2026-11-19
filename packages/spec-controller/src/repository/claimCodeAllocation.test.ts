@@ -58,10 +58,8 @@ describe("the answer is one past the highest code in the feature file, a tracked
     });
   });
 
-  it.each([
-    ["CLM-STG-062", "CLM-ONE-005"],
-    ["CLM-STG-064", "SCN-ONE-005"],
-  ] as const)("[%s] a line in git history, since deleted, had %s: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", (_clm, code) => {
+  it("[CLM-STG-062] a line in git history, since deleted, had CLM-ONE-005: the answer is CLM-ONE-006, noting the file and line it was in, and the commit", () => {
+    const code = "CLM-ONE-005";
     const repository = repositoryForTest();
     repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
     repository.write("old.txt", `kept\n${code}\n`);
@@ -78,20 +76,7 @@ describe("the answer is one past the highest code in the feature file, a tracked
     });
   });
 
-  it("[CLM-STG-063] a file git tracks contained SCN-ONE-005: the answer is CLM-ONE-006", () => {
-    const repository = repositoryForTest();
-    repository.write("features/one.feature", featureFile("ONE", "CLM-ONE-001"));
-    repository.write("retired.txt", "SCN-ONE-005\n");
-    repository.commit("first");
-
-    expect(answerAndHighest(allocate(ONE, repository.top))).toEqual({
-      answer: "CLM-ONE-006",
-      highest: { note: "highest-seen", code: "SCN-ONE-005", path: "retired.txt", line: 1 },
-    });
-  });
-
   it.each([
-    ["CLM-STG-065", "a file git tracks contained SCN-ONE-, with no number", { "partial.txt": "SCN-ONE-\n" }, "first"],
     ["CLM-STG-068", "only a commit's message contained CLM-ONE-900", {}, "first CLM-ONE-900"],
     ["CLM-STG-069", "only a file git ignores contained CLM-ONE-900", { ".gitignore": "ignored.txt\n", "ignored.txt": "CLM-ONE-900\n" }, "first"],
   ] as const)("[%s] %s: the answer is CLM-ONE-002, noting the feature file and line", (_clm, _what, files, message) => {

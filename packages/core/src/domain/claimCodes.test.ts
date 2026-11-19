@@ -128,8 +128,6 @@ const IN_THE_FILE = { path: "features/one.feature", line: 4 };
 describe("the answer is one past the highest code in the feature file, a tracked file or history", () => {
   it.each([
     ["CLM-STG-061", "@CLM-ONE-001", "# CLM-ONE-005", "006", "CLM-ONE-005"],
-    ["CLM-STG-063", "@CLM-ONE-001", "# SCN-ONE-005", "006", "SCN-ONE-005"],
-    ["CLM-STG-065", "@CLM-ONE-001", "# SCN-ONE-", "002", "CLM-ONE-001"],
     ["CLM-STG-070", "@CLM-ONE-7", "", "008", "CLM-ONE-7"],
     ["CLM-STG-071", "@CLM-ONE-999", "", "1000", "CLM-ONE-999"],
   ] as const)("[%s] a feature file tagged @ONE with a scenario tagged %s, and a tracked file holding %j, gives CLM-ONE-%s, noting %s", (_clm, inTheFile, elsewhere, number, seen) => {

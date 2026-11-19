@@ -76,8 +76,8 @@ Feature: every claim code is well formed, filed under its file's code, and never
 
     allocate takes feature codes from the feature files. It takes numbers from every file git lists
     in the tree, except the files git ignores, and from every line the repository's reachable
-    history has contained. It counts a code written under CLM or under the retired SCN, and
-    answers under CLM. It never gives out again a number a code has had, even one since retired.
+    history has contained. It counts a code written under CLM. It never gives out again a number
+    a claim code has had.
 
     @unit
     Scenario Outline: the answer is one past the highest code in the feature file, a tracked file or history
@@ -94,9 +94,6 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-067 | CLM-ONE-001 | a file at the repository's top contained CLM-ONE-005, and the developer stood in a subdirectory containing no code | CLM-ONE-006  | that file and line                          |
         | CLM-STG-062 | CLM-ONE-001 | a line in git history, since deleted, had CLM-ONE-005                                                              | CLM-ONE-006  | the file and line it was in, and the commit |
         | CLM-STG-097 | CLM-ONE-001 | a merge's resolution, and neither side, had CLM-ONE-005                                                            | CLM-ONE-006  | the file and line it was in, and the commit |
-        | CLM-STG-063 | CLM-ONE-001 | a file git tracks contained SCN-ONE-005                                                                            | CLM-ONE-006  | that file and line                          |
-        | CLM-STG-064 | CLM-ONE-001 | a line in git history, since deleted, had SCN-ONE-005                                                              | CLM-ONE-006  | the file and line it was in, and the commit |
-        | CLM-STG-065 | CLM-ONE-001 | a file git tracks contained SCN-ONE-, with no number                                                               | CLM-ONE-002  | the feature file and line                   |
         | CLM-STG-068 | CLM-ONE-001 | only a commit's message contained CLM-ONE-900                                                                      | CLM-ONE-002  | the feature file and line                   |
         | CLM-STG-069 | CLM-ONE-001 | only a file git ignores contained CLM-ONE-900                                                                      | CLM-ONE-002  | the feature file and line                   |
         | CLM-STG-070 | CLM-ONE-7   | nothing else contained a ONE code                                                                                  | CLM-ONE-008  | the feature file and line                   |

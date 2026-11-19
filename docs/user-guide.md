@@ -1043,7 +1043,7 @@ spec-controller allocate <FFF> --new
 # CLM-<FFF>-001
 ```
 
-The tool writes the code under `CLM`. Its number is one past the highest number a code in the repository has **ever** carried for that feature code, whether written under `CLM` or under the retired `SCN`. So the tool never hands out a number again once a claim code has used it, a retired number included, and every old reference to a code, in history, a chat or a stale document, keeps the meaning it had. The number has at least three digits, zero-padded, and grows past three digits (`999` is followed by `1000`).
+The tool writes the code under `CLM`. Its number is one past the highest number a claim code in the repository has **ever** carried for that feature code. So the tool never hands out a number again once a claim code has used it, even one whose claim has since been deleted, and every old reference to a code, in history, a chat or a stale document, keeps the meaning it had. The number has at least three digits, zero-padded, and grows past three digits (`999` is followed by `1000`).
 
 - **The argument** is the feature code, `<FFF>`: two to five characters, each `A`–`Z` or `0`–`9`. A feature code is known when a feature file in `features/` at the top of the repository is headed with it. That folder is the corpus `balance` reads by default. A feature code that only history or a test fixture carries is not known.
 - **`--new`** starts a feature code that no feature file's header carries yet, such as a first code in a tree with no feature files. Its first code is `001`, or one past any number the repository already carries for the feature code. If you give `--new` for a feature code a header already carries, the tool answers as usual and says so on stderr.

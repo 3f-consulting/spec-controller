@@ -57,8 +57,8 @@ const CITATION = new RegExp(`\\[CLM-(${FEATURE_CODE_FORM})-(\\d+)\\]`, "g");
 
 const CLAIM_CODE = new RegExp(`^CLM-(${FEATURE_CODE_FORM})-(\\d+)$`);
 
-// A code written under CLM, or under the retired SCN, anywhere in a line.
-const CODE_IN_A_LINE = new RegExp(`(?:CLM|SCN)-(${FEATURE_CODE_FORM})-(\\d+)`, "g");
+// A claim code anywhere in a line.
+const CODE_IN_A_LINE = new RegExp(`CLM-(${FEATURE_CODE_FORM})-(\\d+)`, "g");
 
 export function claimCodeCitationsIn(text: string): ClaimCode[] {
   return [...text.matchAll(CITATION)].map(([, featureCode, number]) => ({ featureCode: featureCode!, number: number! }));
@@ -148,7 +148,7 @@ interface Seen {
   readonly occurrence: ClaimCodeOccurrence;
 }
 
-// The highest number written under the feature code, CLM or SCN, and where; the occurrence's text becomes the code.
+// The highest number written under the feature code, and where; the occurrence's text becomes the code.
 function highestSeen(featureCode: string, occurrences: readonly ClaimCodeOccurrence[]): Seen | undefined {
   let highest: Seen | undefined;
   for (const occurrence of occurrences) {
