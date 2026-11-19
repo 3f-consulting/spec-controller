@@ -52,8 +52,7 @@ function handedOn(words: readonly string[]): readonly string[] | undefined {
   return words.slice(at + wrapper.length - 1);
 }
 
-// The words of each time the words run the program, from the program's own, through launchers, wrappers and the target's scripts.
-// A script is not followed again inside itself, so a script that runs itself ends; a sibling command may run it again.
+// The words of each time the words run the program, from its own, through launchers, wrappers and scripts, none followed inside itself.
 function invocationsIn(words: readonly string[], program: readonly string[], scripts: Scripts, followed: ReadonlySet<string>): (readonly string[])[] {
   if (opensWith(words, program)) return [words];
   const run = scriptRun(words, scripts);
@@ -62,7 +61,6 @@ function invocationsIn(words: readonly string[], program: readonly string[], scr
   return rest === undefined ? [] : invocationsIn(rest, program, scripts, followed);
 }
 
-// The words after a script's name, as the step's command line parsed them, are its last command's own.
 function invocationsThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: ReadonlySet<string>, after: readonly string[] = []): (readonly string[])[] {
   const pipelines = pipelinesOf(parse(commandLine).commands);
   return pipelines.flatMap((stages, at) => {
@@ -81,7 +79,6 @@ const invokesTheReconciler = (commandLine: string): boolean =>
 // A runner is found only as the last command of a pipeline, through launchers, wrappers and the target's scripts.
 const invokesAsCommand = (commandLine: string, program: string, scripts: Scripts): boolean => invocationsThrough(commandLine, wordsIn(program), scripts, new Set()).length > 0;
 
-// A path is one report, however many of the runner's spellings name it.
 const reportsNamed = (commandLine: string, runner: string, scripts: Scripts, environment: Readonly<Record<string, string>>): ReportLocation[] =>
   invocationsThrough(commandLine, wordsIn(runner), scripts, new Set())
     .flatMap((args) => reportsIn(runner, args, environment))
