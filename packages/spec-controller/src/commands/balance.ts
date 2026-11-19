@@ -1,5 +1,6 @@
 import {
   configurationSettingsFrom,
+  configurationSettingsNamed,
   EVIDENCE_REPORT_FORMATS,
   provenanceInputsOf,
   reconcile,
@@ -7,6 +8,7 @@ import {
   scriptsFrom,
   shellAnswers,
   targetFolderOf,
+  type ConfigurationSettings,
   type ReportGiven,
 } from "@3f-consulting/spec-controller-core";
 import { realpathSync } from "node:fs";
@@ -43,8 +45,16 @@ const reportsGivenOf = ({ reports = NONE }: InputsRead): ReportGiven[] =>
     needsFeatures: format.needsFeatures === true,
   }));
 
+// The settings the command line names, beside those a specController block writes.
+const settingsJoined = (named: ConfigurationSettings, written: ConfigurationSettings): ConfigurationSettings => ({
+  runners: [...named.runners, ...written.runners],
+  nonChecks: [...named.nonChecks, ...written.nonChecks],
+  deferralTags: [...named.deferralTags, ...written.deferralTags],
+  unknownKeys: written.unknownKeys,
+});
+
 export function balance(
-  { inputs, outputs, target, sourceSha, strict, exitZero }: Extract<RunRequest, { command: "balance" }>,
+  { inputs, settings, outputs, target, sourceSha, strict, exitZero }: Extract<RunRequest, { command: "balance" }>,
   folder: string,
   streams: StandardStreams,
   complain: Complain,
@@ -61,7 +71,7 @@ export function balance(
     reports: reportsGivenOf(read),
     steps: read.workflowSteps ?? NONE,
     stepRecord: read.stepRecord ?? NONE,
-    settings: configurationSettingsFrom(read.manifest),
+    settings: settingsJoined(configurationSettingsNamed(settings), configurationSettingsFrom(read.manifest)),
     scripts: scriptsFrom(read.manifest),
     shell: shellAnswers,
     repositoryOf: repositoryOfOrigin,

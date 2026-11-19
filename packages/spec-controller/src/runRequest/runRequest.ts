@@ -1,7 +1,7 @@
-import { isFeatureCode, type OutputRequest } from "@3f-consulting/spec-controller-core";
+import { isFeatureCode, type OutputRequest, type SettingsNamed } from "@3f-consulting/spec-controller-core";
 import { parseArgs } from "node:util";
 import type { Refusal } from "../runEnding/runEnding.js";
-import { COMMANDS, isCommand, isHelp, type Command, type Flag, type InputKind } from "./flags.js";
+import { COMMANDS, isCommand, isHelp, LAYER_FLAGS, type Command, type Flag, type InputKind } from "./flags.js";
 
 export { INPUT_KINDS } from "./flags.js";
 
@@ -19,6 +19,7 @@ export type RunRequest =
   | {
       readonly command: "balance";
       readonly inputs: readonly InputRequest[];
+      readonly settings: SettingsNamed;
       readonly target?: string;
       readonly sourceSha?: string;
       readonly outputs: readonly OutputRequest<ReportFormat>[];
@@ -124,12 +125,20 @@ const inputsOf = ({ values }: FlagsRead): InputRequest[] =>
     return byDefault === undefined ? [] : [{ kind: input, path: byDefault, byDefault: true }];
   });
 
+// The configuration settings the command line names, each in the order given.
+const settingsOf = ({ values }: FlagsRead): SettingsNamed => ({
+  runners: Object.fromEntries(LAYER_FLAGS.map((layer) => [layer, values.get(layer) ?? []])),
+  nonChecks: values.get("not-check") ?? [],
+  deferralTags: values.get("deferral-tag") ?? [],
+});
+
 function balanceRequested(read: FlagsRead): RunRequest | UsageError {
   const outputs = outputsOf(read.values.get("format") ?? []);
   if ("refusals" in outputs) return outputs;
   return {
     command: "balance",
     inputs: inputsOf(read),
+    settings: settingsOf(read),
     target: read.values.get("target")?.[0],
     sourceSha: read.values.get("source-sha")?.[0],
     outputs,

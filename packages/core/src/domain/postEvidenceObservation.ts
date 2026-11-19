@@ -1,5 +1,5 @@
 import { claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
-import { reportsOf, runnerNameOf, type TargetConfiguration } from "./configuration.js";
+import type { TargetConfiguration } from "./configuration.js";
 import { QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
 import type { CiStep, FailureAllowed } from "./workflowSteps.js";
@@ -100,7 +100,7 @@ export function observationsOfTestResults(
 
 // The layers whose runner entry names the report's file name, in the order the layers run; none when no entry does.
 export function layersServing(report: string, runners: TargetConfiguration["runners"]): QualityCheckKind[] {
-  return QUALITY_CHECK_KINDS.filter((kind) => kind !== "fitness" && reportsOf(runners[kind]).includes(report));
+  return QUALITY_CHECK_KINDS.filter((kind) => kind !== "fitness" && runners[kind].some(({ reports = [] }) => reports.includes(report)));
 }
 
 // A scenario is evidence of each layer its report serves that its tags name, and of every one where they name none.
@@ -138,10 +138,7 @@ const isNamedIn = (step: CiStep, { nonChecks }: TargetConfiguration): boolean =>
 
 // The reconciler is recognised in any command of the step, a runner only as the command the step runs, through its scripts.
 const runsARunner = (command: string, { runners }: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): boolean =>
-  Object.values(runners).some((runner) => {
-    const name = runnerNameOf(runner);
-    return name !== undefined && shell.invokesAsCommand(command, name, scripts);
-  });
+  Object.values(runners).some((layerRunners) => layerRunners.some(({ name }) => shell.invokesAsCommand(command, name, scripts)));
 
 export type Scripts = Readonly<Record<string, string>>;
 

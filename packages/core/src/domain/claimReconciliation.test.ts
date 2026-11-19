@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ClaimCode } from "./claimCodes.js";
 import { citedClaimReconciliationOf, claimReconciliationOf, claimReconciliationsOf, evidenceGroupsOf } from "./claimReconciliation.js";
-import { runnersOf } from "./configuration.test-utils.js";
+import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { shellAnswers } from "../inputs/shell.js";
 import { stepRecordFrom } from "../inputs/stepRecord.js";
@@ -224,7 +224,7 @@ describe("balance will split the unnamed claim's evidence by kind, file and shar
 describe("two uncited fitness functions share one group", () => {
   it("[CLM-LDG-069] two steps with no id, in jobs build and test, posted from an empty step record, are one fitness group naming both", () => {
     const steps = workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: [{ run: "pnpm lint" }] }, test: { steps: [{ run: "pnpm audit-the-tree" }] } } }));
-    const posted = fitnessObservationsOf(disposedStepsOf(steps, { runners: runnersOf(), nonChecks: [], deferralTags: [] }, {}, shellAnswers, []), []);
+    const posted = fitnessObservationsOf(disposedStepsOf(steps, { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] }, {}, shellAnswers, []), []);
 
     expect(groupsOf(posted).map(({ kind, file, qualityCheckReconciliations }) => ({ kind, file, places: qualityCheckReconciliations.map(({ observation }) => observation?.place) }))).toEqual([
       { kind: "fitness", file: undefined, places: ["ci.yml:build:pnpm lint", "ci.yml:test:pnpm audit-the-tree"] },
@@ -233,7 +233,7 @@ describe("two uncited fitness functions share one group", () => {
 
   it("[CLM-LDG-069] a step with the id lint, in job build, that failed, and a step with no id, in job test, are one fitness group naming the failure by its place", () => {
     const steps = workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: [{ id: "lint", run: "pnpm lint" }] }, test: { steps: [{ run: "pnpm audit-the-tree" }] } } }));
-    const posted = fitnessObservationsOf(disposedStepsOf(steps, { runners: runnersOf(), nonChecks: [], deferralTags: [] }, {}, shellAnswers, stepRecordFrom({ lint: { outcome: "failure", conclusion: "failure" } })), stepRecordFrom({ lint: { outcome: "failure", conclusion: "failure" } }));
+    const posted = fitnessObservationsOf(disposedStepsOf(steps, { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] }, {}, shellAnswers, stepRecordFrom({ lint: { outcome: "failure", conclusion: "failure" } })), stepRecordFrom({ lint: { outcome: "failure", conclusion: "failure" } }));
 
     expect(groupsOf(posted).map(({ kind, failures }) => ({ kind, failures }))).toEqual([{ kind: "fitness", failures: ["ci.yml:build:pnpm lint"] }]);
   });

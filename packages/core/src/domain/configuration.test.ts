@@ -7,13 +7,13 @@ import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
 import { targetConfigurationOf, type TargetConfiguration } from "./configuration.js";
-import { runnersOf } from "./configuration.test-utils.js";
+import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { runVerdictOf } from "./evidenceReconciliation.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
 import { disposedStepsOf, fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
 import type { CiStep } from "./workflowSteps.js";
 
-const NONE: TargetConfiguration = { runners: runnersOf(), nonChecks: [], deferralTags: [] };
+const NONE: TargetConfiguration = { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] };
 
 // The configuration balance takes from the settings a run names, with the steps it read.
 const takenFrom = (named: Partial<SettingsNamed>, steps: readonly CiStep[] = []): TargetConfiguration =>
@@ -21,9 +21,9 @@ const takenFrom = (named: Partial<SettingsNamed>, steps: readonly CiStep[] = [])
 
 describe("balance takes each configuration setting it can use as the runner, non-check or deferral tag it names", () => {
   it.each<[string, string, Partial<SettingsNamed>, TargetConfiguration]>([
-    ["CLM-CFG-008", "--unit vitest", { runners: { unit: ["vitest"] } }, { ...NONE, runners: runnersOf({ unit: [{ name: "vitest" }] }) }],
-    ["CLM-CFG-008", "--unit with spaces around vitest", { runners: { unit: [" vitest "] } }, { ...NONE, runners: runnersOf({ unit: [{ name: "vitest" }] }) }],
-    ["CLM-CFG-026", "--unit vitest and --unit pytest", { runners: { unit: ["vitest", "pytest"] } }, { ...NONE, runners: runnersOf({ unit: [{ name: "vitest" }, { name: "pytest" }] }) }],
+    ["CLM-CFG-008", "--unit vitest", { runners: { unit: ["vitest"] } }, { ...NONE, runners: { ...NO_RUNNERS, unit: [{ name: "vitest" }] } }],
+    ["CLM-CFG-008", "--unit with spaces around vitest", { runners: { unit: [" vitest "] } }, { ...NONE, runners: { ...NO_RUNNERS, unit: [{ name: "vitest" }] } }],
+    ["CLM-CFG-026", "--unit vitest and --unit pytest", { runners: { unit: ["vitest", "pytest"] } }, { ...NONE, runners: { ...NO_RUNNERS, unit: [{ name: "vitest" }, { name: "pytest" }] } }],
     [
       "CLM-CFG-026",
       "--not-check nightly:build.yml:ci:Install dependencies and --not-check nightly:build.yml:ci:Build",
@@ -41,13 +41,13 @@ describe("balance takes each configuration setting it can use as the runner, non
       "CLM-CFG-024",
       "--e2e playwright:junit:out/playwright.xml",
       { runners: { e2e: ["playwright:junit:out/playwright.xml"] } },
-      { ...NONE, runners: runnersOf({ e2e: [{ name: "playwright", report: { path: "out/playwright.xml", format: "junit" } }] }) },
+      { ...NONE, runners: { ...NO_RUNNERS, e2e: [{ name: "playwright", report: { path: "out/playwright.xml", format: "junit" } }] } },
     ],
     [
       "CLM-CFG-024",
       "--e2e playwright:junit:C:\\out\\playwright.xml, its report's path holding a colon",
       { runners: { e2e: ["playwright:junit:C:\\out\\playwright.xml"] } },
-      { ...NONE, runners: runnersOf({ e2e: [{ name: "playwright", report: { path: "C:\\out\\playwright.xml", format: "junit" } }] }) },
+      { ...NONE, runners: { ...NO_RUNNERS, e2e: [{ name: "playwright", report: { path: "C:\\out\\playwright.xml", format: "junit" } }] } },
     ],
     [
       "CLM-CFG-011",
@@ -142,7 +142,7 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     const { configuration, errors } = targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } } }, [], ["junit.xml"]);
 
     expect({ configuration, errors, playwrightStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({
-      configuration: { ...NONE, runners: runnersOf({ e2e: [{ name: "playwright", reports: [] }] }) },
+      configuration: { ...NONE, runners: { ...NO_RUNNERS, e2e: [{ name: "playwright", reports: [] }] } },
       errors: [{ kind: "runner-report-not-read", entry: "playwright.xml" }],
       playwrightStep: "runner",
     });
@@ -155,7 +155,7 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     const report = unreadReport[variant]!;
 
     expect(targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: [report] } } } }, [], ["playwright.xml"])).toEqual({
-      configuration: { ...NONE, runners: runnersOf({ e2e: [{ name: "playwright", reports: [] }] }) },
+      configuration: { ...NONE, runners: { ...NO_RUNNERS, e2e: [{ name: "playwright", reports: [] }] } },
       errors: [{ kind: "runner-report-not-read", entry: report }],
     });
   });

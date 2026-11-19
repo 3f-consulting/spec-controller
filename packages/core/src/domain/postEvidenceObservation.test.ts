@@ -9,7 +9,7 @@ import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { ClaimCode } from "./claimCodes.js";
 import type { TargetConfiguration } from "./configuration.js";
-import { runnersOf } from "./configuration.test-utils.js";
+import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { disposedStepsOf, fitnessObservationsOf, layersServing, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
@@ -439,20 +439,21 @@ const UNTAGGED_FORMATS = {
 
 type UntaggedFormat = keyof typeof UNTAGGED_FORMATS;
 
-const PLAYWRIGHT_UNDER_E2E: TargetConfiguration["runners"] = runnersOf({ e2e: [{ name: "playwright", reports: ["playwright.xml"] }] });
-const ANOTHER_REPORT_UNDER_E2E: TargetConfiguration["runners"] = runnersOf({ e2e: [{ name: "cypress", reports: ["cypress.xml"] }] });
-const CUCUMBER_UNDER_PERFORMANCE: TargetConfiguration["runners"] = runnersOf({ performance: [{ name: "cucumber-js", reports: ["cucumber.json"] }] });
-const CUCUMBER_UNDER_INTEGRATION_AND_E2E: TargetConfiguration["runners"] = runnersOf({
+const PLAYWRIGHT_UNDER_E2E: TargetConfiguration["runners"] = { ...NO_RUNNERS, e2e: [{ name: "playwright", reports: ["playwright.xml"] }] };
+const ANOTHER_REPORT_UNDER_E2E: TargetConfiguration["runners"] = { ...NO_RUNNERS, e2e: [{ name: "cypress", reports: ["cypress.xml"] }] };
+const CUCUMBER_UNDER_PERFORMANCE: TargetConfiguration["runners"] = { ...NO_RUNNERS, performance: [{ name: "cucumber-js", reports: ["cucumber.json"] }] };
+const CUCUMBER_UNDER_INTEGRATION_AND_E2E: TargetConfiguration["runners"] = {
+  ...NO_RUNNERS,
   integration: [{ name: "cucumber-js", reports: ["cucumber.json"] }],
   e2e: [{ name: "cucumber-js", reports: ["cucumber.json"] }],
-});
+};
 
 describe("balance identifies a result's kind of quality check as the layer its report's runner serves", () => {
   it.each(postEvidenceObservationVariants["formats-without-kind-tags-named-under-a-layer"].variants)("[CLM-OBS-164] with playwright named as a runner writing its report, a result in its report, %s, is read as evidence of that layer", (variant) => {
     const [format, layer] = variant.split(", under ") as [UntaggedFormat, "integration" | "e2e" | "performance"];
     const { report, posted } = UNTAGGED_FORMATS[format];
 
-    expect(posted(layersServing(report, runnersOf({ [layer]: [{ name: "playwright", reports: [report] }] }))).map(({ kind }) => kind)).toEqual([layer]);
+    expect(posted(layersServing(report, { ...NO_RUNNERS, [layer]: [{ name: "playwright", reports: [report] }] })).map(({ kind }) => kind)).toEqual([layer]);
   });
 
   it.each(postEvidenceObservationVariants["formats-without-kind-tags-named-nowhere"].variants)("[CLM-OBS-059] with no runner named as writing it, a result in %s's evidence report is read as unit evidence", (format) => {
@@ -697,7 +698,7 @@ const passedCitingOne001: Readonly<Record<string, () => EvidenceObservation[]>> 
     fitnessObservationsOf(
       disposedStepsOf(
         workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] } } })),
-        { runners: runnersOf(), nonChecks: [], deferralTags: [] },
+        { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] },
         {},
         shellAnswers,
         [{ key: "CLM-ONE-001", result: "passed" }],

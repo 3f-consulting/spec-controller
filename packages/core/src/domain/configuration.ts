@@ -68,8 +68,6 @@ export interface ConfigurationSettings {
 
 export const NO_SETTINGS: ConfigurationSettings = { runners: [], nonChecks: [], deferralTags: [], unknownKeys: [] };
 
-const isEntry = (runner: Runner | undefined): runner is RunnerEntry => typeof runner === "object" && runner !== null;
-
 interface Checked<Value> {
   readonly value: Value;
   readonly errors: readonly ConfigurationError[];
@@ -80,22 +78,24 @@ function checked<Taken, Value>(parts: readonly SettingPart<Taken>[], check: (tak
   return { value: each.flatMap(({ value }) => (value === undefined ? [] : [value])), errors: each.flatMap(({ errors }) => errors) };
 }
 
-// A runner entry keeps the reports the run read, matched by file name; each other report name is left out with an
-// error naming it, and the runner stays.
+// A runner's report comes from where the run names it. A specController block's entry keeps the reports the run read,
+// matched by file name, and leaves out each other report name with an error naming it. A runner whose report is named
+// nowhere is kept, with an error naming it.
 function runnerChecked([layer, runner]: readonly [Layer, Runner], reportsRead: readonly string[]): Checked<readonly [Layer, Runner]> {
-  if (!isEntry(runner)) return { value: [layer, runner], errors: [] };
+  if (runner.report !== undefined) return { value: [layer, runner], errors: [] };
+  if (runner.reports === undefined) return { value: [layer, runner], errors: [{ kind: "runner-report-not-named", entry: runner.name }] };
   const read = (report: string): boolean => reportsRead.includes(report);
   return {
-    value: [layer, { runner: runner.runner, reports: runner.reports.filter(read) }],
+    value: [layer, { name: runner.name, reports: runner.reports.filter(read) }],
     errors: runner.reports.filter((report) => !read(report)).map((report) => ({ kind: "runner-report-not-read", entry: report })),
   };
 }
 
-// The name of the program a layer's runner runs, when it has one.
-export const runnerNameOf = (runner: Runner | undefined): string | undefined => (isEntry(runner) ? runner.runner : (runner ?? undefined));
-
-// The file names of the evidence reports a layer's runner writes, as its entry names them.
-export const reportsOf = (runner: Runner | undefined): readonly string[] => (isEntry(runner) ? runner.reports : []);
+// Each layer's runners, in the order they were named.
+function runnersByLayer(runners: readonly (readonly [Layer, Runner])[]): TargetConfiguration["runners"] {
+  const of = (layer: Layer): Runner[] => runners.flatMap(([named, runner]) => (named === layer ? [runner] : []));
+  return { unit: of("unit"), integration: of("integration"), e2e: of("e2e"), performance: of("performance") };
+}
 
 // A non-check in a workflow that was read must be a step in it.
 function nonCheckChecked({ entry, address }: NonCheck, steps: readonly CiStep[]): Checked<StepAddress | undefined> {
@@ -114,7 +114,7 @@ export function targetConfigurationOf(
   const nonChecks = checked(settings.nonChecks, (nonCheck) => nonCheckChecked(nonCheck, steps));
   const deferralTags = checked(settings.deferralTags, (tag) => ({ value: tag, errors: [] }));
   return {
-    configuration: { runners: Object.fromEntries(runners.value), nonChecks: nonChecks.value, deferralTags: deferralTags.value },
+    configuration: { runners: runnersByLayer(runners.value), nonChecks: nonChecks.value, deferralTags: deferralTags.value },
     errors: [...runners.errors, ...nonChecks.errors, ...deferralTags.errors, ...settings.unknownKeys],
   };
 }

@@ -52,7 +52,7 @@ const BALANCE_FLAGS = [
 const FLAG_BESIDE_ITS_DESCRIPTION = { "--strict": /^\s+--strict\s{2,}\S/, "--exit-zero": /^\s+--exit-zero\s{2,}\S/ };
 
 // The flags help lists, each at the start of a line of its own with what its value is.
-const flagsListed = (help: string): string[] => help.split("\n").flatMap((line) => /^\s+((?:-h, )?--[a-z-]+(?: \S+)?)/.exec(line)?.[1] ?? []);
+const flagsListed = (help: string): string[] => help.split("\n").flatMap((line) => /^\s+((?:-h, )?--[a-z0-9-]+(?: \S+)?)/.exec(line)?.[1] ?? []);
 
 describe("help will list what you can ask for", () => {
   it.each([

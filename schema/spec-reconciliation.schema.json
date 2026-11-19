@@ -7,7 +7,7 @@
       "properties": {
         "schemaVersion": {
           "type": "number",
-          "const": 3
+          "const": 4
         },
         "claimReconciliations": {
           "type": "array",
@@ -928,6 +928,7 @@
             "configuration-unknown-key",
             "runner-key-not-a-layer",
             "runner-report-not-read",
+            "runner-report-not-named",
             "not-checks-entry-matches-no-step",
             "not-checks-entry-not-a-step-name"
           ]

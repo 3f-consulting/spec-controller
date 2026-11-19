@@ -4,13 +4,13 @@ import {
   type ConfigurationError,
   type ConfigurationSettings,
   type Layer,
-  type NonCheck,
   type Runner,
   type RunnerEntry,
   type SettingPart,
   type TargetConfiguration,
 } from "../domain/configuration.js";
 import type { CiStep } from "../domain/workflowSteps.js";
+import { deferralTagParsed, nonCheckParsed } from "./commandLineSettings.js";
 import { isRecord, whereShapeBreaks } from "./shape.js";
 
 // Each setting's key, as the specController block writes it.
@@ -18,22 +18,26 @@ const KEY_OF: Readonly<Record<keyof TargetConfiguration, string>> = { runners: "
 
 const LAYERS: readonly string[] = Object.keys({ unit: null, integration: null, e2e: null, performance: null } satisfies Record<Layer, null>);
 
-// A step as notChecks writes it: its workflow, which ends .yml or .yaml and may hold a colon, its job, and its step.
-const STEP_AS_WRITTEN = /^(.+?\.ya?ml):([^:]+):(.+)$/;
-
 const wrongKind = (entry: string): ConfigurationError => ({ kind: "configuration-wrong-kind", entry });
 
 const isRunnerEntry = (runner: unknown): runner is RunnerEntry =>
   isRecord(runner) && typeof runner.runner === "string" && Array.isArray(runner.reports) && runner.reports.every((report) => typeof report === "string");
 
-const isRunner = (runner: unknown): runner is Runner => typeof runner === "string" || runner === null || isRunnerEntry(runner);
+// A layer's runner as the block writes it: its name, null for none, or an entry naming it with the reports it writes.
+type RunnerWritten = string | null | RunnerEntry;
+
+const isRunner = (runner: unknown): runner is RunnerWritten => typeof runner === "string" || runner === null || isRunnerEntry(runner);
+
+// A runner the block names reads only the reports its entry names, so a runner named alone reads none.
+const runnerOf = (runner: string | RunnerEntry): Runner => (typeof runner === "string" ? { name: runner, reports: [] } : { name: runner.runner, reports: runner.reports });
 
 function runnersParsed(runners: unknown, name: string): SettingPart<readonly [Layer, Runner]>[] {
   if (runners === undefined) return [];
   if (!isRecord(runners)) return [{ error: wrongKind(name) }];
-  return Object.entries(runners).map(([layer, runner]): SettingPart<readonly [Layer, Runner]> => {
-    if (!LAYERS.includes(layer)) return { error: { kind: "runner-key-not-a-layer", entry: `${name}.${layer}` } };
-    return isRunner(runner) ? { taken: [layer as Layer, runner] } : { error: wrongKind(`${name}.${layer}`) };
+  return Object.entries(runners).flatMap(([layer, runner]): SettingPart<readonly [Layer, Runner]>[] => {
+    if (!LAYERS.includes(layer)) return [{ error: { kind: "runner-key-not-a-layer", entry: `${name}.${layer}` } }];
+    if (!isRunner(runner)) return [{ error: wrongKind(`${name}.${layer}`) }];
+    return runner === null ? [] : [{ taken: [layer as Layer, runnerOf(runner)] }];
   });
 }
 
@@ -42,19 +46,6 @@ function listParsed<Value>(list: unknown, name: string, take: (entry: string) =>
   if (list === undefined) return [];
   if (!Array.isArray(list)) return [{ error: wrongKind(name) }];
   return list.map((entry: unknown, at) => (typeof entry === "string" ? take(entry) : { error: wrongKind(`${name}[${at}]`) }));
-}
-
-// A non-check names a step by its workflow, job and step.
-function nonCheckParsed(entry: string): SettingPart<NonCheck> {
-  const step = STEP_AS_WRITTEN.exec(entry);
-  if (step === null) return { error: { kind: "not-checks-entry-not-a-step-name", entry } };
-  return { taken: { entry, address: { workflow: step[1]!, job: step[2]!, step: step[3]! } } };
-}
-
-// A deferral tag is taken with or without its @, and without the spaces around it.
-function deferralTagParsed(entry: string): SettingPart<string> {
-  const tag = entry.trim();
-  return { taken: tag.startsWith("@") ? tag.slice(1) : tag };
 }
 
 // Each setting is read under the key it is written under, and named by it.

@@ -7,7 +7,8 @@ export type { EvidenceReportFormat, EvidenceReportKind } from "./inputs/evidence
 export type { EvidenceReconciliation, ReadersGave, ReportGiven, RunVerdict, StepAccount } from "./domain/evidenceReconciliation.js";
 export type { JsonReport } from "./reports/json.js";
 export type { RunIdentity, ProvenanceInput, RepositoryOfOrigin } from "./domain/provenance.js";
-export type { ConfigurationSettings, RunnerEntry, TargetConfiguration } from "./domain/configuration.js";
+export type { ConfigurationSettings, ReportLocation, Runner, RunnerEntry, TargetConfiguration } from "./domain/configuration.js";
+export type { SettingsNamed } from "./inputs/commandLineSettings.js";
 export type { FileIdentity, OutputRefusal, OutputRequest } from "./domain/outputPlan.js";
 export { allocationOf, claimCodeErrorsOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from "./domain/claimCodes.js";
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";
@@ -18,6 +19,7 @@ export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
 export { provenanceInputsOf, provenanceOf } from "./domain/provenance.js";
 export { disposedStepsOf, fitnessObservationsOf, layersServing, observationsOfTestResults, stepDispositionOf } from "./domain/postEvidenceObservation.js";
 export { EVIDENCE_REPORT_FORMATS } from "./inputs/evidenceReportFormats.js";
+export { configurationSettingsNamed } from "./inputs/commandLineSettings.js";
 export { featureAsWrittenFrom } from "./inputs/gherkin.js";
 export { InputDoesNotParse } from "./inputs/inputDoesNotParse.js";
 export { configurationSettingsFrom, scriptsFrom, targetConfigurationFrom, whereManifestBreaks } from "./inputs/manifest.js";
