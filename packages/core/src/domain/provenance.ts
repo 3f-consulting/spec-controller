@@ -6,6 +6,11 @@ export interface ProvenanceInput {
   readonly path?: string;
 }
 
+// Each input kind the run could read, once for each path it read for it, in order, or once with no path when it read none.
+export function provenanceInputsOf(kinds: readonly { readonly name: string; readonly paths: readonly string[] }[]): ProvenanceInput[] {
+  return kinds.flatMap(({ name, paths }) => (paths.length === 0 ? [{ name }] : paths.map((path) => ({ name, path }))));
+}
+
 // target is unknown-target when nothing names one; sourceSha is unknown outside git.
 export interface Provenance {
   readonly target: string;

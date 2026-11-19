@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { repositoryOfOrigin } from "../inputs/origin.js";
-import { provenanceOf, type Provenance, type ProvenanceInput, type RunIdentity } from "./provenance.js";
+import { provenanceInputsOf, provenanceOf, type Provenance, type ProvenanceInput, type RunIdentity } from "./provenance.js";
 
 describe("the provenance says what the run used", () => {
   it.each([
@@ -36,4 +36,13 @@ describe("the provenance says what the run used", () => {
       );
     },
   );
+
+  it("[CLM-EVR-043] a run names each input kind once for each path it read, in order, and once with no path for a kind it read none of", () => {
+    const inputs = provenanceInputsOf([
+      { name: "cucumber", paths: [] },
+      { name: "vitest", paths: ["/work/acme/a.json", "/work/acme/b.json"] },
+    ]);
+
+    expect(inputs).toStrictEqual([{ name: "cucumber" }, { name: "vitest", path: "/work/acme/a.json" }, { name: "vitest", path: "/work/acme/b.json" }]);
+  });
 });

@@ -15,7 +15,7 @@ export { evidenceReconciliationOf, reconcile, stepAccountOf } from "./domain/evi
 export { outputPlanOf } from "./domain/outputPlan.js";
 export { targetFolderOf } from "./domain/targetPath.js";
 export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
-export { provenanceOf } from "./domain/provenance.js";
+export { provenanceInputsOf, provenanceOf } from "./domain/provenance.js";
 export { disposedStepsOf, fitnessObservationsOf, layersServing, observationsOfTestResults, stepDispositionOf } from "./domain/postEvidenceObservation.js";
 export { EVIDENCE_REPORT_FORMATS } from "./inputs/evidenceReportFormats.js";
 export { featureAsWrittenFrom } from "./inputs/gherkin.js";
