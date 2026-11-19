@@ -278,8 +278,7 @@ describe("the provenance shows each input the run read on its own line", () => {
     const { output } = ran(["balance", flag, first, flag, second, "--format", "md"], folder);
 
     const provenance = output.slice(output.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
-    const lineEndingIn = (path: string) => expect.stringMatching(new RegExp(`^ {2}- .+: \`${path.replaceAll(".", "\\.")}\`$`));
-    expect(provenance.filter((line) => line.includes(first.slice(2)))).toEqual([lineEndingIn(first), lineEndingIn(second)]);
+    expect(provenance.filter((line) => line.includes(first.slice(2))).map((line) => line.replace(/^ {2}- .+: /, ""))).toEqual([`\`${first}\``, `\`${second}\``]);
   });
 });
 
