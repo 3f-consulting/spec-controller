@@ -67,7 +67,7 @@ function creditJournalOf(
   // The layers a report serves, by its file name.
   const servedBy = ({ report }: { readonly report: string }): ReturnType<typeof layersServing> => layersServing(report, configuration.runners);
   return [
-    ...reportsOf(read).flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each), each.format.needsFeatures ? read.features : NONE)),
+    ...reportsOf(read).flatMap((each) => observationsOfTestResults(each.results, targetFolder, each.format.defaultLayer, servedBy(each), each.format.needsFeatures ? read.features : NONE)),
     ...fitnessObservationsOf(disposedSteps, record),
   ];
 }

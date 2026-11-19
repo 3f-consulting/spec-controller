@@ -61,11 +61,12 @@ export interface ShellAnswers {
 const nearestCitations = (chain: readonly string[]): ClaimCode[] =>
   chain.reduceRight<ClaimCode[]>((found, title) => (found.length > 0 ? found : claimCodeCitationsIn(title)), []);
 
-const UNIT: readonly QualityCheckKind[] = ["unit"];
-
-// A scenario's layers are kindsOf's; any other result's, each layer its report serves, or unit where none names it.
-const layersOf = (cites: TestCitation, served: readonly QualityCheckKind[]): readonly QualityCheckKind[] =>
-  "scenarioTags" in cites ? kindsOf(cites.scenarioTags, served) : served.length > 0 ? served : UNIT;
+// The layers a report serves are those its runner entries name, or its format's default layer where none names it. A
+// scenario is evidence of kindsOf's; any other result, of each.
+function layersOf(cites: TestCitation, served: readonly QualityCheckKind[], defaultLayer: QualityCheckKind): readonly QualityCheckKind[] {
+  const layers = served.length > 0 ? served : [defaultLayer];
+  return "scenarioTags" in cites ? kindsOf(cites.scenarioTags, layers) : layers;
+}
 
 // A scenario cites the codes its tags name, or failing those its Outline row's clm cell.
 function codesCitedBy(cites: TestCitation, rowCodeOf: (file: string, line: number) => ClaimCode[]): ClaimCode[] {
@@ -75,10 +76,12 @@ function codesCitedBy(cites: TestCitation, rowCodeOf: (file: string, line: numbe
   return tagged.length > 0 ? tagged : rowCodeOf(cites.file, cites.line);
 }
 
-// features is the corpus as written, where an Outline row's claim code is.
+// defaultLayer is the layer the report's format serves where no runner entry names the report; features is the corpus
+// as written, where an Outline row's claim code is.
 export function observationsOfTestResults(
   results: readonly TestResult[],
   targetFolder: string,
+  defaultLayer: QualityCheckKind,
   served: readonly QualityCheckKind[] = [],
   features: readonly FeatureFile[] = [],
 ): EvidenceObservation[] {
@@ -91,7 +94,7 @@ export function observationsOfTestResults(
       ...(name !== undefined && { name }),
       ...(message !== undefined && { message }),
     };
-    return layersOf(cites, served).map((kind): EvidenceObservation => ({ ...observation, kind }));
+    return layersOf(cites, served, defaultLayer).map((kind): EvidenceObservation => ({ ...observation, kind }));
   });
 }
 
@@ -100,12 +103,8 @@ export function layersServing(report: string, runners: TargetConfiguration["runn
   return QUALITY_CHECK_KINDS.filter((kind) => kind !== "fitness" && reportsOf(runners[kind]).includes(report));
 }
 
-const INTEGRATION: readonly QualityCheckKind[] = ["integration"];
-
-// A scenario is evidence of each layer its report serves that its tags name, and of every one where they name none. A
-// report no runner entry names serves integration.
-function kindsOf(tags: readonly string[], served: readonly QualityCheckKind[]): readonly QualityCheckKind[] {
-  const layers = served.length > 0 ? served : INTEGRATION;
+// A scenario is evidence of each layer its report serves that its tags name, and of every one where they name none.
+function kindsOf(tags: readonly string[], layers: readonly QualityCheckKind[]): readonly QualityCheckKind[] {
   const named = layers.filter((kind) => tags.includes(kind));
   return named.length > 0 ? named : layers;
 }
