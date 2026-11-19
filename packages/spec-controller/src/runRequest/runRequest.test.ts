@@ -27,7 +27,11 @@ describe("a flag the command takes will take effect", () => {
   });
 
   it("[CLM-CLI-122] a flag that takes no value: the flag is on", () => {
-    expect([balanceRequested(["--strict"]).strict, balanceRequested(["--exit-zero"]).exitZero]).toEqual([true, true]);
+    expect([
+      balanceRequested(["--strict"]).strict,
+      balanceRequested(["--exit-zero"]).exitZero,
+      balanceRequested(["--written-claims-only"]).countOnlyExecutableClaims,
+    ]).toEqual([true, true, true]);
   });
 
   it("[CLM-CLI-122] allocate's --new, which takes no value: the flag is on", () => {

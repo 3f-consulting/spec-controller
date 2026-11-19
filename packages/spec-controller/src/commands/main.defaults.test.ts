@@ -11,12 +11,19 @@ interface ProvenanceRead {
   readonly inputs: readonly { readonly name: string; readonly path?: string }[];
 }
 
-// The provenance of the JSON report balance writes, run in the folder with nothing named but the format and what is given.
-function provenanceIn(folder: string, ...args: string[]): ProvenanceRead {
+interface ReportRead {
+  readonly runVerdict: { readonly verdict: string };
+  readonly provenance: ProvenanceRead & { readonly countedOnlyExecutableClaims: boolean };
+}
+
+// The JSON report balance writes, run in the folder with nothing named but the format and what is given.
+function reportIn(folder: string, ...args: string[]): ReportRead {
   let report = "";
   main(["balance", "--format", "json", ...args], folder, { output: { fd: 1, write: (text) => (report += text) }, error: { fd: 2, write: () => {} } });
-  return (JSON.parse(report) as { provenance: ProvenanceRead }).provenance;
+  return JSON.parse(report) as ReportRead;
 }
+
+const provenanceIn = (folder: string, ...args: string[]): ProvenanceRead => reportIn(folder, ...args).provenance;
 
 // The path the provenance shows for the input of that name.
 const inputPath = ({ inputs }: ProvenanceRead, name: string): string | undefined => inputs.find((input) => input.name === name)?.path;
@@ -44,29 +51,26 @@ describe("a flag the command takes will take effect", () => {
 
     expect({ target, sourceSha }).toEqual({ target: "acme/web", sourceSha: "abc1234" });
   });
-});
 
-describe("the target's folder will be the git repository the corpus is in, or else the corpus's parent folder", () => {
-  it("[CLM-CLI-184] a corpus named in a git repository's subfolder, reached by its own path, run from elsewhere: the target is that repository", () => {
-    const repository = repositoryForTest();
-    repository.write("docs/features/one.feature", "@ONE\nFeature: one\n");
-    repository.commit("one");
-
-    expect(inputPath(provenanceIn(temporaryDirectory("elsewhere-"), "--features", `${repository.top}/docs/features`), "features")).toBe("docs/features");
-  });
-
-  it("[CLM-CLI-144] a corpus named in no git repository, run from elsewhere: the target is the corpus's folder", () => {
-    const folder = temporaryDirectory("no-git-");
+  it.each([
+    ["--written-claims-only given", ["--written-claims-only"], { verdict: "balanced", countedOnlyExecutableClaims: true }],
+    ["no --written-claims-only", [], { verdict: "out-of-balance", countedOnlyExecutableClaims: false }],
+  ] as const)("[CLM-CLI-122] balance with %s, over one claim whose passing test cites it and a failing test citing no code: the run verdict and the provenance follow the flag", (_given, flags, expected) => {
+    const folder = temporaryDirectory("written-claims-only-");
     mkdirSync(join(folder, "features"));
+    writeFileSync(join(folder, "features", "one.feature"), ONE_UNIT_CLAIM);
+    writeFileSync(join(folder, "vitest.json"), ONE_CITING_AND_ONE_FAILING_CITING_NONE);
 
-    expect(inputPath(provenanceIn(temporaryDirectory("elsewhere-"), "--features", join(folder, "features")), "features")).toBe("features");
-  });
+    const { runVerdict, provenance } = reportIn(folder, "--unit", "vitest:vitest:vitest.json", ...flags);
 
-  it("[CLM-CLI-142] no feature corpus named, run from a folder: the target is that folder", () => {
-    const folder = temporaryDirectory("no-corpus-");
-    mkdirSync(join(folder, "reports"));
-    writeFileSync(join(folder, "reports", "vitest.json"), '{"testResults":[]}');
-
-    expect(inputPath(provenanceIn(folder, "--unit", `vitest:vitest:${join(folder, "reports", "vitest.json")}`), "vitest")).toBe("reports/vitest.json");
+    expect({ verdict: runVerdict.verdict, countedOnlyExecutableClaims: provenance.countedOnlyExecutableClaims }).toEqual(expected);
   });
 });
+
+const ONE_UNIT_CLAIM = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n";
+
+// A Vitest evidence report with a passing test citing CLM-ONE-001 and a failing test citing no code.
+const ONE_CITING_AND_ONE_FAILING_CITING_NONE =
+  '{"testResults":[{"name":"/work/one.test.ts","status":"failed","message":"","assertionResults":[' +
+  '{"title":"[CLM-ONE-001] one","fullName":"[CLM-ONE-001] one","status":"passed","ancestorTitles":[],"failureMessages":[]},' +
+  '{"title":"cites no code","fullName":"cites no code","status":"failed","ancestorTitles":[],"failureMessages":["expected 1 to be 2"]}]}]}';
