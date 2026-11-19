@@ -19,8 +19,10 @@ export interface Flag {
 
 const HELP: Flag = { name: "help", short: "h" };
 
+const FEATURES: Flag = { name: "features", value: "<dir>", input: "features", byDefault: "features" };
+
 const BALANCE_FLAGS: readonly Flag[] = [
-  { name: "features", value: "<dir>", input: "features", byDefault: "features" },
+  FEATURES,
   ...EVIDENCE_REPORT_FORMATS.map(({ kind, flagValue }): Flag => ({ name: kind, value: flagValue, input: kind, repeats: true })),
   { name: "ci", value: "<workflow.yml|dir>", input: "workflows", byDefault: ".github/workflows" },
   { name: "ci-steps", value: "<record.json>", input: "stepRecord", repeats: true },
@@ -33,7 +35,7 @@ const BALANCE_FLAGS: readonly Flag[] = [
   HELP,
 ];
 
-const ALLOCATE_FLAGS: readonly Flag[] = [{ name: "new" }, HELP];
+const ALLOCATE_FLAGS: readonly Flag[] = [FEATURES, { name: "new" }, HELP];
 
 export const COMMANDS = { balance: BALANCE_FLAGS, allocate: ALLOCATE_FLAGS } as const;
 

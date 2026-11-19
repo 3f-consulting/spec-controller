@@ -114,6 +114,12 @@ Feature: every claim code is well formed, filed under its file's code, and never
       when the developer asks for the next code for NEST
       then the answer will be CLM-NEST-005, and nothing else
 
+    @unit @CLM-STG-099
+    Scenario: allocate finds a feature code in the folder the developer names as its features folder
+      given the repository had no features folder, and its specs folder contained a feature file tagged @ONE
+      when the developer asks for the next code for ONE, naming specs as the features folder
+      then the answer will be CLM-ONE-001, and nothing else
+
     @unit
     Scenario Outline: allocate refuses a feature code no feature file has, and lists those that have one
       given the repository's features folder contained feature files tagged @ONE and @TWO, and <where>
