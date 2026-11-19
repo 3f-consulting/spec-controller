@@ -537,7 +537,7 @@ To convert a fitness function, you write two artefacts and no third. There is no
 - A recorded step that states a claim code no scenario carries posts to a **phantom claim**.
 - A step that states no claim code posts to the **unnamed claim**.
 - A step no step record names is posted as **not recorded**, citing no code, and so is every step when no step record is given. It posts to the unnamed claim, whatever its `id:`. It is never reported as passed, never credited to a scenario, and never posted to a phantom claim.
-- A step the step record names, but that no workflow `balance` read contains, is posted with the result its record gives, at the `id:` the step record names it by. A failure posts as failed, a skipped step as never ran, and a success as passed-on-error, because without the workflow `balance` cannot read whether failure was allowed. The posting cites that `id:` when it is a claim code, and no code otherwise.
+- A step a step record names, but that no workflow `balance` read contains, is posted with the result its record gives, at the `id:` that record names it by. A failure posts as failed, a skipped step as never ran, and a success as passed-on-error, because without the workflow `balance` cannot read whether failure was allowed. The posting cites that `id:` when it is a claim code, and no code otherwise.
 
 **`balance` does not read `specController.fitnessChecks`.** The report names it in `## Errors in the inputs` as `configuration-unknown-key`, as it does a misspelling and any other key this tool does not read (see [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped)).
 

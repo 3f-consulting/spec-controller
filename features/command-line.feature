@@ -210,7 +210,7 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
   Rule: a command validates every input before it does its work
 
-    The inputs a command validates are the evidence reports, the step record, the feature corpus,
+    The inputs a command validates are the evidence reports, the step records, the feature corpus,
     the CI workflows and the manifest. An input that is well formed but empty is valid.
 
     @unit @CLM-CLI-146
