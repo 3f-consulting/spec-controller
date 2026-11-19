@@ -4,8 +4,7 @@ import { resultsBySuiteFrom, whereSuitesBreak } from "./junit.js";
 import { resultsByFileFrom, whereResultsByFileBreak } from "./vitest.js";
 import { scenarioResultsFrom, whereScenarioResultsBreak } from "./cucumber.js";
 
-// How a report of one format is read: parsed as JSON, or as XML where it says so, then checked for where it breaks its
-// tool's shape, then read into test results.
+// A report is parsed as JSON, or as XML where its format says so, checked for where it breaks its tool's shape, then read.
 interface ReadAs<Report> {
   readonly whereItBreaks: (report: Report) => string | undefined;
   readonly resultsFrom: (report: Report) => readonly TestResult[];
@@ -14,7 +13,6 @@ interface ReadAs<Report> {
 interface FormatShape {
   // The format's name, which is also its flag's.
   readonly kind: string;
-  // What its flag's value is, in the help.
   readonly flagValue: string;
   // The endings of the files it reads in a folder, for a format whose flag can name one.
   readonly folderEndings?: readonly string[];
@@ -41,8 +39,6 @@ export const EVIDENCE_REPORT_FORMATS = [
   { kind: "cucumber", flagValue: "<report.json>", whereItBreaks: whereScenarioResultsBreak, resultsFrom: scenarioResultsFrom, needsFeatures: true },
 ] as const satisfies readonly Format[];
 
-// The name of each evidence report format.
 export type EvidenceReportKind = (typeof EVIDENCE_REPORT_FORMATS)[number]["kind"];
 
-// One of the evidence report formats.
 export type EvidenceReportFormat = Format & { readonly kind: EvidenceReportKind };
