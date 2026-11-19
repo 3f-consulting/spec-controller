@@ -8,11 +8,14 @@ import {
   type AllocationAsked,
   type HistoryBoundary,
 } from "@3f-consulting/spec-controller-core";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { featureSourcesUnder } from "../inputs/readFiles.js";
 import type { AllocateNote } from "../output/allocateNotes.js";
 import { historyBoundaryOf, historyLines, standingOf, treeLines, type Read } from "../repository/readRepository.js";
 import type { Refusal } from "../runEnding/runEnding.js";
+
+// What allocate is asked, and the features folder the developer named, if any.
+export type AllocateAsked = AllocationAsked & { readonly features?: string };
 
 export type AllocateOutcome =
   | { readonly answer: string; readonly notes: readonly AllocateNote[] }
@@ -20,14 +23,14 @@ export type AllocateOutcome =
 
 const FEATURES = "features";
 
-// The feature codes the repository's feature files are tagged with; one that does not parse stops allocate, named.
-function featureCodesUnder(top: string): Read<string[]> {
+// The feature codes the features folder's feature files are tagged with; one that does not parse stops allocate, named.
+function featureCodesUnder(top: string, features: string): Read<string[]> {
   const featureCodes: string[] = [];
   let sources: ReturnType<typeof featureSourcesUnder>;
   try {
-    sources = featureSourcesUnder(join(top, FEATURES));
+    sources = featureSourcesUnder(features);
   } catch (error) {
-    const path = (error as NodeJS.ErrnoException).path ?? join(top, FEATURES);
+    const path = (error as NodeJS.ErrnoException).path ?? features;
     return { refusal: { key: "unreadable-in-tree", values: { path: relative(top, path), said: (error as Error).message } } };
   }
   for (const { file, source } of sources) {
@@ -61,12 +64,14 @@ function notesOf(asked: AllocationAsked, allocation: Extract<Allocation, { kind:
   return seen === undefined ? [] : [{ note: "highest-seen", code: seen.text, path: seen.path, line: seen.line, commit: seen.commit }];
 }
 
-export function allocate(asked: AllocationAsked, standingIn: string): AllocateOutcome {
+// A named features folder is read from where the developer stands; left out, it is features at the top.
+export function allocate(asked: AllocateAsked, standingIn: string): AllocateOutcome {
   const standing = standingOf(standingIn);
   if ("refusal" in standing) return { refusal: standing.refusal };
-  const featureCodes = featureCodesUnder(standing.read.top);
+  const features = asked.features === undefined ? join(standing.read.top, FEATURES) : resolve(standingIn, asked.features);
+  const featureCodes = featureCodesUnder(standing.read.top, features);
   if ("refusal" in featureCodes) return { refusal: featureCodes.refusal };
-  const tree = treeLines(standing.read, asked.featureCode);
+  const tree = treeLines(standing.read, asked.featureCode, relative(standing.read.top, features));
   if ("refusal" in tree) return { refusal: tree.refusal };
   const history = standing.read.in === "repository" ? historyLines(standing.read.top, asked.featureCode) : { read: [] };
   if ("refusal" in history) return { refusal: history.refusal };

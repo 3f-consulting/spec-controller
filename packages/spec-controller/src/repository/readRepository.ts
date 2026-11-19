@@ -1,6 +1,6 @@
 import type { ClaimCodeOccurrence, HistoryBoundary } from "@3f-consulting/spec-controller-core";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import type { Refusal } from "../runEnding/runEnding.js";
 import { gitIn } from "./git.js";
 
@@ -22,9 +22,10 @@ const UNREADABLE = /(?:error: failed to stat '(.+)'|warning: could not open dire
 
 const codesOf = (featureCode: string): string => `CLM-${featureCode}-[0-9]`;
 
-// Every line that may write one of the feature code's codes: a repository's tracked and new files, else the feature files.
-export function treeLines({ in: where, top }: Standing, featureCode: string): Read<ClaimCodeOccurrence[]> {
-  const among = where === "repository" ? ["--untracked", "-E", codesOf(featureCode)] : ["--no-index", "-E", codesOf(featureCode), "--", "features/*.feature"];
+// Every line that may write one of the feature code's codes: a repository's tracked and new files, else the feature
+// files in the features folder, named from the top.
+export function treeLines({ in: where, top }: Standing, featureCode: string, features: string): Read<ClaimCodeOccurrence[]> {
+  const among = where === "repository" ? ["--untracked", "-E", codesOf(featureCode)] : ["--no-index", "-E", codesOf(featureCode), "--", join(features, "*.feature")];
   const { status, stdout, stderr } = gitIn(top, ["grep", "-n", "-z", "-I", ...among]);
   const unreadable = UNREADABLE.exec(stderr);
   if (unreadable !== null) return { refusal: { key: "unreadable-in-tree", values: { path: unreadable[1] ?? unreadable[2]!, said: unreadable[0] } } };

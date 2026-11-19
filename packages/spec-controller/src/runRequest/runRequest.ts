@@ -25,7 +25,7 @@ export type RunRequest =
       readonly strict: boolean;
       readonly exitZero: boolean;
     }
-  | { readonly command: "allocate"; readonly featureCode: string; readonly asNewFeatureCode: boolean };
+  | { readonly command: "allocate"; readonly featureCode: string; readonly asNewFeatureCode: boolean; readonly features?: string };
 
 // about: the command whose help follows the complaint; with none, the commands.
 export interface UsageError {
@@ -138,11 +138,12 @@ function balanceRequested(read: FlagsRead): RunRequest | UsageError {
   };
 }
 
-function allocateRequested({ on, positionals }: FlagsRead): RunRequest | UsageError {
+function allocateRequested({ values, on, positionals }: FlagsRead): RunRequest | UsageError {
   const [featureCode] = positionals;
   if (featureCode === undefined) return refused("no-feature-code", {}, "allocate");
   if (!isFeatureCode(featureCode)) return refused("not-a-feature-code", { given: featureCode }, "allocate");
-  return { command: "allocate", featureCode, asNewFeatureCode: on.has("new") };
+  const features = values.get("features")?.[0];
+  return { command: "allocate", featureCode, asNewFeatureCode: on.has("new"), ...(features !== undefined && { features }) };
 }
 
 // A command's help answers once what was given beside it is read: balance's report formats, and allocate's feature code
