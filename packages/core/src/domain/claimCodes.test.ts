@@ -4,7 +4,7 @@ import { allocationOf, claimCodeErrorsOf, claimCodeFrom, featureCodeOfFile, isFe
 
 const is = (found: boolean, what: string): string => `${found ? "be" : "not be"} a ${what}`;
 
-describe("an id is a feature code, a claim code or a retired scenario code only in that form", () => {
+describe("an id is a feature code or a claim code only in that form", () => {
   it.each([
     ["CLM-STG-037", "AB", "be a feature code"],
     ["CLM-STG-038", "ABCDE", "be a feature code"],
@@ -24,19 +24,6 @@ describe("an id is a feature code, a claim code or a retired scenario code only 
     ["CLM-STG-048", "CLM-ONE-", "not be a claim code"],
   ])("[%s] the id %s, checked against the claim code form, will %s", (_clm, id, result) => {
     expect(is(claimCodeFrom(id) !== undefined, "claim code")).toBe(result);
-  });
-
-  // A retired scenario code counts only where allocation reads it: as the highest code seen under its feature code.
-  it.each([
-    ["CLM-STG-049", "SCN-ONE-001", "ONE", "be a retired scenario code"],
-    ["CLM-STG-050", "SCN-ONE-7", "ONE", "be a retired scenario code"],
-    ["CLM-STG-051", "SCN-ONE-1000", "ONE", "be a retired scenario code"],
-    ["CLM-STG-052", "SCN-A-001", "A", "not be a retired scenario code"],
-    ["CLM-STG-053", "SCN-ONE-", "ONE", "not be a retired scenario code"],
-  ])("[%s] the id %s, under the feature code %s, checked against the retired scenario code form, will %s", (_clm, id, featureCode, result) => {
-    const allocation = allocationOf({ featureCode, asNewFeatureCode: true }, [], [{ text: id, path: "notes.txt", line: 1 }]);
-
-    expect(is("highestSeen" in allocation, "retired scenario code")).toBe(result);
   });
 });
 

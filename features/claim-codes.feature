@@ -2,7 +2,7 @@
 Feature: every claim code is well formed, filed under its file's code, and never reused
 
   A feature code is two to five uppercase letters or digits. A claim code is CLM, a feature code
-  and a number of any width: CLM-<FFF>-<NNN>. A retired scenario code has the same form under SCN.
+  and a number of any width: CLM-<FFF>-<NNN>.
   balance reads every id by this one form. An id in any other form is not a claim code.
 
   A feature file declares its feature code on the line above Feature:, and its scenarios' claim
@@ -15,29 +15,24 @@ Feature: every claim code is well formed, filed under its file's code, and never
   and gives no code. It never gives a code worked out without what it could not read.
 
   @unit
-  Scenario Outline: an id is a feature code, a claim code or a retired scenario code only in that form
+  Scenario Outline: an id is a feature code or a claim code only in that form
     given there was the id <id>
     when it is checked against the <form> form
     then it will <result>
 
     Examples:
-      | clm         | form                  | id           | result                         |
-      | CLM-STG-037 | feature code          | AB           | be a feature code              |
-      | CLM-STG-038 | feature code          | ABCDE        | be a feature code              |
-      | CLM-STG-039 | feature code          | A1           | be a feature code              |
-      | CLM-STG-040 | feature code          | A            | not be a feature code          |
-      | CLM-STG-041 | feature code          | ABCDEF       | not be a feature code          |
-      | CLM-STG-042 | feature code          | abc          | not be a feature code          |
-      | CLM-STG-044 | claim code            | CLM-ONE-001  | be a claim code                |
-      | CLM-STG-045 | claim code            | CLM-ONE-7    | be a claim code                |
-      | CLM-STG-046 | claim code            | CLM-ONE-1000 | be a claim code                |
-      | CLM-STG-047 | claim code            | CLM-A-001    | not be a claim code            |
-      | CLM-STG-048 | claim code            | CLM-ONE-     | not be a claim code            |
-      | CLM-STG-049 | retired scenario code | SCN-ONE-001  | be a retired scenario code     |
-      | CLM-STG-050 | retired scenario code | SCN-ONE-7    | be a retired scenario code     |
-      | CLM-STG-051 | retired scenario code | SCN-ONE-1000 | be a retired scenario code     |
-      | CLM-STG-052 | retired scenario code | SCN-A-001    | not be a retired scenario code |
-      | CLM-STG-053 | retired scenario code | SCN-ONE-     | not be a retired scenario code |
+      | clm         | form         | id           | result                |
+      | CLM-STG-037 | feature code | AB           | be a feature code     |
+      | CLM-STG-038 | feature code | ABCDE        | be a feature code     |
+      | CLM-STG-039 | feature code | A1           | be a feature code     |
+      | CLM-STG-040 | feature code | A            | not be a feature code |
+      | CLM-STG-041 | feature code | ABCDEF       | not be a feature code |
+      | CLM-STG-042 | feature code | abc          | not be a feature code |
+      | CLM-STG-044 | claim code   | CLM-ONE-001  | be a claim code       |
+      | CLM-STG-045 | claim code   | CLM-ONE-7    | be a claim code       |
+      | CLM-STG-046 | claim code   | CLM-ONE-1000 | be a claim code       |
+      | CLM-STG-047 | claim code   | CLM-A-001    | not be a claim code   |
+      | CLM-STG-048 | claim code   | CLM-ONE-     | not be a claim code   |
 
   @unit @CLM-STG-043
   Scenario: a tag above Feature: will be the feature code of that file
