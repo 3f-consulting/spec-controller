@@ -38,6 +38,12 @@ describe("balance will use the default when an input is not named", () => {
   });
 });
 
+describe("the provenance says what the run used", () => {
+  it.each([["CLM-EVR-043", "Cucumber", "cucumber"]] as const)("[%s] a run with no %s evidence report given has that report, named as absent, in the provenance", (_clm, _report, input) => {
+    expect(provenanceIn(temporaryDirectory("no-report-")).inputs.filter(({ name }) => name === input)).toStrictEqual([{ name: input }]);
+  });
+});
+
 describe("the target's folder will be the git repository the corpus is in, or else the corpus's parent folder", () => {
   it("[CLM-CLI-184] a corpus named in a git repository's subfolder, reached by its own path, run from elsewhere: the target is that repository", () => {
     const repository = repositoryForTest();
