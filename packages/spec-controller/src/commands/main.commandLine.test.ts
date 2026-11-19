@@ -39,6 +39,7 @@ const BALANCE_FLAGS = [
   "--format <fmt>[:<path>]",
   "--strict",
   "--exit-zero",
+  "--written-claims-only",
   "-h, --help",
 ];
 
