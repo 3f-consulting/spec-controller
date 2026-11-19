@@ -75,12 +75,15 @@ function settingsParsed(block: unknown): ConfigurationSettings {
 export const whereManifestBreaks = (manifest: unknown): string | undefined =>
   whereShapeBreaks(manifest, { fields: { specController: { fields: {} } }, optional: ["specController"] });
 
+// The settings a manifest's specController block writes, as parsed, before they are checked against the steps and reports.
+export const configurationSettingsFrom = (manifest: unknown): ConfigurationSettings => settingsParsed(isRecord(manifest) ? manifest.specController : undefined);
+
 export function targetConfigurationFrom(
   manifest: unknown,
   steps: readonly CiStep[],
   reportsRead: readonly string[],
 ): { readonly configuration: TargetConfiguration; readonly errors: readonly ConfigurationError[] } {
-  return targetConfigurationOf(settingsParsed(isRecord(manifest) ? manifest.specController : undefined), steps, reportsRead);
+  return targetConfigurationOf(configurationSettingsFrom(manifest), steps, reportsRead);
 }
 
 // The scripts a manifest names, each as the command it runs.

@@ -19,40 +19,36 @@ npm install @3f-consulting/spec-controller-core
 ```ts
 import { readFileSync } from "node:fs";
 import {
+  configurationSettingsFrom,
   featureAsWrittenFrom,
-  resultsByFileFrom,
-  executableClaimsOf,
-  observationsOfTestResults,
-  claimReconciliationsOf,
-  claimCodeErrorsOf,
-  provenanceOf,
-  repositoryOfOrigin,
-  evidenceReconciliationOf,
   markdownReportOf,
-  stepAccountOf,
+  reconcile,
+  repositoryOfOrigin,
+  resultsByFileFrom,
+  scriptsFrom,
+  shellAnswers,
 } from "@3f-consulting/spec-controller-core";
 
-// One feature file's text, and one Vitest JSON report parsed from its text, both read from the target's folder.
-// The target's folder: a path the report records below it is shown relative to it.
+// One feature file's text, one Vitest JSON report and the target's package.json, each parsed from its text, all read
+// from the target's folder. A path the report records below that folder is shown relative to it.
 const targetFolder = "/work/shop";
 const featureSource = readFileSync(`${targetFolder}/features/checkout.feature`, "utf8");
 const vitestReport: unknown = JSON.parse(readFileSync(`${targetFolder}/vitest-report.json`, "utf8"));
-const features = [featureAsWrittenFrom("checkout.feature", featureSource)];
-const debitJournal = executableClaimsOf(features, { deferralTags: [], strict: false });
-const creditJournal = observationsOfTestResults(resultsByFileFrom(vitestReport), targetFolder, "unit");
+const manifest: unknown = JSON.parse(readFileSync(`${targetFolder}/package.json`, "utf8"));
 
-const evidenceReconciliation = evidenceReconciliationOf({
-  claimReconciliations: claimReconciliationsOf(debitJournal, creditJournal),
-  claimCodeErrors: claimCodeErrorsOf(features),
-  configurationErrors: [],
-  features,
-  stepAccount: stepAccountOf([]),
-  provenance: provenanceOf(
-    { givenTarget: "acme/shop", toolVersion: "0.1.0", runTime: "2026-01-01T00:00:00Z" },
-    [{ name: "features", path: "/work/shop/features" }],
-    targetFolder,
-    repositoryOfOrigin,
-  ),
+const evidenceReconciliation = reconcile({
+  features: [featureAsWrittenFrom("checkout.feature", featureSource)],
+  reports: [{ report: "vitest-report.json", results: resultsByFileFrom(vitestReport), defaultLayer: "unit", needsFeatures: false }],
+  steps: [],
+  stepRecord: [],
+  settings: configurationSettingsFrom(manifest),
+  scripts: scriptsFrom(manifest),
+  shell: shellAnswers,
+  repositoryOf: repositoryOfOrigin,
+  identity: { givenTarget: "acme/shop", toolVersion: "0.1.0", runTime: "2026-01-01T00:00:00Z" },
+  provenanceInputs: [{ name: "features", path: "/work/shop/features" }],
+  targetFolder,
+  strict: false,
 });
 
 evidenceReconciliation.runVerdict; // { verdict: "balanced" } while every claim's evidence arrived and passed
@@ -60,10 +56,9 @@ markdownReportOf(evidenceReconciliation);
 ```
 
 - `featureAsWrittenFrom` reads one feature file into its scenarios: its tags, and each scenario's tags, title and Examples, including each Outline row's `clm` cell. It throws if the Gherkin parser rejects the file.
-- `executableClaimsOf` reads the executable claims off the feature files, and the **Evidence Obligations** that each claim's tags raise. It takes the deferral tags you configure and whether the run is strict.
-- `resultsByFileFrom` reads a Vitest or Jest JSON report into test results. `observationsOfTestResults` posts them as **Evidence Observations**. Each observation cites the claim codes its test cites, and is placed relative to the target's folder.
-- `claimReconciliationsOf` takes the executable claims as the debit journal and the Evidence Observations as the credit journal. It posts each observation to its claim, to a phantom claim or to the unnamed claim. Then it reconciles each claim into a **Claim Reconciliation**.
-- `evidenceReconciliationOf` gives the whole: the Claim Reconciliations, the run verdict, the totals and the provenance. It also gives the step account, the errors in the inputs and the run integrity when the run has them. With no CI the step account is empty, as here: `stepAccountOf([])`.
+- `resultsByFileFrom` reads a Vitest or Jest JSON report into test results. Each report goes to `reconcile` with its file name, which a `runners` entry may name, the layer its format serves where no entry names it, and whether its results need the feature files, as a Cucumber report's do.
+- `configurationSettingsFrom` reads the `specController` block of the target's `package.json` into its settings, and `scriptsFrom` its scripts.
+- `reconcile` gives the whole **Evidence Reconciliation**: the Claim Reconciliations, the run verdict, the totals, the step account, the provenance, the errors in the inputs and the run integrity. It checks the settings against the CI steps and the reports, says what each CI step is, reads the executable claims and their **Evidence Obligations** off the feature files, posts each report's results and each fitness function's step as **Evidence Observations**, and reconciles each claim into a **Claim Reconciliation**. With no CI, as here, the steps, the step record and the step account are empty.
 
 Everything else the package exports is a variation on these steps.
 
@@ -76,12 +71,12 @@ The package publishes exactly one entrypoint: a barrel that exports the followin
   - test reports: `resultsByFileFrom` (Vitest and Jest JSON), `resultsBySuiteFrom` (JUnit XML, from pytest, gotestsum, Maven Surefire or Gradle, given as text, with `whyXmlDoesNotParse`), `resultsByExampleFrom` (RSpec JSON) and `scenarioResultsFrom` (Cucumber JSON);
   - evidence report formats: `EVIDENCE_REPORT_FORMATS` lists the six report formats above, one entry for each. An entry gives the format's flag and its value, whether it parses as JSON or as XML, its `where…Break` and its reader, the endings it reads in a folder if it reads one, whether its results need the feature files, and its default layer;
   - CI: `workflowStepsFrom` reads one workflow's steps, and `stepRecordFrom` reads a run's `toJSON(steps)` record;
-  - the target's `package.json`: `targetConfigurationFrom` reads its `specController` block, and `scriptsFrom` reads its scripts;
+  - the target's `package.json`: `configurationSettingsFrom` reads its `specController` block into its settings, `targetConfigurationFrom` reads the block and checks it against the CI steps and the reports read, and `scriptsFrom` reads its scripts;
   - `shellAnswers` says whether a step's command runs a runner, through the target's scripts, and whether it runs `spec-controller balance`. `repositoryOfOrigin` names the repository a git origin points to.
 
   `resultsBySuiteFrom` takes the tool that wrote the report. JUnit and pytest differ in one way: how an `<error>` on an ordinary test reads. From JUnit it posts as failed. From pytest it posts as never ran, because pytest writes an `<error>` for an error in a test's setup or teardown.
 - **Post the claims and the evidence**: `executableClaimsOf`; `observationsOfTestResults`, which posts a report's test results at its format's default layer, unless the layers its report serves are given; and `fitnessObservationsOf`, which posts the CI steps that are fitness functions. For a Cucumber report, `observationsOfTestResults` also takes the feature files, where an Outline row's claim code is. `stepDispositionOf` says what a CI step is: the reconciler, a non-check, plumbing, a runner or a fitness function. `disposedStepsOf` gives each of a run's CI steps with what it is, once. `fitnessObservationsOf` and `stepAccountOf` both take its answer.
-- **Reconcile**: `claimReconciliationsOf`, then `evidenceReconciliationOf`, which gives the whole Evidence Reconciliation. Its `runVerdict` is one of `balanced`, `out-of-balance`, or `not-reconciled`. A `not-reconciled` verdict has a `why` of `unsound`, `claim-code-errors` or `nothing-to-reconcile`. `stepAccountOf` works out the step account from each CI step and what it is, as `disposedStepsOf` gives them. The CLI takes its exit code from the run verdict.
+- **Reconcile**: `reconcile` takes what the readers gave and gives the whole Evidence Reconciliation in one call. The steps it runs are exported too: `claimReconciliationsOf`, then `evidenceReconciliationOf`, which assembles the whole from its parts. The Evidence Reconciliation's `runVerdict` is one of `balanced`, `out-of-balance`, or `not-reconciled`. A `not-reconciled` verdict has a `why` of `unsound`, `claim-code-errors` or `nothing-to-reconcile`. `stepAccountOf` works out the step account from each CI step and what it is, as `disposedStepsOf` gives them. The CLI takes its exit code from the run verdict.
 - **Claim codes**: `isFeatureCode`, `featureCodeOfFile`, `writtenClaimCode`, `claimCodeErrorsOf`, and `allocationOf`. `allocationOf` gives the next claim code for a feature code, from the code occurrences you read.
 - **Report**: `markdownReportOf` and `jsonReportOf`, and `textFor`, which fills a message catalogue's text for a code.
 - **Plan output**: `outputPlanOf` takes the requested reports, with the identity of each place, and the inputs' identities. It refuses more than one report on standard output, two reports on one file, or a report on a file the run reads.

@@ -1,11 +1,23 @@
-import type { ClaimCodeError } from "./claimCodes.js";
-import { isExecutable, type ClaimReconciliation, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
-import type { ConfigurationError } from "./configuration.js";
-import { QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
-import type { DisposedStep, EvidenceObservation, StepDisposition } from "./postEvidenceObservation.js";
+import { claimCodeErrorsOf, type ClaimCodeError } from "./claimCodes.js";
+import { claimReconciliationsOf, isExecutable, type ClaimReconciliation, type CreditJournal, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
+import { targetConfigurationOf, type ConfigurationError, type ConfigurationSettings, type TargetConfiguration } from "./configuration.js";
+import { executableClaimsOf, QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
+import {
+  disposedStepsOf,
+  fitnessObservationsOf,
+  layersServing,
+  observationsOfTestResults,
+  type DisposedStep,
+  type EvidenceObservation,
+  type RecordedStep,
+  type Scripts,
+  type ShellAnswers,
+  type StepDisposition,
+  type TestResult,
+} from "./postEvidenceObservation.js";
 import type { CiStep } from "./workflowSteps.js";
 import { claimCodeFrom } from "./claimCodes.js";
-import type { Provenance } from "./provenance.js";
+import { provenanceOf, type Provenance, type ProvenanceInput, type RepositoryOfOrigin, type RunIdentity } from "./provenance.js";
 
 export type RunVerdict =
   | { readonly verdict: "balanced" }
@@ -210,7 +222,7 @@ export interface RunReconciled {
   readonly provenance: Provenance;
 }
 
-// The domain's one entry point: every part is present, empty when the run had nothing for it.
+// The Evidence Reconciliation assembled from its parts: every part is present, empty when the run had nothing for it.
 export function evidenceReconciliationOf({ claimReconciliations, claimCodeErrors, configurationErrors, features, stepAccount, provenance }: RunReconciled): EvidenceReconciliation {
   const neverRan = claimReconciliations.flatMap(({ qualityCheckReconciliations }) =>
     qualityCheckReconciliations.flatMap((reconciliation) => (reconciliation.outcome === "never-ran" ? [reconciliation.observation] : [])),
@@ -224,4 +236,64 @@ export function evidenceReconciliationOf({ claimReconciliations, claimCodeErrors
     errorsInTheInputs: { claimCodeErrors, configurationErrors },
     runIntegrity: { neverRan },
   };
+}
+
+// One evidence report as its reader gave it: its file name, which a runners entry may name; its test results; the layer
+// its format serves where no runners entry names it; and whether its results are posted with the feature files.
+export interface ReportGiven {
+  readonly report: string;
+  readonly results: readonly TestResult[];
+  readonly defaultLayer: QualityCheckKind;
+  readonly needsFeatures: boolean;
+}
+
+// What the readers gave a run, as data and answers: the domain reads no file and asks no reader.
+export interface ReadersGave {
+  readonly features: readonly FeatureFile[];
+  // Every evidence report, in the order its results are posted.
+  readonly reports: readonly ReportGiven[];
+  readonly steps: readonly CiStep[];
+  readonly stepRecord: readonly RecordedStep[];
+  // The configuration settings as parsed, before they are checked against the steps and the reports.
+  readonly settings: ConfigurationSettings;
+  readonly scripts: Scripts;
+  readonly shell: ShellAnswers;
+  readonly repositoryOf: RepositoryOfOrigin;
+  readonly identity: RunIdentity;
+  // Every input the run could read, each path already resolved.
+  readonly provenanceInputs: readonly ProvenanceInput[];
+  readonly targetFolder: string;
+  readonly strict: boolean;
+}
+
+// The credit journal: each report's results as Evidence Observations, beside the fitness functions' from the CI steps.
+function creditJournalOf(
+  { reports, features, stepRecord, targetFolder }: ReadersGave,
+  { runners }: TargetConfiguration,
+  disposedSteps: readonly DisposedStep[],
+): CreditJournal {
+  return [
+    ...reports.flatMap(({ report, results, defaultLayer, needsFeatures }) =>
+      observationsOfTestResults(results, targetFolder, defaultLayer, layersServing(report, runners), needsFeatures ? features : []),
+    ),
+    ...fitnessObservationsOf(disposedSteps, stepRecord),
+  ];
+}
+
+// What the readers gave, reconciled in one call: the configuration checked, the steps disposed, the claims and the evidence
+// posted and reconciled, and the whole assembled.
+export function reconcile(given: ReadersGave): EvidenceReconciliation {
+  const { features, reports, steps, stepRecord, settings, scripts, shell, repositoryOf, identity, provenanceInputs, targetFolder, strict } = given;
+  const { configuration, errors } = targetConfigurationOf(settings, steps, reports.map(({ report }) => report));
+  // Each step with what it is: posting and the step account both take it, and posting the same record.
+  const disposedSteps = disposedStepsOf(steps, configuration, scripts, shell, stepRecord);
+  const debitJournal = executableClaimsOf(features, { deferralTags: configuration.deferralTags, strict });
+  return evidenceReconciliationOf({
+    claimReconciliations: claimReconciliationsOf(debitJournal, creditJournalOf(given, configuration, disposedSteps)),
+    claimCodeErrors: claimCodeErrorsOf(features),
+    configurationErrors: errors,
+    features,
+    stepAccount: stepAccountOf(disposedSteps),
+    provenance: provenanceOf(identity, provenanceInputs, targetFolder, repositoryOf),
+  });
 }
