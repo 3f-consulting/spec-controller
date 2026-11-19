@@ -5,12 +5,12 @@ Two packages are released together. `@3f-consulting/spec-controller-core` is the
 
 **Every push to `main` that passes CI publishes; only a version heading releases.** Each publish
 happens in the run of [`.github/workflows/release.yml`](../.github/workflows/release.yml) that
-follows the push's CI run, with the next counter version, core first. An ordinary merge publishes
-under npm's `next` dist-tag, with no git tag and no GitHub release. A merge that adds a version
-heading to [`CHANGELOG.md`](../CHANGELOG.md), `## 0.1.<N> — <yyyy-mm-dd> — <title>`, publishes its
-version under `latest`, with one `v<version>` tag and one GitHub release (*Releasing at an
-increment's close*, below). No credential is stored anywhere, and there is nothing to promote
-afterwards and nothing to rotate.
+follows the push's CI run. It publishes the next counter version, core first. An ordinary merge
+publishes under npm's `next` dist-tag, with no git tag and no GitHub release. A merge that adds a
+version heading to [`CHANGELOG.md`](../CHANGELOG.md), `## 0.1.<N> — <yyyy-mm-dd> — <title>`,
+publishes its version under `latest`. It also gets one `v<version>` tag and one GitHub release
+(*Releasing at an increment's close*, below). No credential is stored anywhere. There is nothing to
+promote afterwards and nothing to rotate.
 
 **Read *When a publish returns `E401`* before your first release.** It describes an authentication
 error whose cause is not authentication.
@@ -51,10 +51,11 @@ The `release` job:
 3. **Stamps the next counter version** on both manifests in the working copy.
 4. **Reads the version heading the merge adds**: the heading lines
    [`CHANGELOG.md`](../CHANGELOG.md) gained since the commit the previous publish was built from.
-   None: the merge publishes under `next`. One version heading naming the version this run
-   publishes, over at least one line: it publishes under `latest` and releases. Anything else (two
-   headings, a heading line that is not a version heading, or a number other than the counter's)
-   fails the run here, naming the numbers, before anything is published.
+   If there are none, the merge publishes under `next`. If there is one version heading, it names
+   the version this run publishes, and at least one line sits under it, the merge publishes under
+   `latest` and releases. Anything else fails the run here, before anything is published, and the
+   failure names the numbers. That covers two headings, a heading line that is not a version
+   heading, and a number other than the counter's.
 5. **Packs both packages, once.** Every later step reads those same two files.
 6. **Smokes them in a clean room.** It installs the tarballs into a directory outside the workspace
    that holds nothing else of this repository, and starts the command there.
@@ -64,16 +65,16 @@ The `release` job:
 Three jobs then run on what was published:
 
 - The `published` job pushes `refs/published/<version>` at the commit that was built. The counter
-  reads these refs (*The version is a counter*, below). They are not tags: no tag and no GitHub
-  release appears for an ordinary merge.
+  reads these refs (*The version is a counter*, below). They are not tags, so an ordinary merge
+  gets no tag and no GitHub release.
 - The `dist-tag` job runs [`scripts/dist-tag-is.sh`](../scripts/dist-tag-is.sh) for each package.
   It reds unless the dist-tag the merge published under is the version just published. It waits up
   to `DIST_TAG_WAIT_S` for the registry to serve it.
-- On a release only, the `tag` job creates `v<version>` on the commit that was built, and a GitHub
-  release for that tag, titled with the version heading. Its notes are the heading's section: the
-  lines under it, up to the next heading or the file's end. Nothing from a pull request's title
-  reaches them. The `tag` job is separate so that the only token that can write tags never shares
-  a runner with the build. It starts no other workflow. **The tag records a release; it never
+- On a release only, the `tag` job creates `v<version>` on the commit that was built. It also
+  creates a GitHub release for that tag, titled with the version heading. The release notes are the
+  heading's section: the lines under it, up to the next heading or the end of the file. Nothing
+  from a pull request's title reaches them. The `tag` job is separate so that the only token that
+  can write tags never shares a runner with the build. It starts no other workflow. **The tag records a release; it never
   causes one**, and nothing listens for tags.
 
 ### Releasing at an increment's close
@@ -85,17 +86,17 @@ above the lines the increment gathered in [`CHANGELOG.md`](../CHANGELOG.md):
 ## 0.1.<N> — <yyyy-mm-dd> — <the increment's title>
 ```
 
-`<N>` is the version its merge will publish: one past the highest version the counter finds. Its
-merge publishes that version under `latest`, tags it and creates its GitHub release. If another
-merge publishes first and takes the number, the release run fails naming both numbers, and
-publishes nothing; the heading is corrected in a new pull request. An increment that gathered no
-changelog line closes without a release. The changelog's lines from before its first version
-heading belong to versions released before this model.
+`<N>` is the version the pull request's merge will publish: one past the highest version the
+counter finds. That merge publishes the version under `latest`, tags it and creates its GitHub
+release. If another merge publishes first and takes the number, the release run fails, names both
+numbers and publishes nothing. A new pull request then corrects the heading. An increment that
+gathered no changelog line closes without a release. The changelog's lines from before its first
+version heading belong to versions released before this model.
 
-**`next` trails `latest` after a release.** npm moves only the dist-tag a publish names, and
-trusted publishing gives a credential to `npm publish` alone, so no step can move `next` onto the
-version a release published. Until the next ordinary merge, `next` points one version below
-`latest`; that version differs from the release only by its heading line.
+**`next` trails `latest` after a release.** npm moves only the dist-tag a publish names. Trusted
+publishing gives a credential to `npm publish` alone, so no step can move `next` onto the version a
+release published. Until the next ordinary merge, `next` points one version below `latest`. That
+version differs from the release only by its heading line.
 
 The CLI's tarball names no runtime dependency (*Lockstep, `0.x` and what is published*, below), so
 `npm i spec-controller` installs that one package and fetches nothing from core's publish. Core
@@ -106,8 +107,8 @@ still publishes first, and the recovery under *If the run fails* follows from th
 Runs are serialised (`concurrency: release`), and a running run is never cancelled. GitHub holds at
 most one pending run, and a newer pending run cancels the older. For merges A, B and C in quick
 succession, A publishes, B is cancelled and C publishes. C's commit contains B's change, because
-squash merges keep `main` linear, and C reads the changelog back to A's publish, so a version heading
-B added still releases, at C. Each run reads the counter inside its own turn, after the previous
+squash merges keep `main` linear. C reads the changelog back to A's publish, so a version heading
+that B added still releases, at C. Each run reads the counter inside its own turn, after the previous
 run's publish and its `refs/published` ref, so no number is minted twice.
 
 ### Watching one
@@ -152,9 +153,9 @@ Both packages are **semver**, and both are on `0.x`.
 The run takes the **line** from the committed CLI manifest: everything before its last `.N`. So
 `0.1.0` is the line `0.1.`. The run finds the highest number already on that line across **both
 packages on the registry, the repository's `refs/published/*` refs and its `v*` tags**. The
-registry can take 20 to 40 minutes to serve a publish, so the ref each publish pushes is what keeps
-the next run from minting the same number. It stamps the next number into both
-manifests **in the run's working copy only**. Nothing is committed back, because `main` is
+registry can take 20 to 40 minutes to serve a publish, so the ref each publish pushes is what stops
+the next run minting the same number. The run stamps the next number into both manifests **in the
+run's working copy only**. Nothing is committed back, because `main` is
 protected. So the committed manifest is not the published version: it stays where a person last put
 it while the registry counts on. On a stable line the counter moves the patch number and ignores
 prereleases.
@@ -193,7 +194,7 @@ with no guard.
 
 **`latest` is never moved onto a prerelease.** The committed manifests are on the stable line
 `0.1.N`, so every version is a plain one. A bare `npm i spec-controller` installs the latest
-release; `npm i spec-controller@next` installs the current build. The `dist-tag` job checks that
+release, and `npm i spec-controller@next` installs the current build. The `dist-tag` job checks that
 the dist-tag a merge published under resolves to its version.
 
 ---
@@ -245,13 +246,13 @@ until somebody edits one of them.
 
 **The pin follows `latest`, so the reader judging this tree trails by up to an increment.**
 Dependabot moves the pin to the newest release, and releases happen only at an increment's close.
-A slice that changes what the reader reads is judged by the previous release's reader until the
-increment closes. That lag is accepted, and revisited if it bites.
+Until the increment closes, a slice that changes what the reader reads is judged by the previous
+release's reader. That lag is accepted, and revisited if it bites.
 
 ### Dependabot moves it, with no human act
 
-**The pin follows the registry by bot PR, within a day of a release, weekends
-included.** [`.github/dependabot.yml`](../.github/dependabot.yml) lets Dependabot move exactly this
+**The pin follows the registry by bot PR, within a day of a release, weekends included.**
+[`.github/dependabot.yml`](../.github/dependabot.yml) lets Dependabot move exactly this
 one dependency, and keeps it exact. `dependabot-auto-merge.yml` merges its PR once `ci` is green.
 
 **The pin's merge starts no CI and no release, and that is the loop guard.** Auto-merge pushes the
@@ -422,35 +423,36 @@ not *"can I fix this later"* but *"is this the artefact"*.
 
 ### If the run fails
 
-**Re-run it.** The counter reads the registry and the `refs/published` refs, so a re-run picks a
-number nobody has used, once the last publish's ref is there (*After both published and the
+**Re-run it.** The counter reads the registry and the `refs/published` refs. So once the last
+publish's ref is there, a re-run picks a number nobody has used (*After both published and the
 `published` job failed*, below).
 
 A re-run needs the `built-packages` artifact from the CI run it follows. CI keeps that artifact for
 one day (`retention-days: 1`), so a re-run after that cannot download it and fails. The change is
 still unpublished, so the next push to `main` that runs CI and passes publishes it.
 
-- **At the version heading.** The run names the heading's number and the counter's, and published
-  nothing. Correct the heading in a new pull request so it names the counter's number; its merge
-  releases. A heading line that is not a version heading, or two headings, is corrected the same way.
+- **At the version heading.** The run names the heading's number and the counter's, and has
+  published nothing. Correct the heading in a new pull request so that it names the counter's
+  number; its merge releases. Correct a heading line that is not a version heading, or two
+  headings, the same way.
 - **Before anything published.** The re-run publishes the number the failed run would have. A fix
   that needs a code change is an ordinary pull request, and its merge publishes.
 - **After core published and the CLI did not.** Core's number is spent. The re-run's counter sees it
   on the registry and takes the **next** number for both, so no CLI ever names the spent core
-  version. On a release, that next number is not the heading's, so the re-run fails at the heading:
-  correct the heading to the new number in a pull request, and its merge releases.
+  version. On a release, that next number is not the heading's, so the re-run fails at the heading.
+  Correct the heading to the new number in a pull request, and its merge releases.
 - **After both published and the `published` job failed.** Push the ref by hand, on the commit the
   run built: `gh api repos/{owner}/{repo}/git/refs -f ref=refs/published/<version> -f sha=<sha>`.
-  Until it is there, a push inside npm's 20 to 40 minutes can mint the same number and fail with
-  E403.
+  Until the ref is there, a push in the 20 to 40 minutes npm takes to serve the version can mint
+  the same number and fail with E403.
 - **After both published and the `dist-tag` job failed.** Re-run that job alone (*Re-run failed
   jobs*). Re-running the whole workflow publishes the next number, not nothing. If the job fails
   again with time to spare, read `npm view <pkg> dist-tags`. A dist-tag that is not the published
   version is the fault the job exists to catch.
 - **After a release published and the `tag` job failed.** Create the tag by hand on the commit the
-  run built, `gh api repos/{owner}/{repo}/git/refs -f ref=refs/tags/v<version> -f sha=<sha>`, then
-  the release: `gh release create v<version> --verify-tag --title "<the heading>"` with the
-  heading's section as its notes.
+  run built: `gh api repos/{owner}/{repo}/git/refs -f ref=refs/tags/v<version> -f sha=<sha>`. Then
+  create the release, with the heading's section as its notes:
+  `gh release create v<version> --verify-tag --title "<the heading>"`.
 
 ### When a publish returns `E401`, read it as the trusted publisher
 
