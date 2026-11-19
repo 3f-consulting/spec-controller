@@ -137,10 +137,7 @@ const formatReaderOf = (format: EvidenceReportFormat): InputReader => ({
   read: (files) => each(files, (file) => reportRead(file, format)),
 });
 
-// Each input it can read, by the reader that reads it.
-type InputKind = "features" | "workflows" | "stepRecord" | "manifest" | EvidenceReportKind;
-
-const READERS: Readonly<Record<InputKind, InputReader>> = {
+const READERS = {
   features: {
     reads: "folder",
     endings: [".feature"],
@@ -155,7 +152,10 @@ const READERS: Readonly<Record<InputKind, InputReader>> = {
   ...(Object.fromEntries(EVIDENCE_REPORT_FORMATS.map((format) => [format.kind, formatReaderOf(format)])) as Record<EvidenceReportKind, InputReader>),
   stepRecord: { read: (files) => each(files, (file) => jsonRead(file, whereStepRecordBreaks, (record) => ({ stepRecord: stepRecordFrom(record) }))) },
   manifest: { read: (files) => each(files, (file) => jsonRead(file, whereManifestBreaks, (manifest) => ({ manifest }))) },
-};
+} satisfies Readonly<Record<string, InputReader>>;
+
+// Each input it can read, by the reader that reads it.
+type InputKind = keyof typeof READERS;
 
 // An input named on the command line, or left to its default path.
 interface InputNamed {

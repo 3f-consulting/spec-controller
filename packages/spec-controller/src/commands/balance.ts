@@ -51,7 +51,7 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
 };
 
 // Every evidence report the run read: by format, in the formats' order, then in the order read.
-const reportsOf = ({ reports = NONE }: InputsRead) => EVIDENCE_REPORT_FORMATS.flatMap((format) => reports.filter((report) => report.format === format));
+const reportsOf = ({ reports = NONE }: InputsRead) => EVIDENCE_REPORT_FORMATS.flatMap((format) => reports.filter((report) => report.format.kind === format.kind));
 
 // The file name of every evidence report the run read, a JUnit folder's files one by one.
 const reportsReadIn = (read: InputsRead): string[] => reportsOf(read).map(({ report }) => report);
