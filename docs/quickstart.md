@@ -56,7 +56,7 @@ npx spec-controller balance \
   --exit-zero
 ```
 
-- **`--unit vitest:vitest:reports/vitest.json` names your unit runner and its report:** the runner, the format of the report it writes, and the report's path. `balance` reads that report, and each result in it is unit evidence.
+- **`--unit vitest:vitest:reports/vitest.json` names your unit runner and its report:** the runner, the format of the report it writes, and the report's path. `balance` reads that report, and each result in it is unit evidence. This is the runner's long form, which names a report wherever it was written.
 - **Every path you pass must exist.** A report's path names a file your tools have already written. A report with no file at its path is named under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on without it. Leave out any input you don't have. The command refuses a folder that does not exist, so if you have no `features/` folder yet, leave out `--features`.
 - **`--target` names the project in the report.** Without `--target`, the report uses the name of the git checkout's `origin`. With no `origin`, the report reads `unknown-target`.
 - **`--exit-zero` stops the build going red while you watch.** A first run against a pipeline with no citations goes red, because every fitness function (each CI step treated as a check) cites nothing. Every evidence observation then posts to the **unnamed claim**, which collects the evidence that names no scenario. Without `--exit-zero`, `balance` exits `1`. With it, you get the same report, but an out-of-balance run verdict exits `0`. Remove the flag when you are ready to gate.
@@ -82,9 +82,9 @@ More flags make the list shorter. Each may repeat:
 npx spec-controller balance \
   --target your-project \
   --features features \
-  --unit vitest:vitest:reports/vitest.json \
-  --integration cucumber-js:cucumber:reports/cucumber.json \
-  --e2e cucumber-js:cucumber:reports/cucumber.json \
+  --unit vitest \
+  --integration cucumber-js \
+  --e2e cucumber-js \
   --not-check "ci.yml:build:Install dependencies" \
   --not-check "ci.yml:build:Publish the package" \
   --ci .github/workflows/ci.yml \
@@ -92,7 +92,7 @@ npx spec-controller balance \
   --exit-zero
 ```
 
-- **`--unit`, `--integration`, `--e2e` and `--performance`** each name a runner of that layer, in the long form `<runner>:<format>:<report>`. `balance` then reads the step that runs the runner as your test suite, not as a check, and each result in the runner's report as evidence of that layer. One runner may serve two layers, as `cucumber-js` does here: name it under each, with the same report. A layer you name no runner for has none.
+- **`--unit`, `--integration`, `--e2e` and `--performance`** each name a runner of that layer. `balance` then reads the step that runs the runner as your test suite, not as a check, and each result in the runner's report as evidence of that layer. Named alone, a runner has its report found from the step of `ci.yml` that runs it: here, the step that runs `vitest --reporter=json --outputFile=reports/vitest.json`, and the step that runs `cucumber-js --format json:reports/cucumber.json`. When no step names the report, the run names the runner as `runner-report-not-named`: name the report in the long form `<runner>:<format>:<report>`. One runner may serve two layers, as `cucumber-js` does here: name it under each. A layer you name no runner for has none.
 - **`--not-check`** names a step that does work but checks nothing, such as publishing. It is written `<workflow file>:<job id>:<step name>`, and must match exactly.
 
 See [Naming your runners](./user-guide.md#naming-your-runners) and [Naming your non-checks](./user-guide.md#naming-your-non-checks).
@@ -180,7 +180,7 @@ If no recorded step has the scenario's code, the scenario reads `missing`. A rec
 
 The dump must be `toJSON(steps)`, because it is the only place that has a step's `id` and its `outcome` together. Pass it to the command through an environment variable, never inline in the command itself: a step's output can contain a quote, and the shell would run whatever follows that quote.
 
-A single Reconcile step then reads the reports and the record. It runs the command from the first run, plus the step record. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page. `--format json:reconciliation.json` saves the JSON for any later step or tool:
+A single Reconcile step then reads the reports and the record. It runs the command from the first run, plus the step record, with the runner named alone. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page. `--format json:reconciliation.json` saves the JSON for any later step or tool:
 
 ```yaml
 - name: Reconcile
@@ -189,7 +189,7 @@ A single Reconcile step then reads the reports and the record. It runs the comma
     npx spec-controller balance \
       --target your-project \
       --features features \
-      --unit vitest:vitest:reports/vitest.json \
+      --unit vitest \
       --ci-steps ci-steps.json \
       --ci .github/workflows/ci.yml \
       --package-json package.json \
@@ -198,7 +198,7 @@ A single Reconcile step then reads the reports and the record. It runs the comma
       --exit-zero
 ```
 
-Add the other runners and the non-checks you named, such as `--integration cucumber-js:cucumber:reports/cucumber.json` for a Cucumber report. Drop `--ci-steps` if you have converted no check. Remove `--exit-zero` when you are ready to gate.
+`--unit vitest` reads the report your Vitest step writes, as `npx vitest run --reporter=json --outputFile=reports/vitest.json` does. Add the other runners and the non-checks you named, such as `--integration cucumber-js` for a Cucumber suite. Drop `--ci-steps` if you have converted no check. Remove `--exit-zero` when you are ready to gate.
 
 Save the reports as build artefacts, but do not commit them: a report lists the gaps in your codebase. See [Wiring into CI](./user-guide.md#wiring-into-ci) and [GitHub Actions — put the report on the run summary](./user-guide.md#github-actions--put-the-report-on-the-run-summary).
 

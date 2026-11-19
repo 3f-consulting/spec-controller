@@ -10,11 +10,11 @@ At `1.0`, this page will become a promise, written from the mechanisms that reac
 
 Two things make a fitness function an evidence obligation: a `@fitness` scenario, and that scenario's claim code as the `id:` of the CI step that runs the check. See *Wiring into CI* in the user guide.
 
-**The test reports it reads.** The tool reads these test reports, each named in the long form of the runner that writes it: the JSON of Vitest and Jest, the JUnit XML of pytest and other runners, the JSON of RSpec and the JSON of Cucumber.
+**The test reports it reads.** The tool reads these test reports, each found from the CI step of the runner that writes it, or named in that runner's long form: the JSON of Vitest and Jest, the JUnit XML of pytest and other runners, the JSON of RSpec and the JSON of Cucumber.
 
 A pytest test cites its claim code with a `clm` property, which `@pytest.mark.clm` writes. A row of an Outline cites its claim code from the Outline's `clm` column.
 
-A `@performance` evidence obligation is answered by any report in one of these formats that a `--performance` runner's long form names. So a load runner that writes JUnit XML can answer it. A Cucumber report answers it only when a `--performance` runner's long form names it.
+A `@performance` evidence obligation is answered by any report in one of these formats that is a `--performance` runner's. So a load runner that writes JUnit XML can answer it. A Cucumber report answers it only when it is a `--performance` runner's.
 
 **A flag `balance` does not take stops the run.** The tool refuses it as a usage error, at exit `2`, and prints the help for `balance`, which lists every flag it takes.
 
