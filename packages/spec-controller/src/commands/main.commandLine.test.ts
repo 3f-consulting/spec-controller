@@ -31,12 +31,6 @@ const BALANCE_FLAGS = [
   "--performance <runner>[:<format>:<report>]",
   "--not-check <workflow>:<job>:<step>",
   "--deferral-tag <tag>",
-  "--vitest <report.json>",
-  "--jest <report.json>",
-  "--pytest <report.xml>",
-  "--junit <report.xml|dir>",
-  "--rspec <report.json>",
-  "--cucumber <report.json>",
   "--ci <workflow.yml|dir>",
   "--ci-steps <record.json>",
   "--package-json <path>",
@@ -166,7 +160,7 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
       '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1"><testcase classname="test_adds" name="[CLM-ONE-001] adds one" time="0.001"><properties><property name="clm" value="CLM-ONE-001" /></properties></testcase></testsuite></testsuites>',
     ],
   ] as const)("[CLM-CLI-194] a JUnit evidence report written well formed, as %s: its result is posted, and the run does not stop", (_written, report) => {
-    const { exitCode, output } = ran(["balance", "--junit", "junit.xml", "--format", "json"], folderWith({ "junit.xml": report }));
+    const { exitCode, output } = ran(["balance", "--unit", "junit:junit:junit.xml", "--format", "json"], folderWith({ "junit.xml": report }));
 
     expect({ stopped: exitCode === 2, posted: output.includes("adds one") }).toEqual({ stopped: false, posted: true });
   });
@@ -180,7 +174,7 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
       "surefire-reports/example.AddsTest.txt": "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0\n",
     });
 
-    const { exitCode, output } = ran(["balance", "--junit", "surefire-reports", "--format", "json"], folder);
+    const { exitCode, output } = ran(["balance", "--unit", "junit:junit:surefire-reports", "--format", "json"], folder);
 
     expect({ stopped: exitCode === 2, posted: ["adds one", "subtracts one"].filter((test) => output.includes(test)) }).toEqual({ stopped: false, posted: ["adds one", "subtracts one"] });
   });
@@ -194,62 +188,7 @@ const RSPEC_PASSING = '{"examples":[{"id":"./spec/one_spec.rb[1:1]","description
 const CUCUMBER_PASSING =
   '[{"uri":"features/one.feature","name":"one","elements":[{"keyword":"Scenario","name":"one","type":"scenario","line":5,"tags":[{"name":"@unit"},{"name":"@CLM-ONE-001"}],"steps":[{"keyword":"Given ","name":"one","result":{"status":"passed"}}]}]}]';
 
-interface ClaimsReported {
-  readonly claimReconciliations: readonly { readonly qualityCheckReconciliations: readonly { readonly observation?: { readonly result: string } }[] }[];
-}
-
-describe("balance posts the result in the evidence report each runner's flag names", () => {
-  it.each([
-    ["CLM-CLI-196", "--vitest", BY_FILE_PASSING],
-    ["CLM-CLI-196", "--pytest", PYTEST_PASSING],
-    ["CLM-CLI-199", "--jest", BY_FILE_PASSING],
-    ["CLM-CLI-200", "--rspec", RSPEC_PASSING],
-    ["CLM-CLI-201", "--cucumber", CUCUMBER_PASSING],
-  ] as const)("[%s] %s naming a report of one passing result citing CLM-ONE-001: that result is posted", (_clm, flag, report) => {
-    const folder = folderWith({ "features/one.feature": "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n", "report.json": report });
-
-    const { output } = ran(["balance", flag, "report.json", "--format", "json"], folder);
-
-    const { claimReconciliations } = JSON.parse(output) as ClaimsReported;
-    expect(claimReconciliations.flatMap(({ qualityCheckReconciliations }) => qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.result] : [])))).toEqual(["passed"]);
-  });
-
-  it("[CLM-CLI-201] --cucumber naming a report of one passing result for the Outline row citing CLM-ONE-001: that result is posted on CLM-ONE-001", () => {
-    const outline = "@ONE\nFeature: one\n\n  @unit\n  Scenario Outline: adds <n>\n    Given one adds <n>\n\n    Examples:\n      | clm | n |\n      | CLM-ONE-001 | 1 |\n";
-    const rowPassing = '[{"uri":"features/one.feature","name":"one","elements":[{"keyword":"Scenario Outline","name":"adds 1","type":"scenario","line":10,"tags":[{"name":"@unit"}],"steps":[{"keyword":"Given ","name":"one adds 1","result":{"status":"passed"}}]}]}]';
-    const folder = folderWith({ "features/one.feature": outline, "report.json": rowPassing });
-
-    const { output } = ran(["balance", "--cucumber", "report.json", "--format", "json"], folder);
-
-    const { claimReconciliations } = JSON.parse(output) as ResultsByClaimReported;
-    expect(claimReconciliations.map(({ claim, qualityCheckReconciliations }) => [claim.claimCode?.number, qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.result] : []))])).toEqual([["001", ["passed"]]]);
-  });
-});
-
-interface KindsReported {
-  readonly claimReconciliations: readonly { readonly qualityCheckReconciliations: readonly { readonly kind?: string; readonly outcome: string }[] }[];
-}
-
-const PLAYWRIGHT_AS_E2E_RUNNER = '{"name":"acme","specController":{"runners":{"e2e":{"runner":"playwright","reports":["playwright.xml"]}}}}';
-const VITEST_AS_E2E_RUNNER = '{"name":"acme","specController":{"runners":{"e2e":{"runner":"vitest","reports":["vitest.json"]}}}}';
-const E2E_CLAIM = "@ONE\nFeature: one\n\n  @e2e @CLM-ONE-001\n  Scenario: one\n";
 const JUNIT_PASSING = '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="one" tests="1" errors="0" skipped="0" failures="0">\n  <testcase name="[CLM-ONE-001] one" classname="one" time="0.001"/>\n</testsuite>\n';
-
-describe("balance matches each evidence report it read to the runners entry naming its file name, wherever the run read it from", () => {
-  it.each([
-    ["playwright as the e2e runner, writing playwright.xml, and a JUnit report read at out/reports/playwright.xml", { "package.json": PLAYWRIGHT_AS_E2E_RUNNER, "features/one.feature": E2E_CLAIM }, ["--junit", "out/reports/playwright.xml"]],
-    ["playwright as the e2e runner, writing playwright.xml, and a JUnit report read outside the target's folder", { "package.json": PLAYWRIGHT_AS_E2E_RUNNER, "target/features/one.feature": E2E_CLAIM }, ["--features", "target/features", "--junit", "out/reports/playwright.xml"]],
-    ["playwright as the e2e runner, writing playwright.xml, and a JUnit report read as one file of a --junit folder", { "package.json": PLAYWRIGHT_AS_E2E_RUNNER, "features/one.feature": E2E_CLAIM }, ["--junit", "out/reports"]],
-    ["vitest as the e2e runner, writing vitest.json, and a Vitest report read at out/reports/vitest.json", { "package.json": VITEST_AS_E2E_RUNNER, "features/one.feature": E2E_CLAIM }, ["--vitest", "out/reports/vitest.json"]],
-  ] as const)("[CLM-CLI-209] %s, with one result citing CLM-ONE-001: that result is e2e evidence for CLM-ONE-001", (_where, files, args) => {
-    const folder = folderWith({ ...files, "out/reports/playwright.xml": JUNIT_PASSING, "out/reports/vitest.json": BY_FILE_PASSING });
-
-    const { output } = ran(["balance", ...args, "--format", "json"], folder);
-
-    const { claimReconciliations } = JSON.parse(output) as KindsReported;
-    expect(claimReconciliations.flatMap(({ qualityCheckReconciliations }) => qualityCheckReconciliations.map(({ kind, outcome }) => ({ kind, outcome })))).toEqual([{ kind: "e2e", outcome: "satisfied" }]);
-  });
-});
 
 interface ResultsByClaimReported {
   readonly claimReconciliations: readonly {
@@ -262,16 +201,16 @@ const TWO_CLAIMS = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\
 
 describe("balance posts the results of every evidence report the run names for one runner", () => {
   it.each([
-    ["--vitest", BY_FILE_PASSING],
-    ["--jest", BY_FILE_PASSING],
-    ["--pytest", PYTEST_PASSING],
-    ["--junit", JUNIT_PASSING],
-    ["--rspec", RSPEC_PASSING],
-    ["--cucumber", CUCUMBER_PASSING],
-  ] as const)("[CLM-CLI-210] %s given twice, naming two reports of one passing result each, citing CLM-ONE-001 and CLM-ONE-002: both results are posted", (flag, report) => {
+    ["--unit", "vitest:vitest", BY_FILE_PASSING],
+    ["--unit", "jest:jest", BY_FILE_PASSING],
+    ["--unit", "pytest:pytest", PYTEST_PASSING],
+    ["--unit", "junit:junit", JUNIT_PASSING],
+    ["--unit", "rspec:rspec", RSPEC_PASSING],
+    ["--integration", "cucumber-js:cucumber", CUCUMBER_PASSING],
+  ] as const)("[CLM-CLI-210] %s %s:<report> given twice, naming two reports of one passing result each, citing CLM-ONE-001 and CLM-ONE-002: both results are posted", (flag, runner, report) => {
     const folder = folderWith({ "features/one.feature": TWO_CLAIMS, "first.report": report, "second.report": report.replaceAll("CLM-ONE-001", "CLM-ONE-002") });
 
-    const { output, error } = ran(["balance", flag, "first.report", flag, "second.report", "--format", "json"], folder);
+    const { output, error } = ran(["balance", flag, `${runner}:first.report`, flag, `${runner}:second.report`, "--format", "json"], folder);
 
     const { claimReconciliations } = (output === "" ? { claimReconciliations: [] } : JSON.parse(output)) as ResultsByClaimReported;
     const posted = claimReconciliations.map(({ claim, qualityCheckReconciliations }) => [claim.claimCode?.number, qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.result] : []))]);
@@ -313,12 +252,12 @@ describe("balance posts the steps of every step record the run names", () => {
 
 describe("the provenance shows each input the run read on its own line", () => {
   it.each([
-    ["CLM-RPT-172", "--vitest", "a/vitest.json", "b/vitest.json", BY_FILE_PASSING],
-    ["CLM-RPT-173", "--ci-steps", "a/steps.json", "b/steps.json", '{"CLM-ONE-001":{"outcome":"success","conclusion":"success"}}'],
-  ] as const)("[%s] %s given twice, naming %s and %s: the Markdown report's provenance has a line for each", (_code, flag, first, second, citingOne) => {
+    ["CLM-RPT-172", "--unit vitest:vitest:<report>", ["--unit", "vitest:vitest:"], "a/vitest.json", "b/vitest.json", BY_FILE_PASSING],
+    ["CLM-RPT-173", "--ci-steps", ["--ci-steps", ""], "a/steps.json", "b/steps.json", '{"CLM-ONE-001":{"outcome":"success","conclusion":"success"}}'],
+  ] as const)("[%s] %s given twice, naming %s and %s: the Markdown report's provenance has a line for each", (_code, _flag, [flag, before], first, second, citingOne) => {
     const folder = folderWith({ "features/one.feature": TWO_CLAIMS, [first]: citingOne, [second]: citingOne.replaceAll("CLM-ONE-001", "CLM-ONE-002") });
 
-    const { output } = ran(["balance", flag, first, flag, second, "--format", "md"], folder);
+    const { output } = ran(["balance", flag, `${before}${first}`, flag, `${before}${second}`, "--format", "md"], folder);
 
     const provenance = output.slice(output.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
     expect(provenance.filter((line) => line.includes(first.slice(2))).map((line) => line.replace(/^ {2}- .+: /, ""))).toEqual([`\`${first}\``, `\`${second}\``]);
@@ -327,16 +266,16 @@ describe("the provenance shows each input the run read on its own line", () => {
 
 describe("an input that is not valid will stop the run", () => {
   it.each([
-    ["CLM-CLI-147", "a named input that does not exist", {}, ["--vitest", "absent.json"], ["absent.json", "Vitest evidence report", "[input-absent]"]],
+    ["CLM-CLI-147", "a named input that does not exist", {}, ["--ci-steps", "absent.json"], ["absent.json", "CI step record", "[input-absent]"]],
     ["CLM-CLI-160", "a named path that is not the kind of path its flag reads", { "one.feature": "@ONE\nFeature: one\n" }, ["--features", "one.feature"], ["{input-features} one.feature is not {path-folder}", "[input-wrong-kind-of-path]"]],
-    ["CLM-CLI-160", "a folder named as the Vitest evidence report", { "vitest/a.json": VITEST_SHAPED }, ["--vitest", "vitest"], ["{input-vitest} vitest is not {path-file}", "[input-wrong-kind-of-path]"]],
-    ["CLM-CLI-148", "a JSON evidence report that does not parse", { "vitest.json": "{" }, ["--vitest", "vitest.json"], ["vitest.json", "JSON", "[input-does-not-parse]"]],
-    ["CLM-CLI-186", "a JUnit evidence report that does not parse", { "junit.xml": "<testsuite" }, ["--junit", "junit.xml"], ["junit.xml", "JUnit evidence report", "[input-does-not-parse]"]],
+    ["CLM-CLI-160", "a folder named as the Vitest evidence report", { "vitest/a.json": VITEST_SHAPED }, ["--unit", "vitest:vitest:vitest"], ["{input-vitest} vitest is not {path-file}", "[input-wrong-kind-of-path]"]],
+    ["CLM-CLI-148", "a JSON evidence report that does not parse", { "vitest.json": "{" }, ["--unit", "vitest:vitest:vitest.json"], ["vitest.json", "JSON", "[input-does-not-parse]"]],
+    ["CLM-CLI-186", "a JUnit evidence report that does not parse", { "junit.xml": "<testsuite" }, ["--unit", "junit:junit:junit.xml"], ["junit.xml", "JUnit evidence report", "[input-does-not-parse]"]],
     [
       "CLM-CLI-186",
       "a JUnit evidence report its parser refuses, declaring an external entity",
       { "junit.xml": '<?xml version="1.0"?>\n<!DOCTYPE testsuite [<!ENTITY x SYSTEM "file:///etc/passwd">]>\n<testsuite name="s"><testcase name="t"/></testsuite>\n' },
-      ["--junit", "junit.xml"],
+      ["--unit", "junit:junit:junit.xml"],
       ["junit.xml", "JUnit evidence report", "External entities are not supported", "[input-does-not-parse]"],
     ],
     ["CLM-CLI-149", "a feature file that does not parse", { "features/bad.feature": "not Gherkin\n" }, ["--features", "features"], ["bad.feature", "feature file", "[input-does-not-parse]"]],
@@ -376,20 +315,20 @@ describe("an input that is not valid will stop the run", () => {
       ["--ci", "workflows"],
       ["ci.yml", "workflow", "the job at jobs.ci holds no settings", "[input-does-not-parse]"],
     ],
-    ["CLM-CLI-151", "a Vitest evidence report not in Vitest's shape", { "vitest.json": '{"testResults":"none"}' }, ["--vitest", "vitest.json"], ["vitest.json", "$.testResults", "[input-not-in-its-shape]"]],
-    ["CLM-CLI-152", "a Cucumber evidence report not in Cucumber's shape", { "cucumber.json": '{"features":[]}' }, ["--cucumber", "cucumber.json"], ["cucumber.json", "Cucumber", "[input-not-in-its-shape]"]],
-    ["CLM-CLI-153", "a Jest evidence report not in Jest's shape", { "jest.json": "{}" }, ["--jest", "jest.json"], ["jest.json", "testResults", "[input-not-in-its-shape]"]],
-    ["CLM-CLI-154", "a pytest evidence report not in pytest's shape", { "pytest.xml": "<html/>" }, ["--pytest", "pytest.xml"], ["pytest.xml", "pytest", "[input-not-in-its-shape]"]],
-    ["CLM-CLI-155", "a JUnit evidence report not in JUnit's shape", { "junit.xml": "<html/>" }, ["--junit", "junit.xml"], ["junit.xml", "JUnit", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-151", "a Vitest evidence report not in Vitest's shape", { "vitest.json": '{"testResults":"none"}' }, ["--unit", "vitest:vitest:vitest.json"], ["vitest.json", "$.testResults", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-152", "a Cucumber evidence report not in Cucumber's shape", { "cucumber.json": '{"features":[]}' }, ["--integration", "cucumber-js:cucumber:cucumber.json"], ["cucumber.json", "Cucumber", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-153", "a Jest evidence report not in Jest's shape", { "jest.json": "{}" }, ["--unit", "jest:jest:jest.json"], ["jest.json", "testResults", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-154", "a pytest evidence report not in pytest's shape", { "pytest.xml": "<html/>" }, ["--unit", "pytest:pytest:pytest.xml"], ["pytest.xml", "pytest", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-155", "a JUnit evidence report not in JUnit's shape", { "junit.xml": "<html/>" }, ["--unit", "junit:junit:junit.xml"], ["junit.xml", "JUnit", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-155",
       "a JUnit evidence report with a test case that has no name",
       { "junit.xml": '<testsuite name="s"><testcase classname="pkg.Foo"><failure/></testcase></testsuite>' },
-      ["--junit", "junit.xml"],
+      ["--unit", "junit:junit:junit.xml"],
       ["junit.xml", "JUnit", "[input-not-in-its-shape]"],
     ],
-    ["CLM-CLI-156", "a file in a JUnit directory not in JUnit's shape", { "junit/one.xml": "<testsuite/>", "junit/two.xml": "<html/>" }, ["--junit", "junit"], ["{input-junit-folder-file} junit/two.xml", "JUnit", "[input-not-in-its-shape]"]],
-    ["CLM-CLI-157", "an RSpec evidence report not in RSpec's shape", { "rspec.json": '{"examples":3}' }, ["--rspec", "rspec.json"], ["rspec.json", "examples", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-156", "a file in a JUnit directory not in JUnit's shape", { "junit/one.xml": "<testsuite/>", "junit/two.xml": "<html/>" }, ["--unit", "junit:junit:junit"], ["{input-junit-folder-file} junit/two.xml", "JUnit", "[input-not-in-its-shape]"]],
+    ["CLM-CLI-157", "an RSpec evidence report not in RSpec's shape", { "rspec.json": '{"examples":3}' }, ["--unit", "rspec:rspec:rspec.json"], ["rspec.json", "examples", "[input-not-in-its-shape]"]],
     ["CLM-CLI-158", "a step record not in the shape of a record of step outcomes", { "steps.json": '{"test":"passed"}' }, ["--ci-steps", "steps.json"], ["steps.json", "step outcomes", "$.test", "[input-not-in-its-shape]"]],
     [
       "CLM-CLI-158",
@@ -414,7 +353,7 @@ describe("an input that is not valid will stop the run", () => {
     const folder = folderWith({ "vitest.json": VITEST_SHAPED });
     chmodSync(join(folder, "vitest.json"), 0o000);
 
-    const { exitCode, output, error } = ran(["balance", "--vitest", "vitest.json"], folder);
+    const { exitCode, output, error } = ran(["balance", "--unit", "vitest:vitest:vitest.json"], folder);
 
     expect({ exitCode, output, facts: ["vitest.json", "[input-not-permitted]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
   });

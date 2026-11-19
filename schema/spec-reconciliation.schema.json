@@ -925,8 +925,6 @@
           "type": "string",
           "enum": [
             "configuration-wrong-kind",
-            "configuration-unknown-key",
-            "runner-key-not-a-layer",
             "runner-report-not-read",
             "runner-report-not-named",
             "not-checks-entry-matches-no-step",

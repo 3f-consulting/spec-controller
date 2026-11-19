@@ -29,7 +29,6 @@ const BALANCE_FLAGS: readonly Flag[] = [
   ...LAYER_FLAGS.map((name): Flag => ({ name, value: "<runner>[:<format>:<report>]", repeats: true })),
   { name: "not-check", value: "<workflow>:<job>:<step>", repeats: true },
   { name: "deferral-tag", value: "<tag>", repeats: true },
-  ...EVIDENCE_REPORT_FORMATS.map(({ kind, flagValue }): Flag => ({ name: kind, value: flagValue, input: kind, repeats: true })),
   { name: "ci", value: "<workflow.yml|dir>", input: "workflows", byDefault: ".github/workflows" },
   { name: "ci-steps", value: "<record.json>", input: "stepRecord", repeats: true },
   { name: "package-json", value: "<path>", input: "manifest", byDefault: "package.json" },

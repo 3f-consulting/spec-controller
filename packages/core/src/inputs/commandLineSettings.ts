@@ -19,7 +19,7 @@ const FORMATS: readonly string[] = EVIDENCE_REPORT_FORMATS.map(({ kind }) => kin
 // A setting with nothing in it, or in a form balance does not read, is left out, named as written.
 const wrongKind = (entry: string): SettingPart<never> => ({ error: { kind: "configuration-wrong-kind", entry } });
 
-export function nonCheckParsed(entry: string): SettingPart<NonCheck> {
+function nonCheckParsed(entry: string): SettingPart<NonCheck> {
   if (entry.trim() === "") return wrongKind(entry);
   const step = STEP_AS_WRITTEN.exec(entry);
   if (step === null) return { error: { kind: "not-checks-entry-not-a-step-name", entry } };
@@ -27,7 +27,7 @@ export function nonCheckParsed(entry: string): SettingPart<NonCheck> {
 }
 
 // A deferral tag is taken with or without its @, and without the spaces around it.
-export function deferralTagParsed(entry: string): SettingPart<string> {
+function deferralTagParsed(entry: string): SettingPart<string> {
   const trimmed = entry.trim();
   const tag = trimmed.startsWith("@") ? trimmed.slice(1) : trimmed;
   return tag === "" ? wrongKind(entry) : { taken: tag };
@@ -52,5 +52,4 @@ export const configurationSettingsNamed = ({ runners, nonChecks, deferralTags }:
   runners: Object.entries(runners).flatMap(([layer, named = []]) => named.map((runner) => runnerPart(layer as Layer, runner))),
   nonChecks: nonChecks.map(nonCheckParsed),
   deferralTags: deferralTags.map(deferralTagParsed),
-  unknownKeys: [],
 });

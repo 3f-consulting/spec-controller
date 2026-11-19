@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import { configurationSettingsNamed, type SettingsNamed } from "../inputs/commandLineSettings.js";
 import commandLineSettingsVariants from "../inputs/commandLineSettings.variants.json" with { type: "json" };
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
-import { targetConfigurationFrom, whereManifestBreaks } from "../inputs/manifest.js";
-import manifestVariants from "../inputs/manifest.variants.json" with { type: "json" };
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
@@ -18,7 +16,7 @@ const NONE: TargetConfiguration = { runners: NO_RUNNERS, nonChecks: [], deferral
 
 // The configuration balance takes from the settings a run names, with the steps it read.
 const takenFrom = (named: Partial<SettingsNamed>, steps: readonly CiStep[] = []): TargetConfiguration =>
-  targetConfigurationOf(configurationSettingsNamed({ runners: {}, nonChecks: [], deferralTags: [], ...named }), steps, []).configuration;
+  targetConfigurationOf(configurationSettingsNamed({ runners: {}, nonChecks: [], deferralTags: [], ...named }), steps).configuration;
 
 describe("balance takes each configuration setting it can use as the runner, non-check or deferral tag it names", () => {
   it.each<[string, string, Partial<SettingsNamed>, TargetConfiguration]>([
@@ -64,10 +62,6 @@ describe("balance takes each configuration setting it can use as the runner, non
     expect(takenFrom(named)).toEqual(configuration);
   });
 
-  it('[CLM-CFG-009] a specController block with "performance": null under runners takes the performance layer as having no runner', () => {
-    expect(targetConfigurationFrom({ specController: { runners: { performance: null } } }, [], [])).toEqual({ configuration: NONE, errors: [] });
-  });
-
   it("[CLM-CFG-024] a run named --e2e playwright:junit:out/playwright.xml takes playwright as the e2e layer's runner, so a step running it is a runner", () => {
     const configuration = takenFrom({ runners: { e2e: ["playwright:junit:out/playwright.xml"] } });
     const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: playwright test\n");
@@ -102,7 +96,7 @@ const CI_READ: readonly CiStep[] = [{ workflow: "ci.yml", job: "ci", name: "Inst
 
 // The configuration and the errors balance finds in the settings a run names, with ci.yml read and no file at each report path given.
 const checkedFrom = (named: Partial<SettingsNamed>, reportsNotFound: readonly string[] = []) =>
-  targetConfigurationOf(configurationSettingsNamed({ runners: {}, nonChecks: [], deferralTags: [], ...named }), CI_READ, [], reportsNotFound);
+  targetConfigurationOf(configurationSettingsNamed({ runners: {}, nonChecks: [], deferralTags: [], ...named }), CI_READ, reportsNotFound);
 
 describe("balance leaves out a configuration setting it cannot use, naming the error", () => {
   it.each<[string, string, Partial<SettingsNamed>, ConfigurationError]>([
@@ -117,15 +111,6 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     ["CLM-CFG-016", "--not-check Install dependencies", { nonChecks: ["Install dependencies"] }, { kind: "not-checks-entry-not-a-step-name", entry: "Install dependencies" }],
   ])("[%s] a run named %s leaves it out, finding its error naming it", (_clm, _named, named, error) => {
     expect(checkedFrom(named)).toEqual({ configuration: NONE, errors: [error] });
-  });
-
-  it.each([
-    ["CLM-CFG-003", '"unittest": "vitest" under runners', { runners: { unittest: "vitest" } }, { kind: "runner-key-not-a-layer", entry: "runners.unittest" }],
-    ["CLM-CFG-005", '"runer": {} beside runners', { runners: {}, runer: {} }, { kind: "configuration-unknown-key", entry: "runer" }],
-    ["CLM-CFG-019", '"notChecks": "Install"', { notChecks: "Install" }, { kind: "configuration-wrong-kind", entry: "notChecks" }],
-    ["CLM-CFG-020", "3 in deferralTags", { deferralTags: [3] }, { kind: "configuration-wrong-kind", entry: "deferralTags[0]" }],
-  ] as const)("[%s] a specController block with %s leaves it out, finding its error naming the setting", (_clm, _setting, block, error) => {
-    expect(targetConfigurationFrom({ specController: block }, CI_READ, [])).toEqual({ configuration: NONE, errors: [error] });
   });
 
   // Each variant of a setting balance cannot use, as the run names it, with the value its error names.
@@ -181,20 +166,5 @@ describe("the run will still reach its run verdict, using the configuration sett
       runVerdict: { verdict: "balanced" },
       integrationStep: "runner",
     });
-  });
-});
-
-// Each way a specController block can be other than an object, as a value.
-const notAnObject: Readonly<Record<string, unknown>> = { null: null, "a number": 5, "a string": "vitest", "a list": ["vitest"] };
-
-describe("a runners setting that is not an object is left out", () => {
-  it.each(manifestVariants["runners-settings-not-objects"].variants)("[CLM-CFG-018] a specController block whose runners is %s leaves runners out, as the wrong kind", (variant) => {
-    expect(targetConfigurationFrom({ specController: { runners: notAnObject[variant] } }, [], [])).toEqual({ configuration: NONE, errors: [{ kind: "configuration-wrong-kind", entry: "runners" }] });
-  });
-});
-
-describe("a specController block that is not an object stops the run", () => {
-  it.each(manifestVariants["spec-controller-blocks-not-objects"].variants)("[CLM-CFG-021] a specController block that is %s stops the run as a usage error: the manifest is refused at the block", (variant) => {
-    expect(whereManifestBreaks({ specController: notAnObject[variant] })).toBe("$.specController");
   });
 });

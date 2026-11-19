@@ -4,9 +4,7 @@ Feature: balance reads and validates the configuration settings the run names
   A run names three kinds of configuration setting on its command line: the runners of each
   layer, the non-checks and the deferral tags. balance reads and validates each one. It leaves
   out a configuration setting that is not valid, names it among the configuration errors, and
-  still uses the others. A configuration setting that is not valid never stops the run. A
-  target's package.json can also have a specController block with the same settings, and one
-  that is not an object, such as null, stops the run as a usage error.
+  still uses the others. A configuration setting that is not valid never stops the run.
 
   Rule: balance takes each configuration setting it can use
 
@@ -20,7 +18,6 @@ Feature: balance reads and validates the configuration settings the run names
         | clm         | configuration setting                                                                                        | what it sets                                                                               |
         | CLM-CFG-008 | --unit vitest                                                                                                | vitest as the unit layer's runner                                                          |
         | CLM-CFG-026 | --unit vitest and --unit pytest                                                                              | vitest and pytest as the unit layer's runners                                              |
-        | CLM-CFG-009 | a specController block with "performance": null under runners                                                | the performance layer as having no runner                                                  |
         | CLM-CFG-024 | --e2e playwright:junit:out/playwright.xml                                                                    | playwright as the e2e layer's runner, with out/playwright.xml as its JUnit evidence report |
         | CLM-CFG-010 | --not-check ci.yml:ci:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies | the step Install dependencies, in job ci, in ci.yml, as a non-check                        |
         | CLM-CFG-011 | --not-check nightly:build.yml:ci:Install dependencies                                                        | the step Install dependencies, in job ci, in nightly:build.yml, as a non-check             |
@@ -42,15 +39,10 @@ Feature: balance reads and validates the configuration settings the run names
       Examples:
         | clm         | configuration setting                                                                                                                      | error                            | naming                           |
         | CLM-CFG-004 | --unit vitest:vitest, a long form with no report                                                                                           | configuration-wrong-kind         | vitest:vitest                    |
-        | CLM-CFG-003 | a specController block with "unittest": "vitest" under runners                                                                             | runner-key-not-a-layer           | runners.unittest                 |
-        | CLM-CFG-018 | a specController block with "runners": null                                                                                                | configuration-wrong-kind         | runners                          |
         | CLM-CFG-025 | --e2e playwright:junit:out/playwright.xml, with no file at out/playwright.xml                                                              | runner-report-not-read           | out/playwright.xml               |
-        | CLM-CFG-005 | a specController block with "runer": {} beside runners                                                                                     | configuration-unknown-key        | runer                            |
         | CLM-CFG-015 | --not-check ci.yml:ci:No such step, with ci.yml read                                                                                       | not-checks-entry-matches-no-step | ci.yml:ci:No such step           |
         | CLM-CFG-022 | --not-check ci.yml:lint:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies and whose job lint had none | not-checks-entry-matches-no-step | ci.yml:lint:Install dependencies |
         | CLM-CFG-016 | --not-check Install dependencies                                                                                                           | not-checks-entry-not-a-step-name | Install dependencies             |
-        | CLM-CFG-019 | a specController block with "notChecks": "Install"                                                                                         | configuration-wrong-kind         | notChecks                        |
-        | CLM-CFG-020 | a specController block with 3 in deferralTags                                                                                              | configuration-wrong-kind         | deferralTags[0]                  |
 
     @unit @CLM-CFG-017
     Scenario: the run will still reach its run verdict, using the configuration settings it could use
@@ -58,11 +50,3 @@ Feature: balance reads and validates the configuration settings the run names
       when balance reconciles the target
       then the run will reach its run verdict
       and cucumber-js will be what runs the integration layer
-
-  Rule: a specController block that is not an object stops the run
-
-    @unit @CLM-CFG-021
-    Scenario: a specController block that is not an object stops the run as a usage error
-      given the specController block was 5, which is not an object
-      when balance reads it
-      then the run will stop as a usage error

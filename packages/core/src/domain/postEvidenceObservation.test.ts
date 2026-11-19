@@ -4,7 +4,6 @@ import { resultsByFileFrom } from "../inputs/vitest.js";
 import { resultsBySuiteFrom } from "../inputs/junit.js";
 import { resultsByExampleFrom } from "../inputs/rspec.js";
 import { scenarioResultsFrom } from "../inputs/cucumber.js";
-import { EVIDENCE_REPORT_FORMATS, type EvidenceReportKind } from "../inputs/evidenceReportFormats.js";
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { ClaimCode } from "./claimCodes.js";
@@ -17,9 +16,6 @@ import postEvidenceObservationVariants from "./postEvidenceObservation.variants.
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
 const ONE_002: ClaimCode = { featureCode: "ONE", number: "002" };
-
-// The layer a format's results are evidence of where no runner entry names its report, as its entry gives it.
-const defaultLayerOf = (kind: EvidenceReportKind): QualityCheckKind => EVIDENCE_REPORT_FORMATS.find((format) => format.kind === kind)!.defaultLayer;
 
 // A test as Jest's JSON evidence report, which Vitest also writes, records it.
 interface TestByFile {
@@ -45,7 +41,7 @@ const reportByFile = (file: string, tests: readonly TestByFile[], fileStatus = "
   ],
 });
 
-const postedByFile = (report: unknown, targetFolder = "/work"): EvidenceObservation[] => observationsOfTestResults(resultsByFileFrom(report), targetFolder, defaultLayerOf("vitest"));
+const postedByFile = (report: unknown, targetFolder = "/work"): EvidenceObservation[] => observationsOfTestResults(resultsByFileFrom(report), targetFolder, ["unit"]);
 
 // A file that could not run, as Jest words it: under its own heading, the error indented beneath.
 const jestSuiteFailure = (error: string): string => `  \u25cf Test suite failed to run\n\n    ${error}\n`;
@@ -106,7 +102,7 @@ const CLM_PROPERTY = '<properties><property name="clm" value="CLM-ONE-001" /></p
 
 const postedBySuite = (writer: SuiteWriter, suite: string, testCases: string): EvidenceObservation[] => {
   const tool = writer === "pytest" ? "pytest" : "junit";
-  return observationsOfTestResults(resultsBySuiteFrom(reportBySuite(writer, suite, testCases), tool), "/work", defaultLayerOf(tool));
+  return observationsOfTestResults(resultsBySuiteFrom(reportBySuite(writer, suite, testCases), tool), "/work", ["unit"]);
 };
 
 // What a row checks of each Evidence Observation posted.
@@ -143,7 +139,7 @@ const reportByExample = (examples: readonly Example[], errorsOutsideExamples: re
   };
 };
 
-const postedByExample = (report: unknown): EvidenceObservation[] => observationsOfTestResults(resultsByExampleFrom(report), "/work", defaultLayerOf("rspec"));
+const postedByExample = (report: unknown): EvidenceObservation[] => observationsOfTestResults(resultsByExampleFrom(report), "/work", ["unit"]);
 
 // A step as Cucumber's JSON evidence report records it: its keyword, its text and its status.
 type StepRun = readonly [keyword: string, text: string, status: string, errorMessage?: string];
@@ -181,8 +177,8 @@ const reportByScenario = (uri: string, scenarios: readonly ScenarioRun[]): unkno
   },
 ];
 
-const postedByScenario = (report: unknown, features: readonly FeatureFile[] = [], served: readonly QualityCheckKind[] = []): EvidenceObservation[] =>
-  observationsOfTestResults(scenarioResultsFrom(report), "/work", defaultLayerOf("cucumber"), served, features);
+const postedByScenario = (report: unknown, features: readonly FeatureFile[] = [], served: readonly QualityCheckKind[] = ["integration"]): EvidenceObservation[] =>
+  observationsOfTestResults(scenarioResultsFrom(report), "/work", served, features);
 
 const PASSED: StepRun = ["Given ", "one adds one", "passed"];
 
@@ -426,21 +422,19 @@ const UNTAGGED_FORMATS = {
   JUnit: {
     report: "playwright.xml",
     posted: (served: readonly QualityCheckKind[]) =>
-      observationsOfTestResults(resultsBySuiteFrom(reportBySuite("surefire", "example.AddsTest", testCase("example.AddsTest", "[CLM-ONE-001] adds one")), "junit"), "/work", defaultLayerOf("junit"), served),
+      observationsOfTestResults(resultsBySuiteFrom(reportBySuite("surefire", "example.AddsTest", testCase("example.AddsTest", "[CLM-ONE-001] adds one")), "junit"), "/work", served),
   },
-  Vitest: { report: "vitest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", defaultLayerOf("vitest"), served) },
-  Jest: { report: "jest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(jestReportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", defaultLayerOf("jest"), served) },
+  Vitest: { report: "vitest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
+  Jest: { report: "jest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(jestReportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
   pytest: {
     report: "pytest.xml",
-    posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsBySuiteFrom(reportBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)), "pytest"), "/work", defaultLayerOf("pytest"), served),
+    posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsBySuiteFrom(reportBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)), "pytest"), "/work", served),
   },
-  RSpec: { report: "rspec.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByExampleFrom(reportByExample([{ description: "[CLM-ONE-001] adds one", status: "passed" }])), "/work", defaultLayerOf("rspec"), served) },
+  RSpec: { report: "rspec.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByExampleFrom(reportByExample([{ description: "[CLM-ONE-001] adds one", status: "passed" }])), "/work", served) },
 } as const;
 
 type UntaggedFormat = keyof typeof UNTAGGED_FORMATS;
 
-const PLAYWRIGHT_UNDER_E2E: TargetConfiguration["runners"] = { ...NO_RUNNERS, e2e: [{ name: "playwright", reports: ["playwright.xml"] }] };
-const ANOTHER_REPORT_UNDER_E2E: TargetConfiguration["runners"] = { ...NO_RUNNERS, e2e: [{ name: "cypress", reports: ["cypress.xml"] }] };
 const CUCUMBER_UNDER_PERFORMANCE: TargetConfiguration["runners"] = { ...NO_RUNNERS, performance: [{ name: "cucumber-js", reports: ["cucumber.json"] }] };
 const CUCUMBER_UNDER_INTEGRATION_AND_E2E: TargetConfiguration["runners"] = {
   ...NO_RUNNERS,
@@ -456,14 +450,7 @@ describe("balance identifies a result's kind of quality check as the layer its r
     expect(posted(layersServing(report, { ...NO_RUNNERS, [layer]: [{ name: "playwright", reports: [report] }] })).map(({ kind }) => kind)).toEqual([layer]);
   });
 
-  it.each(postEvidenceObservationVariants["formats-without-kind-tags-named-nowhere"].variants)("[CLM-OBS-059] with no runner named as writing it, a result in %s's evidence report is read as unit evidence", (format) => {
-    const { report, posted } = UNTAGGED_FORMATS[format as UntaggedFormat];
-
-    expect(posted(layersServing(report, ANOTHER_REPORT_UNDER_E2E)).map(({ kind }) => kind)).toEqual(["unit"]);
-  });
-
   it.each<[string, TargetConfiguration["runners"], readonly string[], string, readonly QualityCheckKind[]]>([
-    ["CLM-OBS-061", PLAYWRIGHT_UNDER_E2E, ["e2e"], "passed", ["integration"]],
     ["CLM-OBS-063", CUCUMBER_UNDER_PERFORMANCE, [], "passed", ["performance"]],
     ["CLM-OBS-062", CUCUMBER_UNDER_INTEGRATION_AND_E2E, ["e2e"], "passed", ["e2e"]],
     ["CLM-OBS-064", CUCUMBER_UNDER_INTEGRATION_AND_E2E, ["integration", "e2e"], "passed", ["integration", "e2e"]],

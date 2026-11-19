@@ -21,11 +21,9 @@ import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import type { Refusal } from "../runEnding/runEnding.js";
 import type { InputFault, InputRead } from "./inputRead.js";
 
-// One evidence report read: its file name, which a runners entry may name; its path as given, a folder's file as the
-// folder's path joined with its name; its results as its reader reports them; its format; and, for a report a runner's
-// long form names, the path the long form gives.
+// One evidence report read: its path as given, a folder's file as the folder's path joined with its name; its results as
+// its reader reports them; its format; and, for a report a runner's long form names, the path the long form gives.
 interface ReportRead {
-  readonly report: string;
   readonly path: string;
   readonly results: readonly TestResult[];
   readonly format: EvidenceReportFormat;
@@ -114,7 +112,7 @@ function jsonRead<Contents>(file: FileText, whereItBreaks: (report: unknown) => 
 
 // An evidence report read as its format reads one: the one report its file holds.
 function reportRead(file: FileText, format: EvidenceReportFormat): InputRead<Partial<InputsRead>> {
-  const reportOf = (results: readonly TestResult[]): Partial<InputsRead> => ({ reports: [{ report: file.name, path: file.shown, results, format }] });
+  const reportOf = (results: readonly TestResult[]): Partial<InputsRead> => ({ reports: [{ path: file.shown, results, format }] });
   if (format.parsedAs !== "xml") return jsonRead(file, format.whereItBreaks, (report) => reportOf(format.resultsFrom(report)));
   const wrong = whyXmlDoesNotParse(file.text);
   if (wrong !== undefined) return failed(file.shown, "does-not-parse", wrong);

@@ -77,8 +77,6 @@ Feature: Evidence Observations are posted, each to its claim
       Examples:
         | clm         | runners                                                              | result                                                                 | kind of quality check |
         | CLM-OBS-164 | playwright as the e2e runner, writing playwright.xml                 | playwright.xml had a result                                            | e2e                   |
-        | CLM-OBS-059 | no runner writing a Vitest evidence report                           | that report had a result                                               | unit                  |
-        | CLM-OBS-061 | no runner writing a Cucumber evidence report                         | that report had a result for a scenario tagged @e2e                    | integration           |
         | CLM-OBS-063 | cucumber-js as the performance runner, writing cucumber.json         | cucumber.json had a result for a scenario with no kind tag             | performance           |
         | CLM-OBS-062 | cucumber-js as the integration and e2e runner, writing cucumber.json | cucumber.json had a result for a scenario tagged @e2e                  | e2e                   |
         | CLM-OBS-064 | cucumber-js as the integration and e2e runner, writing cucumber.json | cucumber.json had a result for a scenario tagged @integration @e2e     | integration and e2e   |

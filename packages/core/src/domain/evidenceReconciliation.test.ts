@@ -5,14 +5,14 @@ import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimCodeErrorsOf } from "./claimCodes.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
-import { NO_SETTINGS, type TargetConfiguration } from "./configuration.js";
+import { NO_SETTINGS, type Layer, type TargetConfiguration } from "./configuration.js";
 import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { reconcile, runVerdictOf, stepAccountOf, totalsOf, type EvidenceReconciliation, type RunVerdict } from "./evidenceReconciliation.js";
 import { executableClaimsOf, type FeatureFile } from "./postEvidenceObligation.js";
 import { stepDispositionOf, type EvidenceObservation, type Result, type RecordedStep, type TestResult } from "./postEvidenceObservation.js";
 
 // Evidence as a row gives it: its kind, its result, and the code it cites, such as ONE-001, if any.
-type Observed = readonly [EvidenceObservation["kind"], Result, string?];
+type Observed = readonly [Layer, Result, string?];
 
 const observationOf = ([kind, result, code]: Observed): EvidenceObservation => ({
   cites: code === undefined ? [] : [{ featureCode: code.split("-")[0]!, number: code.split("-")[1]! }],
@@ -35,7 +35,7 @@ function runVerdictOfRun(corpus: readonly string[], observed: readonly Observed[
 }
 
 // Evidence as a reader gives it: one test's result in one.test.ts, citing the code given, if any, in its title.
-const testResultOf = ([, result, code]: readonly [EvidenceObservation["kind"], TestResult["result"], string?]): TestResult => ({
+const testResultOf = ([, result, code]: readonly [Layer, TestResult["result"], string?]): TestResult => ({
   place: { file: "/target/one.test.ts" },
   name: "a test",
   result,
@@ -43,7 +43,7 @@ const testResultOf = ([, result, code]: readonly [EvidenceObservation["kind"], T
 });
 
 // The run verdict of the corpus and evidence given, as reconcile gives it from what the readers would give.
-function reconciledRunVerdictOf(corpus: readonly string[], observed: readonly (readonly [EvidenceObservation["kind"], TestResult["result"], string?])[]): RunVerdict {
+function reconciledRunVerdictOf(corpus: readonly string[], observed: readonly (readonly [Layer, TestResult["result"], string?])[]): RunVerdict {
   const features = corpus.map((entry, at) => featureAsWrittenFrom(`f${at}.feature`, entry.includes("Feature:") ? entry : scenariosTagged(`@unit ${entry}`)));
   return reconciledFrom(features, observed, false).runVerdict;
 }
@@ -52,12 +52,12 @@ function reconciledRunVerdictOf(corpus: readonly string[], observed: readonly (r
 // CI step, settings or scripts.
 function reconciledFrom(
   features: readonly FeatureFile[],
-  observed: readonly (readonly [EvidenceObservation["kind"], TestResult["result"], string?])[],
+  observed: readonly (readonly [Layer, TestResult["result"], string?])[],
   strict: boolean,
 ): EvidenceReconciliation {
   return reconcile({
     features,
-    reports: observed.map((evidence) => ({ report: "report.json", results: [testResultOf(evidence)], defaultLayer: evidence[0], needsFeatures: false })),
+    reports: observed.map((evidence) => ({ results: [testResultOf(evidence)], layers: [evidence[0]], needsFeatures: false })),
     steps: [],
     stepRecord: [],
     settings: NO_SETTINGS,

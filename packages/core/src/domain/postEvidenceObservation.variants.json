@@ -26,9 +26,5 @@
       "RSpec, under e2e",
       "RSpec, under performance"
     ]
-  },
-  "formats-without-kind-tags-named-nowhere": {
-    "claim": "CLM-OBS-059",
-    "variants": ["JUnit", "Vitest", "Jest", "pytest", "RSpec"]
   }
 }

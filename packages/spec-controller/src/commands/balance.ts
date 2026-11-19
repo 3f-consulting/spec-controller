@@ -1,5 +1,4 @@
 import {
-  configurationSettingsFrom,
   configurationSettingsNamed,
   EVIDENCE_REPORT_FORMATS,
   provenanceInputsOf,
@@ -38,7 +37,7 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
   return corpus === undefined ? undefined : resolve(folder, corpus.path);
 };
 
-type Layer = NonNullable<ReportGiven["layers"]>[number];
+type Layer = ReportGiven["layers"][number];
 
 // Each report a runner's long form names, with the runner's layer.
 const reportsLocatedBy = ({ runners }: ConfigurationSettings): { readonly layer: Layer; readonly report: ReportLocation }[] =>
@@ -49,23 +48,13 @@ const locatedInputs = (located: readonly { readonly report: ReportLocation }[]):
   [...new Map(located.map(({ report }) => [report.path, report.format as EvidenceReportKind])).entries()].map(([path, kind]) => ({ kind, path, byDefault: false, located: true }));
 
 // Every evidence report the run read, as the domain takes it: by format, in the formats' order, then in the order read. A
-// report a long form names serves the layers of the runners naming its path.
+// report serves the layers of the runners whose long form names its path.
 const reportsGivenOf = ({ reports = NONE }: InputsRead, located: readonly { readonly layer: Layer; readonly report: ReportLocation }[]): ReportGiven[] =>
-  EVIDENCE_REPORT_FORMATS.flatMap(({ kind }) => reports.filter(({ format }) => format.kind === kind)).map(({ report, results, format, located: at }) => ({
-    report,
+  EVIDENCE_REPORT_FORMATS.flatMap(({ kind }) => reports.filter(({ format }) => format.kind === kind)).map(({ results, format, located: at }) => ({
     results,
-    defaultLayer: format.defaultLayer,
-    ...(at !== undefined && { layers: [...new Set(located.flatMap(({ layer, report: { path } }) => (path === at ? [layer] : [])))] }),
+    layers: [...new Set(located.flatMap(({ layer, report: { path } }) => (path === at ? [layer] : [])))],
     needsFeatures: format.needsFeatures === true,
   }));
-
-// The settings the command line names, beside those a specController block writes.
-const settingsJoined = (named: ConfigurationSettings, written: ConfigurationSettings): ConfigurationSettings => ({
-  runners: [...named.runners, ...written.runners],
-  nonChecks: [...named.nonChecks, ...written.nonChecks],
-  deferralTags: [...named.deferralTags, ...written.deferralTags],
-  unknownKeys: written.unknownKeys,
-});
 
 export function balance(
   { inputs, settings, outputs, target, sourceSha, strict, exitZero }: Extract<RunRequest, { command: "balance" }>,
@@ -87,7 +76,7 @@ export function balance(
     reports: reportsGivenOf(read, located),
     steps: read.workflowSteps ?? NONE,
     stepRecord: read.stepRecord ?? NONE,
-    settings: settingsJoined(named, configurationSettingsFrom(read.manifest)),
+    settings: named,
     reportsNotFound: read.reportsNotFound,
     scripts: scriptsFrom(read.manifest),
     shell: shellAnswers,
