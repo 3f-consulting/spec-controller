@@ -54,7 +54,7 @@ Feature: balance reads and validates the configuration settings the run names
 
     @unit @CLM-CFG-017
     Scenario: the run will still reach its run verdict, using the configuration settings it could use
-      given the run named vitest:vitest, a long form with no report, as the unit layer's runner and cucumber-js as the integration layer's runner
+      given the run named a unit runner it could not use, and cucumber-js as the integration runner
       when balance reconciles the target
       then the run will reach its run verdict
       and cucumber-js will be what runs the integration layer
