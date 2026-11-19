@@ -182,11 +182,6 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
 
 // One passing result citing the corpus's one claim, as each runner writes it.
 const BY_FILE_PASSING = '{"testResults":[{"name":"/work/one.test.ts","status":"passed","message":"","assertionResults":[{"title":"[CLM-ONE-001] one","fullName":"[CLM-ONE-001] one","status":"passed","ancestorTitles":[],"failureMessages":[]}]}]}';
-const PYTEST_PASSING =
-  '<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1"><testcase classname="test_one" name="test_one" time="0.001"><properties><property name="clm" value="CLM-ONE-001" /></properties></testcase></testsuite></testsuites>';
-const RSPEC_PASSING = '{"examples":[{"id":"./spec/one_spec.rb[1:1]","description":"[CLM-ONE-001] one","full_description":"[CLM-ONE-001] one","status":"passed","file_path":"./spec/one_spec.rb","line_number":1}],"summary":{}}';
-const CUCUMBER_PASSING =
-  '[{"uri":"features/one.feature","name":"one","elements":[{"keyword":"Scenario","name":"one","type":"scenario","line":5,"tags":[{"name":"@unit"},{"name":"@CLM-ONE-001"}],"steps":[{"keyword":"Given ","name":"one","result":{"status":"passed"}}]}]}]';
 
 const JUNIT_PASSING = '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="one" tests="1" errors="0" skipped="0" failures="0">\n  <testcase name="[CLM-ONE-001] one" classname="one" time="0.001"/>\n</testsuite>\n';
 
@@ -199,18 +194,18 @@ interface ResultsByClaimReported {
 
 const TWO_CLAIMS = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n\n  @unit @CLM-ONE-002\n  Scenario: two\n";
 
-describe("balance posts the results of every evidence report the run names for one runner", () => {
-  it.each([
-    ["--unit", "vitest:vitest", BY_FILE_PASSING],
-    ["--unit", "jest:jest", BY_FILE_PASSING],
-    ["--unit", "pytest:pytest", PYTEST_PASSING],
-    ["--unit", "junit:junit", JUNIT_PASSING],
-    ["--unit", "rspec:rspec", RSPEC_PASSING],
-    ["--integration", "cucumber-js:cucumber", CUCUMBER_PASSING],
-  ] as const)("[CLM-CLI-210] %s %s:<report> given twice, naming two reports of one passing result each, citing CLM-ONE-001 and CLM-ONE-002: both results are posted", (flag, runner, report) => {
-    const folder = folderWith({ "features/one.feature": TWO_CLAIMS, "first.report": report, "second.report": report.replaceAll("CLM-ONE-001", "CLM-ONE-002") });
+const TWO_STEPS_WRITING_VITEST = "jobs:\n  ci:\n    steps:\n      - run: vitest run --reporter=json --outputFile=out/a.json\n      - run: vitest run --reporter=json --outputFile=out/b.json\n";
 
-    const { output, error } = ran(["balance", flag, `${runner}:first.report`, flag, `${runner}:second.report`, "--format", "json"], folder);
+describe("balance posts the results of every evidence report a runner's steps write", () => {
+  it("[CLM-CLI-210] --unit vitest, a workflow with two steps running vitest, one writing out/a.json citing CLM-ONE-001 and one writing out/b.json citing CLM-ONE-002: both results are posted", () => {
+    const folder = folderWith({
+      "features/one.feature": TWO_CLAIMS,
+      "workflows/ci.yml": TWO_STEPS_WRITING_VITEST,
+      "out/a.json": BY_FILE_PASSING,
+      "out/b.json": BY_FILE_PASSING.replaceAll("CLM-ONE-001", "CLM-ONE-002"),
+    });
+
+    const { output, error } = ran(["balance", "--unit", "vitest", "--ci", "workflows", "--format", "json"], folder);
 
     const { claimReconciliations } = (output === "" ? { claimReconciliations: [] } : JSON.parse(output)) as ResultsByClaimReported;
     const posted = claimReconciliations.map(({ claim, qualityCheckReconciliations }) => [claim.claimCode?.number, qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [observation.result] : []))]);
