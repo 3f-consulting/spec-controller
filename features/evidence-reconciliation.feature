@@ -57,6 +57,27 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-011 | a claim code error and a Claim Reconciliation out of balance                       | claim code errors |
         | CLM-EVR-012 | a corpus whose only scenario is tagged with two codes, and no Evidence Observation | claim code errors |
 
+  Rule: a team can gate on the claims it has written before every test cites one
+
+    @unit
+    Scenario Outline: a run counting only the executable claims is balanced or out of balance as its executable claims call for
+      given a run had <executable claim>
+      and it had <other evidence>
+      when balance reconciles it counting only the executable claims
+      then the run verdict will be <run verdict>
+
+      Examples:
+        | clm         | executable claim                                                                                | other evidence                                          | run verdict    |
+        | CLM-EVR-084 | one asking for unit evidence, with a passing unit test citing it                                | a passing unit test citing a code no claim has          | balanced       |
+        | CLM-EVR-085 | one asking for unit evidence, with a passing unit test citing it                                | a failing unit test citing a code no claim has          | balanced       |
+        | CLM-EVR-086 | one asking for unit evidence, with a passing unit test citing it                                | a failing unit test citing no code                      | balanced       |
+        | CLM-EVR-087 | one asking for unit evidence, with a passing unit test citing it                                | a unit test citing a code no claim has, which never ran | balanced       |
+        | CLM-EVR-088 | one asking for unit evidence, with a passing unit test citing it                                | a unit test citing no code, which never ran             | balanced       |
+        | CLM-EVR-089 | one asking for unit evidence, with a failing unit test citing it                                | a passing unit test citing no code                      | out of balance |
+        | CLM-EVR-090 | one asking for unit evidence, with no test citing it                                            | a passing unit test citing no code                      | out of balance |
+        | CLM-EVR-091 | one asking for unit evidence, with a passing unit test and a passing integration test citing it | nothing                                                 | out of balance |
+        | CLM-EVR-092 | one asking for fitness evidence, whose CI step succeeded and set continue-on-error to true      | nothing                                                 | out of balance |
+
   Rule: the summary counts what was reconciled
 
     @unit

@@ -39,6 +39,7 @@ export function reconciled({ scenarios, unitTests, configurationErrors = [], ste
     configurationErrors,
     features,
     claimReading,
+    countOnlyExecutableClaims: false,
     stepAccount: stepAccountOf(stepsRead ? [{ step, disposition: "fitnessFunction" }] : []),
     provenance: { ...PROVENANCE, ...provenance },
   });
@@ -68,5 +69,5 @@ export function reconciledFromSources(sources: readonly (readonly [string, strin
   const features = sources.map(([file, source]) => featureAsWrittenFrom(file, source));
   const claimReading = { deferralTags: [], strict: false };
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, claimReading), evidence.map(evidenceOf));
-  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: claimCodeErrorsOf(features), configurationErrors, features, claimReading, stepAccount: stepAccountOf([]), provenance: PROVENANCE });
+  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: claimCodeErrorsOf(features), configurationErrors, features, claimReading, countOnlyExecutableClaims: false, stepAccount: stepAccountOf([]), provenance: PROVENANCE });
 }

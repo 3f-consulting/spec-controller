@@ -87,7 +87,7 @@ export interface EvidenceReconciliation {
 
 // Not reconciled, first because evidence never ran, then for claim code errors, then for nothing to reconcile; otherwise
 // balanced only when every Claim Reconciliation is.
-export function runVerdictOf(claimReconciliations: readonly ClaimReconciliation[], claimCodeErrors: readonly ClaimCodeError[]): RunVerdict {
+export function runVerdictOf(claimReconciliations: readonly ClaimReconciliation[], claimCodeErrors: readonly ClaimCodeError[], countOnlyExecutableClaims: boolean): RunVerdict {
   const neverRan = claimReconciliations.some(({ qualityCheckReconciliations }) => qualityCheckReconciliations.some(({ outcome }) => outcome === "never-ran"));
   if (neverRan) return { verdict: "not-reconciled", why: "unsound" };
   if (claimCodeErrors.length > 0) return { verdict: "not-reconciled", why: "claim-code-errors" };
@@ -221,6 +221,8 @@ export interface RunReconciled {
   readonly features: readonly FeatureFile[];
   // How the claims were read from the features, so the scenarios a deferral tag set aside are counted by the same reading.
   readonly claimReading: ClaimReadingSettings;
+  // Whether the run verdict counts the executable claims alone, leaving out the phantom claims and the unnamed claim.
+  readonly countOnlyExecutableClaims: boolean;
   readonly stepAccount: StepAccount;
   readonly provenance: Provenance;
 }
@@ -268,6 +270,8 @@ export interface ReadersGave {
   readonly provenanceInputs: readonly ProvenanceInput[];
   readonly targetFolder: string;
   readonly strict: boolean;
+  // Whether the run verdict counts the executable claims alone, leaving out the phantom claims and the unnamed claim.
+  readonly countOnlyExecutableClaims: boolean;
 }
 
 // The credit journal: each report's results as Evidence Observations, beside the fitness functions' from the CI steps.

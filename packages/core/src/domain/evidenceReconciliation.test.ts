@@ -8,11 +8,11 @@ import { claimReconciliationsOf } from "./claimReconciliation.js";
 import { NO_SETTINGS, type Layer, type TargetConfiguration } from "./configuration.js";
 import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { reconcile, runVerdictOf, stepAccountOf, totalsOf, type EvidenceReconciliation, type RunVerdict } from "./evidenceReconciliation.js";
-import { executableClaimsOf, type FeatureFile } from "./postEvidenceObligation.js";
+import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { stepDispositionOf, type EvidenceObservation, type Result, type RecordedStep, type TestResult } from "./postEvidenceObservation.js";
 
 // Evidence as a row gives it: its kind, its result, and the code it cites, such as ONE-001, if any.
-type Observed = readonly [Layer, Result, string?];
+type Observed = readonly [QualityCheckKind, Result, string?];
 
 const observationOf = ([kind, result, code]: Observed): EvidenceObservation => ({
   cites: code === undefined ? [] : [{ featureCode: code.split("-")[0]!, number: code.split("-")[1]! }],
@@ -28,10 +28,10 @@ const scenariosTagged = (...scenarioTags: readonly string[]): string =>
 
 // The run verdict of the corpus and evidence given, read and reconciled as balance does. Each entry of the corpus is the
 // tags of one.feature's scenario, beside its unit tag, or a whole feature file.
-function runVerdictOfRun(corpus: readonly string[], observed: readonly Observed[]): ReturnType<typeof runVerdictOf> {
+function runVerdictOfRun(corpus: readonly string[], observed: readonly Observed[], countOnlyExecutableClaims = false): ReturnType<typeof runVerdictOf> {
   const features = corpus.map((entry, at) => featureAsWrittenFrom(`f${at}.feature`, entry.includes("Feature:") ? entry : scenariosTagged(`@unit ${entry}`)));
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observed.map(observationOf));
-  return runVerdictOf(claimReconciliations, claimCodeErrorsOf(features));
+  return runVerdictOf(claimReconciliations, claimCodeErrorsOf(features), countOnlyExecutableClaims);
 }
 
 // Evidence as a reader gives it: one test's result in one.test.ts, citing the code given, if any, in its title.
@@ -43,9 +43,9 @@ const testResultOf = ([, result, code]: readonly [Layer, TestResult["result"], s
 });
 
 // The run verdict of the corpus and evidence given, as reconcile gives it from what the readers would give.
-function reconciledRunVerdictOf(corpus: readonly string[], observed: readonly (readonly [Layer, TestResult["result"], string?])[]): RunVerdict {
+function reconciledRunVerdictOf(corpus: readonly string[], observed: readonly (readonly [Layer, TestResult["result"], string?])[], countOnlyExecutableClaims = false): RunVerdict {
   const features = corpus.map((entry, at) => featureAsWrittenFrom(`f${at}.feature`, entry.includes("Feature:") ? entry : scenariosTagged(`@unit ${entry}`)));
-  return reconciledFrom(features, observed, false).runVerdict;
+  return reconciledFrom(features, observed, false, countOnlyExecutableClaims).runVerdict;
 }
 
 // What reconcile gives from the feature files and evidence given, each test's result in a report of its own kind, and no
@@ -54,6 +54,7 @@ function reconciledFrom(
   features: readonly FeatureFile[],
   observed: readonly (readonly [Layer, TestResult["result"], string?])[],
   strict: boolean,
+  countOnlyExecutableClaims = false,
 ): EvidenceReconciliation {
   return reconcile({
     features,
@@ -68,6 +69,7 @@ function reconciledFrom(
     provenanceInputs: [],
     targetFolder: "/target",
     strict,
+    countOnlyExecutableClaims,
   });
 }
 
@@ -104,6 +106,32 @@ describe("the run will be not reconciled, naming why", () => {
     ["CLM-EVR-008", "a feature corpus with no scenario, and no Evidence Observation", ["@ONE\nFeature: one\n"], [], "nothing-to-reconcile"],
   ] as const)("[%s] a run with %s is not reconciled, naming why", (_clm, _what, corpus, evidence, why) => {
     expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict: "not-reconciled", why });
+  });
+});
+
+describe("a run counting only the executable claims is balanced or out of balance as its executable claims call for", () => {
+  const passing = ["unit", "passed", "ONE-001"] as const;
+  const rows = [
+    ["CLM-EVR-084", "a passing unit test citing it, and a passing unit test citing a code no claim has", [passing, ["unit", "passed", "ONE-002"]], "balanced"],
+    ["CLM-EVR-085", "a passing unit test citing it, and a failing unit test citing a code no claim has", [passing, ["unit", "failed", "ONE-002"]], "balanced"],
+    ["CLM-EVR-086", "a passing unit test citing it, and a failing unit test citing no code", [passing, ["unit", "failed"]], "balanced"],
+    ["CLM-EVR-087", "a passing unit test citing it, and a unit test citing a code no claim has, which never ran", [passing, ["unit", "never-ran", "ONE-002"]], "balanced"],
+    ["CLM-EVR-088", "a passing unit test citing it, and a unit test citing no code, which never ran", [passing, ["unit", "never-ran"]], "balanced"],
+    ["CLM-EVR-089", "a failing unit test citing it, and a passing unit test citing no code", [["unit", "failed", "ONE-001"], ["unit", "passed"]], "out-of-balance"],
+    ["CLM-EVR-090", "no test citing it, and a passing unit test citing no code", [["unit", "passed"]], "out-of-balance"],
+    ["CLM-EVR-091", "a passing unit test and a passing integration test citing it", [passing, ["integration", "passed", "ONE-001"]], "out-of-balance"],
+  ] as const;
+
+  it.each(rows)("[%s] a run with a claim asking for unit evidence, %s, counting only the executable claims, has its run verdict", (_clm, _what, evidence, verdict) => {
+    expect(runVerdictOfRun(["@CLM-ONE-001"], evidence, true)).toEqual({ verdict });
+  });
+
+  it.each(rows)("[%s] a run with a claim asking for unit evidence, %s, reconciled in one call counting only the executable claims, has its run verdict", (_clm, _what, evidence, verdict) => {
+    expect(reconciledRunVerdictOf(["@CLM-ONE-001"], evidence, true)).toEqual({ verdict });
+  });
+
+  it("[CLM-EVR-092] a run with a claim asking for fitness evidence, whose CI step succeeded and set continue-on-error to true, counting only the executable claims, is out of balance", () => {
+    expect(runVerdictOfRun([scenariosTagged("@fitness @CLM-ONE-001")], [["fitness", "passed-on-error", "ONE-001"]], true)).toEqual({ verdict: "out-of-balance" });
   });
 });
 
