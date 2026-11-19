@@ -43,11 +43,14 @@ jobs:
       actions: read
     outputs:
       version: ${{ steps.counter.outputs.version }}
+      dist-tag: ${{ steps.heading.outputs.dist-tag }}
     timeout-minutes: 15
     steps:
+      # The whole history, so the changelog can be read back to the commit the previous publish named.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -84,8 +87,9 @@ jobs:
               {
                 npm view @3f-consulting/spec-controller-core versions --json &&
                 npm view spec-controller versions --json &&
+                gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/published/" --jq '[.[].ref | ltrimstr("refs/published/")]' &&
                 gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v" --jq '[.[].ref | ltrimstr("refs/tags/v")]'
-              } || { echo "could not read the published versions from registry.npmjs.org and the repository's tags" >&2; exit 1; }
+              } || { echo "could not read the published versions from registry.npmjs.org and the repository's refs" >&2; exit 1; }
             } | jq -r 'if type == "array" then .[] else . end' \
               | awk -v p="$prefix" 'index($0, p) == 1 { s = substr($0, length(p) + 1); if (s ~ /^[0-9]+$/) print s }' \
               | sort -n | tail -1
@@ -95,6 +99,54 @@ jobs:
           (cd packages/core && npm pkg set version="$v")
           (cd packages/spec-controller && npm pkg set version="$v")
           echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "previous=${n:+$prefix$n}" >> "$GITHUB_OUTPUT"
+
+      # A merge releases when the changelog has gained a version heading since the previous publish, and only when the
+      # heading names the version this merge publishes; anything else fails here, before anything is published.
+      - name: Read the version heading the merge adds
+        id: heading
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          VERSION: ${{ steps.counter.outputs.version }}
+          PREVIOUS: ${{ steps.counter.outputs.previous }}
+        run: |
+          since=""
+          for ref in "published/$PREVIOUS" "tags/v$PREVIOUS"; do
+            [ -n "$PREVIOUS" ] || break
+            since="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/$ref" --jq .object.sha 2> /dev/null || true)"
+            [ -n "$since" ] && break
+          done
+          since="${since:-$HEAD_SHA^}"
+          headings="$(git diff --unified=0 --no-color "$since" "$HEAD_SHA" -- CHANGELOG.md \
+            | awk '/^\+\+\+ /{ next } /^\+[[:space:]]*#/{ line = substr($0, 2); sub(/^[[:space:]]+/, "", line); sub(/[[:space:]]+$/, "", line); print line }')"
+          count="$(printf '%s' "$headings" | grep -c . || true)"
+          if [ "$count" -eq 0 ]; then
+            echo "no version heading since $since: publishing $VERSION under next"
+            echo "dist-tag=next" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$count" -gt 1 ]; then
+            printf 'the changelog gained %s headings since %s, and one merge releases once:\n%s\npublishing, tagging and releasing nothing\n' "$count" "$since" "$headings" >&2
+            exit 1
+          fi
+          named="$(printf '%s' "$headings" | sed -nE 's/^## ([0-9]+\.[0-9]+\.[0-9]+) — [0-9]{4}-[0-9]{2}-[0-9]{2} — .+$/\1/p')"
+          if [ -z "$named" ]; then
+            printf 'the changelog gained "%s", which is not a version heading "## <version> — <yyyy-mm-dd> — <title>": publishing, tagging and releasing nothing\n' "$headings" >&2
+            exit 1
+          fi
+          if [ "$named" != "$VERSION" ]; then
+            echo "the version heading names $named, but this merge publishes $VERSION: publishing, tagging and releasing nothing" >&2
+            exit 1
+          fi
+          section="$(awk -v h="$headings" 'found && /^#/{ exit } found && /[^[:space:]]/{ n++ } { line = $0; sub(/^[[:space:]]+/, "", line); sub(/[[:space:]]+$/, "", line) } line == h { found = 1 } END { print n + 0 }' CHANGELOG.md)"
+          if [ "$section" -eq 0 ]; then
+            echo "the version heading for $VERSION stands over no line: publishing, tagging and releasing nothing" >&2
+            exit 1
+          fi
+          echo "the version heading names $VERSION, over $section line(s): publishing it under latest and releasing it"
+          echo "dist-tag=latest" >> "$GITHUB_OUTPUT"
 
       - name: Pack both packages, once
         run: |
@@ -116,18 +168,37 @@ jobs:
           npx spec-controller balance --help
 
       - name: Publish core
+        env:
+          DIST_TAG: ${{ steps.heading.outputs.dist-tag }}
         run: |
           v="$(node -p "require('./packages/core/package.json').version")"
-          case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
+          case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t="$DIST_TAG" ;; esac
           npm publish "$RUNNER_TEMP/release"/3f-consulting-spec-controller-core-*.tgz --tag "$t"
 
       - name: Publish the CLI
+        env:
+          DIST_TAG: ${{ steps.heading.outputs.dist-tag }}
         run: |
           v="$(node -p "require('./packages/spec-controller/package.json').version")"
-          case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
+          case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t="$DIST_TAG" ;; esac
           npm publish "$RUNNER_TEMP/release"/spec-controller-*.tgz --tag "$t"
 
-  latest:
+  # The counter's fast source: npm can take 20 to 40 minutes to serve a publish, and a ref is there at once.
+  published:
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Record the version published at the commit it was built from
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/published/$VERSION" -f sha="$HEAD_SHA"
+
+  dist-tag:
     needs: release
     runs-on: ubuntu-latest
     permissions:
@@ -135,22 +206,25 @@ jobs:
     timeout-minutes: 45
     env:
       # npm can take 20 to 40 minutes to serve a publish it has acknowledged.
-      LATEST_WAIT_S: 2400
+      DIST_TAG_WAIT_S: 2400
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
-      - name: A bare install resolves the version just published
+      - name: The dist-tag the merge published under resolves the version just published
         env:
           VERSION: ${{ needs.release.outputs.version }}
+          DIST_TAG: ${{ needs.release.outputs.dist-tag }}
         run: |
-          scripts/latest-is.sh @3f-consulting/spec-controller-core "$VERSION"
-          scripts/latest-is.sh spec-controller "$VERSION"
+          scripts/dist-tag-is.sh @3f-consulting/spec-controller-core "$DIST_TAG" "$VERSION"
+          scripts/dist-tag-is.sh spec-controller "$DIST_TAG" "$VERSION"
 
+  # Only a merge that released, under latest, is tagged and given a GitHub release.
   tag:
     needs: release
+    if: needs.release.outputs.dist-tag == 'latest'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -166,30 +240,25 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 0
           persist-credentials: false
 
-      # The previous release is the newest v* tag below this one, its own tag set aside, so a merge that published nothing has its line carried into the next release.
-      - name: Write the release notes from the changelog
+      # The notes are the version heading's section: its lines, up to the next heading or the file's end.
+      - name: Write the release notes from the version heading's section
+        id: notes
         shell: bash
         env:
           VERSION: ${{ needs.release.outputs.version }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          earlier="$(git tag -l 'v*' --merged "$HEAD_SHA" | { grep -vx "v$VERSION" || true; })"
-          if [ -n "$earlier" ]; then
-            prev="$(git describe --tags --abbrev=0 --match 'v*' --exclude "v$VERSION" "$HEAD_SHA")"
-          else
-            prev="$(git hash-object -t tree /dev/null)"
-          fi
-          git diff --unified=0 --no-color "$prev" "$HEAD_SHA" -- CHANGELOG.md \
-            | awk '/^\+\+\+ /{ next } /^\+/{ line = substr($0, 2); if (line ~ /[^[:space:]]/) print line }' > "$RUNNER_TEMP/notes.md"
-          if [ ! -s "$RUNNER_TEMP/notes.md" ]; then echo "Dependencies updated." > "$RUNNER_TEMP/notes.md"; fi
-          echo "notes for v$VERSION, from $prev:"
+          heading="$(awk -v v="$VERSION" '{ line = $0; sub(/^[[:space:]]+/, "", line); sub(/[[:space:]]+$/, "", line) } index(line, "## " v " — ") == 1 { print line; exit }' CHANGELOG.md)"
+          awk -v h="$heading" 'found && /^#/{ exit } found { print } { line = $0; sub(/^[[:space:]]+/, "", line); sub(/[[:space:]]+$/, "", line) } line == h { found = 1 }' CHANGELOG.md \
+            | awk 'NF { started = 1 } started' > "$RUNNER_TEMP/notes.md"
+          echo "title=${heading#\#\# }" >> "$GITHUB_OUTPUT"
+          echo "notes for v$VERSION:"
           cat "$RUNNER_TEMP/notes.md"
 
       - name: Publish the release notes for the tag
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.release.outputs.version }}
-        run: gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag --notes-file "$RUNNER_TEMP/notes.md" --title "v$VERSION"
+          TITLE: ${{ steps.notes.outputs.title }}
+        run: gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag --notes-file "$RUNNER_TEMP/notes.md" --title "$TITLE"
