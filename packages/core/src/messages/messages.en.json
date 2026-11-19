@@ -106,7 +106,7 @@
   "step-account-workflow-key": "the workflow file read.",
   "step-account-job-key": "a job in it. The Total row, when there is more than one job, sums them.",
   "step-account-steps-read-key": "the job's steps, each counted once in one of the columns after it.",
-  "step-account-runners-key": "steps that run a test runner the target declares, other than one counted as a fitness function.",
+  "step-account-runners-key": "steps that run a test runner the run names, other than one counted as a fitness function.",
   "step-account-reconciler-steps-key": "steps that run this reconciliation or write the step record it reads.",
   "step-account-non-checks-key": "steps the run names with --not-check, other than reconciler steps.",
   "step-account-plumbing-key": "steps that only set up the job with one of GitHub's own actions: checking out, caching, moving artefacts or setting up a toolchain.",
