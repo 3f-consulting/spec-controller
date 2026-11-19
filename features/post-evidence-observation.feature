@@ -24,48 +24,48 @@ Feature: Evidence Observations are posted, each to its claim
     @unit
     Scenario Outline: balance identifies whether a CI step is a fitness function
       given a workflow had <step>
-      and the target's configuration had <configuration>
+      and the run named <configuration>
       when balance reads the workflow
       then it <fitness function> a fitness function
 
       Examples:
-        | clm         | step                                                                                                  | configuration                  | fitness function |
-        | CLM-OBS-004 | a step running pnpm audit-the-tree                                                                    | no setting for it              | will be          |
-        | CLM-OBS-002 | a step using actions/dependency-review-action                                                         | no setting for it              | will be          |
-        | CLM-OBS-003 | a step using someone/checkout                                                                         | no setting for it              | will be          |
-        | CLM-OBS-005 | a step running gradle lint                                                                            | gradle test as its unit runner | will be          |
-        | CLM-OBS-006 | a step running eslint vitest.config.ts                                                                | vitest as its unit runner      | will be          |
-        | CLM-OBS-007 | a step running vitest run \| tee out.txt                                                              | vitest as its unit runner      | will be          |
-        | CLM-OBS-008 | a step running pnpm test                                                                              | no unit runner                 | will be          |
-        | CLM-OBS-139 | a step named Install in job test of ci.yml, whose job ci had a step named Install                     | ci.yml:ci:Install in notChecks | will be          |
-        | CLM-OBS-140 | a step named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci                 | ci.yml:ci:Install in notChecks | will be          |
-        | CLM-OBS-141 | a step using actions/dependency-review-action                                                         | vitest as its unit runner      | will be          |
-        | CLM-OBS-009 | a step running pnpm test, whose script runs vitest                                                    | vitest as its unit runner      | will not be      |
-        | CLM-OBS-114 | a step running pnpm test, whose script runs another script, whose script runs vitest                  | vitest as its unit runner      | will not be      |
-        | CLM-OBS-131 | a step running pnpm run //, whose scripts entry is a list, not a string                               | vitest as its unit runner      | will be          |
-        | CLM-OBS-115 | a step running pnpm loop, whose script runs itself                                                    | vitest as its unit runner      | will be          |
-        | CLM-OBS-125 | a step running go test ./..., in a target whose test script runs vitest                               | vitest as its unit runner      | will be          |
-        | CLM-OBS-010 | a step running CI=1 npx vitest run                                                                    | vitest as its unit runner      | will not be      |
-        | CLM-OBS-116 | a step running uv run python -m pytest                                                                | pytest as its unit runner      | will not be      |
-        | CLM-OBS-011 | a step running pnpm lint && vitest run                                                                | vitest as its unit runner      | will not be      |
-        | CLM-OBS-122 | a step defining a shell function, then running vitest run                                             | vitest as its unit runner      | will not be      |
-        | CLM-OBS-124 | a step setting start=$SECONDS on one line, then running vitest run                                    | vitest as its unit runner      | will not be      |
-        | CLM-OBS-127 | a step running an if … fi block, then vitest run                                                      | vitest as its unit runner      | will not be      |
-        | CLM-OBS-112 | a step running its unit runner behind a wrapper that runs the command after it                        | that runner as its unit runner | will not be      |
-        | CLM-OBS-117 | a step running xvfb-run -s 99 vitest run                                                              | vitest as its unit runner      | will not be      |
-        | CLM-OBS-126 | a step running xvfb-run --help, a wrapper given only options                                          | vitest as its unit runner      | will be          |
-        | CLM-OBS-113 | a step running a runner named in several words                                                        | that runner as its unit runner | will not be      |
-        | CLM-OBS-012 | a step running spec-controller balance                                                                | no setting for it              | will not be      |
-        | CLM-OBS-119 | a step running spec-controller balance \| tee report.md                                               | no setting for it              | will not be      |
-        | CLM-OBS-013 | a step writing out the step record                                                                    | no setting for it              | will not be      |
-        | CLM-OBS-109 | a step running spec-controller balance                                                                | that step in notChecks         | will not be      |
-        | CLM-OBS-015 | a step using actions/checkout                                                                         | no setting for it              | will not be      |
-        | CLM-OBS-014 | a step named Install                                                                                  | that step in notChecks         | will not be      |
-        | CLM-OBS-016 | a step using actions/checkout                                                                         | that step in notChecks         | will not be      |
-        | CLM-OBS-108 | a step running vitest run, with the id CLM-ONE-001, whose outcome the step record has                 | vitest as its unit runner      | will be          |
-        | CLM-OBS-145 | a step running vitest run, with the id unit, whose outcome the step record has                        | vitest as its unit runner      | will not be      |
-        | CLM-OBS-146 | a step running vitest run, with the id CLM-ONE-001, whose outcome a step record, given, does not have | vitest as its unit runner      | will not be      |
-        | CLM-OBS-147 | a step using actions/checkout, with the id CLM-ONE-001, whose outcome the step record has             | no setting for it              | will not be      |
+        | clm         | step                                                                                                  | configuration                          | fitness function |
+        | CLM-OBS-004 | a step running pnpm audit-the-tree                                                                    | no setting for it                      | will be          |
+        | CLM-OBS-002 | a step using actions/dependency-review-action                                                         | no setting for it                      | will be          |
+        | CLM-OBS-003 | a step using someone/checkout                                                                         | no setting for it                      | will be          |
+        | CLM-OBS-005 | a step running gradle lint                                                                            | gradle test as its unit runner         | will be          |
+        | CLM-OBS-006 | a step running eslint vitest.config.ts                                                                | vitest as its unit runner              | will be          |
+        | CLM-OBS-007 | a step running vitest run \| tee out.txt                                                              | vitest as its unit runner              | will be          |
+        | CLM-OBS-008 | a step running pnpm test                                                                              | no unit runner                         | will be          |
+        | CLM-OBS-139 | a step named Install in job test of ci.yml, whose job ci had a step named Install                     | ci.yml:ci:Install named as a non-check | will be          |
+        | CLM-OBS-140 | a step named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci                 | ci.yml:ci:Install named as a non-check | will be          |
+        | CLM-OBS-141 | a step using actions/dependency-review-action                                                         | vitest as its unit runner              | will be          |
+        | CLM-OBS-009 | a step running pnpm test, whose script runs vitest                                                    | vitest as its unit runner              | will not be      |
+        | CLM-OBS-114 | a step running pnpm test, whose script runs another script, whose script runs vitest                  | vitest as its unit runner              | will not be      |
+        | CLM-OBS-131 | a step running pnpm run //, whose scripts entry is a list, not a string                               | vitest as its unit runner              | will be          |
+        | CLM-OBS-115 | a step running pnpm loop, whose script runs itself                                                    | vitest as its unit runner              | will be          |
+        | CLM-OBS-125 | a step running go test ./..., in a target whose test script runs vitest                               | vitest as its unit runner              | will be          |
+        | CLM-OBS-010 | a step running CI=1 npx vitest run                                                                    | vitest as its unit runner              | will not be      |
+        | CLM-OBS-116 | a step running uv run python -m pytest                                                                | pytest as its unit runner              | will not be      |
+        | CLM-OBS-011 | a step running pnpm lint && vitest run                                                                | vitest as its unit runner              | will not be      |
+        | CLM-OBS-122 | a step defining a shell function, then running vitest run                                             | vitest as its unit runner              | will not be      |
+        | CLM-OBS-124 | a step setting start=$SECONDS on one line, then running vitest run                                    | vitest as its unit runner              | will not be      |
+        | CLM-OBS-127 | a step running an if … fi block, then vitest run                                                      | vitest as its unit runner              | will not be      |
+        | CLM-OBS-112 | a step running its unit runner behind a wrapper that runs the command after it                        | that runner as its unit runner         | will not be      |
+        | CLM-OBS-117 | a step running xvfb-run -s 99 vitest run                                                              | vitest as its unit runner              | will not be      |
+        | CLM-OBS-126 | a step running xvfb-run --help, a wrapper given only options                                          | vitest as its unit runner              | will be          |
+        | CLM-OBS-113 | a step running a runner named in several words                                                        | that runner as its unit runner         | will not be      |
+        | CLM-OBS-012 | a step running spec-controller balance                                                                | no setting for it                      | will not be      |
+        | CLM-OBS-119 | a step running spec-controller balance \| tee report.md                                               | no setting for it                      | will not be      |
+        | CLM-OBS-013 | a step writing out the step record                                                                    | no setting for it                      | will not be      |
+        | CLM-OBS-109 | a step running spec-controller balance                                                                | that step named as a non-check         | will not be      |
+        | CLM-OBS-015 | a step using actions/checkout                                                                         | no setting for it                      | will not be      |
+        | CLM-OBS-014 | a step named Install                                                                                  | that step named as a non-check         | will not be      |
+        | CLM-OBS-016 | a step using actions/checkout                                                                         | that step named as a non-check         | will not be      |
+        | CLM-OBS-108 | a step running vitest run, with the id CLM-ONE-001, whose outcome the step record has                 | vitest as its unit runner              | will be          |
+        | CLM-OBS-145 | a step running vitest run, with the id unit, whose outcome the step record has                        | vitest as its unit runner              | will not be      |
+        | CLM-OBS-146 | a step running vitest run, with the id CLM-ONE-001, whose outcome a step record, given, does not have | vitest as its unit runner              | will not be      |
+        | CLM-OBS-147 | a step using actions/checkout, with the id CLM-ONE-001, whose outcome the step record has             | no setting for it                      | will not be      |
 
     @unit
     Scenario Outline: balance identifies a result's kind of quality check as the layer its report's runner serves
