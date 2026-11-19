@@ -16,8 +16,14 @@ export interface ReportLocation {
   readonly format: string;
 }
 
-// The shell reader's answer of the evidence reports a step's command names for a runner, each path as the command writes it.
-export type ReportsNamed = (commandLine: string, runner: string, scripts: Readonly<Record<string, string>>) => readonly ReportLocation[];
+// The shell reader's answer of the evidence reports a step's command, with the variables the step sets, names for a
+// runner, each path as the command writes it.
+export type ReportsNamed = (
+  commandLine: string,
+  runner: string,
+  scripts: Readonly<Record<string, string>>,
+  environment: Readonly<Record<string, string>>,
+) => readonly ReportLocation[];
 
 // A layer's runner: the program it runs, with the evidence report the run names for it.
 export interface Runner {

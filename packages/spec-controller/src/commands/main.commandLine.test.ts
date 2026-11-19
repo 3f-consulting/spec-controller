@@ -285,6 +285,37 @@ describe("an evidence report the run names for a runner, with no file at its pat
   });
 });
 
+const ONE_UNIT_CLAIM = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n";
+const STEP_WRITING_VITEST = "vitest run --reporter=json --outputFile=out/vitest.json";
+
+// The report at its path read in its runner's format, its one result posted as unit evidence for CLM-ONE-001.
+function postedFromTheStep(runner: string, workflow: string, path: string, report: string): { readonly error: string; readonly posted: unknown } {
+  const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "workflows/ci.yml": workflow, [path]: report });
+
+  const { output, error } = ran(["balance", "--unit", runner, "--ci", "workflows", "--format", "json"], folder);
+
+  const { claimReconciliations } = (output === "" ? { claimReconciliations: [] } : JSON.parse(output)) as ResultsByLayerReported;
+  return { error, posted: claimReconciliations.map(({ claim, qualityCheckReconciliations }) => [claim.claimCode?.number, qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [[observation.kind, observation.result]] : []))]) };
+}
+
+const POSTED_AS_UNIT_EVIDENCE = { error: "", posted: [["001", [["unit", "passed"]]]] };
+
+describe("balance reads the evidence report a named runner's CI step writes, in that runner's format", () => {
+  it.each([
+    ["vitest", `jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`, "out/vitest.json", BY_FILE_PASSING],
+    ["playwright", "jobs:\n  ci:\n    steps:\n      - run: npx playwright test --reporter=junit\n        env:\n          PLAYWRIGHT_JUNIT_OUTPUT_FILE: out/playwright.xml\n", "out/playwright.xml", JUNIT_PASSING],
+  ] as const)("[CLM-CLI-214] --unit %s, a workflow step writing %j in the target's folder: the report at %s is read in its runner's format", (runner, workflow, path, report) => {
+    expect(postedFromTheStep(runner, workflow, path, report)).toEqual(POSTED_AS_UNIT_EVIDENCE);
+  });
+
+  it.each([
+    ["the step's", `jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n        working-directory: web\n`],
+    ["its job's", `jobs:\n  ci:\n    defaults:\n      run:\n        working-directory: web\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`],
+  ] as const)("[CLM-CLI-215] --unit vitest, a workflow step writing out/vitest.json with web as %s working directory: the report at web/out/vitest.json is read in Vitest's format", (_set, workflow) => {
+    expect(postedFromTheStep("vitest", workflow, "web/out/vitest.json", BY_FILE_PASSING)).toEqual(POSTED_AS_UNIT_EVIDENCE);
+  });
+});
+
 const TWO_FITNESS_CLAIMS = "@ONE\nFeature: one\n\n  @fitness @CLM-ONE-001\n  Scenario: one\n\n  @fitness @CLM-ONE-002\n  Scenario: two\n";
 const TWO_JOBS = "jobs:\n  first:\n    steps:\n      - id: CLM-ONE-001\n        run: pnpm one\n  second:\n    steps:\n      - id: CLM-ONE-002\n        run: pnpm two\n";
 

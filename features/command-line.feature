@@ -215,6 +215,18 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads its inputs
       then the run will not stop
 
+    @unit
+    Scenario Outline: balance reads the evidence report a named runner's CI step writes, in that runner's format
+      given the run named <runner> as the unit runner
+      and a workflow had a step running <command>, in the working directory <working directory>
+      when balance reads its inputs
+      then it will read <report> as <format>
+
+      Examples:
+        | clm         | runner | command                                                 | working directory | report              | format                   |
+        | CLM-CLI-214 | vitest | vitest run --reporter=json --outputFile=out/vitest.json | the target's      | out/vitest.json     | a Vitest evidence report |
+        | CLM-CLI-215 | vitest | vitest run --reporter=json --outputFile=out/vitest.json | web               | web/out/vitest.json | a Vitest evidence report |
+
   Rule: a command validates every input before it does its work
 
     The inputs a command validates are each evidence report, each step record, the feature corpus,
