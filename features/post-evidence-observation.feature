@@ -241,10 +241,11 @@ Feature: Evidence Observations are posted, each to its claim
       then an Evidence Observation will be posted, as <result>, citing CLM-ONE-001
 
       Examples:
-        | clm         | where           | value | result          |
-        | CLM-OBS-057 | that step       | true  | passed-on-error |
-        | CLM-OBS-058 | that step's job | true  | passed-on-error |
-        | CLM-OBS-160 | that step       | false | passed          |
+        | clm         | where                                                       | value | result          |
+        | CLM-OBS-057 | that step                                                   | true  | passed-on-error |
+        | CLM-OBS-058 | that step's job                                             | true  | passed-on-error |
+        | CLM-OBS-160 | that step                                                   | false | passed          |
+        | CLM-OBS-168 | a step in another job carrying the same id, that step's job | true  | passed-on-error |
 
     @unit
     Scenario Outline: balance posts a recorded step that no workflow has with the result its step record gives

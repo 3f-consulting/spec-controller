@@ -186,6 +186,18 @@ describe("balance posts a recorded success in a workflow as passed-on-error only
   it("[CLM-OBS-160] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step to false: it is posted as passed, citing CLM-ONE-001", () => {
     expect(postedWith(false, undefined)).toEqual([{ result: "passed", cites: [ONE_001] }]);
   });
+
+  it("[CLM-OBS-168] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on a step in another job carrying the same id, that step's job, to true: it is posted as passed-on-error, citing CLM-ONE-001", () => {
+    const steps = workflowOf({
+      build: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] },
+      experimental: { "continue-on-error": true, steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] },
+    });
+    const record = stepRecordFrom({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
+
+    expect(fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, record), record).map(({ result, cites }) => ({ result, cites }))).toEqual([
+      { result: "passed-on-error", cites: [ONE_001] },
+    ]);
+  });
 });
 
 describe("a recorded step no workflow has, and a step whose id is not a claim code", () => {
