@@ -1,7 +1,6 @@
 import { shownFromTarget } from "./targetPath.js";
 
-// An input the run was given or took by default, with no path when it was absent. Its path is as read until the provenance
-// shows it relative to the target's folder.
+// An input the run was given or took by default, with no path when it was absent.
 export interface ProvenanceInput {
   readonly name: string;
   readonly path?: string;
