@@ -452,15 +452,23 @@ jobs:
             work=$(mktemp -d "$RUNNER_TEMP/fit-085.XXXXXX")
             repo="$work/repo"
             git init -q "$repo"
-            printf '# Changelog\n\n## 0.1.300 — 2026-11-01 — An earlier increment\n\n- An earlier change.\n' > "$repo/CHANGELOG.md"
+            printf '## 0.1.300 — 2026-11-01 — An earlier increment\n\n- An earlier change.\n' > "$repo/CHANGELOG.md"
             git -C "$repo" add CHANGELOG.md
             git -C "$repo" -c user.name=ci -c user.email=ci@localhost commit -q -m before
-            printf '# Changelog\n\n## %s — 2026-11-19 — An increment\n\n- A change.\n\n## 0.1.300 — 2026-11-01 — An earlier increment\n\n- An earlier change.\n' "$named" > "$repo/CHANGELOG.md"
+            { printf '## %s — 2026-11-19 — An increment\n\n- A change.\n\n' "$named"; git -C "$repo" show HEAD:CHANGELOG.md; } > "$work/after.md"
+            mv "$work/after.md" "$repo/CHANGELOG.md"
             git -C "$repo" -c user.name=ci -c user.email=ci@localhost commit -q -a -m after
             : > "$work/output"
             code=0
             (cd "$repo" && VERSION=0.1.400 PREVIOUS="" PREFIX=0.1. HEAD_SHA="$(git rev-parse HEAD)" GITHUB_OUTPUT="$work/output" RUNNER_TEMP="$work" "$SCRIPT") > "$work/log" 2>&1 || code=$?
-            if [ "$code" -eq 0 ] && grep -qx 'dist-tag=latest' "$work/output"; then got=released; else got=refused; fi
+            # Refused means the run failed on the version comparison itself and chose no dist-tag, so nothing publishes.
+            if [ "$code" -eq 0 ] && grep -qx 'dist-tag=latest' "$work/output"; then
+              got=released
+            elif [ "$code" -ne 0 ] && ! grep -q '^dist-tag=' "$work/output" && grep -qF "the version heading names $named, but this merge publishes 0.1.400" "$work/log"; then
+              got=refused
+            else
+              got="neither released nor refused on the version"
+            fi
             echo "The heading naming $named, with 0.1.400 to publish: exit $code, $got ($expected expected)"
             sed 's/^/  /' "$work/log"
             if [ "$got" != "$expected" ]; then held=1; fi
