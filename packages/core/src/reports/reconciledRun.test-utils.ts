@@ -30,14 +30,15 @@ const unitTestOf = ([result, code]: readonly [Result, string?]): EvidenceObserva
 export function reconciled({ scenarios, unitTests, configurationErrors = [], stepsRead = false, provenance = {} }: RunHas): EvidenceReconciliation {
   const source = `@ONE\nFeature: one\n${scenarios.map((tags, at) => `\n  ${tags}\n  Scenario: scenario ${at}\n    Given a step\n`).join("")}`;
   const features = scenarios.length === 0 ? [] : [featureAsWrittenFrom("one.feature", source)];
-  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), unitTests.map(unitTestOf));
+  const claimReading = { deferralTags: [], strict: false };
+  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, claimReading), unitTests.map(unitTestOf));
   const step = { workflow: "ci.yml", job: "build", plumbing: false, writesStepRecord: false, command: "pnpm lint", identity: "pnpm lint" };
   return evidenceReconciliationOf({
     claimReconciliations,
     claimCodeErrors: claimCodeErrorsOf(features),
     configurationErrors,
     features,
-    deferredScenarios: 0,
+    claimReading,
     stepAccount: stepAccountOf(stepsRead ? [{ step, disposition: "fitnessFunction" }] : []),
     provenance: { ...PROVENANCE, ...provenance },
   });
@@ -65,6 +66,7 @@ export function reconciledFrom(files: readonly FileHas[], evidence: readonly Evi
 // A run of the feature files given as written, and the configuration errors and evidence given.
 export function reconciledFromSources(sources: readonly (readonly [string, string])[], configurationErrors: readonly ConfigurationError[] = [], evidence: readonly EvidenceHas[] = []): EvidenceReconciliation {
   const features = sources.map(([file, source]) => featureAsWrittenFrom(file, source));
-  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), evidence.map(evidenceOf));
-  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: claimCodeErrorsOf(features), configurationErrors, features, deferredScenarios: 0, stepAccount: stepAccountOf([]), provenance: PROVENANCE });
+  const claimReading = { deferralTags: [], strict: false };
+  const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, claimReading), evidence.map(evidenceOf));
+  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: claimCodeErrorsOf(features), configurationErrors, features, claimReading, stepAccount: stepAccountOf([]), provenance: PROVENANCE });
 }

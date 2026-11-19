@@ -1,7 +1,7 @@
 import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, isExecutable, type ClaimReconciliation, type CreditJournal, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
 import { targetConfigurationOf, type ConfigurationError, type ConfigurationSettings, type TargetConfiguration } from "./configuration.js";
-import { deferredScenariosOf, executableClaimsOf, QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
+import { deferredScenariosOf, executableClaimsOf, QUALITY_CHECK_KINDS, type ClaimReadingSettings, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import {
   disposedStepsOf,
   fitnessObservationsOf,
@@ -220,21 +220,21 @@ export interface RunReconciled {
   readonly claimCodeErrors: readonly ClaimCodeError[];
   readonly configurationErrors: readonly ConfigurationError[];
   readonly features: readonly FeatureFile[];
-  // The scenarios a deferral tag set aside, which raise no claim.
-  readonly deferredScenarios: number;
+  // How the claims were read from the features, so the scenarios a deferral tag set aside are counted by the same reading.
+  readonly claimReading: ClaimReadingSettings;
   readonly stepAccount: StepAccount;
   readonly provenance: Provenance;
 }
 
 // The Evidence Reconciliation assembled from its parts: every part is present, empty when the run had nothing for it.
-export function evidenceReconciliationOf({ claimReconciliations, claimCodeErrors, configurationErrors, features, deferredScenarios, stepAccount, provenance }: RunReconciled): EvidenceReconciliation {
+export function evidenceReconciliationOf({ claimReconciliations, claimCodeErrors, configurationErrors, features, claimReading, stepAccount, provenance }: RunReconciled): EvidenceReconciliation {
   const neverRan = claimReconciliations.flatMap(({ qualityCheckReconciliations }) =>
     qualityCheckReconciliations.flatMap((reconciliation) => (reconciliation.outcome === "never-ran" ? [reconciliation.observation] : [])),
   );
   return {
     claimReconciliations,
     runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors),
-    totals: totalsOf(claimReconciliations, features, deferredScenarios),
+    totals: totalsOf(claimReconciliations, features, deferredScenariosOf(features, claimReading)),
     stepAccount,
     provenance,
     errorsInTheInputs: { claimCodeErrors, configurationErrors },
@@ -298,7 +298,7 @@ export function reconcile(given: ReadersGave): EvidenceReconciliation {
     claimCodeErrors: claimCodeErrorsOf(features),
     configurationErrors: errors,
     features,
-    deferredScenarios: deferredScenariosOf(features, claimReading),
+    claimReading,
     stepAccount: stepAccountOf(disposedSteps),
     provenance: provenanceOf(identity, provenanceInputs, targetFolder, repositoryOf),
   });
