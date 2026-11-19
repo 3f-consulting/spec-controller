@@ -7,7 +7,7 @@
       "properties": {
         "schemaVersion": {
           "type": "number",
-          "const": 4
+          "const": 5
         },
         "claimReconciliations": {
           "type": "array",
@@ -744,6 +744,9 @@
           "items": {
             "$ref": "#/definitions/ProvenanceInput"
           }
+        },
+        "countedOnlyExecutableClaims": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -751,7 +754,8 @@
         "sourceSha",
         "toolVersion",
         "runTime",
-        "inputs"
+        "inputs",
+        "countedOnlyExecutableClaims"
       ],
       "additionalProperties": false
     },

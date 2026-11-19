@@ -248,7 +248,7 @@ export function evidenceReconciliationOf({
     runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors, countOnlyExecutableClaims),
     totals: totalsOf(claimReconciliations, features, deferredScenariosOf(features, claimReading)),
     stepAccount,
-    provenance,
+    provenance: { ...provenance, countedOnlyExecutableClaims: countOnlyExecutableClaims },
     errorsInTheInputs: { claimCodeErrors, configurationErrors },
     runIntegrity: { neverRan },
   };
