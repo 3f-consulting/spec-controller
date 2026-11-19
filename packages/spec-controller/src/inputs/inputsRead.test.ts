@@ -16,7 +16,8 @@ describe("an empty evidence report will count as no evidence, not as a broken fi
   it("[CLM-CLI-146] a Vitest evidence report listing nothing posts nothing, and the run does not stop", () => {
     const folder = temporaryDirectory("empty-report-");
     writeFileSync(join(folder, "vitest.json"), '{"testResults":[]}');
-    const { features, vitest, pathsRead } = read([{ kind: "vitest", path: "vitest.json", byDefault: false }], folder);
+    const { features, reports = [], pathsRead } = read([{ kind: "vitest", path: "vitest.json", byDefault: false }], folder);
+    const vitest = reports.filter(({ format }) => format.kind === "vitest").map(({ report, path, results }) => ({ report, path, results }));
 
     expect({ features, vitest, pathsRead }).toEqual({ features: [], vitest: [{ report: "vitest.json", path: "vitest.json", results: [] }], pathsRead: { vitest: ["vitest.json"] } });
   });
@@ -99,6 +100,6 @@ describe("an input that is not valid will stop the run", () => {
     writeFileSync(join(folder, "rspec.json"), '{"examples":[],"summary":{"errors_outside_of_examples_count":1},"messages":5}');
     const inputs = inputsReadFor([{ kind: "rspec", path: "rspec.json", byDefault: false }], folder);
 
-    expect("refusals" in inputs ? inputs.refusals.map(({ key, values: { path, detail } }) => ({ key, path, detail })) : inputs.rspec).toEqual([{ key: "input-not-in-its-shape", path: "rspec.json", detail: "$.messages" }]);
+    expect("refusals" in inputs ? inputs.refusals.map(({ key, values: { path, detail } }) => ({ key, path, detail })) : inputs.reports).toEqual([{ key: "input-not-in-its-shape", path: "rspec.json", detail: "$.messages" }]);
   });
 });

@@ -3,6 +3,7 @@ export type { CreditJournal, DebitJournal } from "./domain/claimReconciliation.j
 export type { FeatureFile } from "./domain/postEvidenceObligation.js";
 export type { DisposedStep, EvidenceObservation, RecordedStep, TestCitation, TestPlace, TestResult } from "./domain/postEvidenceObservation.js";
 export type { CiStep } from "./domain/workflowSteps.js";
+export type { EvidenceReportFormat, EvidenceReportKind } from "./inputs/evidenceReportFormats.js";
 export type { EvidenceReconciliation, RunVerdict, StepAccount } from "./domain/evidenceReconciliation.js";
 export type { JsonReport } from "./reports/json.js";
 export type { RunIdentity, ProvenanceInput } from "./domain/provenance.js";
@@ -16,6 +17,7 @@ export { targetFolderOf } from "./domain/targetPath.js";
 export { executableClaimsOf } from "./domain/postEvidenceObligation.js";
 export { provenanceOf } from "./domain/provenance.js";
 export { disposedStepsOf, fitnessObservationsOf, layersServing, observationsOfTestResults, stepDispositionOf } from "./domain/postEvidenceObservation.js";
+export { EVIDENCE_REPORT_FORMATS } from "./inputs/evidenceReportFormats.js";
 export { featureAsWrittenFrom } from "./inputs/gherkin.js";
 export { InputDoesNotParse } from "./inputs/inputDoesNotParse.js";
 export { scriptsFrom, targetConfigurationFrom, whereManifestBreaks } from "./inputs/manifest.js";

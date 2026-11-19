@@ -2,6 +2,7 @@ import {
   claimCodeErrorsOf,
   claimReconciliationsOf,
   disposedStepsOf,
+  EVIDENCE_REPORT_FORMATS,
   evidenceReconciliationOf,
   executableClaimsOf,
   fitnessObservationsOf,
@@ -49,18 +50,11 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
   return corpus === undefined ? undefined : resolve(folder, corpus.path);
 };
 
-// Every evidence report the run read, of each kind.
-const reportsOf = (read: InputsRead) => ({
-  vitest: read.vitest ?? NONE,
-  jest: read.jest ?? NONE,
-  pytest: read.pytest ?? NONE,
-  junit: read.junit ?? NONE,
-  rspec: read.rspec ?? NONE,
-  cucumber: read.cucumber ?? NONE,
-});
+// Every evidence report the run read: by format, in the formats' order, then in the order read.
+const reportsOf = ({ reports = NONE }: InputsRead) => EVIDENCE_REPORT_FORMATS.flatMap((format) => reports.filter((report) => report.format === format));
 
 // The file name of every evidence report the run read, a JUnit folder's files one by one.
-const reportsReadIn = (read: InputsRead): string[] => Object.values(reportsOf(read)).flatMap((reports) => reports.map(({ report }) => report));
+const reportsReadIn = (read: InputsRead): string[] => reportsOf(read).map(({ report }) => report);
 
 // The credit journal: each runner's results as Evidence Observations, beside the fitness functions' from the CI steps.
 function creditJournalOf(
@@ -70,16 +64,10 @@ function creditJournalOf(
   configuration: TargetConfiguration,
   targetFolder: string,
 ): CreditJournal {
-  const { vitest, jest, pytest, junit, rspec, cucumber } = reportsOf(read);
   // The layers a report serves, by its file name.
   const servedBy = ({ report }: { readonly report: string }): ReturnType<typeof layersServing> => layersServing(report, configuration.runners);
   return [
-    ...vitest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
-    ...jest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
-    ...pytest.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
-    ...junit.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
-    ...rspec.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each))),
-    ...cucumber.flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each), read.features)),
+    ...reportsOf(read).flatMap((each) => observationsOfTestResults(each.results, targetFolder, servedBy(each), each.format.needsFeatures ? read.features : NONE)),
     ...fitnessObservationsOf(disposedSteps, record),
   ];
 }

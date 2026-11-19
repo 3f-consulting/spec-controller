@@ -1,5 +1,7 @@
+import { EVIDENCE_REPORT_FORMATS } from "@3f-consulting/spec-controller-core";
+
 // Every input a run can read, in the order the provenance names them.
-export const INPUT_KINDS = ["features", "vitest", "jest", "pytest", "junit", "rspec", "cucumber", "workflows", "stepRecord", "manifest"] as const;
+export const INPUT_KINDS = ["features", ...EVIDENCE_REPORT_FORMATS.map(({ kind }) => kind), "workflows", "stepRecord", "manifest"] as const;
 
 export type InputKind = (typeof INPUT_KINDS)[number];
 
@@ -19,12 +21,7 @@ const HELP: Flag = { name: "help", short: "h" };
 
 const BALANCE_FLAGS: readonly Flag[] = [
   { name: "features", value: "<dir>", input: "features", byDefault: "features" },
-  { name: "vitest", value: "<report.json>", input: "vitest", repeats: true },
-  { name: "jest", value: "<report.json>", input: "jest", repeats: true },
-  { name: "pytest", value: "<report.xml>", input: "pytest", repeats: true },
-  { name: "junit", value: "<report.xml|dir>", input: "junit", repeats: true },
-  { name: "rspec", value: "<report.json>", input: "rspec", repeats: true },
-  { name: "cucumber", value: "<report.json>", input: "cucumber", repeats: true },
+  ...EVIDENCE_REPORT_FORMATS.map(({ kind, flagValue }): Flag => ({ name: kind, value: flagValue, input: kind, repeats: true })),
   { name: "ci", value: "<workflow.yml|dir>", input: "workflows", byDefault: ".github/workflows" },
   { name: "ci-steps", value: "<record.json>", input: "stepRecord", repeats: true },
   { name: "package-json", value: "<path>", input: "manifest", byDefault: "package.json" },

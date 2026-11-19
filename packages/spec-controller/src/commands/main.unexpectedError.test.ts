@@ -17,10 +17,16 @@ vi.mock("@3f-consulting/spec-controller-core", async (original) => {
       if (BREAKING.at === name) throw new Error(`a bug in ${name}`);
       return run(...args);
     };
+  const whereResultsByFileBreak = breakable("whereResultsByFileBreak", written.whereResultsByFileBreak);
+  const resultsByFileFrom = breakable("resultsByFileFrom", written.resultsByFileFrom);
   return {
     ...written,
-    whereResultsByFileBreak: breakable("whereResultsByFileBreak", written.whereResultsByFileBreak),
-    resultsByFileFrom: breakable("resultsByFileFrom", written.resultsByFileFrom),
+    whereResultsByFileBreak,
+    resultsByFileFrom,
+    // The app reaches a report's readers through its format's entry.
+    EVIDENCE_REPORT_FORMATS: written.EVIDENCE_REPORT_FORMATS.map((format) =>
+      format.resultsFrom === written.resultsByFileFrom ? { ...format, whereItBreaks: whereResultsByFileBreak, resultsFrom: resultsByFileFrom } : format,
+    ),
     featureAsWrittenFrom: breakable("featureAsWrittenFrom", written.featureAsWrittenFrom),
     workflowStepsFrom: breakable("workflowStepsFrom", written.workflowStepsFrom),
     featureCodeOfFile: breakable("featureCodeOfFile", written.featureCodeOfFile),
