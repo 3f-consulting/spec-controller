@@ -168,7 +168,7 @@ describe("balance posts a fitness function's step from each step record that nam
   });
 });
 
-describe("balance posts a recorded success in a workflow as passed-on-error only when its step or its job sets continue-on-error to anything but false", () => {
+describe("balance posts a recorded success in a workflow as passed-on-error only when a step carrying its id, or that step's job, sets continue-on-error to anything but false", () => {
   const postedWith = (onStep: unknown, onJob: unknown) => {
     const steps = workflowOf({ ci: { "continue-on-error": onJob, steps: [{ id: "CLM-ONE-001", run: "pnpm lint", "continue-on-error": onStep }] } });
     const record = stepRecordFrom({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
@@ -187,7 +187,7 @@ describe("balance posts a recorded success in a workflow as passed-on-error only
     expect(postedWith(false, undefined)).toEqual([{ result: "passed", cites: [ONE_001] }]);
   });
 
-  it("[CLM-OBS-168] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on a step in another job carrying the same id, that step's job, to true: it is posted as passed-on-error, citing CLM-ONE-001", () => {
+  it("[CLM-OBS-168] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on the job of a step in another job carrying the same id to true: it is posted as passed-on-error, citing CLM-ONE-001", () => {
     const steps = workflowOf({
       build: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] },
       experimental: { "continue-on-error": true, steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] },

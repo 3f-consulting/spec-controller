@@ -234,18 +234,18 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-167 | one in which CLM-ONE-001 succeeded, and one in which it failed   | two fitness Evidence Observations will be posted, one passed and one failed |
 
     @unit
-    Scenario Outline: balance posts a recorded success in a workflow as passed-on-error only when its step or its job sets continue-on-error to anything but false
+    Scenario Outline: balance posts a recorded success in a workflow as passed-on-error only when a step carrying its id, or that step's job, sets continue-on-error to anything but false
       given the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded
       and ci.yml set continue-on-error on <where> to <value>
       when balance posts the evidence
       then an Evidence Observation will be posted, as <result>, citing CLM-ONE-001
 
       Examples:
-        | clm         | where                                                       | value | result          |
-        | CLM-OBS-057 | that step                                                   | true  | passed-on-error |
-        | CLM-OBS-058 | that step's job                                             | true  | passed-on-error |
-        | CLM-OBS-160 | that step                                                   | false | passed          |
-        | CLM-OBS-168 | a step in another job carrying the same id, that step's job | true  | passed-on-error |
+        | clm         | where                                                 | value | result          |
+        | CLM-OBS-057 | that step                                             | true  | passed-on-error |
+        | CLM-OBS-058 | that step's job                                       | true  | passed-on-error |
+        | CLM-OBS-160 | that step                                             | false | passed          |
+        | CLM-OBS-168 | the job of a step in another job carrying the same id | true  | passed-on-error |
 
     @unit
     Scenario Outline: balance posts a recorded step that no workflow has with the result its step record gives
