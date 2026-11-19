@@ -233,6 +233,17 @@ describe("balance reads no evidence report for a runner whose report it cannot f
   });
 });
 
+describe("balance reads the evidence report a named runner's CI step writes, in that runner's format", () => {
+  it.each([
+    ["out/vitest.json", "web/out/vitest.json"],
+    ["/work/out/vitest.json", "/work/out/vitest.json"],
+  ])("[CLM-CLI-215] a run named vitest, where a step in the working directory web wrote %s, locates its report at %s", (written, located) => {
+    const steps = workflowStepsFrom("ci.yml", `jobs:\n  ci:\n    steps:\n      - run: vitest run --reporter=json --outputFile=${written}\n        working-directory: web\n`);
+    const { runners } = reportsLocatedOf(configurationSettingsNamed({ runners: { unit: ["vitest"] }, nonChecks: [], deferralTags: [] }), steps, {}, shellAnswers.reportsNamed);
+    expect(runners).toEqual([{ taken: ["unit", { name: "vitest", report: { path: located, format: "vitest" } }] }]);
+  });
+});
+
 describe("the run will still reach its run verdict, using the configuration settings it could use", () => {
   it("[CLM-CFG-017] a run named --unit vitest:vitest and --integration cucumber-js reaches its run verdict, cucumber-js running the integration layer", () => {
     const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: cucumber-js\n");

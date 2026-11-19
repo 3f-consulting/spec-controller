@@ -38,9 +38,9 @@ const failureAllowedOf = (value: unknown): FailureAllowed | undefined =>
 const identityOf = (name: string | undefined, action: string | undefined, command: string | undefined): string =>
   name ?? action ?? command!.split("\n").map((line) => line.trim()).find((line) => line !== "") ?? "";
 
-// The variables a step sets, each value as the run reads it: a bare number or true is read as its text.
+// The variables a step sets to text: one set to nothing, or to an empty string, is not set.
 const environmentOf = (env: unknown): Readonly<Record<string, string>> | undefined =>
-  isRecord(env) ? Object.fromEntries(Object.entries(env).flatMap(([name, value]) => (value !== null && typeof value !== "object" ? [[name, String(value)]] : []))) : undefined;
+  isRecord(env) ? Object.fromEntries(Object.entries(env).filter((entry): entry is [string, string] => text(entry[1]) !== undefined && entry[1] !== "")) : undefined;
 
 // The folder a job's steps run in unless a step names its own.
 const jobWorkingDirectoryOf = (definition: Mapping): string | undefined => {

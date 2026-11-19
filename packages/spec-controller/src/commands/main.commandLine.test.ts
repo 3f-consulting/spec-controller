@@ -1,4 +1,4 @@
-import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { textFor } from "@3f-consulting/spec-controller-core";
 import { describe, expect, it } from "vitest";
@@ -238,7 +238,7 @@ const ONE_E2E_ROW = "@ONE\nFeature: one\n\n  @e2e\n  Scenario Outline: one <n>\n
 const ROW_PASSING =
   '[{"uri":"features/one.feature","name":"one","elements":[{"keyword":"Scenario Outline","name":"one 1","type":"scenario","line":10,"tags":[{"name":"@e2e"}],"steps":[{"keyword":"Given ","name":"one 1","result":{"status":"passed"}}]}]}]';
 const JUNIT_FAILING_TWO = '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="two" tests="1" errors="0" skipped="0" failures="1">\n  <testcase name="[CLM-ONE-001] two" classname="two" time="0.001"><failure/></testcase>\n</testsuite>\n';
-const WRITES_ANOTHER_PATH = "jobs:\n  e2e:\n    steps:\n      - run: npx playwright test --reporter=junit --output out/other.xml\n";
+const WRITES_ANOTHER_PATH = "jobs:\n  e2e:\n    steps:\n      - run: npx playwright test --reporter=junit\n        env:\n          PLAYWRIGHT_JUNIT_OUTPUT_FILE: out/other.xml\n";
 
 describe("balance reads the evidence report the run names for a runner, at that path, as that runner's layer's evidence", () => {
   it.each([
@@ -286,33 +286,61 @@ describe("an evidence report the run names for a runner, with no file at its pat
 });
 
 const ONE_UNIT_CLAIM = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n";
-const STEP_WRITING_VITEST = "vitest run --reporter=json --outputFile=out/vitest.json";
+// A JUnit evidence report whose one result cites a claim no feature file holds.
+const JUNIT_CITING_NONE = '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="none" tests="1" errors="0" skipped="0" failures="0">\n  <testcase name="[CLM-ONE-009] none" classname="none" time="0.001"/>\n</testsuite>\n';
 
-// The report at its path read in its runner's format, its one result posted as unit evidence.
-function postedFromTheStep(runner: string, workflow: string, path: string, report: string): { readonly error: string; readonly posted: unknown } {
-  const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "workflows/ci.yml": workflow, [path]: report });
-
-  const { output, error } = ran(["balance", "--unit", runner, "--ci", "workflows", "--format", "json"], folder);
-
-  const { claimReconciliations } = (output === "" ? { claimReconciliations: [] } : JSON.parse(output)) as ResultsByLayerReported;
-  return { error, posted: claimReconciliations.map(({ claim, qualityCheckReconciliations }) => [claim.claimCode?.number, qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [[observation.kind, observation.result]] : []))]) };
+interface ProvenanceReported {
+  readonly provenance: { readonly inputs: readonly { readonly path?: string }[] };
 }
 
-const POSTED_AS_UNIT_EVIDENCE = { error: "", posted: [["001", [["unit", "passed"]]]] };
+const STEP_WRITING_VITEST = "vitest run --reporter=json --outputFile=out/vitest.json";
+
+// The report at its path read in its runner's format: its one result posted as unit evidence for the feature file's one
+// claim, and its path in the provenance.
+function readFromTheStep(runner: string, workflow: string, path: string, args: readonly string[], report: string) {
+  const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "workflows/ci.yml": workflow, [path]: report, "out/e2e.xml": JUNIT_CITING_NONE });
+
+  const { output, error } = ran(["balance", "--unit", runner, "--ci", "workflows", ...args, "--format", "json"], folder);
+
+  const { claimReconciliations, provenance } = (output === "" ? { claimReconciliations: [], provenance: { inputs: [] } } : JSON.parse(output)) as ResultsByLayerReported & ProvenanceReported;
+  return {
+    error,
+    posted: claimReconciliations
+      .filter(({ claim }) => claim.claimCode?.number === "001")
+      .map(({ claim, qualityCheckReconciliations }) => [claim.claimCode?.number, qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [[observation.kind, observation.result]] : []))]),
+    provenance: provenance.inputs.some((input) => input.path?.endsWith(path) === true),
+  };
+}
+
+const READ_AS_UNIT_EVIDENCE = { error: "", posted: [["001", [["unit", "passed"]]]], provenance: true };
+const PLAYWRIGHT_STEP = "jobs:\n  ci:\n    steps:\n      - run: npx playwright test --reporter=junit\n        env:\n";
 
 describe("balance reads the evidence report a named runner's CI step writes, in that runner's format", () => {
   it.each([
-    ["vitest", `jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`, "out/vitest.json", BY_FILE_PASSING],
-    ["playwright", "jobs:\n  ci:\n    steps:\n      - run: npx playwright test --reporter=junit\n        env:\n          PLAYWRIGHT_JUNIT_OUTPUT_FILE: out/playwright.xml\n", "out/playwright.xml", JUNIT_PASSING],
-  ] as const)("[CLM-CLI-214] --unit %s, a workflow step writing %j in the target's folder: the report at %s is read in its runner's format", (runner, workflow, path, report) => {
-    expect(postedFromTheStep(runner, workflow, path, report)).toEqual(POSTED_AS_UNIT_EVIDENCE);
+    ["vitest", `jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`, "out/vitest.json", [], BY_FILE_PASSING],
+    ["vitest", `jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`, "out/vitest.json", ["--e2e", "playwright:junit:out/e2e.xml"], BY_FILE_PASSING],
+    ["playwright", `${PLAYWRIGHT_STEP}          PLAYWRIGHT_JUNIT_OUTPUT_FILE: out/playwright.xml\n`, "out/playwright.xml", [], JUNIT_PASSING],
+    ["playwright", `${PLAYWRIGHT_STEP}          PLAYWRIGHT_JUNIT_OUTPUT_FILE:\n          PLAYWRIGHT_JUNIT_OUTPUT_NAME: out/playwright.xml\n`, "out/playwright.xml", [], JUNIT_PASSING],
+    ["playwright", `${PLAYWRIGHT_STEP}          PLAYWRIGHT_JUNIT_OUTPUT_FILE: ""\n          PLAYWRIGHT_JUNIT_OUTPUT_NAME: out/playwright.xml\n`, "out/playwright.xml", [], JUNIT_PASSING],
+  ] as const)("[CLM-CLI-214] --unit %s, a workflow step writing %j in the target's folder: the report at %s is read in its runner's format, beside %j", (runner, workflow, path, args, report) => {
+    expect(readFromTheStep(runner, workflow, path, args, report)).toEqual(READ_AS_UNIT_EVIDENCE);
   });
 
   it.each([
     ["the step's", `jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n        working-directory: web\n`],
     ["its job's", `jobs:\n  ci:\n    defaults:\n      run:\n        working-directory: web\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`],
   ] as const)("[CLM-CLI-215] --unit vitest, a workflow step writing out/vitest.json with web as %s working directory: the report at web/out/vitest.json is read in Vitest's format", (_set, workflow) => {
-    expect(postedFromTheStep("vitest", workflow, "web/out/vitest.json", BY_FILE_PASSING)).toEqual(POSTED_AS_UNIT_EVIDENCE);
+    expect(readFromTheStep("vitest", workflow, "web/out/vitest.json", [], BY_FILE_PASSING)).toEqual(READ_AS_UNIT_EVIDENCE);
+  });
+});
+
+describe("the run refuses to write a report over a file it reads", () => {
+  it("[CLM-FMT-013] --format json:out/vitest.json, where a step writes Vitest's report to out/vitest.json: the run stops with exit 2, and the report is as it was", () => {
+    const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "workflows/ci.yml": `jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`, "out/vitest.json": BY_FILE_PASSING });
+
+    const { exitCode } = ran(["balance", "--unit", "vitest", "--ci", "workflows", "--format", `json:${join(folder, "out/vitest.json")}`], folder);
+
+    expect({ exitCode, report: readFileSync(join(folder, "out/vitest.json"), "utf8") }).toEqual({ exitCode: 2, report: BY_FILE_PASSING });
   });
 });
 
@@ -362,6 +390,13 @@ describe("an input that is not valid will stop the run", () => {
     ["CLM-CLI-160", "a named path that is not the kind of path its flag reads", { "one.feature": "@ONE\nFeature: one\n" }, ["--features", "one.feature"], ["{input-features} one.feature is not {path-folder}", "[input-wrong-kind-of-path]"]],
     ["CLM-CLI-160", "a folder named as the Vitest evidence report", { "vitest/a.json": VITEST_SHAPED }, ["--unit", "vitest:vitest:vitest"], ["{input-vitest} vitest is not {path-file}", "[input-wrong-kind-of-path]"]],
     ["CLM-CLI-148", "a JSON evidence report that does not parse", { "vitest.json": "{" }, ["--unit", "vitest:vitest:vitest.json"], ["vitest.json", "JSON", "[input-does-not-parse]"]],
+    [
+      "CLM-CLI-148",
+      "a JSON evidence report a step writes that does not parse",
+      { "out/vitest.json": "{", "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: vitest run --reporter=json --outputFile=out/vitest.json\n" },
+      ["--unit", "vitest", "--ci", "workflows"],
+      ["out/vitest.json", "JSON", "[input-does-not-parse]"],
+    ],
     ["CLM-CLI-186", "a JUnit evidence report that does not parse", { "junit.xml": "<testsuite" }, ["--unit", "junit:junit:junit.xml"], ["junit.xml", "JUnit evidence report", "[input-does-not-parse]"]],
     [
       "CLM-CLI-186",

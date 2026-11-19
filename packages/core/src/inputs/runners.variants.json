@@ -6,10 +6,18 @@
       { "runner": "vitest", "options": "--reporter=json --outputFile.json=<path>", "format": "vitest" },
       { "runner": "jest", "options": "--json --outputFile=<path>", "format": "jest" },
       { "runner": "pytest", "options": "--junitxml=<path>", "format": "pytest" },
+      { "runner": "pytest", "options": "--junit-xml=<path>", "format": "pytest" },
       { "runner": "cucumber-js", "options": "--format json:<path>", "format": "cucumber" },
+      { "runner": "cucumber-js", "options": "-f json:<path>", "format": "cucumber" },
       { "runner": "rspec", "options": "--format json --out <path>", "format": "rspec", "applies-to": "--format" },
-      { "runner": "playwright", "options": "--reporter=junit", "environment": "PLAYWRIGHT_JUNIT_OUTPUT_FILE", "format": "junit" },
-      { "runner": "gotestsum", "options": "--junitfile <path>", "format": "junit" }
+      {
+        "runner": "playwright",
+        "options": "--reporter=junit",
+        "environment": ["PLAYWRIGHT_JUNIT_OUTPUT_FILE", "PLAYWRIGHT_JUNIT_OUTPUT_DIR/PLAYWRIGHT_JUNIT_OUTPUT_NAME", "PLAYWRIGHT_JUNIT_OUTPUT_NAME"],
+        "format": "junit"
+      },
+      { "runner": "gotestsum", "options": "--junitfile <path>", "format": "junit" },
+      { "runner": "gotestsum", "options": "", "environment": ["GOTESTSUM_JUNITFILE"], "format": "junit" }
     ]
   }
 }

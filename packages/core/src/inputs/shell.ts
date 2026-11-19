@@ -52,23 +52,22 @@ function handedOn(words: readonly string[]): readonly string[] | undefined {
   return words.slice(at + wrapper.length - 1);
 }
 
-// The arguments of each time the words run the program: after the program's own words, through launchers, wrappers and the target's scripts.
+// The words of each time the words run the program, from the program's own, through launchers, wrappers and the target's scripts.
 function invocationsIn(words: readonly string[], program: readonly string[], scripts: Scripts, followed: Set<string>): (readonly string[])[] {
-  if (opensWith(words, program)) return [words.slice(program.length)];
+  if (opensWith(words, program)) return [words];
   const run = scriptRun(words, scripts);
   if (run !== undefined && !followed.has(run.script)) {
     followed.add(run.script);
-    return invocationsThrough(scripts[run.script]!, program, scripts, followed, run.after);
+    return invocationsThrough([scripts[run.script]!, ...run.after].join(" "), program, scripts, followed);
   }
   const rest = handedOn(words);
   return rest === undefined ? [] : invocationsIn(rest, program, scripts, followed);
 }
 
-function invocationsThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: Set<string>, after: readonly string[] = []): (readonly string[])[] {
-  const pipelines = pipelinesOf(parse(commandLine).commands);
-  return pipelines.flatMap((stages, at) => {
+function invocationsThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: Set<string>): (readonly string[])[] {
+  return pipelinesOf(parse(commandLine).commands).flatMap((stages) => {
     const last = stages.at(-1);
-    return isCommand(last) ? invocationsIn([...wordsOf(last), ...(at === pipelines.length - 1 ? after : [])], program, scripts, followed) : [];
+    return isCommand(last) ? invocationsIn(wordsOf(last), program, scripts, followed) : [];
   });
 }
 
