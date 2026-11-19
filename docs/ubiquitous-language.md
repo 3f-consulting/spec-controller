@@ -114,7 +114,7 @@ Correctness is the agreement of two independent records. The debit side is the `
 | Term | Meaning |
 |---|---|
 | pipeline step | A step of a CI job, as the pipeline declares it: it runs a command or uses an action. |
-| action | The published action a `pipeline step` uses, named by its repository and version, such as `actions/checkout@v4`. |
+| action | The action a `pipeline step` uses, as the workflow names it: a published one by its repository and version, such as `actions/checkout@v4`, one kept in the repository, such as `./.github/actions/setup`, or a Docker image, such as `docker://alpine:3`. |
 | command | The shell lines a `pipeline step` runs. |
 | non-check | A step the target names under `specController.notChecks`, unless it is a reconciler step. The `step account` counts it under *Non-checks* (`nonChecks` in the JSON). Double-check: *Excluded* has been seen standing in for it, and means a non-check only where it is used in this sense. |
 | plumbing step | A step that only sets up the job: it checks out the source, caches, sets up a toolchain, or moves artefacts between jobs. It is neither a check nor a runner. The CI workflow's reader says which steps are plumbing. The `step account` counts them under *Plumbing* (`plumbing` in the JSON). A plumbing step that the manifest also names as a non-check is a non-check, and is counted with the non-checks. |

@@ -45,7 +45,7 @@ export interface TestResult {
   readonly cites: TestCitation;
 }
 
-// A step the CI run recorded, keyed by the step's id, with how it went before continue-on-error turns a failure into success.
+// A step the CI run recorded, keyed by the step's id, with how it went before a step that allows failure has its failure read as success.
 export interface RecordedStep {
   readonly key: string;
   readonly result: Extract<Result, "passed" | "failed" | "never-ran">;
@@ -182,8 +182,8 @@ function observationOf(step: CiStep, steps: readonly CiStep[], entry: RecordedSt
   };
 }
 
-// A recorded entry no step carries is posted as its record says, at its id. Without the step, continue-on-error cannot be
-// read, so a success may have hidden a failure: it fails closed, as passed-on-error.
+// A recorded entry no step carries is posted as its record says, at its id. Without the step, whether it allows failure cannot
+// be read, so a success may have hidden a failure: it fails closed, as passed-on-error.
 const unheldObservationOf = ({ key, result }: RecordedStep): EvidenceObservation => {
   const claimCode = claimCodeFrom(key);
   return { cites: claimCode === undefined ? [] : [claimCode], result: result === "passed" ? "passed-on-error" : result, kind: "fitness", place: key };
