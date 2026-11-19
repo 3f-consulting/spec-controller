@@ -22,8 +22,7 @@ const UNREADABLE = /(?:error: failed to stat '(.+)'|warning: could not open dire
 
 const codesOf = (featureCode: string): string => `CLM-${featureCode}-[0-9]`;
 
-// Every line that may write one of the feature code's codes: a repository's tracked and new files, else the feature
-// files in the features folder, named from the top.
+// Every line that may write one of the feature code's codes: a repository's tracked and new files, else the features folder's.
 export function treeLines({ in: where, top }: Standing, featureCode: string, features: string): Read<ClaimCodeOccurrence[]> {
   const among = where === "repository" ? ["--untracked", "-E", codesOf(featureCode)] : ["--no-index", "-E", codesOf(featureCode), "--", join(features, "*.feature")];
   const { status, stdout, stderr } = gitIn(top, ["grep", "-n", "-z", "-I", ...among]);
