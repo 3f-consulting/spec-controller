@@ -1,5 +1,5 @@
 import { parse } from "yaml";
-import type { CiStep, ContinueOnError } from "../domain/workflowSteps.js";
+import type { CiStep, FailureAllowed } from "../domain/workflowSteps.js";
 import { coreText } from "../messages/catalogue.js";
 import { InputDoesNotParse, parsedBy } from "./inputDoesNotParse.js";
 import { isRecord } from "./shape.js";
@@ -31,21 +31,28 @@ const writesStepRecord = (step: Mapping): boolean =>
   workflowsVariants["step-record-writers"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
 
 // continue-on-error as the domain reads it: true or false as written, and anything else an expression the run decides.
-const continueOnErrorOf = (value: unknown): ContinueOnError | undefined =>
+const failureAllowedOf = (value: unknown): FailureAllowed | undefined =>
   value === undefined || typeof value === "boolean" ? value : "decided-by-the-run";
 
-function ciStepOf(workflow: string, job: string, jobContinueOnError: ContinueOnError | undefined, step: Mapping): CiStep {
-  const uses = text(step["uses"]);
+// A step is known by its name, else the action it uses, else the first line of its command: a step with no action has one.
+const identityOf = (name: string | undefined, action: string | undefined, command: string | undefined): string =>
+  name ?? action ?? command!.split("\n").map((line) => line.trim()).find((line) => line !== "") ?? "";
+
+function ciStepOf(workflow: string, job: string, jobAllowsFailure: FailureAllowed | undefined, step: Mapping): CiStep {
+  const name = nameText(step["name"]);
+  const action = text(step["uses"]);
+  const command = text(step["run"]);
   return {
     workflow,
     job,
-    jobContinueOnError,
-    name: nameText(step["name"]),
-    uses,
-    run: text(step["run"]),
+    jobAllowsFailure,
+    name,
+    action,
+    command,
     id: text(step["id"]),
-    continueOnError: continueOnErrorOf(step["continue-on-error"]),
-    plumbing: uses !== undefined && isPlumbing(uses),
+    allowsFailure: failureAllowedOf(step["continue-on-error"]),
+    identity: identityOf(name, action, command),
+    plumbing: action !== undefined && isPlumbing(action),
     writesStepRecord: writesStepRecord(step),
   };
 }
@@ -60,7 +67,7 @@ export function workflowStepsFrom(workflow: string, source: string): CiStep[] {
       if (!isRecord(step) || (text(step["uses"]) === undefined && text(step["run"]) === undefined)) {
         throw new InputDoesNotParse(coreText("step-names-neither-action-nor-command", { place: `jobs.${job}.steps[${at}]` }));
       }
-      return ciStepOf(workflow, job, continueOnErrorOf(definition["continue-on-error"]), step);
+      return ciStepOf(workflow, job, failureAllowedOf(definition["continue-on-error"]), step);
     });
   });
 }

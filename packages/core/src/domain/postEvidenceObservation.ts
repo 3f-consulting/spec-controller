@@ -2,7 +2,7 @@ import { claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCode
 import { reportsOf, runnerNameOf, type TargetConfiguration } from "./configuration.js";
 import { QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
-import { stepIdentityOf, type CiStep, type ContinueOnError } from "./workflowSteps.js";
+import type { CiStep, FailureAllowed } from "./workflowSteps.js";
 
 // not-recorded is a step a workflow has that no step record names: balance has no word on how it went.
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran" | "not-recorded";
@@ -45,7 +45,7 @@ export interface TestResult {
   readonly cites: TestCitation;
 }
 
-// A step the CI run recorded, keyed by the step's id, with how it went before continue-on-error turns a failure into success.
+// A step the CI run recorded, keyed by the step's id, with how it went before a step that allows failure has its failure read as success.
 export interface RecordedStep {
   readonly key: string;
   readonly result: Extract<Result, "passed" | "failed" | "never-ran">;
@@ -135,13 +135,13 @@ export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" 
 export type DisposedStep = { readonly step: CiStep; readonly disposition: StepDisposition };
 
 const isNamedIn = (step: CiStep, { nonChecks }: TargetConfiguration): boolean =>
-  nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === stepIdentityOf(step));
+  nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === step.identity);
 
 // The reconciler is recognised in any command of the step, a runner only as the command the step runs, through its scripts.
-const runsARunner = (run: string, { runners }: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): boolean =>
+const runsARunner = (command: string, { runners }: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): boolean =>
   Object.values(runners).some((runner) => {
     const name = runnerNameOf(runner);
-    return name !== undefined && shell.invokesAsCommand(run, name, scripts);
+    return name !== undefined && shell.invokesAsCommand(command, name, scripts);
   });
 
 export type Scripts = Readonly<Record<string, string>>;
@@ -154,21 +154,21 @@ export function stepDispositionOf(
   shell: ShellAnswers,
   record: readonly RecordedStep[] = [],
 ): StepDisposition {
-  if (step.writesStepRecord || (step.run !== undefined && shell.invokesTheReconciler(step.run))) return "reconciler";
+  if (step.writesStepRecord || (step.command !== undefined && shell.invokesTheReconciler(step.command))) return "reconciler";
   if (isNamedIn(step, configuration)) return "nonCheck";
   if (step.plumbing) return "plumbing";
-  if (step.run !== undefined && runsARunner(step.run, configuration, scripts, shell)) {
+  if (step.command !== undefined && runsARunner(step.command, configuration, scripts, shell)) {
     return claimCodeFrom(step.id) !== undefined && record.some(({ key }) => key === step.id) ? "fitnessFunction" : "runner";
   }
   return "fitnessFunction";
 }
 
-// continue-on-error allows failure when it is set to anything but false: an expression is decided by the run, so it may allow it.
-const allows = (continueOnError: ContinueOnError | undefined): boolean => continueOnError !== undefined && continueOnError !== false;
+// A step or its job allows failure when set to anything but false: one decided by the run may allow it.
+const allows = (failureAllowed: FailureAllowed | undefined): boolean => failureAllowed !== undefined && failureAllowed !== false;
 
-const allowsFailure = ({ continueOnError, jobContinueOnError }: CiStep): boolean => allows(continueOnError) || allows(jobContinueOnError);
+const failureAllowedFor = ({ allowsFailure, jobAllowsFailure }: CiStep): boolean => allows(allowsFailure) || allows(jobAllowsFailure);
 
-const placeOf = (step: CiStep): string => `${step.workflow}:${step.job}:${stepIdentityOf(step)}`;
+const placeOf = (step: CiStep): string => `${step.workflow}:${step.job}:${step.identity}`;
 
 function observationOf(step: CiStep, steps: readonly CiStep[], entry: RecordedStep | undefined): EvidenceObservation {
   const claimCode = claimCodeFrom(step.id);
@@ -176,14 +176,14 @@ function observationOf(step: CiStep, steps: readonly CiStep[], entry: RecordedSt
   const jobsRecorded = new Set(steps.filter(({ id }) => entry !== undefined && id === entry.key).map(({ workflow, job }) => `${workflow}:${job}`));
   return {
     cites: claimCode === undefined || result === "not-recorded" ? [] : [claimCode],
-    result: result === "passed" && allowsFailure(step) ? "passed-on-error" : result,
+    result: result === "passed" && failureAllowedFor(step) ? "passed-on-error" : result,
     kind: "fitness",
     place: jobsRecorded.size > 1 ? entry!.key : placeOf(step)
   };
 }
 
-// A recorded entry no step carries is posted as its record says, at its id. Without the step, continue-on-error cannot be
-// read, so a success may have hidden a failure: it fails closed, as passed-on-error.
+// A recorded entry no step carries is posted as its record says, at its id. Without the step, whether it allows failure cannot
+// be read, so a success may have hidden a failure: it fails closed, as passed-on-error.
 const unheldObservationOf = ({ key, result }: RecordedStep): EvidenceObservation => {
   const claimCode = claimCodeFrom(key);
   return { cites: claimCode === undefined ? [] : [claimCode], result: result === "passed" ? "passed-on-error" : result, kind: "fitness", place: key };

@@ -1,5 +1,5 @@
 import type { QualityCheckKind } from "./postEvidenceObligation.js";
-import { stepIdentityOf, type CiStep } from "./workflowSteps.js";
+import type { CiStep } from "./workflowSteps.js";
 
 export type Layer = Exclude<QualityCheckKind, "fitness">;
 
@@ -88,7 +88,7 @@ export const reportsOf = (runner: Runner | undefined): readonly string[] => (isE
 // A non-check in a workflow that was read must be a step in it.
 function nonCheckChecked({ entry, address }: NonCheck, steps: readonly CiStep[]): Checked<StepAddress | undefined> {
   const inItsWorkflow = steps.filter(({ workflow }) => workflow === address.workflow);
-  const named = inItsWorkflow.some((step) => step.job === address.job && stepIdentityOf(step) === address.step);
+  const named = inItsWorkflow.some((step) => step.job === address.job && step.identity === address.step);
   return inItsWorkflow.length === 0 || named ? { value: address, errors: [] } : { value: undefined, errors: [{ kind: "not-checks-entry-matches-no-step", entry }] };
 }
 
