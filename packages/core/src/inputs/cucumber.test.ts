@@ -1,10 +1,13 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import cucumberVariants from "./cucumber.variants.json" with { type: "json" };
 import { breaksFound } from "./reportVariants.test-utils.js";
 import { whereScenarioResultsBreak } from "./cucumber.js";
 
 const passed = { status: "passed" };
+
+// Each Cucumber evidence report cucumber-js's own JSON formatter wrote, copied from cucumber-js's repository.
+const COPIES = ["failed.json", "passed-rule.json", "passed-scenario-outline.json", "passed-scenario.json", "rejected-pickle.json", "retried.json"];
 
 describe("an input that is not valid will stop the run", () => {
   it("[CLM-CLI-152] the Cucumber evidence report each of those is edited from is in Cucumber's shape", () => {
@@ -17,14 +20,17 @@ describe("an input that is not valid will stop the run", () => {
     expect(found).toEqual(listed);
   });
 
-  it.each(["failed.json", "passed-rule.json", "passed-scenario-outline.json", "passed-scenario.json", "rejected-pickle.json", "retried.json"])(
-    "[CLM-CLI-152] a Cucumber evidence report cucumber-js's own JSON formatter wrote, %s, is in Cucumber's shape",
-    (name) => {
-      const report: unknown = JSON.parse(readFileSync(new URL(`./real-reports/cucumber-js/${name}`, import.meta.url), "utf8"));
+  it.each(COPIES)("[CLM-CLI-152] a Cucumber evidence report cucumber-js's own JSON formatter wrote, %s, is in Cucumber's shape", (name) => {
+    const report: unknown = JSON.parse(readFileSync(new URL(`./real-reports/cucumber-js/${name}`, import.meta.url), "utf8"));
 
-      expect(whereScenarioResultsBreak(report)).toBeUndefined();
-    },
-  );
+    expect(whereScenarioResultsBreak(report)).toBeUndefined();
+  });
+
+  it("[CLM-CLI-152] every Cucumber evidence report copied from cucumber-js is read", () => {
+    const copied = readdirSync(new URL("./real-reports/cucumber-js/", import.meta.url)).filter((name) => name.endsWith(".json")).sort();
+
+    expect([...COPIES].sort()).toEqual(copied);
+  });
 
   it.each([
     ["a feature with no elements", [{ uri: "features/one.feature" }]],
