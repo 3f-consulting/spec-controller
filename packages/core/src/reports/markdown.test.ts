@@ -58,7 +58,7 @@ describe("the step account totals its jobs only when it has more than one", () =
 });
 
 describe("the step account shows each job's counts, and the Total row their sums", () => {
-  const step = (workflow: string, job: string, run: string) => ({ workflow, job, plumbing: false, writesStepRecord: false, run, identity: run });
+  const step = (workflow: string, job: string, command: string) => ({ workflow, job, plumbing: false, writesStepRecord: false, command, identity: command });
 
   it.each([
     ["CLM-RPT-165", "row for build", "build", ["2", "1", "0", "0", "0", "1"]],
