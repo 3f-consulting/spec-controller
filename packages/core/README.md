@@ -39,7 +39,7 @@ const featureSource = readFileSync(`${targetFolder}/features/checkout.feature`, 
 const vitestReport: unknown = JSON.parse(readFileSync(`${targetFolder}/vitest-report.json`, "utf8"));
 const features = [featureAsWrittenFrom("checkout.feature", featureSource)];
 const debitJournal = executableClaimsOf(features, { deferralTags: [], strict: false });
-const creditJournal = observationsOfTestResults(resultsByFileFrom(vitestReport), targetFolder);
+const creditJournal = observationsOfTestResults(resultsByFileFrom(vitestReport), targetFolder, "unit");
 
 const evidenceReconciliation = evidenceReconciliationOf({
   claimReconciliations: claimReconciliationsOf(debitJournal, creditJournal),
@@ -74,12 +74,13 @@ The package publishes exactly one entrypoint: a barrel that exports the followin
 - **Read the inputs.** Each reader translates its tool's format into the domain's words. A test's status becomes passed, failed or never ran. A CI step's `continue-on-error` becomes whether the run may allow its failure. The step record's outcomes become each step's result. Beside each report's reader is a `where…Break`. It says where the report first breaks the shape its tool writes, or gives nothing if the report matches that shape.
   - feature files: `featureAsWrittenFrom`;
   - test reports: `resultsByFileFrom` (Vitest and Jest JSON), `resultsBySuiteFrom` (JUnit XML, from pytest, gotestsum, Maven Surefire or Gradle, given as text, with `whyXmlDoesNotParse`), `resultsByExampleFrom` (RSpec JSON) and `scenarioResultsFrom` (Cucumber JSON);
+  - evidence report formats: `EVIDENCE_REPORT_FORMATS` lists the six report formats above, one entry for each. An entry gives the format's flag and its value, whether it parses as JSON or as XML, its `where…Break` and its reader, the endings it reads in a folder if it reads one, whether its results need the feature files, and its default layer;
   - CI: `workflowStepsFrom` reads one workflow's steps, and `stepRecordFrom` reads a run's `toJSON(steps)` record;
   - the target's `package.json`: `targetConfigurationFrom` reads its `specController` block, and `scriptsFrom` reads its scripts;
   - `shellAnswers` says whether a step's command runs a runner, through the target's scripts, and whether it runs `spec-controller balance`. `repositoryOfOrigin` names the repository a git origin points to.
 
   `resultsBySuiteFrom` takes the tool that wrote the report. JUnit and pytest differ in one way: how an `<error>` on an ordinary test reads. From JUnit it posts as failed. From pytest it posts as never ran, because pytest writes an `<error>` for an error in a test's setup or teardown.
-- **Post the claims and the evidence**: `executableClaimsOf`; `observationsOfTestResults`, which posts a report's test results; and `fitnessObservationsOf`, which posts the CI steps that are fitness functions. For a Cucumber report, `observationsOfTestResults` also takes the feature files, where an Outline row's claim code is. `stepDispositionOf` says what a CI step is: the reconciler, a non-check, plumbing, a runner or a fitness function. `disposedStepsOf` gives each of a run's CI steps with what it is, once. `fitnessObservationsOf` and `stepAccountOf` both take its answer.
+- **Post the claims and the evidence**: `executableClaimsOf`; `observationsOfTestResults`, which posts a report's test results at its format's default layer, unless the layers its report serves are given; and `fitnessObservationsOf`, which posts the CI steps that are fitness functions. For a Cucumber report, `observationsOfTestResults` also takes the feature files, where an Outline row's claim code is. `stepDispositionOf` says what a CI step is: the reconciler, a non-check, plumbing, a runner or a fitness function. `disposedStepsOf` gives each of a run's CI steps with what it is, once. `fitnessObservationsOf` and `stepAccountOf` both take its answer.
 - **Reconcile**: `claimReconciliationsOf`, then `evidenceReconciliationOf`, which gives the whole Evidence Reconciliation. Its `runVerdict` is one of `balanced`, `out-of-balance`, or `not-reconciled`. A `not-reconciled` verdict has a `why` of `unsound`, `claim-code-errors` or `nothing-to-reconcile`. `stepAccountOf` works out the step account from each CI step and what it is, as `disposedStepsOf` gives them. The CLI takes its exit code from the run verdict.
 - **Claim codes**: `isFeatureCode`, `featureCodeOfFile`, `writtenClaimCode`, `claimCodeErrorsOf`, and `allocationOf`. `allocationOf` gives the next claim code for a feature code, from the code occurrences you read.
 - **Report**: `markdownReportOf` and `jsonReportOf`, and `textFor`, which fills a message catalogue's text for a code.
