@@ -7,15 +7,16 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
   The run verdict is balanced, out of balance, or not reconciled. A run is not reconciled when
   balance cannot rely on what it read, and the verdict names why: unsound, when some evidence
   never ran; claim code errors, when balance finds a claim code error; or nothing to reconcile,
-  when there are no Claim Reconciliations. When several reasons apply, unsound comes before claim
-  code errors, and claim code errors before nothing to reconcile; each comes before out of balance.
+  when there are no Claim Reconciliations to count. When several reasons apply, unsound comes
+  before claim code errors, and claim code errors before nothing to reconcile; each comes before
+  out of balance.
 
   The totals count the Claim Reconciliations, the Quality Check Reconciliations by kind and
   outcome, where each Evidence Observation was filed, the excluded claim code occurrences and the
   scenarios a deferral tag set aside. The step account counts every CI step balance read, by job.
   The provenance names the target, the source SHA, the tool, each input and when the run started.
 
-  Rule: a run is balanced only when all its Claim Reconciliations are
+  Rule: a run is balanced only when all the Claim Reconciliations it counts are
 
     @unit
     Scenario Outline: the run will be balanced or out of balance, as its Claim Reconciliations call for

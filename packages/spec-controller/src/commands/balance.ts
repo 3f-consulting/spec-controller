@@ -99,6 +99,7 @@ export function balance(
     provenanceInputs: provenanceInputsOf(inputPathsOf(read, folder, found, targetFolder)),
     targetFolder,
     strict,
+    countOnlyExecutableClaims: false,
   });
   try {
     return writeReports(outputs, [...read.filesRead, ...found.filesRead], reconciliation, streams, { exitZero });

@@ -49,6 +49,7 @@ const evidenceReconciliation = reconcile({
   provenanceInputs: [{ name: "features", path: "/work/shop/features" }],
   targetFolder,
   strict: false,
+  countOnlyExecutableClaims: false,
 });
 
 evidenceReconciliation.runVerdict; // { verdict: "balanced" } while every claim's evidence arrived and passed
