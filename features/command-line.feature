@@ -228,6 +228,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-214 | vitest | vitest run --reporter=json --outputFile=out/vitest.json | the target's      | out/vitest.json     | a Vitest evidence report |
         | CLM-CLI-215 | vitest | vitest run --reporter=json --outputFile=out/vitest.json | web               | web/out/vitest.json | a Vitest evidence report |
 
+    @unit @CLM-CLI-216
+    Scenario: balance reads a named runner's evidence reports from where the runner writes them by default, when its step names none
+      given the run named mvn test as the unit runner
+      and a workflow had a step running mvn test
+      when balance reads its inputs
+      then it will read target/surefire-reports as a folder of JUnit evidence reports
+
   Rule: a command validates every input before it does its work
 
     The inputs a command validates are each evidence report, each step record, the feature corpus,

@@ -149,6 +149,16 @@ const VITEST_SHAPED = '{"testResults":[]}';
 const CATALOGUE_CODE = /\{([a-z-]+)\}/g;
 const shown = (fact: string): string => fact.replace(CATALOGUE_CODE, (_code: string, code: string) => textFor(catalogue, code));
 
+const surefireSuite = (name: string, test: string): string =>
+  `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="example.${name}" tests="1" errors="0" skipped="0" failures="0">\n  <testcase name="${test}" classname="example.${name}" time="0.001"/>\n</testsuite>\n`;
+
+// Maven Surefire's reports in a folder: a suite to a file, each beside its text summary.
+const surefireReportsIn = (folder: string): Record<string, string> => ({
+  [`${folder}/TEST-example.AddsTest.xml`]: surefireSuite("AddsTest", "[CLM-ONE-001] adds one"),
+  [`${folder}/TEST-example.SubtractsTest.xml`]: surefireSuite("SubtractsTest", "[CLM-ONE-002] subtracts one"),
+  [`${folder}/example.AddsTest.txt`]: "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0\n",
+});
+
 describe("a well-formed JUnit evidence report will be read, not refused", () => {
   it.each([
     [
@@ -166,15 +176,7 @@ describe("a well-formed JUnit evidence report will be read, not refused", () => 
   });
 
   it("[CLM-CLI-194] JUnit evidence reports written well formed, as Maven Surefire writes them, a suite to a file beside its text summary: each result is posted, and the run does not stop", () => {
-    const suite = (name: string, test: string): string =>
-      `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="example.${name}" tests="1" errors="0" skipped="0" failures="0">\n  <testcase name="${test}" classname="example.${name}" time="0.001"/>\n</testsuite>\n`;
-    const folder = folderWith({
-      "surefire-reports/TEST-example.AddsTest.xml": suite("AddsTest", "[CLM-ONE-001] adds one"),
-      "surefire-reports/TEST-example.SubtractsTest.xml": suite("SubtractsTest", "[CLM-ONE-002] subtracts one"),
-      "surefire-reports/example.AddsTest.txt": "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0\n",
-    });
-
-    const { exitCode, output } = ran(["balance", "--unit", "junit:junit:surefire-reports", "--format", "json"], folder);
+    const { exitCode, output } = ran(["balance", "--unit", "junit:junit:surefire-reports", "--format", "json"], folderWith(surefireReportsIn("surefire-reports")));
 
     expect({ stopped: exitCode === 2, posted: ["adds one", "subtracts one"].filter((test) => output.includes(test)) }).toEqual({ stopped: false, posted: ["adds one", "subtracts one"] });
   });
@@ -326,6 +328,16 @@ describe("balance reads the evidence report a named runner's CI step writes, in 
     ["its job's", `jobs:\n  ci:\n    defaults:\n      run:\n        working-directory: web\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`],
   ] as const)("[CLM-CLI-215] --unit vitest, a workflow step writing out/vitest.json with web as %s working directory: the report at web/out/vitest.json is read in Vitest's format", (_set, workflow) => {
     expect(readFromTheStep("vitest", workflow, "web/out/vitest.json", [], BY_FILE_PASSING)).toEqual(READ_AS_UNIT_EVIDENCE);
+  });
+});
+
+describe("balance reads a named runner's evidence reports from where the runner writes them by default, when its step names none", () => {
+  it("[CLM-CLI-216] --unit mvn test, a workflow step running mvn test, and Maven Surefire's reports in target/surefire-reports: each result is posted", () => {
+    const folder = folderWith({ "features/one.feature": TWO_CLAIMS, "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: mvn test\n", ...surefireReportsIn("target/surefire-reports") });
+
+    const { output, error } = ran(["balance", "--unit", "mvn test", "--ci", "workflows", "--format", "json"], folder);
+
+    expect({ error, posted: ["adds one", "subtracts one"].filter((test) => output.includes(test)) }).toEqual({ error: "", posted: ["adds one", "subtracts one"] });
   });
 });
 

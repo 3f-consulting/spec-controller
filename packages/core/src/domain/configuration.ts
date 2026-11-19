@@ -25,6 +25,9 @@ export type ReportsNamed = (
   environment: Readonly<Record<string, string>>,
 ) => readonly ReportLocation[];
 
+// The shell reader's answer of where a runner writes its evidence reports when told nowhere, for a step's command that runs it.
+export type DefaultReportsOf = (commandLine: string, runner: string, scripts: Readonly<Record<string, string>>) => readonly ReportLocation[];
+
 // A layer's runner: the program it runs, with the evidence report the run names for it.
 export interface Runner {
   readonly name: string;
@@ -125,6 +128,7 @@ export function reportsLocatedOf(
   steps: readonly CiStep[],
   scripts: Readonly<Record<string, string>>,
   reportsNamed: ReportsNamed,
+  defaultReportsOf: DefaultReportsOf,
 ): ConfigurationSettings {
   const runners = settings.runners.flatMap((part): SettingPart<readonly [Layer, Runner]>[] => {
     if ("error" in part || part.taken[1].report !== undefined) return [part];

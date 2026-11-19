@@ -71,3 +71,21 @@ describe("balance reads the evidence report a named runner's CI step writes, in 
     expect(shellAnswers.reportsNamed(command, runner, scripts, environment)).toEqual(reports);
   });
 });
+
+const SUREFIRE = [{ path: "target/surefire-reports", format: "junit" }];
+const GRADLE = [{ path: "build/test-results/test", format: "junit" }];
+
+describe("balance reads a named runner's evidence reports from where the runner writes them by default, when its step names none", () => {
+  it.each<[string, string, Readonly<Record<string, string>>, readonly ReportLocation[]]>([
+    ["mvn test", "mvn test", NO_SCRIPTS, SUREFIRE],
+    ["./mvnw test", "./mvnw test", NO_SCRIPTS, SUREFIRE],
+    ["gradle test", "gradle test", NO_SCRIPTS, GRADLE],
+    ["./gradlew test", "./gradlew test", NO_SCRIPTS, GRADLE],
+    ["mvn test", "pnpm test", { test: "mvn test" }, SUREFIRE],
+    ["mvn test", "mvn verify", NO_SCRIPTS, []],
+    ["./gradlew check", "./gradlew check", NO_SCRIPTS, []],
+    ["./gradlew :app:test", "./gradlew :app:test", NO_SCRIPTS, []],
+  ])("[CLM-CLI-216] a step running %s as %j, with the scripts %j, writes by default to %j", (runner, command, scripts, reports) => {
+    expect(shellAnswers.defaultReportsOf(command, runner, scripts)).toEqual(reports);
+  });
+});

@@ -146,7 +146,7 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
 // The configuration and the errors balance finds for a run naming one unit runner, with the steps of ci.yml as given and no file at each report path given.
 const locatedFrom = (runner: string, ciYml: string, reportsNotFound: readonly string[]) => {
   const steps = workflowStepsFrom("ci.yml", ciYml);
-  const settings = reportsLocatedOf(configurationSettingsNamed({ runners: { unit: [runner] }, nonChecks: [], deferralTags: [] }), steps, {}, shellAnswers.reportsNamed);
+  const settings = reportsLocatedOf(configurationSettingsNamed({ runners: { unit: [runner] }, nonChecks: [], deferralTags: [] }), steps, {}, shellAnswers.reportsNamed, shellAnswers.defaultReportsOf);
   return targetConfigurationOf(settings, steps, reportsNotFound);
 };
 
@@ -255,8 +255,36 @@ describe("balance reads the evidence report a named runner's CI step writes, in 
     ["/work/out/vitest.json", "/work/out/vitest.json"],
   ])("[CLM-CLI-215] a run named vitest, where a step in the working directory web wrote %s, locates its report at %s", (written, located) => {
     const steps = workflowStepsFrom("ci.yml", `jobs:\n  ci:\n    steps:\n      - run: vitest run --reporter=json --outputFile=${written}\n        working-directory: web\n`);
-    const { runners } = reportsLocatedOf(configurationSettingsNamed({ runners: { unit: ["vitest"] }, nonChecks: [], deferralTags: [] }), steps, {}, shellAnswers.reportsNamed);
+    const { runners } = reportsLocatedOf(configurationSettingsNamed({ runners: { unit: ["vitest"] }, nonChecks: [], deferralTags: [] }), steps, {}, shellAnswers.reportsNamed, shellAnswers.defaultReportsOf);
     expect(runners).toEqual([{ taken: ["unit", { name: "vitest", report: { path: located, format: "vitest" } }] }]);
+  });
+});
+
+// A runner that also writes to out/default.json by default, so the order between a step's own report and the default shows.
+const writesByDefault = (commandLine: string, runner: string, scripts: Readonly<Record<string, string>>) =>
+  shellAnswers.invokesAsCommand(commandLine, runner, scripts) ? [{ path: "out/default.json", format: "vitest" }] : [];
+
+describe("balance reads a named runner's evidence reports from where the runner writes them by default, when its step names none", () => {
+  it.each<[string, string, readonly string[], string]>([
+    ["mvn test", "mvn test, in the working directory web", ["web/target/surefire-reports"], "jobs:\n  ci:\n    steps:\n      - run: mvn test\n        working-directory: web\n"],
+    ["mvn test", "mvn test, in the working directory ${{ matrix.pkg }}", [], "jobs:\n  ci:\n    steps:\n      - run: mvn test\n        working-directory: ${{ matrix.pkg }}\n"],
+  ])("[CLM-CLI-216] a run named %s, where a step ran %s, locates its reports at %j", (runner, _ran, located, ciYml) => {
+    const steps = workflowStepsFrom("ci.yml", ciYml);
+    const { runners } = reportsLocatedOf(configurationSettingsNamed({ runners: { unit: [runner] }, nonChecks: [], deferralTags: [] }), steps, {}, shellAnswers.reportsNamed, shellAnswers.defaultReportsOf);
+    expect(runners).toEqual(located.length === 0 ? [{ taken: ["unit", { name: runner }] }] : located.map((path) => ({ taken: ["unit", { name: runner, report: { path, format: "junit" } }] })));
+  });
+
+  it.each<[string, readonly string[], string]>([
+    ["vitest run", ["out/default.json"], "jobs:\n  ci:\n    steps:\n      - run: vitest run\n"],
+    [
+      "vitest run --reporter=json --outputFile=out/vitest.json, and another vitest run",
+      ["out/vitest.json"],
+      "jobs:\n  ci:\n    steps:\n      - run: vitest run --reporter=json --outputFile=out/vitest.json\n      - run: vitest run\n",
+    ],
+  ])("[CLM-CLI-216] a run named a runner that writes by default to out/default.json, where steps ran %s, locates its reports at %j", (_ran, located, ciYml) => {
+    const steps = workflowStepsFrom("ci.yml", ciYml);
+    const { runners } = reportsLocatedOf(configurationSettingsNamed({ runners: { unit: ["vitest"] }, nonChecks: [], deferralTags: [] }), steps, {}, shellAnswers.reportsNamed, writesByDefault);
+    expect(runners).toEqual(located.map((path) => ({ taken: ["unit", { name: "vitest", report: { path, format: "vitest" } }] })));
   });
 });
 
