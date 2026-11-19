@@ -12,7 +12,7 @@ const usesAction = (uses: string, action: string): boolean => {
   const repository = uses.split("@")[0]!.split("/").slice(0, 2).join("/");
   return action.endsWith("*") ? repository.startsWith(action.slice(0, -1)) : repository === action;
 };
-const isPlumbing = (uses: string): boolean => workflowsVariants["CLM-OBS-015"].variants.some((action) => usesAction(uses, action));
+const isPlumbing = (uses: string): boolean => workflowsVariants["plumbing-actions"].variants.some((action) => usesAction(uses, action));
 const WRITES_STEP_RECORD = "toJSON(steps)";
 
 type Mapping = Readonly<Record<string, unknown>>;
@@ -28,7 +28,7 @@ const HELD_IN: Readonly<Record<string, (step: Mapping) => readonly unknown[]>> =
   "env:": (step) => Object.values(isRecord(step["env"]) ? step["env"] : {}),
 };
 const writesStepRecord = (step: Mapping): boolean =>
-  workflowsVariants["CLM-OBS-013"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
+  workflowsVariants["step-record-writers"].variants.some((place) => HELD_IN[place]!(step).some((value) => text(value)?.includes(WRITES_STEP_RECORD) === true));
 
 // continue-on-error as the domain reads it: true or false as written, and anything else an expression the run decides.
 const continueOnErrorOf = (value: unknown): ContinueOnError | undefined =>

@@ -1,6 +1,6 @@
 {
-  "CLM-CLI-157": {
-    "class": "an RSpec evidence report with one field its reader reads missing, null or of the wrong kind, or a status RSpec never writes",
+  "broken-rspec-reports": {
+    "claim": "CLM-CLI-157",
     "report": {
       "messages": [
         "Run options: exclude {:slow=>true}"

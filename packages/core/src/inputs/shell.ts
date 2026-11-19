@@ -3,7 +3,7 @@ import type { Command, CommandNode, Statement, Word } from "unbash";
 import type { Scripts, ShellAnswers } from "../domain/postEvidenceObservation.js";
 import shellVariants from "./shell.variants.json" with { type: "json" };
 
-const { "CLM-OBS-009": scriptRuns, "CLM-OBS-010": launchers, "CLM-OBS-112": wrappers } = shellVariants;
+const { "script-runs": scriptRuns, launchers, wrappers } = shellVariants;
 
 const wordsIn = (text: string): string[] => text.split(" ");
 

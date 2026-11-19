@@ -10,21 +10,21 @@ const reportWithStatus = (status: string) => ({
 
 describe("an input that is not valid will stop the run", () => {
   it("[CLM-CLI-151] the Vitest evidence report each of those is edited from is in Vitest's shape", () => {
-    expect(whereResultsByFileBreak(vitestVariants["CLM-CLI-151"].report)).toBeUndefined();
+    expect(whereResultsByFileBreak(vitestVariants["broken-vitest-reports"].report)).toBeUndefined();
   });
 
   it("[CLM-CLI-151] each Vitest evidence report with one field its reader reads missing, null or of the wrong kind, or a status Vitest never writes, is not in Vitest's shape, and breaks at that field", () => {
-    const { found, listed } = breaksFound(vitestVariants["CLM-CLI-151"], whereResultsByFileBreak);
+    const { found, listed } = breaksFound(vitestVariants["broken-vitest-reports"], whereResultsByFileBreak);
 
     expect(found).toEqual(listed);
   });
 
   it("[CLM-CLI-153] the Jest evidence report each of those is edited from is in Jest's shape", () => {
-    expect(whereResultsByFileBreak(vitestVariants["CLM-CLI-153"].report)).toBeUndefined();
+    expect(whereResultsByFileBreak(vitestVariants["broken-jest-reports"].report)).toBeUndefined();
   });
 
   it("[CLM-CLI-153] each Jest evidence report with one field its reader reads missing, null or of the wrong kind, or a status Jest never writes, is not in Jest's shape, and breaks at that field", () => {
-    const { found, listed } = breaksFound(vitestVariants["CLM-CLI-153"], whereResultsByFileBreak);
+    const { found, listed } = breaksFound(vitestVariants["broken-jest-reports"], whereResultsByFileBreak);
 
     expect(found).toEqual(listed);
   });

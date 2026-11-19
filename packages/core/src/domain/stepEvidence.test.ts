@@ -69,13 +69,13 @@ const writingTheStepRecord: Readonly<Record<string, object>> = {
 };
 
 describe("a step writing out the step record is the reconciler's", () => {
-  it.each(workflowsVariants["CLM-OBS-013"].variants)("[CLM-OBS-013] a step writing out the step record through %s will not be a fitness function", (variant) => {
+  it.each(workflowsVariants["step-record-writers"].variants)("[CLM-OBS-013] a step writing out the step record through %s will not be a fitness function", (variant) => {
     expect(fitnessObservationsOf(disposedStepsOf(stepsOf(writingTheStepRecord[variant]!), NO_SETTING, {}, shellAnswers, []), [])).toEqual([]);
   });
 });
 
 describe("a step using a plumbing action is plumbing", () => {
-  it.each(workflowsVariants["CLM-OBS-015"].variants)("[CLM-OBS-015] a step using %s will not be a fitness function", (action) => {
+  it.each(workflowsVariants["plumbing-actions"].variants)("[CLM-OBS-015] a step using %s will not be a fitness function", (action) => {
     expect(fitnessObservationsOf(disposedStepsOf(stepsOf({ uses: `${action.replace("*", "node")}@v4` }), NO_SETTING, {}, shellAnswers, []), [])).toEqual([]);
   });
 
@@ -175,11 +175,11 @@ describe("balance posts a recorded success in a workflow as passed-on-error only
     return fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, record), record).map(({ result, cites }) => ({ result, cites }));
   };
 
-  it.each(postEvidenceObservationVariants["CLM-OBS-057"].variants)("[CLM-OBS-057] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
+  it.each(postEvidenceObservationVariants["failure-allowed-on-a-step"].variants)("[CLM-OBS-057] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
     expect(postedWith(value, undefined)).toEqual([{ result: "passed-on-error", cites: [ONE_001] }]);
   });
 
-  it.each(postEvidenceObservationVariants["CLM-OBS-058"].variants)("[CLM-OBS-058] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step's job to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
+  it.each(postEvidenceObservationVariants["failure-allowed-on-a-job"].variants)("[CLM-OBS-058] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step's job to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
     expect(postedWith(undefined, value)).toEqual([{ result: "passed-on-error", cites: [ONE_001] }]);
   });
 
@@ -242,11 +242,11 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(isFitnessFunction(run, runner)).toBe(fitnessFunction);
   });
 
-  it.each(shellVariants["CLM-OBS-007"].variants)("[CLM-OBS-007] a step running %s, with vitest as its unit runner, will be a fitness function", (run) => {
+  it.each(shellVariants["pipes-onward"].variants)("[CLM-OBS-007] a step running %s, with vitest as its unit runner, will be a fitness function", (run) => {
     expect(isFitnessFunction(run, "vitest")).toBe(true);
   });
 
-  it.each(shellVariants["CLM-OBS-011"].variants)("[CLM-OBS-011] a step running pnpm lint, then vitest run after %s, will not be a fitness function", (separator) => {
+  it.each(shellVariants["command-lists"].variants)("[CLM-OBS-011] a step running pnpm lint, then vitest run after %s, will not be a fitness function", (separator) => {
     expect(isFitnessFunction(`pnpm lint ${separator} vitest run`, "vitest")).toBe(false);
   });
 
@@ -262,7 +262,7 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(isFitnessFunction('if [ -n "$CI" ]; then\n  echo in CI\nfi\nvitest run', "vitest")).toBe(false);
   });
 
-  it.each(shellVariants["CLM-OBS-010"].variants)("[CLM-OBS-010] a step running vitest after a NAME=value setting, through the launcher %s, will not be a fitness function", (launcher) => {
+  it.each(shellVariants["launchers"].variants)("[CLM-OBS-010] a step running vitest after a NAME=value setting, through the launcher %s, will not be a fitness function", (launcher) => {
     const handedOn = launcher.includes("<bin>") ? launcher.replace("<bin>", "vitest") : `${launcher} vitest`;
 
     expect(isFitnessFunction(`CI=1 ${handedOn} run`, "vitest")).toBe(false);
@@ -272,7 +272,7 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(isFitnessFunction("uv run python -m pytest", "pytest")).toBe(false);
   });
 
-  it.each(shellVariants["CLM-OBS-009"].variants)("[CLM-OBS-009] a step running a script as %s, whose script runs vitest, will not be a fitness function", (variant) => {
+  it.each(shellVariants["script-runs"].variants)("[CLM-OBS-009] a step running a script as %s, whose script runs vitest, will not be a fitness function", (variant) => {
     const script = variant.includes("<script>") ? "check" : variant.split(" ").at(-1)!;
 
     expect(isFitnessFunction(variant.replace("<script>", script).replace("<name>", "app"), "vitest", { [script]: "vitest run" })).toBe(false);
@@ -300,7 +300,7 @@ describe("a runner is recognised only as the command a step runs", () => {
     "timeout <duration>": "timeout 75 vitest run",
   };
 
-  it.each(shellVariants["CLM-OBS-112"].variants)("[CLM-OBS-112] a step running its unit runner behind the wrapper %s will not be a fitness function", (wrapper) => {
+  it.each(shellVariants["wrappers"].variants)("[CLM-OBS-112] a step running its unit runner behind the wrapper %s will not be a fitness function", (wrapper) => {
     expect(isFitnessFunction(behindTheWrapper[wrapper]!, "vitest")).toBe(false);
   });
 
@@ -308,7 +308,7 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(isFitnessFunction(`timeout ${option} 75 vitest run`, "vitest")).toBe(false);
   });
 
-  it.each(shellVariants["CLM-OBS-117"].variants)("[CLM-OBS-117] a step running xvfb-run %s vitest run, past an option and that option's value, will not be a fitness function", (option) => {
+  it.each(shellVariants["xvfb-run-options"].variants)("[CLM-OBS-117] a step running xvfb-run %s vitest run, past an option and that option's value, will not be a fitness function", (option) => {
     expect(isFitnessFunction(`xvfb-run ${option} vitest run`, "vitest")).toBe(false);
   });
 
@@ -316,7 +316,7 @@ describe("a runner is recognised only as the command a step runs", () => {
     expect(isFitnessFunction("xvfb-run --help", "vitest")).toBe(true);
   });
 
-  it.each(shellVariants["CLM-OBS-113"].variants)("[CLM-OBS-113] a step running %s, a runner named in several words, will not be a fitness function", (runner) => {
+  it.each(shellVariants["runners-in-several-words"].variants)("[CLM-OBS-113] a step running %s, a runner named in several words, will not be a fitness function", (runner) => {
     expect(isFitnessFunction(`${runner} --verbose`, runner)).toBe(false);
   });
 

@@ -5,11 +5,11 @@ import { whereResultsByExampleBreak } from "./rspec.js";
 
 describe("an input that is not valid will stop the run", () => {
   it("[CLM-CLI-157] the RSpec evidence report each of those is edited from is in RSpec's shape", () => {
-    expect(whereResultsByExampleBreak(rspecVariants["CLM-CLI-157"].report)).toBeUndefined();
+    expect(whereResultsByExampleBreak(rspecVariants["broken-rspec-reports"].report)).toBeUndefined();
   });
 
   it("[CLM-CLI-157] each RSpec evidence report with one field its reader reads missing, null or of the wrong kind, or a status RSpec never writes, is not in RSpec's shape, and breaks at that field", () => {
-    const { found, listed } = breaksFound(rspecVariants["CLM-CLI-157"], whereResultsByExampleBreak);
+    const { found, listed } = breaksFound(rspecVariants["broken-rspec-reports"], whereResultsByExampleBreak);
 
     expect(found).toEqual(listed);
   });
