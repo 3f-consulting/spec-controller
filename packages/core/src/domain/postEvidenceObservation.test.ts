@@ -441,14 +441,14 @@ const CUCUMBER_UNDER_INTEGRATION_AND_E2E: TargetConfiguration["runners"] = {
 };
 
 describe("balance identifies a result's kind of quality check as the layer its report's runner serves", () => {
-  it.each(postEvidenceObservationVariants["formats-without-kind-tags-named-under-a-layer"].variants)(`[${postEvidenceObservationVariants["formats-without-kind-tags-named-under-a-layer"].claim}] with playwright named as a runner writing its report, a result in its report, %s, is read as evidence of that layer`, (variant) => {
+  it.each(postEvidenceObservationVariants["formats-without-kind-tags-named-under-a-layer"].variants)("[CLM-OBS-164] with playwright named as a runner writing its report, a result in its report, %s, is read as evidence of that layer", (variant) => {
     const [format, layer] = variant.split(", under ") as [UntaggedFormat, "integration" | "e2e" | "performance"];
     const { report, posted } = UNTAGGED_FORMATS[format];
 
     expect(posted(layersServing(report, { [layer]: { runner: "playwright", reports: [report] } })).map(({ kind }) => kind)).toEqual([layer]);
   });
 
-  it.each(postEvidenceObservationVariants["formats-without-kind-tags-named-nowhere"].variants)(`[${postEvidenceObservationVariants["formats-without-kind-tags-named-nowhere"].claim}] with no runner named as writing it, a result in %s's evidence report is read as unit evidence`, (format) => {
+  it.each(postEvidenceObservationVariants["formats-without-kind-tags-named-nowhere"].variants)("[CLM-OBS-059] with no runner named as writing it, a result in %s's evidence report is read as unit evidence", (format) => {
     const { report, posted } = UNTAGGED_FORMATS[format as UntaggedFormat];
 
     expect(posted(layersServing(report, ANOTHER_REPORT_UNDER_E2E)).map(({ kind }) => kind)).toEqual(["unit"]);
