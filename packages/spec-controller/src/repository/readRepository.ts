@@ -20,7 +20,7 @@ export function standingOf(folder: string): Read<Standing> {
 // git names a file or folder it could not read on its error stream, whatever its exit status says.
 const UNREADABLE = /(?:error: failed to stat '(.+)'|warning: could not open directory '(.+)'):.*/;
 
-const codesOf = (featureCode: string): string => `(CLM|SCN)-${featureCode}-[0-9]`;
+const codesOf = (featureCode: string): string => `CLM-${featureCode}-[0-9]`;
 
 // Every line that may write one of the feature code's codes: a repository's tracked and new files, else the feature files.
 export function treeLines({ in: where, top }: Standing, featureCode: string): Read<ClaimCodeOccurrence[]> {

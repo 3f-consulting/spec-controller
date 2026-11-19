@@ -2,7 +2,7 @@
 Feature: every claim code is well formed, filed under its file's code, and never reused
 
   A feature code is two to five uppercase letters or digits. A claim code is CLM, a feature code
-  and a number of any width: CLM-<FFF>-<NNN>. A retired scenario code has the same form under SCN.
+  and a number of any width: CLM-<FFF>-<NNN>.
   balance reads every id by this one form. An id in any other form is not a claim code.
 
   A feature file declares its feature code on the line above Feature:, and its scenarios' claim
@@ -15,29 +15,24 @@ Feature: every claim code is well formed, filed under its file's code, and never
   and gives no code. It never gives a code worked out without what it could not read.
 
   @unit
-  Scenario Outline: an id is a feature code, a claim code or a retired scenario code only in that form
+  Scenario Outline: an id is a feature code or a claim code only in that form
     given there was the id <id>
     when it is checked against the <form> form
     then it will <result>
 
     Examples:
-      | clm         | form                  | id           | result                         |
-      | CLM-STG-037 | feature code          | AB           | be a feature code              |
-      | CLM-STG-038 | feature code          | ABCDE        | be a feature code              |
-      | CLM-STG-039 | feature code          | A1           | be a feature code              |
-      | CLM-STG-040 | feature code          | A            | not be a feature code          |
-      | CLM-STG-041 | feature code          | ABCDEF       | not be a feature code          |
-      | CLM-STG-042 | feature code          | abc          | not be a feature code          |
-      | CLM-STG-044 | claim code            | CLM-ONE-001  | be a claim code                |
-      | CLM-STG-045 | claim code            | CLM-ONE-7    | be a claim code                |
-      | CLM-STG-046 | claim code            | CLM-ONE-1000 | be a claim code                |
-      | CLM-STG-047 | claim code            | CLM-A-001    | not be a claim code            |
-      | CLM-STG-048 | claim code            | CLM-ONE-     | not be a claim code            |
-      | CLM-STG-049 | retired scenario code | SCN-ONE-001  | be a retired scenario code     |
-      | CLM-STG-050 | retired scenario code | SCN-ONE-7    | be a retired scenario code     |
-      | CLM-STG-051 | retired scenario code | SCN-ONE-1000 | be a retired scenario code     |
-      | CLM-STG-052 | retired scenario code | SCN-A-001    | not be a retired scenario code |
-      | CLM-STG-053 | retired scenario code | SCN-ONE-     | not be a retired scenario code |
+      | clm         | form         | id           | result                |
+      | CLM-STG-037 | feature code | AB           | be a feature code     |
+      | CLM-STG-038 | feature code | ABCDE        | be a feature code     |
+      | CLM-STG-039 | feature code | A1           | be a feature code     |
+      | CLM-STG-040 | feature code | A            | not be a feature code |
+      | CLM-STG-041 | feature code | ABCDEF       | not be a feature code |
+      | CLM-STG-042 | feature code | abc          | not be a feature code |
+      | CLM-STG-044 | claim code   | CLM-ONE-001  | be a claim code       |
+      | CLM-STG-045 | claim code   | CLM-ONE-7    | be a claim code       |
+      | CLM-STG-046 | claim code   | CLM-ONE-1000 | be a claim code       |
+      | CLM-STG-047 | claim code   | CLM-A-001    | not be a claim code   |
+      | CLM-STG-048 | claim code   | CLM-ONE-     | not be a claim code   |
 
   @unit @CLM-STG-043
   Scenario: a tag above Feature: will be the feature code of that file
@@ -81,8 +76,8 @@ Feature: every claim code is well formed, filed under its file's code, and never
 
     allocate takes feature codes from the feature files. It takes numbers from every file git lists
     in the tree, except the files git ignores, and from every line the repository's reachable
-    history has contained. It counts a code written under CLM or under the retired SCN, and
-    answers under CLM. It never gives out again a number a code has had, even one since retired.
+    history has contained. It counts a code written under CLM. It never gives out again a number
+    a claim code has had.
 
     @unit
     Scenario Outline: the answer is one past the highest code in the feature file, a tracked file or history
@@ -99,9 +94,6 @@ Feature: every claim code is well formed, filed under its file's code, and never
         | CLM-STG-067 | CLM-ONE-001 | a file at the repository's top contained CLM-ONE-005, and the developer stood in a subdirectory containing no code | CLM-ONE-006  | that file and line                          |
         | CLM-STG-062 | CLM-ONE-001 | a line in git history, since deleted, had CLM-ONE-005                                                              | CLM-ONE-006  | the file and line it was in, and the commit |
         | CLM-STG-097 | CLM-ONE-001 | a merge's resolution, and neither side, had CLM-ONE-005                                                            | CLM-ONE-006  | the file and line it was in, and the commit |
-        | CLM-STG-063 | CLM-ONE-001 | a file git tracks contained SCN-ONE-005                                                                            | CLM-ONE-006  | that file and line                          |
-        | CLM-STG-064 | CLM-ONE-001 | a line in git history, since deleted, had SCN-ONE-005                                                              | CLM-ONE-006  | the file and line it was in, and the commit |
-        | CLM-STG-065 | CLM-ONE-001 | a file git tracks contained SCN-ONE-, with no number                                                               | CLM-ONE-002  | the feature file and line                   |
         | CLM-STG-068 | CLM-ONE-001 | only a commit's message contained CLM-ONE-900                                                                      | CLM-ONE-002  | the feature file and line                   |
         | CLM-STG-069 | CLM-ONE-001 | only a file git ignores contained CLM-ONE-900                                                                      | CLM-ONE-002  | the feature file and line                   |
         | CLM-STG-070 | CLM-ONE-7   | nothing else contained a ONE code                                                                                  | CLM-ONE-008  | the feature file and line                   |
