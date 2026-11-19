@@ -1,7 +1,6 @@
 import type { ConfigurationSettings, Layer, NonCheck, Runner, SettingPart } from "../domain/configuration.js";
 
-// The configuration settings a run names on its command line, each as given: each layer's runners, the non-checks and the
-// deferral tags.
+// The configuration settings a run names on its command line, each as given.
 export interface SettingsNamed {
   readonly runners: Readonly<Partial<Record<Layer, readonly string[]>>>;
   readonly nonChecks: readonly string[];
@@ -14,7 +13,6 @@ const STEP_AS_WRITTEN = /^(.+?\.ya?ml):([^:]+):(.+)$/;
 // A runner's long form, <runner>:<format>:<report>, splits at its first two colons, so its report's path may hold one.
 const LONG_FORM = /^([^:]*):([^:]*):(.*)$/s;
 
-// A non-check names a step by its workflow, job and step.
 export function nonCheckParsed(entry: string): SettingPart<NonCheck> {
   const step = STEP_AS_WRITTEN.exec(entry);
   if (step === null) return { error: { kind: "not-checks-entry-not-a-step-name", entry } };
@@ -27,7 +25,6 @@ export function deferralTagParsed(entry: string): SettingPart<string> {
   return { taken: tag.startsWith("@") ? tag.slice(1) : tag };
 }
 
-// A runner is named alone, without the spaces around it, or in its long form with the report it writes.
 function runnerParsed(named: string): Runner {
   const long = LONG_FORM.exec(named);
   return long === null ? { name: named.trim() } : { name: long[1]!.trim(), report: { path: long[3]!, format: long[2]! } };
