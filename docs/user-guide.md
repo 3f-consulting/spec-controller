@@ -369,6 +369,8 @@ spec-controller balance --unit "mvn test"
 
 `balance` reads every `.xml` file at the top of that directory, one `TEST-*.xml` for each test class, and ignores the `.txt` summaries beside them. You can give a single report file instead.
 
+In a build with several modules, each module writes its own `target/surefire-reports/`, and `balance` reads only the one at the step's working directory. A step that moves Maven to another folder, with `-pl` or `-f`, still has `balance` look at the step's own `target/surefire-reports`, where Maven writes none, and a step that puts an option before `test`, as `mvn -B test`, does not run the runner `mvn test` at all. Name each module's directory in a long form of its own, as `--unit "mvn test:junit:app/target/surefire-reports"`, and `balance` reads every one.
+
 **Surefire drops the display name by default.** It writes the method name into the report, so no test cites anything: every test lands on the unnamed claim, and every `@unit` scenario reads `missing`. Surefire's phrased reporter writes the display name instead. Set it on the Surefire plugin in your `pom.xml`:
 
 ```xml
