@@ -12,7 +12,6 @@ const REPORT_OPTIONS = runnersVariants["report-options"].variants.map(({ runner,
 // A path holding a variable or an expression is not one balance can read, since it cannot know its value.
 const readable = (path: string): boolean => path !== "" && !path.includes("$");
 
-// The reports a runner's arguments name, each path as written.
 export const reportsIn = (runner: string, args: readonly string[]): ReportLocation[] =>
   REPORT_OPTIONS.filter((options) => options.runner === runner && options.beside.every((word) => args.includes(word))).flatMap(({ before, format }) =>
     args.flatMap((word) => (word.startsWith(before) ? [word.slice(before.length)] : [])).flatMap((path) => (readable(path) ? [{ path, format }] : [])),

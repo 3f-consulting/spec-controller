@@ -80,7 +80,6 @@ const invokesTheReconciler = (commandLine: string): boolean =>
 // A runner is found only as the last command of a pipeline, through launchers, wrappers and the target's scripts.
 const invokesAsCommand = (commandLine: string, program: string, scripts: Scripts): boolean => invocationsThrough(commandLine, wordsIn(program), scripts, new Set()).length > 0;
 
-// The reports a command names for a runner, read from the arguments of each time it runs the runner.
 const reportsNamed = (commandLine: string, runner: string, scripts: Scripts): ReportLocation[] =>
   invocationsThrough(commandLine, wordsIn(runner), scripts, new Set()).flatMap((args) => reportsIn(runner, args));
 
