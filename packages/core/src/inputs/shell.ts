@@ -53,19 +53,17 @@ function handedOn(words: readonly string[]): readonly string[] | undefined {
 }
 
 // The words of each time the words run the program, from the program's own, through launchers, wrappers and the target's scripts.
-function invocationsIn(words: readonly string[], program: readonly string[], scripts: Scripts, followed: Set<string>): (readonly string[])[] {
+// A script is not followed again inside itself, so a script that runs itself ends; a sibling command may run it again.
+function invocationsIn(words: readonly string[], program: readonly string[], scripts: Scripts, followed: ReadonlySet<string>): (readonly string[])[] {
   if (opensWith(words, program)) return [words];
   const run = scriptRun(words, scripts);
-  if (run !== undefined && !followed.has(run.script)) {
-    followed.add(run.script);
-    return invocationsThrough(scripts[run.script]!, program, scripts, followed, run.after);
-  }
+  if (run !== undefined && !followed.has(run.script)) return invocationsThrough(scripts[run.script]!, program, scripts, new Set([...followed, run.script]), run.after);
   const rest = handedOn(words);
   return rest === undefined ? [] : invocationsIn(rest, program, scripts, followed);
 }
 
 // The words after a script's name, as the step's command line parsed them, are its last command's own.
-function invocationsThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: Set<string>, after: readonly string[] = []): (readonly string[])[] {
+function invocationsThrough(commandLine: string, program: readonly string[], scripts: Scripts, followed: ReadonlySet<string>, after: readonly string[] = []): (readonly string[])[] {
   const pipelines = pipelinesOf(parse(commandLine).commands);
   return pipelines.flatMap((stages, at) => {
     const last = stages.at(-1);
