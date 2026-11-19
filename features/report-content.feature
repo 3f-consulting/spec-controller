@@ -108,13 +108,13 @@ Feature: Each report has the right structure, and the Markdown explains it
       then Errors in the inputs will list <kind> with <involved>
 
       Examples:
-        | clm         | the inputs                                                                                 | kind                         | involved                                       |
-        | CLM-RPT-147 | one.feature, tagged @ONE, with a scenario tagged @CLM-TWO-001, and two.feature tagged @TWO | foreign-claim-code           | one.feature, CLM-TWO-001 and two.feature       |
-        | CLM-RPT-149 | three.feature, with no feature code, with a scenario tagged @CLM-ONE-002                   | no-feature-code              | three.feature                                  |
-        | CLM-RPT-150 | one.feature and uno.feature, both tagged @ONE                                              | duplicate-feature-code       | ONE, one.feature and uno.feature               |
-        | CLM-RPT-151 | the scenario adds in one.feature, tagged both @CLM-ONE-001 and @CLM-ONE-002                | several-claim-codes          | one.feature, adds, CLM-ONE-001 and CLM-ONE-002 |
-        | CLM-RPT-152 | the Outline adds in one.feature, tagged @CLM-ONE-009, with a clm column                    | claim-code-beside-clm-column | one.feature, adds and CLM-ONE-009              |
-        | CLM-RPT-153 | a configuration setting runer, which balance does not know                                 | configuration-unknown-key    | runer                                          |
+        | clm         | the inputs                                                                                 | kind                             | involved                                       |
+        | CLM-RPT-147 | one.feature, tagged @ONE, with a scenario tagged @CLM-TWO-001, and two.feature tagged @TWO | foreign-claim-code               | one.feature, CLM-TWO-001 and two.feature       |
+        | CLM-RPT-149 | three.feature, with no feature code, with a scenario tagged @CLM-ONE-002                   | no-feature-code                  | three.feature                                  |
+        | CLM-RPT-150 | one.feature and uno.feature, both tagged @ONE                                              | duplicate-feature-code           | ONE, one.feature and uno.feature               |
+        | CLM-RPT-151 | the scenario adds in one.feature, tagged both @CLM-ONE-001 and @CLM-ONE-002                | several-claim-codes              | one.feature, adds, CLM-ONE-001 and CLM-ONE-002 |
+        | CLM-RPT-152 | the Outline adds in one.feature, tagged @CLM-ONE-009, with a clm column                    | claim-code-beside-clm-column     | one.feature, adds and CLM-ONE-009              |
+        | CLM-RPT-153 | a non-check ci.yml:ci:No such step, with ci.yml read                                       | not-checks-entry-matches-no-step | ci.yml:ci:No such step                         |
 
   Rule: run integrity says where each Evidence Observation that never ran is
 
