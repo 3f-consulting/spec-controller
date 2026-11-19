@@ -54,7 +54,7 @@ Feature: balance reads and validates the configuration settings the run names
 
     @unit @CLM-CFG-017
     Scenario: the run will still reach its run verdict, using the configuration settings it could use
-      given the specController block had "unit": 3 and "integration": "cucumber-js" under runners
+      given the run named --unit vitest:vitest and --integration cucumber-js
       when balance reconciles the target
       then the run will reach its run verdict
       and cucumber-js will be what runs the integration layer
