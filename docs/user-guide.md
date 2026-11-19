@@ -114,6 +114,12 @@ For the smallest form of the command, and for every flag, see [Command reference
 
 Your first run against an unannotated pipeline fails, and the report is right to fail it: the corpus raises no evidence obligations yet. [A first run, report only](./quickstart.md#a-first-run-report-only) explains why, and shows how `--exit-zero` lets you watch before you gate.
 
+### Gate on the scenarios you have written — use `--written-claims-only`
+
+The route from a first run to a gate has three steps. Start with `--exit-zero`, and watch the report. Name a few scenarios, and cite them from their tests. When those balance, replace `--exit-zero` with `--written-claims-only`.
+
+With `--written-claims-only`, the run verdict counts only the executable claims: the claims your feature files write. A test that cites no claim code, or a code no scenario has, is still listed in the report under the unnamed claim or its phantom claim, but it does not turn the run red, and one that never ran does not make the run unsound. A written claim whose evidence is missing, failing, cannot fail or was not asked for is still out of balance. A run with no executable claim has nothing to reconcile, and a claim code error still leaves the run not reconciled. The report's provenance says when the run verdict counted only the executable claims. When every test cites a scenario, drop the flag.
+
 ### Name your first non-checks
 
 `balance` lists every CI step as a check, except a step that runs a runner you name (see [Naming your runners](#naming-your-runners)) and GitHub's own checkout, setup, cache and artifact actions. Some steps do work but check nothing, such as a step that publishes a package or bumps a version. Name each of these steps once with `--not-check`, by the step's own name:
@@ -1039,6 +1045,7 @@ Help answers only when nothing else on the command line is refused. A usage erro
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See [`--format`](#--format--routing-the-output). |
 | `--strict` | Read every claim as if nothing were put off: a deferral tag is ignored, and `@<quality-check-kind>pending` is read as `@<quality-check-kind>`. See [Deferring a scenario](#deferring-a-scenario). |
 | `--exit-zero` | Print the same report, but exit `0` on an out-of-balance (`1`) verdict. Usage (`2`), not reconciled (`3`) and an unexpected error before the verdict (`4`) still fail. Use it as the on-ramp before gating. |
+| `--written-claims-only` | Count only the executable claims in the run verdict. Tests that cite no claim code, or a code no scenario has, are still listed and do not turn the run red. The provenance says so. See [Gate on the scenarios you have written](#gate-on-the-scenarios-you-have-written--use---written-claims-only). |
 | `--help`, `-h` | Show `balance`'s help and exit. |
 
 ### `--format` — routing the output
@@ -1128,7 +1135,7 @@ The tool writes the code under `CLM`. Its number is one past the highest number 
 
 1. Read the report's **Step account**. It names each workflow and job, how many steps were read, and what became of each one. GitHub's own checkout, setup, cache and artifact actions are already counted out as plumbing.
 2. Name your runners, name your non-checks, or narrow `--ci`. See [Configuration](#configuration--runners-non-checks-and-deferral-tags).
-3. To keep the report while you work through it, without failing the build, add `--exit-zero`. Delete it when you are ready to gate.
+3. To keep the report while you work through it, without failing the build, add `--exit-zero`. When the scenarios you have named balance, replace it with `--written-claims-only` to gate on them alone.
 
 **A step I know is my test suite is reported as a check.** Runner recognition did not reach it. `balance` recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. It does not reach a suite:
 
