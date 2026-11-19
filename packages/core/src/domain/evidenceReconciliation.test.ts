@@ -99,6 +99,8 @@ describe("the run will be not reconciled, naming why", () => {
   it.each([
     ["CLM-EVR-004", "an Evidence Observation that never ran", ["@CLM-ONE-001"], [["unit", "never-ran", "ONE-001"]], "unsound"],
     ["CLM-EVR-005", "a claim code error, and only balanced Claim Reconciliations", ["@CLM-TWO-001"], [["unit", "passed", "TWO-001"]], "claim-code-errors"],
+    ["CLM-EVR-006", "no feature corpus, and no Evidence Observation", [], [], "nothing-to-reconcile"],
+    ["CLM-EVR-007", "an empty feature corpus, and no Evidence Observation", [], [], "nothing-to-reconcile"],
     ["CLM-EVR-008", "a feature corpus with no scenario, and no Evidence Observation", ["@ONE\nFeature: one\n"], [], "nothing-to-reconcile"],
   ] as const)("[%s] a run with %s is not reconciled, naming why", (_clm, _what, corpus, evidence, why) => {
     expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict: "not-reconciled", why });
