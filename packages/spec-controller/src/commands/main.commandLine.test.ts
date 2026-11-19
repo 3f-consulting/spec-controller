@@ -269,13 +269,17 @@ describe("balance posts the results of every evidence report the run names for o
 });
 
 describe("the provenance shows each input the run read on its own line", () => {
-  it("[CLM-RPT-172] --vitest given twice, naming a/vitest.json and b/vitest.json: the Markdown report's provenance has a line for each", () => {
-    const folder = folderWith({ "features/one.feature": TWO_CLAIMS, "a/vitest.json": BY_FILE_PASSING, "b/vitest.json": BY_FILE_PASSING.replaceAll("CLM-ONE-001", "CLM-ONE-002") });
+  it.each([
+    ["CLM-RPT-172", "--vitest", "a/vitest.json", "b/vitest.json", BY_FILE_PASSING, BY_FILE_PASSING.replaceAll("CLM-ONE-001", "CLM-ONE-002")],
+    ["CLM-RPT-173", "--ci-steps", "a/steps.json", "b/steps.json", '{"lint":{"outcome":"success","conclusion":"success"}}', '{"test":{"outcome":"success","conclusion":"success"}}'],
+  ] as const)("[%s] %s given twice, naming %s and %s: the Markdown report's provenance has a line for each", (_code, flag, first, second, firstContent, secondContent) => {
+    const folder = folderWith({ "features/one.feature": TWO_CLAIMS, [first]: firstContent, [second]: secondContent });
 
-    const { output } = ran(["balance", "--vitest", "a/vitest.json", "--vitest", "b/vitest.json", "--format", "md"], folder);
+    const { output } = ran(["balance", flag, first, flag, second, "--format", "md"], folder);
 
     const provenance = output.slice(output.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
-    expect(provenance.filter((line) => line.includes("vitest.json"))).toEqual([expect.stringMatching(/^ {2}- .+: `a\/vitest\.json`$/), expect.stringMatching(/^ {2}- .+: `b\/vitest\.json`$/)]);
+    const lineEndingIn = (path: string) => expect.stringMatching(new RegExp(`^ {2}- .+: \`${path.replaceAll(".", "\\.")}\`$`));
+    expect(provenance.filter((line) => line.includes(first.slice(2)))).toEqual([lineEndingIn(first), lineEndingIn(second)]);
   });
 });
 
