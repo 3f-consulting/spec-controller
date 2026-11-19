@@ -7,11 +7,11 @@ import { scenarioResultsFrom } from "../inputs/cucumber.js";
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { ClaimCode } from "./claimCodes.js";
-import type { TargetConfiguration } from "./configuration.js";
+import type { Runner, TargetConfiguration } from "./configuration.js";
 import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { claimReconciliationsOf, type ClaimReconciliation } from "./claimReconciliation.js";
 import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
-import { disposedStepsOf, fitnessObservationsOf, layersServing, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
+import { disposedStepsOf, fitnessObservationsOf, observationsOfTestResults, type EvidenceObservation } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 const ONE_001: ClaimCode = { featureCode: "ONE", number: "001" };
@@ -416,41 +416,35 @@ describe("balance posts what could not run as never ran, from a report kept by s
   });
 });
 
-// Each format with no kind tags: the file name its report is written to, and its one passing result,
-// posted as evidence of the layers given.
+// Each format with no kind tags: its one passing result, posted as evidence of the layers its report's runners serve.
 const UNTAGGED_FORMATS = {
   JUnit: {
-    report: "playwright.xml",
     posted: (served: readonly QualityCheckKind[]) =>
       observationsOfTestResults(resultsBySuiteFrom(reportBySuite("surefire", "example.AddsTest", testCase("example.AddsTest", "[CLM-ONE-001] adds one")), "junit"), "/work", served),
   },
-  Vitest: { report: "vitest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
-  Jest: { report: "jest.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(jestReportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
+  Vitest: { posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(reportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
+  Jest: { posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByFileFrom(jestReportByFile("/work/one.test.ts", [{ title: "[CLM-ONE-001] it holds", status: "passed" }])), "/work", served) },
   pytest: {
-    report: "pytest.xml",
     posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsBySuiteFrom(reportBySuite("pytest", "pytest", testCase("test_adds", "test_adds_one", CLM_PROPERTY)), "pytest"), "/work", served),
   },
-  RSpec: { report: "rspec.json", posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByExampleFrom(reportByExample([{ description: "[CLM-ONE-001] adds one", status: "passed" }])), "/work", served) },
+  RSpec: { posted: (served: readonly QualityCheckKind[]) => observationsOfTestResults(resultsByExampleFrom(reportByExample([{ description: "[CLM-ONE-001] adds one", status: "passed" }])), "/work", served) },
 } as const;
 
 type UntaggedFormat = keyof typeof UNTAGGED_FORMATS;
 
-const CUCUMBER_UNDER_PERFORMANCE: TargetConfiguration["runners"] = { ...NO_RUNNERS, performance: [{ name: "cucumber-js", reports: ["cucumber.json"] }] };
-const CUCUMBER_UNDER_INTEGRATION_AND_E2E: TargetConfiguration["runners"] = {
-  ...NO_RUNNERS,
-  integration: [{ name: "cucumber-js", reports: ["cucumber.json"] }],
-  e2e: [{ name: "cucumber-js", reports: ["cucumber.json"] }],
-};
+// cucumber-js writing cucumber.json, as the run names it under each layer it runs.
+const CUCUMBER_JS: readonly Runner[] = [{ name: "cucumber-js", report: { path: "cucumber.json", format: "cucumber" } }];
+const CUCUMBER_UNDER_PERFORMANCE: Partial<TargetConfiguration["runners"]> = { performance: CUCUMBER_JS };
+const CUCUMBER_UNDER_INTEGRATION_AND_E2E: Partial<TargetConfiguration["runners"]> = { integration: CUCUMBER_JS, e2e: CUCUMBER_JS };
 
 describe("balance identifies a result's kind of quality check as the layer its report's runner serves", () => {
   it.each(postEvidenceObservationVariants["formats-without-kind-tags-named-under-a-layer"].variants)("[CLM-OBS-164] with playwright named as a runner writing its report, a result in its report, %s, is read as evidence of that layer", (variant) => {
     const [format, layer] = variant.split(", under ") as [UntaggedFormat, "integration" | "e2e" | "performance"];
-    const { report, posted } = UNTAGGED_FORMATS[format];
 
-    expect(posted(layersServing(report, { ...NO_RUNNERS, [layer]: [{ name: "playwright", reports: [report] }] })).map(({ kind }) => kind)).toEqual([layer]);
+    expect(UNTAGGED_FORMATS[format].posted([layer]).map(({ kind }) => kind)).toEqual([layer]);
   });
 
-  it.each<[string, TargetConfiguration["runners"], readonly string[], string, readonly QualityCheckKind[]]>([
+  it.each<[string, Partial<TargetConfiguration["runners"]>, readonly string[], string, readonly QualityCheckKind[]]>([
     ["CLM-OBS-063", CUCUMBER_UNDER_PERFORMANCE, [], "passed", ["performance"]],
     ["CLM-OBS-062", CUCUMBER_UNDER_INTEGRATION_AND_E2E, ["e2e"], "passed", ["e2e"]],
     ["CLM-OBS-064", CUCUMBER_UNDER_INTEGRATION_AND_E2E, ["integration", "e2e"], "passed", ["integration", "e2e"]],
@@ -458,8 +452,9 @@ describe("balance identifies a result's kind of quality check as the layer its r
     ["CLM-OBS-165", CUCUMBER_UNDER_INTEGRATION_AND_E2E, [], "passed", ["integration", "e2e"]],
   ])("[%s] with the runners %j, a scenario in cucumber.json tagged %j whose step %s is read as %j evidence", (_clm, runners, tags, status, kinds) => {
     const report = reportByScenario("features/one.feature", [{ tags: ["CLM-ONE-001", ...tags], steps: [["Given ", "one adds one", status]] }]);
+    const served = Object.keys(runners) as QualityCheckKind[];
 
-    expect(postedByScenario(report, [], layersServing("cucumber.json", runners)).map(({ kind }) => kind)).toEqual(kinds);
+    expect(postedByScenario(report, [], served).map(({ kind }) => kind)).toEqual(kinds);
   });
 });
 

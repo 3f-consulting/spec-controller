@@ -69,7 +69,7 @@ Feature: Evidence Observations are posted, each to its claim
 
     @unit
     Scenario Outline: balance identifies a result's kind of quality check as the layer its report's runner serves
-      given the target's configuration named <runners>
+      given the run named <runners>
       and <result>
       when balance reads the evidence
       then the result will be <kind of quality check> evidence
