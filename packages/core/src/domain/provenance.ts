@@ -1,9 +1,14 @@
 import { shownFromTarget } from "./targetPath.js";
 
-// An input the run was given or took by default, its path relative to the target's folder; no path when it was absent.
+// An input the run was given or took by default, with no path when it was absent.
 export interface ProvenanceInput {
   readonly name: string;
   readonly path?: string;
+}
+
+// Each input kind the run could read, once for each path it read for it, in order, or once with no path when it read none.
+export function provenanceInputsOf(kinds: readonly { readonly name: string; readonly paths: readonly string[] }[]): ProvenanceInput[] {
+  return kinds.flatMap(({ name, paths }) => (paths.length === 0 ? [{ name }] : paths.map((path) => ({ name, path }))));
 }
 
 // target is unknown-target when nothing names one; sourceSha is unknown outside git.

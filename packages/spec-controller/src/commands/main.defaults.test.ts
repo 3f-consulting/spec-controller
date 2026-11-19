@@ -38,6 +38,14 @@ describe("balance will use the default when an input is not named", () => {
   });
 });
 
+describe("a flag the command takes will take effect", () => {
+  it("[CLM-CLI-121] balance given --target and --source-sha, each with its value as the next argument: the report's provenance has each value", () => {
+    const { target, sourceSha } = provenanceIn(temporaryDirectory("named-"), "--target", "acme/web", "--source-sha", "abc1234");
+
+    expect({ target, sourceSha }).toEqual({ target: "acme/web", sourceSha: "abc1234" });
+  });
+});
+
 describe("the target's folder will be the git repository the corpus is in, or else the corpus's parent folder", () => {
   it("[CLM-CLI-184] a corpus named in a git repository's subfolder, reached by its own path, run from elsewhere: the target is that repository", () => {
     const repository = repositoryForTest();

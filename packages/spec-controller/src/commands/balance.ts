@@ -1,12 +1,12 @@
 import {
   configurationSettingsFrom,
   EVIDENCE_REPORT_FORMATS,
+  provenanceInputsOf,
   reconcile,
   repositoryOfOrigin,
   scriptsFrom,
   shellAnswers,
   targetFolderOf,
-  type ProvenanceInput,
   type ReportGiven,
 } from "@3f-consulting/spec-controller-core";
 import { realpathSync } from "node:fs";
@@ -24,12 +24,9 @@ import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/r
 // A run has no step and no step record of an input it did not read.
 const NONE: readonly never[] = [];
 
-// Every input the run could read, once for each path it read, its links followed, or once with no path when it read none.
-const provenanceInputsOf = ({ pathsRead }: InputsRead, folder: string): ProvenanceInput[] =>
-  INPUT_KINDS.flatMap((kind): ProvenanceInput[] => {
-    const paths = pathsRead[kind] ?? NONE;
-    return paths.length === 0 ? [{ name: kind, path: undefined }] : paths.map((path) => ({ name: kind, path: realpathSync(resolve(folder, path)) }));
-  });
+// Every input kind the run could read, with each path it read for it, its links followed.
+const inputPathsOf = ({ pathsRead }: InputsRead, folder: string) =>
+  INPUT_KINDS.map((name) => ({ name, paths: (pathsRead[name] ?? NONE).map((path) => realpathSync(resolve(folder, path))) }));
 
 // A corpus the command line named is where the target is; with none named, it is where the run started.
 const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | undefined => {
@@ -69,7 +66,7 @@ export function balance(
     shell: shellAnswers,
     repositoryOf: repositoryOfOrigin,
     identity,
-    provenanceInputs: provenanceInputsOf(read, folder),
+    provenanceInputs: provenanceInputsOf(inputPathsOf(read, folder)),
     targetFolder,
     strict,
   });
