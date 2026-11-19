@@ -67,6 +67,31 @@ describe("a flag the command takes will take effect", () => {
   });
 });
 
+describe("the target's folder will be the git repository the corpus is in, or else the corpus's parent folder", () => {
+  it("[CLM-CLI-184] a corpus named in a git repository's subfolder, reached by its own path, run from elsewhere: the target is that repository", () => {
+    const repository = repositoryForTest();
+    repository.write("docs/features/one.feature", "@ONE\nFeature: one\n");
+    repository.commit("one");
+
+    expect(inputPath(provenanceIn(temporaryDirectory("elsewhere-"), "--features", `${repository.top}/docs/features`), "features")).toBe("docs/features");
+  });
+
+  it("[CLM-CLI-144] a corpus named in no git repository, run from elsewhere: the target is the corpus's folder", () => {
+    const folder = temporaryDirectory("no-git-");
+    mkdirSync(join(folder, "features"));
+
+    expect(inputPath(provenanceIn(temporaryDirectory("elsewhere-"), "--features", join(folder, "features")), "features")).toBe("features");
+  });
+
+  it("[CLM-CLI-142] no feature corpus named, run from a folder: the target is that folder", () => {
+    const folder = temporaryDirectory("no-corpus-");
+    mkdirSync(join(folder, "reports"));
+    writeFileSync(join(folder, "reports", "vitest.json"), '{"testResults":[]}');
+
+    expect(inputPath(provenanceIn(folder, "--unit", `vitest:vitest:${join(folder, "reports", "vitest.json")}`), "vitest")).toBe("reports/vitest.json");
+  });
+});
+
 const ONE_UNIT_CLAIM = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n";
 
 // A Vitest evidence report with a passing test citing CLM-ONE-001 and a failing test citing no code.
