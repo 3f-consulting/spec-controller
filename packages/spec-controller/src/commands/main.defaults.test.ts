@@ -67,6 +67,6 @@ describe("the target's folder will be the git repository the corpus is in, or el
     mkdirSync(join(folder, "reports"));
     writeFileSync(join(folder, "reports", "vitest.json"), '{"testResults":[]}');
 
-    expect(inputPath(provenanceIn(folder, "--vitest", join(folder, "reports", "vitest.json")), "vitest")).toBe("reports/vitest.json");
+    expect(inputPath(provenanceIn(folder, "--unit", `vitest:vitest:${join(folder, "reports", "vitest.json")}`), "vitest")).toBe("reports/vitest.json");
   });
 });

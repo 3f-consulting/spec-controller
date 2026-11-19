@@ -116,8 +116,8 @@ describe("an unexpected error will stop the run with no verdict and exit 4, nami
   });
 
   it.each([
-    ["a report's shape check", "whereResultsByFileBreak", ["balance", "--vitest", "vitest.json"], { "vitest.json": PASSING_VITEST_REPORT }],
-    ["a report's reader", "resultsByFileFrom", ["balance", "--vitest", "vitest.json"], { "vitest.json": PASSING_VITEST_REPORT }],
+    ["a report's shape check", "whereResultsByFileBreak", ["balance", "--unit", "vitest:vitest:vitest.json"], { "vitest.json": PASSING_VITEST_REPORT }],
+    ["a report's reader", "resultsByFileFrom", ["balance", "--unit", "vitest:vitest:vitest.json"], { "vitest.json": PASSING_VITEST_REPORT }],
     ["the feature-file reader", "featureAsWrittenFrom", ["balance"], {}],
     ["the workflow reader", "workflowStepsFrom", ["balance", "--ci", "workflows"], { "workflows/ci.yml": WORKFLOW }],
     ["allocate reading a feature file's code", "featureCodeOfFile", ["allocate", "ONE"], {}],

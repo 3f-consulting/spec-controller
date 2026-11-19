@@ -47,7 +47,7 @@ Given("Cucumber's evidence report had a result for each row", function (this: Ro
 });
 
 When("balance posts the evidence", function (this: Rows) {
-  const run = spawnSync(process.execPath, [CLI, "balance", "--features", "features", "--cucumber", "cucumber.json", "--format", "json"], { cwd: this.folder, encoding: "utf8" });
+  const run = spawnSync(process.execPath, [CLI, "balance", "--features", "features", "--integration", "cucumber-js:cucumber:cucumber.json", "--format", "json"], { cwd: this.folder, encoding: "utf8" });
   this.report = run.stdout;
   this.error = run.stderr;
 });

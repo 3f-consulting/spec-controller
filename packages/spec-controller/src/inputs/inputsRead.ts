@@ -21,13 +21,13 @@ import appCatalogue from "../messages/messages.en.json" with { type: "json" };
 import type { Refusal } from "../runEnding/runEnding.js";
 import type { InputFault, InputRead } from "./inputRead.js";
 
-// One evidence report read: its file name, which a runners entry may name; its path as given, a folder's file as the
-// folder's path joined with its name; its results as its reader reports them; and its format.
+// One evidence report read: its path as given, a folder's file as the folder's path joined with its name; its results as
+// its reader reports them; its format; and, for a report a runner's long form names, the path the long form gives.
 interface ReportRead {
-  readonly report: string;
   readonly path: string;
   readonly results: readonly TestResult[];
   readonly format: EvidenceReportFormat;
+  readonly located?: string;
 }
 
 // Every input the run read, each as its reader reports it; an input not read is absent.
@@ -38,6 +38,8 @@ export interface InputsRead {
   readonly reports?: readonly ReportRead[];
   readonly stepRecord?: readonly RecordedStep[];
   readonly manifest?: unknown;
+  // Every report path a runner's long form names at which no file was.
+  readonly reportsNotFound?: readonly string[];
   // Every file read, so no report lands on one.
   readonly filesRead: readonly string[];
   // Every path given for each input read, in order.
@@ -110,7 +112,7 @@ function jsonRead<Contents>(file: FileText, whereItBreaks: (report: unknown) => 
 
 // An evidence report read as its format reads one: the one report its file holds.
 function reportRead(file: FileText, format: EvidenceReportFormat): InputRead<Partial<InputsRead>> {
-  const reportOf = (results: readonly TestResult[]): Partial<InputsRead> => ({ reports: [{ report: file.name, path: file.shown, results, format }] });
+  const reportOf = (results: readonly TestResult[]): Partial<InputsRead> => ({ reports: [{ path: file.shown, results, format }] });
   if (format.parsedAs !== "xml") return jsonRead(file, format.whereItBreaks, (report) => reportOf(format.resultsFrom(report)));
   const wrong = whyXmlDoesNotParse(file.text);
   if (wrong !== undefined) return failed(file.shown, "does-not-parse", wrong);
@@ -157,11 +159,13 @@ const READERS = {
 // Each input it can read, by the reader that reads it.
 type InputKind = keyof typeof READERS;
 
-// An input named on the command line, or left to its default path.
-interface InputNamed {
+// An input named on the command line, or left to its default path. A located input is a report a runner's long form
+// names, where no file is a fact, not a fault.
+export interface InputNamed {
   readonly kind: InputKind;
   readonly path: string;
   readonly byDefault: boolean;
+  readonly located?: boolean;
 }
 
 function statAt(path: string): Stats | { readonly fault: InputFault; readonly said: string } {
@@ -172,13 +176,15 @@ function statAt(path: string): Stats | { readonly fault: InputFault; readonly sa
   }
 }
 
-// The files an input names, or why it cannot be read; a default that does not exist names none.
-function filesOf({ kind, path: shown, byDefault }: InputNamed, folder: string): InputRead<FileText>[] | undefined {
+// The files an input names, or why it cannot be read; a default that does not exist names none, and a located input with
+// no file is absent.
+function filesOf({ kind, path: shown, byDefault, located }: InputNamed, folder: string): InputRead<FileText>[] | "absent" | undefined {
   const path = resolve(folder, shown);
   const { reads = "file", endings }: InputReader = READERS[kind];
   const stats = statAt(path);
   // A default that cannot be reached is none.
   if ("fault" in stats && byDefault) return undefined;
+  if ("fault" in stats && located === true && stats.fault === "absent") return "absent";
   if ("fault" in stats) return [failed(shown, stats.fault, stats.said)];
   if (stats.isDirectory() && endings !== undefined) {
     try {
@@ -212,21 +218,30 @@ const merged = (reads: readonly Partial<InputsRead>[]): Partial<InputsRead> =>
     {},
   );
 
+// A located input's reports, each with the path its long form gives.
+const locatedAt = (contents: Partial<InputsRead>, { path, located }: InputNamed): Partial<InputsRead> =>
+  located === true ? { ...contents, reports: (contents.reports ?? []).map((report) => ({ ...report, located: path })) } : contents;
+
 // Every input is read before any work, and every one that cannot be read is refused, each named.
 export function inputsReadFor(inputs: readonly InputNamed[], folder: string): InputsRead | { readonly refusals: readonly Refusal[] } {
   const refusals: Refusal[] = [];
   const reads: Partial<InputsRead>[] = [];
   const filesRead: string[] = [];
   const pathsRead: Partial<Record<InputKind, string[]>> = {};
+  const reportsNotFound: string[] = [];
   for (const request of inputs) {
     const named = filesOf(request, folder);
     if (named === undefined) continue;
+    if (named === "absent") {
+      reportsNotFound.push(request.path);
+      continue;
+    }
     pathsRead[request.kind] = [...(pathsRead[request.kind] ?? []), request.path];
     const texts = named.flatMap((file) => (file.ok ? [file.contents] : []));
     filesRead.push(...texts.map(({ path }) => path));
     const read = [...named.filter((file) => !file.ok), ...READERS[request.kind].read(texts)];
-    read.forEach((each) => (each.ok ? reads.push(each.contents) : refusals.push(refusalOf(request, each))));
+    read.forEach((each) => (each.ok ? reads.push(locatedAt(each.contents, request)) : refusals.push(refusalOf(request, each))));
   }
   if (refusals.length > 0) return { refusals };
-  return { features: [], ...merged(reads), filesRead, pathsRead };
+  return { features: [], ...merged(reads), filesRead, pathsRead, ...(reportsNotFound.length > 0 && { reportsNotFound }) };
 }

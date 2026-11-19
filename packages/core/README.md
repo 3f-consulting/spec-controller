@@ -19,7 +19,7 @@ npm install @3f-consulting/spec-controller-core
 ```ts
 import { readFileSync } from "node:fs";
 import {
-  configurationSettingsFrom,
+  configurationSettingsNamed,
   featureAsWrittenFrom,
   markdownReportOf,
   reconcile,
@@ -38,10 +38,10 @@ const manifest: unknown = JSON.parse(readFileSync(`${targetFolder}/package.json`
 
 const evidenceReconciliation = reconcile({
   features: [featureAsWrittenFrom("checkout.feature", featureSource)],
-  reports: [{ report: "vitest-report.json", results: resultsByFileFrom(vitestReport), defaultLayer: "unit", needsFeatures: false }],
+  reports: [{ results: resultsByFileFrom(vitestReport), layers: ["unit"], needsFeatures: false }],
   steps: [],
   stepRecord: [],
-  settings: configurationSettingsFrom(manifest),
+  settings: configurationSettingsNamed({ runners: { unit: ["vitest:vitest:vitest-report.json"] }, nonChecks: [], deferralTags: [] }),
   scripts: scriptsFrom(manifest),
   shell: shellAnswers,
   repositoryOf: repositoryOfOrigin,
@@ -56,8 +56,8 @@ markdownReportOf(evidenceReconciliation);
 ```
 
 - `featureAsWrittenFrom` reads one feature file into its scenarios: its tags, and each scenario's tags, title and Examples, including each Outline row's `clm` cell. It throws if the Gherkin parser rejects the file.
-- `resultsByFileFrom` reads a Vitest or Jest JSON report into test results. Each report goes to `reconcile` with three things: its file name, which a `runners` entry may name; the layer its format serves when no entry names it; and whether its results need the feature files, as a Cucumber report's do.
-- `configurationSettingsFrom` reads the `specController` block of the target's `package.json` into its settings, and `scriptsFrom` reads its scripts.
+- `resultsByFileFrom` reads a Vitest or Jest JSON report into test results. Each report goes to `reconcile` with two things: the layers of the runners whose long form names it, and whether its results need the feature files, as a Cucumber report's do.
+- `configurationSettingsNamed` reads the runners, non-checks and deferral tags a run names on its command line into its settings, and `scriptsFrom` reads the scripts in the target's `package.json`.
 - `reconcile` gives the whole **Evidence Reconciliation**: the Claim Reconciliations, the run verdict, the totals, the step account, the provenance, the errors in the inputs and the run integrity. It checks the settings against the CI steps and the reports, and says what each CI step is. It reads the executable claims and their **Evidence Obligations** off the feature files. It posts each report's results and each fitness function's step as **Evidence Observations**. It reconciles each claim into a **Claim Reconciliation**. With no CI, as here, the steps, the step record and the step account are empty.
 
 Everything else the package exports is a variation on these steps.
@@ -69,13 +69,14 @@ The package publishes exactly one entrypoint: a barrel that exports the followin
 - **Read the inputs.** Each reader translates its tool's format into the domain's words. A test's status becomes passed, failed or never ran. A CI step's `continue-on-error` becomes whether the run may allow its failure. The step record's outcomes become each step's result. Beside each report's reader is a `where…Break`. It says where the report first breaks the shape its tool writes, or gives nothing if the report matches that shape.
   - feature files: `featureAsWrittenFrom`;
   - test reports: `resultsByFileFrom` (Vitest and Jest JSON), `resultsBySuiteFrom` (JUnit XML, from pytest, gotestsum, Maven Surefire or Gradle, given as text, with `whyXmlDoesNotParse`), `resultsByExampleFrom` (RSpec JSON) and `scenarioResultsFrom` (Cucumber JSON);
-  - evidence report formats: `EVIDENCE_REPORT_FORMATS` lists the six report formats above, one entry for each. An entry gives the format's flag and its value, whether it parses as JSON or as XML, its `where…Break` and its reader, the endings it reads in a folder if it reads one, whether its results need the feature files, and its default layer;
+  - evidence report formats: `EVIDENCE_REPORT_FORMATS` lists the six report formats above, one entry for each. An entry gives the format's name, as a runner's long form names it, whether it parses as JSON or as XML, its `where…Break` and its reader, the endings it reads in a folder if it reads one, and whether its results need the feature files;
   - CI: `workflowStepsFrom` reads one workflow's steps, and `stepRecordFrom` reads a run's `toJSON(steps)` record;
-  - the target's `package.json`: `configurationSettingsFrom` reads its `specController` block into its settings, `targetConfigurationFrom` reads the block and checks it against the CI steps and the reports read, and `scriptsFrom` reads its scripts;
+  - the settings a run names: `configurationSettingsNamed` reads its runners, non-checks and deferral tags;
+  - the target's `package.json`: `scriptsFrom` reads its scripts;
   - `shellAnswers` says whether a step's command runs a runner, through the target's scripts, and whether it runs `spec-controller balance`. `repositoryOfOrigin` names the repository a git origin points to.
 
   `resultsBySuiteFrom` takes the tool that wrote the report. JUnit and pytest differ in one way: how an `<error>` on an ordinary test reads. From JUnit it posts as failed. From pytest it posts as never ran, because pytest writes an `<error>` for an error in a test's setup or teardown.
-- **Post the claims and the evidence**: `executableClaimsOf`; `observationsOfTestResults`, which posts a report's test results at its format's default layer, unless it is given the layers the report serves; and `fitnessObservationsOf`, which posts the CI steps that are fitness functions. For a Cucumber report, `observationsOfTestResults` also takes the feature files, where an Outline row's claim code is. `stepDispositionOf` says what a CI step is: the reconciler, a non-check, plumbing, a runner or a fitness function. `disposedStepsOf` gives each of a run's CI steps with what it is, once. `fitnessObservationsOf` and `stepAccountOf` both take its answer.
+- **Post the claims and the evidence**: `executableClaimsOf`; `observationsOfTestResults`, which posts a report's test results at the layers the report serves; and `fitnessObservationsOf`, which posts the CI steps that are fitness functions. For a Cucumber report, `observationsOfTestResults` also takes the feature files, where an Outline row's claim code is. `stepDispositionOf` says what a CI step is: the reconciler, a non-check, plumbing, a runner or a fitness function. `disposedStepsOf` gives each of a run's CI steps with what it is, once. `fitnessObservationsOf` and `stepAccountOf` both take its answer.
 - **Reconcile**: `reconcile` takes what the readers gave and gives the whole Evidence Reconciliation in one call. The steps it runs are exported too: `claimReconciliationsOf`, then `evidenceReconciliationOf`, which assembles the whole from its parts. The Evidence Reconciliation's `runVerdict` is one of `balanced`, `out-of-balance`, or `not-reconciled`. A `not-reconciled` verdict has a `why` of `unsound`, `claim-code-errors` or `nothing-to-reconcile`. `stepAccountOf` works out the step account from each CI step and what it is, as `disposedStepsOf` gives them. The CLI takes its exit code from the run verdict.
 - **Claim codes**: `isFeatureCode`, `featureCodeOfFile`, `writtenClaimCode`, `claimCodeErrorsOf`, and `allocationOf`. `allocationOf` gives the next claim code for a feature code, from the code occurrences you read.
 - **Report**: `markdownReportOf` and `jsonReportOf`, and `textFor`, which fills a message catalogue's text for a code.

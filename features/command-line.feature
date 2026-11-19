@@ -188,13 +188,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance writes its report
       then the report's step account will count two steps
 
-    @unit @CLM-CLI-209
-    Scenario: balance matches each evidence report it read to the runners entry naming its file name, wherever the run read it from
-      given the target's configuration named playwright as the e2e runner, writing playwright.xml
-      and the run read a JUnit evidence report at out/reports/playwright.xml, with one result citing CLM-ONE-001
-      when balance reconciles the target
-      then that result will be e2e evidence for CLM-ONE-001
-
     @unit @CLM-CLI-210
     Scenario: balance posts the results of every evidence report the run names for one runner
       given the run named two Vitest evidence reports, each with one result citing a different claim
@@ -207,6 +200,20 @@ Feature: the command line reads what you give it, and says where each kind of ou
       and the run named two step records, one in which CLM-ONE-001 succeeded and one in which CLM-ONE-002 succeeded
       when balance reads its inputs
       then it will post both steps, each citing its own code
+
+    @unit @CLM-CLI-212
+    Scenario: balance reads the evidence report the run names for a runner, at that path, as that runner's layer's evidence
+      given the run named playwright as the e2e runner, with out/playwright.xml as its JUnit evidence report
+      and out/playwright.xml had one passing result citing CLM-ONE-001
+      when balance reads its inputs
+      then it will read out/playwright.xml as e2e evidence
+
+    @unit @CLM-CLI-213
+    Scenario: an evidence report the run names for a runner, with no file at its path, will not stop the run
+      given the run named playwright as the e2e runner, with out/playwright.xml as its JUnit evidence report
+      and no file was at out/playwright.xml
+      when balance reads its inputs
+      then the run will not stop
 
   Rule: a command validates every input before it does its work
 
@@ -226,19 +233,6 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads it
       then it will post its results
       and the run will not stop
-
-    @unit
-    Scenario Outline: balance posts the result in the evidence report each runner's flag names
-      given the run named <flag> with an evidence report of one passing result that cites a claim
-      when balance reads its inputs
-      then it will post that result
-
-      Examples:
-        | clm         | flag       |
-        | CLM-CLI-196 | --vitest   |
-        | CLM-CLI-199 | --jest     |
-        | CLM-CLI-200 | --rspec    |
-        | CLM-CLI-201 | --cucumber |
 
     @unit
     Scenario Outline: an input that is not valid will stop the run

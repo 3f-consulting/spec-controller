@@ -5,10 +5,19 @@ const balanceRequested = (args: readonly string[]) => runRequestOf(["balance", .
 
 describe("a flag the command takes will take effect", () => {
   it("[CLM-CLI-121] a flag and its value as two arguments: the flag takes that value", () => {
-    expect(balanceRequested(["--features", "specs", "--vitest", "vitest.json"]).inputs.filter(({ byDefault }) => !byDefault)).toEqual([
-      { kind: "features", path: "specs", byDefault: false },
-      { kind: "vitest", path: "vitest.json", byDefault: false },
+    const { inputs, settings } = balanceRequested([
+      ...["--features", "specs", "--unit", "vitest", "--integration", "cucumber:json:cucumber.json", "--e2e", "playwright"],
+      ...["--performance", "k6", "--not-check", "ci.yml:build:Lint", "--deferral-tag", "@later"],
     ]);
+
+    expect({ inputs: inputs.filter(({ byDefault }) => !byDefault), settings }).toEqual({
+      inputs: [{ kind: "features", path: "specs", byDefault: false }],
+      settings: {
+        runners: { unit: ["vitest"], integration: ["cucumber:json:cucumber.json"], e2e: ["playwright"], performance: ["k6"] },
+        nonChecks: ["ci.yml:build:Lint"],
+        deferralTags: ["@later"],
+      },
+    });
   });
 
   it("[CLM-CLI-121] --target and --source-sha, each with its value as the next argument: each takes that value", () => {

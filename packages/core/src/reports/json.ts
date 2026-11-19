@@ -4,7 +4,7 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 // alters one changes the schema, and the schema check then needs schemaVersion raised.
 export interface JsonReport {
   // Raised whenever the report's structure changes, so a reader can tell which contract a report follows.
-  readonly schemaVersion: 3;
+  readonly schemaVersion: 4;
   readonly claimReconciliations: EvidenceReconciliation["claimReconciliations"];
   readonly runVerdict: EvidenceReconciliation["runVerdict"];
   readonly totals: EvidenceReconciliation["totals"];
@@ -15,7 +15,7 @@ export interface JsonReport {
 }
 
 export const jsonReportFrom = ({ claimReconciliations, runVerdict, totals, stepAccount, provenance, errorsInTheInputs, runIntegrity }: EvidenceReconciliation): JsonReport => ({
-  schemaVersion: 3,
+  schemaVersion: 4,
   claimReconciliations,
   runVerdict,
   totals,

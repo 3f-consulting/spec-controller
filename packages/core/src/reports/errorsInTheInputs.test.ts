@@ -39,7 +39,13 @@ describe("Errors in the inputs lists each error under its kind, with the files, 
       [],
       "- `claim-code-beside-clm-column`: `one.feature`, `adds`, `CLM-ONE-009`",
     ],
-    ["CLM-RPT-153", "a configuration setting runer, which balance does not know", [], [{ kind: "configuration-unknown-key", entry: "runer" }], "- `configuration-unknown-key`: `runer`"],
+    [
+      "CLM-RPT-153",
+      "a non-check ci.yml:ci:No such step, with ci.yml read",
+      [],
+      [{ kind: "not-checks-entry-matches-no-step", entry: "ci.yml:ci:No such step" }],
+      "- `not-checks-entry-matches-no-step`: `ci.yml:ci:No such step`",
+    ],
   ] as const)("[%s] a run with %s lists that error under its kind with what it involves", (_clm, _inputs, sources, configurationErrors, line) => {
     expect(errorsListed(sources, configurationErrors)).toEqual([line]);
   });

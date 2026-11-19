@@ -16,10 +16,10 @@ describe("an empty evidence report will count as no evidence, not as a broken fi
   it("[CLM-CLI-146] a Vitest evidence report listing nothing posts nothing, and the run does not stop", () => {
     const folder = temporaryDirectory("empty-report-");
     writeFileSync(join(folder, "vitest.json"), '{"testResults":[]}');
-    const { features, reports = [], pathsRead } = read([{ kind: "vitest", path: "vitest.json", byDefault: false }], folder);
-    const vitest = reports.filter(({ format }) => format.kind === "vitest").map(({ report, path, results }) => ({ report, path, results }));
+    const { features, reports = [], pathsRead } = read([{ kind: "vitest", path: "vitest.json", byDefault: false, located: true }], folder);
+    const vitest = reports.filter(({ format }) => format.kind === "vitest").map(({ path, results }) => ({ path, results }));
 
-    expect({ features, vitest, pathsRead }).toEqual({ features: [], vitest: [{ report: "vitest.json", path: "vitest.json", results: [] }], pathsRead: { vitest: ["vitest.json"] } });
+    expect({ features, vitest, pathsRead }).toEqual({ features: [], vitest: [{ path: "vitest.json", results: [] }], pathsRead: { vitest: ["vitest.json"] } });
   });
 
   it("[CLM-CLI-146] a CI step record listing nothing posts nothing, and the run does not stop", () => {

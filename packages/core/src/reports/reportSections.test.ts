@@ -15,7 +15,7 @@ describe("the Markdown report's sections will come in a fixed order", () => {
       reconciled({
         scenarios: ["@unit @CLM-ONE-001", "@unit @CLM-TWO-001"],
         unitTests: [["never-ran", "ONE-001"]],
-        configurationErrors: [{ kind: "configuration-unknown-key", entry: "runer" }],
+        configurationErrors: [{ kind: "configuration-wrong-kind", entry: "vitest:vitest" }],
         stepsRead: true,
       }),
     );
@@ -69,7 +69,7 @@ describe("each section will have its heading, each value its label, and each tab
       reconciled({
         scenarios: ["@unit @CLM-ONE-001", "@unit @CLM-TWO-001", "@unit", "@e2e @CLM-ONE-003"],
         unitTests: [["never-ran", "ONE-001"], ["passed", "ONE-009"], ["failed"]],
-        configurationErrors: [{ kind: "configuration-unknown-key", entry: "runer" }],
+        configurationErrors: [{ kind: "configuration-wrong-kind", entry: "vitest:vitest" }],
         stepsRead: true,
         provenance: { toolSha: "9f8e7d6", inputs: [{ name: "vitest", path: "vitest.json" }] },
       }),

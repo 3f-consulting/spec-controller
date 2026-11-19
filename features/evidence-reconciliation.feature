@@ -221,8 +221,8 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
 
       Examples:
         | clm         | what it had                                               | inputs                        |
-        | CLM-EVR-042 | a Cucumber evidence report given                          | that report, among the inputs |
-        | CLM-EVR-043 | no Cucumber evidence report given                         | that report, named as absent  |
+        | CLM-EVR-042 | a Cucumber evidence report read                           | that report, among the inputs |
+        | CLM-EVR-043 | no Cucumber evidence report read                          | that report, named as absent  |
         | CLM-EVR-044 | an input at /work/acme/a.json, for a target at /work/acme | that input as a.json          |
 
     @unit @CLM-EVR-053

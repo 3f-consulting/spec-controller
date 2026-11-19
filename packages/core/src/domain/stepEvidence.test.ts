@@ -6,12 +6,13 @@ import shellVariants from "../inputs/shell.variants.json" with { type: "json" };
 import workflowsVariants from "../inputs/workflows.variants.json" with { type: "json" };
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { TargetConfiguration } from "./configuration.js";
+import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { disposedStepsOf, fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
-// A step named in notChecks, if any; a unit layer that has no runner is set to null.
+// A step named as a non-check, if any, with no runner for any layer.
 const configurationNaming = (notCheck: string | undefined): TargetConfiguration => ({
-  runners: { unit: null },
+  runners: NO_RUNNERS,
   nonChecks: notCheck === undefined ? [] : [{ workflow: "ci.yml", job: "ci", step: notCheck }],
   deferralTags: [],
 });
@@ -25,24 +26,24 @@ describe("balance identifies each result's kind of quality check", () => {
     ["CLM-OBS-008", "running pnpm test, with no unit runner, will be", { run: "pnpm test" }, undefined, 1],
     ["CLM-OBS-012", "running spec-controller balance will not be", { run: "spec-controller balance --features features" }, undefined, 0],
     ["CLM-OBS-119", "running spec-controller balance | tee report.md will not be", { run: "spec-controller balance | tee report.md" }, undefined, 0],
-    ["CLM-OBS-109", "running spec-controller balance, in notChecks, will not be", { name: "Reconcile", run: "spec-controller balance" }, "Reconcile", 0],
-    ["CLM-OBS-014", "named Install, in notChecks, will not be", { name: "Install", run: "pnpm install" }, "Install", 0],
-    ["CLM-OBS-016", "using actions/checkout, in notChecks, will not be", { uses: "actions/checkout@v4" }, "actions/checkout@v4", 0],
+    ["CLM-OBS-109", "running spec-controller balance, named as a non-check, will not be", { name: "Reconcile", run: "spec-controller balance" }, "Reconcile", 0],
+    ["CLM-OBS-014", "named Install, named as a non-check, will not be", { name: "Install", run: "pnpm install" }, "Install", 0],
+    ["CLM-OBS-016", "using actions/checkout, named as a non-check, will not be", { uses: "actions/checkout@v4" }, "actions/checkout@v4", 0],
   ] as const)("[%s] a step %s a fitness function", (_clm, _described, step, notCheck, posted) => {
     expect(fitnessObservationsOf(disposedStepsOf(stepsOf(step), configurationNaming(notCheck), {}, shellAnswers, []), []).filter(({ kind }) => kind === "fitness").length).toBe(posted);
   });
 });
 
-const NO_SETTING: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
+const NO_SETTING: TargetConfiguration = { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] };
 
 describe("balance identifies whether a CI step is a fitness function", () => {
   const installIn = (workflow: string, job: string) => workflowStepsFrom(workflow, JSON.stringify({ jobs: { [job]: { steps: [{ name: "Install", run: "pnpm install" }] } } }));
-  const notCheckingCiInstall: TargetConfiguration = { runners: {}, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install" }], deferralTags: [] };
+  const notCheckingCiInstall: TargetConfiguration = { runners: NO_RUNNERS, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install" }], deferralTags: [] };
 
   it.each([
     ["CLM-OBS-139", "named Install in job test of ci.yml, whose job ci had a step named Install", () => installIn("ci.yml", "test")],
     ["CLM-OBS-140", "named Install in job ci of nightly.yml, beside ci.yml's step Install in job ci", () => installIn("nightly.yml", "ci")],
-  ] as const)("[%s] a step %s, with ci.yml:ci:Install in notChecks, will be a fitness function", (_clm, _step, step) => {
+  ] as const)("[%s] a step %s, with ci.yml:ci:Install named as a non-check, will be a fitness function", (_clm, _step, step) => {
     const steps = [...installIn("ci.yml", "ci"), ...step()];
     const counted = steps.slice(1).map((one) => stepDispositionOf(one, notCheckingCiInstall, {}, shellAnswers));
 
@@ -51,7 +52,7 @@ describe("balance identifies whether a CI step is a fitness function", () => {
 
   it("[CLM-OBS-141] a step using actions/dependency-review-action, with vitest as its unit runner, will be a fitness function", () => {
     const steps = stepsOf({ uses: "actions/dependency-review-action@v4" });
-    const configuration: TargetConfiguration = { runners: { unit: "vitest" }, nonChecks: [], deferralTags: [] };
+    const configuration: TargetConfiguration = { runners: { ...NO_RUNNERS, unit: [{ name: "vitest" }] }, nonChecks: [], deferralTags: [] };
 
     expect({ counted: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers), posted: fitnessObservationsOf(disposedStepsOf(steps, configuration, {}, shellAnswers, []), []).length }).toEqual({
       counted: "fitnessFunction",
@@ -242,7 +243,7 @@ describe("an Evidence Observation says where to look", () => {
   });
 });
 
-const unitRunner = (runner: string): TargetConfiguration => ({ runners: { unit: runner }, nonChecks: [], deferralTags: [] });
+const unitRunner = (runner: string): TargetConfiguration => ({ runners: { ...NO_RUNNERS, unit: [{ name: runner }] }, nonChecks: [], deferralTags: [] });
 const isFitnessFunction = (run: string, runner: string, scripts: Readonly<Record<string, string>> = {}) =>
   fitnessObservationsOf(disposedStepsOf(stepsOf({ run }), unitRunner(runner), scripts, shellAnswers, []), []).length > 0;
 

@@ -37,7 +37,7 @@ Every scenario gets a Claim Reconciliation, whether or not any evidence exists f
 To add it to an existing pipeline without failing that pipeline on day one, add `--exit-zero`:
 
 ```
-spec-controller balance --features ./features --vitest ./vitest-report.json --exit-zero
+spec-controller balance --features ./features --unit vitest:vitest:./vitest-report.json --exit-zero
 ```
 
 The report is the same one a run without the flag prints. It has the same Claim Reconciliations, the same counts and the same run verdict. Only the exit status changes:
@@ -52,9 +52,11 @@ Work through the out-of-balance rows, then delete `--exit-zero`. The gate is the
 ```
 spec-controller balance \
   --features ./features \
-  --vitest ./vitest-report.json \
-  --cucumber ./cucumber-report.json
+  --unit vitest:vitest:./vitest-report.json \
+  --integration cucumber-js:cucumber:./cucumber-report.json
 ```
+
+`--unit` and `--integration` each name a runner of that layer, in the long form `<runner>:<format>:<report>`: the runner, the format of the report it writes, and the report's path. Each result in the report is evidence of the runner's layer.
 
 A scenario tagged `@unit` raises an evidence obligation: a unit test must exist and pass. The evidence answers it by citing the scenario's claim code in its test name. Where the two agree, the Claim Reconciliation is **balanced**. Where they do not, it says how: evidence missing, evidence failing, or evidence that cites a scenario nobody wrote.
 
@@ -81,7 +83,7 @@ The tool writes the whole report before it sets the exit code. So a failing run 
 - an unparseable report, or a report that parses but is not in the shape its runner writes;
 - a corpus the Gherkin parser rejects.
 
-The refusal names the input, the path, and what was wrong with it. A well-formed report with nothing in it is read, not refused. An example is a Vitest run that matched no test file.
+The refusal names the input, the path, and what was wrong with it. A well-formed report with nothing in it is read, not refused. A report a runner's long form names, with no file at its path, is not refused either: the report names the path under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on. An example is a Vitest run that matched no test file.
 
 **An output location it cannot write is also `2`.** This covers a `--format` path that is read-only, is a directory, is under a regular file, or is in a directory that does not exist. The tool refuses it before it prints any report. The refusal names the location and the reason.
 
@@ -95,7 +97,7 @@ The refusal names the input, the path, and what was wrong with it. A well-formed
 
 ```
 spec-controller balance --features ./features \
-  --vitest ./vitest-report.json \
+  --unit vitest:vitest:./vitest-report.json \
   --format md:$GITHUB_STEP_SUMMARY \
   --format json:reconciliation.json
 ```

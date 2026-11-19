@@ -1,6 +1,6 @@
 import { claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
-import { reportsOf, runnerNameOf, type TargetConfiguration } from "./configuration.js";
-import { QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
+import type { TargetConfiguration } from "./configuration.js";
+import type { FeatureFile, QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
 import type { CiStep, FailureAllowed } from "./workflowSteps.js";
 
@@ -61,12 +61,8 @@ export interface ShellAnswers {
 const nearestCitations = (chain: readonly string[]): ClaimCode[] =>
   chain.reduceRight<ClaimCode[]>((found, title) => (found.length > 0 ? found : claimCodeCitationsIn(title)), []);
 
-// The layers a report serves are those its runner entries name, or its format's default layer where none names it. A
-// scenario is evidence of kindsOf's; any other result, of each.
-function layersOf(cites: TestCitation, served: readonly QualityCheckKind[], defaultLayer: QualityCheckKind): readonly QualityCheckKind[] {
-  const layers = served.length > 0 ? served : [defaultLayer];
-  return "scenarioTags" in cites ? kindsOf(cites.scenarioTags, layers) : layers;
-}
+// A scenario is evidence of kindsOf's layers of those its report serves; any other result, of each.
+const layersOf = (cites: TestCitation, served: readonly QualityCheckKind[]): readonly QualityCheckKind[] => ("scenarioTags" in cites ? kindsOf(cites.scenarioTags, served) : served);
 
 // A scenario cites the codes its tags name, or failing those its Outline row's clm cell.
 function codesCitedBy(cites: TestCitation, rowCodeOf: (file: string, line: number) => ClaimCode[]): ClaimCode[] {
@@ -76,13 +72,11 @@ function codesCitedBy(cites: TestCitation, rowCodeOf: (file: string, line: numbe
   return tagged.length > 0 ? tagged : rowCodeOf(cites.file, cites.line);
 }
 
-// defaultLayer is the layer the report's format serves where no runner entry names the report; features is the corpus
-// as written, where an Outline row's claim code is.
+// served is the layers the report's runners serve; features is the corpus as written, where an Outline row's claim code is.
 export function observationsOfTestResults(
   results: readonly TestResult[],
   targetFolder: string,
-  defaultLayer: QualityCheckKind,
-  served: readonly QualityCheckKind[] = [],
+  served: readonly QualityCheckKind[],
   features: readonly FeatureFile[] = [],
 ): EvidenceObservation[] {
   const rowCodeOf = rowCodesOf(features);
@@ -94,13 +88,8 @@ export function observationsOfTestResults(
       ...(name !== undefined && { name }),
       ...(message !== undefined && { message }),
     };
-    return layersOf(cites, served, defaultLayer).map((kind): EvidenceObservation => ({ ...observation, kind }));
+    return layersOf(cites, served).map((kind): EvidenceObservation => ({ ...observation, kind }));
   });
-}
-
-// The layers whose runner entry names the report's file name, in the order the layers run; none when no entry does.
-export function layersServing(report: string, runners: TargetConfiguration["runners"]): QualityCheckKind[] {
-  return QUALITY_CHECK_KINDS.filter((kind) => kind !== "fitness" && reportsOf(runners[kind]).includes(report));
 }
 
 // A scenario is evidence of each layer its report serves that its tags name, and of every one where they name none.
@@ -138,10 +127,7 @@ const isNamedIn = (step: CiStep, { nonChecks }: TargetConfiguration): boolean =>
 
 // The reconciler is recognised in any command of the step, a runner only as the command the step runs, through its scripts.
 const runsARunner = (command: string, { runners }: TargetConfiguration, scripts: Scripts, shell: ShellAnswers): boolean =>
-  Object.values(runners).some((runner) => {
-    const name = runnerNameOf(runner);
-    return name !== undefined && shell.invokesAsCommand(command, name, scripts);
-  });
+  Object.values(runners).some((layerRunners) => layerRunners.some(({ name }) => shell.invokesAsCommand(command, name, scripts)));
 
 export type Scripts = Readonly<Record<string, string>>;
 

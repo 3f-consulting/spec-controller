@@ -409,8 +409,8 @@ by publishing by hand.
   could not read a tree with no list at all before then. That condition is written *at or after*
   that release, never as an equality, because the pin lags and jumps.
 
-The current reader names that key as one the `specController` block does not read, and reads
-nothing from it. That does not change the ordering rule the example teaches: step 3 cannot merge
+The current reader reads no `specController` block at all: its settings are flags on `balance`'s
+command line. That does not change the ordering rule the example teaches: step 3 cannot merge
 before the pin has moved.
 
 ---

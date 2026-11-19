@@ -1,11 +1,10 @@
 import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, isExecutable, type ClaimReconciliation, type CreditJournal, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
-import { targetConfigurationOf, type ConfigurationError, type ConfigurationSettings, type TargetConfiguration } from "./configuration.js";
+import { targetConfigurationOf, type ConfigurationError, type ConfigurationSettings, type Layer } from "./configuration.js";
 import { deferredScenariosOf, executableClaimsOf, QUALITY_CHECK_KINDS, type ClaimReadingSettings, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import {
   disposedStepsOf,
   fitnessObservationsOf,
-  layersServing,
   observationsOfTestResults,
   type DisposedStep,
   type EvidenceObservation,
@@ -242,12 +241,11 @@ export function evidenceReconciliationOf({ claimReconciliations, claimCodeErrors
   };
 }
 
-// One evidence report as its reader gave it: its file name, which a runners entry may name; its test results; the layer
-// its format serves where no runners entry names it; and whether its results are posted with the feature files.
+// One evidence report as its reader gave it: its test results; the layers of the runners naming it, one or more; and
+// whether its results are posted with the feature files.
 export interface ReportGiven {
-  readonly report: string;
   readonly results: readonly TestResult[];
-  readonly defaultLayer: QualityCheckKind;
+  readonly layers: readonly Layer[];
   readonly needsFeatures: boolean;
 }
 
@@ -260,6 +258,8 @@ export interface ReadersGave {
   readonly stepRecord: readonly RecordedStep[];
   // The configuration settings as parsed, before they are checked against the steps and the reports.
   readonly settings: ConfigurationSettings;
+  // Every report path a runner's long form names at which no file was.
+  readonly reportsNotFound?: readonly string[];
   readonly scripts: Scripts;
   readonly shell: ShellAnswers;
   readonly repositoryOf: RepositoryOfOrigin;
@@ -271,15 +271,9 @@ export interface ReadersGave {
 }
 
 // The credit journal: each report's results as Evidence Observations, beside the fitness functions' from the CI steps.
-function creditJournalOf(
-  { reports, features, stepRecord, targetFolder }: ReadersGave,
-  { runners }: TargetConfiguration,
-  disposedSteps: readonly DisposedStep[],
-): CreditJournal {
+function creditJournalOf({ reports, features, stepRecord, targetFolder }: ReadersGave, disposedSteps: readonly DisposedStep[]): CreditJournal {
   return [
-    ...reports.flatMap(({ report, results, defaultLayer, needsFeatures }) =>
-      observationsOfTestResults(results, targetFolder, defaultLayer, layersServing(report, runners), needsFeatures ? features : []),
-    ),
+    ...reports.flatMap(({ results, layers, needsFeatures }) => observationsOfTestResults(results, targetFolder, layers, needsFeatures ? features : [])),
     ...fitnessObservationsOf(disposedSteps, stepRecord),
   ];
 }
@@ -287,14 +281,14 @@ function creditJournalOf(
 // What the readers gave, reconciled in one call: the configuration checked, the steps disposed, the claims and the evidence
 // posted and reconciled, and the whole assembled.
 export function reconcile(given: ReadersGave): EvidenceReconciliation {
-  const { features, reports, steps, stepRecord, settings, scripts, shell, repositoryOf, identity, provenanceInputs, targetFolder, strict } = given;
-  const { configuration, errors } = targetConfigurationOf(settings, steps, reports.map(({ report }) => report));
+  const { features, steps, stepRecord, settings, reportsNotFound, scripts, shell, repositoryOf, identity, provenanceInputs, targetFolder, strict } = given;
+  const { configuration, errors } = targetConfigurationOf(settings, steps, reportsNotFound);
   // Each step with what it is: posting and the step account both take it, and posting the same record.
   const disposedSteps = disposedStepsOf(steps, configuration, scripts, shell, stepRecord);
   const claimReading = { deferralTags: configuration.deferralTags, strict };
   const debitJournal = executableClaimsOf(features, claimReading);
   return evidenceReconciliationOf({
-    claimReconciliations: claimReconciliationsOf(debitJournal, creditJournalOf(given, configuration, disposedSteps)),
+    claimReconciliations: claimReconciliationsOf(debitJournal, creditJournalOf(given, disposedSteps)),
     claimCodeErrors: claimCodeErrorsOf(features),
     configurationErrors: errors,
     features,

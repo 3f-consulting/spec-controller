@@ -1,5 +1,5 @@
 import {
-  configurationSettingsFrom,
+  configurationSettingsNamed,
   EVIDENCE_REPORT_FORMATS,
   provenanceInputsOf,
   reconcile,
@@ -7,11 +7,14 @@ import {
   scriptsFrom,
   shellAnswers,
   targetFolderOf,
+  type ConfigurationSettings,
+  type EvidenceReportKind,
   type ReportGiven,
+  type ReportLocation,
 } from "@3f-consulting/spec-controller-core";
 import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
-import { inputsReadFor, type InputsRead } from "../inputs/inputsRead.js";
+import { inputsReadFor, type InputNamed, type InputsRead } from "../inputs/inputsRead.js";
 import type { StandardStreams } from "../output/streams.js";
 import type { Complain } from "../runEnding/crashGuards.js";
 import { exitCodeOf } from "../runEnding/exitCode.js";
@@ -34,17 +37,27 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
   return corpus === undefined ? undefined : resolve(folder, corpus.path);
 };
 
-// Every evidence report the run read, as the domain takes it: by format, in the formats' order, then in the order read.
-const reportsGivenOf = ({ reports = NONE }: InputsRead): ReportGiven[] =>
-  EVIDENCE_REPORT_FORMATS.flatMap(({ kind }) => reports.filter(({ format }) => format.kind === kind)).map(({ report, results, format }) => ({
-    report,
+type Layer = ReportGiven["layers"][number];
+
+// Each report a runner's long form names, with the runner's layer.
+const reportsLocatedBy = ({ runners }: ConfigurationSettings): { readonly layer: Layer; readonly report: ReportLocation }[] =>
+  runners.flatMap((part) => ("taken" in part && part.taken[1].report !== undefined ? [{ layer: part.taken[0], report: part.taken[1].report }] : []));
+
+// Each path a long form names is read once, in its format, where no file is a fact.
+const locatedInputs = (located: readonly { readonly report: ReportLocation }[]): InputNamed[] =>
+  [...new Map(located.map(({ report }) => [report.path, report.format as EvidenceReportKind])).entries()].map(([path, kind]) => ({ kind, path, byDefault: false, located: true }));
+
+// Every evidence report the run read, as the domain takes it: by format, in the formats' order, then in the order read. A
+// report serves the layers of the runners whose long form names its path.
+const reportsGivenOf = ({ reports = NONE }: InputsRead, located: readonly { readonly layer: Layer; readonly report: ReportLocation }[]): ReportGiven[] =>
+  EVIDENCE_REPORT_FORMATS.flatMap(({ kind }) => reports.filter(({ format }) => format.kind === kind)).map(({ results, format, located: at }) => ({
     results,
-    defaultLayer: format.defaultLayer,
+    layers: [...new Set(located.flatMap(({ layer, report: { path } }) => (path === at ? [layer] : [])))],
     needsFeatures: format.needsFeatures === true,
   }));
 
 export function balance(
-  { inputs, outputs, target, sourceSha, strict, exitZero }: Extract<RunRequest, { command: "balance" }>,
+  { inputs, settings, outputs, target, sourceSha, strict, exitZero }: Extract<RunRequest, { command: "balance" }>,
   folder: string,
   streams: StandardStreams,
   complain: Complain,
@@ -52,16 +65,19 @@ export function balance(
   const corpus = corpusNamed(inputs, folder);
   // Read first, so the run's time is when it started.
   const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
-  const read = inputsReadFor(inputs, folder);
+  const named = configurationSettingsNamed(settings);
+  const located = reportsLocatedBy(named);
+  const read = inputsReadFor([...inputs, ...locatedInputs(located)], folder);
   if ("refusals" in read) return refusedWith(read.refusals, streams.error.write);
   // git gives its top level with every link followed, so the folders and paths it is compared with follow theirs too.
   const targetFolder = realpathSync(targetFolderOf({ workingFolder: folder, corpus: corpus && realpathSync(corpus), gitTopLevel: identity.gitTopLevel }));
   const reconciliation = reconcile({
     features: read.features,
-    reports: reportsGivenOf(read),
+    reports: reportsGivenOf(read, located),
     steps: read.workflowSteps ?? NONE,
     stepRecord: read.stepRecord ?? NONE,
-    settings: configurationSettingsFrom(read.manifest),
+    settings: named,
+    reportsNotFound: read.reportsNotFound,
     scripts: scriptsFrom(read.manifest),
     shell: shellAnswers,
     repositoryOf: repositoryOfOrigin,

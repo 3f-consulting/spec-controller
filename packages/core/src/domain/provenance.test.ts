@@ -22,8 +22,8 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-040", "the tool running from its own checkout", { toolSha: "9f8e7d6", toolVersion: "0.0.0" }, [], { toolSha: "9f8e7d6" }],
     ["CLM-EVR-041", "the tool installed as a package", { toolVersion: "0.1.256" }, [], { toolSha: undefined, toolVersion: "0.1.256" }],
     ["CLM-EVR-046", "the tool copied in, its nearest package.json with no version", {}, [], { toolSha: undefined, toolVersion: "unknown" }],
-    ["CLM-EVR-042", "a Cucumber evidence report given", {}, [{ name: "cucumber", path: "cucumber.json" }], { inputs: [{ name: "cucumber", path: "cucumber.json" }] }],
-    ["CLM-EVR-043", "no Cucumber evidence report given", {}, [{ name: "cucumber" }], { inputs: [{ name: "cucumber" }] }],
+    ["CLM-EVR-042", "a Cucumber evidence report read", {}, [{ name: "cucumber", path: "cucumber.json" }], { inputs: [{ name: "cucumber", path: "cucumber.json" }] }],
+    ["CLM-EVR-043", "no Cucumber evidence report read", {}, [{ name: "cucumber" }], { inputs: [{ name: "cucumber" }] }],
     ["CLM-EVR-044", "an input inside the target's folder", {}, [{ name: "vitest", path: "/work/acme/a.json" }], { inputs: [{ name: "vitest", path: "a.json" }] }],
     ["CLM-EVR-053", "a start at 2026-11-12T07:08:14Z", { runTime: "2026-11-12T07:08:14Z" }, [], { runTime: "2026-11-12T07:08:14Z" }],
   ] as const satisfies readonly (readonly [string, string, Partial<RunIdentity>, readonly ProvenanceInput[], Partial<Provenance>])[])(
