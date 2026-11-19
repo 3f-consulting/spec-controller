@@ -26,7 +26,7 @@ const unitTestOf = ([result, code]: readonly [Result, string?]): EvidenceObserva
   name: "a test",
 });
 
-// The run read and reconciled as balance does, from one.feature, its feature code ONE.
+// The run read and reconciled from its parts, from one.feature, its feature code ONE.
 export function reconciled({ scenarios, unitTests, configurationErrors = [], stepsRead = false, provenance = {} }: RunHas): EvidenceReconciliation {
   const source = `@ONE\nFeature: one\n${scenarios.map((tags, at) => `\n  ${tags}\n  Scenario: scenario ${at}\n    Given a step\n`).join("")}`;
   const features = scenarios.length === 0 ? [] : [featureAsWrittenFrom("one.feature", source)];
@@ -55,7 +55,7 @@ const evidenceOf = ([kind, result, code, place = "one.test.ts", name = "a test",
   return { ...unitTest, kind, place, ...(kind === "fitness" ? {} : { name }), ...(message === undefined ? {} : { message }) };
 };
 
-// A run of the feature files and evidence given, read and reconciled as balance does.
+// A run of the feature files and evidence given, read and reconciled from its parts.
 export function reconciledFrom(files: readonly FileHas[], evidence: readonly EvidenceHas[]): EvidenceReconciliation {
   const sources = files.map(([file, featureCode, scenarios]) => [file, `@${featureCode}\nFeature: ${file}\n${scenarios.map(([tags, title]) => `\n  ${tags}\n  Scenario: ${title}\n    Given a step\n`).join("")}`] as const);
   return reconciledFromSources(sources, [], evidence);

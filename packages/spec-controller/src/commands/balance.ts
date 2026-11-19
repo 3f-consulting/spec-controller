@@ -1,26 +1,13 @@
 import {
-  claimCodeErrorsOf,
-  claimReconciliationsOf,
-  disposedStepsOf,
+  configurationSettingsFrom,
   EVIDENCE_REPORT_FORMATS,
-  evidenceReconciliationOf,
-  executableClaimsOf,
-  fitnessObservationsOf,
-  layersServing,
-  observationsOfTestResults,
-  provenanceOf,
+  reconcile,
   repositoryOfOrigin,
-  shellAnswers,
-  stepAccountOf,
-  targetFolderOf,
   scriptsFrom,
-  targetConfigurationFrom,
-  type CreditJournal,
-  type DebitJournal,
+  shellAnswers,
+  targetFolderOf,
   type ProvenanceInput,
-  type DisposedStep,
-  type RecordedStep,
-  type TargetConfiguration,
+  type ReportGiven,
 } from "@3f-consulting/spec-controller-core";
 import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
@@ -50,27 +37,14 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
   return corpus === undefined ? undefined : resolve(folder, corpus.path);
 };
 
-// Every evidence report the run read: by format, in the formats' order, then in the order read.
-const reportsOf = ({ reports = NONE }: InputsRead) => EVIDENCE_REPORT_FORMATS.flatMap((format) => reports.filter((report) => report.format.kind === format.kind));
-
-// The file name of every evidence report the run read, a JUnit folder's files one by one.
-const reportsReadIn = (read: InputsRead): string[] => reportsOf(read).map(({ report }) => report);
-
-// The credit journal: each runner's results as Evidence Observations, beside the fitness functions' from the CI steps.
-function creditJournalOf(
-  read: InputsRead,
-  disposedSteps: readonly DisposedStep[],
-  record: readonly RecordedStep[],
-  configuration: TargetConfiguration,
-  targetFolder: string,
-): CreditJournal {
-  // The layers a report serves, by its file name.
-  const servedBy = ({ report }: { readonly report: string }): ReturnType<typeof layersServing> => layersServing(report, configuration.runners);
-  return [
-    ...reportsOf(read).flatMap((each) => observationsOfTestResults(each.results, targetFolder, each.format.defaultLayer, servedBy(each), each.format.needsFeatures ? read.features : NONE)),
-    ...fitnessObservationsOf(disposedSteps, record),
-  ];
-}
+// Every evidence report the run read, as the domain takes it: by format, in the formats' order, then in the order read.
+const reportsGivenOf = ({ reports = NONE }: InputsRead): ReportGiven[] =>
+  EVIDENCE_REPORT_FORMATS.flatMap(({ kind }) => reports.filter(({ format }) => format.kind === kind)).map(({ report, results, format }) => ({
+    report,
+    results,
+    defaultLayer: format.defaultLayer,
+    needsFeatures: format.needsFeatures === true,
+  }));
 
 export function balance(
   { inputs, outputs, target, sourceSha, strict, exitZero }: Extract<RunRequest, { command: "balance" }>,
@@ -83,23 +57,21 @@ export function balance(
   const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
   const read = inputsReadFor(inputs, folder);
   if ("refusals" in read) return refusedWith(read.refusals, streams.error.write);
-  const steps = read.workflowSteps ?? NONE;
-  const { configuration, errors } = targetConfigurationFrom(read.manifest, steps, reportsReadIn(read));
-  const record = read.stepRecord ?? NONE;
-  // Each workflow step the run read, with what it is: posting and the step account both take it, and posting the same record.
-  const disposedSteps = disposedStepsOf(steps, configuration, scriptsFrom(read.manifest), shellAnswers, record);
   // git gives its top level with every link followed, so the folders and paths it is compared with follow theirs too.
   const targetFolder = realpathSync(targetFolderOf({ workingFolder: folder, corpus: corpus && realpathSync(corpus), gitTopLevel: identity.gitTopLevel }));
-  const debitJournal: DebitJournal = executableClaimsOf(read.features, { deferralTags: configuration.deferralTags, strict });
-  const claimReconciliations = claimReconciliationsOf(debitJournal, creditJournalOf(read, disposedSteps, record, configuration, targetFolder));
-  const provenance = provenanceOf(identity, provenanceInputsOf(read, folder), targetFolder, repositoryOfOrigin);
-  const reconciliation = evidenceReconciliationOf({
-    claimReconciliations,
-    claimCodeErrors: claimCodeErrorsOf(read.features),
-    configurationErrors: errors,
+  const reconciliation = reconcile({
     features: read.features,
-    stepAccount: stepAccountOf(disposedSteps),
-    provenance,
+    reports: reportsGivenOf(read),
+    steps: read.workflowSteps ?? NONE,
+    stepRecord: read.stepRecord ?? NONE,
+    settings: configurationSettingsFrom(read.manifest),
+    scripts: scriptsFrom(read.manifest),
+    shell: shellAnswers,
+    repositoryOf: repositoryOfOrigin,
+    identity,
+    provenanceInputs: provenanceInputsOf(read, folder),
+    targetFolder,
+    strict,
   });
   try {
     return writeReports(outputs, read.filesRead, reconciliation, streams, { exitZero });
