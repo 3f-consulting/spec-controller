@@ -4,7 +4,7 @@ import { QUALITY_CHECK_KINDS, type FeatureFile, type QualityCheckKind } from "./
 import { shownFromTarget } from "./targetPath.js";
 import { stepIdentityOf, type CiStep, type ContinueOnError } from "./workflowSteps.js";
 
-// not-recorded is a step a workflow has that the step record does not name: balance has no word on how it went.
+// not-recorded is a step a workflow has that no step record names: balance has no word on how it went.
 export type Result = "passed" | "passed-on-error" | "failed" | "never-ran" | "not-recorded";
 
 // place is a file or a CI step; name is a test's title where it has one. A report joins them to say where to look.
@@ -146,7 +146,7 @@ const runsARunner = (run: string, { runners }: TargetConfiguration, scripts: Scr
 
 export type Scripts = Readonly<Record<string, string>>;
 
-// A runner is a fitness function of its own when its id is a claim code the step record holds.
+// A runner is a fitness function of its own when its id is a claim code a step record holds.
 export function stepDispositionOf(
   step: CiStep,
   configuration: TargetConfiguration,
@@ -201,11 +201,14 @@ export function disposedStepsOf(
 }
 
 export function fitnessObservationsOf(disposedSteps: readonly DisposedStep[], record: readonly RecordedStep[]): EvidenceObservation[] {
-  const entryFor = ({ id }: CiStep) => record.find(({ key }) => key === id);
+  const entriesFor = ({ id }: CiStep) => record.filter(({ key }) => key === id);
   const posting = disposedSteps.filter(({ disposition }) => disposition === "fitnessFunction").map(({ step }) => step);
-  const postedOnce = posting.filter((step, at) => entryFor(step) === undefined || posting.findIndex(({ id }) => id === step.id) === at);
+  const postedOnce = posting.filter((step, at) => entriesFor(step).length === 0 || posting.findIndex(({ id }) => id === step.id) === at);
   return [
-    ...postedOnce.map((step) => observationOf(step, posting, entryFor(step))),
+    ...postedOnce.flatMap((step) => {
+      const entries = entriesFor(step);
+      return (entries.length === 0 ? [undefined] : entries).map((entry) => observationOf(step, posting, entry));
+    }),
     ...record.filter(({ key }) => !disposedSteps.some(({ step: { id } }) => id === key)).map(unheldObservationOf),
   ];
 }

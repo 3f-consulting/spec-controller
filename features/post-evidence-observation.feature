@@ -222,6 +222,18 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-159 | with no id              | was not set       | a step record was given                                            |
 
     @unit
+    Scenario Outline: balance posts a fitness function's step from each step record that names it
+      given a workflow had a fitness function's step with the id CLM-ONE-001
+      and the run read two step records, <records>
+      when balance posts the evidence
+      then <posted>, citing CLM-ONE-001
+
+      Examples:
+        | clm         | records                                                          | posted                                                                      |
+        | CLM-OBS-166 | one with no entry for CLM-ONE-001, and one in which it succeeded | one fitness Evidence Observation will be posted, as passed                  |
+        | CLM-OBS-167 | one in which CLM-ONE-001 succeeded, and one in which it failed   | two fitness Evidence Observations will be posted, one passed and one failed |
+
+    @unit
     Scenario Outline: balance posts a recorded success in a workflow as passed-on-error only when its step or its job sets continue-on-error to anything but false
       given the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded
       and ci.yml set continue-on-error on <where> to <value>

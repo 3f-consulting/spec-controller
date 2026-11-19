@@ -42,7 +42,7 @@
   "flag-rspec": "an RSpec JSON evidence report; repeatable",
   "flag-cucumber": "a Cucumber JSON evidence report; repeatable",
   "flag-ci": "a CI workflow, or a folder of them (default: .github/workflows)",
-  "flag-ci-steps": "the CI run's record of its steps",
+  "flag-ci-steps": "a CI job's record of its steps; repeatable",
   "flag-package-json": "the target's package.json (default: package.json)",
   "flag-target": "the name of the project reconciled, for the provenance",
   "flag-source-sha": "the commit reconciled, for the provenance (default: HEAD)",

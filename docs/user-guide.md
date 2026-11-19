@@ -51,7 +51,7 @@ If your project uses pnpm, install pnpm yourself (`npm install -g pnpm`). Node 2
 | A Jest JSON report, written by `jest --json --outputFile=<path>` | runtime test evidence | `--jest` |
 | A JUnit XML report from any other runner, such as Go's, written by `gotestsum --junitfile <path>` | runtime test evidence | `--junit` |
 | An RSpec JSON report, written by `rspec --format json --out <path>` | runtime test evidence | `--rspec` |
-| Your CI run's own step record: the `toJSON(steps)` dump your pipeline writes | evidence for every fitness function whose step's `id:` is its claim code (see [Wiring into CI](#wiring-into-ci)) | `--ci-steps` |
+| Each CI job's step record: the `toJSON(steps)` dump that job writes | evidence for every fitness function whose step's `id:` is its claim code (see [Wiring into CI](#wiring-into-ci)) | `--ci-steps` |
 | Your CI config (`ci.yml`) | the scope discovery ranges over | `--ci` |
 | `package.json` | its `scripts`, which runner recognition follows, and your configuration | `--package-json` |
 
@@ -536,12 +536,12 @@ To convert a fitness function, you write two artefacts and no third. There is no
 - A `@fitness` scenario whose claim code no recorded CI step states reconciles as **missing**, and the run is out of balance, exactly as for a `@unit` scenario with no test.
 - A recorded step that states a claim code no scenario carries posts to a **phantom claim**.
 - A step that states no claim code posts to the **unnamed claim**.
-- A step the step record does not name is posted as **not recorded**, citing no code, and so is every step when no step record is given. It posts to the unnamed claim, whatever its `id:`. It is never reported as passed, never credited to a scenario, and never posted to a phantom claim.
-- A step the step record names, but that no workflow `balance` read contains, is posted with the result its record gives, at the `id:` the step record names it by. A failure posts as failed, a skipped step as never ran, and a success as passed-on-error, because without the workflow `balance` cannot read whether failure was allowed. The posting cites that `id:` when it is a claim code, and no code otherwise.
+- A step no step record names is posted as **not recorded**, citing no code, and so is every step when no step record is given. It posts to the unnamed claim, whatever its `id:`. It is never reported as passed, never credited to a scenario, and never posted to a phantom claim.
+- A step a step record names, but that no workflow `balance` read contains, is posted with the result its record gives, at the `id:` that record names it by. A failure posts as failed, a skipped step as never ran, and a success as passed-on-error, because without the workflow `balance` cannot read whether failure was allowed. The posting cites that `id:` when it is a claim code, and no code otherwise.
 
 **`balance` does not read `specController.fitnessChecks`.** The report names it in `## Errors in the inputs` as `configuration-unknown-key`, as it does a misspelling and any other key this tool does not read (see [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped)).
 
-**One `toJSON(steps)` dump step in each job** lets the reconciler read what each step did. `--ci-steps` points `balance` at the dump. This is wiring, not part of the evidence obligation. [Wiring into CI](#wiring-into-ci) covers it, with the `if: always()` rule that goes with it.
+**One `toJSON(steps)` dump step in each job** lets the reconciler read what each step did. Give `--ci-steps` once for each dump; `balance` reads every one. This is wiring, not part of the evidence obligation. [Wiring into CI](#wiring-into-ci) covers it, with the `if: always()` rule that goes with it.
 
 ### A converted check is still a command you can run
 
@@ -730,7 +730,7 @@ Each check step carries its claim code as its `id:`, and the job ends with one d
 
 ### Reconcile once, over the reports and the record
 
-One `balance` run reads the test reports and the CI step record together.
+One `balance` run reads the test reports and the CI step records together.
 
 ```sh
 # after your test steps have written vitest-report.json / cucumber-report.json,
@@ -992,7 +992,7 @@ Help answers only when nothing else on the command line is refused. A usage erro
 | `--cucumber <report.json>` | A Cucumber JSON report: runtime test evidence. Repeatable: `balance` reads every report you name. |
 | `--ci <workflow.yml\|dir>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where a check step's `id:` supplies the claim code its result cites. |
 | `--package-json <path>` | The target's `package.json`: its `scripts`, and its `specController.runners`, `specController.notChecks` and `specController.deferralTags` (see [Configuration](#configuration--the-speccontroller-block)). A fitness function is named by its `@fitness` scenario and by the CI step whose `id:` is that scenario's claim code; no manifest key names one. Defaults to `package.json` in the working directory. |
-| `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did: the `toJSON(steps)` dump, which is the evidence for fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. |
+| `--ci-steps <record.json>` | A CI job's record of what each of its steps did: the `toJSON(steps)` dump, which is the evidence for fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. Repeatable: `balance` reads every record you name. |
 | `--target <name>` | A name recorded verbatim in the report's provenance: the project this run reconciled. |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See [`--format`](#--format--routing-the-output). |

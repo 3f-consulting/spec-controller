@@ -26,7 +26,7 @@ const BALANCE_FLAGS: readonly Flag[] = [
   { name: "rspec", value: "<report.json>", input: "rspec", repeats: true },
   { name: "cucumber", value: "<report.json>", input: "cucumber", repeats: true },
   { name: "ci", value: "<workflow.yml|dir>", input: "workflows", byDefault: ".github/workflows" },
-  { name: "ci-steps", value: "<record.json>", input: "stepRecord" },
+  { name: "ci-steps", value: "<record.json>", input: "stepRecord", repeats: true },
   { name: "package-json", value: "<path>", input: "manifest", byDefault: "package.json" },
   { name: "target", value: "<name>" },
   { name: "source-sha", value: "<sha>" },
