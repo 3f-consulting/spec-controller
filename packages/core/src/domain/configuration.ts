@@ -16,12 +16,23 @@ export interface RunnerEntry {
   readonly reports: readonly string[];
 }
 
-// A layer's runner: its name, null for none, or an entry naming it with the reports it writes.
-export type Runner = string | null | RunnerEntry;
+// Where a runner's evidence report is: its path, and the format it is written in.
+export interface ReportLocation {
+  readonly path: string;
+  readonly format: string;
+}
 
-// null under runners: the target has no runner for that kind.
+// A layer's runner: the program it runs, with the evidence report the run names for it, or the file names of the reports
+// a specController block's entry names.
+export interface Runner {
+  readonly name: string;
+  readonly report?: ReportLocation;
+  readonly reports?: readonly string[];
+}
+
+// Each layer's runners; a layer with none has an empty list.
 export interface TargetConfiguration {
-  readonly runners: Readonly<Partial<Record<Layer, Runner>>>;
+  readonly runners: Readonly<Record<Layer, readonly Runner[]>>;
   readonly nonChecks: readonly StepAddress[];
   readonly deferralTags: readonly string[];
 }
@@ -33,6 +44,7 @@ export interface ConfigurationError {
     | "configuration-unknown-key"
     | "runner-key-not-a-layer"
     | "runner-report-not-read"
+    | "runner-report-not-named"
     | "not-checks-entry-matches-no-step"
     | "not-checks-entry-not-a-step-name";
   readonly entry: string;

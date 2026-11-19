@@ -1,76 +1,98 @@
 import { describe, expect, it } from "vitest";
+import { configurationSettingsNamed, type SettingsNamed } from "../inputs/commandLineSettings.js";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 import { targetConfigurationFrom, whereManifestBreaks } from "../inputs/manifest.js";
 import manifestVariants from "../inputs/manifest.variants.json" with { type: "json" };
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
-import type { TargetConfiguration } from "./configuration.js";
+import { targetConfigurationOf, type TargetConfiguration } from "./configuration.js";
+import { runnersOf } from "./configuration.test-utils.js";
 import { runVerdictOf } from "./evidenceReconciliation.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
 import { disposedStepsOf, fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
+import type { CiStep } from "./workflowSteps.js";
 
-const NONE: TargetConfiguration = { runners: {}, nonChecks: [], deferralTags: [] };
+const NONE: TargetConfiguration = { runners: runnersOf(), nonChecks: [], deferralTags: [] };
+
+// The configuration balance takes from the settings a run names, with the steps it read.
+const takenFrom = (named: Partial<SettingsNamed>, steps: readonly CiStep[] = []): TargetConfiguration =>
+  targetConfigurationOf(configurationSettingsNamed({ runners: {}, nonChecks: [], deferralTags: [], ...named }), steps, []).configuration;
 
 describe("balance takes each configuration setting it can use as the runner, non-check or deferral tag it names", () => {
-  it.each([
-    ["CLM-CFG-008", '"unit": "vitest" under runners', { runners: { unit: "vitest" } }, { ...NONE, runners: { unit: "vitest" } }],
-    ["CLM-CFG-009", '"performance": null under runners', { runners: { performance: null } }, { ...NONE, runners: { performance: null } }],
+  it.each<[string, string, Partial<SettingsNamed>, TargetConfiguration]>([
+    ["CLM-CFG-008", "--unit vitest", { runners: { unit: ["vitest"] } }, { ...NONE, runners: runnersOf({ unit: [{ name: "vitest" }] }) }],
+    ["CLM-CFG-008", "--unit with spaces around vitest", { runners: { unit: [" vitest "] } }, { ...NONE, runners: runnersOf({ unit: [{ name: "vitest" }] }) }],
+    ["CLM-CFG-026", "--unit vitest and --unit pytest", { runners: { unit: ["vitest", "pytest"] } }, { ...NONE, runners: runnersOf({ unit: [{ name: "vitest" }, { name: "pytest" }] }) }],
+    [
+      "CLM-CFG-026",
+      "--not-check nightly:build.yml:ci:Install dependencies and --not-check nightly:build.yml:ci:Build",
+      { nonChecks: ["nightly:build.yml:ci:Install dependencies", "nightly:build.yml:ci:Build"] },
+      {
+        ...NONE,
+        nonChecks: [
+          { workflow: "nightly:build.yml", job: "ci", step: "Install dependencies" },
+          { workflow: "nightly:build.yml", job: "ci", step: "Build" },
+        ],
+      },
+    ],
+    ["CLM-CFG-026", "--deferral-tag deferred and --deferral-tag blocked", { deferralTags: ["deferred", "blocked"] }, { ...NONE, deferralTags: ["deferred", "blocked"] }],
     [
       "CLM-CFG-024",
-      '"e2e": { "runner": "playwright", "reports": ["playwright.xml"] } under runners',
-      { runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } },
-      { ...NONE, runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } },
+      "--e2e playwright:junit:out/playwright.xml",
+      { runners: { e2e: ["playwright:junit:out/playwright.xml"] } },
+      { ...NONE, runners: runnersOf({ e2e: [{ name: "playwright", report: { path: "out/playwright.xml", format: "junit" } }] }) },
+    ],
+    [
+      "CLM-CFG-024",
+      "--e2e playwright:junit:C:\\out\\playwright.xml, its report's path holding a colon",
+      { runners: { e2e: ["playwright:junit:C:\\out\\playwright.xml"] } },
+      { ...NONE, runners: runnersOf({ e2e: [{ name: "playwright", report: { path: "C:\\out\\playwright.xml", format: "junit" } }] }) },
     ],
     [
       "CLM-CFG-011",
-      '"nightly:build.yml:ci:Install dependencies" in notChecks',
-      { notChecks: ["nightly:build.yml:ci:Install dependencies"] },
+      "--not-check nightly:build.yml:ci:Install dependencies",
+      { nonChecks: ["nightly:build.yml:ci:Install dependencies"] },
       { ...NONE, nonChecks: [{ workflow: "nightly:build.yml", job: "ci", step: "Install dependencies" }] },
     ],
-    ["CLM-CFG-012", '"deferred" in deferralTags', { deferralTags: ["deferred"] }, { ...NONE, deferralTags: ["deferred"] }],
-    ["CLM-CFG-013", '"@blocked" in deferralTags', { deferralTags: ["@blocked"] }, { ...NONE, deferralTags: ["blocked"] }],
-    ["CLM-CFG-014", '" deferred " in deferralTags', { deferralTags: [" deferred "] }, { ...NONE, deferralTags: ["deferred"] }],
-    ["CLM-CFG-006", "nothing", undefined, NONE],
-  ] as const)("[%s] a specController block with %s is taken as what it sets", (_clm, _setting, block, configuration) => {
-    expect(targetConfigurationFrom(block === undefined ? {} : { specController: block }, [], ["playwright.xml"])).toEqual({ configuration, errors: [] });
+    ["CLM-CFG-012", "--deferral-tag deferred", { deferralTags: ["deferred"] }, { ...NONE, deferralTags: ["deferred"] }],
+    ["CLM-CFG-013", "--deferral-tag @blocked", { deferralTags: ["@blocked"] }, { ...NONE, deferralTags: ["blocked"] }],
+    ["CLM-CFG-014", "--deferral-tag with spaces around deferred", { deferralTags: [" deferred "] }, { ...NONE, deferralTags: ["deferred"] }],
+    ["CLM-CFG-006", "nothing", {}, NONE],
+  ])("[%s] a run named %s is taken as what it sets", (_clm, _named, named, configuration) => {
+    expect(takenFrom(named)).toEqual(configuration);
   });
 
-  it('[CLM-CFG-024] a specController block with "e2e": { "runner": "playwright", "reports": ["playwright.xml"] } under runners takes playwright as the e2e layer\'s runner, so a step running it is a runner', () => {
-    const { configuration } = targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } } }, [], ["playwright.xml"]);
+  it('[CLM-CFG-009] a specController block with "performance": null under runners takes the performance layer as having no runner', () => {
+    expect(targetConfigurationFrom({ specController: { runners: { performance: null } } }, [], [])).toEqual({ configuration: NONE, errors: [] });
+  });
+
+  it("[CLM-CFG-024] a run named --e2e playwright:junit:out/playwright.xml takes playwright as the e2e layer's runner, so a step running it is a runner", () => {
+    const configuration = takenFrom({ runners: { e2e: ["playwright:junit:out/playwright.xml"] } });
     const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: playwright test\n");
 
     expect(stepDispositionOf(steps[0]!, configuration, {}, shellAnswers)).toBe("runner");
   });
 
-  it('[CLM-CFG-010] a specController block with "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies, takes that step as a non-check', () => {
+  it("[CLM-CFG-010] a run named --not-check ci.yml:ci:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies, takes that step as a non-check", () => {
     const ciRead = [
       { workflow: "ci.yml", job: "ci", name: "Build", identity: "Build", plumbing: false, writesStepRecord: false },
       { workflow: "ci.yml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false },
     ];
 
-    expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yml:ci:Install dependencies"] } }, ciRead, [])).toEqual({
-      configuration: { ...NONE, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }] },
-      errors: [],
-    });
+    expect(takenFrom({ nonChecks: ["ci.yml:ci:Install dependencies"] }, ciRead)).toEqual({ ...NONE, nonChecks: [{ workflow: "ci.yml", job: "ci", step: "Install dependencies" }] });
   });
 
-  it('[CLM-CFG-010] a specController block with "ci.yaml:ci:Install dependencies" in notChecks, with ci.yaml read, whose job ci had the step Install dependencies, takes that step as a non-check', () => {
+  it("[CLM-CFG-010] a run named --not-check ci.yaml:ci:Install dependencies, with ci.yaml read, whose job ci had the step Install dependencies, takes that step as a non-check", () => {
     const ciRead = [{ workflow: "ci.yaml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
-    expect(targetConfigurationFrom({ specController: { notChecks: ["ci.yaml:ci:Install dependencies"] } }, ciRead, [])).toEqual({
-      configuration: { ...NONE, nonChecks: [{ workflow: "ci.yaml", job: "ci", step: "Install dependencies" }] },
-      errors: [],
-    });
+    expect(takenFrom({ nonChecks: ["ci.yaml:ci:Install dependencies"] }, ciRead)).toEqual({ ...NONE, nonChecks: [{ workflow: "ci.yaml", job: "ci", step: "Install dependencies" }] });
   });
 
-  it('[CLM-CFG-023] a specController block with "nightly.yml:ci:Install dependencies" in notChecks, with only ci.yml read, takes that step as a non-check', () => {
+  it("[CLM-CFG-023] a run named --not-check nightly.yml:ci:Install dependencies, with only ci.yml read, takes that step as a non-check", () => {
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
-    expect(targetConfigurationFrom({ specController: { notChecks: ["nightly.yml:ci:Install dependencies"] } }, ciRead, [])).toEqual({
-      configuration: { ...NONE, nonChecks: [{ workflow: "nightly.yml", job: "ci", step: "Install dependencies" }] },
-      errors: [],
-    });
+    expect(takenFrom({ nonChecks: ["nightly.yml:ci:Install dependencies"] }, ciRead)).toEqual({ ...NONE, nonChecks: [{ workflow: "nightly.yml", job: "ci", step: "Install dependencies" }] });
   });
 });
 
@@ -120,7 +142,7 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     const { configuration, errors } = targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: ["playwright.xml"] } } } }, [], ["junit.xml"]);
 
     expect({ configuration, errors, playwrightStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({
-      configuration: { ...NONE, runners: { e2e: { runner: "playwright", reports: [] } } },
+      configuration: { ...NONE, runners: runnersOf({ e2e: [{ name: "playwright", reports: [] }] }) },
       errors: [{ kind: "runner-report-not-read", entry: "playwright.xml" }],
       playwrightStep: "runner",
     });
@@ -133,7 +155,7 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     const report = unreadReport[variant]!;
 
     expect(targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: [report] } } } }, [], ["playwright.xml"])).toEqual({
-      configuration: { ...NONE, runners: { e2e: { runner: "playwright", reports: [] } } },
+      configuration: { ...NONE, runners: runnersOf({ e2e: [{ name: "playwright", reports: [] }] }) },
       errors: [{ kind: "runner-report-not-read", entry: report }],
     });
   });

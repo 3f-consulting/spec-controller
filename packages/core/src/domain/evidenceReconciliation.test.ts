@@ -5,7 +5,8 @@ import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimCodeErrorsOf } from "./claimCodes.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
-import { NO_SETTINGS } from "./configuration.js";
+import { NO_SETTINGS, type TargetConfiguration } from "./configuration.js";
+import { runnersOf } from "./configuration.test-utils.js";
 import { reconcile, runVerdictOf, stepAccountOf, totalsOf, type EvidenceReconciliation, type RunVerdict } from "./evidenceReconciliation.js";
 import { executableClaimsOf, type FeatureFile } from "./postEvidenceObligation.js";
 import { stepDispositionOf, type EvidenceObservation, type Result, type RecordedStep, type TestResult } from "./postEvidenceObservation.js";
@@ -277,7 +278,7 @@ describe("Total of the scenarios a deferral tag set aside", () => {
 
 describe("balance accounts for every step it reads", () => {
   // Steps disposed of under a configuration whose one non-check is the Install step of the job given.
-  const disposed = (steps: ReturnType<typeof workflowStepsFrom>, install: { readonly workflow: string; readonly job: string }, runners: Readonly<Record<string, string>> = {}, record: readonly RecordedStep[] = []) =>
+  const disposed = (steps: ReturnType<typeof workflowStepsFrom>, install: { readonly workflow: string; readonly job: string }, runners: TargetConfiguration["runners"] = runnersOf(), record: readonly RecordedStep[] = []) =>
     steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners, nonChecks: [{ ...install, step: "Install" }], deferralTags: [] }, {}, shellAnswers, record) }));
   const BUILD = [{ uses: "actions/checkout@v4" }, { run: "pnpm lint" }, { run: "spec-controller balance" }];
   const INSTALL = [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }];
@@ -291,7 +292,7 @@ describe("balance accounts for every step it reads", () => {
     ["of one name, in two workflows, with a step record of another step", ["ci.yml", "nightly.yml"], ["build", "build"], [{ key: "lint", result: "passed" }]],
   ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, [first, second], [build, test], record) => {
     const steps = [...workflowStepsFrom(first, JSON.stringify({ jobs: { [build]: { steps: [...BUILD, UNIT] } } })), ...workflowStepsFrom(second, JSON.stringify({ jobs: { [test]: { steps: INSTALL } } }))];
-    const { jobs } = stepAccountOf(disposed(steps, { workflow: second, job: test }, { unit: "vitest" }, record));
+    const { jobs } = stepAccountOf(disposed(steps, { workflow: second, job: test }, runnersOf({ unit: [{ name: "vitest" }] }), record));
 
     expect(jobs.map(({ workflow: _workflow, job: _job, ...counts }) => counts)).toEqual([
       { stepsRead: 4, runners: 1, reconcilerSteps: 1, nonChecks: 0, plumbing: 1, fitnessFunctions: 1 },
@@ -307,14 +308,14 @@ describe("balance accounts for every step it reads", () => {
 
   it("[CLM-EVR-072] a workflow with a job that calls a reusable workflow, and a job with one step, has the one step counted", () => {
     const steps = workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { call: { uses: "./.github/workflows/other.yml" }, build: { steps: [{ run: "pnpm lint" }] } } }));
-    const { jobs } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
+    const { jobs } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: runnersOf(), nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
 
     expect(jobs.map(({ job, stepsRead }) => ({ job, stepsRead }))).toEqual([{ job: "build", stepsRead: 1 }]);
   });
 
   it("[CLM-EVR-073] a workflow whose every line is commented out has no steps counted", () => {
     const steps = workflowStepsFrom("ci.yml", "# on: push\n# jobs:\n#   build:\n#     steps:\n#       - run: pnpm lint\n");
-    const { jobs, total } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: {}, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
+    const { jobs, total } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: runnersOf(), nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
 
     expect({ jobs, stepsRead: total.stepsRead }).toEqual({ jobs: [], stepsRead: 0 });
   });

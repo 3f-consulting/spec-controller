@@ -25,6 +25,12 @@ function ran(args: readonly string[], folder = temporaryDirectory("command-line-
 
 const BALANCE_FLAGS = [
   "--features <dir>",
+  "--unit <runner>[:<format>:<report>]",
+  "--integration <runner>[:<format>:<report>]",
+  "--e2e <runner>[:<format>:<report>]",
+  "--performance <runner>[:<format>:<report>]",
+  "--not-check <workflow>:<job>:<step>",
+  "--deferral-tag <tag>",
   "--vitest <report.json>",
   "--jest <report.json>",
   "--pytest <report.xml>",

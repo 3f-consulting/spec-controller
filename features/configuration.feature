@@ -1,32 +1,34 @@
 @CFG
-Feature: balance reads and validates the configuration settings in the specController block
+Feature: balance reads and validates the configuration settings the run names
 
-  A target's package.json can have a specController block with three configuration settings:
-  runners, notChecks and deferral tags. balance reads and validates each one. It leaves out a
-  configuration setting that is not valid, names it among the configuration errors, and still
-  uses the others. A configuration setting that is not valid never stops the run. A
-  specController block that is not an object, such as null, stops the run as a usage error.
+  A run names three kinds of configuration setting on its command line: the runners of each
+  layer, the non-checks and the deferral tags. balance reads and validates each one. It leaves
+  out a configuration setting that is not valid, names it among the configuration errors, and
+  still uses the others. A configuration setting that is not valid never stops the run. A
+  target's package.json can also have a specController block with the same settings, and one
+  that is not an object, such as null, stops the run as a usage error.
 
   Rule: balance takes each configuration setting it can use
 
     @unit
     Scenario Outline: balance takes each configuration setting it can use as the runner, non-check or deferral tag it names
-      given the specController block had <configuration setting>
+      given the run named <configuration setting>
       when balance reads it
       then balance will take it as <what it sets>
 
       Examples:
-        | clm         | configuration setting                                                                                           | what it sets                                                                   |
-        | CLM-CFG-008 | "unit": "vitest" under runners                                                                                  | vitest as the unit layer's runner                                              |
-        | CLM-CFG-009 | "performance": null under runners                                                                               | the performance layer as having no runner                                      |
-        | CLM-CFG-024 | "e2e": { "runner": "playwright", "reports": ["playwright.xml"] } under runners                                  | playwright as the e2e layer's runner, and playwright.xml as its report         |
-        | CLM-CFG-010 | "ci.yml:ci:Install dependencies" in notChecks, with ci.yml read, whose job ci had the step Install dependencies | the step Install dependencies, in job ci, in ci.yml, as a non-check            |
-        | CLM-CFG-011 | "nightly:build.yml:ci:Install dependencies" in notChecks                                                        | the step Install dependencies, in job ci, in nightly:build.yml, as a non-check |
-        | CLM-CFG-023 | "nightly.yml:ci:Install dependencies" in notChecks, with only ci.yml read                                       | the step Install dependencies, in job ci, in nightly.yml, as a non-check       |
-        | CLM-CFG-012 | "deferred" in deferralTags                                                                                      | @deferred as a deferral tag                                                    |
-        | CLM-CFG-013 | "@blocked" in deferralTags                                                                                      | @blocked as a deferral tag                                                     |
-        | CLM-CFG-014 | " deferred " in deferralTags                                                                                    | @deferred as a deferral tag                                                    |
-        | CLM-CFG-006 | nothing                                                                                                         | the defaults                                                                   |
+        | clm         | configuration setting                                                                                        | what it sets                                                                               |
+        | CLM-CFG-008 | --unit vitest                                                                                                | vitest as the unit layer's runner                                                          |
+        | CLM-CFG-026 | --unit vitest and --unit pytest                                                                              | vitest and pytest as the unit layer's runners                                              |
+        | CLM-CFG-009 | a specController block with "performance": null under runners                                                | the performance layer as having no runner                                                  |
+        | CLM-CFG-024 | --e2e playwright:junit:out/playwright.xml                                                                    | playwright as the e2e layer's runner, with out/playwright.xml as its JUnit evidence report |
+        | CLM-CFG-010 | --not-check ci.yml:ci:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies | the step Install dependencies, in job ci, in ci.yml, as a non-check                        |
+        | CLM-CFG-011 | --not-check nightly:build.yml:ci:Install dependencies                                                        | the step Install dependencies, in job ci, in nightly:build.yml, as a non-check             |
+        | CLM-CFG-023 | --not-check nightly.yml:ci:Install dependencies, with only ci.yml read                                       | the step Install dependencies, in job ci, in nightly.yml, as a non-check                   |
+        | CLM-CFG-012 | --deferral-tag deferred                                                                                      | @deferred as a deferral tag                                                                |
+        | CLM-CFG-013 | --deferral-tag @blocked                                                                                      | @blocked as a deferral tag                                                                 |
+        | CLM-CFG-014 | --deferral-tag with spaces around deferred                                                                   | @deferred as a deferral tag                                                                |
+        | CLM-CFG-006 | nothing                                                                                                      | no runner for any layer, no non-check, and the built-in deferral tags alone                |
 
   Rule: balance leaves out any configuration setting it cannot use, and runs anyway
 
