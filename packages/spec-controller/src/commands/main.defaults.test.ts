@@ -94,7 +94,7 @@ describe("the target's folder will be the git repository the corpus is in, or el
 
 const ONE_UNIT_CLAIM = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n";
 
-// A Vitest evidence report with a passing test citing CLM-ONE-001 and a failing test citing no code.
+// A Vitest evidence report with a passing test citing the one claim and a failing test citing no code.
 const ONE_CITING_AND_ONE_FAILING_CITING_NONE =
   '{"testResults":[{"name":"/work/one.test.ts","status":"failed","message":"","assertionResults":[' +
   '{"title":"[CLM-ONE-001] one","fullName":"[CLM-ONE-001] one","status":"passed","ancestorTitles":[],"failureMessages":[]},' +
