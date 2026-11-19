@@ -64,7 +64,7 @@ describe("help will list what you can ask for", () => {
     expect({ exitCode, takesAFeatureCode: output.includes("allocate <feature code>"), flags: flagsListed(output) }).toEqual({
       exitCode: 0,
       takesAFeatureCode: true,
-      flags: ["--new", "-h, --help"],
+      flags: ["--features <dir>", "--new", "-h, --help"],
     });
   });
 
