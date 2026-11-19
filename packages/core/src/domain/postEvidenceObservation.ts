@@ -201,11 +201,14 @@ export function disposedStepsOf(
 }
 
 export function fitnessObservationsOf(disposedSteps: readonly DisposedStep[], record: readonly RecordedStep[]): EvidenceObservation[] {
-  const entryFor = ({ id }: CiStep) => record.find(({ key }) => key === id);
+  const entriesFor = ({ id }: CiStep) => record.filter(({ key }) => key === id);
   const posting = disposedSteps.filter(({ disposition }) => disposition === "fitnessFunction").map(({ step }) => step);
-  const postedOnce = posting.filter((step, at) => entryFor(step) === undefined || posting.findIndex(({ id }) => id === step.id) === at);
+  const postedOnce = posting.filter((step, at) => entriesFor(step).length === 0 || posting.findIndex(({ id }) => id === step.id) === at);
   return [
-    ...postedOnce.map((step) => observationOf(step, posting, entryFor(step))),
+    ...postedOnce.flatMap((step) => {
+      const entries = entriesFor(step);
+      return entries.length === 0 ? [observationOf(step, posting, undefined)] : entries.map((entry) => observationOf(step, posting, entry));
+    }),
     ...record.filter(({ key }) => !disposedSteps.some(({ step: { id } }) => id === key)).map(unheldObservationOf),
   ];
 }
