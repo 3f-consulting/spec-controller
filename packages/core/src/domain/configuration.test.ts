@@ -211,6 +211,14 @@ describe("balance reads no evidence report for a runner whose report it cannot f
     ],
     [
       "CLM-CFG-029",
+      "vitest, where a step in the working directory ${{ matrix.pkg }} ran vitest run --reporter=json --outputFile=out/vitest.json",
+      "vitest",
+      "jobs:\n  ci:\n    steps:\n      - run: vitest run --reporter=json --outputFile=out/vitest.json\n        working-directory: ${{ matrix.pkg }}\n",
+      [],
+      { kind: "runner-report-not-named", entry: "vitest" },
+    ],
+    [
+      "CLM-CFG-029",
       "vitest, where a step ran vitest run --outputFile=out/vitest.json, naming no reporter",
       "vitest",
       "jobs:\n  ci:\n    steps:\n      - run: vitest run --outputFile=out/vitest.json\n",
