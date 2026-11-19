@@ -1,14 +1,14 @@
 {
-  "CLM-OBS-057": {
-    "class": "continue-on-error set on a step to anything but false",
+  "failure-allowed-on-a-step": {
+    "claim": "CLM-OBS-057",
     "variants": [true, "${{ matrix.experimental }}"]
   },
-  "CLM-OBS-058": {
-    "class": "continue-on-error set on a job to anything but false",
+  "failure-allowed-on-a-job": {
+    "claim": "CLM-OBS-058",
     "variants": [true, "${{ matrix.experimental }}"]
   },
-  "CLM-OBS-164": {
-    "class": "a report in a format with no kind tags, its file name in the reports of a layer other than unit",
+  "formats-without-kind-tags-named-under-a-layer": {
+    "claim": "CLM-OBS-164",
     "variants": [
       "JUnit, under integration",
       "JUnit, under e2e",
@@ -27,8 +27,8 @@
       "RSpec, under performance"
     ]
   },
-  "CLM-OBS-059": {
-    "class": "a report in a format with no kind tags, its file name in no runners entry",
+  "formats-without-kind-tags-named-nowhere": {
+    "claim": "CLM-OBS-059",
     "variants": ["JUnit", "Vitest", "Jest", "pytest", "RSpec"]
   }
 }

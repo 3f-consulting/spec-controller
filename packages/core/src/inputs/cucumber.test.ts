@@ -6,12 +6,12 @@ import { whereScenarioResultsBreak } from "./cucumber.js";
 const passed = { status: "passed" };
 
 describe("an input that is not valid will stop the run", () => {
-  it("[CLM-CLI-152] the Cucumber evidence report each of those is edited from is in Cucumber's shape", () => {
-    expect(whereScenarioResultsBreak(cucumberVariants["CLM-CLI-152"].report)).toBeUndefined();
+  it(`[${cucumberVariants["broken-cucumber-reports"].claim}] the Cucumber evidence report each of those is edited from is in Cucumber's shape`, () => {
+    expect(whereScenarioResultsBreak(cucumberVariants["broken-cucumber-reports"].report)).toBeUndefined();
   });
 
-  it("[CLM-CLI-152] each Cucumber evidence report with one field its reader reads missing, null or of the wrong kind, or a status Cucumber never writes, is not in Cucumber's shape, and breaks at that field", () => {
-    const { found, listed } = breaksFound(cucumberVariants["CLM-CLI-152"], whereScenarioResultsBreak);
+  it(`[${cucumberVariants["broken-cucumber-reports"].claim}] each Cucumber evidence report with one field its reader reads missing, null or of the wrong kind, or a status Cucumber never writes, is not in Cucumber's shape, and breaks at that field`, () => {
+    const { found, listed } = breaksFound(cucumberVariants["broken-cucumber-reports"], whereScenarioResultsBreak);
 
     expect(found).toEqual(listed);
   });

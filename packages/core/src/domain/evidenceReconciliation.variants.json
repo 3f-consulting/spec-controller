@@ -1,6 +1,6 @@
 {
-  "CLM-EVR-028": {
-    "class": "a claim code in a scenario's title, with punctuation stuck to its end",
+  "punctuation-after-a-claim-code": {
+    "claim": "CLM-EVR-028",
     "variants": [",", ")", "),", "."]
   }
 }

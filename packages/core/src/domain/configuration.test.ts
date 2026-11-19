@@ -108,7 +108,7 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     "an entry whose reports hold something other than a file name": { runner: "playwright", reports: ["playwright.xml", 3] },
   };
 
-  it.each(manifestVariants["CLM-CFG-004"].variants)("[CLM-CFG-004] a specController block with %s as the e2e runner leaves it out, finding its error naming the setting", (variant) => {
+  it.each(manifestVariants["malformed-runner-entries"].variants)(`[${manifestVariants["malformed-runner-entries"].claim}] a specController block with %s as the e2e runner leaves it out, finding its error naming the setting`, (variant) => {
     expect(targetConfigurationFrom({ specController: { runners: { e2e: malformedEntry[variant] } } }, [], ["playwright.xml"])).toEqual({
       configuration: NONE,
       errors: [{ kind: "configuration-wrong-kind", entry: "runners.e2e" }],
@@ -129,7 +129,7 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
   // Each variant of a report name that matches no report's file name, as the entry writes it.
   const unreadReport: Readonly<Record<string, string>> = { "a report name with a folder in it": "out/playwright.xml" };
 
-  it.each(manifestVariants["CLM-CFG-025"].variants)("[CLM-CFG-025] a specController block naming %s as the e2e runner's report, with playwright.xml read, leaves the report name out, finding its error naming it", (variant) => {
+  it.each(manifestVariants["report-names-matching-no-report-read"].variants)(`[${manifestVariants["report-names-matching-no-report-read"].claim}] a specController block naming %s as the e2e runner's report, with playwright.xml read, leaves the report name out, finding its error naming it`, (variant) => {
     const report = unreadReport[variant]!;
 
     expect(targetConfigurationFrom({ specController: { runners: { e2e: { runner: "playwright", reports: [report] } } } }, [], ["playwright.xml"])).toEqual({
@@ -144,7 +144,7 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     "a line break after it": "ci.yml:ci:Install dependencies\n",
   };
 
-  it.each(manifestVariants["CLM-CFG-016"].variants)('[CLM-CFG-016] a specController block with "ci.yml:ci:Install dependencies" with %s in notChecks leaves it out, finding its error naming the entry', (variant) => {
+  it.each(manifestVariants["line-breaks-around-a-non-check"].variants)(`[${manifestVariants["line-breaks-around-a-non-check"].claim}] a specController block with "ci.yml:ci:Install dependencies" with %s in notChecks leaves it out, finding its error naming the entry`, (variant) => {
     const entry = withALineBreak[variant]!;
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
@@ -177,13 +177,13 @@ describe("the run will still reach its run verdict, using the configuration sett
 const notAnObject: Readonly<Record<string, unknown>> = { null: null, "a number": 5, "a string": "vitest", "a list": ["vitest"] };
 
 describe("a runners setting that is not an object is left out", () => {
-  it.each(manifestVariants["CLM-CFG-018"].variants)("[CLM-CFG-018] a specController block whose runners is %s leaves runners out, as the wrong kind", (variant) => {
+  it.each(manifestVariants["runners-settings-not-objects"].variants)(`[${manifestVariants["runners-settings-not-objects"].claim}] a specController block whose runners is %s leaves runners out, as the wrong kind`, (variant) => {
     expect(targetConfigurationFrom({ specController: { runners: notAnObject[variant] } }, [], [])).toEqual({ configuration: NONE, errors: [{ kind: "configuration-wrong-kind", entry: "runners" }] });
   });
 });
 
 describe("a specController block that is not an object stops the run", () => {
-  it.each(manifestVariants["CLM-CFG-021"].variants)("[CLM-CFG-021] a specController block that is %s stops the run as a usage error: the manifest is refused at the block", (variant) => {
+  it.each(manifestVariants["spec-controller-blocks-not-objects"].variants)(`[${manifestVariants["spec-controller-blocks-not-objects"].claim}] a specController block that is %s stops the run as a usage error: the manifest is refused at the block`, (variant) => {
     expect(whereManifestBreaks({ specController: notAnObject[variant] })).toBe("$.specController");
   });
 });

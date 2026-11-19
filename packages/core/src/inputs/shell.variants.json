@@ -1,10 +1,10 @@
 {
-  "CLM-OBS-007": {
-    "class": "a runner piped onward, into a command or a compound command",
+  "pipes-onward": {
+    "claim": "CLM-OBS-007",
     "variants": ["vitest run | tee out.txt", "vitest run | while read -r line; do echo \"$line\"; done", "vitest run | if true; then cat; fi", "vitest run | (cat)"]
   },
-  "CLM-OBS-009": {
-    "class": "a package manager running a script whose script runs the unit runner",
+  "script-runs": {
+    "claim": "CLM-OBS-009",
     "variants": [
       "npm test",
       "npm run <script>",
@@ -17,24 +17,24 @@
       "yarn workspace <name> <script>"
     ]
   },
-  "CLM-OBS-010": {
-    "class": "a launcher handing on to the unit runner",
+  "launchers": {
+    "claim": "CLM-OBS-010",
     "variants": ["npx", "pnpm exec", "pnpm <bin>", "yarn <bin>", "bunx", "python -m", "python3 -m", "uv run", "poetry run", "pipenv run", "coverage run -m", "bundle exec"]
   },
-  "CLM-OBS-011": {
-    "class": "a list of commands with the unit runner among them",
+  "command-lists": {
+    "claim": "CLM-OBS-011",
     "variants": ["&&", ";"]
   },
-  "CLM-OBS-112": {
-    "class": "a wrapper that runs the command after it",
+  "wrappers": {
+    "claim": "CLM-OBS-112",
     "variants": ["xvfb-run", "timeout <duration>"]
   },
-  "CLM-OBS-113": {
-    "class": "a runner named in several words",
+  "runners-in-several-words": {
+    "claim": "CLM-OBS-113",
     "variants": ["mvn test", "./mvnw test", "./gradlew test", "./gradlew check", "./gradlew :app:test", "gotestsum"]
   },
-  "CLM-OBS-117": {
-    "class": "an option xvfb-run takes, with its value",
+  "xvfb-run-options": {
+    "claim": "CLM-OBS-117",
     "variants": ["-n 99", "-s 99", "-e file", "-f file", "-p MIT-MAGIC", "-w 1"]
   }
 }

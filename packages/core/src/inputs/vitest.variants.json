@@ -1,6 +1,6 @@
 {
-  "CLM-CLI-151": {
-    "class": "a Vitest evidence report with one field its reader reads missing, null or of the wrong kind, or a status Vitest never writes",
+  "broken-vitest-reports": {
+    "claim": "CLM-CLI-151",
     "report": {
       "testResults": [
         {
@@ -122,8 +122,8 @@
       }
     ]
   },
-  "CLM-CLI-153": {
-    "class": "a Jest evidence report with one field its reader reads missing, null or of the wrong kind, or a status Jest never writes",
+  "broken-jest-reports": {
+    "claim": "CLM-CLI-153",
     "report": {
       "testResults": [
         {

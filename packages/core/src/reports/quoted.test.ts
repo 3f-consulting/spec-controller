@@ -30,11 +30,11 @@ function shown(name: string): { readonly name: string | undefined; readonly same
 }
 
 describe("a name will show in code, and every row will have the same columns", () => {
-  it.for(variants["CLM-RPT-084"].variants)("[CLM-RPT-084] a failing test named %j shows in code unchanged, and every row has the same columns", (name) => {
+  it.for(variants["names-markdown-would-format"].variants)(`[${variants["names-markdown-would-format"].claim}] a failing test named %j shows in code unchanged, and every row has the same columns`, (name) => {
     expect(shown(name)).toEqual({ name, sameColumns: true });
   });
 
-  it.for(variants["CLM-RPT-107"].variants)("[CLM-RPT-107] a failing test named %j shows in code as one quoted line, and every row has the same columns", (name) => {
+  it.for(variants["names-a-code-span-cannot-show"].variants)(`[${variants["names-a-code-span-cannot-show"].claim}] a failing test named %j shows in code as one quoted line, and every row has the same columns`, (name) => {
     expect(shown(name)).toEqual({ name: JSON.stringify(name), sameColumns: true });
   });
 });

@@ -1,10 +1,10 @@
 {
-  "CLM-OBS-013": {
-    "class": "a step writing out the step record",
+  "step-record-writers": {
+    "claim": "CLM-OBS-013",
     "variants": ["run:", "env:"]
   },
-  "CLM-OBS-015": {
-    "class": "an action that only sets the job up",
+  "plumbing-actions": {
+    "claim": "CLM-OBS-015",
     "variants": ["actions/checkout", "actions/cache", "actions/setup-*", "actions/upload-artifact", "actions/download-artifact"]
   }
 }
