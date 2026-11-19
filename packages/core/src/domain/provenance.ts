@@ -19,7 +19,12 @@ export interface Provenance {
   readonly toolVersion: string;
   readonly runTime: string;
   readonly inputs: readonly ProvenanceInput[];
+  // Whether the run verdict counted the executable claims alone, leaving out the phantom claims and the unnamed claim.
+  readonly countedOnlyExecutableClaims: boolean;
 }
+
+// The provenance as the run's identity and inputs give it, before the run verdict's setting is recorded on it.
+export type ProvenanceOfInputs = Omit<Provenance, "countedOnlyExecutableClaims">;
 
 // What the Run identity port reads from git, the install and the clock, as written. Which wins is the domain's.
 export interface RunIdentity {
@@ -37,7 +42,7 @@ export interface RunIdentity {
 export type RepositoryOfOrigin = (origin: string) => string | undefined;
 
 // A target given wins, then the origin's repository; with neither the target is unknown-target.
-export function provenanceOf(identity: RunIdentity, inputs: readonly ProvenanceInput[], targetFolder: string, repositoryOf: RepositoryOfOrigin): Provenance {
+export function provenanceOf(identity: RunIdentity, inputs: readonly ProvenanceInput[], targetFolder: string, repositoryOf: RepositoryOfOrigin): ProvenanceOfInputs {
   return {
     target: identity.givenTarget ?? (identity.origin === undefined ? undefined : repositoryOf(identity.origin)) ?? "unknown-target",
     sourceSha: identity.givenSourceSha ?? identity.head ?? "unknown",

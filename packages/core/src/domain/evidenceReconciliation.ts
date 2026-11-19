@@ -15,7 +15,7 @@ import {
   type TestResult,
 } from "./postEvidenceObservation.js";
 import type { CiStep } from "./workflowSteps.js";
-import { provenanceOf, type Provenance, type ProvenanceInput, type RepositoryOfOrigin, type RunIdentity } from "./provenance.js";
+import { provenanceOf, type Provenance, type ProvenanceInput, type ProvenanceOfInputs, type RepositoryOfOrigin, type RunIdentity } from "./provenance.js";
 
 export type RunVerdict =
   | { readonly verdict: "balanced" }
@@ -226,7 +226,7 @@ export interface RunReconciled {
   // Whether the run verdict counts the executable claims alone, leaving out the phantom claims and the unnamed claim.
   readonly countOnlyExecutableClaims: boolean;
   readonly stepAccount: StepAccount;
-  readonly provenance: Provenance;
+  readonly provenance: ProvenanceOfInputs;
 }
 
 // The Evidence Reconciliation assembled from its parts: every part is present, empty when the run had nothing for it.

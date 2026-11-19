@@ -3,11 +3,13 @@ import { claimReconciliationsOf } from "../domain/claimReconciliation.js";
 import type { ConfigurationError } from "../domain/configuration.js";
 import { evidenceReconciliationOf, stepAccountOf, type EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import { executableClaimsOf } from "../domain/postEvidenceObligation.js";
-import type { Provenance } from "../domain/provenance.js";
+import type { Provenance, ProvenanceOfInputs } from "../domain/provenance.js";
 import type { EvidenceObservation, Result } from "../domain/postEvidenceObservation.js";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
 
-export const PROVENANCE: Provenance = { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] };
+const PROVENANCE_OF_INPUTS: ProvenanceOfInputs = { target: "acme/web", sourceSha: "abc1234", toolVersion: "0.1.256", runTime: "2026-11-12T07:08:14Z", inputs: [] };
+
+export const PROVENANCE: Provenance = { ...PROVENANCE_OF_INPUTS, countedOnlyExecutableClaims: false };
 
 // What a run has, as literals: its feature files' scenario tags, its unit tests, and anything else it has.
 export interface RunHas {
@@ -15,7 +17,7 @@ export interface RunHas {
   readonly unitTests: readonly (readonly [Result, string?])[];
   readonly configurationErrors?: readonly ConfigurationError[];
   readonly stepsRead?: boolean;
-  readonly provenance?: Partial<Provenance>;
+  readonly provenance?: Partial<ProvenanceOfInputs>;
 }
 
 const unitTestOf = ([result, code]: readonly [Result, string?]): EvidenceObservation => ({
@@ -41,7 +43,7 @@ export function reconciled({ scenarios, unitTests, configurationErrors = [], ste
     claimReading,
     countOnlyExecutableClaims: false,
     stepAccount: stepAccountOf(stepsRead ? [{ step, disposition: "fitnessFunction" }] : []),
-    provenance: { ...PROVENANCE, ...provenance },
+    provenance: { ...PROVENANCE_OF_INPUTS, ...provenance },
   });
 }
 
@@ -69,5 +71,5 @@ export function reconciledFromSources(sources: readonly (readonly [string, strin
   const features = sources.map(([file, source]) => featureAsWrittenFrom(file, source));
   const claimReading = { deferralTags: [], strict: false };
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, claimReading), evidence.map(evidenceOf));
-  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: claimCodeErrorsOf(features), configurationErrors, features, claimReading, countOnlyExecutableClaims: false, stepAccount: stepAccountOf([]), provenance: PROVENANCE });
+  return evidenceReconciliationOf({ claimReconciliations, claimCodeErrors: claimCodeErrorsOf(features), configurationErrors, features, claimReading, countOnlyExecutableClaims: false, stepAccount: stepAccountOf([]), provenance: PROVENANCE_OF_INPUTS });
 }
