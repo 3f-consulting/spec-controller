@@ -33,6 +33,7 @@ describe("balance reads the evidence report a named runner's CI step writes, in 
     ["gotestsum", "gotestsum -- ./...", NO_SCRIPTS, { GOTESTSUM_JUNITFILE: "out/go.xml" }, [{ path: "out/go.xml", format: "junit" }]],
     ["pytest", "pytest --junit-xml=out/pytest.xml", NO_SCRIPTS, NO_ENVIRONMENT, [{ path: "out/pytest.xml", format: "pytest" }]],
     ["cucumber-js", "cucumber-js -f json:out/cucumber.json", NO_SCRIPTS, NO_ENVIRONMENT, [{ path: "out/cucumber.json", format: "cucumber" }]],
+    ["cucumber-js", "cucumber-js -f progress --format json:out/cucumber.json", NO_SCRIPTS, NO_ENVIRONMENT, [{ path: "out/cucumber.json", format: "cucumber" }]],
     [
       "playwright",
       "npx playwright test --reporter=junit",

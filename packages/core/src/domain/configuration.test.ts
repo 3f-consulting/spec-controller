@@ -177,6 +177,14 @@ describe("balance reads no evidence report for a runner whose report it cannot f
       { kind: "runner-report-not-read", entry: "out/vitest.json" },
     ],
     [
+      "CLM-CFG-027",
+      "cucumber-js, where a step ran cucumber-js -f progress --format json:out/cucumber.json, and no file was at out/cucumber.json",
+      "cucumber-js",
+      "jobs:\n  ci:\n    steps:\n      - run: cucumber-js -f progress --format json:out/cucumber.json\n",
+      ["out/cucumber.json"],
+      { kind: "runner-report-not-read", entry: "out/cucumber.json" },
+    ],
+    [
       "CLM-CFG-028",
       "my-tool, a runner balance does not know, where a step ran my-tool",
       "my-tool",
