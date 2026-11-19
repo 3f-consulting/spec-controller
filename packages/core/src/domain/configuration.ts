@@ -78,10 +78,11 @@ function checked<Taken, Value>(parts: readonly SettingPart<Taken>[], check: (tak
   return { value: each.flatMap(({ value }) => (value === undefined ? [] : [value])), errors: each.flatMap(({ errors }) => errors) };
 }
 
-// A runner's report comes from where the run names it. A specController block's entry keeps the reports the run read,
-// matched by file name, and leaves out each other report name with an error naming it. A runner whose report is named
-// nowhere is kept, with an error naming it.
-function runnerChecked([layer, runner]: readonly [Layer, Runner], reportsRead: readonly string[]): Checked<readonly [Layer, Runner]> {
+// A runner is kept, naming as an error a report path with no file, a block entry's report name not read, or no report.
+function runnerChecked([layer, runner]: readonly [Layer, Runner], reportsRead: readonly string[], reportsNotFound: readonly string[]): Checked<readonly [Layer, Runner]> {
+  if (runner.report !== undefined && reportsNotFound.includes(runner.report.path)) {
+    return { value: [layer, { name: runner.name }], errors: [{ kind: "runner-report-not-read", entry: runner.report.path }] };
+  }
   if (runner.report !== undefined) return { value: [layer, runner], errors: [] };
   if (runner.reports === undefined) return { value: [layer, runner], errors: [{ kind: "runner-report-not-named", entry: runner.name }] };
   const read = (report: string): boolean => reportsRead.includes(report);
@@ -104,14 +105,14 @@ function nonCheckChecked({ entry, address }: NonCheck, steps: readonly CiStep[])
   return inItsWorkflow.length === 0 || named ? { value: address, errors: [] } : { value: undefined, errors: [{ kind: "not-checks-entry-matches-no-step", entry }] };
 }
 
-// The target's configuration: the settings checked against the steps and the reports the run read, with every error.
+// The target's configuration: the settings checked against the steps and the reports read and not found, with every error.
 export function targetConfigurationOf(
   settings: ConfigurationSettings,
   steps: readonly CiStep[],
   reportsRead: readonly string[],
-  reportsNotFound?: readonly string[],
+  reportsNotFound: readonly string[] = [],
 ): { readonly configuration: TargetConfiguration; readonly errors: readonly ConfigurationError[] } {
-  const runners = checked(settings.runners, (runner) => runnerChecked(runner, reportsRead));
+  const runners = checked(settings.runners, (runner) => runnerChecked(runner, reportsRead, reportsNotFound));
   const nonChecks = checked(settings.nonChecks, (nonCheck) => nonCheckChecked(nonCheck, steps));
   const deferralTags = checked(settings.deferralTags, (tag) => ({ value: tag, errors: [] }));
   return {

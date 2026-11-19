@@ -1,4 +1,5 @@
 import type { ConfigurationSettings, Layer, NonCheck, Runner, SettingPart } from "../domain/configuration.js";
+import { EVIDENCE_REPORT_FORMATS } from "./evidenceReportFormats.js";
 
 // The configuration settings a run names on its command line, each as given.
 export interface SettingsNamed {
@@ -13,7 +14,13 @@ const STEP_AS_WRITTEN = /^(.+?\.ya?ml):([^:]+):(.+)$/;
 // A runner's long form, <runner>:<format>:<report>, splits at its first two colons, so its report's path may hold one.
 const LONG_FORM = /^([^:]*):([^:]*):(.*)$/s;
 
+const FORMATS: readonly string[] = EVIDENCE_REPORT_FORMATS.map(({ kind }) => kind);
+
+// A setting with nothing in it, or in a form balance does not read, is left out, named as written.
+const wrongKind = (entry: string): SettingPart<never> => ({ error: { kind: "configuration-wrong-kind", entry } });
+
 export function nonCheckParsed(entry: string): SettingPart<NonCheck> {
+  if (entry.trim() === "") return wrongKind(entry);
   const step = STEP_AS_WRITTEN.exec(entry);
   if (step === null) return { error: { kind: "not-checks-entry-not-a-step-name", entry } };
   return { taken: { entry, address: { workflow: step[1]!, job: step[2]!, step: step[3]! } } };
@@ -21,17 +28,28 @@ export function nonCheckParsed(entry: string): SettingPart<NonCheck> {
 
 // A deferral tag is taken with or without its @, and without the spaces around it.
 export function deferralTagParsed(entry: string): SettingPart<string> {
-  const tag = entry.trim();
-  return { taken: tag.startsWith("@") ? tag.slice(1) : tag };
+  const trimmed = entry.trim();
+  const tag = trimmed.startsWith("@") ? trimmed.slice(1) : trimmed;
+  return tag === "" ? wrongKind(entry) : { taken: tag };
 }
 
-function runnerParsed(named: string): Runner {
+// A runner named alone, or in its long form with a runner, a format balance reads and a report.
+function runnerParsed(named: string): Runner | undefined {
   const long = LONG_FORM.exec(named);
-  return long === null ? { name: named.trim() } : { name: long[1]!.trim(), report: { path: long[3]!, format: long[2]! } };
+  if (long === null) return named.includes(":") || named.trim() === "" ? undefined : { name: named.trim() };
+  const name = long[1]!.trim();
+  const format = long[2]!;
+  const path = long[3]!;
+  return name === "" || path === "" || !FORMATS.includes(format) ? undefined : { name, report: { path, format } };
 }
+
+const runnerPart = (layer: Layer, named: string): SettingPart<readonly [Layer, Runner]> => {
+  const runner = runnerParsed(named);
+  return runner === undefined ? wrongKind(named) : { taken: [layer, runner] };
+};
 
 export const configurationSettingsNamed = ({ runners, nonChecks, deferralTags }: SettingsNamed): ConfigurationSettings => ({
-  runners: Object.entries(runners).flatMap(([layer, named = []]) => named.map((runner) => ({ taken: [layer as Layer, runnerParsed(runner)] as const }))),
+  runners: Object.entries(runners).flatMap(([layer, named = []]) => named.map((runner) => runnerPart(layer as Layer, runner))),
   nonChecks: nonChecks.map(nonCheckParsed),
   deferralTags: deferralTags.map(deferralTagParsed),
   unknownKeys: [],
