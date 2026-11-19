@@ -69,7 +69,7 @@ const reportsGivenOf = (reports: NonNullable<InputsRead["reports"]>, located: re
   }));
 
 export function balance(
-  { inputs, settings, outputs, target, sourceSha, strict, exitZero }: Extract<RunRequest, { command: "balance" }>,
+  { inputs, settings, outputs, target, sourceSha, strict, exitZero, countOnlyExecutableClaims }: Extract<RunRequest, { command: "balance" }>,
   folder: string,
   streams: StandardStreams,
   complain: Complain,
@@ -102,7 +102,7 @@ export function balance(
     provenanceInputs: provenanceInputsOf(inputPathsOf(read, folder, found, targetFolder)),
     targetFolder,
     strict,
-    countOnlyExecutableClaims: false,
+    countOnlyExecutableClaims,
   });
   try {
     return writeReports(outputs, [...read.filesRead, ...found.filesRead], reconciliation, streams, { exitZero });

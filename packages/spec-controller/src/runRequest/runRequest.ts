@@ -145,6 +145,7 @@ function balanceRequested(read: FlagsRead): RunRequest | UsageError {
     outputs,
     strict: read.on.has("strict"),
     exitZero: read.on.has("exit-zero"),
+    countOnlyExecutableClaims: read.on.has("written-claims-only"),
   };
 }
 
