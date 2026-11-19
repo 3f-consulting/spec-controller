@@ -201,6 +201,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads its inputs
       then it will post both steps, each citing its own code
 
+    @unit @CLM-CLI-212
+    Scenario: balance reads the evidence report the run names for a runner, at that path, as that runner's layer's evidence
+      given the run named playwright as the e2e runner, with out/playwright.xml as its JUnit evidence report
+      and out/playwright.xml had one passing result citing CLM-ONE-001
+      when balance reads its inputs
+      then it will read out/playwright.xml as e2e evidence
+
   Rule: a command validates every input before it does its work
 
     The inputs a command validates are each evidence report, each step record, the feature corpus,

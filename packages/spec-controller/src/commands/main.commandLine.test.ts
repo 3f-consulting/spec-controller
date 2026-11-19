@@ -224,6 +224,48 @@ describe("balance posts the results of every evidence report the run names for o
   });
 });
 
+interface ResultsByLayerReported {
+  readonly claimReconciliations: readonly {
+    readonly claim: { readonly claimCode?: { readonly number: string } };
+    readonly qualityCheckReconciliations: readonly { readonly observation?: { readonly kind: string; readonly result: string } }[];
+  }[];
+}
+
+const ONE_E2E_CLAIM = "@ONE\nFeature: one\n\n  @e2e @CLM-ONE-001\n  Scenario: one\n";
+const ONE_UNIT_AND_E2E_CLAIM = "@ONE\nFeature: one\n\n  @unit @e2e @CLM-ONE-001\n  Scenario: one\n";
+// An Outline whose one row cites its claim in the feature file alone, so its result names no claim code.
+const ONE_E2E_ROW = "@ONE\nFeature: one\n\n  @e2e\n  Scenario Outline: one <n>\n    Given one <n>\n\n    Examples:\n      | clm         | n |\n      | CLM-ONE-001 | 1 |\n";
+const ROW_PASSING =
+  '[{"uri":"features/one.feature","name":"one","elements":[{"keyword":"Scenario Outline","name":"one 1","type":"scenario","line":10,"tags":[{"name":"@e2e"}],"steps":[{"keyword":"Given ","name":"one 1","result":{"status":"passed"}}]}]}]';
+const JUNIT_FAILING_TWO = '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="two" tests="1" errors="0" skipped="0" failures="1">\n  <testcase name="[CLM-ONE-001] two" classname="two" time="0.001"><failure/></testcase>\n</testsuite>\n';
+const WRITES_ANOTHER_PATH = "jobs:\n  e2e:\n    steps:\n      - run: npx playwright test --reporter=junit --output out/other.xml\n";
+
+describe("balance reads the evidence report the run names for a runner, at that path, as that runner's layer's evidence", () => {
+  it.each([
+    ["--e2e playwright:junit:out/playwright.xml", ["--e2e", "playwright:junit:out/playwright.xml"], "out/playwright.xml", JUNIT_PASSING, ONE_E2E_CLAIM],
+    ["--e2e playwright:junit:out/playwright.xml beside the short form --e2e cypress", ["--e2e", "playwright:junit:out/playwright.xml", "--e2e", "cypress"], "out/playwright.xml", JUNIT_PASSING, ONE_E2E_CLAIM],
+    ["--e2e playwright:junit:out/playwright.xml beside a runner it cannot use, --e2e cypress:html:out/other.xml", ["--e2e", "playwright:junit:out/playwright.xml", "--e2e", "cypress:html:out/other.xml"], "out/playwright.xml", JUNIT_PASSING, ONE_E2E_CLAIM],
+    ["--e2e cucumber-js:cucumber:out/cucumber.json, its result an Outline row citing its claim through the feature file", ["--e2e", "cucumber-js:cucumber:out/cucumber.json"], "out/cucumber.json", ROW_PASSING, ONE_E2E_ROW],
+    ["--e2e playwright:junit:out/playwright.xml, a workflow step writing out/other.xml", ["--e2e", "playwright:junit:out/playwright.xml", "--ci", "workflows"], "out/playwright.xml", JUNIT_PASSING, ONE_E2E_CLAIM],
+    [
+      "--e2e playwright:junit:out/playwright.xml beside --unit junit:junit:out/unit.xml, which also cites CLM-ONE-001",
+      ["--e2e", "playwright:junit:out/playwright.xml", "--unit", "junit:junit:out/unit.xml"],
+      "out/playwright.xml",
+      JUNIT_PASSING,
+      ONE_UNIT_AND_E2E_CLAIM,
+      [["unit", "passed"], ["e2e", "passed"]],
+    ],
+  ] as const)("[CLM-CLI-212] %s, the report there one passing result citing CLM-ONE-001: the result is posted as e2e evidence for CLM-ONE-001", (_given, args, path, report, feature, posts: readonly (readonly string[])[] = [["e2e", "passed"]]) => {
+    const folder = folderWith({ "features/one.feature": feature, [path]: report, "out/unit.xml": JUNIT_PASSING, "out/other.xml": JUNIT_FAILING_TWO, "workflows/ci.yml": WRITES_ANOTHER_PATH });
+
+    const { output } = ran(["balance", ...args, "--format", "json"], folder);
+
+    const { claimReconciliations } = (output === "" ? { claimReconciliations: [] } : JSON.parse(output)) as ResultsByLayerReported;
+    const posted = claimReconciliations.map(({ claim, qualityCheckReconciliations }) => [claim.claimCode?.number, qualityCheckReconciliations.flatMap(({ observation }) => (observation ? [[observation.kind, observation.result]] : []))]);
+    expect(posted).toEqual([["001", posts]]);
+  });
+});
+
 const TWO_FITNESS_CLAIMS = "@ONE\nFeature: one\n\n  @fitness @CLM-ONE-001\n  Scenario: one\n\n  @fitness @CLM-ONE-002\n  Scenario: two\n";
 const TWO_JOBS = "jobs:\n  first:\n    steps:\n      - id: CLM-ONE-001\n        run: pnpm one\n  second:\n    steps:\n      - id: CLM-ONE-002\n        run: pnpm two\n";
 
