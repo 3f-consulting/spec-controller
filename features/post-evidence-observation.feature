@@ -151,9 +151,9 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-043 | Cucumber's evidence report          | a step was skipped and none failed       |
 
     @unit @CLM-OBS-169
-    Scenario: balance posts nothing for a fitness function's step skipped in a job that succeeded
+    Scenario: balance posts nothing for a fitness function's step skipped in a job that succeeded and in which no step failed
       given a workflow had a fitness function's step with the id CLM-ONE-001, in ci.yml
-      and the step record said that step was skipped, in a job that succeeded
+      and the step record said that step was skipped, in a job that succeeded, and no step in that record failed
       when balance posts the evidence
       then nothing will be posted
 
