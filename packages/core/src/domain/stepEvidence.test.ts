@@ -115,6 +115,15 @@ describe("balance reads a result as passed or failed, citing the code it names",
   });
 });
 
+describe("balance posts nothing for a fitness function's step skipped in a job that succeeded", () => {
+  it("[CLM-OBS-169] a workflow had a fitness function's step with the id CLM-ONE-001, in ci.yml, and the step record said that step was skipped, in a job that succeeded: nothing is posted", () => {
+    const steps = workflowOf({ ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] } });
+    const record = stepRecordFrom({ job: { status: "success" }, steps: { "CLM-ONE-001": { outcome: "skipped", conclusion: "skipped" } } });
+
+    expect(fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, record), record)).toEqual([]);
+  });
+});
+
 describe("balance posts what could not run as never ran", () => {
   it.each([
     ["CLM-OBS-053", "CLM-ONE-001", "in ci.yml, was skipped", { name: "Lint", run: "pnpm lint" }, "skipped", [ONE_001], "ci.yml:ci:Lint"],
