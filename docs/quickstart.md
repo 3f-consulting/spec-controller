@@ -214,7 +214,7 @@ A run is not reconciled when you cannot rely on it. Its run verdict says why:
 
 - `unsound` when some evidence never ran.
 - `claim-code-errors` when a claim code is misfiled.
-- `nothing-to-reconcile` when there is nothing to reconcile at all.
+- `nothing-to-reconcile` when there is no claim for the run verdict to count.
 
 See [Exit codes](./user-guide.md#exit-codes).
 

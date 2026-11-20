@@ -261,7 +261,7 @@ def test_offers_the_next_code():
 | a code no feature file carries | makes a [phantom claim](#report-rows-to-know) |
 | no `clm` property, or a value that is not a claim code | lands on the unnamed claim |
 | `clm` properties naming two or more different codes | **credits none of them**; it lands on the unnamed claim, naming every code, because one test proves exactly one scenario |
-| a module that fails to collect, or a test whose setup errors | never ran its proof: it posts a `never-ran` Evidence Observation, the run is not reconciled, as `unsound` (exit `3`), and the scenario it cites reads `missing` |
+| a module that fails to collect, or a test whose setup errors | never ran its proof: it posts a `never-ran` Evidence Observation, the run is not reconciled, as `unsound` (exit `3`), and the scenario it cites reads `missing`; under `--written-claims-only`, it is listed but does not make the run unsound |
 
 ### Citing a scenario from Jest
 
@@ -311,7 +311,7 @@ describe("allocating the next number", () => {
 | failing | answers that scenario as failing |
 | todo or skipped | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its title | **credits none of them**; it lands on the unnamed claim, naming every code |
-| a test file that failed to run | never ran its proof: it posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`) |
+| a test file that failed to run | never ran its proof: it posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`); under `--written-claims-only`, it is listed but does not make the run unsound |
 
 ### Citing a scenario from Go
 
@@ -362,7 +362,7 @@ A nested subtest's name also includes the name of every enclosing subtest. `bala
 | failing | answers that scenario as failing |
 | skipped | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its own name | **credits none of them**; it lands on the unnamed claim, naming every code |
-| in a package that failed to compile | never ran its proof: the package posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`) |
+| in a package that failed to compile | never ran its proof: the package posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`); under `--written-claims-only`, it is listed but does not make the run unsound |
 
 ### Citing a scenario from Java
 
@@ -523,7 +523,7 @@ The runner's name is `rspec`, so a step that runs `rspec`, or `bundle exec rspec
 | failing | answers that scenario as failing |
 | skipped or pending (`skip`, `xit`, `pending`) | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its own description | **credits none of them**; it lands on the unnamed claim, naming every code |
-| in a spec file that failed to load | never ran its proof: the file posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`) |
+| in a spec file that failed to load | never ran its proof: the file posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`); under `--written-claims-only`, it is listed but does not make the run unsound |
 
 ---
 
@@ -849,9 +849,9 @@ The package ships a JSON Schema that states the JSON's structure: `dist/spec-rec
 | --- | --- | --- | --- |
 | balanced | `balanced` | `0` | every Claim Reconciliation balances |
 | out of balance | `out-of-balance` | `1` | at least one Claim Reconciliation is out of balance |
-| not reconciled, as unsound | `not-reconciled`, `unsound` | `3` | some evidence never ran, so the run cannot be relied on to show a disagreement |
+| not reconciled, as unsound | `not-reconciled`, `unsound` | `3` | some evidence never ran, so the run cannot be relied on to show a disagreement; under `--written-claims-only`, only evidence citing an executable claim counts |
 | not reconciled, for claim code errors | `not-reconciled`, `claim-code-errors` | `3` | a claim code is misfiled (see [Claim code errors](#claim-code-errors)) |
-| not reconciled, with nothing to reconcile | `not-reconciled`, `nothing-to-reconcile` | `3` | there is no Claim Reconciliation at all, so the run has no basis for a verdict |
+| not reconciled, with nothing to reconcile | `not-reconciled`, `nothing-to-reconcile` | `3` | there is no Claim Reconciliation the run verdict counts, so the run has no basis for a verdict |
 
 The totals follow, in groups:
 
@@ -888,7 +888,7 @@ Both reports name each outcome by its handle.
 | `failing` | the evidence asked for arrived, and failed | a swallowed red also reads `failing`, given `--ci-steps` |
 | `cannot-fail` | the evidence passed, but its CI step or its job sets `continue-on-error`, or `balance` cannot read whether it does, so its red might not fail the build | see below |
 | `not-asked-for` | the evidence is of a kind of quality check its claim did not ask for | see [When a row reads `not-asked-for`](#when-a-row-reads-not-asked-for) |
-| `never-ran` | the evidence never reached its assertions | the run is not reconciled, as `unsound`, and the evidence is listed under `## Run integrity` too |
+| `never-ran` | the evidence never reached its assertions | the run is not reconciled, as `unsound`, and the evidence is listed under `## Run integrity` too; under `--written-claims-only`, only when it cites an executable claim |
 | `no-claim-code` | the claim has no claim code for evidence to cite | |
 | `duplicate-claim-code` | the claim's claim code is carried by another claim | see below |
 | `no-quality-check` | the claim asks for no quality check, and nothing cites it | |

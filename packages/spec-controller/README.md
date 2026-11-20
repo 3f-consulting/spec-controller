@@ -45,7 +45,7 @@ The report is the same one a run without the flag prints. It has the same Claim 
 - Out-of-balance (`1`) exits `0`.
 - Usage (`2`), not reconciled (`3`) and an unexpected error (`4`) still fail. Each one means the run could not be relied on, or reached no verdict. A flag that relaxes a verdict does not relax these.
 
-Work through the out-of-balance rows, then delete `--exit-zero`. The gate is then on. Do not wrap the step in `continue-on-error` or `|| true` instead. Those swallow the codes that mean the run could not be trusted. They also leave nothing in the command to show that the gate is off.
+Work through the out-of-balance rows, then delete `--exit-zero`. The gate is then on. To gate on the scenarios you have written before every test cites one, replace `--exit-zero` with `--written-claims-only`: the run verdict then counts only the executable claims. Do not wrap the step in `continue-on-error` or `|| true` instead. Those swallow the codes that mean the run could not be trusted. They also leave nothing in the command to show that the gate is off.
 
 ### Give it the evidence
 
@@ -67,7 +67,7 @@ A scenario tagged `@unit` raises an evidence obligation: a unit test must exist 
 | `0` | balanced — every obligation has evidence, and that evidence holds |
 | `1` | out-of-balance — the scenarios and the evidence disagree, and the report says where |
 | `2` | usage — the invocation was wrong, or an input could not be read |
-| `3` | not reconciled — the run could not be relied on. Its run verdict says why: `unsound`, when some evidence never ran; `claim-code-errors`, when a claim code is misfiled (the report lists it under `## Errors in the inputs`); or `nothing-to-reconcile`, when there is no Claim Reconciliation at all |
+| `3` | not reconciled — the run could not be relied on. Its run verdict says why: `unsound`, when some evidence never ran; `claim-code-errors`, when a claim code is misfiled (the report lists it under `## Errors in the inputs`); or `nothing-to-reconcile`, when there is no Claim Reconciliation the run verdict counts |
 | `4` | unexpected error — the run stops on an error that no refusal names, and gives no verdict. One line on stderr names the error |
 
 The tool writes the whole report before it sets the exit code. So a failing run still tells you why.
