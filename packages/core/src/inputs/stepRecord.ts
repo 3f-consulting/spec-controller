@@ -17,6 +17,6 @@ const resultFrom = (outcome: unknown): RecordedStep["result"] =>
 export function stepRecordFrom(record: unknown): RecordedStep[] {
   const jobSucceeded = savesItsJob(record) && record.job.status === "success";
   const results = Object.entries(stepsOf(record) as object).map(([key, entry]: [string, { readonly outcome?: unknown }]) => ({ key, result: resultFrom(entry.outcome) }));
-  const jobHadAFailedStep = results.some(({ result }) => result === "failed");
-  return results.map((entry) => ({ ...entry, jobSucceeded, jobHadAFailedStep }));
+  const recordHadAFailedStep = results.some(({ result }) => result === "failed");
+  return results.map((entry) => ({ ...entry, jobSucceeded, recordHadAFailedStep }));
 }

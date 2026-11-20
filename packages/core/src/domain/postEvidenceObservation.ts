@@ -50,7 +50,7 @@ export interface RecordedStep {
   readonly key: string;
   readonly result: Extract<Result, "passed" | "failed" | "never-ran"> | "skipped";
   readonly jobSucceeded: boolean;
-  readonly jobHadAFailedStep: boolean;
+  readonly recordHadAFailedStep: boolean;
 }
 
 // The shell reader's answers, handed to the domain so it decides which question serves which step.
@@ -165,7 +165,7 @@ const placeOf = (step: CiStep): string => `${step.workflow}:${step.job}:${step.i
 
 const postedResultOf = (recorded: RecordedStep["result"]): Result => (recorded === "skipped" ? "never-ran" : recorded);
 
-const skippedByDesign = ({ result, jobSucceeded, jobHadAFailedStep }: RecordedStep): boolean => result === "skipped" && jobSucceeded && !jobHadAFailedStep;
+const skippedByDesign = ({ result, jobSucceeded, recordHadAFailedStep }: RecordedStep): boolean => result === "skipped" && jobSucceeded && !recordHadAFailedStep;
 
 function observationOf(step: CiStep, steps: readonly CiStep[], allSteps: readonly CiStep[], entry: RecordedStep | undefined): EvidenceObservation {
   const claimCode = claimCodeFrom(step.id);
