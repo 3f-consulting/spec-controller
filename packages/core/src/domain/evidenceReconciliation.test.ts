@@ -212,6 +212,18 @@ describe("a run counting only the executable claims is not reconciled for a reas
   });
 });
 
+describe("a run counting only the executable claims is not reconciled when it has a configuration error", () => {
+  it("[CLM-EVR-102] a run with a claim asking for unit evidence, a passing unit test citing it, and a configuration error, reconciled counting only the executable claims, is not reconciled, because of configuration errors", () => {
+    const features = [featureAsWrittenFrom("f0.feature", scenariosTagged("@unit @CLM-ONE-001"))];
+    const settingsFileErrors: readonly ConfigurationError[] = [{ kind: "configuration-unknown-key", entry: "unitt" }];
+
+    expect(reconcile({ ...readersGaveOf(features, [["unit", "passed", "ONE-001"]], false, true), settingsFileErrors }).runVerdict).toEqual({
+      verdict: "not-reconciled",
+      why: "configuration-errors",
+    });
+  });
+});
+
 describe("when several reasons apply, the run verdict follows a fixed order among them", () => {
   const configurationError: readonly ConfigurationError[] = [{ kind: "configuration-unknown-key", entry: "unitt" }];
 

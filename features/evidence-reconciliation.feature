@@ -99,6 +99,13 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-094 | none                                                    | a passing unit test citing no code                      | nothing to reconcile |
         | CLM-EVR-095 | none                                                    | a unit test citing a code no claim has, which never ran | nothing to reconcile |
 
+    @unit @CLM-EVR-102
+    Scenario: a run counting only the executable claims is not reconciled when it has a configuration error
+      given a run had one executable claim asking for unit evidence, with a passing unit test citing it
+      and it had a configuration error
+      when balance reconciles it counting only the executable claims
+      then the run verdict will be not reconciled, because configuration errors
+
   Rule: the summary counts what was reconciled
 
     @unit
