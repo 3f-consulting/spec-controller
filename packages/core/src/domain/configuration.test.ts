@@ -404,19 +404,20 @@ describe("balance still uses the configuration settings it can use beside one it
 });
 
 describe("balance reads the evidence report the run names for a runner, at that path, as that runner's layer's evidence", () => {
-  it.each<[string, string, readonly string[], Partial<SettingsNamed>, string]>([
-    ["playwright:junit:out/playwright.xml as the e2e runner", "out/playwright.xml", ["e2e"], { runners: { e2e: ["playwright:junit:out/playwright.xml"] } }, ""],
-    ["playwright:junit:out/playwright.xml as the e2e runner", "out/other.xml", [], { runners: { e2e: ["playwright:junit:out/playwright.xml"] } }, ""],
+  it.each<[string, string, readonly string[], Partial<SettingsNamed>, readonly string[]]>([
+    ["playwright:junit:out/playwright.xml as the e2e runner", "out/playwright.xml", ["e2e"], { runners: { e2e: ["playwright:junit:out/playwright.xml"] } }, []],
+    ["playwright:junit:out/playwright.xml as the e2e runner", "out/other.xml", [], { runners: { e2e: ["playwright:junit:out/playwright.xml"] } }, []],
     [
       "cucumber-js:cucumber:out/cucumber.json as the e2e runner, then as the integration runner",
       "out/cucumber.json",
       ["e2e", "integration"],
       { runners: { e2e: ["cucumber-js:cucumber:out/cucumber.json"], integration: ["cucumber-js:cucumber:out/cucumber.json"] } },
-      "",
+      [],
     ],
-    ["no runner, where a step ran vitest run --reporter=json --outputFile=out/vitest.json", "out/vitest.json", ["unit"], {}, "vitest run --reporter=json --outputFile=out/vitest.json"],
-  ])("[CLM-CLI-212] a run that named %s reads a report at %s as the evidence of the layers %j", (_named, path, layers, named, command) => {
-    const steps = command === "" ? [] : workflowStepsFrom("ci.yml", `jobs:\n  ci:\n    steps:\n      - run: ${command}\n`);
+    ["no runner, where a step ran vitest run --reporter=json --outputFile=out/vitest.json", "out/vitest.json", ["unit"], {}, ["vitest run --reporter=json --outputFile=out/vitest.json"]],
+    ["no runner, where two steps each ran vitest run --reporter=json --outputFile=out/vitest.json", "out/vitest.json", ["unit"], {}, ["vitest run --reporter=json --outputFile=out/vitest.json", "vitest run --reporter=json --outputFile=out/vitest.json"]],
+  ])("[CLM-CLI-212] a run that named %s reads a report at %s as the evidence of the layers %j", (_named, path, layers, named, commands) => {
+    const steps = commands.length === 0 ? [] : workflowStepsFrom("ci.yml", `jobs:\n  ci:\n    steps:\n${commands.map((command) => `      - run: ${command}\n`).join("")}`);
     const runners = runnersFoundOf(configurationSettingsNamed({ runners: {}, nonChecks: [], deferralTags: [], ...named }), steps, {}, shellAnswers);
     const settings = reportsLocatedOf(runners, steps, {}, shellAnswers.reportsNamed, shellAnswers.defaultReportsOf);
 
