@@ -61,7 +61,7 @@ const locatedInputs = (located: readonly { readonly report: ReportLocation }[]):
 const reportsGivenOf = (reports: NonNullable<InputsRead["reports"]>, settingsLocated: ConfigurationSettings): ReportGiven[] =>
   EVIDENCE_REPORT_FORMATS.flatMap(({ kind }) => reports.filter(({ format }) => format.kind === kind)).map(({ results, format, located: at }) => ({
     results,
-    layers: at === undefined ? [] : layersOfReportAt(settingsLocated, at),
+    layers: layersOfReportAt(settingsLocated, at),
     needsFeatures: format.needsFeatures === true,
   }));
 

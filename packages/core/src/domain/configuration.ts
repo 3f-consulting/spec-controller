@@ -178,6 +178,6 @@ export const runnerReportsOf = ({ runners }: ConfigurationSettings): readonly { 
   runners.flatMap((part) => ("taken" in part && part.taken[1].report !== undefined ? [{ layer: part.taken[0], report: part.taken[1].report }] : []));
 
 // A report serves the layers of the runners whose report is located at its path, each once, in the order the settings hold them.
-export const layersOfReportAt = (settings: ConfigurationSettings, path: string): readonly Layer[] => [
+export const layersOfReportAt = (settings: ConfigurationSettings, path: string | undefined): readonly Layer[] => [
   ...new Set(runnerReportsOf(settings).flatMap(({ layer, report }) => (report.path === path ? [layer] : []))),
 ];
