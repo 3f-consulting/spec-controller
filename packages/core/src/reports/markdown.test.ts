@@ -38,11 +38,9 @@ describe("the provenance shows each input the run read on its own line", () => {
 });
 
 describe("the provenance shows where each layer's runners came from", () => {
-  const unitRunners = `- ${coreText("provenance-runners-unit")}:`;
-
   it.each([
     ["CLM-RPT-178", "vitest, which the run named", "vitest is the unit layer's runner", [{ name: "vitest", report: { path: "out/vitest.json", format: "vitest" } }], "`vitest`"],
-    ["CLM-RPT-180", "no runner", "the unit layer has no runner", [], coreText("provenance-runners-none")],
+    ["CLM-RPT-180", "no runner", "the unit layer has no runner", [], "none"],
     [
       "CLM-RPT-181",
       "vitest, which the run named, with two evidence reports",
@@ -54,6 +52,7 @@ describe("the provenance shows where each layer's runners came from", () => {
       "`vitest`",
     ],
   ] as const)("[%s] the unit layer's results read from %s: the Markdown provenance says %s", (_clm, _runner, _says, unit, named) => {
+    const unitRunners = `- ${coreText("provenance-runners-unit")}:`;
     const report = markdownReportOf(reconciled({ scenarios: [], unitTests: [], runners: { unit } }));
     const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
 

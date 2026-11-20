@@ -15,6 +15,13 @@ export function provenanceInputsOf(kinds: readonly { readonly name: string; read
 // A layer's runner as the provenance names it, marked when balance found it in the workflows.
 export type ProvenanceRunner = Pick<Runner, "name" | "found">;
 
+// Each layer's runners as the provenance names them: a runner once, however many evidence reports were named for it.
+export function provenanceRunnersOf(runners: Readonly<Record<Layer, readonly Runner[]>>): Provenance["runners"] {
+  const once = (named: readonly Runner[]): ProvenanceRunner[] =>
+    named.filter(({ name }, at) => named.findIndex((runner) => runner.name === name) === at).map(({ name, found }) => (found ? { name, found } : { name }));
+  return { unit: once(runners.unit), integration: once(runners.integration), e2e: once(runners.e2e), performance: once(runners.performance) };
+}
+
 // target is unknown-target when nothing names one; sourceSha is unknown outside git.
 export interface Provenance {
   readonly target: string;

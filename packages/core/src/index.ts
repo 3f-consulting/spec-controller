@@ -6,7 +6,7 @@ export type { CiStep } from "./domain/workflowSteps.js";
 export type { EvidenceReportFormat, EvidenceReportKind } from "./inputs/evidenceReportFormats.js";
 export type { EvidenceReconciliation, ReadersGave, ReportGiven, RunVerdict, StepAccount } from "./domain/evidenceReconciliation.js";
 export type { JsonReport } from "./reports/json.js";
-export type { RunIdentity, Provenance, ProvenanceInput, ProvenanceOfInputs, RepositoryOfOrigin } from "./domain/provenance.js";
+export type { RunIdentity, Provenance, ProvenanceInput, ProvenanceOfInputs, ProvenanceRunner, RepositoryOfOrigin } from "./domain/provenance.js";
 export type { ConfigurationSettings, DefaultReportsOf, KnownRunner, ReportLocation, ReportsNamed, Runner, RunnerFinder, TargetConfiguration } from "./domain/configuration.js";
 export type { SettingsNamed } from "./inputs/commandLineSettings.js";
 export type { BalanceSettingName, SettingsFileEntries, SettingsGiven, SettingsMerged, SettingShape } from "./inputs/settingsFile.js";

@@ -15,7 +15,7 @@ import {
   type TestResult,
 } from "./postEvidenceObservation.js";
 import type { CiStep } from "./workflowSteps.js";
-import { provenanceOf, type Provenance, type ProvenanceInput, type ProvenanceOfInputs, type RepositoryOfOrigin, type RunIdentity } from "./provenance.js";
+import { provenanceOf, provenanceRunnersOf, type Provenance, type ProvenanceInput, type ProvenanceOfInputs, type RepositoryOfOrigin, type RunIdentity } from "./provenance.js";
 
 export type RunVerdict =
   | { readonly verdict: "balanced" }
@@ -239,6 +239,7 @@ export function evidenceReconciliationOf({
   features,
   claimReading,
   countOnlyExecutableClaims,
+  runners,
   stepAccount,
   provenance,
 }: RunReconciled): EvidenceReconciliation {
@@ -250,7 +251,7 @@ export function evidenceReconciliationOf({
     runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors, countOnlyExecutableClaims),
     totals: totalsOf(claimReconciliations, features, deferredScenariosOf(features, claimReading)),
     stepAccount,
-    provenance: { ...provenance, countedOnlyExecutableClaims: countOnlyExecutableClaims },
+    provenance: { ...provenance, countedOnlyExecutableClaims: countOnlyExecutableClaims, runners: provenanceRunnersOf(runners) },
     errorsInTheInputs: { claimCodeErrors, configurationErrors },
     runIntegrity: { neverRan },
   };
@@ -314,6 +315,7 @@ export function reconcile(given: ReadersGave): EvidenceReconciliation {
     features,
     claimReading,
     countOnlyExecutableClaims,
+    runners: configuration.runners,
     stepAccount: stepAccountOf(disposedSteps),
     provenance: provenanceOf(identity, provenanceInputs, targetFolder, repositoryOf),
   });
