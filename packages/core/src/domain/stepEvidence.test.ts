@@ -200,6 +200,21 @@ describe("balance posts a fitness function's step from each step record that nam
       results.map((result) => ({ kind: "fitness", result, cites: [ONE_001] })),
     );
   });
+
+  it("[CLM-OBS-173] a workflow had a fitness function's step with the id CLM-ONE-001, and the run read two step records, one in which CLM-ONE-001 was skipped in a job that succeeded and no step in that record failed, and one from another job in which a step that allows failure failed: no fitness Evidence Observation is posted citing CLM-ONE-001", () => {
+    const steps = workflowOf({
+      lint: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] },
+      build: { steps: [{ id: "build", run: "pnpm build", "continue-on-error": true }] },
+    });
+    const record = [
+      ...stepRecordFrom({ job: { status: "success" }, steps: { "CLM-ONE-001": skipped } }),
+      ...stepRecordFrom({ job: { status: "success" }, steps: { build: { outcome: "failure", conclusion: "success" } } }),
+    ];
+
+    expect(fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, record), record).map(({ result, cites, place }) => ({ result, cites, place }))).toEqual([
+      { result: "failed", cites: [], place: "ci.yml:build:pnpm build" },
+    ]);
+  });
 });
 
 describe("balance posts a recorded success in a workflow as passed-on-error only when a step carrying its id, or that step's job, sets continue-on-error to anything but false", () => {
