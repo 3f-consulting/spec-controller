@@ -57,7 +57,6 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
 const locatedInputs = (located: readonly { readonly report: ReportLocation }[]): InputNamed[] =>
   [...new Map(located.map(({ report }) => [report.path, report.format as EvidenceReportKind])).entries()].map(([path, kind]) => ({ kind, path, byDefault: false, located: true }));
 
-// Every evidence report the run read, as the domain takes it: by format, in the formats' order, then in the order read.
 const reportsGivenOf = (reports: NonNullable<InputsRead["reports"]>, settingsLocated: ConfigurationSettings): ReportGiven[] =>
   EVIDENCE_REPORT_FORMATS.flatMap(({ kind }) => reports.filter(({ format }) => format.kind === kind)).map(({ results, format, located: at }) => ({
     results,
