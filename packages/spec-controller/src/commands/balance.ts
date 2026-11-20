@@ -1,10 +1,12 @@
 import {
   configurationSettingsNamed,
   EVIDENCE_REPORT_FORMATS,
+  layersOfReportAt,
   provenanceInputsOf,
   reconcile,
   reportsLocatedOf,
   repositoryOfOrigin,
+  runnerReportsOf,
   runnersFoundOf,
   scriptsFrom,
   shellAnswers,
@@ -51,22 +53,15 @@ const corpusNamed = (inputs: readonly InputRequest[], folder: string): string | 
   return corpus === undefined ? undefined : resolve(folder, corpus.path);
 };
 
-type Layer = ReportGiven["layers"][number];
-
-// Each report located for a runner, with the runner's layer.
-const reportsLocatedBy = ({ runners }: ConfigurationSettings): { readonly layer: Layer; readonly report: ReportLocation }[] =>
-  runners.flatMap((part) => ("taken" in part && part.taken[1].report !== undefined ? [{ layer: part.taken[0], report: part.taken[1].report }] : []));
-
 // Each path a runner's report is located at is read once, in its format, where no file is a fact.
 const locatedInputs = (located: readonly { readonly report: ReportLocation }[]): InputNamed[] =>
   [...new Map(located.map(({ report }) => [report.path, report.format as EvidenceReportKind])).entries()].map(([path, kind]) => ({ kind, path, byDefault: false, located: true }));
 
-// Every evidence report the run read, as the domain takes it: by format, in the formats' order, then in the order read. A
-// report serves the layers of the runners whose report is located at its path.
-const reportsGivenOf = (reports: NonNullable<InputsRead["reports"]>, located: readonly { readonly layer: Layer; readonly report: ReportLocation }[]): ReportGiven[] =>
+// Every evidence report the run read, as the domain takes it: by format, in the formats' order, then in the order read.
+const reportsGivenOf = (reports: NonNullable<InputsRead["reports"]>, settingsLocated: ConfigurationSettings): ReportGiven[] =>
   EVIDENCE_REPORT_FORMATS.flatMap(({ kind }) => reports.filter(({ format }) => format.kind === kind)).map(({ results, format, located: at }) => ({
     results,
-    layers: [...new Set(located.flatMap(({ layer, report: { path } }) => (path === at ? [layer] : [])))],
+    layers: at === undefined ? [] : layersOfReportAt(settingsLocated, at),
     needsFeatures: format.needsFeatures === true,
   }));
 
@@ -76,7 +71,7 @@ function balanced(request: BalanceRequest, folder: string, streams: StandardStre
   // Read first, so the run's time is when it started.
   const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
   const named = configurationSettingsNamed(settings);
-  const longForms = reportsLocatedBy(named);
+  const longForms = runnerReportsOf(named);
   const read = inputsReadFor([...inputs, ...locatedInputs(longForms)], folder);
   if ("refusals" in read) return refusedWith(read.refusals, streams.error.write);
   // git gives its top level with every link followed, so the folders and paths it is compared with follow theirs too.
@@ -85,12 +80,12 @@ function balanced(request: BalanceRequest, folder: string, streams: StandardStre
   const scripts = scriptsFrom(read.manifest);
   const runners = runnersFoundOf(named, read.workflowSteps ?? NONE, scripts, shellAnswers);
   const settingsLocated = reportsLocatedOf(runners, read.workflowSteps ?? NONE, scripts, shellAnswers.reportsNamed, shellAnswers.defaultReportsOf);
-  const located = reportsLocatedBy(settingsLocated);
+  const located = runnerReportsOf(settingsLocated);
   const found = inputsReadFor(locatedInputs(located.filter(({ report }) => !longForms.some((longForm) => longForm.report === report))), targetFolder);
   if ("refusals" in found) return refusedWith(found.refusals, streams.error.write);
   const reconciliation = reconcile({
     features: read.features,
-    reports: reportsGivenOf([...(read.reports ?? NONE), ...(found.reports ?? NONE)], located),
+    reports: reportsGivenOf([...(read.reports ?? NONE), ...(found.reports ?? NONE)], settingsLocated),
     steps: read.workflowSteps ?? NONE,
     stepRecord: read.stepRecord ?? NONE,
     settings: settingsLocated,
