@@ -267,6 +267,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads its inputs
       then it will read target/surefire-reports as a folder of JUnit evidence reports
 
+    @unit @CLM-CLI-224
+    Scenario: balance reads the evidence report of a runner it found as that runner's layer's evidence
+      given the run named no runner
+      and a workflow had a step running vitest run --reporter=json --outputFile=out/vitest.json
+      when balance reads its inputs
+      then it will read out/vitest.json as unit evidence
+
   Rule: a command validates every input before it does its work
 
     The inputs a command validates are the settings file, each evidence report, each step record,
