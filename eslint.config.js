@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename } from "node:path";
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import json from "@eslint/json";
+import vitest from "@vitest/eslint-plugin";
 import checkFile from "eslint-plugin-check-file";
 import i18next from "eslint-plugin-i18next";
 import sonarjs from "eslint-plugin-sonarjs";
@@ -507,6 +508,15 @@ export default [
     languageOptions: tsLanguageOptions,
     rules: {
       "domainTests/no-restricted-syntax": ["error", ...DOMAIN_TEST_SELECTORS],
+    },
+  },
+
+  {
+    files: ["packages/**/*.test.ts"],
+    plugins: { vitest },
+    languageOptions: tsLanguageOptions,
+    rules: {
+      "vitest/expect-expect": ["error", { assertFunctionNames: ["expect", "expectLeftOut"] }],
     },
   },
 
