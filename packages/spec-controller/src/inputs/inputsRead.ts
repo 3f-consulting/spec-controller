@@ -195,7 +195,7 @@ function filesOf({ kind, path: shown, byDefault, located }: InputNamed, folder: 
   const { reads = "file", endings }: InputReader = READERS[kind];
   const stats = statAt(path);
   // A default that cannot be reached is none.
-  if ("fault" in stats && byDefault && kind !== "settingsFile") return undefined;
+  if ("fault" in stats && byDefault) return undefined;
   if ("fault" in stats && located === true && stats.fault === "absent") return "absent";
   if ("fault" in stats) return [failed(shown, stats.fault, stats.said)];
   if (stats.isDirectory() && endings !== undefined) {
