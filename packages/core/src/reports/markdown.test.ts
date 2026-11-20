@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { stepAccountOf, totalsOf, type EvidenceReconciliation, type StepCounts } from "../domain/evidenceReconciliation.js";
 import { coreText } from "../messages/catalogue.js";
 import { markdownReportOf } from "./markdown.js";
-import { PROVENANCE } from "./reconciledRun.test-utils.js";
+import { PROVENANCE, reconciled } from "./reconciledRun.test-utils.js";
 
 // A run with nothing reconciled, and the parts given.
 const runWith = (parts: Pick<EvidenceReconciliation, "runVerdict" | "provenance"> & Partial<EvidenceReconciliation>): EvidenceReconciliation => ({
@@ -34,6 +34,29 @@ describe("the provenance shows each input the run read on its own line", () => {
     const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
 
     expect(provenance.slice(provenance.indexOf(`- ${coreText("provenance-inputs")}:`))).toEqual([`- ${coreText("provenance-inputs")}:`, "  - CI workflows: `.github/workflows`"]);
+  });
+});
+
+describe("the provenance shows where each layer's runners came from", () => {
+  it.each([
+    ["CLM-RPT-178", "vitest, which the run named", "vitest is the unit layer's runner", [{ name: "vitest", report: { path: "out/vitest.json", format: "vitest" } }], "`vitest`"],
+    ["CLM-RPT-180", "no runner", "the unit layer has no runner", [], "none"],
+    [
+      "CLM-RPT-181",
+      "vitest, which the run named, with two evidence reports",
+      "vitest is the unit layer's runner, named once",
+      [
+        { name: "vitest", report: { path: "a/vitest.json", format: "vitest" } },
+        { name: "vitest", report: { path: "b/vitest.json", format: "vitest" } },
+      ],
+      "`vitest`",
+    ],
+  ] as const)("[%s] the unit layer's results read from %s: the Markdown provenance says %s", (_clm, _runner, _says, unit, named) => {
+    const unitRunners = `- ${coreText("provenance-runners-unit")}:`;
+    const report = markdownReportOf(reconciled({ scenarios: [], unitTests: [], runners: { unit } }));
+    const provenance = report.slice(report.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
+
+    expect(provenance.filter((line) => line.startsWith(unitRunners))).toEqual([`${unitRunners} ${named}`]);
   });
 });
 

@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { configurationSettingsNamed, type SettingsNamed } from "../inputs/commandLineSettings.js";
 import commandLineSettingsVariants from "../inputs/commandLineSettings.variants.json" with { type: "json" };
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
+import runnersVariants from "../inputs/runners.variants.json" with { type: "json" };
 import { settingsFileEntriesFrom, settingsMerged, settingsNamedOf, type SettingsGiven } from "../inputs/settingsFile.js";
 import settingsFileVariants from "../inputs/settingsFile.variants.json" with { type: "json" };
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
-import { reportsLocatedOf, targetConfigurationOf, type ConfigurationError, type TargetConfiguration } from "./configuration.js";
+import { reportsLocatedOf, runnersFoundOf, targetConfigurationOf, type ConfigurationError, type TargetConfiguration } from "./configuration.js";
 import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { runVerdictOf } from "./evidenceReconciliation.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
@@ -136,6 +137,39 @@ describe("balance takes each configuration setting it can use as the runner, non
     const ciRead = [{ workflow: "ci.yml", job: "ci", name: "Install dependencies", identity: "Install dependencies", plumbing: false, writesStepRecord: false }];
 
     expect(takenFrom({ nonChecks: ["nightly.yml:ci:Install dependencies"] }, ciRead)).toEqual({ ...NONE, nonChecks: [{ workflow: "nightly.yml", job: "ci", step: "Install dependencies" }] });
+  });
+});
+
+// The runners balance takes for each layer when ci.yml's job ci had a step named Test running the command given, and the run named the settings given.
+function runnersTakenFrom(command: string, named: Partial<SettingsNamed> = {}, scripts: Readonly<Record<string, string>> = {}): TargetConfiguration["runners"] {
+  const steps = workflowStepsFrom("ci.yml", `jobs:\n  ci:\n    steps:\n      - name: Test\n        run: ${command}\n`);
+  const settings = configurationSettingsNamed({ runners: {}, nonChecks: [], deferralTags: [], ...named });
+  return targetConfigurationOf(runnersFoundOf(settings, steps, scripts, shellAnswers), steps).configuration.runners;
+}
+
+describe("balance finds a runner it knows in a workflow, at its usual layer", () => {
+  it.each<[string, Readonly<Record<string, string>>]>([
+    ["vitest run", {}],
+    ["pnpm test", { test: "vitest run" }],
+    ["CI=1 npx vitest run", {}],
+  ])("[CLM-CFG-036] a workflow that had a step running %s, with a run that named no runner, takes vitest as the unit layer's runner", (command, scripts) => {
+    expect(runnersTakenFrom(command, {}, scripts)).toEqual({ ...NO_RUNNERS, unit: [{ name: "vitest", found: true }] });
+  });
+
+  it.each([...runnersVariants["usual-layers"].variants])("[CLM-CFG-036] a workflow that had a step running $runner, with a run that named no runner, takes $runner as a runner", ({ runner }) => {
+    expect(Object.values(runnersTakenFrom(runner)).flat()).toEqual([{ name: runner, found: true }]);
+  });
+
+  it.each<[string, string, string, Partial<SettingsNamed>, TargetConfiguration["runners"]]>([
+    ["CLM-CFG-037", "cucumber-js", "no runner", {}, { ...NO_RUNNERS, integration: [{ name: "cucumber-js", found: true }] }],
+    ["CLM-CFG-038", "vitest run", "pytest as the unit runner", { runners: { unit: ["pytest"] } }, { ...NO_RUNNERS, unit: [{ name: "pytest" }] }],
+    ["CLM-CFG-039", "playwright test", "pytest as the unit runner", { runners: { unit: ["pytest"] } }, { ...NO_RUNNERS, unit: [{ name: "pytest" }], e2e: [{ name: "playwright", found: true }] }],
+    ["CLM-CFG-040", "cucumber-js", "cucumber-js as the e2e runner", { runners: { e2e: ["cucumber-js"] } }, { ...NO_RUNNERS, e2e: [{ name: "cucumber-js" }] }],
+    ["CLM-CFG-041", "vitest run", "that step as a non-check", { nonChecks: ["ci.yml:ci:Test"] }, NO_RUNNERS],
+    ["CLM-CFG-042", "vitest run", "vitest:vitest as the unit runner, left out", { runners: { unit: ["vitest:vitest"] } }, { ...NO_RUNNERS, unit: [{ name: "vitest", found: true }] }],
+    ["CLM-CFG-043", "my-tool test", "no runner", {}, NO_RUNNERS],
+  ])("[%s] a workflow that had a step running %s, with a run that named %s, gives each layer the runners balance takes", (_clm, command, _named, named, runners) => {
+    expect(runnersTakenFrom(command, named)).toEqual(runners);
   });
 });
 

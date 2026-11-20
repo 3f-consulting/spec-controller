@@ -297,9 +297,13 @@ const STEP_WRITING_VITEST = "vitest run --reporter=json --outputFile=out/vitest.
 // The report at its path read in its runner's format: its one result posted as unit evidence for the feature file's one
 // claim, and its path in the provenance.
 function readFromTheStep(runner: string, workflow: string, path: string, args: readonly string[], report: string) {
+  return readFromAStep(workflow, path, ["--unit", runner, ...args], report);
+}
+
+function readFromAStep(workflow: string, path: string, args: readonly string[], report: string) {
   const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "workflows/ci.yml": workflow, [path]: report, "out/e2e.xml": JUNIT_CITING_NONE });
 
-  const { output, error } = ran(["balance", "--unit", runner, "--ci", "workflows", ...args, "--format", "json"], folder);
+  const { output, error } = ran(["balance", "--ci", "workflows", ...args, "--format", "json"], folder);
 
   const { claimReconciliations, provenance } = (output === "" ? { claimReconciliations: [], provenance: { inputs: [] } } : JSON.parse(output)) as ResultsByLayerReported & ProvenanceReported;
   return {
@@ -330,6 +334,23 @@ describe("balance reads the evidence report a named runner's CI step writes, in 
     ["its job's", `jobs:\n  ci:\n    defaults:\n      run:\n        working-directory: web\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`],
   ] as const)("[CLM-CLI-215] --unit vitest, a workflow step writing out/vitest.json with web as %s working directory: the report at web/out/vitest.json is read in Vitest's format", (_set, workflow) => {
     expect(readFromTheStep("vitest", workflow, "web/out/vitest.json", [], BY_FILE_PASSING)).toEqual(READ_AS_UNIT_EVIDENCE);
+  });
+});
+
+describe("balance reads the evidence report of a runner it found as that runner's layer's evidence", () => {
+  it("[CLM-CLI-224] no runner named, a workflow step running vitest and writing out/vitest.json: the report is read as unit evidence", () => {
+    expect(readFromAStep(`jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`, "out/vitest.json", [], BY_FILE_PASSING)).toEqual(READ_AS_UNIT_EVIDENCE);
+  });
+});
+
+describe("the provenance shows where each layer's runners came from", () => {
+  it("[CLM-RPT-179] no runner named, a workflow step running vitest: the Markdown report's provenance says vitest is the unit layer's runner, found in a workflow", () => {
+    const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "workflows/ci.yml": `jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`, "out/vitest.json": BY_FILE_PASSING });
+
+    const { output } = ran(["balance", "--ci", "workflows", "--format", "md"], folder);
+
+    const provenance = output.slice(output.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
+    expect(provenance.filter((line) => line.startsWith("- Unit runners:"))).toEqual(["- Unit runners: `vitest` (found in a workflow)"]);
   });
 });
 

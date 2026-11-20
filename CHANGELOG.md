@@ -12,6 +12,10 @@ Each line says what a change means for someone using spec-controller. A line tha
 - spec-controller's repository is public, with every commit of its history, and from this release on each release carries its provenance on npm.
 - What balance does is unchanged: two specification files read more plainly, one describing reconciliation in fewer words and one with its Rules in the order the report shows them.
 - What balance does is unchanged: spec-controller's own CI keeps its balance settings in `spec-controller.yml`, writes its reports and step record to `reports/` in the workspace, saves the job's status in the step record, and runs `balance` alone.
+- **balance finds the runners it knows.** For a layer the run names no runner for, a workflow step running Vitest, Jest, pytest, RSpec, gotestsum, Maven's or Gradle's test task is read as that layer's runner at its usual layer: unit, or integration for cucumber-js and e2e for Playwright. So one scenario, one test citing it and `--written-claims-only` gate a run with no settings. The report's provenance names each layer's runners and marks the ones balance found, and the JSON report's schema is version 7.
+- **@3f-consulting/spec-controller-core's API changed.** At 0.x it promises no compatibility.
+  - Added: `runnersFoundOf`, which adds the runners balance knows that the workflows run, and the types `KnownRunner`, `RunnerFinder` and `ProvenanceRunner`.
+  - Changed: `Runner` gains an optional `found`, set on a runner balance found. `Provenance` gains `runners`, each layer's runners named once. `ShellAnswers` gains `knownRunners`, each runner balance knows with its usual layer.
 
 ## 0.1.330 — 2026-11-20 — Easier adoption
 

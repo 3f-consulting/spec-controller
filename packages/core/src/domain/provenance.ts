@@ -1,3 +1,4 @@
+import type { Layer, Runner } from "./configuration.js";
 import { shownFromTarget } from "./targetPath.js";
 
 // An input the run was given or took by default, with no path when it was absent.
@@ -11,6 +12,14 @@ export function provenanceInputsOf(kinds: readonly { readonly name: string; read
   return kinds.flatMap(({ name, paths }) => (paths.length === 0 ? [{ name }] : paths.map((path) => ({ name, path }))));
 }
 
+export type ProvenanceRunner = Pick<Runner, "name" | "found">;
+
+export function provenanceRunnersOf(runners: Readonly<Record<Layer, readonly Runner[]>>): Provenance["runners"] {
+  const once = (named: readonly Runner[]): ProvenanceRunner[] =>
+    named.filter(({ name }, at) => named.findIndex((runner) => runner.name === name) === at).map(({ name, found }) => (found ? { name, found } : { name }));
+  return { unit: once(runners.unit), integration: once(runners.integration), e2e: once(runners.e2e), performance: once(runners.performance) };
+}
+
 // target is unknown-target when nothing names one; sourceSha is unknown outside git.
 export interface Provenance {
   readonly target: string;
@@ -20,9 +29,10 @@ export interface Provenance {
   readonly runTime: string;
   readonly inputs: readonly ProvenanceInput[];
   readonly countedOnlyExecutableClaims: boolean;
+  readonly runners: Readonly<Record<Layer, readonly ProvenanceRunner[]>>;
 }
 
-export type ProvenanceOfInputs = Omit<Provenance, "countedOnlyExecutableClaims">;
+export type ProvenanceOfInputs = Omit<Provenance, "countedOnlyExecutableClaims" | "runners">;
 
 // What the Run identity port reads from git, the install and the clock, as written. Which wins is the domain's.
 export interface RunIdentity {

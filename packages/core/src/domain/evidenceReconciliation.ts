@@ -1,6 +1,6 @@
 import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, isExecutable, type ClaimReconciliation, type CreditJournal, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
-import { targetConfigurationOf, type ConfigurationError, type ConfigurationSettings, type Layer } from "./configuration.js";
+import { targetConfigurationOf, type ConfigurationError, type ConfigurationSettings, type Layer, type TargetConfiguration } from "./configuration.js";
 import { deferredScenariosOf, executableClaimsOf, QUALITY_CHECK_KINDS, type ClaimReadingSettings, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import {
   disposedStepsOf,
@@ -15,7 +15,7 @@ import {
   type TestResult,
 } from "./postEvidenceObservation.js";
 import type { CiStep } from "./workflowSteps.js";
-import { provenanceOf, type Provenance, type ProvenanceInput, type ProvenanceOfInputs, type RepositoryOfOrigin, type RunIdentity } from "./provenance.js";
+import { provenanceOf, provenanceRunnersOf, type Provenance, type ProvenanceInput, type ProvenanceOfInputs, type RepositoryOfOrigin, type RunIdentity } from "./provenance.js";
 
 export type RunVerdict =
   | { readonly verdict: "balanced" }
@@ -225,6 +225,7 @@ export interface RunReconciled {
   readonly claimReading: ClaimReadingSettings;
   // Whether the run verdict counts the executable claims alone, leaving out the phantom claims and the unnamed claim.
   readonly countOnlyExecutableClaims: boolean;
+  readonly runners: TargetConfiguration["runners"];
   readonly stepAccount: StepAccount;
   readonly provenance: ProvenanceOfInputs;
 }
@@ -237,6 +238,7 @@ export function evidenceReconciliationOf({
   features,
   claimReading,
   countOnlyExecutableClaims,
+  runners,
   stepAccount,
   provenance,
 }: RunReconciled): EvidenceReconciliation {
@@ -248,7 +250,7 @@ export function evidenceReconciliationOf({
     runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors, countOnlyExecutableClaims),
     totals: totalsOf(claimReconciliations, features, deferredScenariosOf(features, claimReading)),
     stepAccount,
-    provenance: { ...provenance, countedOnlyExecutableClaims: countOnlyExecutableClaims },
+    provenance: { ...provenance, countedOnlyExecutableClaims: countOnlyExecutableClaims, runners: provenanceRunnersOf(runners) },
     errorsInTheInputs: { claimCodeErrors, configurationErrors },
     runIntegrity: { neverRan },
   };
@@ -312,6 +314,7 @@ export function reconcile(given: ReadersGave): EvidenceReconciliation {
     features,
     claimReading,
     countOnlyExecutableClaims,
+    runners: configuration.runners,
     stepAccount: stepAccountOf(disposedSteps),
     provenance: provenanceOf(identity, provenanceInputs, targetFolder, repositoryOf),
   });

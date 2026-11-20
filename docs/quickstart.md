@@ -61,10 +61,10 @@ it("[CLM-<FFF>-<NNN>] refuses an empty basket", () => { /* … */ });
 ```yaml
 - name: Reconcile
   if: always()
-  run: npx spec-controller balance --unit vitest --written-claims-only
+  run: npx spec-controller balance --written-claims-only
 ```
 
-`--unit vitest` finds Vitest's report from the step in `.github/workflows` that runs Vitest, such as `npx vitest run --reporter=json --outputFile=reports/vitest.json`. If no workflow step names the report, name it yourself: `--unit vitest:vitest:reports/vitest.json`. The two settings can also live in `spec-controller.yml` at the top of your repository, as `unit: [vitest]` and `written-claims-only: true`, so the step runs `npx spec-controller balance` alone.
+Vitest needs no setting. `balance` knows it, so it finds Vitest at the unit layer in the step in `.github/workflows` that runs it, and finds its report from that step, such as `npx vitest run --reporter=json --outputFile=reports/vitest.json`. Name a runner only for one `balance` does not know, or for a layer other than its usual one. If no workflow step names the report, name it yourself: `--unit vitest:vitest:reports/vitest.json`. The setting can also live in `spec-controller.yml` at the top of your repository, as `written-claims-only: true`, so the step runs `npx spec-controller balance` alone.
 
 The scenario balances while its test passes. Delete the test, or let it fail, and the run is out of balance and exits `1`. Everything else that ran is listed under the unnamed claim, and none of it turns the run red. That includes tests citing no scenario, and your install, build and lint steps. You need no `id:` on any step, no step record and no non-checks.
 
@@ -101,7 +101,7 @@ For the report command of every other runner, see [Every report, and the whole c
 
 `balance` lists every CI step as a check, except these, which post nothing:
 
-- a step that runs a runner you name;
+- a step that runs a runner you name, or one `balance` finds;
 - GitHub's own checkout, setup, cache and artifact actions;
 - the reconciler's own steps: the steps that write the step record and run `balance`;
 - a non-check.
@@ -126,7 +126,7 @@ npx spec-controller balance \
   --exit-zero
 ```
 
-- **`--unit`, `--integration`, `--e2e` and `--performance`** each name a runner of that layer. `balance` then reads the step that runs the runner as your test suite, not as a check, and each result in the runner's report as evidence of that layer. Named alone, a runner has its report found from the step of `ci.yml` that runs it: here, the step that runs `vitest --reporter=json --outputFile=reports/vitest.json`, and the step that runs `cucumber-js --format json:reports/cucumber.json`. Maven's `mvn test` and Gradle's `./gradlew test` need no option: `balance` reads their reports from where they write them by default. When no step names the report and the runner has no default location, the run names the runner as `runner-report-not-named`: name the report in the long form `<runner>:<format>:<report>`. One runner may serve two layers, as `cucumber-js` does here: name it under each. A layer you name no runner for has none.
+- **`--unit`, `--integration`, `--e2e` and `--performance`** each name a runner of that layer. `balance` then reads the step that runs the runner as your test suite, not as a check, and each result in the runner's report as evidence of that layer. Named alone, a runner has its report found from the step of `ci.yml` that runs it: here, the step that runs `vitest --reporter=json --outputFile=reports/vitest.json`, and the step that runs `cucumber-js --format json:reports/cucumber.json`. Maven's `mvn test` and Gradle's `./gradlew test` need no option: `balance` reads their reports from where they write them by default. When no step names the report and the runner has no default location, the run names the runner as `runner-report-not-named`: name the report in the long form `<runner>:<format>:<report>`. One runner may serve two layers, as `cucumber-js` does here: name it under each. A layer you name no runner for takes the runners `balance` knows that a step runs at that layer, unless you name them at another layer, so `vitest` here would be found without `--unit vitest`. It has none when you name none and `balance` finds none.
 - **`--not-check`** names a step that does work but checks nothing, such as publishing. It is written `<workflow file>:<job id>:<step name>`, and must match exactly.
 
 See [Naming your runners](./user-guide.md#naming-your-runners) and [Naming your non-checks](./user-guide.md#naming-your-non-checks).

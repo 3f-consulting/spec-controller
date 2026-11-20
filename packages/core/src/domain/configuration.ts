@@ -28,10 +28,20 @@ export type ReportsNamed = (
 // The shell reader's answer of where a runner writes its evidence reports when told nowhere, for a step's command that runs it.
 export type DefaultReportsOf = (commandLine: string, runner: string, scripts: Readonly<Record<string, string>>) => readonly ReportLocation[];
 
-// A layer's runner: the program it runs, with the evidence report the run names for it.
 export interface Runner {
   readonly name: string;
   readonly report?: ReportLocation;
+  readonly found?: true;
+}
+
+export interface KnownRunner {
+  readonly name: string;
+  readonly layer: Layer;
+}
+
+export interface RunnerFinder {
+  readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
+  readonly knownRunners: readonly KnownRunner[];
 }
 
 // Each layer's runners; a layer with none has an empty list.
@@ -83,7 +93,9 @@ function checked<Taken, Value>(parts: readonly SettingPart<Taken>[], check: (tak
 // A runner is kept, naming as an error a report path with no file, or no report.
 function runnerChecked([layer, runner]: readonly [Layer, Runner], reportsNotFound: readonly string[]): Checked<readonly [Layer, Runner]> {
   if (runner.report === undefined) return { value: [layer, runner], errors: [{ kind: "runner-report-not-named", entry: runner.name }] };
-  if (reportsNotFound.includes(runner.report.path)) return { value: [layer, { name: runner.name }], errors: [{ kind: "runner-report-not-read", entry: runner.report.path }] };
+  if (reportsNotFound.includes(runner.report.path)) {
+    return { value: [layer, { name: runner.name, ...(runner.found && { found: true }) }], errors: [{ kind: "runner-report-not-read", entry: runner.report.path }] };
+  }
   return { value: [layer, runner], errors: [] };
 }
 
@@ -134,7 +146,8 @@ export function reportsLocatedOf(
 ): ConfigurationSettings {
   const runners = settings.runners.flatMap((part): SettingPart<readonly [Layer, Runner]>[] => {
     if ("error" in part || part.taken[1].report !== undefined) return [part];
-    const [layer, { name }] = part.taken;
+    const [layer, runner] = part.taken;
+    const { name } = runner;
     const fromSteps = (reportsOf: (command: string, environment: Readonly<Record<string, string>>) => readonly ReportLocation[]): ReportLocation[] =>
       steps
         .flatMap(({ command, workingDirectory, environment = {} }) =>
@@ -143,7 +156,19 @@ export function reportsLocatedOf(
         .filter(({ path }) => readable(path));
     const named = fromSteps((command, environment) => reportsNamed(command, name, scripts, environment));
     const reports = named.length > 0 ? named : fromSteps((command) => defaultReportsOf(command, name, scripts));
-    return reports.length === 0 ? [part] : reports.map((report) => ({ taken: [layer, { name, report }] }));
+    return reports.length === 0 ? [part] : reports.map((report) => ({ taken: [layer, { ...runner, report }] }));
   });
   return { ...settings, runners };
+}
+
+const isAt = (address: StepAddress, step: CiStep): boolean => address.workflow === step.workflow && address.job === step.job && address.step === step.identity;
+
+export function runnersFoundOf(settings: ConfigurationSettings, steps: readonly CiStep[], scripts: Readonly<Record<string, string>>, shell: RunnerFinder): ConfigurationSettings {
+  const named = settings.runners.flatMap((part) => ("taken" in part ? [part.taken] : []));
+  const nonChecks = settings.nonChecks.flatMap((part) => ("taken" in part ? [part.taken.address] : []));
+  const commands = steps.flatMap((step) => (step.command === undefined || nonChecks.some((address) => isAt(address, step)) ? [] : [step.command]));
+  const found = shell.knownRunners.filter(
+    ({ name, layer }) => !named.some(([at, runner]) => at === layer || runner.name === name) && commands.some((command) => shell.invokesAsCommand(command, name, scripts)),
+  );
+  return { ...settings, runners: [...settings.runners, ...found.map(({ name, layer }): SettingPart<readonly [Layer, Runner]> => ({ taken: [layer, { name, found: true }] }))] };
 }

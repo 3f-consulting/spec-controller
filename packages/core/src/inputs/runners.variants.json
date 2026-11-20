@@ -28,5 +28,21 @@
       { "runner": "gradle test", "path": "build/test-results/test", "format": "junit" },
       { "runner": "./gradlew test", "path": "build/test-results/test", "format": "junit" }
     ]
+  },
+  "usual-layers": {
+    "claim": "CLM-CFG-036",
+    "variants": [
+      { "runner": "vitest", "layer": "unit" },
+      { "runner": "jest", "layer": "unit" },
+      { "runner": "pytest", "layer": "unit" },
+      { "runner": "rspec", "layer": "unit" },
+      { "runner": "gotestsum", "layer": "unit" },
+      { "runner": "mvn test", "layer": "unit" },
+      { "runner": "./mvnw test", "layer": "unit" },
+      { "runner": "gradle test", "layer": "unit" },
+      { "runner": "./gradlew test", "layer": "unit" },
+      { "runner": "cucumber-js", "layer": "integration" },
+      { "runner": "playwright", "layer": "e2e" }
+    ]
   }
 }

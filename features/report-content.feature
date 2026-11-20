@@ -99,6 +99,21 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-167 | the tool SHA 9f8e7d6 | the tool SHA 9f8e7d6   |
         | CLM-RPT-168 | no tool SHA          | no line for a tool SHA |
 
+  Rule: the provenance shows where each layer's runners came from
+
+    @unit
+    Scenario Outline: the provenance says where each layer's runner came from
+      given a run read the unit layer's results from <runner>
+      when the Markdown report is written
+      then the provenance will say <says>
+
+      Examples:
+        | clm         | runner                                                 | says                                                   |
+        | CLM-RPT-178 | vitest, which the run named                            | vitest is the unit layer's runner                      |
+        | CLM-RPT-179 | vitest, which balance found                            | vitest is the unit layer's runner, found in a workflow |
+        | CLM-RPT-180 | no runner                                              | the unit layer has no runner                           |
+        | CLM-RPT-181 | vitest, which the run named, with two evidence reports | vitest is the unit layer's runner, named once          |
+
   Rule: a reader can tell when the run verdict left out the phantom claims and the unnamed claim
 
     @unit

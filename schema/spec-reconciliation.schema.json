@@ -7,7 +7,7 @@
       "properties": {
         "schemaVersion": {
           "type": "number",
-          "const": 6
+          "const": 7
         },
         "claimReconciliations": {
           "type": "array",
@@ -747,6 +747,42 @@
         },
         "countedOnlyExecutableClaims": {
           "type": "boolean"
+        },
+        "runners": {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ProvenanceRunner"
+              }
+            },
+            "integration": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ProvenanceRunner"
+              }
+            },
+            "e2e": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ProvenanceRunner"
+              }
+            },
+            "performance": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ProvenanceRunner"
+              }
+            }
+          },
+          "required": [
+            "unit",
+            "integration",
+            "e2e",
+            "performance"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -755,7 +791,8 @@
         "toolVersion",
         "runTime",
         "inputs",
-        "countedOnlyExecutableClaims"
+        "countedOnlyExecutableClaims",
+        "runners"
       ],
       "additionalProperties": false
     },
@@ -767,6 +804,22 @@
         },
         "path": {
           "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "ProvenanceRunner": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "found": {
+          "type": "boolean",
+          "const": true
         }
       },
       "required": [
