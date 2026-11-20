@@ -34,7 +34,7 @@ function runVerdictOfRun(corpus: readonly string[], observed: readonly Observed[
   return runVerdictOf(claimReconciliations, claimCodeErrorsOf(features), countOnlyExecutableClaims);
 }
 
-// Evidence as a reader gives it: one test's result in one.test.ts, citing the code given, if any, in its title.
+// Evidence as a reader gives it: one test's result in one test file, citing the code given, if any, in its title.
 const testResultOf = ([, result, code]: readonly [Layer, TestResult["result"], string?]): TestResult => ({
   place: { file: "/target/one.test.ts" },
   name: "a test",

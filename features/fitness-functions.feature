@@ -113,6 +113,12 @@ Feature: the fitness functions CI runs over this repository, one scenario for ea
       then none will name a ticket or a claim code
       and none will narrate how the product used to be
 
+    @fitness @CLM-FIT-086
+    Scenario: no comment in a code, workflow or configuration file names a TypeScript or JavaScript file
+      given the repository had comments in its code, workflow and configuration files
+      when CI runs the fitness function over them
+      then none will name a TypeScript or JavaScript file
+
     @fitness @CLM-FIT-059
     Scenario: every file, heading or path a current-state document cites exists
       given the repository had current-state documents citing files, headings and paths
