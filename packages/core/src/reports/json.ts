@@ -12,7 +12,6 @@ export interface JsonReport {
   readonly provenance: EvidenceReconciliation["provenance"];
   readonly errorsInTheInputs: EvidenceReconciliation["errorsInTheInputs"];
   readonly runIntegrity: EvidenceReconciliation["runIntegrity"];
-  readonly planted?: string;
 }
 
 export const jsonReportFrom = ({ claimReconciliations, runVerdict, totals, stepAccount, provenance, errorsInTheInputs, runIntegrity }: EvidenceReconciliation): JsonReport => ({
