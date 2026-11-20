@@ -333,7 +333,7 @@ describe("balance accounts for every step it reads", () => {
 
   it.each([
     ["in one workflow, with no step record", ["ci.yml", "ci.yml"], ["build", "test"], []],
-    ["of one name, in two workflows, with a step record of another step", ["ci.yml", "nightly.yml"], ["build", "build"], [{ key: "lint", result: "passed", jobSucceeded: false }]],
+    ["of one name, in two workflows, with a step record of another step", ["ci.yml", "nightly.yml"], ["build", "build"], [{ key: "lint", result: "passed", jobSucceeded: false, jobHadAFailedStep: false }]],
   ] as const)("[CLM-EVR-032] two jobs %s will each have counts that add up to the steps read in it", (_jobs, [first, second], [build, test], record) => {
     const steps = [...workflowStepsFrom(first, JSON.stringify({ jobs: { [build]: { steps: [...BUILD, UNIT] } } })), ...workflowStepsFrom(second, JSON.stringify({ jobs: { [test]: { steps: INSTALL } } }))];
     const { jobs } = stepAccountOf(disposed(steps, { workflow: second, job: test }, { ...NO_RUNNERS, unit: [{ name: "vitest" }] }, record));

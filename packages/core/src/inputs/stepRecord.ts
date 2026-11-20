@@ -16,9 +16,7 @@ const resultFrom = (outcome: unknown): RecordedStep["result"] =>
 // One CI job's record of its steps, keyed by each step's id, as toJSON(steps) writes it, alone or beside toJSON(job).
 export function stepRecordFrom(record: unknown): RecordedStep[] {
   const jobSucceeded = savesItsJob(record) && record.job.status === "success";
-  return Object.entries(stepsOf(record) as object).map(([key, entry]: [string, { readonly outcome?: unknown }]) => ({
-    key,
-    result: resultFrom(entry.outcome),
-    jobSucceeded,
-  }));
+  const results = Object.entries(stepsOf(record) as object).map(([key, entry]: [string, { readonly outcome?: unknown }]) => ({ key, result: resultFrom(entry.outcome) }));
+  const jobHadAFailedStep = results.some(({ result }) => result === "failed");
+  return results.map((entry) => ({ ...entry, jobSucceeded, jobHadAFailedStep }));
 }
