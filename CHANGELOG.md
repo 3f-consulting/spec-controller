@@ -11,6 +11,7 @@ Each line says what a change means for someone using spec-controller. A line tha
 - No change to the packages: the first release from spec-controller's new repository.
 - spec-controller's repository is public, with every commit of its history, and from this release on each release carries its provenance on npm.
 - What balance does is unchanged: two specification files read more plainly, one describing reconciliation in fewer words and one with its Rules in the order the report shows them.
+- What balance does is unchanged: spec-controller's own CI keeps its balance settings in `spec-controller.yml`, writes its reports and step record to `reports/` in the workspace, saves the job's status in the step record, and runs `balance` alone.
 
 ## 0.1.330 — 2026-11-20 — Easier adoption
 
