@@ -1221,7 +1221,7 @@ Name the step with `--not-check`. The failure direction is deliberate: a step wr
 
 **Your tracker keeps the work.** A ticket is a change. A scenario is behaviour the system has now. The two meet only where one piece of work creates, reads, updates or deletes one scenario.
 
-**spec-controller assumes that each test is valid.** It reconciles a result to the test that claimed it. You make sure the test reflects the behaviour the business wants, as you do under CI, TDD and BDD. The tool does not try to establish that a test is a good test.
+**spec-controller assumes that each test is valid.** It reconciles a result to the test that claimed it. You make sure the test reflects the behaviour the business wants, as you do under CI, TDD and BDD. The tool does not try to establish that a test is a good test. To catch a test that asserts nothing, run your test framework's lint rule as a fitness function: `expect-expect` from `@vitest/eslint-plugin` for Vitest, or `jest/expect-expect` from `eslint-plugin-jest` for Jest. A test whose only assertion is trivial still passes it; mutation testing finds those.
 
 **A title can stop matching its check. spec-controller states this gap and does not solve it.** Where the runner is not Cucumber (usually for `@unit`, `@performance` and `@fitness`), a scenario's given, when and then are lowercase description that no runner executes, so no unexecuted step reads as a test. But its title is still prose that nothing reads against the check that answers it. The title and the check can come to say different things, and nothing goes red. The report proves that a scenario is linked to evidence and that the evidence passed. **It does not prove that the evidence tests what the title says.**
 

@@ -28,7 +28,7 @@ That link is where spec-controller is heading: specification-driven development,
 
 Every behaviour is recorded twice: as a scenario, and as the test that proves it. The two records must agree. So **changes to your quality checks become deliberate, not accidental.**
 
-Each kind of disagreement has its own outcome, shown below. [Reading the full report](#reading-the-full-report) defines a *phantom claim* and the *unnamed claim*. Every outcome except `satisfied` turns the build red:
+Each kind of disagreement has its own outcome, shown below. [Reading the full report](#reading-the-full-report) defines a *phantom claim* and the *unnamed claim*. Every outcome except `satisfied` turns the build red, except where `--written-claims-only` leaves a phantom claim or the unnamed claim out of the verdict:
 
 | You change | The report shows |
 |---|---|
@@ -56,8 +56,9 @@ This matters most when an agent writes the code. An agent makes the mistakes a p
 - **Deliberate is not right.** A change made in both places balances. Review decides whether the change should have been made.
 - **A change inside one check is one entry, and `balance` does not see it.** A row reads the step record: your CI run's own record of whether the step ran and what it reported. It does not read what the tool examined. So a lint step narrowed to match no files still exits 0, and its row reads satisfied. And because the row reads the step record, a red that `continue-on-error` swallowed still turns its row red.
 - **Delete a scenario but keep its step definitions**, and Cucumber runs nothing and reports nothing. With no result reported, `balance` cannot see it. A check for unused step definitions catches this, and this repository runs one.
-- **No named behaviours, no second entry, no protection.** Code that arrives with no scenario gives `balance` nothing to reconcile.
-- **Whether a test is a good test is assumed.** A balanced row means the evidence exists and passes, and that a CI check's failure would have failed its build. It does not mean the test checks what its title says, or checks anything at all.
+- **No named behaviours, no second entry, no protection.** Code that arrives with no scenario gives `balance` nothing to reconcile. There is no mode that guards CI checks without scenarios: a check that fails already fails its build, so such a guard would be your automated tests again. What `balance` adds is the second entry.
+- **Under `--written-claims-only`, a deferral tag takes its scenario out of the gate.** Tag a scenario `@wip` and the tests citing it land on a phantom claim, which that flag leaves out of the verdict, so even a failing test leaves the build green. Review a deferral tag as you would a deleted test.
+- **Whether a test is a good test is assumed.** A balanced row means the evidence exists and passes, and that a CI check's failure would have failed its build. It does not mean the test checks what its title says, or checks anything at all. A test that asserts nothing is a fitness function's to catch, as the [user guide](./user-guide.md) says, outside `balance`.
 
 ## Reading the full report
 

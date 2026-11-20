@@ -27,6 +27,7 @@ import {
   resultsByFileFrom,
   scriptsFrom,
   shellAnswers,
+  whereResultsByFileBreak,
 } from "@3f-consulting/spec-controller-core";
 
 // One feature file's text, one Vitest JSON report and the target's package.json, each parsed from its text, all read
@@ -35,6 +36,8 @@ const targetFolder = "/work/shop";
 const featureSource = readFileSync(`${targetFolder}/features/checkout.feature`, "utf8");
 const vitestReport: unknown = JSON.parse(readFileSync(`${targetFolder}/vitest-report.json`, "utf8"));
 const manifest: unknown = JSON.parse(readFileSync(`${targetFolder}/package.json`, "utf8"));
+const vitestReportBreaks = whereResultsByFileBreak(vitestReport);
+if (vitestReportBreaks !== undefined) throw new Error(`vitest-report.json is not in the shape Vitest writes: ${vitestReportBreaks}`);
 
 const evidenceReconciliation = reconcile({
   features: [featureAsWrittenFrom("checkout.feature", featureSource)],
@@ -57,7 +60,7 @@ markdownReportOf(evidenceReconciliation);
 ```
 
 - `featureAsWrittenFrom` reads one feature file into its scenarios: its tags, and each scenario's tags, title and Examples, including each Outline row's `clm` cell. It throws if the Gherkin parser rejects the file.
-- `resultsByFileFrom` reads a Vitest or Jest JSON report into test results. Each report goes to `reconcile` with two things: the layers of the runners whose report it is, and whether its results need the feature files, as a Cucumber report's do.
+- `resultsByFileFrom` reads a Vitest or Jest JSON report into test results. It trusts the report's shape, so check that first with `whereResultsByFileBreak`, which names where a report breaks, or gives `undefined` for one it can read. Each report goes to `reconcile` with two things: the layers of the runners whose report it is, and whether its results need the feature files, as a Cucumber report's do.
 - `configurationSettingsNamed` reads the runners, non-checks and deferral tags a run names on its command line into its settings, and `scriptsFrom` reads the scripts in the target's `package.json`.
 - `reconcile` gives the whole **Evidence Reconciliation**: the Claim Reconciliations, the run verdict, the totals, the step account, the provenance, the errors in the inputs and the run integrity. It checks the settings against the CI steps and the reports, and says what each CI step is. It reads the executable claims and their **Evidence Obligations** off the feature files. It posts each report's results and each fitness function's step as **Evidence Observations**. It reconciles each claim into a **Claim Reconciliation**. With no CI, as here, the steps, the step record and the step account are empty.
 
