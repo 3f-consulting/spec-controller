@@ -21,6 +21,7 @@ describe("the JSON report keeps every part and every count, empty or zero", () =
       outOfBalanceByFeature: json.totals.outOfBalanceByFeature,
       deferredScenarios: json.totals.deferredScenarios,
       countedOnlyExecutableClaims: json.provenance.countedOnlyExecutableClaims,
+      runners: json.provenance.runners,
     }).toEqual({
       errorsInTheInputs: { claimCodeErrors: [], configurationErrors: [] },
       runIntegrity: { neverRan: [] },
@@ -28,6 +29,7 @@ describe("the JSON report keeps every part and every count, empty or zero", () =
       outOfBalanceByFeature: [],
       deferredScenarios: 0,
       countedOnlyExecutableClaims: false,
+      runners: { unit: [], integration: [], e2e: [], performance: [] },
     });
     expect({
       kinds: new Set(byKind.map(({ kind }) => kind)),

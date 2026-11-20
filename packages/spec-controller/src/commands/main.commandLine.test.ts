@@ -343,6 +343,17 @@ describe("balance reads the evidence report of a runner it found as that runner'
   });
 });
 
+describe("the provenance shows where each layer's runners came from", () => {
+  it("[CLM-RPT-179] no runner named, a workflow step running vitest: the Markdown report's provenance says vitest is the unit layer's runner, found in a workflow", () => {
+    const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "workflows/ci.yml": `jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`, "out/vitest.json": BY_FILE_PASSING });
+
+    const { output } = ran(["balance", "--ci", "workflows", "--format", "md"], folder);
+
+    const provenance = output.slice(output.indexOf("## Run provenance")).split("\n\n## ")[0]!.split("\n");
+    expect(provenance.filter((line) => line.startsWith("- Unit runners:"))).toEqual(["- Unit runners: `vitest` (found in a workflow)"]);
+  });
+});
+
 describe("balance reads a named runner's evidence reports from where the runner writes them by default, when its step names none", () => {
   it("[CLM-CLI-216] --unit mvn test, a workflow step running mvn test, and Maven Surefire's reports in target/surefire-reports: each result is posted", () => {
     const folder = folderWith({ "features/one.feature": TWO_CLAIMS, "workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: mvn test\n", ...surefireReportsIn("target/surefire-reports") });

@@ -1,6 +1,6 @@
 import { claimCodeErrorsOf, claimCodeFrom, type ClaimCodeError } from "./claimCodes.js";
 import { claimReconciliationsOf, isExecutable, type ClaimReconciliation, type CreditJournal, type Outcome, type QualityCheckReconciliation } from "./claimReconciliation.js";
-import { targetConfigurationOf, type ConfigurationError, type ConfigurationSettings, type Layer } from "./configuration.js";
+import { targetConfigurationOf, type ConfigurationError, type ConfigurationSettings, type Layer, type TargetConfiguration } from "./configuration.js";
 import { deferredScenariosOf, executableClaimsOf, QUALITY_CHECK_KINDS, type ClaimReadingSettings, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import {
   disposedStepsOf,
@@ -225,6 +225,8 @@ export interface RunReconciled {
   readonly claimReading: ClaimReadingSettings;
   // Whether the run verdict counts the executable claims alone, leaving out the phantom claims and the unnamed claim.
   readonly countOnlyExecutableClaims: boolean;
+  // Each layer's runners as the run took them, a runner once for each evidence report named for it.
+  readonly runners: TargetConfiguration["runners"];
   readonly stepAccount: StepAccount;
   readonly provenance: ProvenanceOfInputs;
 }
