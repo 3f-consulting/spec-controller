@@ -171,6 +171,12 @@ Feature: the command line reads what you give it, and says where each kind of ou
       when balance reads its inputs
       then it will read a/x.feature before b.feature
 
+    @unit @CLM-CLI-218
+    Scenario: balance reads a path the settings file names from the settings file's folder
+      given the run named ci/spec-controller.yml as its settings file, and that file had features: specs
+      when balance reads its inputs
+      then it will read its feature files from ci/specs
+
     @unit
     Scenario Outline: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
       given the run named <CI workflows> as its CI workflows

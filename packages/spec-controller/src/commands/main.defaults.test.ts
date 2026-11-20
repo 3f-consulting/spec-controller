@@ -92,6 +92,17 @@ describe("the target's folder will be the git repository the corpus is in, or el
   });
 });
 
+describe("balance reads every input the command line names or leaves to its default", () => {
+  it("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had features: specs: balance reads its feature files from ci/specs", () => {
+    const repository = repositoryForTest();
+    repository.write("ci/spec-controller.yml", "features: specs\n");
+    repository.write("ci/specs/one.feature", ONE_UNIT_CLAIM);
+    repository.commit("one");
+
+    expect(inputPath(provenanceIn(repository.top, "--config", "ci/spec-controller.yml"), "features")).toBe("ci/specs");
+  });
+});
+
 const ONE_UNIT_CLAIM = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n";
 
 // A Vitest evidence report with a passing test citing the one claim and a failing test citing no code.
