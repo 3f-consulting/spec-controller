@@ -19,7 +19,7 @@ on:
         default: false
 
 env:
-  # Production files no scope mutates. Core's index.ts re-exports only.
+  # Production files no scope mutates. Core's barrel only re-exports.
   UNSCOPED: |
     packages/core/src/index.ts
 

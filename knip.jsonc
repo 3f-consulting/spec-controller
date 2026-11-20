@@ -1,14 +1,14 @@
 {
-  // tsx: loaded through the requireModule string in cucumber.js, which knip's Cucumber plugin does not read.
+  // tsx: loaded through the requireModule string in Cucumber's configuration, which knip's Cucumber plugin does not read.
   // remark-cli, remark-validate-links: run from a package script behind xargs, which knip does not read through.
   // yaml: imported by the inline Node script in scripts/red-proof.sh, which knip does not read.
   // kiira: run from a package script behind bash -c, which knip does not read through.
   "ignoreDependencies": ["tsx", "remark-cli", "remark-validate-links", "yaml", "kiira"],
-  // remark-feature-prose.mjs: a remark plugin loaded by path through --use in a package script, which knip does not read.
+  // The remark plugin for feature prose: loaded by path through --use in a package script, which knip does not read.
   "ignoreFiles": ["scripts/remark-feature-prose.mjs"],
   "workspaces": {
-    // commands/cli.ts: the command's entry point, named in bundle.mjs, which knip does not read. Its bin, dist/cli.js, maps
-    // by name only to a src/cli.ts.
+    // The command's entry point, named in the bundle script, which knip does not read. Knip maps the package's bin by name
+    // only, to a source of the same name at the root of src, where there is none.
     "packages/spec-controller": { "entry": ["src/commands/cli.ts"] }
   }
 }
