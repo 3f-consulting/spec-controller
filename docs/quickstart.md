@@ -1,6 +1,6 @@
 # Quickstart
 
-This guide takes you from nothing to a first `spec-controller balance` run on your own project. By the end, the run is wired into CI, one test cites the scenario it proves, and one CI check cites a different scenario that it proves.
+This guide takes you from nothing to a first `spec-controller balance` run on your own project. It starts with the smallest gate: one scenario, one test that cites it, and one CI step. By the end, the run is wired into CI, and one CI check cites a different scenario that it proves.
 
 ## What spec-controller does
 
@@ -36,9 +36,43 @@ npm install --save-dev spec-controller@<version>
 
 Then run it as `npx spec-controller`. See [Install](./user-guide.md#install).
 
-## A first run, report only
+## Gate on one scenario, from the first run
 
-This example is for a project whose tests run on Vitest. Run these commands from the repository you want to reconcile. First, write the Vitest report:
+You need three things. Nothing else in your CI changes.
+
+**1. A feature file with one scenario,** in `features/` at the top of your repository. Ask `allocate` for its claim code, as [Cite one scenario from one test](#cite-one-scenario-from-one-test) shows:
+
+```gherkin
+@<FFF>
+Feature: Checkout
+
+  @unit @CLM-<FFF>-<NNN>
+  Scenario: an empty basket cannot be checked out
+```
+
+**2. A test that cites it,** with the code in square brackets in its title:
+
+```ts
+it("[CLM-<FFF>-<NNN>] refuses an empty basket", () => { /* … */ });
+```
+
+**3. `balance` with `--written-claims-only`,** after your tests have written their report. Add one step at the end of the job that runs your tests:
+
+```yaml
+- name: Reconcile
+  if: always()
+  run: npx spec-controller balance --unit vitest --written-claims-only
+```
+
+`--unit vitest` finds Vitest's report from the step in `.github/workflows` that runs Vitest, such as `npx vitest run --reporter=json --outputFile=reports/vitest.json`. If no workflow step names the report, name it yourself: `--unit vitest:vitest:reports/vitest.json`. The two settings can also live in `spec-controller.yml` at the top of your repository, as `unit: [vitest]` and `written-claims-only: true`, so the step runs `npx spec-controller balance` alone.
+
+The scenario balances while its test passes. Delete the test, or let it fail, and the run is out of balance and exits `1`. Everything else that ran is listed under the unnamed claim, and none of it turns the run red. That includes tests citing no scenario, and your install, build and lint steps. You need no `id:` on any step, no step record and no non-checks.
+
+Then name more behaviours as you go. When every test and CI check cites a scenario, drop `--written-claims-only`, and anything citing nothing turns the run red too.
+
+## See everything that ran, report only
+
+A report-only run lists everything your pipeline ran, before you have named anything. This example is for a project whose tests run on Vitest. Run these commands from the repository you want to reconcile. First, write the Vitest report:
 
 ```sh
 npx vitest run --reporter=json --outputFile=reports/vitest.json
@@ -154,6 +188,8 @@ A step the record does not name is posted as not recorded, citing no code. So is
 If no recorded step has the scenario's code, the scenario reads `missing`. A recorded step that cites a code no scenario has posts to a **phantom claim**: a claim the evidence names and nobody wrote. See [Turn a fitness function into an evidence obligation](./user-guide.md#turn-a-fitness-function-into-an-evidence-obligation).
 
 ## Wire the run into CI
+
+The smallest gate needs only the Reconcile step above. This section is for a CI check that cites a scenario: its outcome reaches `balance` only through the run's step record.
 
 `balance` belongs in CI, after your tests have written their reports. spec-controller's own CI workflow runs its steps in this order:
 

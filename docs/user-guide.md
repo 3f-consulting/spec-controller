@@ -112,7 +112,7 @@ For the smallest form of the command, and for every flag, see [Command reference
 
 ### Expect your first run to fail — use `--exit-zero`
 
-Your first run against an unannotated pipeline fails, and the report is right to fail it: the corpus raises no evidence obligations yet. [A first run, report only](./quickstart.md#a-first-run-report-only) explains why, and shows how `--exit-zero` lets you watch before you gate.
+Your first run against an unannotated pipeline fails, and the report is right to fail it: the corpus raises no evidence obligations yet. [See everything that ran, report only](./quickstart.md#see-everything-that-ran-report-only) explains why, and shows how `--exit-zero` lets you watch before you gate.
 
 ### Gate on the scenarios you have written — use `--written-claims-only`
 
