@@ -723,6 +723,31 @@ None of these codes refuses the run. Each is a line in `## Errors in the inputs`
 - **Runner recognition has a false positive that you can see.** `balance` reports a suite run through an action, or a runner inside a quoted argument to a wrapper, as a fitness function. It does not silently exclude it. Fix each with one `--not-check`.
 - **`balance` tells a step skipped on purpose only by its job's status.** It reads no step's `if:`. A matrix build that skips a check on the platforms it does not apply to posts nothing for that check there, because the job succeeded, and the legs that run it post their results. A step skipped in a job that failed or was cancelled reads `never-ran`, so the run is not reconciled, even where its `if:` would have skipped it anyway. A check skipped on every leg posts nothing at all, so its scenario reads `missing`. A step that fails under `continue-on-error` leaves the job's status `success`, so a later step its failure skips posts nothing too; the failed step, if it is a fitness function, posts as failed.
 
+  What `balance` posts for one fitness function's step, from its step record:
+
+  ```
+                         the step record, for the step
+                                     │
+          ┌─────────────┬────────────┼──────────────┬──────────────────┐
+          ▼             ▼            ▼              ▼                  ▼
+      succeeded       failed      skipped       cancelled       not in the record
+          │             │            │              │                  │
+          │             │      the job's status?    │                  │
+          │             │      ┌─────┴───────┐      │                  │
+          │             │   success     failed,     │                  │
+          │             │      │        cancelled,  │                  │
+          │             │      │        or none     │                  │
+          ▼             ▼      ▼             ▼      ▼                  ▼
+       passed        failed  nothing     never-ran never-ran     not recorded
+    (cannot-fail             posted
+     if it allows              │
+     failure)                  ▼
+                       another job ran it: that result counts
+                       no job ran it: its scenario reads missing
+  ```
+
+  In a job whose status is `success`, every skip was the step's own `if:`. GitHub skips a step for an earlier failure only when that failure was not allowed, and such a failure fails the job.
+
 ---
 
 ## Wiring into CI
