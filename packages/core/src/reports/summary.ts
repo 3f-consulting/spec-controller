@@ -12,7 +12,7 @@ function claimReconciliationsGroup({ claimReconciliations: { total, balanced, ou
   return group("summary-claim-reconciliations", [
     ...tableOf(["summary-total", "summary-balanced", "summary-out-of-balance"], [[total, balanced, outOfBalance]]),
     ...(excludedClaimCodeOccurrences === 0 ? [] : ["", coreText("summary-excluded", { count: excludedClaimCodeOccurrences })]),
-    ...(deferredScenarios === 0 ? [] : ["", coreText("summary-deferred", { count: deferredScenarios })]),
+    ...(false ? [] : ["", coreText("summary-deferred", { count: deferredScenarios })]),
   ]);
 }
 
