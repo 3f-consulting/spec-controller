@@ -213,13 +213,19 @@ describe("a run counting only the executable claims is not reconciled for a reas
 });
 
 describe("when several reasons apply, the run verdict follows a fixed order among them", () => {
+  const configurationError: readonly ConfigurationError[] = [{ kind: "configuration-unknown-key", entry: "unitt" }];
+
   it.each([
-    ["CLM-EVR-009", "evidence that never ran and a claim out of balance", ["@CLM-ONE-001"], [["unit", "never-ran", "ONE-009"]], "unsound"],
-    ["CLM-EVR-010", "evidence that never ran and a claim code error", ["@CLM-TWO-001"], [["unit", "never-ran", "TWO-001"]], "unsound"],
-    ["CLM-EVR-011", "a claim code error and a claim out of balance", ["@CLM-TWO-001"], [["unit", "failed", "TWO-001"]], "claim-code-errors"],
-    ["CLM-EVR-012", "a corpus whose only scenario is tagged with two codes", ["@CLM-ONE-001 @CLM-ONE-002"], [], "claim-code-errors"],
-  ] as const)("[%s] a run with %s is not reconciled, naming the first reason", (_clm, _what, corpus, evidence, why) => {
-    expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict: "not-reconciled", why });
+    ["CLM-EVR-009", "evidence that never ran and a claim out of balance", ["@CLM-ONE-001"], [["unit", "never-ran", "ONE-009"]], [], "unsound"],
+    ["CLM-EVR-010", "evidence that never ran and a claim code error", ["@CLM-TWO-001"], [["unit", "never-ran", "TWO-001"]], [], "unsound"],
+    ["CLM-EVR-098", "evidence that never ran and a configuration error", ["@CLM-ONE-001"], [["unit", "never-ran", "ONE-001"]], configurationError, "unsound"],
+    ["CLM-EVR-011", "a claim code error and a claim out of balance", ["@CLM-TWO-001"], [["unit", "failed", "TWO-001"]], [], "claim-code-errors"],
+    ["CLM-EVR-012", "a corpus whose only scenario is tagged with two codes", ["@CLM-ONE-001 @CLM-ONE-002"], [], [], "claim-code-errors"],
+    ["CLM-EVR-099", "a claim code error and a configuration error", ["@CLM-TWO-001"], [["unit", "passed", "TWO-001"]], configurationError, "claim-code-errors"],
+    ["CLM-EVR-100", "a configuration error and a claim out of balance", ["@CLM-ONE-001"], [["unit", "failed", "ONE-001"]], configurationError, "configuration-errors"],
+    ["CLM-EVR-101", "a configuration error, with no feature files and no Evidence Observation", [], [], configurationError, "configuration-errors"],
+  ] as const)("[%s] a run with %s is not reconciled, naming the first reason", (_clm, _what, corpus, evidence, configurationErrors, why) => {
+    expect(runVerdictOfRun(corpus, evidence, false, configurationErrors)).toEqual({ verdict: "not-reconciled", why });
   });
 });
 
