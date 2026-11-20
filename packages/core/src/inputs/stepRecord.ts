@@ -1,15 +1,24 @@
 import type { RecordedStep } from "../domain/postEvidenceObservation.js";
-import { whereShapeBreaks } from "./shape.js";
+import { isRecord, whereShapeBreaks } from "./shape.js";
 
-export const whereStepRecordBreaks = (record: unknown): string | undefined =>
-  whereShapeBreaks(record, { entriesOf: { fields: {} } });
+type SavedWithItsJob = { readonly job: Readonly<Record<string, unknown>>; readonly steps?: unknown };
 
-const resultFrom = (outcome: unknown): RecordedStep["result"] => (outcome === "success" ? "passed" : outcome === "failure" ? "failed" : "never-ran");
+// Every entry of toJSON(steps) carries an outcome and toJSON(job) never does, so a step whose id is job leaves the record steps alone.
+const savesItsJob = (record: unknown): record is SavedWithItsJob => isRecord(record) && isRecord(record.job) && !("outcome" in record.job);
 
-// One CI job's record of its steps, keyed by each step's id, as toJSON(steps) writes it.
+const stepsOf = (record: unknown): unknown => (savesItsJob(record) ? record.steps : record);
+
+export const whereStepRecordBreaks = (record: unknown): string | undefined => whereShapeBreaks(stepsOf(record), { entriesOf: { fields: {} } });
+
+const resultFrom = (outcome: unknown): RecordedStep["result"] =>
+  outcome === "success" ? "passed" : outcome === "failure" ? "failed" : outcome === "skipped" ? "skipped" : "never-ran";
+
+// One CI job's record of its steps, keyed by each step's id, as toJSON(steps) writes it, alone or beside toJSON(job).
 export function stepRecordFrom(record: unknown): RecordedStep[] {
-  return Object.entries(record as object).map(([key, entry]: [string, { readonly outcome?: unknown }]) => ({
+  const jobSucceeded = savesItsJob(record) && record.job.status === "success";
+  return Object.entries(stepsOf(record) as object).map(([key, entry]: [string, { readonly outcome?: unknown }]) => ({
     key,
     result: resultFrom(entry.outcome),
+    jobSucceeded,
   }));
 }

@@ -51,7 +51,7 @@ If your project uses pnpm, install pnpm yourself (`npm install -g pnpm`). Node 2
 | A Jest JSON report, written by `jest --json --outputFile=<path>` | runtime test evidence | `--<layer> jest`, or `--<layer> <runner>:jest:<report>` |
 | A JUnit XML report, or a folder of them, from any other runner, such as Go's, written by `gotestsum --junitfile <path>` | runtime test evidence | `--<layer> gotestsum` or `--<layer> playwright`, or `--<layer> <runner>:junit:<report>` |
 | An RSpec JSON report, written by `rspec --format json --out <path>` | runtime test evidence | `--<layer> rspec`, or `--<layer> <runner>:rspec:<report>` |
-| Each CI job's step record: the `toJSON(steps)` dump that job writes | evidence for every fitness function whose step's `id:` is its claim code (see [Wiring into CI](#wiring-into-ci)) | `--ci-steps` |
+| Each CI job's step record: the dump of `toJSON(job)` and `toJSON(steps)` that job writes | evidence for every fitness function whose step's `id:` is its claim code (see [Wiring into CI](#wiring-into-ci)) | `--ci-steps` |
 | Your CI config (`ci.yml`) | the scope discovery ranges over | `--ci` |
 | `package.json` | its `scripts`, which runner recognition follows; nothing else in it is read | `--package-json` |
 
@@ -566,9 +566,10 @@ To convert a fitness function, you write two artefacts and no third. There is no
 - A recorded step that states a claim code no scenario carries posts to a **phantom claim**.
 - A step that states no claim code posts to the **unnamed claim**.
 - A step no step record names is posted as **not recorded**, citing no code, and so is every step when no step record is given. It posts to the unnamed claim, whatever its `id:`. It is never reported as passed, never credited to a scenario, and never posted to a phantom claim.
+- A step a step record says was skipped, in a job whose status that record saves as `success`, posts nothing, as a skipped test posts nothing. A step skipped in a job that failed or was cancelled, or in a record that saves no job's status, posts as never ran.
 - A step a step record names, but that no workflow `balance` read contains, is posted with the result its record gives, at the `id:` that record names it by. A failure posts as failed, a skipped step as never ran, and a success as passed-on-error, because without the workflow `balance` cannot read whether failure was allowed. The posting cites that `id:` when it is a claim code, and no code otherwise.
 
-**One `toJSON(steps)` dump step in each job** lets the reconciler read what each step did. Give `--ci-steps` once for each dump; `balance` reads every one. This is wiring, not part of the evidence obligation. [Wiring into CI](#wiring-into-ci) covers it, with the `if: always()` rule that goes with it.
+**One dump step in each job** lets the reconciler read what each step did. Give `--ci-steps` once for each dump; `balance` reads every one. This is wiring, not part of the evidence obligation. [Wiring into CI](#wiring-into-ci) covers it, with the `if: always()` rule that goes with it.
 
 ### A converted check is still a command you can run
 
@@ -650,7 +651,7 @@ These variants are the only ones `balance` reads, one list per claim, in [`packa
 - **To take a whole workflow out, narrow `--ci`** instead of listing its steps.
 - **The report counts a non-check. It does not drop it.** The report's **Step account** counts it under *Non-checks*, in the row of its workflow and job.
 - **The report names a non-check that matches no step of a workflow the run read**, in `## Errors in the inputs`, as `not-checks-entry-matches-no-step`. The run does not judge a non-check that names a workflow the run did not read.
-- **Never list `balance` itself or its `toJSON(steps)` dump.** `balance` always leaves them out of the checks.
+- **Never list `balance` itself or its step record's dump.** `balance` always leaves them out of the checks.
 
 **`balance` always leaves GitHub plumbing out of the checks too.** Plumbing is a step whose only work is an action in one of these repositories: `actions/checkout`, `actions/setup-*`, `actions/cache`, `actions/upload-artifact` and `actions/download-artifact`. Each is matched on the action's owner and repository, whatever path or ref follows. So `actions/cache/save` is plumbing, as `actions/cache` is, and `actions/setup-*` matches every repository whose name begins `actions/setup-`. Such a step moves code, tools and files, and judges nothing, so the **Step account** counts it under *Plumbing*, never as a check. The list is closed: every other action stays a fitness function, including `actions/dependency-review-action`, which is a check. A plumbing step you also name with `--not-check` is a non-check, as you named it.
 
@@ -696,7 +697,7 @@ None of these codes refuses the run. Each is a line in `## Errors in the inputs`
 - **The configuration does not depend on Node.** Every setting is a flag on `balance`'s command line, so a repository with no `package.json` names its runners as any other does. What `balance` can discover does not depend on Node either.
 - **Annotating steps does not depend on Node.** An `id:` is a key of the step mapping, the command below it can be any command in any language, and nothing in the resolution reads a manifest.
 - **Runner recognition has a false positive that you can see.** `balance` reports a suite run through an action, or a runner inside a quoted argument to a wrapper, as a fitness function. It does not silently exclude it. Fix each with one `--not-check`.
-- **`balance` does not serve a check that legitimately applies to only some platforms.** A matrix build uses `if:` to skip such a step, and in the step record that skip reads `never-ran`, so the run is not reconciled. *"The command examined nothing"* and *"this row was not obliged on this run"* are different claims, and `balance` models only the first.
+- **`balance` tells a step skipped on purpose only by its job's status.** It reads no step's `if:`. A matrix build that skips a check on the platforms it does not apply to posts nothing for that check there, because the job succeeded, and the legs that run it post their results. A step skipped in a job that failed or was cancelled reads `never-ran`, so the run is not reconciled, even where its `if:` would have skipped it anyway. A check skipped on every leg posts nothing at all, so its scenario reads `missing`.
 
 ---
 
@@ -732,8 +733,9 @@ jobs:
       - name: Record the steps
         if: always()
         env:
+          JOB_JSON: ${{ toJSON(job) }}
           STEPS_JSON: ${{ toJSON(steps) }}
-        run: printf '%s' "$STEPS_JSON" > ci-steps.json
+        run: printf '{"job":%s,"steps":%s}' "$JOB_JSON" "$STEPS_JSON" > ci-steps.json
       - name: Reconcile
         if: always()
         run: |
@@ -764,13 +766,14 @@ Each check step carries its claim code as its `id:`, and the job ends with one d
   if: always()
 - if: always()
   env:
+    JOB_JSON: ${{ toJSON(job) }}
     STEPS_JSON: ${{ toJSON(steps) }}
-  run: printf '%s' "$STEPS_JSON" > ci-steps.json
+  run: printf '{"job":%s,"steps":%s}' "$JOB_JSON" "$STEPS_JSON" > ci-steps.json
 ```
 
 - **Put `if: always()` on every check step, not just on the dump.** Without it, the first red stops the job and every later check is skipped. The report then shows one `failing` and N `never-ran`, and the run is not reconciled, as `unsound`. The mechanism has worked correctly, but the report is worse.
-- **The dump must be `toJSON(steps)`.** It is the only place where a step's `id` and its `outcome` appear together. `outcome` is the field that survives `continue-on-error`; `conclusion` does not.
-- **Pass the dump through an environment variable.** Never write `${{ toJSON(steps) }}` into the command itself: a step's output can hold a quote, and the shell would then run whatever follows that quote.
+- **The dump must be `toJSON(job)` and `toJSON(steps)`.** `toJSON(steps)` is the only place where a step's `id` and its `outcome` appear together. `outcome` is the field that survives `continue-on-error`; `conclusion` does not. `toJSON(job)` holds the job's `status`, `success` when every step before the dump succeeded: a step skipped in such a job posts nothing. A dump of `toJSON(steps)` alone saves no job's status, so each step it says was skipped reads `never-ran`.
+- **Pass the dump through an environment variable.** Never write `${{ toJSON(job) }}` or `${{ toJSON(steps) }}` into the command itself: a step's output can hold a quote, and the shell would then run whatever follows that quote.
 - **A check that runs on a schedule stays on its own schedule, and no push step records it.** A check too slow for every push, such as a mutation sweep, enforces its threshold in its own run: a scope's nightly job concludes `failure` below the threshold. No push step reads that result, so the check has no Claim Reconciliation in a push's report. Its red needs a stop of its own where work starts, not in CI: while the newest full sweep is red, has lapsed or measured nothing, no new work starts except the fix, which merges on its own CI. Without that stop, a red sweep blocks nothing.
 
 ### Reconcile once, over the reports and the record
@@ -1039,7 +1042,7 @@ Help answers only when nothing else on the command line is refused. A usage erro
 | `--deferral-tag <tag>` | A tag that defers the scenarios it is on, beside the built-in set. Repeatable. See [Deferring a scenario](#deferring-a-scenario). |
 | `--ci <workflow.yml\|dir>` | Your CI workflows: a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery.** The tool reads every step of every job it resolves; narrow it to leave a whole workflow out. It is also where a check step's `id:` supplies the claim code its result cites, and where a runner named alone has its report found. |
 | `--package-json <path>` | The target's `package.json`, read only for its `scripts`, which runner recognition and report finding follow (see [Configuration](#configuration--runners-non-checks-and-deferral-tags)). A fitness function is named by its `@fitness` scenario and by the CI step whose `id:` is that scenario's claim code; no setting names one. Defaults to `package.json` in the working directory. |
-| `--ci-steps <record.json>` | A CI job's record of what each of its steps did: the `toJSON(steps)` dump, which is the evidence for fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. Repeatable: `balance` reads every record you name. |
+| `--ci-steps <record.json>` | A CI job's record of what each of its steps did: the dump of `toJSON(job)` and `toJSON(steps)`, which is the evidence for fitness functions. See [Wiring into CI](#wiring-into-ci). Omit it if you have converted none. Repeatable: `balance` reads every record you name. |
 | `--target <name>` | A name recorded verbatim in the report's provenance: the project this run reconciled. |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See [`--format`](#--format--routing-the-output). |

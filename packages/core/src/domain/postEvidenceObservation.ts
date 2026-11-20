@@ -45,10 +45,12 @@ export interface TestResult {
   readonly cites: TestCitation;
 }
 
-// A step the CI run recorded, keyed by the step's id, with how it went before a step that allows failure has its failure read as success.
+// A step the CI run recorded, keyed by the step's id, with how it went before a step that allows failure has its failure read as success,
+// and whether its record saved its job as succeeded.
 export interface RecordedStep {
   readonly key: string;
-  readonly result: Extract<Result, "passed" | "failed" | "never-ran">;
+  readonly result: Extract<Result, "passed" | "failed" | "never-ran"> | "skipped";
+  readonly jobSucceeded: boolean;
 }
 
 // The shell reader's answers, handed to the domain so it decides which question serves which step.
@@ -161,9 +163,14 @@ const anyAllowsFailure = (id: string | undefined, steps: readonly CiStep[]): boo
 
 const placeOf = (step: CiStep): string => `${step.workflow}:${step.job}:${step.identity}`;
 
+const postedResultOf = (recorded: RecordedStep["result"]): Result => (recorded === "skipped" ? "never-ran" : recorded);
+
+// A step skipped in a job that succeeded was skipped by design, so it posts nothing, as a skipped test does.
+const skippedByDesign = ({ result, jobSucceeded }: RecordedStep): boolean => result === "skipped" && jobSucceeded;
+
 function observationOf(step: CiStep, steps: readonly CiStep[], allSteps: readonly CiStep[], entry: RecordedStep | undefined): EvidenceObservation {
   const claimCode = claimCodeFrom(step.id);
-  const result = entry === undefined ? "not-recorded" : entry.result;
+  const result = entry === undefined ? "not-recorded" : postedResultOf(entry.result);
   const jobsRecorded = new Set(steps.filter(({ id }) => entry !== undefined && id === entry.key).map(({ workflow, job }) => `${workflow}:${job}`));
   return {
     cites: claimCode === undefined || result === "not-recorded" ? [] : [claimCode],
@@ -175,7 +182,8 @@ function observationOf(step: CiStep, steps: readonly CiStep[], allSteps: readonl
 
 // A recorded entry no step carries is posted as its record says, at its id. Without the step, whether it allows failure cannot
 // be read, so a success may have hidden a failure: it fails closed, as passed-on-error.
-const unheldObservationOf = ({ key, result }: RecordedStep): EvidenceObservation => {
+const unheldObservationOf = ({ key, result: recorded }: RecordedStep): EvidenceObservation => {
+  const result = postedResultOf(recorded);
   const claimCode = claimCodeFrom(key);
   return { cites: claimCode === undefined ? [] : [claimCode], result: result === "passed" ? "passed-on-error" : result, kind: "fitness", place: key };
 };
@@ -199,7 +207,7 @@ export function fitnessObservationsOf(disposedSteps: readonly DisposedStep[], re
   return [
     ...postedOnce.flatMap((step) => {
       const entries = entriesFor(step);
-      return (entries.length === 0 ? [undefined] : entries).map((entry) => observationOf(step, posting, allSteps, entry));
+      return (entries.length === 0 ? [undefined] : entries.filter((entry) => !skippedByDesign(entry))).map((entry) => observationOf(step, posting, allSteps, entry));
     }),
     ...record.filter(({ key }) => !disposedSteps.some(({ step: { id } }) => id === key)).map(unheldObservationOf),
   ];
