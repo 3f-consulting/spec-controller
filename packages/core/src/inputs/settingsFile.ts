@@ -1,5 +1,5 @@
 import { parse } from "yaml";
-import type { Layer } from "../domain/configuration.js";
+import type { ConfigurationError, Layer } from "../domain/configuration.js";
 import type { SettingsNamed } from "./commandLineSettings.js";
 import { isRecord } from "./shape.js";
 
@@ -54,8 +54,18 @@ const TAKEN: Readonly<Record<SettingShape, (value: unknown) => readonly string[]
 
 const NOTHING_GIVEN: SettingsGiven = { values: {}, on: [] };
 
+// The settings given, with an error naming each entry of the settings file that was left out.
+export interface SettingsMerged {
+  readonly settings: SettingsGiven;
+  readonly errors: readonly ConfigurationError[];
+}
+
 // The settings the file's entries give, by the command line's names; a setting the command line gives replaces the file's.
-export function settingsMerged(entries: SettingsFileEntries, commandLine: SettingsGiven = NOTHING_GIVEN): SettingsGiven {
+export function settingsMerged(entries: SettingsFileEntries, commandLine: SettingsGiven = NOTHING_GIVEN): SettingsMerged {
+  return { settings: settingsGiven(entries, commandLine), errors: [] };
+}
+
+function settingsGiven(entries: SettingsFileEntries, commandLine: SettingsGiven): SettingsGiven {
   const taken = BALANCE_SETTINGS.flatMap(({ name, shape }) => {
     const value = TAKEN[shape](entries[name]);
     return value === undefined ? [] : [{ name, value }];

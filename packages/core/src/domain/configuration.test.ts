@@ -21,7 +21,7 @@ const takenFrom = (named: Partial<SettingsNamed>, steps: readonly CiStep[] = [])
   targetConfigurationOf(configurationSettingsNamed({ runners: {}, nonChecks: [], deferralTags: [], ...named }), steps).configuration;
 
 // The settings balance takes from a settings file holding the YAML text given.
-const settingsFrom = (yaml: string): SettingsGiven => settingsMerged(settingsFileEntriesFrom(yaml));
+const settingsFrom = (yaml: string): SettingsGiven => settingsMerged(settingsFileEntriesFrom(yaml)).settings;
 
 describe("balance takes each entry of the settings file as the command-line setting of the same name", () => {
   it("[CLM-CFG-031] a settings file that had unit: [vitest] is taken as vitest as the unit layer's runner", () => {
@@ -56,7 +56,7 @@ describe("balance takes each entry of the settings file as the command-line sett
 describe("a setting the command line gives replaces the settings file's setting of the same name", () => {
   it("[CLM-CFG-033] a runner the command line names replaces the settings file's runners for that layer alone", () => {
     const entries = settingsFileEntriesFrom("unit: [vitest]\ne2e: [playwright:junit:out/e2e.xml]\n");
-    const settings = settingsMerged(entries, { values: { unit: ["pytest"] }, on: [] });
+    const { settings } = settingsMerged(entries, { values: { unit: ["pytest"] }, on: [] });
     const { configuration } = targetConfigurationOf(configurationSettingsNamed(settingsNamedOf(settings)), []);
 
     expect(configuration).toEqual({
@@ -188,6 +188,30 @@ describe("balance leaves out a configuration setting it cannot use, naming the e
     const entry = withALineBreak[variant]!;
 
     expect(checkedFrom({ nonChecks: [entry] })).toEqual({ configuration: NONE, errors: [{ kind: "not-checks-entry-not-a-step-name", entry }] });
+  });
+});
+
+describe("balance leaves out an entry of the settings file it cannot use, naming the error", () => {
+  // A settings file holding the one entry given gives no setting, and an error of the kind given naming the entry's key.
+  const expectLeftOut = (entry: string, kind: ConfigurationError["kind"]) =>
+    expect(settingsMerged(settingsFileEntriesFrom(`${entry}\n`))).toEqual({
+      settings: { values: {}, on: [] },
+      errors: [{ kind, entry: entry.slice(0, entry.indexOf(":")) }],
+    });
+
+  it.each<[string, string, ConfigurationError["kind"]]>([
+    ["CLM-CFG-034", "unitt: [vitest]", "configuration-unknown-key"],
+    ["CLM-CFG-035", "unit: vitest", "configuration-wrong-kind"],
+  ])("[%s] a settings file that had %s leaves it out, finding the error %s naming its key", (_clm, entry, kind) => {
+    expectLeftOut(entry, kind);
+  });
+
+  it.each([...settingsFileVariants["keys-that-name-no-setting"].variants])("[CLM-CFG-034] a settings file that had %s leaves it out, finding the error configuration-unknown-key naming its key", (entry) => {
+    expectLeftOut(entry, "configuration-unknown-key");
+  });
+
+  it.each([...settingsFileVariants["values-of-the-wrong-kind"].variants])("[CLM-CFG-035] a settings file that had %s leaves it out, finding the error configuration-wrong-kind naming its key", (entry) => {
+    expectLeftOut(entry, "configuration-wrong-kind");
   });
 });
 

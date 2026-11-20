@@ -9,7 +9,7 @@ export type { JsonReport } from "./reports/json.js";
 export type { RunIdentity, Provenance, ProvenanceInput, ProvenanceOfInputs, RepositoryOfOrigin } from "./domain/provenance.js";
 export type { ConfigurationSettings, DefaultReportsOf, ReportLocation, ReportsNamed, Runner, TargetConfiguration } from "./domain/configuration.js";
 export type { SettingsNamed } from "./inputs/commandLineSettings.js";
-export type { BalanceSettingName, SettingsFileEntries, SettingsGiven, SettingShape } from "./inputs/settingsFile.js";
+export type { BalanceSettingName, SettingsFileEntries, SettingsGiven, SettingsMerged, SettingShape } from "./inputs/settingsFile.js";
 export type { FileIdentity, OutputRefusal, OutputRequest } from "./domain/outputPlan.js";
 export { allocationOf, claimCodeErrorsOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from "./domain/claimCodes.js";
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";

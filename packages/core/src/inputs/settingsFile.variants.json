@@ -10,5 +10,13 @@
   "no-value-settings": {
     "claim": "CLM-CFG-032",
     "variants": ["strict", "exit-zero"]
+  },
+  "keys-that-name-no-setting": {
+    "claim": "CLM-CFG-034",
+    "variants": ["help: true", "config: other.yml"]
+  },
+  "values-of-the-wrong-kind": {
+    "claim": "CLM-CFG-035",
+    "variants": ["features: [a, b]", "strict: yes"]
   }
 }

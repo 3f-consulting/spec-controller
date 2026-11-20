@@ -41,10 +41,12 @@ export interface TargetConfiguration {
   readonly deferralTags: readonly string[];
 }
 
-// entry is the setting as written, such as a runner's long form or a deferral tag; for a report error, the runner or the report's path.
+// entry is the setting as written, such as a runner's long form or a deferral tag; for a report error, the runner or the report's path;
+// for an entry of the settings file, its key.
 export interface ConfigurationError {
   readonly kind:
     | "configuration-wrong-kind"
+    | "configuration-unknown-key"
     | "runner-report-not-read"
     | "runner-report-not-named"
     | "not-checks-entry-matches-no-step"

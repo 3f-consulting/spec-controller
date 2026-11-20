@@ -5,8 +5,8 @@ Feature: balance reads and validates the configuration settings the run names
   the runners of each layer, the non-checks and the deferral tags. The settings file names each
   of balance's settings by the name its command line uses. balance reads and validates each one.
   It leaves out a configuration setting that is not valid, names it among the configuration
-  errors, and still uses the others. A configuration setting that is not valid never stops the
-  run.
+  errors, and still uses the others. A setting balance cannot use never stops the run. An input
+  it cannot read stops it, whether the command line or the settings file names it.
 
   Rule: balance takes the settings its settings file gives, by the names its command line uses
 
@@ -67,6 +67,18 @@ Feature: balance reads and validates the configuration settings the run names
         | CLM-CFG-015 | --not-check ci.yml:ci:No such step, with ci.yml read                                                                                       | not-checks-entry-matches-no-step | ci.yml:ci:No such step           |
         | CLM-CFG-022 | --not-check ci.yml:lint:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies and whose job lint had none | not-checks-entry-matches-no-step | ci.yml:lint:Install dependencies |
         | CLM-CFG-016 | --not-check Install dependencies                                                                                                           | not-checks-entry-not-a-step-name | Install dependencies             |
+
+    @unit
+    Scenario Outline: balance leaves out an entry of the settings file it cannot use, naming the error
+      given the settings file had <entry>
+      when balance reads it
+      then the run will not use it
+      and balance will find the error <error>, naming <named>
+
+      Examples:
+        | clm         | entry           | error                     | named |
+        | CLM-CFG-034 | unitt: [vitest] | configuration-unknown-key | unitt |
+        | CLM-CFG-035 | unit: vitest    | configuration-wrong-kind  | unit  |
 
     @unit
     Scenario Outline: balance reads no evidence report for a runner whose report it cannot find, naming the error
