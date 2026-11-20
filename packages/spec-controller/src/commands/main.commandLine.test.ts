@@ -499,6 +499,12 @@ describe("an input that is not valid will stop the run", () => {
     });
   });
 
+  it("[CLM-CLI-223] an empty settings file is not refused as not a mapping of settings: it sets nothing, and the run does not stop", () => {
+    const { exitCode, error } = ran(["balance", "--config", "settings.yml"], folderWith({ "settings.yml": "" }));
+
+    expect({ stopped: exitCode === 2, refused: error.includes("[input-not-in-its-shape]") }).toEqual({ stopped: false, refused: false });
+  });
+
   it("[CLM-CLI-161] a named input that the tool is not permitted to read: the run stops, no verdict, exit 2, and a complaint with its facts", () => {
     const folder = folderWith({ "vitest.json": VITEST_SHAPED });
     chmodSync(join(folder, "vitest.json"), 0o000);

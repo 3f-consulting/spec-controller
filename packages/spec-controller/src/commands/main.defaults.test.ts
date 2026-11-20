@@ -122,22 +122,24 @@ describe("balance reads every input the command line names or leaves to its defa
   });
 
   // The target the run names, with spec-controller.yml at the top giving target: acme and nothing on the command line.
-  const targetWithSettingsAt = (top: string, ranIn: string): string => {
+  // The run's target name, and the settings file its provenance names among the inputs it read.
+  const targetWithSettingsAt = (top: string, ranIn: string): { readonly target: string; readonly settingsFile?: string } => {
     writeFileSync(join(top, "spec-controller.yml"), "target: acme\n");
-    return provenanceIn(ranIn).target;
+    const { target, inputs } = provenanceIn(ranIn);
+    return { target, settingsFile: inputs.find(({ name }) => name === "settingsFile")?.path };
   };
 
-  it("[CLM-CLI-219] balance ran in packages/app, in a git repository whose top's spec-controller.yml had target: acme: the run's target name is acme", () => {
+  it("[CLM-CLI-219] balance ran in packages/app, in a git repository whose top's spec-controller.yml had target: acme: the run's target name is acme, from the settings file it read there", () => {
     const repository = repositoryForTest();
     mkdirSync(join(repository.top, "packages", "app"), { recursive: true });
 
-    expect(targetWithSettingsAt(repository.top, join(repository.top, "packages", "app"))).toBe("acme");
+    expect(targetWithSettingsAt(repository.top, join(repository.top, "packages", "app"))).toEqual({ target: "acme", settingsFile: "spec-controller.yml" });
   });
 
-  it("[CLM-CLI-220] balance ran in a folder in no git repository whose spec-controller.yml had target: acme: the run's target name is acme", () => {
+  it("[CLM-CLI-220] balance ran in a folder in no git repository whose spec-controller.yml had target: acme: the run's target name is acme, from the settings file it read there", () => {
     const folder = temporaryDirectory("no-git-");
 
-    expect(targetWithSettingsAt(folder, folder)).toBe("acme");
+    expect(targetWithSettingsAt(folder, folder)).toEqual({ target: "acme", settingsFile: "spec-controller.yml" });
   });
 
   it("[CLM-CLI-221] the run named ci/spec-controller.yml as its settings file, and that file had target: named, and spec-controller.yml at the root of the repository had target: root: the run's target name is named", () => {
