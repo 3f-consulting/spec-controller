@@ -22,6 +22,8 @@ Today's mechanism holds the checks ↔ application link well at the unit layer. 
 
 `balance` never reads your document specification. Whether the checks say what it says is a judgement, not a reconciliation.
 
+That link is where spec-controller is heading: specification-driven development, in which the document specification becomes executable. `balance` holds the checks to the application. `analyse` and `migrate`, the modes that follow it, will hold the document specification to the checks. This is why each behaviour is written as a scenario, not only as a code in a list. Any test can cite a code in a list. A scenario says what its test must show, so a reader can judge whether the test proves it.
+
 ## What double entry buys: a change becomes deliberate
 
 Every behaviour is recorded twice: as a scenario, and as the test that proves it. The two records must agree. So **changes to your quality checks become deliberate, not accidental.**
@@ -47,7 +49,7 @@ Each kind of disagreement has its own outcome, shown below. [Reading the full re
 
 To remove a behaviour cleanly, you change both the scenario and its evidence. That change shows in the diff, and review judges it there.
 
-This matters most when an agent writes the code. An agent asked to make failing tests pass can delete them. Here, deleting them gives a red build, not a quiet green.
+This matters most when an agent writes the code. An agent makes the mistakes a person makes, many times faster, and too often for review alone to catch them. An agent asked to make failing tests pass can delete them. Here, deleting them gives a red build, not a quiet green.
 
 **The limits:**
 
@@ -160,4 +162,4 @@ Both answer their own questions well, and both live at the unit layer:
 
 Coverage tells you how much of the application the unit tests reach. Mutation testing tells you whether those tests would notice the application change. Neither knows which behaviours your scenarios name. So neither notices a named behaviour with no proof, or a passing test credited to a scenario that asked for a different kind of evidence. `spec-controller` reconciles all five kinds of quality check in one account.
 
-**For a team already well tested at the unit layer, `spec-controller` adds hygiene, not discovery.** Above the unit layer, once behaviours are named, nothing else checks each one against its proof. Keep your coverage gate and your mutation threshold. They are inputs here, not rivals.
+**For a team already well tested at the unit layer, `spec-controller` finds nothing at that layer that coverage and mutation testing miss.** What it finds is above it: a named behaviour with no passing proof, a test credited to a scenario that asked for a different kind of evidence, and a CI check that cannot fail or never ran. Keep your coverage gate and your mutation threshold. They are inputs here, not rivals.
