@@ -51,10 +51,10 @@ Delete that test, and the run is out of balance and exits `1`. The row says a un
 
 ```sh
 npm install --save-dev spec-controller@<version>
-npx spec-controller balance --unit vitest --written-claims-only
+npx spec-controller balance --written-claims-only
 ```
 
-Name one behaviour as a scenario, as the checkout example above does, and cite it from its test. Then add the command as a step at the end of the CI job that runs your tests. `--unit vitest` names the unit layer's runner, and `balance` finds its report from the workflow step that runs it. If no step names the report, name it yourself, as `--unit vitest:vitest:./vitest-report.json`: the runner, the format of its report, and the report's path. For other test reports, give the format `jest`, `pytest`, `junit`, `rspec` or `cucumber`, under the flag of the layer the runner serves: `--unit`, `--integration`, `--e2e` or `--performance`. The settings can also live in `spec-controller.yml` at the top of your repository, keyed by the flags' names, such as `unit: [vitest]` and `written-claims-only: true`.
+Name one behaviour as a scenario, as the checkout example above does, and cite it from its test. Then add the command as a step at the end of the CI job that runs your tests. A runner `balance` knows, such as Vitest, needs no setting: `balance` finds it in the workflow step that runs it, at its usual layer, and finds its report from that step. Name a runner only for one `balance` does not know, or for a layer other than its usual one, under the flag of the layer it serves: `--unit`, `--integration`, `--e2e` or `--performance`. If no step names the report, name it yourself, as `--unit vitest:vitest:./vitest-report.json`: the runner, the format of its report, and the report's path. For other test reports, give the format `jest`, `pytest`, `junit`, `rspec` or `cucumber`. The settings can also live in `spec-controller.yml` at the top of your repository, keyed by the flags' names, such as `unit: [vitest]` and `written-claims-only: true`.
 
 The build then goes red only for the scenarios you have written. Every other test and CI step is listed in the report, and none of them turns it red. You need no `id:` on any step, no step record and no list of non-checks. Name more behaviours as you go. When every test cites a scenario, drop `--written-claims-only`.
 

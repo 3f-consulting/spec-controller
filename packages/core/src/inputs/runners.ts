@@ -1,4 +1,4 @@
-import { readable, type ReportLocation } from "../domain/configuration.js";
+import { readable, type KnownRunner, type Layer, type ReportLocation } from "../domain/configuration.js";
 import runnersVariants from "./runners.variants.json" with { type: "json" };
 
 const PATH = "<path>";
@@ -65,3 +65,6 @@ export const reportsIn = (runner: string, args: readonly string[], environment: 
 // Where a runner writes its evidence reports when its command names none.
 export const defaultLocationsOf = (runner: string): ReportLocation[] =>
   runnersVariants["default-locations"].variants.filter((location) => location.runner === runner).map(({ path, format }) => ({ path, format }));
+
+// Each runner balance knows, at the layer it usually runs.
+export const knownRunners: readonly KnownRunner[] = runnersVariants["usual-layers"].variants.map(({ runner, layer }) => ({ name: runner, layer: layer as Layer }));

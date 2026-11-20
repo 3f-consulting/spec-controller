@@ -7,13 +7,13 @@ export type { EvidenceReportFormat, EvidenceReportKind } from "./inputs/evidence
 export type { EvidenceReconciliation, ReadersGave, ReportGiven, RunVerdict, StepAccount } from "./domain/evidenceReconciliation.js";
 export type { JsonReport } from "./reports/json.js";
 export type { RunIdentity, Provenance, ProvenanceInput, ProvenanceOfInputs, RepositoryOfOrigin } from "./domain/provenance.js";
-export type { ConfigurationSettings, DefaultReportsOf, ReportLocation, ReportsNamed, Runner, TargetConfiguration } from "./domain/configuration.js";
+export type { ConfigurationSettings, DefaultReportsOf, KnownRunner, ReportLocation, ReportsNamed, Runner, RunnerFinder, TargetConfiguration } from "./domain/configuration.js";
 export type { SettingsNamed } from "./inputs/commandLineSettings.js";
 export type { BalanceSettingName, SettingsFileEntries, SettingsGiven, SettingsMerged, SettingShape } from "./inputs/settingsFile.js";
 export type { FileIdentity, OutputRefusal, OutputRequest } from "./domain/outputPlan.js";
 export { allocationOf, claimCodeErrorsOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from "./domain/claimCodes.js";
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";
-export { reportsLocatedOf } from "./domain/configuration.js";
+export { reportsLocatedOf, runnersFoundOf } from "./domain/configuration.js";
 export { evidenceReconciliationOf, reconcile, stepAccountOf } from "./domain/evidenceReconciliation.js";
 export { outputPlanOf } from "./domain/outputPlan.js";
 export { targetFolderOf } from "./domain/targetPath.js";

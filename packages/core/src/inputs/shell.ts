@@ -2,7 +2,7 @@ import { parse } from "unbash";
 import type { Command, CommandNode, Statement, Word } from "unbash";
 import type { ReportLocation } from "../domain/configuration.js";
 import type { Scripts, ShellAnswers } from "../domain/postEvidenceObservation.js";
-import { defaultLocationsOf, reportsIn } from "./runners.js";
+import { defaultLocationsOf, knownRunners, reportsIn } from "./runners.js";
 import shellVariants from "./shell.variants.json" with { type: "json" };
 
 const { "script-runs": scriptRuns, launchers, wrappers } = shellVariants;
@@ -90,4 +90,4 @@ const defaultReportsOf = (commandLine: string, runner: string, scripts: Scripts)
   return locations.length > 0 && invokesAsCommand(commandLine, runner, scripts) ? locations : [];
 };
 
-export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed, defaultReportsOf };
+export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed, defaultReportsOf, knownRunners };

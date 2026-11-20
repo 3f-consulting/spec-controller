@@ -122,7 +122,7 @@ With `--written-claims-only`, the run verdict counts only the executable claims:
 
 ### Name your first non-checks
 
-`balance` lists every CI step as a check, except a step that runs a runner you name (see [Naming your runners](#naming-your-runners)) and GitHub's own checkout, setup, cache and artifact actions. Some steps do work but check nothing, such as a step that publishes a package or bumps a version. Name each of these steps once with `--not-check`, by the step's own name:
+`balance` lists every CI step as a check, except a step that runs a runner you name or `balance` finds (see [Naming your runners](#naming-your-runners)) and GitHub's own checkout, setup, cache and artifact actions. Some steps do work but check nothing, such as a step that publishes a package or bumps a version. Name each of these steps once with `--not-check`, by the step's own name:
 
 ```sh
 npx spec-controller balance \
@@ -593,7 +593,7 @@ npx spec-controller balance \
   --deferral-tag deferred
 ```
 
-Each runner here is named alone, so `balance` finds the report it writes from the CI step that runs it (see [Naming your runners](#naming-your-runners)).
+Each runner here is named alone, so `balance` finds the report it writes from the CI step that runs it (see [Naming your runners](#naming-your-runners)). `balance` knows `vitest`, so it would find it at the unit layer with no `--unit`. Cucumber is named because it serves e2e as well as its usual integration layer, and a runner named at any layer is never found at another.
 
 ### Keep your settings in `spec-controller.yml`
 
@@ -622,13 +622,21 @@ written-claims-only: true
 
 ### How discovery works
 
-**You do not name a list of checks.** You name the commands that run your behavioural suites, each under the flag of its layer: a closed set of four. **Every other step of the workflows `--ci` names is a fitness function**, whatever it invokes, whether a `run:` step or a `uses:` action.
+**You do not name a list of checks.** You name the commands that run your behavioural suites, each under the flag of its layer: a closed set of four. A runner `balance` knows, it finds in your workflows, at its usual layer, so you name only the others. **Every other step of the workflows `--ci` names is a fitness function**, whatever it invokes, whether a `run:` step or a `uses:` action.
 
 Discovery does not depend on Node: it does not match `package.json` script names against prefixes. `balance` discovers a pipeline with a bare `run: ruff` and no `package.json` script like any other pipeline.
 
 ### Naming your runners
 
-- **Each layer has its own flag:** `--unit`, `--integration`, `--e2e` and `--performance`. Each names a runner of that layer, and may repeat, so one layer may have several runners. A layer you name no runner for has none.
+- **Each layer has its own flag:** `--unit`, `--integration`, `--e2e` and `--performance`. Each names a runner of that layer, and may repeat, so one layer may have several runners.
+- **A runner `balance` knows needs no setting.** For a layer you name no runner for, `balance` finds each runner it knows whose usual layer that is, when a step of the workflows `--ci` names runs it, as it recognises a named runner, and you name that runner at no layer. A step you name with `--not-check` is never found. A layer has no runner when you name none and `balance` finds none. Name a runner only for one `balance` does not know, or for a layer other than its usual one: any runner you name for a layer stops `balance` finding runners for it. A found runner is read exactly as one named alone, and the runners `balance` knows are these:
+
+  | Layer | Runners `balance` knows |
+  |---|---|
+  | unit | `vitest`, `jest`, `pytest`, `rspec`, `gotestsum`, `mvn test`, `./mvnw test`, `gradle test`, `./gradlew test` |
+  | integration | `cucumber-js` |
+  | e2e | `playwright` |
+
 - **A runner named alone, as `--unit vitest`, has its report found from the CI step that runs it.** `balance` reads the step's command for the option that names the report, in the spellings below. A step that runs a `package.json` script is read through the script, and any words after the script's name count as the words of the script's last command. Scripts come only from the `--package-json` file; a script in a subfolder's `package.json` is not followed. Each result in the report is evidence of the runner's layer.
 - **A path a step names is read from the step's folder:** the target's folder, the top of its git repository, joined with the step's `working-directory`, or else its job's `defaults.run.working-directory`. An absolute path is read as written.
 - **Where no step that runs the runner names a report, `balance` reads where the runner writes its reports by default**, joined with the step's working directory as a named path is. Only these runners have one, each read as a folder of JUnit XML reports:
@@ -657,14 +665,14 @@ Discovery does not depend on Node: it does not match `package.json` script names
 - **A runner named alone whose report `balance` cannot find** is named in `## Errors in the inputs` as `runner-report-not-named`. That is a runner `balance` has no spelling and no default location for, a runner whose steps name no report and that has no default location, or a runner no step runs. A step names no report when the report is set only in the runner's own configuration file, or by an expression such as `${{ env.OUT }}/x.json`. The runner is kept, so its step is still a runner, but no result of it is read. Name its report in the long form.
 - **A report with no file at its path**, a long form's, a step's or a default location, is named in `## Errors in the inputs` as `runner-report-not-read`, with the path. The run goes on: the runner is kept, so its step is still a runner, and no result of that report is read. Any other report that cannot be read, such as one that does not parse, refuses the run at exit `2`.
 - **A runner `balance` cannot read** is left out, and named as `configuration-wrong-kind`: an empty one, or a long form with no runner, no report, or a format `balance` does not read.
-- **No runner at all is not an error.** Every step that is not a reconciler step, a non-check or a plumbing step becomes a fitness function. That is the zero-annotation report.
+- **No runner at all, named or found, is not an error.** Every step that is not a reconciler step, a non-check or a plumbing step becomes a fitness function. That is the zero-annotation report.
 - **`balance` recognises a runner only as the command a step runs**: the command a line of the step opens with, or a command after `&&` or `;` in that line, past any `NAME=value` settings. So a runner is recognised after a line that sets a variable, after a shell function's definition, and after an `if … fi` block. A runner named anywhere else, as an argument or a path, leaves the step a check. So does a step that pipes the runner's output onward, into another command or into a compound command such as a `while` loop, an `if` block or a subshell.
 - **A launcher or a wrapper may hand on to a runner.** The launchers are `npx`, `pnpm exec`, `pnpm <bin>`, `yarn <bin>`, `bunx`, `python -m`, `python3 -m`, `uv run`, `poetry run`, `pipenv run`, `coverage run -m` and `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. The wrappers `xvfb-run` and `timeout <duration>` hand on too, past their options and the values those options take (`xvfb-run`'s `-n`, `-s`, `-e`, `-f`, `-p` and `-w` each take one value). So `timeout 75 pnpm test` runs `test`.
 - **A `package.json` script may run a runner.** A step runs a script as `npm test`, `npm run <script>`, `pnpm <script>`, `pnpm run <script>`, `pnpm -r <script>`, `pnpm --filter <name> <script>`, `yarn <script>`, `yarn run <script>` or `yarn workspace <name> <script>`, when the target's own `package.json` has a script by that name. `balance` follows the script through any scripts it runs in turn, however deep. A script that runs itself ends as a check.
 - **A runner named in several words is recognised where a command opens with all of those words.** This covers `mvn test`, `./mvnw test`, `./gradlew test`, `./gradlew check`, `./gradlew :app:test` and `gotestsum`. A build tool runs more than its tests, so name it with its test task. Then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: `rspec` covers `bundle exec rspec`.
 - **Any other variant is a check.** A launcher, script runner or wrapper not listed here leaves the step a check that runs the runner. Name such a step with `--not-check`, or run the runner in one of the variants above.
 
-These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The spellings that name a runner's report are listed in [`runners.variants.json`](../packages/core/src/inputs/runners.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json). [Naming your non-checks](#naming-your-non-checks) lists them and says how they are matched.
+These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The spellings that name a runner's report, and the runners `balance` knows with their usual layers, are listed in [`runners.variants.json`](../packages/core/src/inputs/runners.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json). [Naming your non-checks](#naming-your-non-checks) lists them and says how they are matched.
 
 ### Naming your non-checks
 
