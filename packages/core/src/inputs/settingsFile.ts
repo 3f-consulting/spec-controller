@@ -1,7 +1,8 @@
 import { parse } from "yaml";
 import type { ConfigurationError, Layer } from "../domain/configuration.js";
 import type { SettingsNamed } from "./commandLineSettings.js";
-import { isRecord } from "./shape.js";
+import { parsedBy } from "./inputDoesNotParse.js";
+import { isRecord, whereShapeBreaks } from "./shape.js";
 
 // What a setting takes: a list of values, one value, or none, given or not.
 export type SettingShape = "list" | "one" | "none";
@@ -38,10 +39,15 @@ export interface SettingsGiven {
   readonly on: readonly string[];
 }
 
-export function settingsFileEntriesFrom(text: string): SettingsFileEntries {
-  const read: unknown = parse(text);
-  return isRecord(read) ? read : {};
-}
+// The settings file as YAML reads it, or the file refused with what the parser said.
+export const settingsFileFrom = (text: string): unknown => parsedBy(() => parse(text) as unknown);
+
+// A settings file is a mapping of settings; an empty file, which YAML reads as nothing, sets none.
+export const whereSettingsFileBreaks = (read: unknown): string | undefined => (read === null ? undefined : whereShapeBreaks(read, { fields: {} }));
+
+export const settingsFileEntriesOf = (read: unknown): SettingsFileEntries => (isRecord(read) ? read : {});
+
+export const settingsFileEntriesFrom = (text: string): SettingsFileEntries => settingsFileEntriesOf(settingsFileFrom(text));
 
 const isText = (value: unknown): value is string => typeof value === "string";
 

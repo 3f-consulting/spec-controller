@@ -26,7 +26,7 @@ export { featureAsWrittenFrom } from "./inputs/gherkin.js";
 export { InputDoesNotParse } from "./inputs/inputDoesNotParse.js";
 export { scriptsFrom, whereManifestBreaks } from "./inputs/manifest.js";
 export { repositoryOfOrigin } from "./inputs/origin.js";
-export { BALANCE_SETTINGS, settingsFileEntriesFrom, settingsMerged, settingsNamedOf } from "./inputs/settingsFile.js";
+export { BALANCE_SETTINGS, settingsFileEntriesFrom, settingsFileEntriesOf, settingsFileFrom, settingsMerged, settingsNamedOf, whereSettingsFileBreaks } from "./inputs/settingsFile.js";
 export { shellAnswers } from "./inputs/shell.js";
 export { stepRecordFrom, whereStepRecordBreaks } from "./inputs/stepRecord.js";
 export { resultsByFileFrom, whereResultsByFileBreak } from "./inputs/vitest.js";

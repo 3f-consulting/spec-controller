@@ -2,10 +2,12 @@ import {
   EVIDENCE_REPORT_FORMATS,
   featureAsWrittenFrom,
   InputDoesNotParse,
-  settingsFileEntriesFrom,
+  settingsFileEntriesOf,
+  settingsFileFrom,
   stepRecordFrom,
   textFor,
   whereManifestBreaks,
+  whereSettingsFileBreaks,
   whereStepRecordBreaks,
   whyXmlDoesNotParse,
   workflowStepsFrom,
@@ -122,6 +124,12 @@ function reportRead(file: FileText, format: EvidenceReportFormat): InputRead<Par
   return readInItsShape(file, file.text, format.whereItBreaks, (xml) => reportOf(format.resultsFrom(xml)));
 }
 
+// A settings file that parses as YAML, is a mapping of settings, and is read.
+function settingsFileRead(file: FileText): InputRead<Partial<InputsRead>> {
+  const read = parsed(file, settingsFileFrom);
+  return read.ok ? readInItsShape(file, read.contents, whereSettingsFileBreaks, (settings) => ({ settingsFile: settingsFileEntriesOf(settings) })) : read;
+}
+
 interface InputReader {
   // What its path must name: a file, unless it says a folder.
   readonly reads?: "file" | "folder";
@@ -143,7 +151,7 @@ const formatReaderOf = (format: EvidenceReportFormat): InputReader => ({
 });
 
 const READERS = {
-  settingsFile: { read: (files) => each(files, (file) => parsed(file, (text) => ({ settingsFile: settingsFileEntriesFrom(text) }))) },
+  settingsFile: { read: (files) => each(files, settingsFileRead) },
   features: {
     reads: "folder",
     endings: [".feature"],

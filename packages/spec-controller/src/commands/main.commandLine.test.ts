@@ -148,7 +148,7 @@ function folderWith(files: Readonly<Record<string, string>>): string {
 const VITEST_SHAPED = '{"testResults":[]}';
 
 // A fact as the complaint shows it, each {code} in it the catalogue's text for that code.
-const CATALOGUE_CODE = /\{([a-z-]+)\}/g;
+const CATALOGUE_CODE = /\{([a-zA-Z-]+)\}/g;
 const shown = (fact: string): string => fact.replace(CATALOGUE_CODE, (_code: string, code: string) => textFor(catalogue, code));
 
 const surefireSuite = (name: string, test: string): string =>
