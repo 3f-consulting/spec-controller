@@ -50,5 +50,7 @@ export function withSettingsFile(request: BalanceRequest, folder: string): Balan
   if ("refusals" in read) return read;
   const { settings, errors } = settingsMerged(pathsFromFolder(read.settingsFile ?? {}, resolve(folder, dirname(file.path))), request.given);
   const merged = balanceRequestOf(settings);
-  return "refusals" in merged ? merged : { ...merged, settingsFileErrors: errors };
+  if ("refusals" in merged) return merged;
+  const named = merged.inputs.some(({ kind }) => kind === "settingsFile");
+  return { ...merged, inputs: named || read.settingsFile === undefined ? merged.inputs : [...merged.inputs, file], settingsFileErrors: errors };
 }
