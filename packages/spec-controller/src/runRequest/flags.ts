@@ -1,4 +1,4 @@
-import { EVIDENCE_REPORT_FORMATS } from "@3f-consulting/spec-controller-core";
+import { BALANCE_SETTINGS, EVIDENCE_REPORT_FORMATS, type BalanceSettingName } from "@3f-consulting/spec-controller-core";
 
 // Every input a run can read, in the order the provenance names them.
 export const INPUT_KINDS = ["features", ...EVIDENCE_REPORT_FORMATS.map(({ kind }) => kind), "workflows", "stepRecord", "manifest"] as const;
@@ -21,23 +21,31 @@ const HELP: Flag = { name: "help", short: "h" };
 
 const FEATURES: Flag = { name: "features", value: "<dir>", input: "features", byDefault: "features" };
 
-// The layers a run names its runners for, each by a flag of its own.
-export const LAYER_FLAGS = ["unit", "integration", "e2e", "performance"] as const;
+const RUNNER: Omit<Flag, "name"> = { value: "<runner>[:<format>:<report>]" };
 
+// What the help says each of balance's settings takes, and the input it names.
+const BALANCE_FLAG_DETAILS: Readonly<Record<BalanceSettingName, Omit<Flag, "name" | "repeats">>> = {
+  features: FEATURES,
+  unit: RUNNER,
+  integration: RUNNER,
+  e2e: RUNNER,
+  performance: RUNNER,
+  "not-check": { value: "<workflow>:<job>:<step>" },
+  "deferral-tag": { value: "<tag>" },
+  ci: { value: "<workflow.yml|dir>", input: "workflows", byDefault: ".github/workflows" },
+  "ci-steps": { value: "<record.json>", input: "stepRecord" },
+  "package-json": { value: "<path>", input: "manifest", byDefault: "package.json" },
+  target: { value: "<name>" },
+  "source-sha": { value: "<sha>" },
+  format: { value: "<fmt>[:<path>]" },
+  strict: {},
+  "exit-zero": {},
+  "written-claims-only": {},
+};
+
+// A flag for each of balance's settings, in their order; a setting that takes a list repeats.
 const BALANCE_FLAGS: readonly Flag[] = [
-  FEATURES,
-  ...LAYER_FLAGS.map((name): Flag => ({ name, value: "<runner>[:<format>:<report>]", repeats: true })),
-  { name: "not-check", value: "<workflow>:<job>:<step>", repeats: true },
-  { name: "deferral-tag", value: "<tag>", repeats: true },
-  { name: "ci", value: "<workflow.yml|dir>", input: "workflows", byDefault: ".github/workflows" },
-  { name: "ci-steps", value: "<record.json>", input: "stepRecord", repeats: true },
-  { name: "package-json", value: "<path>", input: "manifest", byDefault: "package.json" },
-  { name: "target", value: "<name>" },
-  { name: "source-sha", value: "<sha>" },
-  { name: "format", value: "<fmt>[:<path>]", repeats: true },
-  { name: "strict" },
-  { name: "exit-zero" },
-  { name: "written-claims-only" },
+  ...BALANCE_SETTINGS.map(({ name, shape }): Flag => ({ ...BALANCE_FLAG_DETAILS[name], name, ...(shape === "list" && { repeats: true }) })),
   HELP,
 ];
 

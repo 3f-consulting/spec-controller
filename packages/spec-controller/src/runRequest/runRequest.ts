@@ -1,7 +1,7 @@
-import { isFeatureCode, type OutputRequest, type SettingsNamed } from "@3f-consulting/spec-controller-core";
+import { isFeatureCode, settingsNamedOf, type OutputRequest, type SettingsNamed } from "@3f-consulting/spec-controller-core";
 import { parseArgs } from "node:util";
 import type { Refusal } from "../runEnding/runEnding.js";
-import { COMMANDS, isCommand, isHelp, LAYER_FLAGS, type Command, type Flag, type InputKind } from "./flags.js";
+import { COMMANDS, isCommand, isHelp, type Command, type Flag, type InputKind } from "./flags.js";
 
 export { INPUT_KINDS } from "./flags.js";
 
@@ -127,11 +127,7 @@ const inputsOf = ({ values }: FlagsRead): InputRequest[] =>
   });
 
 // The configuration settings the command line names, each in the order given.
-const settingsOf = ({ values }: FlagsRead): SettingsNamed => ({
-  runners: Object.fromEntries(LAYER_FLAGS.map((layer) => [layer, values.get(layer) ?? []])),
-  nonChecks: values.get("not-check") ?? [],
-  deferralTags: values.get("deferral-tag") ?? [],
-});
+const settingsOf = ({ values }: FlagsRead): SettingsNamed => settingsNamedOf({ values: Object.fromEntries(values), on: [] });
 
 function balanceRequested(read: FlagsRead): RunRequest | UsageError {
   const outputs = outputsOf(read.values.get("format") ?? []);

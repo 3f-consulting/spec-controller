@@ -165,11 +165,12 @@ export default {
       name: "yaml-parsed-by-its-one-home",
       severity: "error",
       comment:
-        "only core's workflow module, which reads another tool's workflows, imports the YAML parser",
+        "only core's workflow module, which reads another tool's workflows, and its settings file reader import the YAML parser",
       from: {
         path: "^packages/[^/]+/src/",
         pathNot: [
           "^packages/core/src/inputs/workflows\\.ts$",
+          "^packages/core/src/inputs/settingsFile\\.ts$",
           "\\.(test|test-utils)\\.ts$",
         ],
       },
