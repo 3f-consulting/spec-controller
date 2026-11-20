@@ -28,15 +28,13 @@ export type ReportsNamed = (
 // The shell reader's answer of where a runner writes its evidence reports when told nowhere, for a step's command that runs it.
 export type DefaultReportsOf = (commandLine: string, runner: string, scripts: Readonly<Record<string, string>>) => readonly ReportLocation[];
 
-// A layer's runner: the program it runs, with the evidence report the run names for it. A runner balance found in the
-// workflows, rather than one the run named, is marked found.
+// A layer's runner: the program it runs, the evidence report the run names for it, and whether balance found it in the workflows.
 export interface Runner {
   readonly name: string;
   readonly report?: ReportLocation;
   readonly found?: true;
 }
 
-// A runner balance knows, at the layer it usually runs.
 export interface KnownRunner {
   readonly name: string;
   readonly layer: Layer;

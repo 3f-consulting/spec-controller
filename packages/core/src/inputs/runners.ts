@@ -66,5 +66,4 @@ export const reportsIn = (runner: string, args: readonly string[], environment: 
 export const defaultLocationsOf = (runner: string): ReportLocation[] =>
   runnersVariants["default-locations"].variants.filter((location) => location.runner === runner).map(({ path, format }) => ({ path, format }));
 
-// Each runner balance knows, at the layer it usually runs.
 export const knownRunners: readonly KnownRunner[] = runnersVariants["usual-layers"].variants.map(({ runner, layer }) => ({ name: runner, layer: layer as Layer }));
