@@ -150,6 +150,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then it will read no manifest
       and the run will not stop
 
+    @unit @CLM-CLI-217
+    Scenario: a settings file read by default that does not exist will count as no settings file, not as a missing input
+      given the run named no settings file, and the file spec-controller.yml did not exist at the root of the repository
+      when balance reads its inputs
+      then it will read no settings file
+      and the run will not stop
+
     @unit @CLM-CLI-198
     Scenario: an input read by default that the tool is not permitted to read will stop the run, not count as none
       given the run named no CI workflows, and the tool was not permitted to read the folder .github/workflows
@@ -170,6 +177,31 @@ Feature: the command line reads what you give it, and says where each kind of ou
       given the feature corpus had b.feature and a/x.feature
       when balance reads its inputs
       then it will read a/x.feature before b.feature
+
+    @unit @CLM-CLI-218
+    Scenario: balance reads a path the settings file names from the settings file's folder
+      given the run named ci/spec-controller.yml as its settings file, and that file had features: specs
+      when balance reads its inputs
+      then it will read its feature files from ci/specs
+
+    @unit
+    Scenario Outline: balance finds the default settings file at the root of the repository it runs in, or else in the folder it runs in
+      given balance ran in <where>
+      and <file> had target: acme
+      when balance reads its settings
+      then the run's target name will be acme
+
+      Examples:
+        | clm         | where                                                      | file                           |
+        | CLM-CLI-219 | /work/acme/packages/app, in a git repository at /work/acme | /work/acme/spec-controller.yml |
+        | CLM-CLI-220 | /tmp/acme, in no git repository                            | /tmp/acme/spec-controller.yml  |
+
+    @unit @CLM-CLI-221
+    Scenario: balance reads only the settings file the run names
+      given the run named ci/spec-controller.yml as its settings file, and that file had target: named
+      and spec-controller.yml at the root of the repository had target: root
+      when balance reads its settings
+      then the run's target name will be named
 
     @unit
     Scenario Outline: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
@@ -237,8 +269,9 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
   Rule: a command validates every input before it does its work
 
-    The inputs a command validates are each evidence report, each step record, the feature corpus,
-    the CI workflows and the manifest. An input that is well formed but empty is valid.
+    The inputs a command validates are the settings file, each evidence report, each step record,
+    the feature corpus, the CI workflows and the manifest. An input that is well formed but empty is
+    valid.
 
     @unit @CLM-CLI-146
     Scenario: an empty evidence report will count as no evidence, not as a broken file
@@ -276,6 +309,8 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-154 | a pytest evidence report that is not in the shape pytest writes     | a pytest evidence report, and what is wrong    |
         | CLM-CLI-155 | a JUnit evidence report that is not in the shape JUnit writes       | a JUnit evidence report, and what is wrong     |
         | CLM-CLI-156 | a file in a JUnit directory that is not in the shape JUnit writes   | a file in a JUnit directory, and what is wrong |
+        | CLM-CLI-222 | a settings file that does not parse as YAML                         | a settings file, and where it fails to parse   |
+        | CLM-CLI-223 | a settings file that is a list, not a mapping of settings           | a settings file, and what it holds             |
         | CLM-CLI-157 | an RSpec evidence report that is not in the shape RSpec writes      | an RSpec evidence report, and what is wrong    |
         | CLM-CLI-158 | a step record that is not in the shape of a record of step outcomes | a CI step record, and what is wrong            |
         | CLM-CLI-159 | a manifest that is not in a manifest's shape                        | a manifest, and what is wrong                  |

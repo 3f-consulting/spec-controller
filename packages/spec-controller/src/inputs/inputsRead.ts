@@ -2,9 +2,12 @@ import {
   EVIDENCE_REPORT_FORMATS,
   featureAsWrittenFrom,
   InputDoesNotParse,
+  settingsFileEntriesOf,
+  settingsFileFrom,
   stepRecordFrom,
   textFor,
   whereManifestBreaks,
+  whereSettingsFileBreaks,
   whereStepRecordBreaks,
   whyXmlDoesNotParse,
   workflowStepsFrom,
@@ -14,6 +17,7 @@ import {
   type TestResult,
   type RecordedStep,
   type CiStep,
+  type SettingsFileEntries,
 } from "@3f-consulting/spec-controller-core";
 import { readdirSync, readFileSync, statSync, type Stats } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
@@ -32,6 +36,7 @@ interface ReportRead {
 
 // Every input the run read, each as its reader reports it; an input not read is absent.
 export interface InputsRead {
+  readonly settingsFile?: SettingsFileEntries;
   readonly features: readonly FeatureFile[];
   readonly workflowSteps?: readonly CiStep[];
   // Every evidence report read, of every format, in the order read.
@@ -119,6 +124,12 @@ function reportRead(file: FileText, format: EvidenceReportFormat): InputRead<Par
   return readInItsShape(file, file.text, format.whereItBreaks, (xml) => reportOf(format.resultsFrom(xml)));
 }
 
+// A settings file that parses as YAML, is a mapping of settings, and is read.
+function settingsFileRead(file: FileText): InputRead<Partial<InputsRead>> {
+  const read = parsed(file, settingsFileFrom);
+  return read.ok ? readInItsShape(file, read.contents, whereSettingsFileBreaks, (settings) => ({ settingsFile: settingsFileEntriesOf(settings) })) : read;
+}
+
 interface InputReader {
   // What its path must name: a file, unless it says a folder.
   readonly reads?: "file" | "folder";
@@ -140,6 +151,7 @@ const formatReaderOf = (format: EvidenceReportFormat): InputReader => ({
 });
 
 const READERS = {
+  settingsFile: { read: (files) => each(files, settingsFileRead) },
   features: {
     reads: "folder",
     endings: [".feature"],

@@ -1,10 +1,35 @@
 @CFG
 Feature: balance reads and validates the configuration settings the run names
 
-  A run names three kinds of configuration setting on its command line: the runners of each
-  layer, the non-checks and the deferral tags. balance reads and validates each one. It leaves
-  out a configuration setting that is not valid, names it among the configuration errors, and
-  still uses the others. A configuration setting that is not valid never stops the run.
+  A run names three kinds of configuration setting, on its command line or in its settings file:
+  the runners of each layer, the non-checks and the deferral tags. The settings file names each
+  of balance's settings by the name its command line uses. balance reads and validates each one.
+  It leaves out a configuration setting that is not valid, names it among the configuration
+  errors, and still uses the others. A setting balance cannot use never stops the run. An input
+  it cannot read stops it, whether the command line or the settings file names it.
+
+  Rule: balance takes the settings its settings file gives, by the names its command line uses
+
+    @unit
+    Scenario Outline: balance takes each entry of the settings file as the command-line setting of the same name
+      given the settings file had <entry>
+      when balance reads it
+      then balance will take it as <what it sets>
+
+      Examples:
+        | clm         | entry                     | what it sets                                         |
+        | CLM-CFG-031 | unit: [vitest]            | vitest as the unit layer's runner                    |
+        | CLM-CFG-032 | written-claims-only: true | a run verdict that counts only the executable claims |
+
+  Rule: a setting the command line gives replaces the settings file's setting of the same name
+
+    @unit @CLM-CFG-033
+    Scenario: a runner the command line names replaces the settings file's runners for that layer alone
+      given the settings file had unit: [vitest] and e2e: [playwright:junit:out/e2e.xml]
+      and the run named pytest as the unit runner
+      when balance reads its settings
+      then pytest alone will be the unit layer's runner
+      and playwright will be the e2e layer's runner
 
   Rule: balance takes each configuration setting it can use
 
@@ -42,6 +67,18 @@ Feature: balance reads and validates the configuration settings the run names
         | CLM-CFG-015 | --not-check ci.yml:ci:No such step, with ci.yml read                                                                                       | not-checks-entry-matches-no-step | ci.yml:ci:No such step           |
         | CLM-CFG-022 | --not-check ci.yml:lint:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies and whose job lint had none | not-checks-entry-matches-no-step | ci.yml:lint:Install dependencies |
         | CLM-CFG-016 | --not-check Install dependencies                                                                                                           | not-checks-entry-not-a-step-name | Install dependencies             |
+
+    @unit
+    Scenario Outline: balance leaves out an entry of the settings file it cannot use, naming the error
+      given the settings file had <entry>
+      when balance reads it
+      then the run will not use it
+      and balance will find the error <error>, naming <named>
+
+      Examples:
+        | clm         | entry           | error                     | named |
+        | CLM-CFG-034 | unitt: [vitest] | configuration-unknown-key | unitt |
+        | CLM-CFG-035 | unit: vitest    | configuration-wrong-kind  | unit  |
 
     @unit
     Scenario Outline: balance reads no evidence report for a runner whose report it cannot find, naming the error

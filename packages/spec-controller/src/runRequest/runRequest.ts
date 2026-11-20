@@ -1,7 +1,7 @@
-import { isFeatureCode, type OutputRequest, type SettingsNamed } from "@3f-consulting/spec-controller-core";
+import { isFeatureCode, settingsNamedOf, type OutputRequest, type SettingsGiven, type SettingsMerged, type SettingsNamed } from "@3f-consulting/spec-controller-core";
 import { parseArgs } from "node:util";
 import type { Refusal } from "../runEnding/runEnding.js";
-import { COMMANDS, isCommand, isHelp, LAYER_FLAGS, type Command, type Flag, type InputKind } from "./flags.js";
+import { COMMANDS, isCommand, isHelp, type Command, type Flag, type InputKind } from "./flags.js";
 
 export { INPUT_KINDS } from "./flags.js";
 
@@ -18,6 +18,8 @@ export type RunRequest =
   | { readonly command: "help"; readonly about?: Command }
   | {
       readonly command: "balance";
+      // The settings as the command line gives them, by the names it uses.
+      readonly given: SettingsGiven;
       readonly inputs: readonly InputRequest[];
       readonly settings: SettingsNamed;
       readonly target?: string;
@@ -26,8 +28,12 @@ export type RunRequest =
       readonly strict: boolean;
       readonly exitZero: boolean;
       readonly countOnlyExecutableClaims: boolean;
+      // Each entry of the settings file left out, named by the error that left it out.
+      readonly settingsFileErrors?: SettingsMerged["errors"];
     }
   | { readonly command: "allocate"; readonly featureCode: string; readonly asNewFeatureCode: boolean; readonly features?: string };
+
+export type BalanceRequest = Extract<RunRequest, { command: "balance" }>;
 
 // about: the command whose help follows the complaint; with none, the commands.
 export interface UsageError {
@@ -118,36 +124,34 @@ function outputsOf(formats: readonly string[]): OutputRequest<ReportFormat>[] | 
 }
 
 // Each input in the order balance's flags list them, one for each value its flag was given in the order given, or at its default path.
-const inputsOf = ({ values }: FlagsRead): InputRequest[] =>
+const inputsOf = ({ values }: SettingsGiven): InputRequest[] =>
   COMMANDS.balance.flatMap(({ name, input, byDefault }): InputRequest[] => {
     if (input === undefined) return [];
-    const named = values.get(name) ?? [];
+    const named: readonly string[] = (values as Readonly<Record<string, readonly string[]>>)[name] ?? [];
     if (named.length > 0) return named.map((path) => ({ kind: input, path, byDefault: false }));
     return byDefault === undefined ? [] : [{ kind: input, path: byDefault, byDefault: true }];
   });
 
-// The configuration settings the command line names, each in the order given.
-const settingsOf = ({ values }: FlagsRead): SettingsNamed => ({
-  runners: Object.fromEntries(LAYER_FLAGS.map((layer) => [layer, values.get(layer) ?? []])),
-  nonChecks: values.get("not-check") ?? [],
-  deferralTags: values.get("deferral-tag") ?? [],
-});
-
-function balanceRequested(read: FlagsRead): RunRequest | UsageError {
-  const outputs = outputsOf(read.values.get("format") ?? []);
+// balance's run as the settings given ask for it.
+export function balanceRequestOf(given: SettingsGiven): BalanceRequest | UsageError {
+  const { values, on } = given;
+  const outputs = outputsOf(values.format ?? []);
   if ("refusals" in outputs) return outputs;
   return {
     command: "balance",
-    inputs: inputsOf(read),
-    settings: settingsOf(read),
-    target: read.values.get("target")?.[0],
-    sourceSha: read.values.get("source-sha")?.[0],
+    given,
+    inputs: inputsOf(given),
+    settings: settingsNamedOf(given),
+    target: values.target?.[0],
+    sourceSha: values["source-sha"]?.[0],
     outputs,
-    strict: read.on.has("strict"),
-    exitZero: read.on.has("exit-zero"),
-    countOnlyExecutableClaims: read.on.has("written-claims-only"),
+    strict: on.includes("strict"),
+    exitZero: on.includes("exit-zero"),
+    countOnlyExecutableClaims: on.includes("written-claims-only"),
   };
 }
+
+const balanceRequested = ({ values, on }: FlagsRead): RunRequest | UsageError => balanceRequestOf({ values: Object.fromEntries(values), on: [...on] });
 
 function allocateRequested({ values, on, positionals }: FlagsRead): RunRequest | UsageError {
   const [featureCode] = positionals;

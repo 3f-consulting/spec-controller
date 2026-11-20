@@ -271,6 +271,8 @@ export interface ReadersGave {
   readonly stepRecord: readonly RecordedStep[];
   // The configuration settings as parsed, before they are checked against the steps and the reports.
   readonly settings: ConfigurationSettings;
+  // Each entry of the settings file left out, named by the error that left it out.
+  readonly settingsFileErrors?: readonly ConfigurationError[];
   // Every report path a runner's long form names at which no file was.
   readonly reportsNotFound?: readonly string[];
   readonly scripts: Scripts;
@@ -296,7 +298,8 @@ function creditJournalOf({ reports, features, stepRecord, targetFolder }: Reader
 // What the readers gave, reconciled in one call: the configuration checked, the steps disposed, the claims and the evidence
 // posted and reconciled, and the whole assembled.
 export function reconcile(given: ReadersGave): EvidenceReconciliation {
-  const { features, steps, stepRecord, settings, reportsNotFound, scripts, shell, repositoryOf, identity, provenanceInputs, targetFolder, strict, countOnlyExecutableClaims } = given;
+  const { features, steps, stepRecord, settings, settingsFileErrors = [], reportsNotFound, scripts, shell, repositoryOf, identity, provenanceInputs, targetFolder, strict, countOnlyExecutableClaims } =
+    given;
   const { configuration, errors } = targetConfigurationOf(settings, steps, reportsNotFound);
   // Each step with what it is: posting and the step account both take it, and posting the same record.
   const disposedSteps = disposedStepsOf(steps, configuration, scripts, shell, stepRecord);
@@ -305,7 +308,7 @@ export function reconcile(given: ReadersGave): EvidenceReconciliation {
   return evidenceReconciliationOf({
     claimReconciliations: claimReconciliationsOf(debitJournal, creditJournalOf(given, disposedSteps)),
     claimCodeErrors: claimCodeErrorsOf(features),
-    configurationErrors: errors,
+    configurationErrors: [...settingsFileErrors, ...errors],
     features,
     claimReading,
     countOnlyExecutableClaims,

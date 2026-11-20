@@ -55,6 +55,7 @@ describe("an input read by default that does not exist will count as none, not a
     ["CLM-CLI-183", "a workflows folder", "workflows", ".github/workflows", (inputs: InputsRead) => inputs.workflowSteps],
     ["CLM-CLI-190", "a feature corpus", "features", "features", (inputs: InputsRead) => inputs.features],
     ["CLM-CLI-192", "a manifest", "manifest", "package.json", (inputs: InputsRead) => inputs.manifest],
+    ["CLM-CLI-217", "a settings file", "settingsFile", "spec-controller.yml", (inputs: InputsRead) => inputs.settingsFile],
   ] as const)("[%s] %s read by default that does not exist: none is read, and the run does not stop", (_clm, _input, kind, path, readOf) => {
     const inputs = inputsReadFor([{ kind, path, byDefault: true }], temporaryDirectory("absent-default-"));
 

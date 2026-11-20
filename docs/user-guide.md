@@ -595,6 +595,29 @@ npx spec-controller balance \
 
 Each runner here is named alone, so `balance` finds the report it writes from the CI step that runs it (see [Naming your runners](#naming-your-runners)).
 
+### Keep your settings in `spec-controller.yml`
+
+The same settings can live in a file in your repository, so the CI step stays short. `balance` reads `spec-controller.yml` at the top of the git repository it runs in, or in the folder it runs in outside git, or the file `--config` names. Its keys are the settings' long flag names, without the dashes:
+
+```yaml
+features: features
+unit: [vitest]
+integration: [cucumber-js]
+e2e: [cucumber-js]
+not-check:
+  - "ci.yml:build:Install dependencies"
+  - "ci.yml:build:Publish the package"
+deferral-tag: [deferred]
+written-claims-only: true
+```
+
+- **Every flag but `--help` and `--config` is a key.** A flag that repeats takes a list, a flag with a value takes one value, and a flag with no value takes `true`.
+- **The command line wins.** A setting given on the command line replaces the file's setting of the same name, and the file's other settings stand. A setting with no value is turned off by removing it from the file.
+- **Paths are read from the file's folder:** `features`, `ci`, `ci-steps`, `package-json`, a long form's report, and `format`'s path. An input the file names that does not exist stops the run, as a named input does.
+- **An entry `balance` cannot use is named and left out,** and the run goes on: a key that names no setting reads `configuration-unknown-key`, and a value of the wrong kind reads `configuration-wrong-kind`. A value the command line would refuse, such as a `format` `balance` does not write, stops the run as it would there (see [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped)).
+- **A file that does not parse as YAML, or is not a mapping of settings, stops the run** at exit `2`, naming the file. An empty file sets nothing. A default file that does not exist is no settings file.
+- The provenance lists the settings file among the inputs the run read.
+
 `package.json` is read only for its `scripts`, which runner recognition and report finding follow. `--package-json` points at it, and defaults to `package.json` in the working directory. A `specController` block in it is not read.
 
 ### How discovery works
@@ -684,13 +707,14 @@ A run names each configuration setting it cannot use, with one of these codes:
 
 | Code | The setting |
 | --- | --- |
-| `configuration-wrong-kind` | a setting in a form its flag does not take (an empty runner, non-check or deferral tag, or a runner with a colon that is not a long form naming a runner, a format `balance` reads and a report) is left out |
+| `configuration-wrong-kind` | a setting in a form its flag does not take (an empty runner, non-check or deferral tag, or a runner with a colon that is not a long form naming a runner, a format `balance` reads and a report) is left out, as is an entry of the settings file whose value its setting does not take |
+| `configuration-unknown-key` | a key of the settings file that names none of `balance`'s settings is left out; `help` and `config` are not settings |
 | `runner-report-not-named` | a runner named alone whose report no step names, and that has no default location, is kept, so its step is still a runner, but no result of it is read |
 | `runner-report-not-read` | a report, named in a long form or by a step, or a default location, that has no file at its path keeps its runner, and no result of that report is read |
 | `not-checks-entry-matches-no-step` | a `--not-check` that matches no step of a workflow the run read makes no step a non-check |
 | `not-checks-entry-not-a-step-name` | a `--not-check` that does not name a step as `<workflow file>:<job id>:<step name>` makes no step a non-check |
 
-None of these codes refuses the run. Each is a line in `## Errors in the inputs`, right after the run provenance, giving its code, then the setting as written: the runner for `runner-report-not-named`, and the report's path for `runner-report-not-read`. The rest of the report is the one you would get without that entry. The JSON lists them under `errorsInTheInputs.configurationErrors`.
+None of these codes refuses the run. Each is a line in `## Errors in the inputs`, right after the run provenance, giving its code, then the setting as written: the runner for `runner-report-not-named`, the report's path for `runner-report-not-read`, and the key for an entry of the settings file. The rest of the report is the one you would get without that entry. The JSON lists them under `errorsInTheInputs.configurationErrors`.
 
 ### Limits
 
@@ -793,7 +817,7 @@ spec-controller balance --features ./features \
   --format json:reconciliation.json
 ```
 
-Drop `--ci-steps` if you have converted nothing. `balance` reads each runner's report at the path its test step names. When a test step runs in another job, download its report to that path before `balance` runs.
+Drop `--ci-steps` if you have converted nothing. Settings that stay the same from run to run can move into `spec-controller.yml` (see [Keep your settings in `spec-controller.yml`](#keep-your-settings-in-spec-controlleryml)), and the step names only what changes. `balance` reads each runner's report at the path its test step names. When a test step runs in another job, download its report to that path before `balance` runs.
 
 **Keep the reports as build artefacts, but do not commit them to the repository.** An Evidence Reconciliation lists a codebase's gaps, phantom claims and passes that cannot fail. That makes it more sensitive than the code itself, so it belongs outside version control.
 
@@ -1049,6 +1073,7 @@ Help answers only when nothing else on the command line is refused. A usage erro
 | `--strict` | Read every claim as if nothing were put off: a deferral tag is ignored, and `@<quality-check-kind>pending` is read as `@<quality-check-kind>`. See [Deferring a scenario](#deferring-a-scenario). |
 | `--exit-zero` | Print the same report, but exit `0` on an out-of-balance (`1`) verdict. Usage (`2`), not reconciled (`3`) and an unexpected error before the verdict (`4`) still fail. Use it as the on-ramp before gating. |
 | `--written-claims-only` | Count only the executable claims in the run verdict. Tests that cite no claim code, or a code no scenario has, are still listed and do not turn the run red. The provenance says so. See [Gate on the scenarios you have written](#gate-on-the-scenarios-you-have-written--use---written-claims-only). |
+| `--config <file>` | The settings file to read, in place of `spec-controller.yml` at the top of the repository. Only the file it names is read. See [Keep your settings in `spec-controller.yml`](#keep-your-settings-in-spec-controlleryml). |
 | `--help`, `-h` | Show `balance`'s help and exit. |
 
 ### `--format` — routing the output

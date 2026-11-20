@@ -7,6 +7,7 @@
   "provenance-run-time": "Run started",
   "provenance-counted-only-executable-claims": "The run verdict counted only the executable claims",
   "provenance-inputs": "Inputs read",
+  "provenance-input-settingsFile": "Settings file",
   "provenance-input-features": "Feature files",
   "provenance-input-vitest": "Vitest report",
   "provenance-input-jest": "Jest report",

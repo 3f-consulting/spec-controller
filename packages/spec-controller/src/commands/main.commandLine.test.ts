@@ -40,6 +40,7 @@ const BALANCE_FLAGS = [
   "--strict",
   "--exit-zero",
   "--written-claims-only",
+  "--config <file>",
   "-h, --help",
 ];
 
@@ -147,7 +148,7 @@ function folderWith(files: Readonly<Record<string, string>>): string {
 const VITEST_SHAPED = '{"testResults":[]}';
 
 // A fact as the complaint shows it, each {code} in it the catalogue's text for that code.
-const CATALOGUE_CODE = /\{([a-z-]+)\}/g;
+const CATALOGUE_CODE = /\{([a-zA-Z-]+)\}/g;
 const shown = (fact: string): string => fact.replace(CATALOGUE_CODE, (_code: string, code: string) => textFor(catalogue, code));
 
 const surefireSuite = (name: string, test: string): string =>
@@ -473,6 +474,20 @@ describe("an input that is not valid will stop the run", () => {
       ["steps.json", "step outcomes", "$.test", "[input-not-in-its-shape]"],
     ],
     ["CLM-CLI-159", "a manifest not in a manifest's shape", { "package.json": "[]" }, ["--package-json", "package.json"], ["package.json", "manifest", "[input-not-in-its-shape]"]],
+    [
+      "CLM-CLI-222",
+      "a settings file that does not parse as YAML",
+      { "settings.yml": "unit: [vitest\n" },
+      ["--config", "settings.yml"],
+      ["{input-settingsFile} settings.yml does not parse", "at line 2, column 1", "[input-does-not-parse]"],
+    ],
+    [
+      "CLM-CLI-223",
+      "a settings file that is a list, not a mapping of settings",
+      { "settings.yml": "- unit: [vitest]\n" },
+      ["--config", "settings.yml"],
+      ["{input-settingsFile} settings.yml is not in {shape-settingsFile}", "[input-not-in-its-shape]"],
+    ],
   ] as const)("[%s] %s: the run stops, no verdict, exit 2, and a complaint with its facts", (_clm, _given, files, args, facts) => {
     const { exitCode, output, error } = ran(["balance", ...args], folderWith(files));
 
@@ -482,6 +497,12 @@ describe("an input that is not valid will stop the run", () => {
       complaints: 1,
       facts: [],
     });
+  });
+
+  it("[CLM-CLI-223] an empty settings file is not refused as not a mapping of settings: it sets nothing, and the run does not stop", () => {
+    const { exitCode, error } = ran(["balance", "--config", "settings.yml"], folderWith({ "settings.yml": "" }));
+
+    expect({ stopped: exitCode === 2, refused: error.includes("[input-not-in-its-shape]") }).toEqual({ stopped: false, refused: false });
   });
 
   it("[CLM-CLI-161] a named input that the tool is not permitted to read: the run stops, no verdict, exit 2, and a complaint with its facts", () => {

@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { repositoryForTest } from "../repository/repository.test-utils.js";
@@ -89,6 +89,78 @@ describe("the target's folder will be the git repository the corpus is in, or el
     writeFileSync(join(folder, "reports", "vitest.json"), '{"testResults":[]}');
 
     expect(inputPath(provenanceIn(folder, "--unit", `vitest:vitest:${join(folder, "reports", "vitest.json")}`), "vitest")).toBe("reports/vitest.json");
+  });
+});
+
+describe("balance reads every input the command line names or leaves to its default", () => {
+  it.each([
+    ["features: specs", "ci/specs", "features", { "ci/specs/one.feature": "@ONE\nFeature: one\n" }],
+    ["ci: workflows", "ci/workflows", "workflows", { "ci/workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: echo\n" }],
+    ["ci-steps: [steps.json]", "ci/steps.json", "stepRecord", { "ci/steps.json": "{}" }],
+    ["package-json: package.json", "ci/package.json", "manifest", { "ci/package.json": "{}" }],
+    ["unit: [vitest:vitest:out/vitest.json]", "ci/out/vitest.json", "vitest", { "ci/out/vitest.json": '{"testResults":[]}' }],
+  ])("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had %s: balance reads it from %s", (entry, expected, input, files) => {
+    const repository = repositoryForTest();
+    repository.write("ci/spec-controller.yml", `${entry}\n`);
+    Object.entries(files).forEach(([path, text]) => repository.write(path, text));
+    repository.commit("one");
+
+    expect(inputPath(provenanceIn(repository.top, "--config", "ci/spec-controller.yml"), input)).toBe(expected);
+  });
+
+  it("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had unit: [vitest:vitest:out/missing.json], with no file there: the error names ci/out/missing.json", () => {
+    const repository = repositoryForTest();
+    repository.write("ci/spec-controller.yml", "unit: [vitest:vitest:out/missing.json]\n");
+    repository.commit("one");
+    let report = "";
+    main(["balance", "--format", "json", "--config", "ci/spec-controller.yml"], repository.top, { output: { fd: 1, write: (text) => (report += text) }, error: { fd: 2, write: () => {} } });
+
+    const { configurationErrors } = (JSON.parse(report) as { errorsInTheInputs: { configurationErrors: readonly { kind: string; entry: string }[] } }).errorsInTheInputs;
+
+    expect(configurationErrors.filter(({ kind }) => kind === "runner-report-not-read")).toEqual([{ kind: "runner-report-not-read", entry: "ci/out/missing.json" }]);
+  });
+
+  it("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had format: [json:out/report.json]: balance writes its report to ci/out/report.json", () => {
+    const repository = repositoryForTest();
+    repository.write("ci/spec-controller.yml", "format: [json:out/report.json]\n");
+    repository.write("ci/out/.keep", "");
+    repository.commit("one");
+
+    main(["balance", "--config", "ci/spec-controller.yml", "--target", "acme/web"], repository.top, { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } });
+
+    const written = join(repository.top, "ci", "out", "report.json");
+
+    expect(existsSync(written) && (JSON.parse(readFileSync(written, "utf8")) as ReportRead).provenance.target).toBe("acme/web");
+  });
+
+  // The target the run names, with spec-controller.yml at the top giving target: acme and nothing on the command line.
+  // The run's target name, and the settings file its provenance names among the inputs it read.
+  const targetWithSettingsAt = (top: string, ranIn: string): { readonly target: string; readonly settingsFile?: string } => {
+    writeFileSync(join(top, "spec-controller.yml"), "target: acme\n");
+    const { target, inputs } = provenanceIn(ranIn);
+    return { target, settingsFile: inputs.find(({ name }) => name === "settingsFile")?.path };
+  };
+
+  it("[CLM-CLI-219] balance ran in packages/app, in a git repository whose top's spec-controller.yml had target: acme: the run's target name is acme, from the settings file it read there", () => {
+    const repository = repositoryForTest();
+    mkdirSync(join(repository.top, "packages", "app"), { recursive: true });
+
+    expect(targetWithSettingsAt(repository.top, join(repository.top, "packages", "app"))).toEqual({ target: "acme", settingsFile: "spec-controller.yml" });
+  });
+
+  it("[CLM-CLI-220] balance ran in a folder in no git repository whose spec-controller.yml had target: acme: the run's target name is acme, from the settings file it read there", () => {
+    const folder = temporaryDirectory("no-git-");
+
+    expect(targetWithSettingsAt(folder, folder)).toEqual({ target: "acme", settingsFile: "spec-controller.yml" });
+  });
+
+  it("[CLM-CLI-221] the run named ci/spec-controller.yml as its settings file, and that file had target: named, and spec-controller.yml at the root of the repository had target: root: the run's target name is named", () => {
+    const repository = repositoryForTest();
+    repository.write("ci/spec-controller.yml", "target: named\n");
+    repository.write("spec-controller.yml", "target: root\n");
+    repository.commit("one");
+
+    expect(provenanceIn(repository.top, "--config", "ci/spec-controller.yml").target).toBe("named");
   });
 });
 
