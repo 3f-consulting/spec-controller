@@ -1,5 +1,5 @@
 import { settingsMerged, type SettingsFileEntries } from "@3f-consulting/spec-controller-core";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { inputsReadFor } from "../inputs/inputsRead.js";
 import { gitIn } from "../repository/git.js";
 import type { Refusal } from "../runEnding/runEnding.js";
@@ -21,14 +21,18 @@ const PATH_IN = new Map<string, RegExp>([
   ["format", /^([^:]*:)(.+)$/s],
 ]);
 
-// Each path the settings file names, read from the file's folder; a value of a shape no setting takes is left as written.
-function pathsFromFolder(entries: SettingsFileEntries, folder: string): SettingsFileEntries {
-  const joined = (path: RegExp) => (value: unknown) => (typeof value === "string" ? value.replace(path, (_all, before: string, after: string) => `${before}${resolve(folder, after)}`) : value);
+// Each path the settings file names, read from its folder: an input's written from the folder balance runs in, a report's
+// file in full. A value of a shape no setting takes is left as written.
+function pathsFromFolder(entries: SettingsFileEntries, folder: string, ranIn: string): SettingsFileEntries {
+  const joined = (path: RegExp, written: (full: string) => string) => (value: unknown) =>
+    typeof value === "string" ? value.replace(path, (_all, before: string, after: string) => `${before}${written(resolve(folder, after))}`) : value;
+  const fromRunFolder = (full: string): string => relative(ranIn, full) || ".";
   return Object.fromEntries(
     Object.entries(entries).map(([key, value]) => {
       const path = PATH_IN.get(key);
       if (path === undefined) return [key, value];
-      return [key, Array.isArray(value) ? value.map(joined(path)) : joined(path)(value)];
+      const each = joined(path, key === "format" ? (full) => full : fromRunFolder);
+      return [key, Array.isArray(value) ? value.map(each) : each(value)];
     }),
   );
 }
@@ -48,7 +52,7 @@ export function withSettingsFile(request: BalanceRequest, folder: string): Balan
   const file = settingsFileOf(request, folder);
   const read = inputsReadFor([file], folder);
   if ("refusals" in read) return read;
-  const { settings, errors } = settingsMerged(pathsFromFolder(read.settingsFile ?? {}, resolve(folder, dirname(file.path))), request.given);
+  const { settings, errors } = settingsMerged(pathsFromFolder(read.settingsFile ?? {}, resolve(folder, dirname(file.path)), folder), request.given);
   const merged = balanceRequestOf(settings);
   if ("refusals" in merged) return merged;
   const named = merged.inputs.some(({ kind }) => kind === "settingsFile");

@@ -614,7 +614,7 @@ written-claims-only: true
 - **Every flag but `--help` and `--config` is a key.** A flag that repeats takes a list, a flag with a value takes one value, and a flag with no value takes `true`.
 - **The command line wins.** A setting given on the command line replaces the file's setting of the same name, and the file's other settings stand. A setting with no value is turned off by removing it from the file.
 - **Paths are read from the file's folder:** `features`, `ci`, `ci-steps`, `package-json`, a long form's report, and `format`'s path. An input the file names that does not exist stops the run, as a named input does.
-- **An entry `balance` cannot use is named and left out,** and the run goes on: a key that names no setting reads `configuration-unknown-key`, and a value of the wrong kind reads `configuration-wrong-kind` (see [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped)).
+- **An entry `balance` cannot use is named and left out,** and the run goes on: a key that names no setting reads `configuration-unknown-key`, and a value of the wrong kind reads `configuration-wrong-kind`. A value the command line would refuse, such as a `format` `balance` does not write, stops the run as it would there (see [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped)).
 - **A file that does not parse as YAML, or is not a mapping of settings, stops the run** at exit `2`, naming the file. An empty file sets nothing. A default file that does not exist is no settings file.
 - The provenance lists the settings file among the inputs the run read.
 
