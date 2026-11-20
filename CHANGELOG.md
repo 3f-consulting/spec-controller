@@ -36,3 +36,4 @@ Each line says what a change means for someone using spec-controller.
 - **The readers are tested against real output.** The Vitest, Cucumber and JUnit readers are tested against reports copied from those tools' own repositories. CI type-checks every TypeScript example in the READMEs.
 
 - What balance does is unchanged: the comment on spec-controller's own duplicate-code CI step states its rule and names no source file, so it cannot name one the tree does not have.
+- What balance does is unchanged: spec-controller's own CI refuses a comment in a code, workflow or configuration file that names a TypeScript or JavaScript file, since such a comment goes stale when the file moves.
