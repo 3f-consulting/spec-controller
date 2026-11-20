@@ -4,6 +4,7 @@ Each line says what a change means for someone using spec-controller. A line tha
 
 **Not yet released:**
 
+- **Breaking: a run with a configuration error is not reconciled, and exits 3**, even under `--exit-zero`. A setting balance cannot use, such as a misspelt key in `spec-controller.yml`, a runner whose report it cannot find, or a non-check naming no step, now turns the run red. Fix each error *Errors in the inputs* names. The JSON report's run verdict can now give the reason `configuration-errors`, and its schema is version 8.
 - What balance does is unchanged: three of the specification's claims (the Summary's deferral line, the JSON schema's version and a missing default settings file) each have a recorded failing run, proving their tests can fail.
 - What balance does is unchanged: spec-controller's own build runs the community lint rule `vitest/expect-expect`, so a test in its packages that calls no assertion reds the build.
 
