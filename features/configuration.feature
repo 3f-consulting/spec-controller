@@ -51,7 +51,7 @@ Feature: balance reads and validates the configuration settings the run names
         | CLM-CFG-012 | --deferral-tag deferred                                                                                      | @deferred as a deferral tag                                                                |
         | CLM-CFG-013 | --deferral-tag @blocked                                                                                      | @blocked as a deferral tag                                                                 |
         | CLM-CFG-014 | --deferral-tag with spaces around deferred                                                                   | @deferred as a deferral tag                                                                |
-        | CLM-CFG-006 | nothing                                                                                                      | no runner for any layer, no non-check, and the built-in deferral tags alone                |
+        | CLM-CFG-006 | nothing                                                                                                      | no runner named for any layer, no non-check, and the built-in deferral tags alone          |
 
   Rule: a layer the run names no runner for takes the runners balance knows that the workflows run there, and that the run named at no layer
 
