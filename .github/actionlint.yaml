@@ -1,4 +1,4 @@
 paths:
   .github/workflows/ci.yml:
     ignore:
-      - 'shellcheck reported issue in this script: SC2046:warning:1:160: Quote this to prevent word splitting'
+      - 'shellcheck reported issue in this script: SC2046:warning:10:3: Quote this to prevent word splitting'

@@ -493,7 +493,19 @@ jobs:
       - name: Reconciliation
         if: always()
         # $(…) is unquoted, and .github/actionlint.yaml ignores SC2046 for it: it must split into --ci-steps and its path, or add nothing when no step record was written.
-        run: pnpm spec-controller balance --features features --vitest "$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --cucumber "$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json" ] && echo "--ci-steps $SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json") --ci .github/workflows/ci.yml --package-json package.json --target spec-controller
+        # Each report is named in its runner's long form: the Test and Cucumber steps write it under $SPEC_CONTROLLER_EVIDENCE_DIR, which balance cannot read from a step's command.
+        run: |
+          pnpm spec-controller balance --features features \
+            --unit "vitest:vitest:$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" \
+            --integration "cucumber-js:cucumber:$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" \
+            --e2e "cucumber-js:cucumber:$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" \
+            --not-check "ci.yml:ci:Enable corepack" \
+            --not-check "ci.yml:ci:Resolve the evidence root" \
+            --not-check "ci.yml:ci:Install dependencies" \
+            --not-check "ci.yml:ci:Read the Python Semgrep runs on" \
+            --not-check "ci.yml:ci:Install Semgrep" \
+            $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json" ] && echo "--ci-steps $SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json") \
+            --ci .github/workflows/ci.yml --package-json package.json --target spec-controller
 
       - name: Hand the built packages to the release
         if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
