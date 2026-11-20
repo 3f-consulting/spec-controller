@@ -163,7 +163,9 @@ describe("balance reads every input the command line names or leaves to its defa
     repository.write("spec-controller.yml", "target: root\n");
     repository.commit("one");
 
-    expect(provenanceIn(repository.top, "--config", "ci/spec-controller.yml").target).toBe("named");
+    const { target, inputs } = provenanceIn(repository.top, "--config", "ci/spec-controller.yml");
+
+    expect({ target, settingsFiles: inputs.filter(({ name }) => name === "settingsFile").map(({ path }) => path) }).toEqual({ target: "named", settingsFiles: ["ci/spec-controller.yml"] });
   });
 });
 
