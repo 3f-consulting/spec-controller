@@ -50,6 +50,7 @@
   "flag-strict": "read every claim as if nothing were put off",
   "flag-exit-zero": "exit 0 on an out-of-balance run",
   "flag-written-claims-only": "count only the executable claims in the run verdict, leaving out the phantom claims and the unnamed claim",
+  "flag-config": "the settings file, read in place of spec-controller.yml",
   "flag-help": "show this help",
   "flag-new": "the feature code is new: give its first claim code",
   "input-absent": "{input} {path} does not exist: {detail}",

@@ -19,6 +19,9 @@ export interface Flag {
 
 const HELP: Flag = { name: "help", short: "h" };
 
+// The settings file balance reads; it is no setting of its own.
+const CONFIG: Flag = { name: "config", value: "<file>" };
+
 const FEATURES: Flag = { name: "features", value: "<dir>", input: "features", byDefault: "features" };
 
 const RUNNER: Omit<Flag, "name"> = { value: "<runner>[:<format>:<report>]" };
@@ -46,6 +49,7 @@ const BALANCE_FLAG_DETAILS: Readonly<Record<BalanceSettingName, Omit<Flag, "name
 // A flag for each of balance's settings, in their order; a setting that takes a list repeats.
 const BALANCE_FLAGS: readonly Flag[] = [
   ...BALANCE_SETTINGS.map(({ name, shape }): Flag => ({ ...BALANCE_FLAG_DETAILS[name], name, ...(shape === "list" && { repeats: true }) })),
+  CONFIG,
   HELP,
 ];
 
