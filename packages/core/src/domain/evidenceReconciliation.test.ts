@@ -7,7 +7,7 @@ import { claimCodeErrorsOf } from "./claimCodes.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
 import { NO_SETTINGS, type Layer, type TargetConfiguration } from "./configuration.js";
 import { NO_RUNNERS } from "./configuration.test-utils.js";
-import { reconcile, runVerdictOf, stepAccountOf, totalsOf, type EvidenceReconciliation, type RunVerdict } from "./evidenceReconciliation.js";
+import { reconcile, runVerdictOf, stepAccountOf, totalsOf, type EvidenceReconciliation, type ReadersGave, type RunVerdict } from "./evidenceReconciliation.js";
 import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
 import { stepDispositionOf, type EvidenceObservation, type Result, type RecordedStep, type TestResult } from "./postEvidenceObservation.js";
 
@@ -56,7 +56,17 @@ function reconciledFrom(
   strict: boolean,
   countOnlyExecutableClaims = false,
 ): EvidenceReconciliation {
-  return reconcile({
+  return reconcile(readersGaveOf(features, observed, strict, countOnlyExecutableClaims));
+}
+
+// What the readers would give from the feature files and evidence given, as reconciledFrom takes it.
+function readersGaveOf(
+  features: readonly FeatureFile[],
+  observed: readonly (readonly [Layer, TestResult["result"], string?])[],
+  strict: boolean,
+  countOnlyExecutableClaims = false,
+): ReadersGave {
+  return {
     features,
     reports: observed.map((evidence) => ({ results: [testResultOf(evidence)], layers: [evidence[0]], needsFeatures: false })),
     steps: [],
@@ -70,7 +80,7 @@ function reconciledFrom(
     targetFolder: "/target",
     strict,
     countOnlyExecutableClaims,
-  });
+  };
 }
 
 describe("the run will be balanced or out of balance, as its Claim Reconciliations call for", () => {
@@ -362,5 +372,13 @@ describe("balance accounts for every step it reads", () => {
     const { jobs, total } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
 
     expect({ jobs, stepsRead: total.stepsRead }).toEqual({ jobs: [], stepsRead: 0 });
+  });
+});
+
+describe("balance leaves out any configuration setting it cannot use, and runs anyway", () => {
+  it("[CLM-CFG-034] a settings file that had unitt: [vitest]: the run's configuration errors name configuration-unknown-key for unitt", () => {
+    const leftOut = { kind: "configuration-unknown-key", entry: "unitt" } as const;
+
+    expect(reconcile({ ...readersGaveOf([], [], false), settingsFileErrors: [leftOut] }).errorsInTheInputs.configurationErrors).toEqual([leftOut]);
   });
 });

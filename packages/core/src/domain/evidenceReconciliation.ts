@@ -271,6 +271,8 @@ export interface ReadersGave {
   readonly stepRecord: readonly RecordedStep[];
   // The configuration settings as parsed, before they are checked against the steps and the reports.
   readonly settings: ConfigurationSettings;
+  // Each entry of the settings file left out, named by the error that left it out.
+  readonly settingsFileErrors?: readonly ConfigurationError[];
   // Every report path a runner's long form names at which no file was.
   readonly reportsNotFound?: readonly string[];
   readonly scripts: Scripts;

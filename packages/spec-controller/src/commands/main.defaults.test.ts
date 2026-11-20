@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { repositoryForTest } from "../repository/repository.test-utils.js";
@@ -93,13 +93,31 @@ describe("the target's folder will be the git repository the corpus is in, or el
 });
 
 describe("balance reads every input the command line names or leaves to its default", () => {
-  it("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had features: specs: balance reads its feature files from ci/specs", () => {
+  it.each([
+    ["features: specs", "ci/specs", "features", { "ci/specs/one.feature": "@ONE\nFeature: one\n" }],
+    ["ci: workflows", "ci/workflows", "workflows", { "ci/workflows/ci.yml": "jobs:\n  ci:\n    steps:\n      - run: echo\n" }],
+    ["ci-steps: [steps.json]", "ci/steps.json", "stepRecord", { "ci/steps.json": "{}" }],
+    ["package-json: package.json", "ci/package.json", "manifest", { "ci/package.json": "{}" }],
+    ["unit: [vitest:vitest:out/vitest.json]", "ci/out/vitest.json", "vitest", { "ci/out/vitest.json": '{"testResults":[]}' }],
+  ])("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had %s: balance reads it from %s", (entry, expected, input, files) => {
     const repository = repositoryForTest();
-    repository.write("ci/spec-controller.yml", "features: specs\n");
-    repository.write("ci/specs/one.feature", ONE_UNIT_CLAIM);
+    repository.write("ci/spec-controller.yml", `${entry}\n`);
+    Object.entries(files).forEach(([path, text]) => repository.write(path, text));
     repository.commit("one");
 
-    expect(inputPath(provenanceIn(repository.top, "--config", "ci/spec-controller.yml"), "features")).toBe("ci/specs");
+    expect(inputPath(provenanceIn(repository.top, "--config", "ci/spec-controller.yml"), input)).toBe(expected);
+  });
+
+  it("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had format: [json:out/report.json]: balance writes its report to ci/out/report.json", () => {
+    const repository = repositoryForTest();
+    repository.write("ci/spec-controller.yml", "format: [json:out/report.json]\n");
+    repository.commit("one");
+
+    main(["balance", "--config", "ci/spec-controller.yml", "--target", "acme/web"], repository.top, { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } });
+
+    const written = join(repository.top, "ci", "out", "report.json");
+
+    expect(existsSync(written) && (JSON.parse(readFileSync(written, "utf8")) as ReportRead).provenance.target).toBe("acme/web");
   });
 });
 
