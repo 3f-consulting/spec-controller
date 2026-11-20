@@ -490,9 +490,10 @@ jobs:
           STEPS_JSON: ${{ toJSON(steps) }}
         run: |
           mkdir -p reports
-          printf '{"job":%s,"steps":%s}' "$JOB_JSON" "$STEPS_JSON" > reports/ci-steps.json
+          record=reports/ci-steps.json
+          printf '{"job":%s,"steps":%s}' "$JOB_JSON" "$STEPS_JSON" > "$record"
           printf 'step record: %s bytes, job %s, %s step(s) with an id:\n' \
-            "$(wc -c < reports/ci-steps.json | tr -d ' ')" "$(jq -r '.job.status' reports/ci-steps.json)" "$(jq '.steps | length' reports/ci-steps.json)"
+            "$(wc -c < "$record" | tr -d ' ')" "$(jq -r '.job.status' "$record")" "$(jq '.steps | length' "$record")"
 
       - name: Reconciliation
         if: always()
