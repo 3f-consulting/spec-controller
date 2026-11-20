@@ -39,10 +39,8 @@ export interface SettingsGiven {
   readonly on: readonly string[];
 }
 
-// The settings file as YAML reads it, or the file refused with what the parser said.
 export const settingsFileFrom = (text: string): unknown => parsedBy(() => parse(text) as unknown);
 
-// A settings file is a mapping of settings; an empty file, which YAML reads as nothing, sets none.
 export const whereSettingsFileBreaks = (read: unknown): string | undefined => (read === null ? undefined : whereShapeBreaks(read, { fields: {} }));
 
 export const settingsFileEntriesOf = (read: unknown): SettingsFileEntries => (isRecord(read) ? read : {});
