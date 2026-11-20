@@ -178,6 +178,18 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then it will read its feature files from ci/specs
 
     @unit
+    Scenario Outline: balance finds the default settings file at the root of the repository it runs in, or else in the folder it runs in
+      given balance ran in <where>
+      and <file> had target: acme
+      when balance reads its settings
+      then the run's target name will be acme
+
+      Examples:
+        | clm         | where                                                      | file                           |
+        | CLM-CLI-219 | /work/acme/packages/app, in a git repository at /work/acme | /work/acme/spec-controller.yml |
+        | CLM-CLI-220 | /tmp/acme, in no git repository                            | /tmp/acme/spec-controller.yml  |
+
+    @unit
     Scenario Outline: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
       given the run named <CI workflows> as its CI workflows
       when balance reads its inputs

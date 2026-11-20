@@ -120,6 +120,25 @@ describe("balance reads every input the command line names or leaves to its defa
 
     expect(existsSync(written) && (JSON.parse(readFileSync(written, "utf8")) as ReportRead).provenance.target).toBe("acme/web");
   });
+
+  // The target the run names, with spec-controller.yml at the top giving target: acme and nothing on the command line.
+  const targetWithSettingsAt = (top: string, ranIn: string): string => {
+    writeFileSync(join(top, "spec-controller.yml"), "target: acme\n");
+    return provenanceIn(ranIn).target;
+  };
+
+  it("[CLM-CLI-219] balance ran in packages/app, in a git repository whose top's spec-controller.yml had target: acme: the run's target name is acme", () => {
+    const repository = repositoryForTest();
+    mkdirSync(join(repository.top, "packages", "app"), { recursive: true });
+
+    expect(targetWithSettingsAt(repository.top, join(repository.top, "packages", "app"))).toBe("acme");
+  });
+
+  it("[CLM-CLI-220] balance ran in a folder in no git repository whose spec-controller.yml had target: acme: the run's target name is acme", () => {
+    const folder = temporaryDirectory("no-git-");
+
+    expect(targetWithSettingsAt(folder, folder)).toBe("acme");
+  });
 });
 
 const ONE_UNIT_CLAIM = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n";
