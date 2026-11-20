@@ -4,3 +4,5 @@ level: error
 nonword: true
 tokens:
   - '(?<![\w./*-])[\w.-][\w./-]*\.(?:tsx|ts|mjs|cjs|js)\b'
+exceptions:
+  - Node.js
