@@ -1,5 +1,5 @@
 import { claimCodeCitationsIn, claimCodeFrom, type ClaimCode } from "./claimCodes.js";
-import type { DefaultReportsOf, ReportsNamed, TargetConfiguration } from "./configuration.js";
+import type { DefaultReportsOf, KnownRunner, ReportsNamed, TargetConfiguration } from "./configuration.js";
 import type { FeatureFile, QualityCheckKind } from "./postEvidenceObligation.js";
 import { shownFromTarget } from "./targetPath.js";
 import type { CiStep, FailureAllowed } from "./workflowSteps.js";
@@ -58,6 +58,7 @@ export interface ShellAnswers {
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
   readonly reportsNamed: ReportsNamed;
   readonly defaultReportsOf: DefaultReportsOf;
+  readonly knownRunners: readonly KnownRunner[];
 }
 
 // The codes a test cites: its own, or else those of its nearest parent that cites any. The chain runs outermost first.

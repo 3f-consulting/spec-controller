@@ -28,10 +28,24 @@ export type ReportsNamed = (
 // The shell reader's answer of where a runner writes its evidence reports when told nowhere, for a step's command that runs it.
 export type DefaultReportsOf = (commandLine: string, runner: string, scripts: Readonly<Record<string, string>>) => readonly ReportLocation[];
 
-// A layer's runner: the program it runs, with the evidence report the run names for it.
+// A layer's runner: the program it runs, with the evidence report the run names for it. A runner balance found in the
+// workflows, rather than one the run named, is marked found.
 export interface Runner {
   readonly name: string;
   readonly report?: ReportLocation;
+  readonly found?: true;
+}
+
+// A runner balance knows, at the layer it usually runs.
+export interface KnownRunner {
+  readonly name: string;
+  readonly layer: Layer;
+}
+
+// The shell reader's answers finding a runner needs: whether a step's command runs a program, and the runners balance knows.
+export interface RunnerFinder {
+  readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
+  readonly knownRunners: readonly KnownRunner[];
 }
 
 // Each layer's runners; a layer with none has an empty list.
@@ -146,4 +160,8 @@ export function reportsLocatedOf(
     return reports.length === 0 ? [part] : reports.map((report) => ({ taken: [layer, { name, report }] }));
   });
   return { ...settings, runners };
+}
+
+export function runnersFoundOf(settings: ConfigurationSettings, _steps: readonly CiStep[], _scripts: Readonly<Record<string, string>>, _shell: RunnerFinder): ConfigurationSettings {
+  return settings;
 }

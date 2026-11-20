@@ -2,8 +2,9 @@
 Feature: balance reads and validates the configuration settings the run names
 
   A run names three kinds of configuration setting, on its command line or in its settings file:
-  the runners of each layer, the non-checks and the deferral tags. The settings file names each
-  of balance's settings by the name its command line uses. balance reads and validates each one.
+  the runners of each layer, the non-checks and the deferral tags. A runner balance knows that no
+  setting names, it finds in the workflows. The settings file names each of balance's settings by
+  the name its command line uses. balance reads and validates each one.
   It leaves out a configuration setting that is not valid, names it among the configuration
   errors, and still uses the others. A setting balance cannot use never stops the run. An input
   it cannot read stops it, whether the command line or the settings file names it.
@@ -51,6 +52,26 @@ Feature: balance reads and validates the configuration settings the run names
         | CLM-CFG-013 | --deferral-tag @blocked                                                                                      | @blocked as a deferral tag                                                                 |
         | CLM-CFG-014 | --deferral-tag with spaces around deferred                                                                   | @deferred as a deferral tag                                                                |
         | CLM-CFG-006 | nothing                                                                                                      | no runner for any layer, no non-check, and the built-in deferral tags alone                |
+
+  Rule: a layer the run names no runner for takes the runners balance knows that the workflows run there, and that the run named at no layer
+
+    @unit
+    Scenario Outline: balance finds a runner it knows in a workflow, at its usual layer
+      given a workflow had <step>
+      and the run named <named>
+      when balance reads its inputs
+      then <runners>
+
+      Examples:
+        | clm         | step                           | named                                      | runners                                            |
+        | CLM-CFG-036 | a step running vitest run      | no runner                                  | vitest will be the unit layer's runner             |
+        | CLM-CFG-037 | a step running cucumber-js     | no runner                                  | cucumber-js will be the integration layer's runner |
+        | CLM-CFG-038 | a step running vitest run      | pytest as the unit runner                  | pytest alone will be the unit layer's runner       |
+        | CLM-CFG-039 | a step running playwright test | pytest as the unit runner                  | playwright will be the e2e layer's runner          |
+        | CLM-CFG-040 | a step running cucumber-js     | cucumber-js as the e2e runner              | the integration layer will have no runner          |
+        | CLM-CFG-041 | a step running vitest run      | that step as a non-check                   | no layer will have a runner                        |
+        | CLM-CFG-042 | a step running vitest run      | vitest:vitest as the unit runner, left out | vitest will be the unit layer's runner             |
+        | CLM-CFG-043 | a step running my-tool test    | no runner                                  | no layer will have a runner                        |
 
   Rule: balance leaves out any configuration setting it cannot use, and runs anyway
 
