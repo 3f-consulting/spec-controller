@@ -412,3 +412,7 @@ describe("the run will still reach its run verdict, using the configuration sett
     });
   });
 });
+
+it("a planted test that asserts nothing", () => {
+  void 0;
+});
