@@ -47,16 +47,18 @@ Delete that test, and the run is out of balance and exits `1`. The row says a un
 - **CI checks:** any step your pipeline runs, such as lint, type checks or a complexity limit.
 - **You:** willing to name your behaviours as scenarios. `balance` checks the names you write; it does not write them for you.
 
-## Start with nothing named
+## Start with one scenario
 
 ```sh
 npm install --save-dev spec-controller@<version>
-npx spec-controller balance --unit vitest:vitest:./vitest-report.json --exit-zero
+npx spec-controller balance --unit vitest --written-claims-only
 ```
 
-`--unit vitest:vitest:./vitest-report.json` names the unit layer's runner, the format of the report it writes, and that report's path. For other test reports, give the format `jest`, `pytest`, `junit`, `rspec` or `cucumber`, under the flag of the layer the runner serves: `--unit`, `--integration`, `--e2e` or `--performance`. When the CI step that runs the runner writes its report, name the runner alone, as `--unit vitest`: `balance` finds the report from that step. The settings can also live in `spec-controller.yml` at the top of your repository, keyed by the flags' names, such as `unit: [vitest]`.
+Name one behaviour as a scenario, as the checkout example above does, and cite it from its test. Then add the command as a step at the end of the CI job that runs your tests. `--unit vitest` names the unit layer's runner, and `balance` finds its report from the workflow step that runs it. If no step names the report, name it yourself, as `--unit vitest:vitest:./vitest-report.json`: the runner, the format of its report, and the report's path. For other test reports, give the format `jest`, `pytest`, `junit`, `rspec` or `cucumber`, under the flag of the layer the runner serves: `--unit`, `--integration`, `--e2e` or `--performance`. The settings can also live in `spec-controller.yml` at the top of your repository, keyed by the flags' names, such as `unit: [vitest]` and `written-claims-only: true`.
 
-With no scenarios yet, the report lists every test that ran, and `--exit-zero` keeps an out-of-balance build green. A run balance cannot reconcile, such as one with a check that never ran, still fails. Give it your workflow and the run's step record (GitHub Actions' own record of how each step ended), as the quickstart shows, and it lists your CI checks too. Then name a few behaviours, cite them from their tests, and watch those rows balance. When the ones you care about balance, replace `--exit-zero` with `--written-claims-only`. `balance` then gates your build on the scenarios you have written, and the tests that cite none are still listed but do not turn it red. When every test cites a scenario, drop `--written-claims-only` too.
+The build then goes red only for the scenarios you have written. Every other test and CI step is listed in the report, and none of them turns it red. You need no `id:` on any step, no step record and no list of non-checks. Name more behaviours as you go. When every test cites a scenario, drop `--written-claims-only`.
+
+To see everything that ran before you name anything, run with `--exit-zero` instead. The report lists every test and CI step, and an out-of-balance build stays green. A run balance cannot reconcile, such as one with a check that never ran, still fails. To turn a CI check such as lint into evidence, give its step the scenario's code as its `id:`, and pass the run's step record (GitHub Actions' own record of how each step ended), as the quickstart shows.
 
 [`docs/quickstart.md`](./docs/quickstart.md) takes you from here to a first run in CI. [`docs/user-guide.md`](./docs/user-guide.md) has every flag and runner.
 
