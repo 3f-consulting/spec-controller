@@ -11,6 +11,9 @@ Each line says what a change means for someone using spec-controller.
 - No change to the packages: the first release from spec-controller's new repository.
 - spec-controller's repository is public, with every commit of its history, and from this release on each release carries its provenance on npm.
 - What balance does is unchanged: two specification files read more plainly, one describing reconciliation in fewer words and one with its Rules in the order the report shows them.
+
+## 0.1.330 — 2026-11-20 — Impress a sceptical engineer reading the public repository
+
 - @3f-consulting/spec-controller-core exports `CreditJournal`, the Evidence Observations read from a run's reports that `claimReconciliationsOf` posts; nothing balance does changes.
 - The JSON report names the version of its schema in `schemaVersion`, and the version rises whenever the report's structure changes; @3f-consulting/spec-controller-core exports the report's type, `JsonReport`, and `jsonReportFrom`, which builds it from a reconciliation.
 - Every TypeScript example in the READMEs is written whole, with its imports and declarations, and CI type-checks each one against the package's own exports.
