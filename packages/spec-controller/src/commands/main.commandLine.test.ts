@@ -514,6 +514,13 @@ describe("an input that is not valid will stop the run", () => {
       ["{input-settingsFile} settings.yml does not parse", "at line 2, column 1", "[input-does-not-parse]"],
     ],
     [
+      "CLM-CLI-222",
+      "a settings file read by default that does not parse as YAML",
+      { "spec-controller.yml": "unit: [vitest\n" },
+      [],
+      ["{input-settingsFile}", "/spec-controller.yml does not parse", "at line 2, column 1", "[input-does-not-parse]"],
+    ],
+    [
       "CLM-CLI-223",
       "a settings file that is a list, not a mapping of settings",
       { "settings.yml": "- unit: [vitest]\n" },
