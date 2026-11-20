@@ -6,10 +6,11 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
 
   The run verdict is balanced, out of balance, or not reconciled. A run is not reconciled when
   balance cannot rely on what it read, and the verdict names why: unsound, when some evidence
-  never ran; claim code errors, when balance finds a claim code error; or nothing to reconcile,
-  when there are no Claim Reconciliations to count. When several reasons apply, unsound comes
-  before claim code errors, and claim code errors before nothing to reconcile; each comes before
-  out of balance.
+  never ran; claim code errors, when balance finds a claim code error; configuration errors, when
+  balance finds a configuration error; or nothing to reconcile, when there are no Claim
+  Reconciliations to count. When several reasons apply, unsound comes before claim code errors,
+  claim code errors before configuration errors, and configuration errors before nothing to
+  reconcile; each comes before out of balance.
 
   The totals count the Claim Reconciliations, the Quality Check Reconciliations by kind and
   outcome, where each Evidence Observation was filed, the excluded claim code occurrences and the
@@ -39,11 +40,13 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       then the run verdict will be not reconciled, because <why>
 
       Examples:
-        | clm         | what it has                                                    | why                  |
-        | CLM-EVR-004 | an Evidence Observation that never ran                         | unsound              |
-        | CLM-EVR-005 | a claim code error, and only balanced Claim Reconciliations    | claim code errors    |
-        | CLM-EVR-006 | no feature files, and no Evidence Observation                  | nothing to reconcile |
-        | CLM-EVR-008 | a feature corpus with no scenario, and no Evidence Observation | nothing to reconcile |
+        | clm         | what it has                                                                                               | why                  |
+        | CLM-EVR-004 | an Evidence Observation that never ran                                                                    | unsound              |
+        | CLM-EVR-005 | a claim code error, and only balanced Claim Reconciliations                                               | claim code errors    |
+        | CLM-EVR-096 | a settings file with the key unitt, and only balanced Claim Reconciliations                               | configuration errors |
+        | CLM-EVR-097 | a runner balance found in a workflow, whose step named no report, and only balanced Claim Reconciliations | configuration errors |
+        | CLM-EVR-006 | no feature files, and no Evidence Observation                                                             | nothing to reconcile |
+        | CLM-EVR-008 | a feature corpus with no scenario, and no Evidence Observation                                            | nothing to reconcile |
 
     @unit
     Scenario Outline: when several reasons apply, the run verdict follows a fixed order among them

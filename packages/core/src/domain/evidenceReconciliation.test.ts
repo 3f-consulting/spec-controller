@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import evidenceReconciliationVariants from "./evidenceReconciliation.variants.json" with { type: "json" };
+import { configurationSettingsNamed } from "../inputs/commandLineSettings.js";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
+import { settingsFileEntriesFrom, settingsMerged, settingsNamedOf, type SettingsGiven } from "../inputs/settingsFile.js";
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimCodeErrorsOf } from "./claimCodes.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
-import { NO_SETTINGS, type Layer, type TargetConfiguration } from "./configuration.js";
+import { NO_SETTINGS, reportsLocatedOf, runnersFoundOf, type ConfigurationError, type Layer, type TargetConfiguration } from "./configuration.js";
 import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { reconcile, runVerdictOf, stepAccountOf, totalsOf, type EvidenceReconciliation, type ReadersGave, type RunVerdict } from "./evidenceReconciliation.js";
 import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
@@ -116,6 +118,50 @@ describe("the run will be not reconciled, naming why", () => {
     ["CLM-EVR-008", "a feature corpus with no scenario, and no Evidence Observation", ["@ONE\nFeature: one\n"], [], "nothing-to-reconcile"],
   ] as const)("[%s] a run with %s is not reconciled, naming why", (_clm, _what, corpus, evidence, why) => {
     expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict: "not-reconciled", why });
+  });
+
+  // What the readers would give of a run's configuration, built as balance builds it: a settings file holding the YAML
+  // given, the settings the command line gives, and the steps of ci.yml as given, with no file at each report path given.
+  const configuredRunOf = ({ settingsFile = "", commandLine = { values: {}, on: [] }, ciYml = "", reportsNotFound = [] }: ConfiguredRun): Partial<ReadersGave> => {
+    const { settings, errors } = settingsMerged(settingsFileEntriesFrom(settingsFile), commandLine);
+    const steps = ciYml === "" ? [] : workflowStepsFrom("ci.yml", ciYml);
+    const named = runnersFoundOf(configurationSettingsNamed(settingsNamedOf(settings)), steps, {}, shellAnswers);
+    return { settings: reportsLocatedOf(named, steps, {}, shellAnswers.reportsNamed, shellAnswers.defaultReportsOf), settingsFileErrors: errors, steps, reportsNotFound };
+  };
+
+  interface ConfiguredRun {
+    readonly settingsFile?: string;
+    readonly commandLine?: SettingsGiven;
+    readonly ciYml?: string;
+    readonly reportsNotFound?: readonly string[];
+  }
+
+  it.each<[string, string, ConfiguredRun, ConfigurationError["kind"]]>([
+    ["CLM-EVR-096", "a settings file with the key unitt", { settingsFile: "unitt: [vitest]\n" }, "configuration-unknown-key"],
+    ["CLM-EVR-096", "a settings file with unit: vitest, a value of the wrong kind", { settingsFile: "unit: vitest\n" }, "configuration-wrong-kind"],
+    ["CLM-EVR-097", "a runner balance found in a workflow, whose step named no report", { ciYml: "jobs:\n  ci:\n    steps:\n      - run: vitest run\n" }, "runner-report-not-named"],
+    ["CLM-EVR-097", "--unit vitest:vitest, a long form with no report", { commandLine: { values: { unit: ["vitest:vitest"] }, on: [] } }, "configuration-wrong-kind"],
+    [
+      "CLM-EVR-097",
+      "--unit playwright:junit:out/playwright.xml, and no file at out/playwright.xml",
+      { commandLine: { values: { unit: ["playwright:junit:out/playwright.xml"] }, on: [] }, reportsNotFound: ["out/playwright.xml"] },
+      "runner-report-not-read",
+    ],
+    [
+      "CLM-EVR-097",
+      "--not-check ci.yml:ci:No such step, with ci.yml read",
+      { commandLine: { values: { "not-check": ["ci.yml:ci:No such step"] }, on: [] }, ciYml: "jobs:\n  ci:\n    steps:\n      - uses: actions/checkout@v4\n" },
+      "not-checks-entry-matches-no-step",
+    ],
+    ["CLM-EVR-097", "--not-check Install dependencies", { commandLine: { values: { "not-check": ["Install dependencies"] }, on: [] } }, "not-checks-entry-not-a-step-name"],
+  ])("[%s] a run with %s, and only balanced Claim Reconciliations, is not reconciled, because of configuration errors", (_clm, _what, configured, kind) => {
+    const features = [featureAsWrittenFrom("f0.feature", scenariosTagged("@unit @CLM-ONE-001"))];
+    const { runVerdict, errorsInTheInputs } = reconcile({ ...readersGaveOf(features, [["unit", "passed", "ONE-001"]], false), ...configuredRunOf(configured) });
+
+    expect({ runVerdict, configurationErrors: errorsInTheInputs.configurationErrors.map((error) => error.kind) }).toEqual({
+      runVerdict: { verdict: "not-reconciled", why: "configuration-errors" },
+      configurationErrors: [kind],
+    });
   });
 });
 
