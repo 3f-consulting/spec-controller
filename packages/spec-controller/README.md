@@ -58,6 +58,8 @@ spec-controller balance \
 
 `--unit` and `--integration` each name a runner of that layer, in the long form `<runner>:<format>:<report>`: the runner, the format of the report it writes, and the report's path. Each result in the report is evidence of the runner's layer. When the CI step that runs the runner writes its report, name the runner alone, as `--unit vitest`: `balance` finds the report from that step, in the workflows in `.github/workflows` or the ones `--ci` names.
 
+The same settings can live in `spec-controller.yml` at the top of your repository, keyed by the flags' names (`features: ./features`, `unit: [vitest]`), so the command is `spec-controller balance` alone. A setting given on the command line replaces the file's.
+
 A scenario tagged `@unit` raises an evidence obligation: a unit test must exist and pass. The evidence answers it by citing the scenario's claim code in its test name. Where the two agree, the Claim Reconciliation is **balanced**. Where they do not, it says how: evidence missing, evidence failing, or evidence that cites a scenario nobody wrote.
 
 ## Exit codes
