@@ -8,6 +8,7 @@ Each line says what a change means for someone using spec-controller. A line tha
 - What balance does is unchanged: three of the specification's claims (the Summary's deferral line, the JSON schema's version and a missing default settings file) each have a recorded failing run, proving their tests can fail.
 - What balance does is unchanged: spec-controller's own build runs the community lint rule `vitest/expect-expect`, so a test in its packages that calls no assertion reds the build.
 - What balance does is unchanged: the list of outcomes the totals count is checked by the compiler, so an outcome added to balance cannot be left out of the totals.
+- What balance does is unchanged. Added to @3f-consulting/spec-controller-core: `runnerReportsOf`, each runner's located evidence report with its layer, and `layersOfReportAt`, the layers a report at a path serves. A library user calling core gets the rule the command line uses.
 
 ## 0.1.338 — 2026-11-20 — Easier adoption
 
