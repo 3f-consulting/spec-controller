@@ -1,7 +1,7 @@
 import { BALANCE_SETTINGS, EVIDENCE_REPORT_FORMATS, type BalanceSettingName } from "@3f-consulting/spec-controller-core";
 
 // Every input a run can read, in the order the provenance names them.
-export const INPUT_KINDS = ["features", ...EVIDENCE_REPORT_FORMATS.map(({ kind }) => kind), "workflows", "stepRecord", "manifest"] as const;
+export const INPUT_KINDS = ["settingsFile", "features", ...EVIDENCE_REPORT_FORMATS.map(({ kind }) => kind), "workflows", "stepRecord", "manifest"] as const;
 
 export type InputKind = (typeof INPUT_KINDS)[number];
 
@@ -20,7 +20,7 @@ export interface Flag {
 const HELP: Flag = { name: "help", short: "h" };
 
 // The settings file balance reads; it is no setting of its own.
-const CONFIG: Flag = { name: "config", value: "<file>" };
+const CONFIG: Flag = { name: "config", value: "<file>", input: "settingsFile" };
 
 const FEATURES: Flag = { name: "features", value: "<dir>", input: "features", byDefault: "features" };
 

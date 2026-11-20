@@ -2,6 +2,7 @@ import {
   EVIDENCE_REPORT_FORMATS,
   featureAsWrittenFrom,
   InputDoesNotParse,
+  settingsFileEntriesFrom,
   stepRecordFrom,
   textFor,
   whereManifestBreaks,
@@ -14,6 +15,7 @@ import {
   type TestResult,
   type RecordedStep,
   type CiStep,
+  type SettingsFileEntries,
 } from "@3f-consulting/spec-controller-core";
 import { readdirSync, readFileSync, statSync, type Stats } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
@@ -32,6 +34,7 @@ interface ReportRead {
 
 // Every input the run read, each as its reader reports it; an input not read is absent.
 export interface InputsRead {
+  readonly settingsFile?: SettingsFileEntries;
   readonly features: readonly FeatureFile[];
   readonly workflowSteps?: readonly CiStep[];
   // Every evidence report read, of every format, in the order read.
@@ -140,6 +143,7 @@ const formatReaderOf = (format: EvidenceReportFormat): InputReader => ({
 });
 
 const READERS = {
+  settingsFile: { read: (files) => each(files, (file) => parsed(file, (text) => ({ settingsFile: settingsFileEntriesFrom(text) }))) },
   features: {
     reads: "folder",
     endings: [".feature"],

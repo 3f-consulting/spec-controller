@@ -24,7 +24,8 @@ import { refusedWith } from "../runEnding/refusal.js";
 import type { ExitCode } from "../runEnding/runEnding.js";
 import { runIdentityIn } from "../runIdentity/runIdentity.js";
 import { writeReports } from "../output/writer.js";
-import { INPUT_KINDS, type InputRequest, type RunRequest } from "../runRequest/runRequest.js";
+import { INPUT_KINDS, type BalanceRequest, type InputRequest } from "../runRequest/runRequest.js";
+import { withSettingsFile } from "./settingsFile.js";
 
 // A run has no step and no step record of an input it did not read.
 const NONE: readonly never[] = [];
@@ -68,12 +69,8 @@ const reportsGivenOf = (reports: NonNullable<InputsRead["reports"]>, located: re
     needsFeatures: format.needsFeatures === true,
   }));
 
-export function balance(
-  { inputs, settings, outputs, target, sourceSha, strict, exitZero, countOnlyExecutableClaims }: Extract<RunRequest, { command: "balance" }>,
-  folder: string,
-  streams: StandardStreams,
-  complain: Complain,
-): ExitCode {
+function balanced(request: BalanceRequest, folder: string, streams: StandardStreams, complain: Complain): ExitCode {
+  const { inputs, settings, settingsFileErrors, outputs, target, sourceSha, strict, exitZero, countOnlyExecutableClaims } = request;
   const corpus = corpusNamed(inputs, folder);
   // Read first, so the run's time is when it started.
   const identity = runIdentityIn(corpus ?? folder, { target, sourceSha });
@@ -95,6 +92,7 @@ export function balance(
     steps: read.workflowSteps ?? NONE,
     stepRecord: read.stepRecord ?? NONE,
     settings: settingsLocated,
+    settingsFileErrors,
     reportsNotFound: [...(read.reportsNotFound ?? NONE), ...(found.reportsNotFound ?? NONE)],
     scripts,
     ...ASKED,
@@ -111,4 +109,9 @@ export function balance(
     complain(error);
     return exitCodeOf(reconciliation.runVerdict, { exitZero });
   }
+}
+
+export function balance(request: BalanceRequest, folder: string, streams: StandardStreams, complain: Complain): ExitCode {
+  const run = withSettingsFile(request, folder);
+  return "refusals" in run ? refusedWith(run.refusals, streams.error.write) : balanced(run, folder, streams, complain);
 }

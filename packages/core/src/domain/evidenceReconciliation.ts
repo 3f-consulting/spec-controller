@@ -298,7 +298,8 @@ function creditJournalOf({ reports, features, stepRecord, targetFolder }: Reader
 // What the readers gave, reconciled in one call: the configuration checked, the steps disposed, the claims and the evidence
 // posted and reconciled, and the whole assembled.
 export function reconcile(given: ReadersGave): EvidenceReconciliation {
-  const { features, steps, stepRecord, settings, reportsNotFound, scripts, shell, repositoryOf, identity, provenanceInputs, targetFolder, strict, countOnlyExecutableClaims } = given;
+  const { features, steps, stepRecord, settings, settingsFileErrors = [], reportsNotFound, scripts, shell, repositoryOf, identity, provenanceInputs, targetFolder, strict, countOnlyExecutableClaims } =
+    given;
   const { configuration, errors } = targetConfigurationOf(settings, steps, reportsNotFound);
   // Each step with what it is: posting and the step account both take it, and posting the same record.
   const disposedSteps = disposedStepsOf(steps, configuration, scripts, shell, stepRecord);
@@ -307,7 +308,7 @@ export function reconcile(given: ReadersGave): EvidenceReconciliation {
   return evidenceReconciliationOf({
     claimReconciliations: claimReconciliationsOf(debitJournal, creditJournalOf(given, disposedSteps)),
     claimCodeErrors: claimCodeErrorsOf(features),
-    configurationErrors: errors,
+    configurationErrors: [...settingsFileErrors, ...errors],
     features,
     claimReading,
     countOnlyExecutableClaims,

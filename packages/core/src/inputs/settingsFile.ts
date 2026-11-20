@@ -35,7 +35,7 @@ export type SettingsFileEntries = Readonly<Record<string, unknown>>;
 // each setting that takes no value, given.
 export interface SettingsGiven {
   readonly values: Readonly<Partial<Record<BalanceSettingName, readonly string[]>>>;
-  readonly on: readonly BalanceSettingName[];
+  readonly on: readonly string[];
 }
 
 export function settingsFileEntriesFrom(text: string): SettingsFileEntries {

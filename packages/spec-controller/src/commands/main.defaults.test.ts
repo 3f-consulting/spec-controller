@@ -111,6 +111,7 @@ describe("balance reads every input the command line names or leaves to its defa
   it("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had format: [json:out/report.json]: balance writes its report to ci/out/report.json", () => {
     const repository = repositoryForTest();
     repository.write("ci/spec-controller.yml", "format: [json:out/report.json]\n");
+    repository.write("ci/out/.keep", "");
     repository.commit("one");
 
     main(["balance", "--config", "ci/spec-controller.yml", "--target", "acme/web"], repository.top, { output: { fd: 1, write: () => {} }, error: { fd: 2, write: () => {} } });
