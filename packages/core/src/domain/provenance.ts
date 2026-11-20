@@ -12,7 +12,6 @@ export function provenanceInputsOf(kinds: readonly { readonly name: string; read
   return kinds.flatMap(({ name, paths }) => (paths.length === 0 ? [{ name }] : paths.map((path) => ({ name, path }))));
 }
 
-// A layer's runner as the provenance names it, marked when balance found it in the workflows.
 export type ProvenanceRunner = Pick<Runner, "name" | "found">;
 
 // Each layer's runners as the provenance names them: a runner once, however many evidence reports were named for it.
