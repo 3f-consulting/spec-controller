@@ -172,6 +172,7 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-117 | not reconciled, because unsound                        |
         | CLM-RPT-118 | not reconciled, because of claim code errors           |
         | CLM-RPT-119 | not reconciled, because there was nothing to reconcile |
+        | CLM-RPT-182 | not reconciled, because of configuration errors        |
 
   Rule: the report shows each count the run has in its cell
 

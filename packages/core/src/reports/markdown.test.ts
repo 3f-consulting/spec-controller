@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { stepAccountOf, totalsOf, type EvidenceReconciliation, type StepCounts } from "../domain/evidenceReconciliation.js";
 import { coreText } from "../messages/catalogue.js";
+import catalogue from "../messages/messages.en.json" with { type: "json" };
 import { markdownReportOf } from "./markdown.js";
 import { PROVENANCE, reconciled } from "./reconciledRun.test-utils.js";
 
@@ -21,9 +22,11 @@ describe("the Summary names each run verdict, and each reason a run is not recon
     ["CLM-RPT-117", "not reconciled, because unsound", { verdict: "not-reconciled", why: "unsound" }, "verdict-unsound"],
     ["CLM-RPT-118", "not reconciled, because of claim code errors", { verdict: "not-reconciled", why: "claim-code-errors" }, "verdict-claim-code-errors"],
     ["CLM-RPT-119", "not reconciled, because there was nothing to reconcile", { verdict: "not-reconciled", why: "nothing-to-reconcile" }, "verdict-nothing-to-reconcile"],
+    ["CLM-RPT-182", "not reconciled, because of configuration errors", { verdict: "not-reconciled", why: "configuration-errors" }, "verdict-configuration-errors"],
   ] as const)("[%s] a run that was %s has its Summary name that run verdict", (_clm, _verdict, runVerdict, words) => {
     const lines = markdownReportOf(runWith({ runVerdict, provenance: PROVENANCE })).split("\n");
 
+    expect(Object.keys(catalogue)).toContain(words);
     expect(lines.filter((line) => line.startsWith(`- ${coreText("summary-run-verdict")}:`))).toEqual([`- ${coreText("summary-run-verdict")}: ${coreText(words)}`]);
   });
 });
