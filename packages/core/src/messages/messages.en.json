@@ -43,6 +43,7 @@
   "verdict-out-of-balance": "out of balance",
   "verdict-unsound": "not reconciled, as unsound",
   "verdict-claim-code-errors": "not reconciled, for claim code errors",
+  "verdict-configuration-errors": "not reconciled, for configuration errors",
   "verdict-nothing-to-reconcile": "not reconciled, with nothing to reconcile",
   "claim-reconciliations-heading": "Claim Reconciliations",
   "claim-reconciliations-none": "None.",

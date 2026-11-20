@@ -6,8 +6,9 @@ Feature: balance reads and validates the configuration settings the run names
   setting names, it finds in the workflows. The settings file names each of balance's settings by
   the name its command line uses. balance reads and validates each one.
   It leaves out a configuration setting that is not valid, names it among the configuration
-  errors, and still uses the others. A setting balance cannot use never stops the run. An input
-  it cannot read stops it, whether the command line or the settings file names it.
+  errors, and still uses the others. A setting balance cannot use never stops the run. It makes
+  the run not reconciled, as evidence-reconciliation.feature claims. An input it cannot read
+  stops it, whether the command line or the settings file names it.
 
   Rule: balance takes the settings its settings file gives, by the names its command line uses
 
@@ -118,8 +119,7 @@ Feature: balance reads and validates the configuration settings the run names
         | CLM-CFG-030 | vitest                                                           | no step ran vitest                                                                                     | runner-report-not-named | vitest             |
 
     @unit @CLM-CFG-017
-    Scenario: the run will still reach its run verdict, using the configuration settings it could use
+    Scenario: balance still uses the configuration settings it can use beside one it cannot
       given the run named a unit runner it could not use, and cucumber-js as the integration runner
       when balance reconciles the target
-      then the run will reach its run verdict
-      and cucumber-js will be what runs the integration layer
+      then cucumber-js will be what runs the integration layer

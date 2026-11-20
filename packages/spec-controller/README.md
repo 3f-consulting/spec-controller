@@ -69,7 +69,7 @@ A scenario tagged `@unit` raises an evidence obligation: a unit test must exist 
 | `0` | balanced — every obligation has evidence, and that evidence holds |
 | `1` | out-of-balance — the scenarios and the evidence disagree, and the report says where |
 | `2` | usage — the invocation was wrong, or an input could not be read |
-| `3` | not reconciled — the run could not be relied on. Its run verdict says why: `unsound`, when some evidence never ran; `claim-code-errors`, when a claim code is misfiled (the report lists it under `## Errors in the inputs`); or `nothing-to-reconcile`, when there is no Claim Reconciliation the run verdict counts |
+| `3` | not reconciled — the run could not be relied on. Its run verdict says why: `unsound`, when some evidence never ran; `claim-code-errors`, when a claim code is misfiled; `configuration-errors`, when a configuration setting cannot be used (the report lists each error under `## Errors in the inputs`); or `nothing-to-reconcile`, when there is no Claim Reconciliation the run verdict counts |
 | `4` | unexpected error — the run stops on an error that no refusal names, and gives no verdict. One line on stderr names the error |
 
 The tool writes the whole report before it sets the exit code. So a failing run still tells you why.
@@ -85,7 +85,7 @@ The tool writes the whole report before it sets the exit code. So a failing run 
 - an unparseable report, or a report that parses but is not in the shape its runner writes;
 - a corpus the Gherkin parser rejects.
 
-The refusal names the input, the path, and what was wrong with it. A well-formed report with nothing in it is read, not refused. A runner's report with no file at its path, named in a long form or by the CI step that runs the runner, is not refused either: the report names the path under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on. An example is a Vitest run that matched no test file.
+The refusal names the input, the path, and what was wrong with it. A well-formed report with nothing in it is read, not refused. A runner's report with no file at its path, named in a long form or by the CI step that runs the runner, is not refused either: the report names the path under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on, but is not reconciled, and exits `3`. An example is a Vitest run that matched no test file.
 
 **An output location it cannot write is also `2`.** This covers a `--format` path that is read-only, is a directory, is under a regular file, or is in a directory that does not exist. The tool refuses it before it prints any report. The refusal names the location and the reason.
 

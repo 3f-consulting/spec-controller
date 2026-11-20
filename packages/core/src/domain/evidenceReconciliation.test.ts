@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import evidenceReconciliationVariants from "./evidenceReconciliation.variants.json" with { type: "json" };
+import { configurationSettingsNamed } from "../inputs/commandLineSettings.js";
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
+import { settingsFileEntriesFrom, settingsMerged, settingsNamedOf, type SettingsGiven } from "../inputs/settingsFile.js";
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimCodeErrorsOf } from "./claimCodes.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
-import { NO_SETTINGS, type Layer, type TargetConfiguration } from "./configuration.js";
+import { NO_SETTINGS, reportsLocatedOf, runnersFoundOf, type ConfigurationError, type Layer, type TargetConfiguration } from "./configuration.js";
 import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { reconcile, runVerdictOf, stepAccountOf, totalsOf, type EvidenceReconciliation, type ReadersGave, type RunVerdict } from "./evidenceReconciliation.js";
 import { executableClaimsOf, type FeatureFile, type QualityCheckKind } from "./postEvidenceObligation.js";
@@ -26,12 +28,15 @@ const observationOf = ([kind, result, code]: Observed): EvidenceObservation => (
 const scenariosTagged = (...scenarioTags: readonly string[]): string =>
   `@ONE\nFeature: one\n${scenarioTags.map((tags, at) => `\n  ${tags}\n  Scenario: scenario ${at}\n    Given a step\n`).join("")}`;
 
-// The run verdict of the corpus and evidence given, read and reconciled as balance does. Each entry of the corpus is the
-// tags of one.feature's scenario, beside its unit tag, or a whole feature file.
-function runVerdictOfRun(corpus: readonly string[], observed: readonly Observed[], countOnlyExecutableClaims = false): ReturnType<typeof runVerdictOf> {
+function runVerdictOfRun(
+  corpus: readonly string[],
+  observed: readonly Observed[],
+  countOnlyExecutableClaims = false,
+  configurationErrors: readonly ConfigurationError[] = [],
+): ReturnType<typeof runVerdictOf> {
   const features = corpus.map((entry, at) => featureAsWrittenFrom(`f${at}.feature`, entry.includes("Feature:") ? entry : scenariosTagged(`@unit ${entry}`)));
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observed.map(observationOf));
-  return runVerdictOf(claimReconciliations, claimCodeErrorsOf(features), countOnlyExecutableClaims);
+  return runVerdictOf(claimReconciliations, claimCodeErrorsOf(features), configurationErrors, countOnlyExecutableClaims);
 }
 
 // Evidence as a reader gives it: one test's result in one test file, citing the code given, if any, in its title.
@@ -117,6 +122,48 @@ describe("the run will be not reconciled, naming why", () => {
   ] as const)("[%s] a run with %s is not reconciled, naming why", (_clm, _what, corpus, evidence, why) => {
     expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict: "not-reconciled", why });
   });
+
+  const configuredRunOf = ({ settingsFile = "", commandLine = { values: {}, on: [] }, ciYml = "", reportsNotFound = [] }: ConfiguredRun): Partial<ReadersGave> => {
+    const { settings, errors } = settingsMerged(settingsFileEntriesFrom(settingsFile), commandLine);
+    const steps = ciYml === "" ? [] : workflowStepsFrom("ci.yml", ciYml);
+    const named = runnersFoundOf(configurationSettingsNamed(settingsNamedOf(settings)), steps, {}, shellAnswers);
+    return { settings: reportsLocatedOf(named, steps, {}, shellAnswers.reportsNamed, shellAnswers.defaultReportsOf), settingsFileErrors: errors, steps, reportsNotFound };
+  };
+
+  interface ConfiguredRun {
+    readonly settingsFile?: string;
+    readonly commandLine?: SettingsGiven;
+    readonly ciYml?: string;
+    readonly reportsNotFound?: readonly string[];
+  }
+
+  it.each<[string, string, ConfiguredRun, ConfigurationError["kind"]]>([
+    ["CLM-EVR-096", "a settings file with the key unitt", { settingsFile: "unitt: [vitest]\n" }, "configuration-unknown-key"],
+    ["CLM-EVR-096", "a settings file with unit: vitest, a value of the wrong kind", { settingsFile: "unit: vitest\n" }, "configuration-wrong-kind"],
+    ["CLM-EVR-097", "a runner balance found in a workflow, whose step named no report", { ciYml: "jobs:\n  ci:\n    steps:\n      - run: vitest run\n" }, "runner-report-not-named"],
+    ["CLM-EVR-097", "--unit vitest:vitest, a long form with no report", { commandLine: { values: { unit: ["vitest:vitest"] }, on: [] } }, "configuration-wrong-kind"],
+    [
+      "CLM-EVR-097",
+      "--unit playwright:junit:out/playwright.xml, and no file at out/playwright.xml",
+      { commandLine: { values: { unit: ["playwright:junit:out/playwright.xml"] }, on: [] }, reportsNotFound: ["out/playwright.xml"] },
+      "runner-report-not-read",
+    ],
+    [
+      "CLM-EVR-097",
+      "--not-check ci.yml:ci:No such step, with ci.yml read",
+      { commandLine: { values: { "not-check": ["ci.yml:ci:No such step"] }, on: [] }, ciYml: "jobs:\n  ci:\n    steps:\n      - uses: actions/checkout@v4\n" },
+      "not-checks-entry-matches-no-step",
+    ],
+    ["CLM-EVR-097", "--not-check Install dependencies", { commandLine: { values: { "not-check": ["Install dependencies"] }, on: [] } }, "not-checks-entry-not-a-step-name"],
+  ])("[%s] a run with %s, and only balanced Claim Reconciliations, is not reconciled, because of configuration errors", (_clm, _what, configured, kind) => {
+    const features = [featureAsWrittenFrom("f0.feature", scenariosTagged("@unit @CLM-ONE-001"))];
+    const { runVerdict, errorsInTheInputs } = reconcile({ ...readersGaveOf(features, [["unit", "passed", "ONE-001"]], false), ...configuredRunOf(configured) });
+
+    expect({ runVerdict, configurationErrors: errorsInTheInputs.configurationErrors.map((error) => error.kind) }).toEqual({
+      runVerdict: { verdict: "not-reconciled", why: "configuration-errors" },
+      configurationErrors: [kind],
+    });
+  });
 });
 
 describe("a run counting only the executable claims is balanced or out of balance as its executable claims call for", () => {
@@ -161,14 +208,32 @@ describe("a run counting only the executable claims is not reconciled for a reas
   });
 });
 
+describe("a run counting only the executable claims is not reconciled when it has a configuration error", () => {
+  it("[CLM-EVR-102] a run with a claim asking for unit evidence, a passing unit test citing it, and a configuration error, reconciled counting only the executable claims, is not reconciled, because of configuration errors", () => {
+    const features = [featureAsWrittenFrom("f0.feature", scenariosTagged("@unit @CLM-ONE-001"))];
+    const settingsFileErrors: readonly ConfigurationError[] = [{ kind: "configuration-unknown-key", entry: "unitt" }];
+
+    expect(reconcile({ ...readersGaveOf(features, [["unit", "passed", "ONE-001"]], false, true), settingsFileErrors }).runVerdict).toEqual({
+      verdict: "not-reconciled",
+      why: "configuration-errors",
+    });
+  });
+});
+
 describe("when several reasons apply, the run verdict follows a fixed order among them", () => {
+  const configurationError: readonly ConfigurationError[] = [{ kind: "configuration-unknown-key", entry: "unitt" }];
+
   it.each([
-    ["CLM-EVR-009", "evidence that never ran and a claim out of balance", ["@CLM-ONE-001"], [["unit", "never-ran", "ONE-009"]], "unsound"],
-    ["CLM-EVR-010", "evidence that never ran and a claim code error", ["@CLM-TWO-001"], [["unit", "never-ran", "TWO-001"]], "unsound"],
-    ["CLM-EVR-011", "a claim code error and a claim out of balance", ["@CLM-TWO-001"], [["unit", "failed", "TWO-001"]], "claim-code-errors"],
-    ["CLM-EVR-012", "a corpus whose only scenario is tagged with two codes", ["@CLM-ONE-001 @CLM-ONE-002"], [], "claim-code-errors"],
-  ] as const)("[%s] a run with %s is not reconciled, naming the first reason", (_clm, _what, corpus, evidence, why) => {
-    expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict: "not-reconciled", why });
+    ["CLM-EVR-009", "evidence that never ran and a claim out of balance", ["@CLM-ONE-001"], [["unit", "never-ran", "ONE-009"]], [], "unsound"],
+    ["CLM-EVR-010", "evidence that never ran and a claim code error", ["@CLM-TWO-001"], [["unit", "never-ran", "TWO-001"]], [], "unsound"],
+    ["CLM-EVR-098", "evidence that never ran and a configuration error", ["@CLM-ONE-001"], [["unit", "never-ran", "ONE-001"]], configurationError, "unsound"],
+    ["CLM-EVR-011", "a claim code error and a claim out of balance", ["@CLM-TWO-001"], [["unit", "failed", "TWO-001"]], [], "claim-code-errors"],
+    ["CLM-EVR-012", "a corpus whose only scenario is tagged with two codes", ["@CLM-ONE-001 @CLM-ONE-002"], [], [], "claim-code-errors"],
+    ["CLM-EVR-099", "a claim code error and a configuration error", ["@CLM-TWO-001"], [["unit", "passed", "TWO-001"]], configurationError, "claim-code-errors"],
+    ["CLM-EVR-100", "a configuration error and a claim out of balance", ["@CLM-ONE-001"], [["unit", "failed", "ONE-001"]], configurationError, "configuration-errors"],
+    ["CLM-EVR-101", "a configuration error, with no feature files and no Evidence Observation", [], [], configurationError, "configuration-errors"],
+  ] as const)("[%s] a run with %s is not reconciled, naming the first reason", (_clm, _what, corpus, evidence, configurationErrors, why) => {
+    expect(runVerdictOfRun(corpus, evidence, false, configurationErrors)).toEqual({ verdict: "not-reconciled", why });
   });
 });
 

@@ -7,7 +7,7 @@
       "properties": {
         "schemaVersion": {
           "type": "number",
-          "const": 7
+          "const": 8
         },
         "claimReconciliations": {
           "type": "array",
@@ -376,6 +376,7 @@
               "enum": [
                 "unsound",
                 "claim-code-errors",
+                "configuration-errors",
                 "nothing-to-reconcile"
               ]
             }

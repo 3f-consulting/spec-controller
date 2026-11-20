@@ -118,7 +118,7 @@ Your first run against an unannotated pipeline fails, and the report is right to
 
 The route from a first run to a gate has three steps. Start with `--exit-zero`, and watch the report. Name a few scenarios, and cite them from their tests. When those balance, replace `--exit-zero` with `--written-claims-only`.
 
-With `--written-claims-only`, the run verdict counts only the executable claims: the claims your feature files write. A test that cites no claim code, or a code no scenario has, is still listed in the report under the unnamed claim or its phantom claim, but it does not turn the run red, and one that never ran does not make the run unsound. A written claim whose evidence is missing, failing, cannot fail or was not asked for is still out of balance. A run with no executable claim has nothing to reconcile, and a claim code error still leaves the run not reconciled. The report's provenance says when the run verdict counted only the executable claims. When every test cites a scenario, drop the flag.
+With `--written-claims-only`, the run verdict counts only the executable claims: the claims your feature files write. A test that cites no claim code, or a code no scenario has, is still listed in the report under the unnamed claim or its phantom claim, but it does not turn the run red, and one that never ran does not make the run unsound. A written claim whose evidence is missing, failing, cannot fail or was not asked for is still out of balance. A run with no executable claim has nothing to reconcile, and a claim code error or a configuration error still leaves the run not reconciled. The report's provenance says when the run verdict counted only the executable claims. When every test cites a scenario, drop the flag.
 
 ### Name your first non-checks
 
@@ -614,7 +614,7 @@ written-claims-only: true
 - **Every flag but `--help` and `--config` is a key.** A flag that repeats takes a list, a flag with a value takes one value, and a flag with no value takes `true`.
 - **The command line wins.** A setting given on the command line replaces the file's setting of the same name, and the file's other settings stand. A setting with no value is turned off by removing it from the file.
 - **Paths are read from the file's folder:** `features`, `ci`, `ci-steps`, `package-json`, a long form's report, and `format`'s path. An input the file names that does not exist stops the run, as a named input does.
-- **An entry `balance` cannot use is named and left out,** and the run goes on: a key that names no setting reads `configuration-unknown-key`, and a value of the wrong kind reads `configuration-wrong-kind`. A value the command line would refuse, such as a `format` `balance` does not write, stops the run as it would there (see [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped)).
+- **An entry `balance` cannot use is named and left out,** and the run goes on, but is not reconciled: a key that names no setting reads `configuration-unknown-key`, and a value of the wrong kind reads `configuration-wrong-kind`. A value the command line would refuse, such as a `format` `balance` does not write, stops the run as it would there (see [Configuration the run cannot use is named, and the run is not reconciled](#configuration-the-run-cannot-use-is-named-and-the-run-is-not-reconciled)).
 - **A file that does not parse as YAML, or is not a mapping of settings, stops the run** at exit `2`, naming the file. An empty file sets nothing. A default file that does not exist is no settings file.
 - The provenance lists the settings file among the inputs the run read.
 
@@ -709,7 +709,7 @@ npx spec-controller balance --deferral-tag deferred --deferral-tag @blocked
 
 **`--strict` reads every claim as if nothing were put off.** It ignores a deferral tag, so the scenario is an executable claim again, and it reads `@<quality-check-kind>pending` as `@<quality-check-kind>`, which raises that evidence obligation. It changes no exit code.
 
-### Configuration the run cannot use is named, never dropped
+### Configuration the run cannot use is named, and the run is not reconciled
 
 A run names each configuration setting it cannot use, with one of these codes:
 
@@ -722,7 +722,7 @@ A run names each configuration setting it cannot use, with one of these codes:
 | `not-checks-entry-matches-no-step` | a `--not-check` that matches no step of a workflow the run read makes no step a non-check |
 | `not-checks-entry-not-a-step-name` | a `--not-check` that does not name a step as `<workflow file>:<job id>:<step name>` makes no step a non-check |
 
-None of these codes refuses the run. Each is a line in `## Errors in the inputs`, right after the run provenance, giving its code, then the setting as written: the runner for `runner-report-not-named`, the report's path for `runner-report-not-read`, and the key for an entry of the settings file. The rest of the report is the one you would get without that entry. The JSON lists them under `errorsInTheInputs.configurationErrors`.
+None of these codes refuses the run. Each is a line in `## Errors in the inputs`, right after the run provenance, giving its code, then the setting as written: the runner for `runner-report-not-named`, the report's path for `runner-report-not-read`, and the key for an entry of the settings file. The rest of the report is the one you would get without that entry, except its run verdict: any of these codes leaves the run *not reconciled, for configuration errors*, and it exits `3`, even under `--exit-zero`. Claim code errors, and evidence that never ran, come before it. The JSON lists them under `errorsInTheInputs.configurationErrors`.
 
 ### Limits
 
@@ -886,7 +886,7 @@ Two limits:
 The output is the **Evidence Reconciliation**: the whole reconciliation. It comes in two renderings of the same model:
 
 - **Markdown**, for people. It opens with its title, `# Evidence Reconciliation`. Its sections then come in a fixed order: `## Run provenance`; `## Errors in the inputs`, when there are any; `## Run integrity`, when some evidence never ran; `## Summary`, with the run verdict and the totals; and `## Claim Reconciliations`. It also has `## Step account` when the run read a step from its CI workflows. Every table has a key above it that says what each column means. The Markdown leaves out a section the run had nothing for, except `## Claim Reconciliations`, which reads *None.* when there are none.
-- **JSON**, for machines: the same model, for comparing two runs, feeding a dashboard, or building automation on top. Its top-level keys are `schemaVersion`, `claimReconciliations`, `runVerdict`, `totals`, `stepAccount`, `provenance`, `errorsInTheInputs` and `runIntegrity`. Every one is present, and a part the run had nothing for is empty. `runVerdict.verdict` is the run verdict (`balanced`, `out-of-balance` or `not-reconciled`). A `not-reconciled` verdict has `runVerdict.why` (`unsound`, `claim-code-errors` or `nothing-to-reconcile`), so automation reads the reason there instead of working it out from the Claim Reconciliations. The JSON gives every count, zero included.
+- **JSON**, for machines: the same model, for comparing two runs, feeding a dashboard, or building automation on top. Its top-level keys are `schemaVersion`, `claimReconciliations`, `runVerdict`, `totals`, `stepAccount`, `provenance`, `errorsInTheInputs` and `runIntegrity`. Every one is present, and a part the run had nothing for is empty. `runVerdict.verdict` is the run verdict (`balanced`, `out-of-balance` or `not-reconciled`). A `not-reconciled` verdict has `runVerdict.why` (`unsound`, `claim-code-errors`, `configuration-errors` or `nothing-to-reconcile`), so automation reads the reason there instead of working it out from the Claim Reconciliations. The JSON gives every count, zero included.
 
 Both include a **provenance** that records what was reconciled: the target, the source SHA, the tool's commit when the tool runs from its own checkout, the tool version, the time the run started, each layer's runners, and each input the run read, with its path. So a reconciliation is reproducible and attributable. The Markdown gives each layer a line naming its runners, each once however many reports it has, and marks a runner balance found in a workflow as *found in a workflow*, so a runner read at its usual layer by a guess is visible; a layer with no runner reads *none*. The JSON lists each layer's runners under `provenance.runners`, with `found: true` on a found one. The Markdown gives a line of its own to each input the run read, including one read by default, and leaves out an input the run did not read. The JSON lists every input, with a `path` only for one the run read.
 
@@ -911,6 +911,7 @@ The package ships a JSON Schema that states the JSON's structure: `dist/spec-rec
 | out of balance | `out-of-balance` | `1` | at least one Claim Reconciliation is out of balance |
 | not reconciled, as unsound | `not-reconciled`, `unsound` | `3` | some evidence never ran, so the run cannot be relied on to show a disagreement; under `--written-claims-only`, only evidence citing an executable claim counts |
 | not reconciled, for claim code errors | `not-reconciled`, `claim-code-errors` | `3` | a claim code is misfiled (see [Claim code errors](#claim-code-errors)) |
+| not reconciled, for configuration errors | `not-reconciled`, `configuration-errors` | `3` | a configuration setting cannot be used (see [Configuration the run cannot use is named, and the run is not reconciled](#configuration-the-run-cannot-use-is-named-and-the-run-is-not-reconciled)) |
 | not reconciled, with nothing to reconcile | `not-reconciled`, `nothing-to-reconcile` | `3` | there is no Claim Reconciliation the run verdict counts, so the run has no basis for a verdict |
 
 The totals follow, in groups:
@@ -1009,10 +1010,10 @@ When Cucumber runs an Outline with a `clm` column, Cucumber's own result for eac
 | `0` | balanced; or out of balance under `--exit-zero` |
 | `1` | out of balance |
 | `2` | usage error |
-| `3` | not reconciled: `unsound`, `claim-code-errors` or `nothing-to-reconcile` |
+| `3` | not reconciled: `unsound`, `claim-code-errors`, `configuration-errors` or `nothing-to-reconcile` |
 | `4` | unexpected error: the run stops before a verdict, and one line on stderr names the error |
 
-When several reasons apply, this order decides: unsound, then claim code errors, then nothing to reconcile, all before out of balance. `--exit-zero` changes only `1`, to `0`.
+When several reasons apply, this order decides: unsound, then claim code errors, then configuration errors, then nothing to reconcile, all before out of balance. `--exit-zero` changes only `1`, to `0`.
 
 An unexpected error (`4`) is not in that order. A run exits `4` only when it meets the error before it has an exit code. An error after the run has its exit code does not change that code: one line goes to stderr, `[unexpected-error] spec-controller hit an unexpected error: <name>: <message>`, the run keeps its code, and the report stands as written. A run writes at most one such line.
 
@@ -1022,7 +1023,7 @@ An unexpected error (`4`) is not in that order. A run exits `4` only when it mee
 
 Every error below refuses the command as given. That is a usage error, and the run exits `2`. After a refusal of the command line, the tool prints the help for what was asked for, which lists what was allowed.
 
-An error in the inputs is not a refusal. Its line in the report's `## Errors in the inputs` gives its code. Those codes are listed under [Configuration the run cannot use is named, never dropped](#configuration-the-run-cannot-use-is-named-never-dropped) and [Claim code errors](#claim-code-errors).
+An error in the inputs is not a refusal. Its line in the report's `## Errors in the inputs` gives its code. Those codes are listed under [Configuration the run cannot use is named, and the run is not reconciled](#configuration-the-run-cannot-use-is-named-and-the-run-is-not-reconciled) and [Claim code errors](#claim-code-errors).
 
 **The command line:**
 
@@ -1210,6 +1211,8 @@ The tool writes the code under `CLM`. Its number is one past the highest number 
 Name the step with `--not-check`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
 
 **The run verdict reads *not reconciled, for claim code errors*.** One of these is true: the corpus files a claim code under the wrong feature file, or in a file that declares no feature code; two files declare one feature code; a scenario carries more than one claim code; or an Outline carries a claim code beside a `clm` column. `## Errors in the inputs` names each error by its handle and the files it is about. A misfiled code leaves every Claim Reconciliation reconciling, so the rest of the report is unchanged. A scenario that carries several claim codes, or an Outline that carries a claim code beside a `clm` column, has no Claim Reconciliation under any of them. The run exits `3` until the codes are filed correctly. See [Claim code errors](#claim-code-errors).
+
+**The run verdict reads *not reconciled, for configuration errors*.** `## Errors in the inputs` names each setting the run could not use by its code, such as a misspelt key in `spec-controller.yml`, a runner whose report `balance` cannot find, or a `--not-check` that names no step. The rest of the report is the one you would get without that setting. The run exits `3`, even under `--exit-zero`, until each one is fixed. See [Configuration the run cannot use is named, and the run is not reconciled](#configuration-the-run-cannot-use-is-named-and-the-run-is-not-reconciled).
 
 **A row reads `duplicate-claim-code`.** Two scenarios carry that claim code. Each has a Claim Reconciliation of its own, and its row is named by the code and its feature file. Give one of them a code of its own. While two scenarios share the code, the run exits `1`.
 

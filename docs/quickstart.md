@@ -91,9 +91,9 @@ npx spec-controller balance \
 ```
 
 - **`--unit vitest:vitest:reports/vitest.json` names your unit runner and its report:** the runner, the format of the report it writes, and the report's path. `balance` reads that report, and each result in it is unit evidence. This is the runner's long form, which names a report wherever it was written.
-- **Every path you pass must exist.** A report's path names a file your tools have already written. A report with no file at its path is named under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on without it. Leave out any input you don't have. The command refuses a folder that does not exist, so if you have no `features/` folder yet, leave out `--features`.
+- **Every path you pass must exist.** A report's path names a file your tools have already written. A report with no file at its path is named under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on without it, but is not reconciled. Leave out any input you don't have. The command refuses a folder that does not exist, so if you have no `features/` folder yet, leave out `--features`.
 - **`--target` names the project in the report.** Without `--target`, the report uses the name of the git checkout's `origin`. With no `origin`, the report reads `unknown-target`.
-- **`--exit-zero` stops the build going red while you watch.** A first run against a pipeline with no citations goes red, because every fitness function (each CI step treated as a check) cites nothing. Every evidence observation then posts to the **unnamed claim**, which collects the evidence that names no scenario. Without `--exit-zero`, `balance` exits `1`. With it, you get the same report, but an out-of-balance run verdict exits `0`. Remove the flag when you are ready to gate.
+- **`--exit-zero` stops the build going red while you watch.** A first run against a pipeline with no citations goes red, because every fitness function (each CI step treated as a check) cites nothing. Every evidence observation then posts to the **unnamed claim**, which collects the evidence that names no scenario. Without `--exit-zero`, `balance` exits `1`. With it, you get the same report, but an out-of-balance run verdict exits `0`. It does not keep a run with a configuration error green: that run is not reconciled, and exits `3`. Remove the flag when you are ready to gate.
 
 For the report command of every other runner, see [Every report, and the whole command](./user-guide.md#every-report-and-the-whole-command).
 
@@ -251,6 +251,7 @@ A run is not reconciled when you cannot rely on it. Its run verdict says why:
 
 - `unsound` when some evidence never ran.
 - `claim-code-errors` when a claim code is misfiled.
+- `configuration-errors` when a configuration setting cannot be used.
 - `nothing-to-reconcile` when there is no claim for the run verdict to count.
 
 See [Exit codes](./user-guide.md#exit-codes).

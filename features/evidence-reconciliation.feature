@@ -6,10 +6,11 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
 
   The run verdict is balanced, out of balance, or not reconciled. A run is not reconciled when
   balance cannot rely on what it read, and the verdict names why: unsound, when some evidence
-  never ran; claim code errors, when balance finds a claim code error; or nothing to reconcile,
-  when there are no Claim Reconciliations to count. When several reasons apply, unsound comes
-  before claim code errors, and claim code errors before nothing to reconcile; each comes before
-  out of balance.
+  never ran; claim code errors, when balance finds a claim code error; configuration errors, when
+  balance finds a configuration error; or nothing to reconcile, when there are no Claim
+  Reconciliations to count. When several reasons apply, unsound comes before claim code errors,
+  claim code errors before configuration errors, and configuration errors before nothing to
+  reconcile; each comes before out of balance.
 
   The totals count the Claim Reconciliations, the Quality Check Reconciliations by kind and
   outcome, where each Evidence Observation was filed, the excluded claim code occurrences and the
@@ -39,11 +40,13 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       then the run verdict will be not reconciled, because <why>
 
       Examples:
-        | clm         | what it has                                                    | why                  |
-        | CLM-EVR-004 | an Evidence Observation that never ran                         | unsound              |
-        | CLM-EVR-005 | a claim code error, and only balanced Claim Reconciliations    | claim code errors    |
-        | CLM-EVR-006 | no feature files, and no Evidence Observation                  | nothing to reconcile |
-        | CLM-EVR-008 | a feature corpus with no scenario, and no Evidence Observation | nothing to reconcile |
+        | clm         | what it has                                                                                               | why                  |
+        | CLM-EVR-004 | an Evidence Observation that never ran                                                                    | unsound              |
+        | CLM-EVR-005 | a claim code error, and only balanced Claim Reconciliations                                               | claim code errors    |
+        | CLM-EVR-096 | a settings file with the key unitt, and only balanced Claim Reconciliations                               | configuration errors |
+        | CLM-EVR-097 | a runner balance found in a workflow, whose step named no report, and only balanced Claim Reconciliations | configuration errors |
+        | CLM-EVR-006 | no feature files, and no Evidence Observation                                                             | nothing to reconcile |
+        | CLM-EVR-008 | a feature corpus with no scenario, and no Evidence Observation                                            | nothing to reconcile |
 
     @unit
     Scenario Outline: when several reasons apply, the run verdict follows a fixed order among them
@@ -52,11 +55,15 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
       then the run verdict will be not reconciled, because <why>
 
       Examples:
-        | clm         | what it has                                                                        | why               |
-        | CLM-EVR-009 | an Evidence Observation that never ran and a Claim Reconciliation out of balance   | unsound           |
-        | CLM-EVR-010 | an Evidence Observation that never ran and a claim code error                      | unsound           |
-        | CLM-EVR-011 | a claim code error and a Claim Reconciliation out of balance                       | claim code errors |
-        | CLM-EVR-012 | a corpus whose only scenario is tagged with two codes, and no Evidence Observation | claim code errors |
+        | clm         | what it has                                                                        | why                  |
+        | CLM-EVR-009 | an Evidence Observation that never ran and a Claim Reconciliation out of balance   | unsound              |
+        | CLM-EVR-010 | an Evidence Observation that never ran and a claim code error                      | unsound              |
+        | CLM-EVR-098 | an Evidence Observation that never ran and a configuration error                   | unsound              |
+        | CLM-EVR-011 | a claim code error and a Claim Reconciliation out of balance                       | claim code errors    |
+        | CLM-EVR-012 | a corpus whose only scenario is tagged with two codes, and no Evidence Observation | claim code errors    |
+        | CLM-EVR-099 | a claim code error and a configuration error                                       | claim code errors    |
+        | CLM-EVR-100 | a configuration error and a Claim Reconciliation out of balance                    | configuration errors |
+        | CLM-EVR-101 | a configuration error, with no feature files and no Evidence Observation           | configuration errors |
 
   Rule: a team can gate on the claims it has written before every test cites one
 
@@ -91,6 +98,13 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-093 | one asking for unit evidence, whose unit test never ran | nothing                                                 | unsound              |
         | CLM-EVR-094 | none                                                    | a passing unit test citing no code                      | nothing to reconcile |
         | CLM-EVR-095 | none                                                    | a unit test citing a code no claim has, which never ran | nothing to reconcile |
+
+    @unit @CLM-EVR-102
+    Scenario: a run counting only the executable claims is not reconciled when it has a configuration error
+      given a run had one executable claim asking for unit evidence, with a passing unit test citing it
+      and it had a configuration error
+      when balance reconciles it counting only the executable claims
+      then the run verdict will be not reconciled, because configuration errors
 
   Rule: the summary counts what was reconciled
 

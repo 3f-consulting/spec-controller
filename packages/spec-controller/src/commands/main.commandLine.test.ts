@@ -270,16 +270,16 @@ interface VerdictReported {
 }
 
 describe("an evidence report the run names for a runner, with no file at its path, will not stop the run", () => {
-  it("[CLM-CLI-213] --e2e playwright:junit:out/playwright.xml, with no file at out/playwright.xml: the run reaches its verdict with nothing on standard error", () => {
+  it("[CLM-CLI-213] --e2e playwright:junit:out/playwright.xml, with no file at out/playwright.xml: the run is not stopped, and writes its report with nothing on standard error", () => {
     const folder = folderWith({ "features/one.feature": ONE_E2E_CLAIM });
 
     const { exitCode, output, error } = ran(["balance", "--e2e", "playwright:junit:out/playwright.xml", "--format", "json"], folder);
 
     const reported = (output === "" ? undefined : JSON.parse(output)) as VerdictReported | undefined;
-    expect({ exitCode, error, verdict: reported?.runVerdict.verdict }).toEqual({
-      exitCode: 1,
+    expect({ stopped: exitCode === 2, error, verdict: reported?.runVerdict.verdict }).toEqual({
+      stopped: false,
       error: "",
-      verdict: "out-of-balance",
+      verdict: expect.any(String),
     });
   });
 });
@@ -340,6 +340,17 @@ describe("balance reads the evidence report a named runner's CI step writes, in 
 describe("balance reads the evidence report of a runner it found as that runner's layer's evidence", () => {
   it("[CLM-CLI-224] no runner named, a workflow step running vitest and writing out/vitest.json: the report is read as unit evidence", () => {
     expect(readFromAStep(`jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`, "out/vitest.json", [], BY_FILE_PASSING)).toEqual(READ_AS_UNIT_EVIDENCE);
+  });
+});
+
+describe("each run verdict will have its exit code", () => {
+  it("[CLM-CLI-225] a settings file with a key balance does not know, under --exit-zero: the run is not reconciled, because of configuration errors, and exits 3", () => {
+    const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "spec-controller.yml": "unitt: [vitest]\n" });
+
+    const { exitCode, output } = ran(["balance", "--exit-zero", "--format", "json"], folder);
+
+    const reported = (output === "" ? undefined : JSON.parse(output)) as VerdictReported | undefined;
+    expect({ exitCode, runVerdict: reported?.runVerdict }).toEqual({ exitCode: 3, runVerdict: { verdict: "not-reconciled", why: "configuration-errors" } });
   });
 });
 

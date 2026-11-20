@@ -12,7 +12,7 @@ import { reportsLocatedOf, runnersFoundOf, targetConfigurationOf, type Configura
 import { NO_RUNNERS } from "./configuration.test-utils.js";
 import { runVerdictOf } from "./evidenceReconciliation.js";
 import { executableClaimsOf } from "./postEvidenceObligation.js";
-import { disposedStepsOf, fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
+import { stepDispositionOf } from "./postEvidenceObservation.js";
 import type { CiStep } from "./workflowSteps.js";
 
 const NONE: TargetConfiguration = { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] };
@@ -38,7 +38,7 @@ describe("balance takes each entry of the settings file as the command-line sett
     // ONE-002 names no scenario, so its passing test is filed on a phantom claim.
     const claimReconciliations = claimReconciliationsOf(claims, [passingTestCiting("001"), passingTestCiting("002")]);
 
-    expect(runVerdictOf(claimReconciliations, [], settings.on.includes("written-claims-only"))).toEqual({ verdict: "balanced" });
+    expect(runVerdictOf(claimReconciliations, [], [], settings.on.includes("written-claims-only"))).toEqual({ verdict: "balanced" });
   });
 
   it.each([...settingsFileVariants["list-settings"].variants])("[CLM-CFG-031] a settings file that had %s: [one, two] is taken as that setting given one, then two, on the command line", (name) => {
@@ -394,21 +394,11 @@ describe("balance reads a named runner's evidence reports from where the runner 
   });
 });
 
-describe("the run will still reach its run verdict, using the configuration settings it could use", () => {
-  it("[CLM-CFG-017] a run named --unit vitest:vitest and --integration cucumber-js reaches its run verdict, cucumber-js running the integration layer", () => {
+describe("balance still uses the configuration settings it can use beside one it cannot", () => {
+  it("[CLM-CFG-017] a run named --unit vitest:vitest and --integration cucumber-js has cucumber-js run the integration layer", () => {
     const steps = workflowStepsFrom("ci.yml", "jobs:\n  ci:\n    steps:\n      - run: cucumber-js\n");
     const configuration = takenFrom({ runners: { unit: ["vitest:vitest"], integration: ["cucumber-js"] } }, steps);
-    const claims = executableClaimsOf([featureAsWrittenFrom("one.feature", "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: s\n    Given a step\n")], {
-      deferralTags: configuration.deferralTags,
-      strict: false,
-    });
-    const passingUnitTest = { cites: [{ featureCode: "ONE", number: "001" }], result: "passed", kind: "unit", place: "one.test.ts" } as const;
 
-    const runVerdict = runVerdictOf(claimReconciliationsOf(claims, [passingUnitTest, ...fitnessObservationsOf(disposedStepsOf(steps, configuration, {}, shellAnswers, []), [])]), [], false);
-
-    expect({ runVerdict, integrationStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({
-      runVerdict: { verdict: "balanced" },
-      integrationStep: "runner",
-    });
+    expect(stepDispositionOf(steps[0]!, configuration, {}, shellAnswers)).toBe("runner");
   });
 });

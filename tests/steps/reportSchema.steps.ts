@@ -13,20 +13,23 @@ const SCHEMA = resolve("packages/spec-controller/dist/spec-reconciliation.schema
 type Report = Record<string, unknown> & { readonly totals: { readonly claimReconciliations: Record<string, unknown> } };
 
 interface SchemaCheck {
-  report: Report;
-  accepted: boolean;
+  reports: readonly Report[];
+  accepted: readonly boolean[];
   errors: string;
 }
 
-// The JSON report the built command writes for a target with one feature file.
-function realReport(): Report {
+function realReport(settingsFile: string | undefined): Report {
   const folder = temporaryDirectory("report-schema-");
   mkdirSync(join(folder, "features"));
   writeFileSync(join(folder, "features", "one.feature"), "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: adds one\n    Given a step\n");
-  const run = spawnSync(process.execPath, [CLI, "balance", "--features", "features", "--format", "json"], { cwd: folder, encoding: "utf8" });
+  const config = settingsFile === undefined ? [] : ["--config", "spec-controller.yml"];
+  if (settingsFile !== undefined) writeFileSync(join(folder, "spec-controller.yml"), settingsFile);
+  const run = spawnSync(process.execPath, [CLI, "balance", ...config, "--features", "features", "--format", "json"], { cwd: folder, encoding: "utf8" });
   assert.notEqual(run.stdout, "", `the command wrote no report, exiting ${run.status}: ${run.stderr}`);
   return JSON.parse(run.stdout) as Report;
 }
+
+const REAL_RUNS = [undefined, "unitt: [vitest]\n"];
 
 // Each report checked, as a real run's report with one change made to it.
 const WRITTEN: Readonly<Record<string, (report: Report) => Report>> = {
@@ -37,15 +40,16 @@ const WRITTEN: Readonly<Record<string, (report: Report) => Report>> = {
 };
 
 Given(/^(a JSON report .+) was written$/, function (this: SchemaCheck, written: string) {
-  this.report = WRITTEN[written]!(realReport());
+  this.reports = REAL_RUNS.map((settingsFile) => WRITTEN[written]!(realReport(settingsFile)));
 });
 
 When("it is checked against the schema", function (this: SchemaCheck) {
   const validate = new Ajv({ allErrors: true }).compile(JSON.parse(readFileSync(SCHEMA, "utf8")));
-  this.accepted = validate(this.report);
-  this.errors = JSON.stringify(validate.errors);
+  const checked = this.reports.map((report) => ({ accepted: validate(report), errors: JSON.stringify(validate.errors) }));
+  this.accepted = checked.map(({ accepted }) => accepted);
+  this.errors = checked.map(({ errors }) => errors).join("\n");
 });
 
 Then(/^it will be (accepted|refused)$/, function (this: SchemaCheck, result: string) {
-  assert.equal(this.accepted, result === "accepted", this.errors);
+  assert.deepEqual(this.accepted, this.accepted.map(() => result === "accepted"), this.errors);
 });

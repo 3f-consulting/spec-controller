@@ -20,7 +20,7 @@ import { provenanceOf, provenanceRunnersOf, type Provenance, type ProvenanceInpu
 export type RunVerdict =
   | { readonly verdict: "balanced" }
   | { readonly verdict: "out-of-balance" }
-  | { readonly verdict: "not-reconciled"; readonly why: "unsound" | "claim-code-errors" | "nothing-to-reconcile" };
+  | { readonly verdict: "not-reconciled"; readonly why: "unsound" | "claim-code-errors" | "configuration-errors" | "nothing-to-reconcile" };
 
 // One row of the Quality Check Reconciliations by kind. Every outcome has a count, zero included.
 export interface QualityCheckCounts {
@@ -85,14 +85,17 @@ export interface EvidenceReconciliation {
   readonly runIntegrity: RunIntegrity;
 }
 
-// Not reconciled, first because evidence never ran, then for claim code errors, then for nothing to reconcile; otherwise
-// balanced only when every Claim Reconciliation counted is. Counting only the executable claims leaves the phantom claims
-// and the unnamed claim out of the never-ran check and the balance.
-export function runVerdictOf(claimReconciliations: readonly ClaimReconciliation[], claimCodeErrors: readonly ClaimCodeError[], countOnlyExecutableClaims: boolean): RunVerdict {
+export function runVerdictOf(
+  claimReconciliations: readonly ClaimReconciliation[],
+  claimCodeErrors: readonly ClaimCodeError[],
+  configurationErrors: readonly ConfigurationError[],
+  countOnlyExecutableClaims: boolean,
+): RunVerdict {
   const counted = countOnlyExecutableClaims ? claimReconciliations.filter(({ claim }) => isExecutable(claim)) : claimReconciliations;
   const neverRan = counted.some(({ qualityCheckReconciliations }) => qualityCheckReconciliations.some(({ outcome }) => outcome === "never-ran"));
   if (neverRan) return { verdict: "not-reconciled", why: "unsound" };
   if (claimCodeErrors.length > 0) return { verdict: "not-reconciled", why: "claim-code-errors" };
+  if (configurationErrors.length > 0) return { verdict: "not-reconciled", why: "configuration-errors" };
   if (counted.length === 0) return { verdict: "not-reconciled", why: "nothing-to-reconcile" };
   return { verdict: counted.every(({ verdict }) => verdict === "balanced") ? "balanced" : "out-of-balance" };
 }
@@ -247,7 +250,7 @@ export function evidenceReconciliationOf({
   );
   return {
     claimReconciliations,
-    runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors, countOnlyExecutableClaims),
+    runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors, configurationErrors, countOnlyExecutableClaims),
     totals: totalsOf(claimReconciliations, features, deferredScenariosOf(features, claimReading)),
     stepAccount,
     provenance: { ...provenance, countedOnlyExecutableClaims: countOnlyExecutableClaims, runners: provenanceRunnersOf(runners) },
