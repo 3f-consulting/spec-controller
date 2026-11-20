@@ -683,9 +683,9 @@ const passedCitingOne001: Readonly<Record<string, () => EvidenceObservation[]>> 
         { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] },
         {},
         shellAnswers,
-        [{ key: "CLM-ONE-001", result: "passed" }],
+        [{ key: "CLM-ONE-001", result: "passed", jobSucceeded: false }],
       ),
-      [{ key: "CLM-ONE-001", result: "passed" }],
+      [{ key: "CLM-ONE-001", result: "passed", jobSucceeded: false }],
     ),
 };
 

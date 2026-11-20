@@ -150,6 +150,13 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-042 | RSpec's evidence report             | it was skipped or pending                |
         | CLM-OBS-043 | Cucumber's evidence report          | a step was skipped and none failed       |
 
+    @unit @CLM-OBS-169
+    Scenario: balance posts nothing for a fitness function's step skipped in a job that succeeded
+      given a workflow had a fitness function's step with the id CLM-ONE-001, in ci.yml
+      and the step record said that step was skipped, in a job that succeeded
+      when balance posts the evidence
+      then nothing will be posted
+
     @unit @CLM-OBS-106
     Scenario: balance posts nothing for a Cucumber scenario that had no steps
       given Cucumber's evidence report had a scenario tagged @CLM-ONE-001 with no steps
@@ -170,23 +177,24 @@ Feature: Evidence Observations are posted, each to its claim
       then an Evidence Observation will be posted, as never-ran, citing <cited> and naming <named>
 
       Examples:
-        | clm         | source                            | what could not run                                                                                            | cited         | named                         |
-        | CLM-OBS-044 | Vitest's evidence report          | a test file failed to collect                                                                                 | no claim code | the file and its error        |
-        | CLM-OBS-045 | Jest's evidence report            | a test file failed to run                                                                                     | no claim code | the file and its error        |
-        | CLM-OBS-046 | pytest's evidence report          | a test file failed to collect                                                                                 | no claim code | the file and its error        |
-        | CLM-OBS-047 | Go's evidence report              | a package failed to compile                                                                                   | no claim code | the package and its error     |
-        | CLM-OBS-100 | Go's evidence report              | TestMain failed before any test ran                                                                           | no claim code | the package and its error     |
-        | CLM-OBS-048 | JUnit 5 in Java's evidence report | a class's setup before all its tests failed                                                                   | no claim code | the class and its error       |
-        | CLM-OBS-049 | RSpec's evidence report           | a spec file failed to load                                                                                    | no claim code | the file and its error        |
-        | CLM-OBS-129 | RSpec's evidence report           | a spec file failed to load, and the run wrote no other message                                                | no claim code | the file and its error        |
-        | CLM-OBS-099 | RSpec's evidence report           | the suite failed to load, naming no spec file                                                                 | no claim code | the error                     |
-        | CLM-OBS-050 | pytest's evidence report          | the setup of a test citing CLM-ONE-001 errored                                                                | CLM-ONE-001   | the test                      |
-        | CLM-OBS-051 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched two definitions                             | CLM-ONE-001   | the step "Given one adds one" |
-        | CLM-OBS-052 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched no definition                               | CLM-ONE-001   | the step "Given one adds one" |
-        | CLM-OBS-110 | Cucumber's evidence report        | a scenario tagged @CLM-ONE-001 had a step that failed, and the step "one adds one" that matched no definition | CLM-ONE-001   | the step "Given one adds one" |
-        | CLM-OBS-053 | the step record                   | a fitness function's step with the id CLM-ONE-001, in ci.yml, was skipped                                     | CLM-ONE-001   | that step                     |
-        | CLM-OBS-137 | the step record                   | a fitness function's step with the id audit, in ci.yml running pnpm audit-the-tree, was skipped               | no claim code | that step                     |
-        | CLM-OBS-054 | the step record                   | a fitness function's step with the id CLM-ONE-001, in ci.yml, had a status balance does not know              | CLM-ONE-001   | that step                     |
+        | clm         | source                            | what could not run                                                                                                                      | cited         | named                         |
+        | CLM-OBS-044 | Vitest's evidence report          | a test file failed to collect                                                                                                           | no claim code | the file and its error        |
+        | CLM-OBS-045 | Jest's evidence report            | a test file failed to run                                                                                                               | no claim code | the file and its error        |
+        | CLM-OBS-046 | pytest's evidence report          | a test file failed to collect                                                                                                           | no claim code | the file and its error        |
+        | CLM-OBS-047 | Go's evidence report              | a package failed to compile                                                                                                             | no claim code | the package and its error     |
+        | CLM-OBS-100 | Go's evidence report              | TestMain failed before any test ran                                                                                                     | no claim code | the package and its error     |
+        | CLM-OBS-048 | JUnit 5 in Java's evidence report | a class's setup before all its tests failed                                                                                             | no claim code | the class and its error       |
+        | CLM-OBS-049 | RSpec's evidence report           | a spec file failed to load                                                                                                              | no claim code | the file and its error        |
+        | CLM-OBS-129 | RSpec's evidence report           | a spec file failed to load, and the run wrote no other message                                                                          | no claim code | the file and its error        |
+        | CLM-OBS-099 | RSpec's evidence report           | the suite failed to load, naming no spec file                                                                                           | no claim code | the error                     |
+        | CLM-OBS-050 | pytest's evidence report          | the setup of a test citing CLM-ONE-001 errored                                                                                          | CLM-ONE-001   | the test                      |
+        | CLM-OBS-051 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched two definitions                                                       | CLM-ONE-001   | the step "Given one adds one" |
+        | CLM-OBS-052 | Cucumber's evidence report        | the step "one adds one" of a scenario tagged @CLM-ONE-001 matched no definition                                                         | CLM-ONE-001   | the step "Given one adds one" |
+        | CLM-OBS-110 | Cucumber's evidence report        | a scenario tagged @CLM-ONE-001 had a step that failed, and the step "one adds one" that matched no definition                           | CLM-ONE-001   | the step "Given one adds one" |
+        | CLM-OBS-170 | the step record                   | a fitness function's step with the id CLM-ONE-001, in ci.yml, was skipped, in a job that failed                                         | CLM-ONE-001   | that step                     |
+        | CLM-OBS-053 | the step record                   | a fitness function's step with the id CLM-ONE-001, in ci.yml, was skipped, and the record said nothing of its job                       | CLM-ONE-001   | that step                     |
+        | CLM-OBS-137 | the step record                   | a fitness function's step with the id audit, in ci.yml running pnpm audit-the-tree, was skipped, and the record said nothing of its job | no claim code | that step                     |
+        | CLM-OBS-054 | the step record                   | a fitness function's step with the id CLM-ONE-001, in ci.yml, had a status balance does not know                                        | CLM-ONE-001   | that step                     |
 
     @unit @CLM-OBS-055
     Scenario: balance posts a Kotlin class whose setup failed as one failed Evidence Observation, citing no claim code
@@ -229,9 +237,10 @@ Feature: Evidence Observations are posted, each to its claim
       then <posted>, citing CLM-ONE-001
 
       Examples:
-        | clm         | records                                                          | posted                                                                      |
-        | CLM-OBS-166 | one with no entry for CLM-ONE-001, and one in which it succeeded | one fitness Evidence Observation will be posted, as passed                  |
-        | CLM-OBS-167 | one in which CLM-ONE-001 succeeded, and one in which it failed   | two fitness Evidence Observations will be posted, one passed and one failed |
+        | clm         | records                                                                                  | posted                                                                      |
+        | CLM-OBS-166 | one with no entry for CLM-ONE-001, and one in which it succeeded                         | one fitness Evidence Observation will be posted, as passed                  |
+        | CLM-OBS-167 | one in which CLM-ONE-001 succeeded, and one in which it failed                           | two fitness Evidence Observations will be posted, one passed and one failed |
+        | CLM-OBS-171 | one in which CLM-ONE-001 was skipped in a job that succeeded, and one in which it failed | one fitness Evidence Observation will be posted, as failed                  |
 
     @unit
     Scenario Outline: balance posts a recorded success in a workflow as passed-on-error only when a step carrying its id, or that step's job, sets continue-on-error to anything but false

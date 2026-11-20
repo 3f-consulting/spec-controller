@@ -115,17 +115,35 @@ describe("balance reads a result as passed or failed, citing the code it names",
   });
 });
 
-describe("balance posts what could not run as never ran", () => {
-  it.each([
-    ["CLM-OBS-053", "CLM-ONE-001", "in ci.yml, was skipped", { name: "Lint", run: "pnpm lint" }, "skipped", [ONE_001], "ci.yml:ci:Lint"],
-    ["CLM-OBS-054", "CLM-ONE-001", "in ci.yml, had a status balance does not know", { name: "Lint", run: "pnpm lint" }, "neutral", [ONE_001], "ci.yml:ci:Lint"],
-    ["CLM-OBS-137", "audit", "in ci.yml running pnpm audit-the-tree, was skipped", { run: "pnpm audit-the-tree" }, "skipped", [], "ci.yml:ci:pnpm audit-the-tree"],
-  ] as const)("[%s] the step record said a fitness function's step with the id %s, %s: it is posted as never-ran, citing the code it has and naming that step", (_clm, id, _what, step, outcome, cites, place) => {
-    const steps = workflowOf({ ci: { steps: [{ id, ...step }] } });
+describe("balance posts nothing for a fitness function's step skipped in a job that succeeded", () => {
+  it("[CLM-OBS-169] a workflow had a fitness function's step with the id CLM-ONE-001, in ci.yml, and the step record said that step was skipped, in a job that succeeded: nothing is posted", () => {
+    const steps = workflowOf({ ci: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] } });
+    const record = stepRecordFrom({ job: { status: "success" }, steps: { "CLM-ONE-001": { outcome: "skipped", conclusion: "skipped" } } });
 
-    expect(
-      fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, stepRecordFrom({ [id]: { outcome, conclusion: outcome } })), stepRecordFrom({ [id]: { outcome, conclusion: outcome } })).map(({ result, cites: cited, place: placed }) => ({ result, cites: cited, place: placed })),
-    ).toEqual([{ result: "never-ran", cites, place }]);
+    expect(fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, record), record)).toEqual([]);
+  });
+});
+
+describe("balance posts what could not run as never ran", () => {
+  const savingNothingOfItsJob = (entries: object) => entries;
+  const besideAStepWithTheIdJob = (entries: object) => ({ job: { outcome: "success", conclusion: "success" }, ...entries });
+  const postedFor = (id: string, step: object, outcome: string, recordOf: (entries: object) => object) => {
+    const steps = workflowOf({ ci: { steps: [{ id: "job", uses: "actions/checkout@v4" }, { id, ...step }] } });
+    const record = stepRecordFrom(recordOf({ [id]: { outcome, conclusion: outcome } }));
+    return fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, record), record).map(({ result, cites, place }) => ({ result, cites, place }));
+  };
+
+  it.each(postEvidenceObservationVariants["job-statuses-not-a-success"].variants)("[CLM-OBS-170] the step record said a fitness function's step with the id CLM-ONE-001, in ci.yml, was skipped, in a job that failed, its status saved as %j: it is posted as never-ran, citing the code it has and naming that step", (status) => {
+    expect(postedFor("CLM-ONE-001", { name: "Lint", run: "pnpm lint" }, "skipped", (entries) => ({ job: { status }, steps: entries }))).toEqual([{ result: "never-ran", cites: [ONE_001], place: "ci.yml:ci:Lint" }]);
+  });
+
+  it.each([
+    ["CLM-OBS-053", "CLM-ONE-001", "in ci.yml, was skipped, and the record said nothing of its job", { name: "Lint", run: "pnpm lint" }, "skipped", savingNothingOfItsJob, [ONE_001], "ci.yml:ci:Lint"],
+    ["CLM-OBS-053", "CLM-ONE-001", "in ci.yml, was skipped, and the record said nothing of its job, beside a step whose id is job", { name: "Lint", run: "pnpm lint" }, "skipped", besideAStepWithTheIdJob, [ONE_001], "ci.yml:ci:Lint"],
+    ["CLM-OBS-054", "CLM-ONE-001", "in ci.yml, had a status balance does not know", { name: "Lint", run: "pnpm lint" }, "neutral", savingNothingOfItsJob, [ONE_001], "ci.yml:ci:Lint"],
+    ["CLM-OBS-137", "audit", "in ci.yml running pnpm audit-the-tree, was skipped, and the record said nothing of its job", { run: "pnpm audit-the-tree" }, "skipped", savingNothingOfItsJob, [], "ci.yml:ci:pnpm audit-the-tree"],
+  ] as const)("[%s] the step record said a fitness function's step with the id %s, %s: it is posted as never-ran, citing the code it has and naming that step", (_clm, id, _what, step, outcome, recordOf, cites, place) => {
+    expect(postedFor(id, step, outcome, recordOf)).toEqual([{ result: "never-ran", cites, place }]);
   });
 });
 
@@ -155,10 +173,12 @@ describe("balance posts a fitness function's step the step record does not name 
 describe("balance posts a fitness function's step from each step record that names it", () => {
   const succeeded = { outcome: "success", conclusion: "success" };
   const failed = { outcome: "failure", conclusion: "failure" };
+  const skipped = { outcome: "skipped", conclusion: "skipped" };
 
   it.each([
     ["CLM-OBS-166", "one with no entry for CLM-ONE-001, and one in which it succeeded", { checkout: succeeded }, { "CLM-ONE-001": succeeded }, ["passed"]],
     ["CLM-OBS-167", "one in which CLM-ONE-001 succeeded, and one in which it failed", { "CLM-ONE-001": succeeded }, { "CLM-ONE-001": failed }, ["passed", "failed"]],
+    ["CLM-OBS-171", "one in which CLM-ONE-001 was skipped in a job that succeeded, and one in which it failed", { job: { status: "success" }, steps: { "CLM-ONE-001": skipped } }, { "CLM-ONE-001": failed }, ["failed"]],
   ] as const)("[%s] a workflow had a fitness function's step with the id CLM-ONE-001, and the run read two step records, %s: a fitness Evidence Observation is posted for each entry naming it, citing CLM-ONE-001", (_clm, _records, first, second, results) => {
     const steps = workflowOf({ ci: { steps: [{ id: "checkout", uses: "actions/checkout@v4" }, { id: "CLM-ONE-001", run: "pnpm lint" }] } });
     const record = [...stepRecordFrom(first), ...stepRecordFrom(second)];
