@@ -60,6 +60,13 @@ With no scenarios yet, the report lists every test that ran, and `--exit-zero` k
 
 [`docs/quickstart.md`](./docs/quickstart.md) takes you from here to a first run in CI. [`docs/user-guide.md`](./docs/user-guide.md) has every flag and runner.
 
+## What comes next
+
+`balance` keeps a codebase that can reconcile from drifting again. Two modes will follow it, once `balance` is stable:
+
+- **`analyse`** will read an existing codebase and judge its specification against its quality checks: which claims are met, unmet, unstated or in conflict.
+- **`migrate`** will write the `.feature` files and the scenario-tagged tests the specification calls for, so a team starts from the tests it already has, not from a blank page.
+
 ## Learn more
 
 - [`docs/how-it-works.md`](./docs/how-it-works.md): what each kind of disagreement reports, how to read the full report, its limits, and why coverage and mutation testing don't do this.
