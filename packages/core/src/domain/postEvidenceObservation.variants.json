@@ -7,6 +7,10 @@
     "claim": "CLM-OBS-058",
     "variants": [true, "${{ matrix.experimental }}"]
   },
+  "job-statuses-not-a-success": {
+    "claim": "CLM-OBS-170",
+    "variants": ["failure", "cancelled", "neutral", "Success", null, 3]
+  },
   "formats-without-kind-tags-named-under-a-layer": {
     "claim": "CLM-OBS-164",
     "variants": [
