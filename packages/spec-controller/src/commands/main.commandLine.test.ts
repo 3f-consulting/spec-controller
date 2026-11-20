@@ -40,6 +40,7 @@ const BALANCE_FLAGS = [
   "--strict",
   "--exit-zero",
   "--written-claims-only",
+  "--config <file>",
   "-h, --help",
 ];
 
