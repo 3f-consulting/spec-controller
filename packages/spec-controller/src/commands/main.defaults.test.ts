@@ -108,6 +108,18 @@ describe("balance reads every input the command line names or leaves to its defa
     expect(inputPath(provenanceIn(repository.top, "--config", "ci/spec-controller.yml"), input)).toBe(expected);
   });
 
+  it("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had unit: [vitest:vitest:out/missing.json], with no file there: the error names ci/out/missing.json", () => {
+    const repository = repositoryForTest();
+    repository.write("ci/spec-controller.yml", "unit: [vitest:vitest:out/missing.json]\n");
+    repository.commit("one");
+    let report = "";
+    main(["balance", "--format", "json", "--config", "ci/spec-controller.yml"], repository.top, { output: { fd: 1, write: (text) => (report += text) }, error: { fd: 2, write: () => {} } });
+
+    const { configurationErrors } = (JSON.parse(report) as { errorsInTheInputs: { configurationErrors: readonly { kind: string; entry: string }[] } }).errorsInTheInputs;
+
+    expect(configurationErrors.filter(({ kind }) => kind === "runner-report-not-read")).toEqual([{ kind: "runner-report-not-read", entry: "ci/out/missing.json" }]);
+  });
+
   it("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had format: [json:out/report.json]: balance writes its report to ci/out/report.json", () => {
     const repository = repositoryForTest();
     repository.write("ci/spec-controller.yml", "format: [json:out/report.json]\n");
