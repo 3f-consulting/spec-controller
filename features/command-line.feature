@@ -150,6 +150,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
       then it will read no manifest
       and the run will not stop
 
+    @unit @CLM-CLI-217
+    Scenario: a settings file read by default that does not exist will count as no settings file, not as a missing input
+      given the run named no settings file, and the file spec-controller.yml did not exist at the root of the repository
+      when balance reads its inputs
+      then it will read no settings file
+      and the run will not stop
+
     @unit @CLM-CLI-198
     Scenario: an input read by default that the tool is not permitted to read will stop the run, not count as none
       given the run named no CI workflows, and the tool was not permitted to read the folder .github/workflows
