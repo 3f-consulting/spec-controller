@@ -45,8 +45,7 @@ export interface TestResult {
   readonly cites: TestCitation;
 }
 
-// A step the CI run recorded, keyed by the step's id, with how it went before a step that allows failure has its failure read as success,
-// and whether its record saved its job as succeeded.
+// A step the CI run recorded, keyed by the step's id, with how it went before a step that allows failure has its failure read as success.
 export interface RecordedStep {
   readonly key: string;
   readonly result: Extract<Result, "passed" | "failed" | "never-ran"> | "skipped";
@@ -165,7 +164,6 @@ const placeOf = (step: CiStep): string => `${step.workflow}:${step.job}:${step.i
 
 const postedResultOf = (recorded: RecordedStep["result"]): Result => (recorded === "skipped" ? "never-ran" : recorded);
 
-// A step skipped in a job that succeeded was skipped by design, so it posts nothing, as a skipped test does.
 const skippedByDesign = ({ result, jobSucceeded }: RecordedStep): boolean => result === "skipped" && jobSucceeded;
 
 function observationOf(step: CiStep, steps: readonly CiStep[], allSteps: readonly CiStep[], entry: RecordedStep | undefined): EvidenceObservation {

@@ -179,7 +179,7 @@ If no recorded step has the scenario's code, the scenario reads `missing`. A rec
   run: printf '{"job":%s,"steps":%s}' "$JOB_JSON" "$STEPS_JSON" > ci-steps.json
 ```
 
-The dump saves `toJSON(steps)`, because it is the only place that has a step's `id` and its `outcome` together, and `toJSON(job)`, because the job's status tells a step skipped on purpose from one skipped because an earlier step failed: a step skipped in a job that succeeded posts nothing. Pass both to the command through environment variables, never inline in the command itself: a step's output can contain a quote, and the shell would run whatever follows that quote.
+The dump saves `toJSON(steps)`, because it is the only place that has a step's `id` and its `outcome` together, and `toJSON(job)`, because the job's status tells a step skipped on purpose from one skipped because an earlier step failed the job: a step skipped in a job that succeeded posts nothing. Pass both to the command through environment variables, never inline in the command itself: a step's output can contain a quote, and the shell would run whatever follows that quote.
 
 A single Reconcile step then reads the reports and the record. It runs the command from the first run, plus the step record, with the runner named alone. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page. `--format json:reconciliation.json` saves the JSON for any later step or tool:
 
