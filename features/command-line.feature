@@ -196,6 +196,13 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-219 | /work/acme/packages/app, in a git repository at /work/acme | /work/acme/spec-controller.yml |
         | CLM-CLI-220 | /tmp/acme, in no git repository                            | /tmp/acme/spec-controller.yml  |
 
+    @unit @CLM-CLI-221
+    Scenario: balance reads only the settings file the run names
+      given the run named ci/spec-controller.yml as its settings file, and that file had target: named
+      and spec-controller.yml at the root of the repository had target: root
+      when balance reads its settings
+      then the run's target name will be named
+
     @unit
     Scenario Outline: balance reads the one workflow a CI workflows path names, or every workflow in the folder it names
       given the run named <CI workflows> as its CI workflows

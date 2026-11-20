@@ -139,6 +139,15 @@ describe("balance reads every input the command line names or leaves to its defa
 
     expect(targetWithSettingsAt(folder, folder)).toBe("acme");
   });
+
+  it("[CLM-CLI-221] the run named ci/spec-controller.yml as its settings file, and that file had target: named, and spec-controller.yml at the root of the repository had target: root: the run's target name is named", () => {
+    const repository = repositoryForTest();
+    repository.write("ci/spec-controller.yml", "target: named\n");
+    repository.write("spec-controller.yml", "target: root\n");
+    repository.commit("one");
+
+    expect(provenanceIn(repository.top, "--config", "ci/spec-controller.yml").target).toBe("named");
+  });
 });
 
 const ONE_UNIT_CLAIM = "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: one\n";
