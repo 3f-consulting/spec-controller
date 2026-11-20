@@ -162,7 +162,7 @@ jobs:
         # It scans both packages' src as TypeScript, with tests and shared test helpers ignored: production code only.
         # minTokens 50 and minLines 5 are jscpd's own default definition of a clone, stated in full so a copier inherits it.
         # The step reds on jscpd's own exit code, so a clone anywhere in that population reds it, whichever files the change touches.
-        # --fail-on-empty reds an analysis of no file. jscpd does not count a file under the 50-token clone size, since no such file can hold a clone.
+        # --fail-on-empty reds an analysis of no file. jscpd does not count a file smaller than the clone size above, in tokens or in lines, since no such file can hold a clone.
         run: node_modules/.bin/jscpd --config .jscpd.json --exit-code --fail-on-empty
 
       - name: Unused code — no unused file, export or dependency outside the test code
