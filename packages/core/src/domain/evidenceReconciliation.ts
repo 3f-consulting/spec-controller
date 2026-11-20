@@ -131,19 +131,19 @@ export function stepAccountOf(steps: readonly DisposedStep[]): StepAccount {
   return { jobs, total: countsOf(steps) };
 }
 
-const OUTCOMES: readonly Outcome[] = [
-  "satisfied",
-  "failing",
-  "cannot-fail",
-  "missing",
-  "no-claim-code",
-  "duplicate-claim-code",
-  "not-asked-for",
-  "cites-unknown-claim",
-  "cites-no-claim",
-  "never-ran",
-  "no-quality-check",
-];
+const OUTCOMES = Object.keys({
+  satisfied: true,
+  failing: true,
+  "cannot-fail": true,
+  missing: true,
+  "no-claim-code": true,
+  "duplicate-claim-code": true,
+  "not-asked-for": true,
+  "cites-unknown-claim": true,
+  "cites-no-claim": true,
+  "never-ran": true,
+  "no-quality-check": true,
+} satisfies Record<Outcome, true>) as readonly Outcome[];
 
 const countsOfReconciliations = (reconciliations: readonly QualityCheckReconciliation[], evidenceObligations: number): QualityCheckCounts => ({
   evidenceObligations,
