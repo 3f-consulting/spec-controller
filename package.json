@@ -26,21 +26,6 @@
     "docs:file-links": "bash -o pipefail -c 'git ls-files -z -- \"*.md\" \"features/*.feature\" | xargs -0 vale --config=.vale/references.ini'",
     "docs:readme-examples": "bash -o pipefail -c 'kiira check --entry README.md --entry \"packages/*/README.md\" --reporter json | jq -er --argjson files \"$(git ls-files README.md \"packages/*/README.md\" | wc -l)\" \"(.diagnostics[] | \\\"\\(.markdownFile):\\(.markdownRange.start.line):\\(.markdownRange.start.character) \\(.severity) \\(.source) \\(.code) \\(.message)\\\"), if .stats.markdownFiles != \\$files or .stats.checked == 0 or .stats.errors > 0 or .stats.ignored > 0 then error(\\\"read \\(.stats.markdownFiles) of \\(\\$files) READMEs; \\(.stats.checked) examples checked; \\(.stats.errors) type errors; \\(.stats.ignored) examples left unchecked by a fence flagged ignore or validate=none\\\") else \\\"\\(.stats.checked) examples in \\(.stats.markdownFiles) READMEs type-check\\\" end\"'"
   },
-  "specController": {
-    "runners": {
-      "unit": "vitest",
-      "integration": { "runner": "cucumber-js", "reports": ["cucumber.json"] },
-      "e2e": { "runner": "cucumber-js", "reports": ["cucumber.json"] },
-      "performance": null
-    },
-    "notChecks": [
-      "ci.yml:ci:Enable corepack",
-      "ci.yml:ci:Resolve the evidence root",
-      "ci.yml:ci:Install dependencies",
-      "ci.yml:ci:Read the Python Semgrep runs on",
-      "ci.yml:ci:Install Semgrep"
-    ]
-  },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",
     "@barney-media/crap-typescript": "1.0.0",
