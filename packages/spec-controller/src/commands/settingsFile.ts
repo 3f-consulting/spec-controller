@@ -7,8 +7,8 @@ import { balanceRequestOf, type BalanceRequest, type InputRequest } from "../run
 
 // What comes before the path in each setting that names one, and the path: the whole value, a runner's long form's report
 // after its second colon, or a format's file after its first.
-const WHOLE = /^()(.+)$/s;
-const LONG_FORM = /^([^:]*:[^:]*:)(.+)$/s;
+const WHOLE = /()(.+)/s;
+const LONG_FORM = /([^:]*:[^:]*:)(.+)/s;
 const PATH_IN = new Map<string, RegExp>([
   ["features", WHOLE],
   ["ci", WHOLE],
@@ -18,7 +18,7 @@ const PATH_IN = new Map<string, RegExp>([
   ["integration", LONG_FORM],
   ["e2e", LONG_FORM],
   ["performance", LONG_FORM],
-  ["format", /^([^:]*:)(.+)$/s],
+  ["format", /([^:]*:)(.+)/s],
 ]);
 
 // Each path the settings file names, read from its folder: an input's written from the folder balance runs in, a report's
