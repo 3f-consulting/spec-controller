@@ -85,9 +85,6 @@ export interface EvidenceReconciliation {
   readonly runIntegrity: RunIntegrity;
 }
 
-// Not reconciled, first because evidence never ran, then for claim code errors, then for configuration errors, then for
-// nothing to reconcile; otherwise balanced only when every Claim Reconciliation counted is. Counting only the executable
-// claims leaves the phantom claims and the unnamed claim out of the never-ran check and the balance.
 export function runVerdictOf(
   claimReconciliations: readonly ClaimReconciliation[],
   claimCodeErrors: readonly ClaimCodeError[],

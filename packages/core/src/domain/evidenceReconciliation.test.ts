@@ -28,8 +28,6 @@ const observationOf = ([kind, result, code]: Observed): EvidenceObservation => (
 const scenariosTagged = (...scenarioTags: readonly string[]): string =>
   `@ONE\nFeature: one\n${scenarioTags.map((tags, at) => `\n  ${tags}\n  Scenario: scenario ${at}\n    Given a step\n`).join("")}`;
 
-// The run verdict of the corpus and evidence given, with the configuration errors given, read and reconciled as balance
-// does. Each entry of the corpus is the tags of one.feature's scenario, beside its unit tag, or a whole feature file.
 function runVerdictOfRun(
   corpus: readonly string[],
   observed: readonly Observed[],
@@ -125,8 +123,6 @@ describe("the run will be not reconciled, naming why", () => {
     expect(runVerdictOfRun(corpus, evidence)).toEqual({ verdict: "not-reconciled", why });
   });
 
-  // What the readers would give of a run's configuration, built as balance builds it: a settings file holding the YAML
-  // given, the settings the command line gives, and the steps of ci.yml as given, with no file at each report path given.
   const configuredRunOf = ({ settingsFile = "", commandLine = { values: {}, on: [] }, ciYml = "", reportsNotFound = [] }: ConfiguredRun): Partial<ReadersGave> => {
     const { settings, errors } = settingsMerged(settingsFileEntriesFrom(settingsFile), commandLine);
     const steps = ciYml === "" ? [] : workflowStepsFrom("ci.yml", ciYml);

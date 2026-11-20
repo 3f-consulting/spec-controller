@@ -85,7 +85,7 @@ The tool writes the whole report before it sets the exit code. So a failing run 
 - an unparseable report, or a report that parses but is not in the shape its runner writes;
 - a corpus the Gherkin parser rejects.
 
-The refusal names the input, the path, and what was wrong with it. A well-formed report with nothing in it is read, not refused. A runner's report with no file at its path, named in a long form or by the CI step that runs the runner, is not refused either: the report names the path under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on. An example is a Vitest run that matched no test file.
+The refusal names the input, the path, and what was wrong with it. A well-formed report with nothing in it is read, not refused. A runner's report with no file at its path, named in a long form or by the CI step that runs the runner, is not refused either: the report names the path under `## Errors in the inputs` as `runner-report-not-read`, and the run goes on, but is not reconciled, and exits `3`. An example is a Vitest run that matched no test file.
 
 **An output location it cannot write is also `2`.** This covers a `--format` path that is read-only, is a directory, is under a regular file, or is in a directory that does not exist. The tool refuses it before it prints any report. The refusal names the location and the reason.
 
