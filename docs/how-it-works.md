@@ -146,7 +146,7 @@ The report uses these exact terms:
 - A *phantom claim* comes from a test that names a scenario which does not exist. The usual cause is a typo or a deleted scenario.
 - The *unnamed claim* takes any test that names no scenario at all, several scenarios, or a code that several scenarios share.
 - A *cannot-fail* check passes, but its red might not fail the CI run: its CI step or job sets `continue-on-error`, or `balance` did not read its workflow and so cannot tell whether it does.
-- The *run verdict* is `balanced`, `out-of-balance`, or `not-reconciled`. A `not-reconciled` verdict gives the reason the run could not be relied on: `unsound`, `claim-code-errors` or `nothing-to-reconcile`.
+- The *run verdict* is `balanced`, `out-of-balance`, or `not-reconciled`. A `not-reconciled` verdict gives the reason the run could not be relied on: `unsound`, `claim-code-errors`, `configuration-errors` or `nothing-to-reconcile`.
 
 [`ubiquitous-language.md`](./ubiquitous-language.md) has the rest.
 

@@ -28,12 +28,17 @@ const observationOf = ([kind, result, code]: Observed): EvidenceObservation => (
 const scenariosTagged = (...scenarioTags: readonly string[]): string =>
   `@ONE\nFeature: one\n${scenarioTags.map((tags, at) => `\n  ${tags}\n  Scenario: scenario ${at}\n    Given a step\n`).join("")}`;
 
-// The run verdict of the corpus and evidence given, read and reconciled as balance does. Each entry of the corpus is the
-// tags of one.feature's scenario, beside its unit tag, or a whole feature file.
-function runVerdictOfRun(corpus: readonly string[], observed: readonly Observed[], countOnlyExecutableClaims = false): ReturnType<typeof runVerdictOf> {
+// The run verdict of the corpus and evidence given, with the configuration errors given, read and reconciled as balance
+// does. Each entry of the corpus is the tags of one.feature's scenario, beside its unit tag, or a whole feature file.
+function runVerdictOfRun(
+  corpus: readonly string[],
+  observed: readonly Observed[],
+  countOnlyExecutableClaims = false,
+  configurationErrors: readonly ConfigurationError[] = [],
+): ReturnType<typeof runVerdictOf> {
   const features = corpus.map((entry, at) => featureAsWrittenFrom(`f${at}.feature`, entry.includes("Feature:") ? entry : scenariosTagged(`@unit ${entry}`)));
   const claimReconciliations = claimReconciliationsOf(executableClaimsOf(features, { deferralTags: [], strict: false }), observed.map(observationOf));
-  return runVerdictOf(claimReconciliations, claimCodeErrorsOf(features), countOnlyExecutableClaims);
+  return runVerdictOf(claimReconciliations, claimCodeErrorsOf(features), configurationErrors, countOnlyExecutableClaims);
 }
 
 // Evidence as a reader gives it: one test's result in one test file, citing the code given, if any, in its title.

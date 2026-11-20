@@ -38,7 +38,7 @@ describe("balance takes each entry of the settings file as the command-line sett
     // ONE-002 names no scenario, so its passing test is filed on a phantom claim.
     const claimReconciliations = claimReconciliationsOf(claims, [passingTestCiting("001"), passingTestCiting("002")]);
 
-    expect(runVerdictOf(claimReconciliations, [], settings.on.includes("written-claims-only"))).toEqual({ verdict: "balanced" });
+    expect(runVerdictOf(claimReconciliations, [], [], settings.on.includes("written-claims-only"))).toEqual({ verdict: "balanced" });
   });
 
   it.each([...settingsFileVariants["list-settings"].variants])("[CLM-CFG-031] a settings file that had %s: [one, two] is taken as that setting given one, then two, on the command line", (name) => {
