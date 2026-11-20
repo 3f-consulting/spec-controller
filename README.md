@@ -4,7 +4,7 @@
 
 You name each behaviour of your software as a scenario in a Gherkin `.feature` file, with a claim code of the form `@CLM-<FFF>-<NNN>`. Each test and each CI check cites the code of the behaviour it proves. On every CI run, `spec-controller balance` reads the reports your tools already write and checks every named behaviour against them. Each proof it asks for must have run and passed. A CI check must also have been able to fail its build: a step set to `continue-on-error` cannot. Whether a test asserts anything is not checked. If a proof falls short, the build goes red.
 
-So when an agent deletes a test to make CI pass, or a lint step is quietly set never to fail, the build goes red instead of staying quietly green.
+So when an agent deletes a test to make CI pass, or a lint step is quietly set never to fail, the build goes red instead of staying quietly green. An agent that empties a test's body instead still passes: that is a change for review to catch.
 
 <div class="sample-report">
 
@@ -42,19 +42,28 @@ Delete that test, and the run is out of balance and exits `1`. The row says a un
 
 ## Does it fit your project?
 
-- **CI:** GitHub Actions.
+- **CI:** GitHub Actions, on Linux runners. `balance` reads paths with `/` and is tested only on Linux, so Windows runners are not supported.
 - **Tests:** Vitest, Jest, pytest, Go, JUnit (Java, Kotlin), RSpec, or any Cucumber.
 - **CI checks:** any step your pipeline runs, such as lint, type checks or a complexity limit.
 - **You:** willing to name your behaviours as scenarios. `balance` checks the names you write; it does not write them for you.
 
 ## Start with one scenario
 
-```sh
-npm install --save-dev spec-controller@<version>
-npx spec-controller balance --written-claims-only
-```
+1. **Install it, pinned to the exact version**, since at `0.x` nothing is promised between versions:
 
-Name one behaviour as a scenario, as the checkout example above does, and cite it from its test. Then add the command as a step at the end of the CI job that runs your tests. A runner `balance` knows, such as Vitest, needs no setting: `balance` finds it in the workflow step that runs it, at its usual layer, and finds its report from that step. Name a runner only for one `balance` does not know, or for a layer other than its usual one, under the flag of the layer it serves: `--unit`, `--integration`, `--e2e` or `--performance`. If no step names the report, name it yourself, as `--unit vitest:vitest:./vitest-report.json`: the runner, the format of its report, and the report's path. For other test reports, give the format `jest`, `pytest`, `junit`, `rspec` or `cucumber`. The settings can also live in `spec-controller.yml` at the top of your repository, keyed by the flags' names, such as `unit: [vitest]` and `written-claims-only: true`.
+   ```sh
+   npm install --save-dev --save-exact spec-controller
+   ```
+
+2. **Name one behaviour as a scenario,** as the checkout example above does, and cite its code from its test's title.
+3. **Make sure the CI step that runs your tests writes its report,** such as `vitest run --reporter=json --outputFile=reports/vitest.json`. A runner `balance` knows (Vitest, Jest, pytest, RSpec, gotestsum, Maven, Gradle, cucumber-js, Playwright) needs no setting: `balance` finds it in that step, at its usual layer, and reads the report the step names.
+4. **Add one step at the end of that CI job:**
+
+   ```sh
+   npx spec-controller balance --written-claims-only
+   ```
+
+Name a runner yourself only when `balance` does not know it, or when it serves a layer other than its usual one. Use the flag of that layer (`--unit`, `--integration`, `--e2e` or `--performance`), with the long form when no step names the report: `--unit vitest:vitest:./vitest-report.json` gives the runner, its report's format and its path. The formats are `vitest`, `jest`, `pytest`, `junit`, `rspec` and `cucumber`. Settings can also live in `spec-controller.yml` at the top of your repository, keyed by the flags' names, such as `unit: [vitest]` and `written-claims-only: true`.
 
 The build then goes red only for the scenarios you have written. Every other test and CI step is listed in the report, and none of them turns it red. You need no `id:` on any step, no step record and no list of non-checks. Name more behaviours as you go. When every test cites a scenario, drop `--written-claims-only`.
 
