@@ -62,7 +62,14 @@ export interface SettingsMerged {
 
 // The settings the file's entries give, by the command line's names; a setting the command line gives replaces the file's.
 export function settingsMerged(entries: SettingsFileEntries, commandLine: SettingsGiven = NOTHING_GIVEN): SettingsMerged {
-  return { settings: settingsGiven(entries, commandLine), errors: [] };
+  return { settings: settingsGiven(entries, commandLine), errors: Object.entries(entries).flatMap(errorsOfEntry) };
+}
+
+// The error that leaves an entry out: a key that names none of balance's settings, or a value its setting cannot take.
+function errorsOfEntry([key, value]: readonly [string, unknown]): ConfigurationError[] {
+  const setting = BALANCE_SETTINGS.find(({ name }) => name === key);
+  if (setting === undefined) return [{ kind: "configuration-unknown-key", entry: key }];
+  return TAKEN[setting.shape](value) === undefined ? [{ kind: "configuration-wrong-kind", entry: key }] : [];
 }
 
 function settingsGiven(entries: SettingsFileEntries, commandLine: SettingsGiven): SettingsGiven {

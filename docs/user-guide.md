@@ -684,13 +684,14 @@ A run names each configuration setting it cannot use, with one of these codes:
 
 | Code | The setting |
 | --- | --- |
-| `configuration-wrong-kind` | a setting in a form its flag does not take (an empty runner, non-check or deferral tag, or a runner with a colon that is not a long form naming a runner, a format `balance` reads and a report) is left out |
+| `configuration-wrong-kind` | a setting in a form its flag does not take (an empty runner, non-check or deferral tag, or a runner with a colon that is not a long form naming a runner, a format `balance` reads and a report) is left out, as is an entry of the settings file whose value its setting does not take |
+| `configuration-unknown-key` | a key of the settings file that names none of `balance`'s settings is left out; `help` and `config` are not settings |
 | `runner-report-not-named` | a runner named alone whose report no step names, and that has no default location, is kept, so its step is still a runner, but no result of it is read |
 | `runner-report-not-read` | a report, named in a long form or by a step, or a default location, that has no file at its path keeps its runner, and no result of that report is read |
 | `not-checks-entry-matches-no-step` | a `--not-check` that matches no step of a workflow the run read makes no step a non-check |
 | `not-checks-entry-not-a-step-name` | a `--not-check` that does not name a step as `<workflow file>:<job id>:<step name>` makes no step a non-check |
 
-None of these codes refuses the run. Each is a line in `## Errors in the inputs`, right after the run provenance, giving its code, then the setting as written: the runner for `runner-report-not-named`, and the report's path for `runner-report-not-read`. The rest of the report is the one you would get without that entry. The JSON lists them under `errorsInTheInputs.configurationErrors`.
+None of these codes refuses the run. Each is a line in `## Errors in the inputs`, right after the run provenance, giving its code, then the setting as written: the runner for `runner-report-not-named`, the report's path for `runner-report-not-read`, and the key for an entry of the settings file. The rest of the report is the one you would get without that entry. The JSON lists them under `errorsInTheInputs.configurationErrors`.
 
 ### Limits
 

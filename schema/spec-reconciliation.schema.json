@@ -7,7 +7,7 @@
       "properties": {
         "schemaVersion": {
           "type": "number",
-          "const": 5
+          "const": 6
         },
         "claimReconciliations": {
           "type": "array",
@@ -929,6 +929,7 @@
           "type": "string",
           "enum": [
             "configuration-wrong-kind",
+            "configuration-unknown-key",
             "runner-report-not-read",
             "runner-report-not-named",
             "not-checks-entry-matches-no-step",
