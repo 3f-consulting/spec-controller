@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { configurationSettingsNamed, type SettingsNamed } from "../inputs/commandLineSettings.js";
 import commandLineSettingsVariants from "../inputs/commandLineSettings.variants.json" with { type: "json" };
 import { featureAsWrittenFrom } from "../inputs/gherkin.js";
+import { settingsFileEntriesFrom, settingsMerged, settingsNamedOf, type SettingsGiven } from "../inputs/settingsFile.js";
+import settingsFileVariants from "../inputs/settingsFile.variants.json" with { type: "json" };
 import { shellAnswers } from "../inputs/shell.js";
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import { claimReconciliationsOf } from "./claimReconciliation.js";
@@ -17,6 +19,39 @@ const NONE: TargetConfiguration = { runners: NO_RUNNERS, nonChecks: [], deferral
 // The configuration balance takes from the settings a run names, with the steps it read.
 const takenFrom = (named: Partial<SettingsNamed>, steps: readonly CiStep[] = []): TargetConfiguration =>
   targetConfigurationOf(configurationSettingsNamed({ runners: {}, nonChecks: [], deferralTags: [], ...named }), steps).configuration;
+
+// The settings balance takes from a settings file holding the YAML text given.
+const settingsFrom = (yaml: string): SettingsGiven => settingsMerged(settingsFileEntriesFrom(yaml));
+
+describe("balance takes each entry of the settings file as the command-line setting of the same name", () => {
+  it("[CLM-CFG-031] a settings file that had unit: [vitest] is taken as vitest as the unit layer's runner", () => {
+    const { configuration } = targetConfigurationOf(configurationSettingsNamed(settingsNamedOf(settingsFrom("unit: [vitest]\n"))), []);
+
+    expect(configuration).toEqual({ ...NONE, runners: { ...NO_RUNNERS, unit: [{ name: "vitest" }] } });
+  });
+
+  it("[CLM-CFG-032] a settings file that had written-claims-only: true is taken as a run verdict that counts only the executable claims", () => {
+    const settings = settingsFrom("written-claims-only: true\n");
+    const claims = executableClaimsOf([featureAsWrittenFrom("one.feature", "@ONE\nFeature: one\n\n  @unit @CLM-ONE-001\n  Scenario: s\n    Given a step\n")], { deferralTags: [], strict: false });
+    const passingTestCiting = (number: string) => ({ cites: [{ featureCode: "ONE", number }], result: "passed", kind: "unit", place: "one.test.ts" }) as const;
+    // ONE-002 names no scenario, so its passing test is filed on a phantom claim.
+    const claimReconciliations = claimReconciliationsOf(claims, [passingTestCiting("001"), passingTestCiting("002")]);
+
+    expect(runVerdictOf(claimReconciliations, [], settings.on.includes("written-claims-only"))).toEqual({ verdict: "balanced" });
+  });
+
+  it.each([...settingsFileVariants["list-settings"].variants])("[CLM-CFG-031] a settings file that had %s: [one, two] is taken as that setting given one, then two, on the command line", (name) => {
+    expect(settingsFrom(`${name}: [one, two]\n`)).toEqual({ values: { [name]: ["one", "two"] }, on: [] });
+  });
+
+  it.each([...settingsFileVariants["one-value-settings"].variants])("[CLM-CFG-031] a settings file that had %s: one is taken as that setting given one on the command line", (name) => {
+    expect(settingsFrom(`${name}: one\n`)).toEqual({ values: { [name]: ["one"] }, on: [] });
+  });
+
+  it.each([...settingsFileVariants["no-value-settings"].variants])("[CLM-CFG-032] a settings file that had %s: true is taken as that setting given on the command line", (name) => {
+    expect(settingsFrom(`${name}: true\n`)).toEqual({ values: {}, on: [name] });
+  });
+});
 
 describe("balance takes each configuration setting it can use as the runner, non-check or deferral tag it names", () => {
   it.each<[string, string, Partial<SettingsNamed>, TargetConfiguration]>([

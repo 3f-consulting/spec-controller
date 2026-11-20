@@ -1,10 +1,25 @@
 @CFG
 Feature: balance reads and validates the configuration settings the run names
 
-  A run names three kinds of configuration setting on its command line: the runners of each
-  layer, the non-checks and the deferral tags. balance reads and validates each one. It leaves
-  out a configuration setting that is not valid, names it among the configuration errors, and
-  still uses the others. A configuration setting that is not valid never stops the run.
+  A run names three kinds of configuration setting, on its command line or in its settings file:
+  the runners of each layer, the non-checks and the deferral tags. The settings file names each
+  of balance's settings by the name its command line uses. balance reads and validates each one.
+  It leaves out a configuration setting that is not valid, names it among the configuration
+  errors, and still uses the others. A configuration setting that is not valid never stops the
+  run.
+
+  Rule: balance takes the settings its settings file gives, by the names its command line uses
+
+    @unit
+    Scenario Outline: balance takes each entry of the settings file as the command-line setting of the same name
+      given the settings file had <entry>
+      when balance reads it
+      then balance will take it as <what it sets>
+
+      Examples:
+        | clm         | entry                     | what it sets                                         |
+        | CLM-CFG-031 | unit: [vitest]            | vitest as the unit layer's runner                    |
+        | CLM-CFG-032 | written-claims-only: true | a run verdict that counts only the executable claims |
 
   Rule: balance takes each configuration setting it can use
 
