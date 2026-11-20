@@ -225,7 +225,6 @@ export interface RunReconciled {
   readonly claimReading: ClaimReadingSettings;
   // Whether the run verdict counts the executable claims alone, leaving out the phantom claims and the unnamed claim.
   readonly countOnlyExecutableClaims: boolean;
-  // Each layer's runners as the run took them, a runner once for each evidence report named for it.
   readonly runners: TargetConfiguration["runners"];
   readonly stepAccount: StepAccount;
   readonly provenance: ProvenanceOfInputs;

@@ -14,7 +14,6 @@ export function provenanceInputsOf(kinds: readonly { readonly name: string; read
 
 export type ProvenanceRunner = Pick<Runner, "name" | "found">;
 
-// Each layer's runners as the provenance names them: a runner once, however many evidence reports were named for it.
 export function provenanceRunnersOf(runners: Readonly<Record<Layer, readonly Runner[]>>): Provenance["runners"] {
   const once = (named: readonly Runner[]): ProvenanceRunner[] =>
     named.filter(({ name }, at) => named.findIndex((runner) => runner.name === name) === at).map(({ name, found }) => (found ? { name, found } : { name }));
@@ -30,7 +29,6 @@ export interface Provenance {
   readonly runTime: string;
   readonly inputs: readonly ProvenanceInput[];
   readonly countedOnlyExecutableClaims: boolean;
-  // Each layer's runners, each named once; a layer with none has an empty list.
   readonly runners: Readonly<Record<Layer, readonly ProvenanceRunner[]>>;
 }
 

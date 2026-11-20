@@ -28,7 +28,6 @@ export type ReportsNamed = (
 // The shell reader's answer of where a runner writes its evidence reports when told nowhere, for a step's command that runs it.
 export type DefaultReportsOf = (commandLine: string, runner: string, scripts: Readonly<Record<string, string>>) => readonly ReportLocation[];
 
-// A layer's runner: the program it runs, the evidence report the run names for it, and whether balance found it in the workflows.
 export interface Runner {
   readonly name: string;
   readonly report?: ReportLocation;
@@ -40,7 +39,6 @@ export interface KnownRunner {
   readonly layer: Layer;
 }
 
-// The shell reader's answers finding a runner needs: whether a step's command runs a program, and the runners balance knows.
 export interface RunnerFinder {
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
   readonly knownRunners: readonly KnownRunner[];
@@ -165,8 +163,6 @@ export function reportsLocatedOf(
 
 const isAt = (address: StepAddress, step: CiStep): boolean => address.workflow === step.workflow && address.job === step.job && address.step === step.identity;
 
-// The settings with each runner balance knows found at its usual layer, when the run names no runner for that layer, names
-// that runner at no layer, and a step it does not name as a non-check runs it.
 export function runnersFoundOf(settings: ConfigurationSettings, steps: readonly CiStep[], scripts: Readonly<Record<string, string>>, shell: RunnerFinder): ConfigurationSettings {
   const named = settings.runners.flatMap((part) => ("taken" in part ? [part.taken] : []));
   const nonChecks = settings.nonChecks.flatMap((part) => ("taken" in part ? [part.taken.address] : []));
