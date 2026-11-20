@@ -53,7 +53,7 @@ const TAKEN: Readonly<Record<SettingShape, (value: unknown) => readonly string[]
 };
 
 // The settings the file's entries give, each as the command line gives the setting of the same name.
-export function settingsMerged(entries: SettingsFileEntries): SettingsGiven {
+export function settingsMerged(entries: SettingsFileEntries, commandLine?: SettingsGiven): SettingsGiven {
   const taken = BALANCE_SETTINGS.flatMap(({ name, shape }) => {
     const value = TAKEN[shape](entries[name]);
     return value === undefined ? [] : [{ name, value }];

@@ -21,6 +21,16 @@ Feature: balance reads and validates the configuration settings the run names
         | CLM-CFG-031 | unit: [vitest]            | vitest as the unit layer's runner                    |
         | CLM-CFG-032 | written-claims-only: true | a run verdict that counts only the executable claims |
 
+  Rule: a setting the command line gives replaces the settings file's setting of the same name
+
+    @unit @CLM-CFG-033
+    Scenario: a runner the command line names replaces the settings file's runners for that layer alone
+      given the settings file had unit: [vitest] and e2e: [playwright:junit:out/e2e.xml]
+      and the run named pytest as the unit runner
+      when balance reads its settings
+      then pytest alone will be the unit layer's runner
+      and playwright will be the e2e layer's runner
+
   Rule: balance takes each configuration setting it can use
 
     @unit

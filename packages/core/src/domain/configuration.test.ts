@@ -53,6 +53,19 @@ describe("balance takes each entry of the settings file as the command-line sett
   });
 });
 
+describe("a setting the command line gives replaces the settings file's setting of the same name", () => {
+  it("[CLM-CFG-033] a runner the command line names replaces the settings file's runners for that layer alone", () => {
+    const entries = settingsFileEntriesFrom("unit: [vitest]\ne2e: [playwright:junit:out/e2e.xml]\n");
+    const settings = settingsMerged(entries, { values: { unit: ["pytest"] }, on: [] });
+    const { configuration } = targetConfigurationOf(configurationSettingsNamed(settingsNamedOf(settings)), []);
+
+    expect(configuration).toEqual({
+      ...NONE,
+      runners: { ...NO_RUNNERS, unit: [{ name: "pytest" }], e2e: [{ name: "playwright", report: { path: "out/e2e.xml", format: "junit" } }] },
+    });
+  });
+});
+
 describe("balance takes each configuration setting it can use as the runner, non-check or deferral tag it names", () => {
   it.each<[string, string, Partial<SettingsNamed>, TargetConfiguration]>([
     ["CLM-CFG-008", "--unit vitest", { runners: { unit: ["vitest"] } }, { ...NONE, runners: { ...NO_RUNNERS, unit: [{ name: "vitest" }] } }],
