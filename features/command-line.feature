@@ -269,8 +269,9 @@ Feature: the command line reads what you give it, and says where each kind of ou
 
   Rule: a command validates every input before it does its work
 
-    The inputs a command validates are each evidence report, each step record, the feature corpus,
-    the CI workflows and the manifest. An input that is well formed but empty is valid.
+    The inputs a command validates are the settings file, each evidence report, each step record,
+    the feature corpus, the CI workflows and the manifest. An input that is well formed but empty is
+    valid.
 
     @unit @CLM-CLI-146
     Scenario: an empty evidence report will count as no evidence, not as a broken file
@@ -308,6 +309,8 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-154 | a pytest evidence report that is not in the shape pytest writes     | a pytest evidence report, and what is wrong    |
         | CLM-CLI-155 | a JUnit evidence report that is not in the shape JUnit writes       | a JUnit evidence report, and what is wrong     |
         | CLM-CLI-156 | a file in a JUnit directory that is not in the shape JUnit writes   | a file in a JUnit directory, and what is wrong |
+        | CLM-CLI-222 | a settings file that does not parse as YAML                         | a settings file, and where it fails to parse   |
+        | CLM-CLI-223 | a settings file that is a list, not a mapping of settings           | a settings file, and what it holds             |
         | CLM-CLI-157 | an RSpec evidence report that is not in the shape RSpec writes      | an RSpec evidence report, and what is wrong    |
         | CLM-CLI-158 | a step record that is not in the shape of a record of step outcomes | a CI step record, and what is wrong            |
         | CLM-CLI-159 | a manifest that is not in a manifest's shape                        | a manifest, and what is wrong                  |

@@ -474,6 +474,20 @@ describe("an input that is not valid will stop the run", () => {
       ["steps.json", "step outcomes", "$.test", "[input-not-in-its-shape]"],
     ],
     ["CLM-CLI-159", "a manifest not in a manifest's shape", { "package.json": "[]" }, ["--package-json", "package.json"], ["package.json", "manifest", "[input-not-in-its-shape]"]],
+    [
+      "CLM-CLI-222",
+      "a settings file that does not parse as YAML",
+      { "settings.yml": "unit: [vitest\n" },
+      ["--config", "settings.yml"],
+      ["{input-settingsFile} settings.yml does not parse", "at line 2, column 1", "[input-does-not-parse]"],
+    ],
+    [
+      "CLM-CLI-223",
+      "a settings file that is a list, not a mapping of settings",
+      { "settings.yml": "- unit: [vitest]\n" },
+      ["--config", "settings.yml"],
+      ["{input-settingsFile} settings.yml is not in {shape-settingsFile}", "[input-not-in-its-shape]"],
+    ],
   ] as const)("[%s] %s: the run stops, no verdict, exit 2, and a complaint with its facts", (_clm, _given, files, args, facts) => {
     const { exitCode, output, error } = ran(["balance", ...args], folderWith(files));
 
