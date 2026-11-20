@@ -5,7 +5,7 @@ Each line says what a change means for someone using spec-controller. A line tha
 **Not yet released:**
 
 - What balance does is unchanged: three of the specification's claims (the Summary's deferral line, the JSON schema's version and a missing default settings file) each have a recorded failing run, proving their tests can fail.
-- What balance does is unchanged: spec-controller's own build runs the community lint rule `vitest/expect-expect`, so a test of its own that asserts nothing reds the build.
+- What balance does is unchanged: spec-controller's own build runs the community lint rule `vitest/expect-expect`, so a test in its packages that calls no assertion reds the build.
 
 ## 0.1.338 — 2026-11-20 — Easier adoption
 
