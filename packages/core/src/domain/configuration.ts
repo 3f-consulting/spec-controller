@@ -172,3 +172,10 @@ export function runnersFoundOf(settings: ConfigurationSettings, steps: readonly 
   );
   return { ...settings, runners: [...settings.runners, ...found.map(({ name, layer }): SettingPart<readonly [Layer, Runner]> => ({ taken: [layer, { name, found: true }] }))] };
 }
+
+export const runnerReportsOf = ({ runners }: ConfigurationSettings): readonly { readonly layer: Layer; readonly report: ReportLocation }[] =>
+  runners.flatMap((part) => ("taken" in part && part.taken[1].report !== undefined ? [{ layer: part.taken[0], report: part.taken[1].report }] : []));
+
+export const layersOfReportAt = (settings: ConfigurationSettings, path: string | undefined): readonly Layer[] => [
+  ...new Set(runnerReportsOf(settings).flatMap(({ layer, report }) => (report.path === path ? [layer] : []))),
+];

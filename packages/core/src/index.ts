@@ -13,7 +13,7 @@ export type { BalanceSettingName, SettingsFileEntries, SettingsGiven, SettingsMe
 export type { FileIdentity, OutputRefusal, OutputRequest } from "./domain/outputPlan.js";
 export { allocationOf, claimCodeErrorsOf, featureCodeOfFile, isFeatureCode, writtenClaimCode } from "./domain/claimCodes.js";
 export { claimReconciliationsOf } from "./domain/claimReconciliation.js";
-export { reportsLocatedOf, runnersFoundOf } from "./domain/configuration.js";
+export { layersOfReportAt, reportsLocatedOf, runnerReportsOf, runnersFoundOf } from "./domain/configuration.js";
 export { evidenceReconciliationOf, reconcile, stepAccountOf } from "./domain/evidenceReconciliation.js";
 export { outputPlanOf } from "./domain/outputPlan.js";
 export { targetFolderOf } from "./domain/targetPath.js";
