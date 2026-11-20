@@ -1,0 +1,13 @@
+features: features
+ci: .github/workflows/ci.yml
+ci-steps: [reports/ci-steps.json]
+package-json: package.json
+target: spec-controller
+unit: [vitest]
+integration: [cucumber-js]
+e2e: [cucumber-js]
+not-check:
+  - "ci.yml:ci:Enable corepack"
+  - "ci.yml:ci:Install dependencies"
+  - "ci.yml:ci:Read the Python Semgrep runs on"
+  - "ci.yml:ci:Install Semgrep"

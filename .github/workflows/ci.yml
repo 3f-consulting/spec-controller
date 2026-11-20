@@ -48,10 +48,6 @@ jobs:
       - name: Enable corepack
         run: corepack enable
 
-      - name: Resolve the evidence root
-        run: |
-          echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
-
       # The docs: package scripts run Vale. Its version and checksum move together; the checksum is the Linux_64-bit line of the release's vale_<version>_checksums.txt.
       - name: Install dependencies
         shell: bash
@@ -109,7 +105,7 @@ jobs:
         run: |
           start=$SECONDS
           status=0
-          timeout "${UNIT_SUITE_TIMEOUT_S:?}" pnpm test --maxWorkers="$(nproc)" --no-isolate --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --coverage.enabled || status=$?
+          timeout "${UNIT_SUITE_TIMEOUT_S:?}" pnpm test --maxWorkers="$(nproc)" --no-isolate --reporter=default --reporter=json --outputFile.json=reports/vitest.json --coverage.enabled || status=$?
           echo "the unit suite took $((SECONDS - start)) s of its $UNIT_SUITE_TIMEOUT_S s limit"
           exit "$status"
 
@@ -120,7 +116,7 @@ jobs:
         run: |
           start=$SECONDS
           status=0
-          timeout "${CUCUMBER_SUITE_TIMEOUT_S:?}" pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" || status=$?
+          timeout "${CUCUMBER_SUITE_TIMEOUT_S:?}" pnpm cucumber --format json:reports/cucumber.json || status=$?
           echo "the behavioural suite took $((SECONDS - start)) s of its $CUCUMBER_SUITE_TIMEOUT_S s limit"
           exit "$status"
 
@@ -490,30 +486,18 @@ jobs:
       - name: Dump this run's step record
         if: always()
         env:
+          JOB_JSON: ${{ toJSON(job) }}
           STEPS_JSON: ${{ toJSON(steps) }}
         run: |
-          mkdir -p "$SPEC_CONTROLLER_EVIDENCE_DIR"
-          record="$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json"
-          printf '%s' "$STEPS_JSON" > "$record"
-          printf 'step record: %s bytes, %s step(s) with an id:\n' \
-            "$(wc -c < "$record" | tr -d ' ')" "$(jq 'length' "$record")"
+          mkdir -p reports
+          record=reports/ci-steps.json
+          printf '{"job":%s,"steps":%s}' "$JOB_JSON" "$STEPS_JSON" > "$record"
+          printf 'step record: %s bytes, job %s, %s step(s) with an id:\n' \
+            "$(wc -c < "$record" | tr -d ' ')" "$(jq -r '.job.status' "$record")" "$(jq '.steps | length' "$record")"
 
       - name: Reconciliation
         if: always()
-        # $(…) is unquoted, and .github/actionlint.yaml ignores SC2046 for it: it must split into --ci-steps and its path, or add nothing when no step record was written.
-        # Each report is named in its runner's long form: the Test and Cucumber steps write it under $SPEC_CONTROLLER_EVIDENCE_DIR, which balance cannot read from a step's command.
-        run: |
-          pnpm spec-controller balance --features features \
-            --unit "vitest:vitest:$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" \
-            --integration "cucumber-js:cucumber:$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" \
-            --e2e "cucumber-js:cucumber:$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" \
-            --not-check "ci.yml:ci:Enable corepack" \
-            --not-check "ci.yml:ci:Resolve the evidence root" \
-            --not-check "ci.yml:ci:Install dependencies" \
-            --not-check "ci.yml:ci:Read the Python Semgrep runs on" \
-            --not-check "ci.yml:ci:Install Semgrep" \
-            $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json" ] && echo "--ci-steps $SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json") \
-            --ci .github/workflows/ci.yml --package-json package.json --target spec-controller
+        run: pnpm spec-controller balance
 
       - name: Hand the built packages to the release
         if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
