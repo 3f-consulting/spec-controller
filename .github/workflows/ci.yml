@@ -315,6 +315,13 @@ jobs:
           done
           pnpm docs:current-state
 
+      - name: No comment in a code, workflow or configuration file names a TypeScript or JavaScript file
+        id: CLM-FIT-086
+        if: always()
+        run: |
+          printf '// see %s\n' "$(printf '%s.%s' one ts)" | vale --config=.vale/comments.ini --ext=.ts --output=line | grep -q ':Paths.CodeFile:' || { echo "Vale's Paths.CodeFile rule did not fire on a comment that breaks it"; exit 1; }
+          pnpm docs:code-file-in-comment
+
       - name: No title or description names a code identifier or a source file
         id: CLM-FIT-038
         if: always()
