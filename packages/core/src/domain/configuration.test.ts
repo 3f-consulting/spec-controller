@@ -298,7 +298,7 @@ describe("the run will still reach its run verdict, using the configuration sett
     });
     const passingUnitTest = { cites: [{ featureCode: "ONE", number: "001" }], result: "passed", kind: "unit", place: "one.test.ts" } as const;
 
-    const runVerdict = runVerdictOf(claimReconciliationsOf(claims, [passingUnitTest, ...fitnessObservationsOf(disposedStepsOf(steps, configuration, {}, shellAnswers, []), [])]), []);
+    const runVerdict = runVerdictOf(claimReconciliationsOf(claims, [passingUnitTest, ...fitnessObservationsOf(disposedStepsOf(steps, configuration, {}, shellAnswers, []), [])]), [], false);
 
     expect({ runVerdict, integrationStep: stepDispositionOf(steps[0]!, configuration, {}, shellAnswers) }).toEqual({
       runVerdict: { verdict: "balanced" },

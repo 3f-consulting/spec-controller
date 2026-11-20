@@ -25,6 +25,7 @@ export type RunRequest =
       readonly outputs: readonly OutputRequest<ReportFormat>[];
       readonly strict: boolean;
       readonly exitZero: boolean;
+      readonly countOnlyExecutableClaims: boolean;
     }
   | { readonly command: "allocate"; readonly featureCode: string; readonly asNewFeatureCode: boolean; readonly features?: string };
 
@@ -144,6 +145,7 @@ function balanceRequested(read: FlagsRead): RunRequest | UsageError {
     outputs,
     strict: read.on.has("strict"),
     exitZero: read.on.has("exit-zero"),
+    countOnlyExecutableClaims: read.on.has("written-claims-only"),
   };
 }
 

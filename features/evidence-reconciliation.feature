@@ -7,15 +7,16 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
   The run verdict is balanced, out of balance, or not reconciled. A run is not reconciled when
   balance cannot rely on what it read, and the verdict names why: unsound, when some evidence
   never ran; claim code errors, when balance finds a claim code error; or nothing to reconcile,
-  when there are no Claim Reconciliations. When several reasons apply, unsound comes before claim
-  code errors, and claim code errors before nothing to reconcile; each comes before out of balance.
+  when there are no Claim Reconciliations to count. When several reasons apply, unsound comes
+  before claim code errors, and claim code errors before nothing to reconcile; each comes before
+  out of balance.
 
   The totals count the Claim Reconciliations, the Quality Check Reconciliations by kind and
   outcome, where each Evidence Observation was filed, the excluded claim code occurrences and the
   scenarios a deferral tag set aside. The step account counts every CI step balance read, by job.
   The provenance names the target, the source SHA, the tool, each input and when the run started.
 
-  Rule: a run is balanced only when all its Claim Reconciliations are
+  Rule: a run is balanced only when all the Claim Reconciliations it counts are
 
     @unit
     Scenario Outline: the run will be balanced or out of balance, as its Claim Reconciliations call for
@@ -56,6 +57,40 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
         | CLM-EVR-010 | an Evidence Observation that never ran and a claim code error                      | unsound           |
         | CLM-EVR-011 | a claim code error and a Claim Reconciliation out of balance                       | claim code errors |
         | CLM-EVR-012 | a corpus whose only scenario is tagged with two codes, and no Evidence Observation | claim code errors |
+
+  Rule: a team can gate on the claims it has written before every test cites one
+
+    @unit
+    Scenario Outline: a run counting only the executable claims is balanced or out of balance as its executable claims call for
+      given a run had <executable claim>
+      and it had <other evidence>
+      when balance reconciles it counting only the executable claims
+      then the run verdict will be <run verdict>
+
+      Examples:
+        | clm         | executable claim                                                                                | other evidence                                          | run verdict    |
+        | CLM-EVR-084 | one asking for unit evidence, with a passing unit test citing it                                | a passing unit test citing a code no claim has          | balanced       |
+        | CLM-EVR-085 | one asking for unit evidence, with a passing unit test citing it                                | a failing unit test citing a code no claim has          | balanced       |
+        | CLM-EVR-086 | one asking for unit evidence, with a passing unit test citing it                                | a failing unit test citing no code                      | balanced       |
+        | CLM-EVR-087 | one asking for unit evidence, with a passing unit test citing it                                | a unit test citing a code no claim has, which never ran | balanced       |
+        | CLM-EVR-088 | one asking for unit evidence, with a passing unit test citing it                                | a unit test citing no code, which never ran             | balanced       |
+        | CLM-EVR-089 | one asking for unit evidence, with a failing unit test citing it                                | a passing unit test citing no code                      | out of balance |
+        | CLM-EVR-090 | one asking for unit evidence, with no test citing it                                            | a passing unit test citing no code                      | out of balance |
+        | CLM-EVR-091 | one asking for unit evidence, with a passing unit test and a passing integration test citing it | nothing                                                 | out of balance |
+        | CLM-EVR-092 | one asking for fitness evidence, whose CI step succeeded and set continue-on-error to true      | nothing                                                 | out of balance |
+
+    @unit
+    Scenario Outline: a run counting only the executable claims is not reconciled for a reason an executable claim gives, or for having none
+      given a run had <executable claim>
+      and it had <other evidence>
+      when balance reconciles it counting only the executable claims
+      then the run verdict will be not reconciled, because <why>
+
+      Examples:
+        | clm         | executable claim                                        | other evidence                                          | why                  |
+        | CLM-EVR-093 | one asking for unit evidence, whose unit test never ran | nothing                                                 | unsound              |
+        | CLM-EVR-094 | none                                                    | a passing unit test citing no code                      | nothing to reconcile |
+        | CLM-EVR-095 | none                                                    | a unit test citing a code no claim has, which never ran | nothing to reconcile |
 
   Rule: the summary counts what was reconciled
 

@@ -5,7 +5,7 @@ import { quoted } from "./quoted.js";
 const item = (label: string, value: string): string => `- ${coreText(`provenance-${label}`)}: ${quoted(value)}`;
 
 // The tool's commit only when it ran from its own checkout; an input on a line of its own only when the run read it.
-export function provenanceSection({ target, sourceSha, toolSha, toolVersion, runTime, inputs }: Provenance): string[] {
+export function provenanceSection({ target, sourceSha, toolSha, toolVersion, runTime, countedOnlyExecutableClaims, inputs }: Provenance): string[] {
   return [
     `## ${coreText("provenance-heading")}`,
     "",
@@ -14,6 +14,7 @@ export function provenanceSection({ target, sourceSha, toolSha, toolVersion, run
     ...(toolSha === undefined ? [] : [item("tool-sha", toolSha)]),
     item("tool-version", toolVersion),
     item("run-time", runTime),
+    ...(countedOnlyExecutableClaims ? [`- ${coreText("provenance-counted-only-executable-claims")}`] : []),
     `- ${coreText("provenance-inputs")}:`,
     ...inputs.flatMap(({ name, path }) => (path === undefined ? [] : [`  ${item(`input-${name}`, path)}`])),
   ];

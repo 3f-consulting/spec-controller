@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { repositoryOfOrigin } from "../inputs/origin.js";
-import { provenanceInputsOf, provenanceOf, type Provenance, type ProvenanceInput, type RunIdentity } from "./provenance.js";
+import { provenanceInputsOf, provenanceOf, type ProvenanceInput, type ProvenanceOfInputs, type RunIdentity } from "./provenance.js";
 
 describe("the provenance says what the run used", () => {
   it.each([
@@ -26,12 +26,12 @@ describe("the provenance says what the run used", () => {
     ["CLM-EVR-043", "no Cucumber evidence report read", {}, [{ name: "cucumber" }], { inputs: [{ name: "cucumber" }] }],
     ["CLM-EVR-044", "an input inside the target's folder", {}, [{ name: "vitest", path: "/work/acme/a.json" }], { inputs: [{ name: "vitest", path: "a.json" }] }],
     ["CLM-EVR-053", "a start at 2026-11-12T07:08:14Z", { runTime: "2026-11-12T07:08:14Z" }, [], { runTime: "2026-11-12T07:08:14Z" }],
-  ] as const satisfies readonly (readonly [string, string, Partial<RunIdentity>, readonly ProvenanceInput[], Partial<Provenance>])[])(
+  ] as const satisfies readonly (readonly [string, string, Partial<RunIdentity>, readonly ProvenanceInput[], Partial<ProvenanceOfInputs>])[])(
     "[%s] a run that had %s has what it used in the provenance",
     (_clm, _had, identity, inputs, details) => {
       const provenance = provenanceOf({ runTime: "2026-01-01T00:00:00Z", ...identity }, inputs, "/work/acme", repositoryOfOrigin);
 
-      expect(Object.fromEntries(Object.keys(details).flatMap((detail) => (detail in provenance ? [[detail, provenance[detail as keyof Provenance]]] : [])))).toStrictEqual(
+      expect(Object.fromEntries(Object.keys(details).flatMap((detail) => (detail in provenance ? [[detail, provenance[detail as keyof ProvenanceOfInputs]]] : [])))).toStrictEqual(
         Object.fromEntries(Object.entries(details).filter(([, value]) => value !== undefined)),
       );
     },

@@ -198,7 +198,7 @@ A single Reconcile step then reads the reports and the record. It runs the comma
       --exit-zero
 ```
 
-`--unit vitest` reads the report your Vitest step writes, as `npx vitest run --reporter=json --outputFile=reports/vitest.json` does. Add the other runners and the non-checks you named, such as `--integration cucumber-js` for a Cucumber suite. Drop `--ci-steps` if you have converted no check. Remove `--exit-zero` when you are ready to gate.
+`--unit vitest` reads the report your Vitest step writes, as `npx vitest run --reporter=json --outputFile=reports/vitest.json` does. Add the other runners and the non-checks you named, such as `--integration cucumber-js` for a Cucumber suite. Drop `--ci-steps` if you have converted no check. When the scenarios you have named balance, replace `--exit-zero` with `--written-claims-only` to gate on them while other tests still cite nothing. See [Gate on the scenarios you have written](./user-guide.md#gate-on-the-scenarios-you-have-written--use---written-claims-only).
 
 Save the reports as build artefacts, but do not commit them: a report lists the gaps in your codebase. See [Wiring into CI](./user-guide.md#wiring-into-ci) and [GitHub Actions — put the report on the run summary](./user-guide.md#github-actions--put-the-report-on-the-run-summary).
 
@@ -214,7 +214,7 @@ A run is not reconciled when you cannot rely on it. Its run verdict says why:
 
 - `unsound` when some evidence never ran.
 - `claim-code-errors` when a claim code is misfiled.
-- `nothing-to-reconcile` when there is nothing to reconcile at all.
+- `nothing-to-reconcile` when there is no claim for the run verdict to count.
 
 See [Exit codes](./user-guide.md#exit-codes).
 

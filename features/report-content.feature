@@ -99,6 +99,19 @@ Feature: Each report has the right structure, and the Markdown explains it
         | CLM-RPT-167 | the tool SHA 9f8e7d6 | the tool SHA 9f8e7d6   |
         | CLM-RPT-168 | no tool SHA          | no line for a tool SHA |
 
+  Rule: a reader can tell when the run verdict left out the phantom claims and the unnamed claim
+
+    @unit
+    Scenario Outline: the provenance says the run verdict counted only the executable claims, only when it did
+      given a run <how it ran>
+      when the Markdown report is written
+      then the provenance <says> that the run verdict counted only the executable claims
+
+      Examples:
+        | clm         | how it ran                         | says         |
+        | CLM-RPT-176 | counted only the executable claims | will say     |
+        | CLM-RPT-177 | counted every claim                | will not say |
+
   Rule: the report names the files, codes or setting each error in the inputs involves
 
     @unit

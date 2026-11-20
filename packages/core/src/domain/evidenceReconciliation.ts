@@ -15,7 +15,7 @@ import {
   type TestResult,
 } from "./postEvidenceObservation.js";
 import type { CiStep } from "./workflowSteps.js";
-import { provenanceOf, type Provenance, type ProvenanceInput, type RepositoryOfOrigin, type RunIdentity } from "./provenance.js";
+import { provenanceOf, type Provenance, type ProvenanceInput, type ProvenanceOfInputs, type RepositoryOfOrigin, type RunIdentity } from "./provenance.js";
 
 export type RunVerdict =
   | { readonly verdict: "balanced" }
@@ -86,13 +86,15 @@ export interface EvidenceReconciliation {
 }
 
 // Not reconciled, first because evidence never ran, then for claim code errors, then for nothing to reconcile; otherwise
-// balanced only when every Claim Reconciliation is.
-export function runVerdictOf(claimReconciliations: readonly ClaimReconciliation[], claimCodeErrors: readonly ClaimCodeError[]): RunVerdict {
-  const neverRan = claimReconciliations.some(({ qualityCheckReconciliations }) => qualityCheckReconciliations.some(({ outcome }) => outcome === "never-ran"));
+// balanced only when every Claim Reconciliation counted is. Counting only the executable claims leaves the phantom claims
+// and the unnamed claim out of the never-ran check and the balance.
+export function runVerdictOf(claimReconciliations: readonly ClaimReconciliation[], claimCodeErrors: readonly ClaimCodeError[], countOnlyExecutableClaims: boolean): RunVerdict {
+  const counted = countOnlyExecutableClaims ? claimReconciliations.filter(({ claim }) => isExecutable(claim)) : claimReconciliations;
+  const neverRan = counted.some(({ qualityCheckReconciliations }) => qualityCheckReconciliations.some(({ outcome }) => outcome === "never-ran"));
   if (neverRan) return { verdict: "not-reconciled", why: "unsound" };
   if (claimCodeErrors.length > 0) return { verdict: "not-reconciled", why: "claim-code-errors" };
-  if (claimReconciliations.length === 0) return { verdict: "not-reconciled", why: "nothing-to-reconcile" };
-  return { verdict: claimReconciliations.every(({ verdict }) => verdict === "balanced") ? "balanced" : "out-of-balance" };
+  if (counted.length === 0) return { verdict: "not-reconciled", why: "nothing-to-reconcile" };
+  return { verdict: counted.every(({ verdict }) => verdict === "balanced") ? "balanced" : "out-of-balance" };
 }
 
 const COUNTED: Readonly<Record<StepDisposition, keyof Omit<StepCounts, "stepsRead">>> = {
@@ -221,21 +223,32 @@ export interface RunReconciled {
   readonly features: readonly FeatureFile[];
   // How the claims were read from the features, so the scenarios a deferral tag set aside are counted by the same reading.
   readonly claimReading: ClaimReadingSettings;
+  // Whether the run verdict counts the executable claims alone, leaving out the phantom claims and the unnamed claim.
+  readonly countOnlyExecutableClaims: boolean;
   readonly stepAccount: StepAccount;
-  readonly provenance: Provenance;
+  readonly provenance: ProvenanceOfInputs;
 }
 
 // The Evidence Reconciliation assembled from its parts: every part is present, empty when the run had nothing for it.
-export function evidenceReconciliationOf({ claimReconciliations, claimCodeErrors, configurationErrors, features, claimReading, stepAccount, provenance }: RunReconciled): EvidenceReconciliation {
+export function evidenceReconciliationOf({
+  claimReconciliations,
+  claimCodeErrors,
+  configurationErrors,
+  features,
+  claimReading,
+  countOnlyExecutableClaims,
+  stepAccount,
+  provenance,
+}: RunReconciled): EvidenceReconciliation {
   const neverRan = claimReconciliations.flatMap(({ qualityCheckReconciliations }) =>
     qualityCheckReconciliations.flatMap((reconciliation) => (reconciliation.outcome === "never-ran" ? [reconciliation.observation] : [])),
   );
   return {
     claimReconciliations,
-    runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors),
+    runVerdict: runVerdictOf(claimReconciliations, claimCodeErrors, countOnlyExecutableClaims),
     totals: totalsOf(claimReconciliations, features, deferredScenariosOf(features, claimReading)),
     stepAccount,
-    provenance,
+    provenance: { ...provenance, countedOnlyExecutableClaims: countOnlyExecutableClaims },
     errorsInTheInputs: { claimCodeErrors, configurationErrors },
     runIntegrity: { neverRan },
   };
@@ -268,6 +281,8 @@ export interface ReadersGave {
   readonly provenanceInputs: readonly ProvenanceInput[];
   readonly targetFolder: string;
   readonly strict: boolean;
+  // Whether the run verdict counts the executable claims alone, leaving out the phantom claims and the unnamed claim.
+  readonly countOnlyExecutableClaims: boolean;
 }
 
 // The credit journal: each report's results as Evidence Observations, beside the fitness functions' from the CI steps.
@@ -281,7 +296,7 @@ function creditJournalOf({ reports, features, stepRecord, targetFolder }: Reader
 // What the readers gave, reconciled in one call: the configuration checked, the steps disposed, the claims and the evidence
 // posted and reconciled, and the whole assembled.
 export function reconcile(given: ReadersGave): EvidenceReconciliation {
-  const { features, steps, stepRecord, settings, reportsNotFound, scripts, shell, repositoryOf, identity, provenanceInputs, targetFolder, strict } = given;
+  const { features, steps, stepRecord, settings, reportsNotFound, scripts, shell, repositoryOf, identity, provenanceInputs, targetFolder, strict, countOnlyExecutableClaims } = given;
   const { configuration, errors } = targetConfigurationOf(settings, steps, reportsNotFound);
   // Each step with what it is: posting and the step account both take it, and posting the same record.
   const disposedSteps = disposedStepsOf(steps, configuration, scripts, shell, stepRecord);
@@ -293,6 +308,7 @@ export function reconcile(given: ReadersGave): EvidenceReconciliation {
     configurationErrors: errors,
     features,
     claimReading,
+    countOnlyExecutableClaims,
     stepAccount: stepAccountOf(disposedSteps),
     provenance: provenanceOf(identity, provenanceInputs, targetFolder, repositoryOf),
   });

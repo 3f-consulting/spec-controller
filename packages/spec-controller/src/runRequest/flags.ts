@@ -37,6 +37,7 @@ const BALANCE_FLAGS: readonly Flag[] = [
   { name: "format", value: "<fmt>[:<path>]", repeats: true },
   { name: "strict" },
   { name: "exit-zero" },
+  { name: "written-claims-only" },
   HELP,
 ];
 

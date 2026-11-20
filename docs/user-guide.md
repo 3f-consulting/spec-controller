@@ -114,6 +114,12 @@ For the smallest form of the command, and for every flag, see [Command reference
 
 Your first run against an unannotated pipeline fails, and the report is right to fail it: the corpus raises no evidence obligations yet. [A first run, report only](./quickstart.md#a-first-run-report-only) explains why, and shows how `--exit-zero` lets you watch before you gate.
 
+### Gate on the scenarios you have written — use `--written-claims-only`
+
+The route from a first run to a gate has three steps. Start with `--exit-zero`, and watch the report. Name a few scenarios, and cite them from their tests. When those balance, replace `--exit-zero` with `--written-claims-only`.
+
+With `--written-claims-only`, the run verdict counts only the executable claims: the claims your feature files write. A test that cites no claim code, or a code no scenario has, is still listed in the report under the unnamed claim or its phantom claim, but it does not turn the run red, and one that never ran does not make the run unsound. A written claim whose evidence is missing, failing, cannot fail or was not asked for is still out of balance. A run with no executable claim has nothing to reconcile, and a claim code error still leaves the run not reconciled. The report's provenance says when the run verdict counted only the executable claims. When every test cites a scenario, drop the flag.
+
 ### Name your first non-checks
 
 `balance` lists every CI step as a check, except a step that runs a runner you name (see [Naming your runners](#naming-your-runners)) and GitHub's own checkout, setup, cache and artifact actions. Some steps do work but check nothing, such as a step that publishes a package or bumps a version. Name each of these steps once with `--not-check`, by the step's own name:
@@ -255,7 +261,7 @@ def test_offers_the_next_code():
 | a code no feature file carries | makes a [phantom claim](#report-rows-to-know) |
 | no `clm` property, or a value that is not a claim code | lands on the unnamed claim |
 | `clm` properties naming two or more different codes | **credits none of them**; it lands on the unnamed claim, naming every code, because one test proves exactly one scenario |
-| a module that fails to collect, or a test whose setup errors | never ran its proof: it posts a `never-ran` Evidence Observation, the run is not reconciled, as `unsound` (exit `3`), and the scenario it cites reads `missing` |
+| a module that fails to collect, or a test whose setup errors | never ran its proof: it posts a `never-ran` Evidence Observation, the run is not reconciled, as `unsound` (exit `3`), and the scenario it cites reads `missing`; under `--written-claims-only`, it is listed but does not make the run unsound |
 
 ### Citing a scenario from Jest
 
@@ -305,7 +311,7 @@ describe("allocating the next number", () => {
 | failing | answers that scenario as failing |
 | todo or skipped | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its title | **credits none of them**; it lands on the unnamed claim, naming every code |
-| a test file that failed to run | never ran its proof: it posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`) |
+| a test file that failed to run | never ran its proof: it posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`); under `--written-claims-only`, it is listed but does not make the run unsound |
 
 ### Citing a scenario from Go
 
@@ -356,7 +362,7 @@ A nested subtest's name also includes the name of every enclosing subtest. `bala
 | failing | answers that scenario as failing |
 | skipped | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its own name | **credits none of them**; it lands on the unnamed claim, naming every code |
-| in a package that failed to compile | never ran its proof: the package posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`) |
+| in a package that failed to compile | never ran its proof: the package posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`); under `--written-claims-only`, it is listed but does not make the run unsound |
 
 ### Citing a scenario from Java
 
@@ -517,7 +523,7 @@ The runner's name is `rspec`, so a step that runs `rspec`, or `bundle exec rspec
 | failing | answers that scenario as failing |
 | skipped or pending (`skip`, `xit`, `pending`) | nothing, so the scenario it cites reads `missing` |
 | two or more codes in its own description | **credits none of them**; it lands on the unnamed claim, naming every code |
-| in a spec file that failed to load | never ran its proof: the file posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`) |
+| in a spec file that failed to load | never ran its proof: the file posts a `never-ran` Evidence Observation, and the run is not reconciled, as `unsound` (exit `3`); under `--written-claims-only`, it is listed but does not make the run unsound |
 
 ---
 
@@ -843,9 +849,9 @@ The package ships a JSON Schema that states the JSON's structure: `dist/spec-rec
 | --- | --- | --- | --- |
 | balanced | `balanced` | `0` | every Claim Reconciliation balances |
 | out of balance | `out-of-balance` | `1` | at least one Claim Reconciliation is out of balance |
-| not reconciled, as unsound | `not-reconciled`, `unsound` | `3` | some evidence never ran, so the run cannot be relied on to show a disagreement |
+| not reconciled, as unsound | `not-reconciled`, `unsound` | `3` | some evidence never ran, so the run cannot be relied on to show a disagreement; under `--written-claims-only`, only evidence citing an executable claim counts |
 | not reconciled, for claim code errors | `not-reconciled`, `claim-code-errors` | `3` | a claim code is misfiled (see [Claim code errors](#claim-code-errors)) |
-| not reconciled, with nothing to reconcile | `not-reconciled`, `nothing-to-reconcile` | `3` | there is no Claim Reconciliation at all, so the run has no basis for a verdict |
+| not reconciled, with nothing to reconcile | `not-reconciled`, `nothing-to-reconcile` | `3` | there is no Claim Reconciliation the run verdict counts, so the run has no basis for a verdict |
 
 The totals follow, in groups:
 
@@ -882,7 +888,7 @@ Both reports name each outcome by its handle.
 | `failing` | the evidence asked for arrived, and failed | a swallowed red also reads `failing`, given `--ci-steps` |
 | `cannot-fail` | the evidence passed, but its CI step or its job sets `continue-on-error`, or `balance` cannot read whether it does, so its red might not fail the build | see below |
 | `not-asked-for` | the evidence is of a kind of quality check its claim did not ask for | see [When a row reads `not-asked-for`](#when-a-row-reads-not-asked-for) |
-| `never-ran` | the evidence never reached its assertions | the run is not reconciled, as `unsound`, and the evidence is listed under `## Run integrity` too |
+| `never-ran` | the evidence never reached its assertions | the run is not reconciled, as `unsound`, and the evidence is listed under `## Run integrity` too; under `--written-claims-only`, only when it cites an executable claim |
 | `no-claim-code` | the claim has no claim code for evidence to cite | |
 | `duplicate-claim-code` | the claim's claim code is carried by another claim | see below |
 | `no-quality-check` | the claim asks for no quality check, and nothing cites it | |
@@ -1039,6 +1045,7 @@ Help answers only when nothing else on the command line is refused. A usage erro
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See [`--format`](#--format--routing-the-output). |
 | `--strict` | Read every claim as if nothing were put off: a deferral tag is ignored, and `@<quality-check-kind>pending` is read as `@<quality-check-kind>`. See [Deferring a scenario](#deferring-a-scenario). |
 | `--exit-zero` | Print the same report, but exit `0` on an out-of-balance (`1`) verdict. Usage (`2`), not reconciled (`3`) and an unexpected error before the verdict (`4`) still fail. Use it as the on-ramp before gating. |
+| `--written-claims-only` | Count only the executable claims in the run verdict. Tests that cite no claim code, or a code no scenario has, are still listed and do not turn the run red. The provenance says so. See [Gate on the scenarios you have written](#gate-on-the-scenarios-you-have-written--use---written-claims-only). |
 | `--help`, `-h` | Show `balance`'s help and exit. |
 
 ### `--format` — routing the output
@@ -1128,7 +1135,7 @@ The tool writes the code under `CLM`. Its number is one past the highest number 
 
 1. Read the report's **Step account**. It names each workflow and job, how many steps were read, and what became of each one. GitHub's own checkout, setup, cache and artifact actions are already counted out as plumbing.
 2. Name your runners, name your non-checks, or narrow `--ci`. See [Configuration](#configuration--runners-non-checks-and-deferral-tags).
-3. To keep the report while you work through it, without failing the build, add `--exit-zero`. Delete it when you are ready to gate.
+3. To keep the report while you work through it, without failing the build, add `--exit-zero`. When the scenarios you have named balance, replace it with `--written-claims-only` to gate on them alone.
 
 **A step I know is my test suite is reported as a check.** Runner recognition did not reach it. `balance` recognises the runner only as the command a step runs, directly or behind one of the listed launchers, in the step's command or in the `package.json` script the step invokes. It does not reach a suite:
 
