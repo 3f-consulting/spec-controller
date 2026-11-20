@@ -343,6 +343,17 @@ describe("balance reads the evidence report of a runner it found as that runner'
   });
 });
 
+describe("each run verdict will have its exit code", () => {
+  it("[CLM-CLI-225] a settings file with a key balance does not know, under --exit-zero: the run is not reconciled, because of configuration errors, and exits 3", () => {
+    const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "spec-controller.yml": "unitt: [vitest]\n" });
+
+    const { exitCode, output } = ran(["balance", "--exit-zero", "--format", "json"], folder);
+
+    const reported = (output === "" ? undefined : JSON.parse(output)) as VerdictReported | undefined;
+    expect({ exitCode, runVerdict: reported?.runVerdict }).toEqual({ exitCode: 3, runVerdict: { verdict: "not-reconciled", why: "configuration-errors" } });
+  });
+});
+
 describe("the provenance shows where each layer's runners came from", () => {
   it("[CLM-RPT-179] no runner named, a workflow step running vitest: the Markdown report's provenance says vitest is the unit layer's runner, found in a workflow", () => {
     const folder = folderWith({ "features/one.feature": ONE_UNIT_CLAIM, "workflows/ci.yml": `jobs:\n  ci:\n    steps:\n      - run: ${STEP_WRITING_VITEST}\n`, "out/vitest.json": BY_FILE_PASSING });

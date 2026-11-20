@@ -359,6 +359,7 @@ Feature: the command line reads what you give it, and says where each kind of ou
         | CLM-CLI-168 | not reconciled, because unsound              | 3         |
         | CLM-CLI-169 | not reconciled, because claim code errors    | 3         |
         | CLM-CLI-170 | not reconciled, because nothing to reconcile | 3         |
+        | CLM-CLI-225 | not reconciled, because configuration errors | 3         |
 
   Rule: --exit-zero moves only an out-of-balance run's exit code, to 0
 
