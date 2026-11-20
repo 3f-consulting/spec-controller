@@ -237,9 +237,10 @@ Feature: Evidence Observations are posted, each to its claim
       then <posted>, citing CLM-ONE-001
 
       Examples:
-        | clm         | records                                                          | posted                                                                      |
-        | CLM-OBS-166 | one with no entry for CLM-ONE-001, and one in which it succeeded | one fitness Evidence Observation will be posted, as passed                  |
-        | CLM-OBS-167 | one in which CLM-ONE-001 succeeded, and one in which it failed   | two fitness Evidence Observations will be posted, one passed and one failed |
+        | clm         | records                                                                                  | posted                                                                      |
+        | CLM-OBS-166 | one with no entry for CLM-ONE-001, and one in which it succeeded                         | one fitness Evidence Observation will be posted, as passed                  |
+        | CLM-OBS-167 | one in which CLM-ONE-001 succeeded, and one in which it failed                           | two fitness Evidence Observations will be posted, one passed and one failed |
+        | CLM-OBS-171 | one in which CLM-ONE-001 was skipped in a job that succeeded, and one in which it failed | one fitness Evidence Observation will be posted, as failed                  |
 
     @unit
     Scenario Outline: balance posts a recorded success in a workflow as passed-on-error only when a step carrying its id, or that step's job, sets continue-on-error to anything but false

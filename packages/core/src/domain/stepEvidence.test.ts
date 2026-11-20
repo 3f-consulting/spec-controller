@@ -173,10 +173,12 @@ describe("balance posts a fitness function's step the step record does not name 
 describe("balance posts a fitness function's step from each step record that names it", () => {
   const succeeded = { outcome: "success", conclusion: "success" };
   const failed = { outcome: "failure", conclusion: "failure" };
+  const skipped = { outcome: "skipped", conclusion: "skipped" };
 
   it.each([
     ["CLM-OBS-166", "one with no entry for CLM-ONE-001, and one in which it succeeded", { checkout: succeeded }, { "CLM-ONE-001": succeeded }, ["passed"]],
     ["CLM-OBS-167", "one in which CLM-ONE-001 succeeded, and one in which it failed", { "CLM-ONE-001": succeeded }, { "CLM-ONE-001": failed }, ["passed", "failed"]],
+    ["CLM-OBS-171", "one in which CLM-ONE-001 was skipped in a job that succeeded, and one in which it failed", { job: { status: "success" }, steps: { "CLM-ONE-001": skipped } }, { "CLM-ONE-001": failed }, ["failed"]],
   ] as const)("[%s] a workflow had a fitness function's step with the id CLM-ONE-001, and the run read two step records, %s: a fitness Evidence Observation is posted for each entry naming it, citing CLM-ONE-001", (_clm, _records, first, second, results) => {
     const steps = workflowOf({ ci: { steps: [{ id: "checkout", uses: "actions/checkout@v4" }, { id: "CLM-ONE-001", run: "pnpm lint" }] } });
     const record = [...stepRecordFrom(first), ...stepRecordFrom(second)];
