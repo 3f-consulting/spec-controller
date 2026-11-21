@@ -70,7 +70,7 @@ prove_unit() {
   local filter="\\[$code\\]" files=() file
   while IFS= read -r file; do
     files+=("$file")
-  done < <(git grep -l -F "$code" -- ':(glob)packages/*/src/**/*.test.ts' || true)
+  done < <(git grep -l -E "${code}([^0-9]|$)" -- ':(glob)packages/*/src/**/*.test.ts' || true)
   refuse_empty "${#files[@]}"
 
   limit="$(suite_limit UNIT_SUITE_TIMEOUT_S)"
