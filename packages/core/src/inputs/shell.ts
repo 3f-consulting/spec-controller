@@ -95,7 +95,7 @@ const SWALLOW_SET_COMMANDS = swallowSetForms.variants.map((form) => `set ${form}
 const isOneOf = (node: SyntaxNode, lines: readonly string[]): boolean => node.type === "Command" && lines.includes(wordsOf(node).join(" "));
 
 const swallowsHere = (node: SyntaxNode): boolean =>
-  node.type === "AndOr" ? node.commands.some((command, at) => node.operators[at - 1] !== undefined && isOneOf(command, swallowFallbacks.variants)) : isOneOf(node, SWALLOW_SET_COMMANDS);
+  node.type === "AndOr" ? node.commands.some((command, at) => node.operators[at - 1] === "||" && isOneOf(command, swallowFallbacks.variants)) : isOneOf(node, SWALLOW_SET_COMMANDS);
 
 function nodesOf(node: SyntaxNode): SyntaxNode[] {
   const found = [node];
