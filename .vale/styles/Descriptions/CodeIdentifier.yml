@@ -14,9 +14,6 @@ exceptions:
   - errorsInTheInputs
   - outOfBalance
   - qualityCheckReconciliations
-  # The keys an adopter writes in package.json.
-  - specController
-  - notChecks
   # The published API's type, which a package consumer reads off the v1 barrel, and GitHub, TypeScript and JavaScript, names that belong to others.
   - QualityCheckReconciliation
   - GitHub

@@ -4,6 +4,8 @@ Each line says what a change means for someone using spec-controller. A line tha
 
 **Not yet released:**
 
+- What balance does is unchanged: the compatibility page names the settings file, `spec-controller.yml`, and the runners balance finds for itself, and the feature-description word list drops `specController` and `notChecks`, keys balance does not read.
+
 ## 0.1.350 — 2026-11-21 — Easier adoption
 
 - **New: [`docs/what-an-agent-can-still-do.md`](https://github.com/3f-consulting/spec-controller/blob/main/docs/what-an-agent-can-still-do.md) says which changes `balance` cannot see**, such as a scenario deleted together with its tests, and how to make sure a person reviews each of them when coding agents write your code.
