@@ -112,6 +112,12 @@ describe("an argument the tool does not accept will stop the run", () => {
 
     expect({ exitCode, output, facts: facts.filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
   });
+
+  it("[CLM-CLI-133] a report format the tool does not have, given in the settings file: the run stops, no verdict, exit 2, and a complaint with its facts", () => {
+    const { exitCode, output, error } = ran(["balance"], folderWith({ "spec-controller.yml": "format: [html]\n" }));
+
+    expect({ exitCode, output, facts: ["html", "md", "json", "[unknown-format]"].filter((fact) => !error.includes(fact)) }).toEqual({ exitCode: 2, output: "", facts: [] });
+  });
 });
 
 describe("a usage error shows the help for what was asked for", () => {
@@ -512,6 +518,13 @@ describe("an input that is not valid will stop the run", () => {
       { "settings.yml": "unit: [vitest\n" },
       ["--config", "settings.yml"],
       ["{input-settingsFile} settings.yml does not parse", "at line 2, column 1", "[input-does-not-parse]"],
+    ],
+    [
+      "CLM-CLI-222",
+      "a settings file read by default that does not parse as YAML",
+      { "spec-controller.yml": "unit: [vitest\n" },
+      [],
+      ["{input-settingsFile}", "/spec-controller.yml does not parse", "at line 2, column 1", "[input-does-not-parse]"],
     ],
     [
       "CLM-CLI-223",

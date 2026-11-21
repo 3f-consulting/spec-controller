@@ -99,6 +99,9 @@ describe("balance reads every input the command line names or leaves to its defa
     ["ci-steps: [steps.json]", "ci/steps.json", "stepRecord", { "ci/steps.json": "{}" }],
     ["package-json: package.json", "ci/package.json", "manifest", { "ci/package.json": "{}" }],
     ["unit: [vitest:vitest:out/vitest.json]", "ci/out/vitest.json", "vitest", { "ci/out/vitest.json": '{"testResults":[]}' }],
+    ["integration: [cucumber-js:cucumber:out/cucumber.json]", "ci/out/cucumber.json", "cucumber", { "ci/out/cucumber.json": "[]" }],
+    ["e2e: [playwright:junit:out/e2e.xml]", "ci/out/e2e.xml", "junit", { "ci/out/e2e.xml": '<testsuite name="e2e" tests="0"></testsuite>' }],
+    ["performance: [k6:junit:out/perf.xml]", "ci/out/perf.xml", "junit", { "ci/out/perf.xml": '<testsuite name="perf" tests="0"></testsuite>' }],
   ])("[CLM-CLI-218] the run named ci/spec-controller.yml as its settings file, and that file had %s: balance reads it from %s", (entry, expected, input, files) => {
     const repository = repositoryForTest();
     repository.write("ci/spec-controller.yml", `${entry}\n`);
@@ -160,7 +163,9 @@ describe("balance reads every input the command line names or leaves to its defa
     repository.write("spec-controller.yml", "target: root\n");
     repository.commit("one");
 
-    expect(provenanceIn(repository.top, "--config", "ci/spec-controller.yml").target).toBe("named");
+    const { target, inputs } = provenanceIn(repository.top, "--config", "ci/spec-controller.yml");
+
+    expect({ target, settingsFiles: inputs.filter(({ name }) => name === "settingsFile").map(({ path }) => path) }).toEqual({ target: "named", settingsFiles: ["ci/spec-controller.yml"] });
   });
 });
 
