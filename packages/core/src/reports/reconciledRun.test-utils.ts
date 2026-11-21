@@ -46,7 +46,7 @@ export function reconciled({ scenarios, unitTests, configurationErrors = [], ste
     claimReading,
     countOnlyExecutableClaims: false,
     runners: { ...NO_RUNNERS, ...runners },
-    stepAccount: stepAccountOf(stepsRead ? [{ step, disposition: "fitnessFunction" }] : []),
+    stepAccount: stepAccountOf(stepsRead ? [{ step, disposition: "fitnessFunction", swallowsFailure: false }] : []),
     provenance: { ...PROVENANCE_OF_INPUTS, ...provenance },
   });
 }

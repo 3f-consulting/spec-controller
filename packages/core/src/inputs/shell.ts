@@ -1,11 +1,11 @@
-import { parse } from "unbash";
-import type { Command, CommandNode, Statement, Word } from "unbash";
+import { forEachChild, parse } from "unbash";
+import type { Command, CommandNode, Statement, SyntaxNode, Word } from "unbash";
 import type { ReportLocation } from "../domain/configuration.js";
 import type { Scripts, ShellAnswers } from "../domain/postEvidenceObservation.js";
 import { defaultLocationsOf, knownRunners, reportsIn } from "./runners.js";
 import shellVariants from "./shell.variants.json" with { type: "json" };
 
-const { "script-runs": scriptRuns, launchers, wrappers } = shellVariants;
+const { "script-runs": scriptRuns, launchers, wrappers, "swallow-fallbacks": swallowFallbacks, "swallow-set-forms": swallowSetForms } = shellVariants;
 
 const wordsIn = (text: string): string[] => text.split(" ");
 
@@ -90,4 +90,31 @@ const defaultReportsOf = (commandLine: string, runner: string, scripts: Scripts)
   return locations.length > 0 && invokesAsCommand(commandLine, runner, scripts) ? locations : [];
 };
 
-export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, reportsNamed, defaultReportsOf, knownRunners };
+const SWALLOW_SET_COMMANDS = swallowSetForms.variants.map((form) => `set ${form}`);
+
+// A command matches a fallback or a set command only whole, all its words as one line.
+const isOneOf = (node: SyntaxNode, lines: readonly string[]): boolean => node.type === "Command" && lines.includes(wordsOf(node).join(" "));
+
+// An || list swallows a failure when a command after an || is exactly a swallowing fallback, such as true.
+const swallowsHere = (node: SyntaxNode): boolean =>
+  node.type === "AndOr" ? node.commands.some((command, at) => node.operators[at - 1] === "||" && isOneOf(command, swallowFallbacks.variants)) : isOneOf(node, SWALLOW_SET_COMMANDS);
+
+// Every node of the tree, compounds and command substitutions included; a comment is not parsed, nor is quoted text.
+function nodesOf(node: SyntaxNode): SyntaxNode[] {
+  const found = [node];
+  forEachChild(node, (child) => found.push(...nodesOf(child)));
+  return found;
+}
+
+// A script the line runs is read as the line is, none followed inside itself.
+function swallowsIn(commandLine: string, scripts: Scripts, followed: ReadonlySet<string>): boolean {
+  return nodesOf(parse(commandLine)).some((node) => {
+    if (swallowsHere(node)) return true;
+    const run = node.type === "Command" ? scriptRun(wordsOf(node), scripts) : undefined;
+    return run !== undefined && !followed.has(run.script) && swallowsIn(scripts[run.script]!, scripts, new Set([...followed, run.script]));
+  });
+}
+
+const swallowsFailure = (commandLine: string, scripts: Scripts): boolean => swallowsIn(commandLine, scripts, new Set());
+
+export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, swallowsFailure, reportsNamed, defaultReportsOf, knownRunners };

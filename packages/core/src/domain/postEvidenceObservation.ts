@@ -56,6 +56,7 @@ export interface RecordedStep {
 export interface ShellAnswers {
   readonly invokesTheReconciler: (commandLine: string) => boolean;
   readonly invokesAsCommand: (commandLine: string, program: string, scripts: Readonly<Record<string, string>>) => boolean;
+  readonly swallowsFailure: (commandLine: string, scripts: Readonly<Record<string, string>>) => boolean;
   readonly reportsNamed: ReportsNamed;
   readonly defaultReportsOf: DefaultReportsOf;
   readonly knownRunners: readonly KnownRunner[];
@@ -124,7 +125,8 @@ function rowCodesOf(features: readonly FeatureFile[]): (file: string, line: numb
 // What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a fitness function.
 export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "fitnessFunction";
 
-export type DisposedStep = { readonly step: CiStep; readonly disposition: StepDisposition };
+// swallowsFailure is whether the step's command, or a script it runs, lets a failure of the command through as a success.
+export type DisposedStep = { readonly step: CiStep; readonly disposition: StepDisposition; readonly swallowsFailure: boolean };
 
 const isNamedIn = (step: CiStep, { nonChecks }: TargetConfiguration): boolean =>
   nonChecks.some(({ workflow, job, step: named }) => workflow === step.workflow && job === step.job && named === step.identity);
@@ -155,11 +157,12 @@ export function stepDispositionOf(
 // A step or its job allows failure when set to anything but false: one decided by the run may allow it.
 const allows = (failureAllowed: FailureAllowed | undefined): boolean => failureAllowed !== undefined && failureAllowed !== false;
 
-const failureAllowedFor = ({ allowsFailure, jobAllowsFailure }: CiStep): boolean => allows(allowsFailure) || allows(jobAllowsFailure);
+const failureAllowedFor = ({ step: { allowsFailure, jobAllowsFailure }, swallowsFailure }: DisposedStep): boolean =>
+  allows(allowsFailure) || allows(jobAllowsFailure) || swallowsFailure;
 
 // A success fails closed: it may have hidden a failure when any step carrying its id, in any job or workflow, allows failure.
-const anyAllowsFailure = (id: string | undefined, steps: readonly CiStep[]): boolean =>
-  steps.some((step) => step.id === id && failureAllowedFor(step));
+const anyAllowsFailure = (id: string | undefined, steps: readonly DisposedStep[]): boolean =>
+  steps.some((disposed) => disposed.step.id === id && failureAllowedFor(disposed));
 
 const placeOf = (step: CiStep): string => `${step.workflow}:${step.job}:${step.identity}`;
 
@@ -167,7 +170,7 @@ const postedResultOf = (recorded: RecordedStep["result"]): Result => (recorded =
 
 const skippedByDesign = ({ result, jobSucceeded }: RecordedStep): boolean => result === "skipped" && jobSucceeded;
 
-function observationOf(step: CiStep, steps: readonly CiStep[], allSteps: readonly CiStep[], entry: RecordedStep | undefined): EvidenceObservation {
+function observationOf(step: CiStep, steps: readonly CiStep[], allSteps: readonly DisposedStep[], entry: RecordedStep | undefined): EvidenceObservation {
   const claimCode = claimCodeFrom(step.id);
   const result = entry === undefined ? "not-recorded" : postedResultOf(entry.result);
   const jobsRecorded = new Set(steps.filter(({ id }) => entry !== undefined && id === entry.key).map(({ workflow, job }) => `${workflow}:${job}`));
@@ -195,18 +198,21 @@ export function disposedStepsOf(
   shell: ShellAnswers,
   record: readonly RecordedStep[],
 ): DisposedStep[] {
-  return steps.map((step) => ({ step, disposition: stepDispositionOf(step, configuration, scripts, shell, record) }));
+  return steps.map((step) => ({
+    step,
+    disposition: stepDispositionOf(step, configuration, scripts, shell, record),
+    swallowsFailure: step.command !== undefined && shell.swallowsFailure(step.command, scripts),
+  }));
 }
 
 export function fitnessObservationsOf(disposedSteps: readonly DisposedStep[], record: readonly RecordedStep[]): EvidenceObservation[] {
   const entriesFor = ({ id }: CiStep) => record.filter(({ key }) => key === id);
-  const allSteps = disposedSteps.map(({ step }) => step);
   const posting = disposedSteps.filter(({ disposition }) => disposition === "fitnessFunction").map(({ step }) => step);
   const postedOnce = posting.filter((step, at) => entriesFor(step).length === 0 || posting.findIndex(({ id }) => id === step.id) === at);
   return [
     ...postedOnce.flatMap((step) => {
       const entries = entriesFor(step);
-      return (entries.length === 0 ? [undefined] : entries.filter((entry) => !skippedByDesign(entry))).map((entry) => observationOf(step, posting, allSteps, entry));
+      return (entries.length === 0 ? [undefined] : entries.filter((entry) => !skippedByDesign(entry))).map((entry) => observationOf(step, posting, disposedSteps, entry));
     }),
     ...record.filter(({ key }) => !disposedSteps.some(({ step: { id } }) => id === key)).map(unheldObservationOf),
   ];

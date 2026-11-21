@@ -398,7 +398,7 @@ describe("Total of the scenarios a deferral tag set aside", () => {
 describe("balance accounts for every step it reads", () => {
   // Steps disposed of under a configuration whose one non-check is the Install step of the job given.
   const disposed = (steps: ReturnType<typeof workflowStepsFrom>, install: { readonly workflow: string; readonly job: string }, runners: TargetConfiguration["runners"] = NO_RUNNERS, record: readonly RecordedStep[] = []) =>
-    steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners, nonChecks: [{ ...install, step: "Install" }], deferralTags: [] }, {}, shellAnswers, record) }));
+    steps.map((step) => ({ step, swallowsFailure: false, disposition: stepDispositionOf(step, { runners, nonChecks: [{ ...install, step: "Install" }], deferralTags: [] }, {}, shellAnswers, record) }));
   const BUILD = [{ uses: "actions/checkout@v4" }, { run: "pnpm lint" }, { run: "spec-controller balance" }];
   const INSTALL = [{ name: "Install", run: "pnpm install" }, { run: "pnpm audit-the-tree" }];
   const twoJobs = () => disposed(workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { build: { steps: BUILD }, test: { steps: INSTALL } } })), { workflow: "ci.yml", job: "test" });
@@ -427,14 +427,14 @@ describe("balance accounts for every step it reads", () => {
 
   it("[CLM-EVR-072] a workflow with a job that calls a reusable workflow, and a job with one step, has the one step counted", () => {
     const steps = workflowStepsFrom("ci.yml", JSON.stringify({ jobs: { call: { uses: "./.github/workflows/other.yml" }, build: { steps: [{ run: "pnpm lint" }] } } }));
-    const { jobs } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
+    const { jobs } = stepAccountOf(steps.map((step) => ({ step, swallowsFailure: false, disposition: stepDispositionOf(step, { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
 
     expect(jobs.map(({ job, stepsRead }) => ({ job, stepsRead }))).toEqual([{ job: "build", stepsRead: 1 }]);
   });
 
   it("[CLM-EVR-073] a workflow whose every line is commented out has no steps counted", () => {
     const steps = workflowStepsFrom("ci.yml", "# on: push\n# jobs:\n#   build:\n#     steps:\n#       - run: pnpm lint\n");
-    const { jobs, total } = stepAccountOf(steps.map((step) => ({ step, disposition: stepDispositionOf(step, { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
+    const { jobs, total } = stepAccountOf(steps.map((step) => ({ step, swallowsFailure: false, disposition: stepDispositionOf(step, { runners: NO_RUNNERS, nonChecks: [], deferralTags: [] }, {}, shellAnswers) })));
 
     expect({ jobs, stepsRead: total.stepsRead }).toEqual({ jobs: [], stepsRead: 0 });
   });

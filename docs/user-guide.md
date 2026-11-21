@@ -947,7 +947,7 @@ Both reports name each outcome by its handle.
 | `satisfied` | the evidence asked for arrived, and passed | |
 | `missing` | no evidence that ran answers the obligation | |
 | `failing` | the evidence asked for arrived, and failed | a swallowed red also reads `failing`, given `--ci-steps` |
-| `cannot-fail` | the evidence passed, but its CI step or its job sets `continue-on-error`, or `balance` cannot read whether it does, so its red might not fail the build | see below |
+| `cannot-fail` | the evidence passed, but its CI step or its job sets `continue-on-error`, its step's command or a script it runs swallows its failure with `\|\| true` or `set +e`, or `balance` cannot read whether it does, so its red might not fail the build | see below |
 | `not-asked-for` | the evidence is of a kind of quality check its claim did not ask for | see [When a row reads `not-asked-for`](#when-a-row-reads-not-asked-for) |
 | `never-ran` | the evidence never reached its assertions | the run is not reconciled, as `unsound`, and the evidence is listed under `## Run integrity` too; under `--written-claims-only`, only when it cites an executable claim |
 | `no-claim-code` | the claim has no claim code for evidence to cite | |
@@ -962,7 +962,7 @@ A step the step record does not name lands on the unnamed claim as not recorded,
 
 ### Passes that cannot fail
 
-The outcome to watch for is **cannot-fail**. It marks a fitness function that passes, but whose red might not fail the CI run: its CI step or job sets `continue-on-error` to anything but `false`, or no workflow `balance` read has its step. A green CI run then does not mean that the check passed. The row is read from the run's step record (`--ci-steps`), and the step's own outcome decides it: a swallowed red reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
+The outcome to watch for is **cannot-fail**. It marks a fitness function that passes, but whose red might not fail the CI run: its CI step or job sets `continue-on-error` to anything but `false`, its step's command or a package script it runs swallows its failure, or no workflow `balance` read has its step. A swallow is a fallback `|| true`, `|| :` or `|| exit 0`, or `set +e` or `set +o errexit`, anywhere in the command, compounds and command substitutions included; one in a comment or in quoted text does not count, and a fallback that can still fail, such as `|| { echo failed; exit 1; }`, is not one. A green CI run then does not mean that the check passed. The row is read from the run's step record (`--ci-steps`), and the step's own outcome decides it: a red that `continue-on-error` let through reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
 
 ### What counts as a claim code
 
@@ -1191,7 +1191,7 @@ The tool writes the code under `CLM`. Its number is one past the highest number 
 **A fitness function shows `missing` or `cannot-fail` when you didn't expect it.** Both are real findings, not tool errors.
 
 - `missing` means that no CI step the step record names carries that scenario's claim code as its `id:`. A step the step record does not name is posted as not recorded, to the unnamed claim, and credits nothing. `package.json` scripts play no part in it.
-- `cannot-fail` means that the step passed, and either the step that cites it, or its job, sets `continue-on-error` to anything but `false`, or no workflow `balance` read has that step.
+- `cannot-fail` means that the step passed, and either the step that cites it, or its job, sets `continue-on-error` to anything but `false`, or its command or a package script it runs swallows its failure with `|| true` or `set +e`, or no workflow `balance` read has that step.
 
 **My first run fails with many checks that cite nothing.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a fitness function until something says otherwise. A fitness function that cites no claim posts to the unnamed claim, so `balance` exits `1`.
 
