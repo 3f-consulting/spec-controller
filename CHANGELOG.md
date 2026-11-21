@@ -5,6 +5,7 @@ Each line says what a change means for someone using spec-controller. A line tha
 **Not yet released:**
 
 - What balance does is unchanged: spec-controller's own CI also runs balance from the code it just built, beside the released version it pins, and both must pass.
+- What balance does is unchanged: spec-controller's own red-proof script accepts every claim code balance accepts, including a feature code with a digit and a number longer than three digits.
 
 ## 0.1.346 — 2026-11-21 — Easier adoption
 

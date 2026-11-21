@@ -48,7 +48,7 @@ fi
 layer=$1
 code=$2
 valid_layer "$layer"
-[[ $code =~ ^CLM-[A-Z]{2,5}-[0-9]{3}$ ]] || usage
+[[ $code =~ ^CLM-[A-Z0-9]{2,5}-[0-9]+$ ]] || usage
 
 refuse_empty() {
   [ "$1" -gt 0 ] || { echo "no test selected: $code at $layer" >&2; exit 3; }
@@ -70,7 +70,7 @@ prove_unit() {
   local filter="\\[$code\\]" files=() file
   while IFS= read -r file; do
     files+=("$file")
-  done < <(git grep -l -F "$code" -- ':(glob)packages/*/src/**/*.test.ts' || true)
+  done < <(git grep -l -E "${code}([^0-9]|$)" -- ':(glob)packages/*/src/**/*.test.ts' || true)
   refuse_empty "${#files[@]}"
 
   limit="$(suite_limit UNIT_SUITE_TIMEOUT_S)"
