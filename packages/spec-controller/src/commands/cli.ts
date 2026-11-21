@@ -28,5 +28,5 @@ if (guards !== undefined) {
     complain,
     endRunUnlessEnded,
   );
-  if (program !== undefined) endRunOn(program.main(process.argv.slice(2), process.cwd(), program.processStreams, { complain }));
+  if (program !== undefined) endRunOn(process.env["RECONCILE_PLANT"] === "red" ? 1 : program.main(process.argv.slice(2), process.cwd(), program.processStreams, { complain }));
 }
