@@ -2,6 +2,8 @@
 
 This page is the long version of the [README](../README.md). It covers the gap spec-controller closes, what each kind of disagreement reports, what `balance` cannot see, how to read the full report, and how spec-controller differs from coverage and mutation testing. To set it up, start with [`quickstart.md`](./quickstart.md).
 
+spec-controller is built for teams where coding agents write most of the code. [`what-an-agent-can-still-do.md`](./what-an-agent-can-still-do.md) says what it does not catch, and what to do about it.
+
 ## The gap it closes
 
 Software built from a written specification has three things to keep in step:
@@ -32,7 +34,8 @@ Each kind of disagreement has its own outcome, shown below. [Reading the full re
 
 | You change | The report shows |
 |---|---|
-| Delete a test | `missing` on its scenario |
+| Delete a scenario's last test of a kind | `missing` on its scenario |
+| Delete one of several tests citing a scenario | nothing: the others still answer |
 | Skip a test | `missing`: a skipped test proves nothing |
 | Break the behaviour a test checks | `failing` |
 | Re-point a test at another scenario | `missing` on the original |

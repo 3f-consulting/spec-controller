@@ -2,9 +2,11 @@
 
 **Your build goes red when a behaviour you named has no passing proof.**
 
+It is built for teams where coding agents write most of the code. An agent optimises for passing tests, and can delete or weaken the checks that stand in its way; `balance` makes each such change a second entry that review sees.
+
 You name each behaviour of your software as a scenario in a Gherkin `.feature` file, with a claim code of the form `@CLM-<FFF>-<NNN>`. Each test and each CI check cites the code of the behaviour it proves. On every CI run, `spec-controller balance` reads the reports your tools already write and checks every named behaviour against them. Each proof it asks for must have run and passed. A CI check must also have been able to fail its build: a step set to `continue-on-error` cannot, nor can one that swallows its own failure with `|| true` or `set +e`. Whether a test asserts anything is not checked. If a proof falls short, the build goes red.
 
-So when an agent deletes a test to make CI pass, or a lint step is quietly set never to fail, the build goes red instead of staying quietly green. An agent that empties a test's body instead still passes: that is a change for review to catch.
+So when an agent deletes a behaviour's last test of a kind to make CI pass, or a lint step is quietly set never to fail, the build goes red instead of staying quietly green. An agent that empties a test's body instead still passes: that is a change for review to catch.
 
 <div class="sample-report">
 
@@ -42,8 +44,9 @@ Delete that test, and the run is out of balance and exits `1`. The row says a un
 
 ## Does it fit your project?
 
+- **Node:** 22.12 or later.
 - **CI:** GitHub Actions, on Linux runners. `balance` reads paths with `/` and is tested only on Linux, so Windows runners are not supported.
-- **Tests:** Vitest, Jest, pytest, Go, JUnit (Java, Kotlin), RSpec, or any Cucumber.
+- **Tests:** Vitest, Jest, pytest, Go, JUnit (Java, Kotlin), RSpec, or any Cucumber. The Vitest, Cucumber and JUnit readers are tested against reports those tools wrote; Jest, pytest, RSpec and Playwright against report shapes written from their documentation.
 - **CI checks:** any step your pipeline runs, such as lint, type checks or a complexity limit.
 - **You:** willing to name your behaviours as scenarios. `balance` checks the names you write; it does not write them for you.
 
@@ -84,7 +87,7 @@ To see everything that ran before you name anything, run with `--exit-zero` inst
 - [`docs/ubiquitous-language.md`](./docs/ubiquitous-language.md): the words the report uses.
 - [`@3f-consulting/spec-controller-core`](./packages/core/README.md): the same engine as a library, with no CLI.
 
-At `0.x`, nothing is promised between versions ([`docs/compatibility.md`](./docs/compatibility.md)). Pin an exact version.
+spec-controller is pre-1.0 and changes quickly. A release can change a flag, a settings key, an exit code or the JSON report, and its changelog line then starts with **Breaking:**. At `0.x`, nothing is promised between versions ([`docs/compatibility.md`](./docs/compatibility.md)), so pin an exact version. The versions committed in the packages' `package.json` files are not the published ones ([`docs/releasing.md`](./docs/releasing.md)).
 
 ## Built with Claude Code, and kept honest
 

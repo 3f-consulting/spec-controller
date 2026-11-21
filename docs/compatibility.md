@@ -18,4 +18,4 @@ A `@performance` evidence obligation is answered by any report in one of these f
 
 **A flag `balance` does not take stops the run.** The tool refuses it as a usage error, at exit `2`, and prints the help for `balance`, which lists every flag it takes.
 
-**No script prefix is read.** A `lint:` or `guard:` prefix means nothing to the tool. The tool observes every step. The only steps it names are the behavioural runners the run names.
+**No script prefix is read.** A `lint:` or `guard:` prefix means nothing to the tool. The tool observes every step. The steps it reads as runners are those running a runner the run names, or one it knows.
