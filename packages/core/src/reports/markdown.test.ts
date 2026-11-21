@@ -103,9 +103,9 @@ describe("the step account shows each job's counts, and the Total row their sums
     ["CLM-RPT-166", "Total row", "", ["3", "1", "0", "0", "1", "1"]],
   ] as const)("[%s] steps read in job build of ci.yml, 1 a test runner, and in job sweep of nightly.yml, 1 only setting the job up, show the step account's %s with its counts", (_clm, _row, job, counts) => {
     const stepAccount = stepAccountOf([
-      { step: step("ci.yml", "build", "pnpm test"), disposition: "runner" },
-      { step: step("ci.yml", "build", "pnpm lint"), disposition: "fitnessFunction" },
-      { step: step("nightly.yml", "sweep", "actions/checkout"), disposition: "plumbing" },
+      { step: step("ci.yml", "build", "pnpm test"), disposition: "runner", swallowsFailure: false },
+      { step: step("ci.yml", "build", "pnpm lint"), disposition: "fitnessFunction", swallowsFailure: false },
+      { step: step("nightly.yml", "sweep", "actions/checkout"), disposition: "plumbing", swallowsFailure: false },
     ]);
     const report = markdownReportOf(runWith({ runVerdict: { verdict: "balanced" }, provenance: PROVENANCE, stepAccount }));
     const rows = report.slice(report.indexOf("## Step account")).split("\n").filter((line) => line.startsWith("| ")).map((line) => line.slice(2, -2).split(" | "));

@@ -7,7 +7,7 @@ import workflowsVariants from "../inputs/workflows.variants.json" with { type: "
 import { workflowStepsFrom } from "../inputs/workflows.js";
 import type { TargetConfiguration } from "./configuration.js";
 import { NO_RUNNERS } from "./configuration.test-utils.js";
-import { disposedStepsOf, fitnessObservationsOf, stepDispositionOf } from "./postEvidenceObservation.js";
+import { disposedStepsOf, fitnessObservationsOf, stepDispositionOf, type Scripts } from "./postEvidenceObservation.js";
 import postEvidenceObservationVariants from "./postEvidenceObservation.variants.json" with { type: "json" };
 
 // A step named as a non-check, if any, with no runner for any layer.
@@ -189,35 +189,60 @@ describe("balance posts a fitness function's step from each step record that nam
   });
 });
 
-describe("balance posts a recorded success in a workflow as passed-on-error only when a step carrying its id, or that step's job, sets continue-on-error to anything but false", () => {
-  const postedWith = (onStep: unknown, onJob: unknown) => {
-    const steps = workflowOf({ ci: { "continue-on-error": onJob, steps: [{ id: "CLM-ONE-001", run: "pnpm lint", "continue-on-error": onStep }] } });
-    const record = stepRecordFrom({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
-    return fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, record), record).map(({ result, cites }) => ({ result, cites }));
+describe("balance posts a recorded success in a workflow as passed-on-error when a failure of the step carrying its id might not fail the build", () => {
+  const postedFrom = (jobs: object, scripts: Scripts = {}) => {
+    const succeeded = stepRecordFrom({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
+    return fitnessObservationsOf(disposedStepsOf(workflowOf(jobs), NO_SETTING, scripts, shellAnswers, succeeded), succeeded).map(({ result, cites }) => ({ result, cites }));
   };
+  const postedWith = (onStep: unknown, onJob: unknown) => postedFrom({ ci: { "continue-on-error": onJob, steps: [{ id: "CLM-ONE-001", run: "eslint .", "continue-on-error": onStep }] } });
+  const postedRunning = (run: string, scripts: Scripts = {}) => postedFrom({ ci: { steps: [{ id: "CLM-ONE-001", run }] } }, scripts);
 
-  it.each(postEvidenceObservationVariants["failure-allowed-on-a-step"].variants)("[CLM-OBS-057] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
+  it.each(postEvidenceObservationVariants["failure-allowed-on-a-step"].variants)("[CLM-OBS-057] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and that step set continue-on-error to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
     expect(postedWith(value, undefined)).toEqual([{ result: "passed-on-error", cites: [ONE_001] }]);
   });
 
-  it.each(postEvidenceObservationVariants["failure-allowed-on-a-job"].variants)("[CLM-OBS-058] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step's job to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
+  it.each(postEvidenceObservationVariants["failure-allowed-on-a-job"].variants)("[CLM-OBS-058] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and that step was in a job that set continue-on-error to %s: it is posted as passed-on-error, citing CLM-ONE-001", (value) => {
     expect(postedWith(undefined, value)).toEqual([{ result: "passed-on-error", cites: [ONE_001] }]);
   });
 
-  it("[CLM-OBS-160] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on that step to false: it is posted as passed, citing CLM-ONE-001", () => {
+  it("[CLM-OBS-160] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and that step set continue-on-error to false, and ran eslint .: it is posted as passed, citing CLM-ONE-001", () => {
     expect(postedWith(false, undefined)).toEqual([{ result: "passed", cites: [ONE_001] }]);
   });
 
-  it("[CLM-OBS-168] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and ci.yml set continue-on-error on the job of a step in another job carrying the same id to true: it is posted as passed-on-error, citing CLM-ONE-001", () => {
-    const steps = workflowOf({
-      build: { steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] },
-      experimental: { "continue-on-error": true, steps: [{ id: "CLM-ONE-001", run: "pnpm lint" }] },
-    });
-    const record = stepRecordFrom({ "CLM-ONE-001": { outcome: "success", conclusion: "success" } });
+  it.each([
+    ["CLM-OBS-168", "set continue-on-error to true", { "continue-on-error": true, steps: [{ id: "CLM-ONE-001", run: "eslint ." }] }],
+    ["CLM-OBS-179", "ran eslint . || true", { steps: [{ id: "CLM-ONE-001", run: "eslint . || true" }] }],
+  ] as const)("[%s] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and that step shared its id with a step in another job that %s: it is posted as passed-on-error, citing CLM-ONE-001", (_clm, _other, otherJob) => {
+    expect(postedFrom({ build: { steps: [{ id: "CLM-ONE-001", run: "eslint ." }] }, experimental: otherJob })).toEqual([{ result: "passed-on-error", cites: [ONE_001] }]);
+  });
 
-    expect(fitnessObservationsOf(disposedStepsOf(steps, NO_SETTING, {}, shellAnswers, record), record).map(({ result, cites }) => ({ result, cites }))).toEqual([
-      { result: "passed-on-error", cites: [ONE_001] },
-    ]);
+  it.each(shellVariants["swallow-fallbacks"].variants)("[CLM-OBS-172] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and that step ran eslint . || %s: it is posted as passed-on-error, citing CLM-ONE-001", (fallback) => {
+    expect(postedRunning(`eslint . || ${fallback}`)).toEqual([{ result: "passed-on-error", cites: [ONE_001] }]);
+  });
+
+  it.each(shellVariants["swallow-set-forms"].variants)("[CLM-OBS-174] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and that step ran set %s, then eslint ., then echo done: it is posted as passed-on-error, citing CLM-ONE-001", (form) => {
+    expect(postedRunning(`set ${form}\neslint .\necho done`)).toEqual([{ result: "passed-on-error", cites: [ONE_001] }]);
+  });
+
+  it.each(['if [ -n "$CI" ]; then eslint . || true; fi', "{ eslint . || true; }", "( eslint . || true )", "for f in a; do eslint . || true; done", "x=$(eslint . || true)", 'echo "$(eslint . || true)"'])(
+    "[CLM-OBS-178] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and that step ran %s: it is posted as passed-on-error, citing CLM-ONE-001",
+    (run) => {
+      expect(postedRunning(run)).toEqual([{ result: "passed-on-error", cites: [ONE_001] }]);
+    },
+  );
+
+  it.each([
+    ["CLM-OBS-173", "eslint . || true, then vitest run on the next line", "passed-on-error", "eslint . || true\nvitest run", {}],
+    ["CLM-OBS-175", "pnpm lint, whose script was eslint . || true", "passed-on-error", "pnpm lint", { lint: "eslint . || true" }],
+    ["CLM-OBS-175", "timeout 10m pnpm lint, whose script was eslint . || true", "passed-on-error", "timeout 10m pnpm lint", { lint: "eslint . || true" }],
+    ["CLM-OBS-175", "npx pnpm lint, whose script was eslint . || true", "passed-on-error", "npx pnpm lint", { lint: "eslint . || true" }],
+    ["CLM-OBS-176", "eslint . || (echo failed; exit 1)", "passed", "eslint . || (echo failed; exit 1)", {}],
+    ["CLM-OBS-177", "eslint . && true", "passed", "eslint . && true", {}],
+    ["CLM-OBS-180", 'eslint . || status=$?, then exit "$status"', "passed", 'eslint . || status=$?\nexit "$status"', {}],
+    ["CLM-OBS-181", "eslint . # || true", "passed", "eslint . # || true", {}],
+    ["CLM-OBS-181", 'echo "a || true"', "passed", 'echo "a || true"', {}],
+  ] as const)("[%s] the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded, and that step ran %s: it is posted as %s, citing CLM-ONE-001", (_clm, _ran, result, run, scripts) => {
+    expect(postedRunning(run, scripts)).toEqual([{ result, cites: [ONE_001] }]);
   });
 });
 
