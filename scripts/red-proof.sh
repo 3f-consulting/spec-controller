@@ -48,7 +48,7 @@ fi
 layer=$1
 code=$2
 valid_layer "$layer"
-[[ $code =~ ^CLM-[A-Z]{2,5}-[0-9]{3}$ ]] || usage
+[[ $code =~ ^CLM-[A-Z0-9]{2,5}-[0-9]+$ ]] || usage
 
 refuse_empty() {
   [ "$1" -gt 0 ] || { echo "no test selected: $code at $layer" >&2; exit 3; }
