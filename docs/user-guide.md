@@ -271,7 +271,7 @@ def test_offers_the_next_code():
 | a code no feature file carries | makes a [phantom claim](#report-rows-to-know) |
 | no `clm` property, or a value that is not a claim code | lands on the unnamed claim |
 | `clm` properties naming two or more different codes | **credits none of them**; it lands on the unnamed claim, naming every code, because one test proves exactly one scenario |
-| a module that fails to collect, or a test whose setup errors | never ran its proof: it posts a `never-ran` Evidence Observation, the run is not reconciled, as `unsound` (exit `3`), and the scenario it cites reads `missing`; under `--written-claims-only`, it is listed but does not make the run unsound |
+| a module that fails to collect, or a test whose setup errors | never ran its proof: it posts a `never-ran` Evidence Observation, the run is not reconciled, as `unsound` (exit `3`), and the scenario it cites reads `missing`. Under `--written-claims-only`, a module that fails to collect cites no scenario, so it is listed but does not make the run unsound; a test whose setup errors still cites its scenario, so it does |
 
 ### Citing a scenario from Jest
 

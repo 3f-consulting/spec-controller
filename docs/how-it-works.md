@@ -32,7 +32,7 @@ This is why each behaviour is written as a scenario, not only as a code in a lis
 
 Every behaviour is recorded twice: as a scenario, and as the test that proves it. The two records must agree. So **changes to your quality checks become deliberate, not accidental.**
 
-Each kind of disagreement has its own outcome, shown below. Every outcome except `satisfied` turns the build red. The one exception is `--written-claims-only`, which leaves a phantom claim and the unnamed claim out of the verdict. [Reading the full report](#reading-the-full-report) defines both:
+Each kind of disagreement has its own outcome, shown below. Every outcome except `satisfied` turns the build red, unless a flag says otherwise. `--written-claims-only` leaves a phantom claim and the unnamed claim out of the verdict, and `--exit-zero` gives an out-of-balance run exit `0`. [Reading the full report](#reading-the-full-report) defines the phantom claim and the unnamed claim:
 
 | You change | The report shows |
 |---|---|

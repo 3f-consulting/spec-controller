@@ -9,7 +9,7 @@
 - **Delete one of several tests citing a scenario.** The others still answer, so the scenario still balances. `balance` checks that each kind of proof the scenario asks for arrived, not how many tests there were.
 - **Empty a test, or weaken its assertion.** `balance` assumes a test is a valid test. A lint rule such as `expect-expect` catches a test with no assertion; mutation testing catches a weak one.
 - **Add a non-check** to `spec-controller.yml`, or **remove the `balance` step**, or **edit the step that saves the step record**, in your workflow.
-- **Let a failure through in a way `balance` does not read.** It reads `continue-on-error`, a fallback `|| true`, `|| :` or `|| exit 0`, and `set +e`, in a step or a package script it runs. It does not read a pipe without `pipefail`, a `shell:` without `-e`, a shell file the step runs, a reusable workflow or composite action, or a swallow written another way.
+- **Let a failure through in a way `balance` does not read.** It reads `continue-on-error`, a fallback `|| true`, `|| :` or `|| exit 0`, and `set +e` or `set +o errexit`, in a step or a package script it runs. It does not read a pipe without `pipefail`, a `shell:` without `-e`, a shell file the step runs, a reusable workflow or composite action, or a swallow written another way.
 
 ## What to do about it
 
