@@ -4,6 +4,7 @@ Each line says what a change means for someone using spec-controller. A line tha
 
 **Not yet released:**
 
+- What balance does is unchanged: four of the swallow rows' guards each have a recorded failing run, proving their tests can fail.
 - What balance does is unchanged: `configuration.feature` and `command-line.feature` read in a plainer order, with every Rule, scenario and row as it was.
 - What balance does is unchanged: the README, CONTRIBUTING, the guides, the core package's README and six feature files' descriptions read more plainly, with every fact kept.
 - What balance does is unchanged: the compatibility page names the settings file, `spec-controller.yml`, and the runners balance finds for itself, and the feature-description word list drops `specController` and `notChecks`, keys balance does not read.
