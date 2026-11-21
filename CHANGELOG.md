@@ -2,6 +2,10 @@
 
 Each line says what a change means for someone using spec-controller. A line that changes what an adopter must do (a flag, a settings key, the JSON report's shape, an exit code) starts with **Breaking:** and says what to change. The newest release comes first.
 
+**Not yet released:**
+
+- What balance does is unchanged: spec-controller's own CI also runs balance from the code it just built, beside the released version it pins, and both must pass.
+
 ## 0.1.346 — 2026-11-21 — Easier adoption
 
 - **Breaking: a run with a configuration error is not reconciled, and exits 3**, even under `--exit-zero`. A setting balance cannot use, such as a misspelt key in `spec-controller.yml`, a runner whose report it cannot find, or a non-check naming no step, now turns the run red. Fix each error *Errors in the inputs* names. The JSON report's run verdict can now give the reason `configuration-errors`, and its schema is version 8.
