@@ -92,21 +92,17 @@ const defaultReportsOf = (commandLine: string, runner: string, scripts: Scripts)
 
 const SWALLOW_SET_COMMANDS = swallowSetForms.variants.map((form) => `set ${form}`);
 
-// A command matches a fallback or a set command only whole, all its words as one line.
 const isOneOf = (node: SyntaxNode, lines: readonly string[]): boolean => node.type === "Command" && lines.includes(wordsOf(node).join(" "));
 
-// An || list swallows a failure when a command after an || is exactly a swallowing fallback, such as true.
 const swallowsHere = (node: SyntaxNode): boolean =>
   node.type === "AndOr" ? node.commands.some((command, at) => node.operators[at - 1] === "||" && isOneOf(command, swallowFallbacks.variants)) : isOneOf(node, SWALLOW_SET_COMMANDS);
 
-// Every node of the tree, compounds and command substitutions included; a comment is not parsed, nor is quoted text.
 function nodesOf(node: SyntaxNode): SyntaxNode[] {
   const found = [node];
   forEachChild(node, (child) => found.push(...nodesOf(child)));
   return found;
 }
 
-// A script the line runs is read as the line is, none followed inside itself.
 function swallowsIn(commandLine: string, scripts: Scripts, followed: ReadonlySet<string>): boolean {
   return nodesOf(parse(commandLine)).some((node) => {
     if (swallowsHere(node)) return true;

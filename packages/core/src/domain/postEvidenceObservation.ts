@@ -125,7 +125,6 @@ function rowCodesOf(features: readonly FeatureFile[]): (file: string, line: numb
 // What a CI step is, for the evidence: the reconciler, a non-check, plumbing, a runner, or a fitness function.
 export type StepDisposition = "reconciler" | "nonCheck" | "plumbing" | "runner" | "fitnessFunction";
 
-// swallowsFailure is whether the step's command, or a script it runs, lets a failure of the command through as a success.
 export type DisposedStep = { readonly step: CiStep; readonly disposition: StepDisposition; readonly swallowsFailure: boolean };
 
 const isNamedIn = (step: CiStep, { nonChecks }: TargetConfiguration): boolean =>
