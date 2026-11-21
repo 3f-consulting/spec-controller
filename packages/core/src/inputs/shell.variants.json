@@ -33,6 +33,14 @@
     "claim": "CLM-OBS-113",
     "variants": ["mvn test", "./mvnw test", "./gradlew test", "./gradlew check", "./gradlew :app:test", "gotestsum"]
   },
+  "swallow-fallbacks": {
+    "claim": "CLM-OBS-172",
+    "variants": ["true", ":", "exit 0"]
+  },
+  "swallow-set-forms": {
+    "claim": "CLM-OBS-174",
+    "variants": ["+e", "+o errexit"]
+  },
   "xvfb-run-options": {
     "claim": "CLM-OBS-117",
     "variants": ["-n 99", "-s 99", "-e file", "-f file", "-p MIT-MAGIC", "-w 1"]

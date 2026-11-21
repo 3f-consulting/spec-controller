@@ -13,7 +13,8 @@ Feature: Evidence Observations are posted, each to its claim
   Each Evidence Observation says which claim it cites, whether it passed, passed-on-error,
   failed, never ran or was not recorded, its kind of quality check, and where to look. A recorded
   success is passed-on-error when continue-on-error is anything but false on any step carrying its
-  id or on that step's job, or when no workflow has its step.
+  id or on that step's job, or when its step's command, or a script it runs, holds an || or set +e,
+  or when no workflow has its step.
 
   An Evidence Observation that cites one executable claim is posted to that claim. One that cites
   a claim nobody wrote is posted to a phantom claim. One that cites none, or could mean more than
@@ -243,18 +244,28 @@ Feature: Evidence Observations are posted, each to its claim
         | CLM-OBS-171 | one in which CLM-ONE-001 was skipped in a job that succeeded, and one in which it failed | one fitness Evidence Observation will be posted, as failed                  |
 
     @unit
-    Scenario Outline: balance posts a recorded success in a workflow as passed-on-error only when a step carrying its id, or that step's job, sets continue-on-error to anything but false
+    Scenario Outline: balance posts a recorded success in a workflow as passed-on-error when a failure of the step carrying its id might not fail the build
       given the step record had a result with the id CLM-ONE-001, on a fitness function's step in ci.yml, and it succeeded
-      and ci.yml set continue-on-error on <where> to <value>
+      and that step <what it had>
       when balance posts the evidence
       then an Evidence Observation will be posted, as <result>, citing CLM-ONE-001
 
       Examples:
-        | clm         | where                                                 | value | result          |
-        | CLM-OBS-057 | that step                                             | true  | passed-on-error |
-        | CLM-OBS-058 | that step's job                                       | true  | passed-on-error |
-        | CLM-OBS-160 | that step                                             | false | passed          |
-        | CLM-OBS-168 | the job of a step in another job carrying the same id | true  | passed-on-error |
+        | clm         | what it had                                                                 | result          |
+        | CLM-OBS-057 | set continue-on-error to true                                               | passed-on-error |
+        | CLM-OBS-058 | was in a job that set continue-on-error to true                             | passed-on-error |
+        | CLM-OBS-168 | shared its id with a step in another job that set continue-on-error to true | passed-on-error |
+        | CLM-OBS-160 | set continue-on-error to false, and ran eslint .                            | passed          |
+        | CLM-OBS-172 | ran eslint . \|\| true                                                      | passed-on-error |
+        | CLM-OBS-173 | ran eslint . \|\| true, then vitest run on the next line                    | passed-on-error |
+        | CLM-OBS-174 | ran set +e, then eslint ., then echo done                                   | passed-on-error |
+        | CLM-OBS-175 | ran pnpm lint, whose script was eslint . \|\| true                          | passed-on-error |
+        | CLM-OBS-176 | ran eslint . \|\| (echo failed; exit 1)                                     | passed          |
+        | CLM-OBS-177 | ran eslint . && true                                                        | passed          |
+        | CLM-OBS-178 | ran if [ -n "$CI" ]; then eslint . \|\| true; fi                            | passed-on-error |
+        | CLM-OBS-179 | shared its id with a step in another job that ran eslint . \|\| true        | passed-on-error |
+        | CLM-OBS-180 | ran eslint . \|\| status=$?, then exit "$status"                            | passed          |
+        | CLM-OBS-181 | ran eslint . # \|\| true                                                    | passed          |
 
     @unit
     Scenario Outline: balance posts a recorded step that no workflow has with the result its step record gives
