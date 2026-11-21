@@ -11,3 +11,4 @@ not-check:
   - "ci.yml:ci:Install dependencies"
   - "ci.yml:ci:Read the Python Semgrep runs on"
   - "ci.yml:ci:Install Semgrep"
+  - "ci.yml:ci:Reconciliation of the code just built"
