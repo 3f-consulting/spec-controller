@@ -11,6 +11,27 @@ Feature: balance reads and validates the configuration settings the run names
   the run not reconciled, as evidence-reconciliation.feature claims. An input balance cannot read
   stops the run, whether the command line or the settings file names it.
 
+  Rule: balance takes each configuration setting it can use
+
+    @unit
+    Scenario Outline: balance takes each configuration setting it can use as the runner, non-check or deferral tag it names
+      given the run named <configuration setting>
+      when balance reads it
+      then balance will take it as <what it sets>
+
+      Examples:
+        | clm         | configuration setting                                                                                        | what it sets                                                                               |
+        | CLM-CFG-008 | --unit vitest                                                                                                | vitest as the unit layer's runner                                                          |
+        | CLM-CFG-026 | --unit vitest and --unit pytest                                                                              | vitest and pytest as the unit layer's runners                                              |
+        | CLM-CFG-024 | --e2e playwright:junit:out/playwright.xml                                                                    | playwright as the e2e layer's runner, with out/playwright.xml as its JUnit evidence report |
+        | CLM-CFG-010 | --not-check ci.yml:ci:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies | the step Install dependencies, in job ci, in ci.yml, as a non-check                        |
+        | CLM-CFG-011 | --not-check nightly:build.yml:ci:Install dependencies                                                        | the step Install dependencies, in job ci, in nightly:build.yml, as a non-check             |
+        | CLM-CFG-023 | --not-check nightly.yml:ci:Install dependencies, with only ci.yml read                                       | the step Install dependencies, in job ci, in nightly.yml, as a non-check                   |
+        | CLM-CFG-012 | --deferral-tag deferred                                                                                      | @deferred as a deferral tag                                                                |
+        | CLM-CFG-013 | --deferral-tag @blocked                                                                                      | @blocked as a deferral tag                                                                 |
+        | CLM-CFG-014 | --deferral-tag with spaces around deferred                                                                   | @deferred as a deferral tag                                                                |
+        | CLM-CFG-006 | nothing                                                                                                      | no runner named for any layer, no non-check, and the built-in deferral tags alone          |
+
   Rule: balance takes the settings its settings file gives, by the names its command line uses
 
     @unit
@@ -34,27 +55,6 @@ Feature: balance reads and validates the configuration settings the run names
       then pytest alone will be the unit layer's runner
       and playwright will be the e2e layer's runner
 
-  Rule: balance takes each configuration setting it can use
-
-    @unit
-    Scenario Outline: balance takes each configuration setting it can use as the runner, non-check or deferral tag it names
-      given the run named <configuration setting>
-      when balance reads it
-      then balance will take it as <what it sets>
-
-      Examples:
-        | clm         | configuration setting                                                                                        | what it sets                                                                               |
-        | CLM-CFG-008 | --unit vitest                                                                                                | vitest as the unit layer's runner                                                          |
-        | CLM-CFG-026 | --unit vitest and --unit pytest                                                                              | vitest and pytest as the unit layer's runners                                              |
-        | CLM-CFG-024 | --e2e playwright:junit:out/playwright.xml                                                                    | playwright as the e2e layer's runner, with out/playwright.xml as its JUnit evidence report |
-        | CLM-CFG-010 | --not-check ci.yml:ci:Install dependencies, with ci.yml read, whose job ci had the step Install dependencies | the step Install dependencies, in job ci, in ci.yml, as a non-check                        |
-        | CLM-CFG-011 | --not-check nightly:build.yml:ci:Install dependencies                                                        | the step Install dependencies, in job ci, in nightly:build.yml, as a non-check             |
-        | CLM-CFG-023 | --not-check nightly.yml:ci:Install dependencies, with only ci.yml read                                       | the step Install dependencies, in job ci, in nightly.yml, as a non-check                   |
-        | CLM-CFG-012 | --deferral-tag deferred                                                                                      | @deferred as a deferral tag                                                                |
-        | CLM-CFG-013 | --deferral-tag @blocked                                                                                      | @blocked as a deferral tag                                                                 |
-        | CLM-CFG-014 | --deferral-tag with spaces around deferred                                                                   | @deferred as a deferral tag                                                                |
-        | CLM-CFG-006 | nothing                                                                                                      | no runner named for any layer, no non-check, and the built-in deferral tags alone          |
-
   Rule: a layer the run names no runner for takes the runners balance knows that the workflows run there, and that the run named at no layer
 
     @unit
@@ -76,6 +76,12 @@ Feature: balance reads and validates the configuration settings the run names
         | CLM-CFG-043 | a step running my-tool test    | no runner                                  | no layer will have a runner                        |
 
   Rule: balance leaves out any configuration setting it cannot use, and runs anyway
+
+    @unit @CLM-CFG-017
+    Scenario: balance still uses the configuration settings it can use beside one it cannot
+      given the run named a unit runner it could not use, and cucumber-js as the integration runner
+      when balance reconciles the target
+      then cucumber-js will be what runs the integration layer
 
     @unit
     Scenario Outline: balance leaves out a configuration setting it cannot use, naming the error
@@ -118,9 +124,3 @@ Feature: balance reads and validates the configuration settings the run names
         | CLM-CFG-028 | my-tool, a runner balance does not know                          | a step ran my-tool                                                                                     | runner-report-not-named | my-tool            |
         | CLM-CFG-029 | vitest                                                           | a step ran vitest run, naming no report                                                                | runner-report-not-named | vitest             |
         | CLM-CFG-030 | vitest                                                           | no step ran vitest                                                                                     | runner-report-not-named | vitest             |
-
-    @unit @CLM-CFG-017
-    Scenario: balance still uses the configuration settings it can use beside one it cannot
-      given the run named a unit runner it could not use, and cucumber-js as the integration runner
-      when balance reconciles the target
-      then cucumber-js will be what runs the integration layer
