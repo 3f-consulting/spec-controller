@@ -497,14 +497,10 @@ jobs:
 
       - name: Reconciliation
         if: always()
-        env:
-          RECONCILE_PLANT: red
         run: pnpm spec-controller balance
 
       - name: Reconciliation of the code just built
         if: ${{ !cancelled() && steps.CLM-FIT-013.outcome == 'success' }}
-        env:
-          RECONCILE_PLANT: red
         run: node packages/spec-controller/dist/cli.js balance
 
       - name: Hand the built packages to the release
