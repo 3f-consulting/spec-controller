@@ -6,6 +6,7 @@ Each line says what a change means for someone using spec-controller. A line tha
 
 ## 0.1.350 — 2026-11-21 — Easier adoption
 
+- **New: [`docs/what-an-agent-can-still-do.md`](https://github.com/3f-consulting/spec-controller/blob/main/docs/what-an-agent-can-still-do.md) says which changes `balance` cannot see**, such as a scenario deleted together with its tests, and how to make sure a person reviews each of them when coding agents write your code.
 - **Breaking: a CI check whose command swallows its own failure reads cannot-fail.** A fitness function's step that runs `|| true`, `|| :`, `|| exit 0`, `set +e` or `set +o errexit`, in its command or a package script it runs, has its recorded success posted as passed-on-error, as `continue-on-error` already does. A guard that can still fail, such as `|| status=$?` then `exit "$status"`, is read as able to fail. Remove the swallow, or expect the check to read cannot-fail. @3f-consulting/spec-controller-core's `DisposedStep` gains a required `swallowsFailure`, and `ShellAnswers` a required `swallowsFailure`; code that builds either sets it.
 
 ## 0.1.346 — 2026-11-21 — Easier adoption

@@ -13,7 +13,7 @@
 
 ## What to do about it
 
-- **Require review of the files that hold the specification and the gate.** Put `features/`, `spec-controller.yml` and `.github/workflows/` under CODEOWNERS, so a person reviews every change to them.
+- **Require review of the files that hold the specification and the gate.** Put [`features/`](../features/), [`spec-controller.yml`](../spec-controller.yml) and [`.github/workflows/`](../.github/workflows/) under CODEOWNERS, so a person reviews every change to them.
 - **Make the `balance` step a required check** in your branch protection, so a change that removes or skips it cannot merge.
 - **Review a deferral tag as you would a deleted test.**
 - **Run your test framework's assertion lint and mutation testing** beside `balance`. They catch what `balance` assumes.
