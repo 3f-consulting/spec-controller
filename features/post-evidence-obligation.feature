@@ -2,7 +2,7 @@
 Feature: Evidence Obligations are raised, one for each kind of quality check
 
   balance reads your project's feature files and raises the Evidence Obligations each claim asks
-  for. This is the debit side.
+  for.
 
   A scenario is one executable claim, and so is each row of an Outline with a clm column. A
   scenario with a deferral tag, such as @wip, on the scenario, its Rule or its Feature, is not an

@@ -64,7 +64,9 @@ it("[CLM-<FFF>-<NNN>] refuses an empty basket", () => { /* … */ });
   run: npx spec-controller balance --written-claims-only
 ```
 
-Vitest needs no setting. `balance` knows it, so it finds Vitest at the unit layer in the step in `.github/workflows` that runs it, and finds its report from that step, such as `npx vitest run --reporter=json --outputFile=reports/vitest.json`. Name a runner only for one `balance` does not know, or for a layer other than its usual one. If no workflow step names the report, name it yourself: `--unit vitest:vitest:reports/vitest.json`. The setting can also live in `spec-controller.yml` at the top of your repository, as `written-claims-only: true`, so the step runs `npx spec-controller balance` alone.
+Vitest needs no setting. `balance` knows it, so it finds Vitest at the unit layer in the step in `.github/workflows` that runs it. It finds the report from that step, such as `npx vitest run --reporter=json --outputFile=reports/vitest.json`. If no workflow step names the report, name it yourself: `--unit vitest:vitest:reports/vitest.json`. Name a runner only for one `balance` does not know, or for a layer other than its usual one.
+
+The setting can also live in `spec-controller.yml` at the top of your repository, as `written-claims-only: true`. The step then runs `npx spec-controller balance` alone.
 
 The scenario balances while its test passes. Delete the test, or let it fail, and the run is out of balance and exits `1`. Everything else that ran is listed under the unnamed claim, and none of it turns the run red. That includes tests citing no scenario, and your install, build and lint steps. You need no `id:` on any step, no step record and no non-checks.
 
@@ -97,7 +99,7 @@ npx spec-controller balance \
 
 For the report command of every other runner, see [Every report, and the whole command](./user-guide.md#every-report-and-the-whole-command).
 
-**Before you name anything, `balance` lists what ran.** Each test and fitness function that cites no code goes to the unnamed claim. The report groups them by kind of quality check and by file. Each group says how many ran, passed and failed, and names each one that failed. A test or fitness function that cites a code no scenario has goes to a phantom claim.
+**How the report lists what ran.** Each test and fitness function that cites no code goes to the unnamed claim. The report groups them by kind of quality check and by file. Each group says how many ran, passed and failed, and names each one that failed. A test or fitness function that cites a code no scenario has goes to a phantom claim.
 
 `balance` lists every CI step as a check, except these, which post nothing:
 
@@ -126,7 +128,10 @@ npx spec-controller balance \
   --exit-zero
 ```
 
-- **`--unit`, `--integration`, `--e2e` and `--performance`** each name a runner of that layer. `balance` then reads the step that runs the runner as your test suite, not as a check, and each result in the runner's report as evidence of that layer. Named alone, a runner has its report found from the step of `ci.yml` that runs it: here, the step that runs `vitest --reporter=json --outputFile=reports/vitest.json`, and the step that runs `cucumber-js --format json:reports/cucumber.json`. Maven's `mvn test` and Gradle's `./gradlew test` need no option: `balance` reads their reports from where they write them by default. When no step names the report and the runner has no default location, the run names the runner as `runner-report-not-named`: name the report in the long form `<runner>:<format>:<report>`. One runner may serve two layers, as `cucumber-js` does here: name it under each. A layer you name no runner for takes the runners `balance` knows that a step runs at that layer, unless you name them at another layer, so `vitest` here would be found without `--unit vitest`. It has none when you name none and `balance` finds none.
+- **`--unit`, `--integration`, `--e2e` and `--performance`** each name a runner of that layer. `balance` then reads the step that runs the runner as your test suite, not as a check, and each result in the runner's report as evidence of that layer.
+  - **Named alone, a runner has its report found from the step of `ci.yml` that runs it.** Here, that is the step that runs `vitest --reporter=json --outputFile=reports/vitest.json`, and the step that runs `cucumber-js --format json:reports/cucumber.json`. Maven's `mvn test` and Gradle's `./gradlew test` need no option: `balance` reads their reports from where they write them by default. When no step names the report and the runner has no default location, the run names the runner as `runner-report-not-named`. Name the report in the long form `<runner>:<format>:<report>`.
+  - **One runner may serve two layers,** as `cucumber-js` does here. Name it under each.
+  - **A layer you name no runner for** takes the runners `balance` knows that a step runs at that layer, unless you name them at another layer. So `vitest` here would be found without `--unit vitest`. The layer has no runner when you name none and `balance` finds none.
 - **`--not-check`** names a step that does work but checks nothing, such as publishing. It is written `<workflow file>:<job id>:<step name>`, and must match exactly.
 
 See [Naming your runners](./user-guide.md#naming-your-runners) and [Naming your non-checks](./user-guide.md#naming-your-non-checks).
@@ -154,9 +159,7 @@ describe("[CLM-<FFF>-<NNN>] a feature code whose highest live claim code is belo
 
 For Vitest, Jest, Go, JUnit 5 and RSpec tests, only the bracketed form counts. A code without brackets, or a code in a comment, names nothing. The test still runs, but its evidence observation goes to the unnamed claim, and the scenario reads `missing`. **When a `@unit` scenario reads `missing` while its test passes, check the brackets first.**
 
-Other evidence cites a scenario in other ways. A pytest test cites it with a `clm` property. A Cucumber run cites it with the scenario's own claim code. A CI check cites it with its step's `id:`. See [Only these four forms are read](./user-guide.md#only-these-four-forms-are-read).
-
-For how each other runner cites a scenario, see [Citing a scenario from pytest](./user-guide.md#citing-a-scenario-from-pytest), [Citing a scenario from Jest](./user-guide.md#citing-a-scenario-from-jest), [Citing a scenario from Go](./user-guide.md#citing-a-scenario-from-go), [Citing a scenario from Java](./user-guide.md#citing-a-scenario-from-java), [Citing a scenario from Kotlin](./user-guide.md#citing-a-scenario-from-kotlin) and [Citing a scenario from RSpec](./user-guide.md#citing-a-scenario-from-rspec).
+Other evidence cites a scenario in other ways. A pytest test cites it with a `clm` property. A Cucumber run cites it with the scenario's own claim code. A CI check cites it with its step's `id:`. See [Only these four forms are read](./user-guide.md#only-these-four-forms-are-read). For how each other runner cites a scenario, see [Citing a scenario from pytest](./user-guide.md#citing-a-scenario-from-pytest), [Citing a scenario from Jest](./user-guide.md#citing-a-scenario-from-jest), [Citing a scenario from Go](./user-guide.md#citing-a-scenario-from-go), [Citing a scenario from Java](./user-guide.md#citing-a-scenario-from-java), [Citing a scenario from Kotlin](./user-guide.md#citing-a-scenario-from-kotlin) and [Citing a scenario from RSpec](./user-guide.md#citing-a-scenario-from-rspec).
 
 ## Turn one CI check into a fitness function
 
@@ -215,7 +218,12 @@ The smallest gate needs only the Reconcile step above. This section is for a CI 
   run: printf '{"job":%s,"steps":%s}' "$JOB_JSON" "$STEPS_JSON" > ci-steps.json
 ```
 
-The dump saves `toJSON(steps)`, because it is the only place that has a step's `id` and its `outcome` together, and `toJSON(job)`, because the job's status tells a step skipped on purpose from one skipped because an earlier step failed the job: a step skipped in a job that succeeded posts nothing. Pass both to the command through environment variables, never inline in the command itself: a step's output can contain a quote, and the shell would run whatever follows that quote.
+The dump saves two things:
+
+- `toJSON(steps)`, because it is the only place that has a step's `id` and its `outcome` together;
+- `toJSON(job)`, because the job's status tells a step skipped on purpose from one skipped because an earlier step failed the job. A step skipped in a job that succeeded posts nothing.
+
+Pass both to the command through environment variables, never inline in the command itself. A step's output can contain a quote, and the shell would run whatever follows that quote.
 
 A single Reconcile step then reads the reports and the record. It runs the command from the first run, plus the step record, with the runner named alone. `--format md:$GITHUB_STEP_SUMMARY` puts the report on the run's summary page. `--format json:reconciliation.json` saves the JSON for any later step or tool:
 
@@ -235,7 +243,11 @@ A single Reconcile step then reads the reports and the record. It runs the comma
       --exit-zero
 ```
 
-`--unit vitest` reads the report your Vitest step writes, as `npx vitest run --reporter=json --outputFile=reports/vitest.json` does. Add the other runners and the non-checks you named, such as `--integration cucumber-js` for a Cucumber suite. Drop `--ci-steps` if you have converted no check. The settings that stay the same can live in `spec-controller.yml` at the top of your repository instead, keyed by the flags' names, such as `unit: [vitest]` (see [Keep your settings in `spec-controller.yml`](./user-guide.md#keep-your-settings-in-spec-controlleryml)). When the scenarios you have named balance, replace `--exit-zero` with `--written-claims-only` to gate on them while other tests still cite nothing. See [Gate on the scenarios you have written](./user-guide.md#gate-on-the-scenarios-you-have-written--use---written-claims-only).
+- `--unit vitest` reads the report your Vitest step writes, as `npx vitest run --reporter=json --outputFile=reports/vitest.json` does.
+- Add the other runners and the non-checks you named, such as `--integration cucumber-js` for a Cucumber suite.
+- Drop `--ci-steps` if you have converted no check.
+- The settings that stay the same can live in `spec-controller.yml` at the top of your repository instead, keyed by the flags' names, such as `unit: [vitest]`. See [Keep your settings in `spec-controller.yml`](./user-guide.md#keep-your-settings-in-spec-controlleryml).
+- When the scenarios you have named balance, replace `--exit-zero` with `--written-claims-only` to gate on them while other tests still cite nothing. See [Gate on the scenarios you have written](./user-guide.md#gate-on-the-scenarios-you-have-written--use---written-claims-only).
 
 Save the reports as build artefacts, but do not commit them: a report lists the gaps in your codebase. See [Wiring into CI](./user-guide.md#wiring-into-ci) and [GitHub Actions — put the report on the run summary](./user-guide.md#github-actions--put-the-report-on-the-run-summary).
 
@@ -266,7 +278,7 @@ The [README's sample report](../README.md) shows every kind of Claim Reconciliat
 - **A phantom claim** receives evidence that cites a code no scenario has. The cause is usually a typo, or the code of a deleted scenario. Each unknown code gets its own phantom claim, named by that code. The sample has one, and its row reads `cites-unknown-claim`.
 - **The unnamed claim** receives evidence that cites no code, several codes, or a code several scenarios share. It also receives each step the step record does not name, and its fitness group shows how many were not recorded.
 
-Watch for a **cannot-fail** check. It is green, but its CI step or job sets `continue-on-error` to anything but `false`, or its step's command swallows its failure with `|| true` or `set +e`, so its red might not fail the CI run. `balance` reads it from the step record that `--ci-steps` passes. The step's own outcome answers the row: a red that `continue-on-error` let through reads `failing`, and a green still reads `cannot-fail`.
+Watch for a **cannot-fail** check. It is green, but its red might not fail the CI run: its CI step or job sets `continue-on-error` to anything but `false`, or its step's command swallows its failure with `|| true` or `set +e`. `balance` reads it from the step record that `--ci-steps` passes. The step's own outcome answers the row: a red that `continue-on-error` let through reads `failing`, and a green still reads `cannot-fail`.
 
 If your first run lists many checks that cite nothing, read the report's **Step account**. It names each workflow and job, how many steps were read, and what happened to each step.
 

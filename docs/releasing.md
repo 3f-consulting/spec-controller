@@ -21,11 +21,11 @@ error whose cause is not authentication.
 
 ### Which merges publish
 
-**Every push to `main` whose CI run succeeds publishes.** `release.yml` runs when the `CI` workflow
-completes on `main`. Its `release` job goes on when that CI run succeeded and was started by a
-`push`, with no other condition. Each such run publishes the next counter version, unless a newer
-pending run cancels it (*Two merges close together*, below). That includes a merge that touches only
-[`features/`](../features/), [`tests/`](../tests/), [`.github/`](../.github/) or the lockfile.
+`release.yml` runs when the `CI` workflow completes on `main`. Its `release` job goes on when that
+CI run succeeded and was started by a `push`, with no other condition. Each such run publishes the
+next counter version, unless a newer pending run cancels it (*Two merges close together*, below).
+That includes a merge that touches only [`features/`](../features/), [`tests/`](../tests/),
+[`.github/`](../.github/) or the lockfile.
 
 A push that changes only `docs/**`, the root [`README.md`](../README.md),
 [`CONTRIBUTING.md`](../CONTRIBUTING.md) or [`LICENSE`](../LICENSE) does not run CI at all
@@ -75,8 +75,8 @@ Three jobs then run on what was published:
   creates a GitHub release for that tag, titled with the version heading. The release notes are the
   heading's section: the lines under it, up to the next heading or the end of the file. Nothing
   from a pull request's title reaches them. The `tag` job is separate so that the only token that
-  can write tags never shares a runner with the build. It starts no other workflow. **The tag records a release; it never
-  causes one**, and nothing listens for tags.
+  can write tags never shares a runner with the build. It starts no other workflow. **The tag
+  records a release; it never causes one**, and nothing listens for tags.
 
 ### Releasing at an increment's close
 
@@ -92,7 +92,7 @@ counter finds. That merge publishes the version under `latest`, tags it and crea
 release. If another merge publishes first and takes the number, the release run fails, names both
 numbers and publishes nothing. A new pull request then corrects the heading. An increment that
 gathered no changelog line closes without a release. The changelog's lines from before its first
-version heading belong to versions released before this model.
+version heading belong to versions released before releases were marked by version headings.
 
 **`next` trails `latest` after a release.** npm moves only the dist-tag a publish names. Trusted
 publishing gives a credential to `npm publish` alone, so no step can move `next` onto the version a
@@ -159,10 +159,9 @@ The run takes the **line** from the committed CLI manifest: everything before it
 packages on the registry, the repository's `refs/published/*` refs and its `v*` tags**. The
 registry can take 20 to 40 minutes to serve a publish, so the ref each publish pushes is what stops
 the next run minting the same number. The run stamps the next number into both manifests **in the
-run's working copy only**. Nothing is committed back, because `main` is
-protected. So the committed manifest is not the published version: it stays where a person last put
-it while the registry counts on. On a stable line the counter moves the patch number and ignores
-prereleases.
+run's working copy only**. Nothing is committed back, because `main` is protected. So the
+committed manifest is not the published version: it stays where a person last put it while the
+registry counts on. On a stable line the counter moves the patch number and ignores prereleases.
 
 **Starting a new major or minor line is done by hand, as an ordinary merge.** Edit both manifests to
 start the new line, for example `0.2.0-alpha.0` or `1.0.0`, and merge. Nothing is on that line yet,
@@ -198,8 +197,7 @@ with no guard.
 
 **`latest` is never moved onto a prerelease.** The committed manifests are on the stable line
 `0.1.N`, so every version is a plain one. A bare `npm i spec-controller` installs the latest
-release, and `npm i spec-controller@next` installs the current build. The `dist-tag` job checks that
-the dist-tag a merge published under resolves to its version.
+release, and `npm i spec-controller@next` installs the current build.
 
 ---
 
@@ -245,8 +243,8 @@ This was measured with no such script. The report's own provenance read
 over the same argv, read `0.1.0-alpha.4` and this checkout's HEAD.
 
 **That pin is the single declaration of which reader judges this tree.** No second "minimum
-readable version" is kept anywhere, on purpose. A second spelling of the same fact agrees with the first only
-until somebody edits one of them.
+readable version" is kept anywhere, on purpose. A second spelling of the same fact agrees with the
+first only until somebody edits one of them.
 
 **The pin follows `latest`, so the reader judging this tree trails by up to an increment.**
 Dependabot moves the pin to the newest release, and releases happen only at an increment's close.

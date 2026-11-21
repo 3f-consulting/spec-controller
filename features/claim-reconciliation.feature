@@ -17,8 +17,8 @@ Feature: A Claim Reconciliation sets a claim's Evidence Obligations against its 
   A claim is balanced when every Quality Check Reconciliation on it is satisfied. Otherwise it is
   out of balance, and lists every reconciling item with its outcome.
 
-  Evidence no single executable claim can take is posted to the unnamed claim. balance groups it
-  there by kind of quality check, file and shared claim code, and counts each group's results.
+  balance groups the unnamed claim's evidence by kind of quality check, file and shared claim
+  code, and counts each group's results.
 
   Each Claim Reconciliation lists its Quality Check Reconciliations in a fixed order.
 

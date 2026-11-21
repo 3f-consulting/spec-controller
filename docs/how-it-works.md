@@ -22,15 +22,17 @@ Each link between them needs something to hold it:
 
 Today's mechanism holds the checks ↔ application link well at the unit layer. `balance` makes that link hold for every kind of quality check: each named behaviour must be answered by a check that ran against the application and passed, and a CI check must have been able to fail its build.
 
-`balance` never reads your document specification. Whether the checks say what it says is a judgement, not a reconciliation.
+`balance` never reads your document specification. Whether the checks say what the document specification says is a judgement, not a reconciliation.
 
-That link is where spec-controller is heading: specification-driven development, in which the document specification becomes executable. `balance` holds the checks to the application. `analyse` and `migrate`, the modes that follow it, will hold the document specification to the checks. This is why each behaviour is written as a scenario, not only as a code in a list. Any test can cite a code in a list. A scenario says what its test must show, so a reader can judge whether the test proves it.
+The document specification ↔ checks link is where spec-controller is heading: specification-driven development, in which the document specification becomes executable. `balance` holds the checks to the application. `analyse` and `migrate`, the modes that follow it, will hold the document specification to the checks.
+
+This is why each behaviour is written as a scenario, not only as a code in a list. Any test can cite a code in a list. A scenario says what its test must show, so a reader can judge whether the test proves it.
 
 ## What double entry buys: a change becomes deliberate
 
 Every behaviour is recorded twice: as a scenario, and as the test that proves it. The two records must agree. So **changes to your quality checks become deliberate, not accidental.**
 
-Each kind of disagreement has its own outcome, shown below. [Reading the full report](#reading-the-full-report) defines a *phantom claim* and the *unnamed claim*. Every outcome except `satisfied` turns the build red, except where `--written-claims-only` leaves a phantom claim or the unnamed claim out of the verdict:
+Each kind of disagreement has its own outcome, shown below. Every outcome except `satisfied` turns the build red. The one exception is `--written-claims-only`, which leaves a phantom claim and the unnamed claim out of the verdict. [Reading the full report](#reading-the-full-report) defines both:
 
 | You change | The report shows |
 |---|---|
@@ -58,7 +60,7 @@ This matters most when an agent writes the code. An agent makes the mistakes a p
 **The limits:**
 
 - **Deliberate is not right.** A change made in both places balances. Review decides whether the change should have been made.
-- **A change inside one check is one entry, and `balance` does not see it.** A row reads the step record: your CI run's own record of whether the step ran and what it reported. It does not read what the tool examined. So a lint step narrowed to match no files still exits 0, and its row reads satisfied. And because the row reads the step record, a red that `continue-on-error` swallowed still turns its row red.
+- **A change inside one check is one entry, and `balance` does not see it.** A row reads the step record: your CI run's own record of whether the step ran and what it reported. It does not read what the tool examined. So a lint step narrowed to match no files still exits 0, and its row reads satisfied.
 - **Delete a scenario but keep its step definitions**, and Cucumber runs nothing and reports nothing. With no result reported, `balance` cannot see it. A check for unused step definitions catches this, and this repository runs one.
 - **No named behaviours, no second entry, no protection.** Code that arrives with no scenario gives `balance` nothing to reconcile. There is no mode that guards CI checks without scenarios: a check that fails already fails its build, so such a guard would be your automated tests again. What `balance` adds is the second entry.
 - **Under `--written-claims-only`, a deferral tag takes its scenario out of the gate.** Tag a scenario `@wip` and the tests citing it land on a phantom claim, which that flag leaves out of the verdict, so even a failing test leaves the build green. Review a deferral tag as you would a deleted test.
@@ -134,7 +136,7 @@ Read it as double entry. Each claim is an account. Its tags say what it is owed.
 - one test cites a scenario that does not exist;
 - one test cites nothing.
 
-The two claims with an `F` are CI checks: the complexity limit that passes, and the lint step that failed. `balance` reconciles a check the same way as a test: its scenario is owed one, and the step's result, read from the run's step record, is the evidence. A scenario tagged `@unit @e2e` is owed both. It balances only when a unit test and an end-to-end run each arrive and pass. No single test runner can see that.
+The two claims with an `F` are the CI checks: the complexity limit and the lint step. `balance` reconciles a check the same way as a test. Its scenario is owed one, and the step's result, read from the run's step record, is the evidence. A scenario tagged `@unit @e2e` is owed both. It balances only when a unit test and an end-to-end run each arrive and pass. No single test runner can see that.
 
 The **Step account** says what became of every CI step the run read. This sample has seven:
 

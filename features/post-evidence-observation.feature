@@ -11,10 +11,12 @@ Feature: Evidence Observations are posted, each to its claim
   balance recognises as running your tests. Any other step is a fitness function.
 
   Each Evidence Observation says which claim it cites, whether it passed, passed-on-error,
-  failed, never ran or was not recorded, its kind of quality check, and where to look. A recorded
-  success is passed-on-error when continue-on-error is anything but false on any step carrying its
-  id or on that step's job, or when its step's command, or a script it runs, holds an || or set +e,
-  or when no workflow has its step.
+  failed, never ran or was not recorded, its kind of quality check, and where to look.
+
+  A recorded success is passed-on-error when:
+  - continue-on-error is anything but false on any step with its id, or on that step's job
+  - its step's command, or a script it runs, contains an || or set +e
+  - no workflow has its step
 
   An Evidence Observation that cites one executable claim is posted to that claim. One that cites
   a claim nobody wrote is posted to a phantom claim. One that cites none, or could mean more than

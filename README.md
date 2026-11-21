@@ -6,7 +6,7 @@ It is built for teams where coding agents write most of the code. An agent optim
 
 You name each behaviour of your software as a scenario in a Gherkin `.feature` file, with a claim code of the form `@CLM-<FFF>-<NNN>`. Each test and each CI check cites the code of the behaviour it proves. On every CI run, `spec-controller balance` reads the reports your tools already write and checks every named behaviour against them. Each proof it asks for must have run and passed. A CI check must also have been able to fail its build: a step set to `continue-on-error` cannot, nor can one that swallows its own failure with `|| true` or `set +e`. Whether a test asserts anything is not checked. If a proof falls short, the build goes red.
 
-So when an agent deletes a behaviour's last test of a kind to make CI pass, or a lint step is quietly set never to fail, the build goes red instead of staying quietly green. An agent that empties a test's body instead still passes: that is a change for review to catch.
+So when an agent deletes a behaviour's last test of a kind to make CI pass, or a lint step is quietly set never to fail, the build goes red instead of staying green. An agent that empties a test's body instead still passes: that is a change for review to catch.
 
 <div class="sample-report">
 
@@ -52,7 +52,7 @@ Delete that test, and the run is out of balance and exits `1`. The row says a un
 
 ## Start with one scenario
 
-1. **Install it, pinned to the exact version**, since at `0.x` nothing is promised between versions:
+1. **Install it, pinned to the exact version** (see *Versions*):
 
    ```sh
    npm install --save-dev --save-exact spec-controller
@@ -76,7 +76,7 @@ To see everything that ran before you name anything, run with `--exit-zero` inst
 
 ## What comes next
 
-`balance` keeps a codebase that can reconcile from drifting again. Two modes will follow it, once `balance` is stable:
+`balance` keeps a codebase that can reconcile from drifting again. Two modes will follow once `balance` is stable:
 
 - **`analyse`** will read an existing codebase and judge its specification against its quality checks: which claims are met, unmet, unstated or in conflict.
 - **`migrate`** will write the `.feature` files and the scenario-tagged tests the specification calls for, so a team starts from the tests it already has, not from a blank page.
@@ -87,6 +87,8 @@ To see everything that ran before you name anything, run with `--exit-zero` inst
 - [`docs/ubiquitous-language.md`](./docs/ubiquitous-language.md): the words the report uses.
 - [`@3f-consulting/spec-controller-core`](./packages/core/README.md): the same engine as a library, with no CLI.
 
+## Versions
+
 spec-controller is pre-1.0 and changes quickly. A release can change a flag, a settings key, an exit code or the JSON report, and its changelog line then starts with **Breaking:**. At `0.x`, nothing is promised between versions ([`docs/compatibility.md`](./docs/compatibility.md)), so pin an exact version. The versions committed in the packages' `package.json` files are not the published ones ([`docs/releasing.md`](./docs/releasing.md)).
 
 ## Built with Claude Code, and kept honest
@@ -95,6 +97,6 @@ spec-controller is maintained by Steven Thomas at 3F Consulting, who does not wr
 
 The repository holds itself to the discipline it asks of you. Its own CI reconciles its own scenarios with `balance` on every run, and gates on dependency boundaries, complexity, duplication, package and workflow security, and a ceiling on test code against production code; a nightly mutation sweep stops new work when any scope falls below 95%. Each gate is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), whose Rule says what it checks and why.
 
-The agent has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. [`CONTRIBUTING.md`](./CONTRIBUTING.md) says how to build, make a change and report a problem.
+The agent has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. [`CONTRIBUTING.md`](./CONTRIBUTING.md) says how to build, test, make a change and report a problem.
 
 MIT licence, see [`LICENSE`](./LICENSE). © 2026 3F Consulting Ltd.

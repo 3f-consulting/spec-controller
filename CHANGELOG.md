@@ -4,6 +4,7 @@ Each line says what a change means for someone using spec-controller. A line tha
 
 **Not yet released:**
 
+- What balance does is unchanged: the README, CONTRIBUTING, the guides, the core package's README and six feature files' descriptions read more plainly, with every fact kept.
 - What balance does is unchanged: the compatibility page names the settings file, `spec-controller.yml`, and the runners balance finds for itself, and the feature-description word list drops `specController` and `notChecks`, keys balance does not read.
 
 ## 0.1.350 — 2026-11-21 — Easier adoption

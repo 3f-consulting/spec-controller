@@ -1,8 +1,7 @@
 @MSG
 Feature: a message catalogue gives back the text for a code
 
-  The tool's sentences for a reader are in a message catalogue, a data file apart from the code.
-  Each package has one.
+  The tool's sentences for a reader are in a message catalogue.
 
   Asked for the text under a message code, the catalogue gives back that text, with each value
   given filled into its gap. When the catalogue cannot use a text, or cannot fill it with the

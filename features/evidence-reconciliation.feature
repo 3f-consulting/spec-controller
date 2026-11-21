@@ -8,9 +8,8 @@ Feature: The Evidence Reconciliation states the run verdict, the totals, the ste
   balance cannot rely on what it read, and the verdict names why: unsound, when some evidence
   never ran; claim code errors, when balance finds a claim code error; configuration errors, when
   balance finds a configuration error; or nothing to reconcile, when there are no Claim
-  Reconciliations to count. When several reasons apply, unsound comes before claim code errors,
-  claim code errors before configuration errors, and configuration errors before nothing to
-  reconcile; each comes before out of balance.
+  Reconciliations to count. When several reasons apply, they come in this order: unsound, claim
+  code errors, configuration errors, nothing to reconcile. Each comes before out of balance.
 
   The totals count the Claim Reconciliations, the Quality Check Reconciliations by kind and
   outcome, where each Evidence Observation was filed, the excluded claim code occurrences and the

@@ -2,13 +2,14 @@
 Feature: balance reads and validates the configuration settings the run names
 
   A run names three kinds of configuration setting, on its command line or in its settings file:
-  the runners of each layer, the non-checks and the deferral tags. A runner balance knows that no
-  setting names, it finds in the workflows. The settings file names each of balance's settings by
-  the name its command line uses. balance reads and validates each one.
-  It leaves out a configuration setting that is not valid, names it among the configuration
+  the runners of each layer, the non-checks and the deferral tags. The settings file names each of
+  balance's settings by the name its command line uses. balance finds in the workflows each runner
+  it knows that no setting names. balance reads and validates each setting.
+
+  balance leaves out a configuration setting that is not valid, names it among the configuration
   errors, and still uses the others. A setting balance cannot use never stops the run. It makes
-  the run not reconciled, as evidence-reconciliation.feature claims. An input it cannot read
-  stops it, whether the command line or the settings file names it.
+  the run not reconciled, as evidence-reconciliation.feature claims. An input balance cannot read
+  stops the run, whether the command line or the settings file names it.
 
   Rule: balance takes the settings its settings file gives, by the names its command line uses
 

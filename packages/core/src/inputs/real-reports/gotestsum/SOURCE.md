@@ -12,7 +12,7 @@ The reports here are ones gotestsum's JUnit XML writer wrote, copied from gotest
 
 ## What was copied
 
-Each file is copied byte for byte from [`internal/junitxml/testdata/`](https://github.com/gotestyourself/gotestsum/tree/3cf14356a16c7931cfeacd7dfee585527618df3d/internal/junitxml/testdata) at the commit: every `.golden` file there, four in all, each saved here with the extension `.xml`. Each is the file gotestsum's test of its writer, [`report_test.go`](https://github.com/gotestyourself/gotestsum/blob/3cf14356a16c7931cfeacd7dfee585527618df3d/internal/junitxml/report_test.go), requires the writer's output to equal.
+Each file is copied byte for byte from [`internal/junitxml/testdata/`](https://github.com/gotestyourself/gotestsum/tree/3cf14356a16c7931cfeacd7dfee585527618df3d/internal/junitxml/testdata) at the commit: every `.golden` file there, four in all, each saved here with the extension `.xml`. gotestsum's test of its writer, [`report_test.go`](https://github.com/gotestyourself/gotestsum/blob/3cf14356a16c7931cfeacd7dfee585527618df3d/internal/junitxml/report_test.go), requires the writer's output to equal each one.
 
 | File here | Copied from |
 |---|---|

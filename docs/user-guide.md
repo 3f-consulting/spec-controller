@@ -40,7 +40,9 @@ node --version   # must be v22.12 or higher
 
 If your project uses pnpm, install pnpm yourself (`npm install -g pnpm`). Node 25 and later do not bundle corepack.
 
-**Your evidence, as reports.** Before you run `balance`, generate whichever of these reports apply to your project. Step 1 of [Every report, and the whole command](#every-report-and-the-whole-command) gives the command that writes each one. You name each runner under the flag of the layer it serves: `--unit`, `--integration`, `--e2e` or `--performance`. Named alone, as `--unit vitest`, a runner has its report found from the CI step that runs it. A report `balance` cannot find that way, you name in the runner's long form, `<runner>:<format>:<report>` (see [Naming your runners](#naming-your-runners)).
+**Your evidence, as reports.** Before you run `balance`, generate whichever of these reports apply to your project. Step 1 of [Every report, and the whole command](#every-report-and-the-whole-command) gives the command that writes each one.
+
+You name each runner under the flag of the layer it serves: `--unit`, `--integration`, `--e2e` or `--performance`. A runner named alone, as `--unit vitest`, has its report found from the CI step that runs it. For a report `balance` cannot find that way, name the runner in its long form, `<runner>:<format>:<report>` (see [Naming your runners](#naming-your-runners)).
 
 | Input | What it is | Flag |
 |---|---|---|
@@ -101,7 +103,8 @@ npx spec-controller balance \
 ```
 
 - **Leave out any input you don't have.**
-- **Each runner flag names a layer's runner.** `balance` reads the step that runs the runner as that layer's suite, and each result in the runner's report as evidence of that layer. Here each runner is in its long form, `<runner>:<format>:<report>`, which names the report wherever it was written. When the step of `ci.yml` that runs a runner writes its report with the options of step 1, name the runner alone, as `--unit vitest`: `balance` finds the report from that step. See [Naming your runners](#naming-your-runners).
+- **Each runner flag names a layer's runner.** `balance` reads the step that runs the runner as that layer's suite. It reads each result in the runner's report as evidence of that layer.
+- **Here each runner is in its long form**, `<runner>:<format>:<report>`, which names the report wherever it was written. When the step of `ci.yml` that runs a runner writes its report with the options of step 1, name the runner alone, as `--unit vitest`, and `balance` finds the report from that step. See [Naming your runners](#naming-your-runners).
 - **`--target` names the project in the report.** Without `--target`, when the project is a git checkout with an `origin` remote, the report names the target by that origin, as in `owner/repo`. Otherwise the report reads `unknown-target`. When the name comes from the origin:
   - It leaves out any user, password, token, query or fragment in the remote.
   - An `https` or `ssh` URL is named `owner/repo`, and so is an scp remote such as `git@github.com:owner/repo.git`.
@@ -118,7 +121,14 @@ Your first run against an unannotated pipeline fails, and the report is right to
 
 The route from a first run to a gate has three steps. Start with `--exit-zero`, and watch the report. Name a few scenarios, and cite them from their tests. When those balance, replace `--exit-zero` with `--written-claims-only`.
 
-With `--written-claims-only`, the run verdict counts only the executable claims: the claims your feature files write. A test that cites no claim code, or a code no scenario has, is still listed in the report under the unnamed claim or its phantom claim, but it does not turn the run red, and one that never ran does not make the run unsound. A written claim whose evidence is missing, failing, cannot fail or was not asked for is still out of balance. A run with no executable claim has nothing to reconcile, and a claim code error or a configuration error still leaves the run not reconciled. The report's provenance says when the run verdict counted only the executable claims. When every test cites a scenario, drop the flag.
+With `--written-claims-only`, the run verdict counts only the executable claims: the claims your feature files write.
+
+- A test that cites no claim code, or a code no scenario has, is still listed in the report, under the unnamed claim or its phantom claim. It does not turn the run red. If it never ran, it does not make the run unsound.
+- A written claim whose evidence is missing, failing, cannot fail or was not asked for is still out of balance.
+- A run with no executable claim has nothing to reconcile. A claim code error or a configuration error still leaves the run not reconciled.
+- The report's provenance says when the run verdict counted only the executable claims.
+
+When every test cites a scenario, drop the flag.
 
 ### Name your first non-checks
 
@@ -214,7 +224,7 @@ A pytest test's name is a Python function name, and a function name cannot hold 
 spec-controller balance --unit pytest
 ```
 
-`balance` reads the report the step's `--junitxml` or `--junit-xml` names. A report the step does not name, name in the runner's long form: `--unit pytest:pytest:reports/pytest.xml`.
+`balance` reads the report the step's `--junitxml` or `--junit-xml` names. For a report the step does not name, use the runner's long form: `--unit pytest:pytest:reports/pytest.xml`.
 
 **1. Add the hook once**, in `conftest.py` beside your tests:
 
@@ -276,7 +286,7 @@ A Jest test cites its scenario exactly as a Vitest test does: with the claim cod
 spec-controller balance --unit jest
 ```
 
-`balance` reads the report the step's `--json --outputFile=<path>` names. A report the step does not name, name in the runner's long form: `--unit jest:jest:reports/jest.json`.
+`balance` reads the report the step's `--json --outputFile=<path>` names. For a report the step does not name, use the runner's long form: `--unit jest:jest:reports/jest.json`.
 
 A complete test file:
 
@@ -328,7 +338,7 @@ A Go function name cannot hold brackets. So a Go test cites its scenario through
 spec-controller balance --unit gotestsum
 ```
 
-`balance` reads the report the step's `--junitfile` names, or the step's `env` names as `GOTESTSUM_JUNITFILE`. A report the step does not name, name in the runner's long form, in the `junit` format: `--unit gotestsum:junit:reports/go.xml`.
+`balance` reads the report the step's `--junitfile` names, or the step's `env` names as `GOTESTSUM_JUNITFILE`. For a report the step does not name, use the runner's long form, in the `junit` format: `--unit gotestsum:junit:reports/go.xml`.
 
 A complete test file:
 
@@ -375,7 +385,7 @@ spec-controller balance --unit "mvn test"
 
 `balance` reads every `.xml` file at the top of that directory, one `TEST-*.xml` for each test class, and ignores the `.txt` summaries beside them. You can give a single report file instead.
 
-In a build with several modules, each module writes its own `target/surefire-reports/`, and `balance` reads only the one at the step's working directory. A step that moves Maven to another folder, with `-pl` or `-f`, still has `balance` look at the step's own `target/surefire-reports`, where Maven writes none, and a step that puts an option before `test`, as `mvn -B test`, does not run the runner `mvn test` at all. Name each module's directory in a long form of its own, as `--unit "mvn test:junit:app/target/surefire-reports"`, and `balance` reads every one.
+In a build with several modules, each module writes its own `target/surefire-reports/`, and `balance` reads only the one at the step's working directory. A step that moves Maven to another folder, with `-pl` or `-f`, still has `balance` look at the step's own `target/surefire-reports`, where Maven writes none. A step that puts an option before `test`, as `mvn -B test`, does not run the runner `mvn test` at all. Name each module's directory in a long form of its own, as `--unit "mvn test:junit:app/target/surefire-reports"`, and `balance` reads every one.
 
 **Surefire drops the display name by default.** It writes the method name into the report, so no test cites anything: every test lands on the unnamed claim, and every `@unit` scenario reads `missing`. Surefire's phrased reporter writes the display name instead. Set it on the Surefire plugin in your `pom.xml`:
 
@@ -484,7 +494,7 @@ An RSpec example cites its scenario with the claim code in square brackets in it
 spec-controller balance --unit rspec
 ```
 
-The first `--format` keeps RSpec's usual console output. The second writes the JSON report to the file `--out` names: an `--out` applies to the `--format` before it, and `balance` reads the path of the `--out` that follows `--format json`. A report the step does not name, name in the runner's long form: `--unit rspec:rspec:reports/rspec.json`.
+The first `--format` keeps RSpec's usual console output. The second writes the JSON report to the file `--out` names: an `--out` applies to the `--format` before it, and `balance` reads the path of the `--out` that follows `--format json`. For a report the step does not name, use the runner's long form: `--unit rspec:rspec:reports/rspec.json`.
 
 A complete spec file:
 
@@ -629,7 +639,8 @@ Discovery does not depend on Node: it does not match `package.json` script names
 ### Naming your runners
 
 - **Each layer has its own flag:** `--unit`, `--integration`, `--e2e` and `--performance`. Each names a runner of that layer, and may repeat, so one layer may have several runners.
-- **A runner `balance` knows needs no setting.** For a layer you name no runner for, `balance` finds each runner it knows whose usual layer that is, when a step of the workflows `--ci` names runs it, as it recognises a named runner, and you name that runner at no layer. A step you name with `--not-check` is never found. A layer has no runner when you name none and `balance` finds none. Name a runner only for one `balance` does not know, or for a layer other than its usual one: any runner you name for a layer stops `balance` finding runners for it. A found runner is read exactly as one named alone, and the runners `balance` knows are these:
+- **A runner `balance` knows needs no setting.** For each layer you name no runner for, `balance` finds every runner it knows whose usual layer that is. It finds one when a step of the workflows `--ci` names runs it, recognised as a named runner is, and you name that runner at no layer. A step you name with `--not-check` is never found. A found runner is read exactly as one named alone.
+- **Name a runner only when `balance` does not know it, or for a layer other than its usual one.** Any runner you name for a layer stops `balance` finding runners for that layer. A layer has no runner when you name none and `balance` finds none. The runners `balance` knows are these:
 
   | Layer | Runners `balance` knows |
   |---|---|
@@ -637,6 +648,12 @@ Discovery does not depend on Node: it does not match `package.json` script names
   | integration | `cucumber-js` |
   | e2e | `playwright` |
 
+- **No runner at all, named or found, is not an error.** Every step that is not a reconciler step, a non-check or a plumbing step becomes a fitness function. That is the zero-annotation report.
+- **`balance` recognises a runner only as the command a step runs**: the command a line of the step opens with, or a command after `&&` or `;` in that line, past any `NAME=value` settings. So a runner is recognised after a line that sets a variable, after a shell function's definition, and after an `if … fi` block. A runner named anywhere else, as an argument or a path, leaves the step a check. So does a step that pipes the runner's output onward, into another command or into a compound command such as a `while` loop, an `if` block or a subshell.
+- **A launcher or a wrapper may hand on to a runner.** The launchers are `npx`, `pnpm exec`, `pnpm <bin>`, `yarn <bin>`, `bunx`, `python -m`, `python3 -m`, `uv run`, `poetry run`, `pipenv run`, `coverage run -m` and `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. The wrappers `xvfb-run` and `timeout <duration>` hand on too, past their options and the values those options take (`xvfb-run`'s `-n`, `-s`, `-e`, `-f`, `-p` and `-w` each take one value). So `timeout 75 pnpm test` runs `test`.
+- **A `package.json` script may run a runner.** A step runs a script as `npm test`, `npm run <script>`, `pnpm <script>`, `pnpm run <script>`, `pnpm -r <script>`, `pnpm --filter <name> <script>`, `yarn <script>`, `yarn run <script>` or `yarn workspace <name> <script>`, when the target's own `package.json` has a script by that name. `balance` follows the script through any scripts it runs in turn, however deep. A script that runs itself ends as a check.
+- **A runner named in several words is recognised where a command opens with all of those words.** This covers `mvn test`, `./mvnw test`, `./gradlew test`, `./gradlew check`, `./gradlew :app:test` and `gotestsum`. A build tool runs more than its tests, so name it with its test task. Then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: `rspec` covers `bundle exec rspec`.
+- **Any other variant is a check.** A launcher, script runner or wrapper not listed here leaves the step a check that runs the runner. Name such a step with `--not-check`, or run the runner in one of the variants above.
 - **A runner named alone, as `--unit vitest`, has its report found from the CI step that runs it.** `balance` reads the step's command for the option that names the report, in the spellings below. A step that runs a `package.json` script is read through the script, and any words after the script's name count as the words of the script's last command. Scripts come only from the `--package-json` file; a script in a subfolder's `package.json` is not followed. Each result in the report is evidence of the runner's layer.
 - **A path a step names is read from the step's folder:** the target's folder, the top of its git repository, joined with the step's `working-directory`, or else its job's `defaults.run.working-directory`. An absolute path is read as written.
 - **Where no step that runs the runner names a report, `balance` reads where the runner writes its reports by default**, joined with the step's working directory as a named path is. Only these runners have one, each read as a folder of JUnit XML reports:
@@ -665,14 +682,8 @@ Discovery does not depend on Node: it does not match `package.json` script names
 - **A runner named alone whose report `balance` cannot find** is named in `## Errors in the inputs` as `runner-report-not-named`. That is a runner `balance` has no spelling and no default location for, a runner whose steps name no report and that has no default location, or a runner no step runs. A step names no report when the report is set only in the runner's own configuration file, or by an expression such as `${{ env.OUT }}/x.json`. The runner is kept, so its step is still a runner, but no result of it is read. Name its report in the long form.
 - **A report with no file at its path**, a long form's, a step's or a default location, is named in `## Errors in the inputs` as `runner-report-not-read`, with the path. The run goes on: the runner is kept, so its step is still a runner, and no result of that report is read. Any other report that cannot be read, such as one that does not parse, refuses the run at exit `2`.
 - **A runner `balance` cannot read** is left out, and named as `configuration-wrong-kind`: an empty one, or a long form with no runner, no report, or a format `balance` does not read.
-- **No runner at all, named or found, is not an error.** Every step that is not a reconciler step, a non-check or a plumbing step becomes a fitness function. That is the zero-annotation report.
-- **`balance` recognises a runner only as the command a step runs**: the command a line of the step opens with, or a command after `&&` or `;` in that line, past any `NAME=value` settings. So a runner is recognised after a line that sets a variable, after a shell function's definition, and after an `if … fi` block. A runner named anywhere else, as an argument or a path, leaves the step a check. So does a step that pipes the runner's output onward, into another command or into a compound command such as a `while` loop, an `if` block or a subshell.
-- **A launcher or a wrapper may hand on to a runner.** The launchers are `npx`, `pnpm exec`, `pnpm <bin>`, `yarn <bin>`, `bunx`, `python -m`, `python3 -m`, `uv run`, `poetry run`, `pipenv run`, `coverage run -m` and `bundle exec`. Launchers chain, so `uv run python -m pytest` reaches `pytest`. The wrappers `xvfb-run` and `timeout <duration>` hand on too, past their options and the values those options take (`xvfb-run`'s `-n`, `-s`, `-e`, `-f`, `-p` and `-w` each take one value). So `timeout 75 pnpm test` runs `test`.
-- **A `package.json` script may run a runner.** A step runs a script as `npm test`, `npm run <script>`, `pnpm <script>`, `pnpm run <script>`, `pnpm -r <script>`, `pnpm --filter <name> <script>`, `yarn <script>`, `yarn run <script>` or `yarn workspace <name> <script>`, when the target's own `package.json` has a script by that name. `balance` follows the script through any scripts it runs in turn, however deep. A script that runs itself ends as a check.
-- **A runner named in several words is recognised where a command opens with all of those words.** This covers `mvn test`, `./mvnw test`, `./gradlew test`, `./gradlew check`, `./gradlew :app:test` and `gotestsum`. A build tool runs more than its tests, so name it with its test task. Then only the step that runs the tests is the runner, and every other task the tool runs is a check. Name a runner without its launcher: `rspec` covers `bundle exec rspec`.
-- **Any other variant is a check.** A launcher, script runner or wrapper not listed here leaves the step a check that runs the runner. Name such a step with `--not-check`, or run the runner in one of the variants above.
 
-These variants are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The spellings that name a runner's report, and the runners `balance` knows with their usual layers, are listed in [`runners.variants.json`](../packages/core/src/inputs/runners.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json). [Naming your non-checks](#naming-your-non-checks) lists them and says how they are matched.
+The command variants above are the only ones `balance` reads, one list per claim, in [`packages/core/src/inputs/shell.variants.json`](../packages/core/src/inputs/shell.variants.json). The spellings that name a runner's report, and the runners `balance` knows with their usual layers, are listed in [`runners.variants.json`](../packages/core/src/inputs/runners.variants.json). The plumbing actions, which are neither checks nor runners, are listed beside the workflow reader in [`workflows.variants.json`](../packages/core/src/inputs/workflows.variants.json). [Naming your non-checks](#naming-your-non-checks) lists them and says how they are matched.
 
 ### Naming your non-checks
 
@@ -722,7 +733,11 @@ A run names each configuration setting it cannot use, with one of these codes:
 | `not-checks-entry-matches-no-step` | a `--not-check` that matches no step of a workflow the run read makes no step a non-check |
 | `not-checks-entry-not-a-step-name` | a `--not-check` that does not name a step as `<workflow file>:<job id>:<step name>` makes no step a non-check |
 
-None of these codes refuses the run. Each is a line in `## Errors in the inputs`, right after the run provenance, giving its code, then the setting as written: the runner for `runner-report-not-named`, the report's path for `runner-report-not-read`, and the key for an entry of the settings file. The rest of the report is the one you would get without that entry, except its run verdict: any of these codes leaves the run *not reconciled, for configuration errors*, and it exits `3`, even under `--exit-zero`. Claim code errors, and evidence that never ran, come before it. The JSON lists them under `errorsInTheInputs.configurationErrors`.
+None of these codes refuses the run.
+
+- **Each is a line in `## Errors in the inputs`**, right after the run provenance. The line gives its code, then the setting as written: the runner for `runner-report-not-named`, the report's path for `runner-report-not-read`, and the key for an entry of the settings file. The JSON lists them under `errorsInTheInputs.configurationErrors`.
+- **The rest of the report is the one you would get without that entry**, except its run verdict.
+- **Any of these codes leaves the run *not reconciled, for configuration errors***, and it exits `3`, even under `--exit-zero`. Claim code errors, and evidence that never ran, come before it.
 
 ### Limits
 
@@ -829,7 +844,7 @@ Each check step carries its claim code as its `id:`, and the job ends with one d
 ```
 
 - **Put `if: always()` on every check step, not just on the dump.** Without it, the first red stops the job and every later check is skipped. The report then shows one `failing` and N `never-ran`, and the run is not reconciled, as `unsound`. The mechanism has worked correctly, but the report is worse.
-- **The dump must be `toJSON(job)` and `toJSON(steps)`.** `toJSON(steps)` is the only place where a step's `id` and its `outcome` appear together. `outcome` is the field that survives `continue-on-error`; `conclusion` does not. `toJSON(job)` holds the job's `status`, `success` when no step before the dump failed, a failure that `continue-on-error` allowed aside: a step skipped in such a job posts nothing. A dump of `toJSON(steps)` alone saves no job's status, so each step it says was skipped reads `never-ran`.
+- **The dump must be `toJSON(job)` and `toJSON(steps)`.** `toJSON(steps)` is the only place where a step's `id` and its `outcome` appear together. `outcome` is the field that survives `continue-on-error`; `conclusion` does not. `toJSON(job)` holds the job's `status`. It is `success` when no step before the dump failed, setting aside a failure that `continue-on-error` allowed, and a step skipped in such a job posts nothing. A dump of `toJSON(steps)` alone saves no job's status, so each step it says was skipped reads `never-ran`.
 - **Pass the dump through an environment variable.** Never write `${{ toJSON(job) }}` or `${{ toJSON(steps) }}` into the command itself: a step's output can hold a quote, and the shell would then run whatever follows that quote.
 - **A check that runs on a schedule stays on its own schedule, and no push step records it.** A check too slow for every push, such as a mutation sweep, enforces its threshold in its own run: a scope's nightly job concludes `failure` below the threshold. No push step reads that result, so the check has no Claim Reconciliation in a push's report. Its red needs a stop of its own where work starts, not in CI: while the newest full sweep is red, has lapsed or measured nothing, no new work starts except the fix, which merges on its own CI. Without that stop, a red sweep blocks nothing.
 
@@ -888,11 +903,14 @@ The output is the **Evidence Reconciliation**: the whole reconciliation. It come
 - **Markdown**, for people. It opens with its title, `# Evidence Reconciliation`. Its sections then come in a fixed order: `## Run provenance`; `## Errors in the inputs`, when there are any; `## Run integrity`, when some evidence never ran; `## Summary`, with the run verdict and the totals; and `## Claim Reconciliations`. It also has `## Step account` when the run read a step from its CI workflows. Every table has a key above it that says what each column means. The Markdown leaves out a section the run had nothing for, except `## Claim Reconciliations`, which reads *None.* when there are none.
 - **JSON**, for machines: the same model, for comparing two runs, feeding a dashboard, or building automation on top. Its top-level keys are `schemaVersion`, `claimReconciliations`, `runVerdict`, `totals`, `stepAccount`, `provenance`, `errorsInTheInputs` and `runIntegrity`. Every one is present, and a part the run had nothing for is empty. `runVerdict.verdict` is the run verdict (`balanced`, `out-of-balance` or `not-reconciled`). A `not-reconciled` verdict has `runVerdict.why` (`unsound`, `claim-code-errors`, `configuration-errors` or `nothing-to-reconcile`), so automation reads the reason there instead of working it out from the Claim Reconciliations. The JSON gives every count, zero included.
 
-Both include a **provenance** that records what was reconciled: the target, the source SHA, the tool's commit when the tool runs from its own checkout, the tool version, the time the run started, each layer's runners, and each input the run read, with its path. So a reconciliation is reproducible and attributable. The Markdown gives each layer a line naming its runners, each once however many reports it has, and marks a runner balance found in a workflow as *found in a workflow*, so a runner read at its usual layer by a guess is visible; a layer with no runner reads *none*. The JSON lists each layer's runners under `provenance.runners`, with `found: true` on a found one. The Markdown gives a line of its own to each input the run read, including one read by default, and leaves out an input the run did not read. The JSON lists every input, with a `path` only for one the run read.
+Both include a **provenance** that records what was reconciled: the target, the source SHA, the tool's commit when the tool runs from its own checkout, the tool version, the time the run started, each layer's runners, and each input the run read, with its path. So a reconciliation is reproducible and attributable.
+
+- **Runners.** The Markdown gives each layer a line naming its runners, each once however many reports it has. It marks a runner `balance` found in a workflow as *found in a workflow*, so a runner read at its usual layer by a guess is visible. A layer with no runner reads *none*. The JSON lists each layer's runners under `provenance.runners`, with `found: true` on a found one.
+- **Inputs.** The Markdown gives a line of its own to each input the run read, including one read by default, and leaves out an input the run did not read. The JSON lists every input, with a `path` only for one the run read.
 
 The package ships a JSON Schema that states the JSON's structure: `dist/spec-reconciliation.schema.json` inside the installed `spec-controller` package (in a local install, `node_modules/spec-controller/dist/`). The schema names every key the JSON may carry and refuses any other. The report names the version of the schema it follows in `schemaVersion`, and a change to the JSON's structure raises it. Validate a report you are handed against the schema of the version that wrote it, which the report's provenance names.
 
-**The JSON uses the glossary's words, on purpose.** It is the Evidence Reconciliation written out, so its keys and values are the terms of [`ubiquitous-language.md`](./ubiquitous-language.md), as the Markdown's headings are. When a term changes, the JSON changes with it and its schema's version rises. CI refuses any change to the schema that does not raise `schemaVersion`. Read a report against the schema its version names.
+**The JSON uses the glossary's words, on purpose.** It is the Evidence Reconciliation written out, so its keys and values are the terms of [`ubiquitous-language.md`](./ubiquitous-language.md), as the Markdown's headings are. When a term changes, the JSON changes with it and its schema's version rises. CI refuses any change to the schema that does not raise `schemaVersion`.
 
 ### How a run works
 
@@ -962,7 +980,15 @@ A step the step record does not name lands on the unnamed claim as not recorded,
 
 ### Passes that cannot fail
 
-The outcome to watch for is **cannot-fail**. It marks a fitness function that passes, but whose red might not fail the CI run: its CI step or job sets `continue-on-error` to anything but `false`, its step's command or a package script it runs swallows its failure, or no workflow `balance` read has its step. A swallow is a fallback `|| true`, `|| :` or `|| exit 0`, or `set +e` or `set +o errexit`, anywhere in the command, compounds and command substitutions included; one in a comment or in quoted text does not count, and a fallback that can still fail, such as `|| { echo failed; exit 1; }`, is not one. A green CI run then does not mean that the check passed. The row is read from the run's step record (`--ci-steps`), and the step's own outcome decides it: a red that `continue-on-error` let through reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
+The outcome to watch for is **cannot-fail**. It marks a fitness function that passes, but whose red might not fail the CI run. A green CI run then does not mean that the check passed. A pass reads `cannot-fail` when:
+
+- its CI step or job sets `continue-on-error` to anything but `false`;
+- its step's command, or a package script it runs, swallows its failure;
+- or no workflow `balance` read has its step.
+
+A swallow is a fallback `|| true`, `|| :` or `|| exit 0`, or `set +e` or `set +o errexit`, anywhere in the command, compounds and command substitutions included. One in a comment or in quoted text does not count. A fallback that can still fail, such as `|| { echo failed; exit 1; }`, is not a swallow.
+
+The row is read from the run's step record (`--ci-steps`), and the step's own outcome decides it: a red that `continue-on-error` let through reads `failing`, and a green under `continue-on-error` still reads `cannot-fail`.
 
 ### What counts as a claim code
 
@@ -978,7 +1004,7 @@ When Cucumber runs an Outline with a `clm` column, Cucumber's own result for eac
 
 ### Duplicate claim codes
 
-**A claim code identifies one claim. Two scenarios with one claim code are two claims that cannot reconcile.** A shared claim code arises when the same code is written twice:
+**A claim code identifies one claim. Two scenarios with one claim code are two claims that cannot reconcile.** A shared claim code arises when the same code is written twice. Then:
 
 - Each scenario has a Claim Reconciliation of its own. Each Quality Check Reconciliation for a quality check the scenario asks for reads `duplicate-claim-code`. A scenario that asks for no quality check reads `no-quality-check`. The Markdown names each row by the claim code and its feature file. The JSON gives each claim its file and title.
 - `balance` cannot attribute evidence that cites the code to either scenario, so both claims are out of balance whatever the evidence says. An evidence observation that cites the code credits neither claim and posts to the unnamed claim.
@@ -1191,7 +1217,7 @@ The tool writes the code under `CLM`. Its number is one past the highest number 
 **A fitness function shows `missing` or `cannot-fail` when you didn't expect it.** Both are real findings, not tool errors.
 
 - `missing` means that no CI step the step record names carries that scenario's claim code as its `id:`. A step the step record does not name is posted as not recorded, to the unnamed claim, and credits nothing. `package.json` scripts play no part in it.
-- `cannot-fail` means that the step passed, and either the step that cites it, or its job, sets `continue-on-error` to anything but `false`, or its command or a package script it runs swallows its failure with `|| true` or `set +e`, or no workflow `balance` read has that step.
+- `cannot-fail` means that the step passed, and either the step that cites it, or its job, sets `continue-on-error` to anything but `false`, or its command or a package script it runs swallows its failure with `|| true` or `set +e`, or no workflow `balance` read has that step. See [Passes that cannot fail](#passes-that-cannot-fail) for every swallow it reads.
 
 **My first run fails with many checks that cite nothing.** This is expected, not a misconfiguration. Every step of the workflows `--ci` names is a fitness function until something says otherwise. A fitness function that cites no claim posts to the unnamed claim, so `balance` exits `1`.
 
@@ -1210,7 +1236,7 @@ The tool writes the code under `CLM`. Its number is one past the highest number 
 
 Name the step with `--not-check`. The failure direction is deliberate: a step wrongly reported is one line to fix, but a step wrongly excluded would be invisible.
 
-**The run verdict reads *not reconciled, for claim code errors*.** One of these is true: the corpus files a claim code under the wrong feature file, or in a file that declares no feature code; two files declare one feature code; a scenario carries more than one claim code; or an Outline carries a claim code beside a `clm` column. `## Errors in the inputs` names each error by its handle and the files it is about. A misfiled code leaves every Claim Reconciliation reconciling, so the rest of the report is unchanged. A scenario that carries several claim codes, or an Outline that carries a claim code beside a `clm` column, has no Claim Reconciliation under any of them. The run exits `3` until the codes are filed correctly. See [Claim code errors](#claim-code-errors).
+**The run verdict reads *not reconciled, for claim code errors*.** One of these is true: the corpus files a claim code under the wrong feature file, or in a file that declares no feature code; two files declare one feature code; a scenario carries more than one claim code; or an Outline carries a claim code beside a `clm` column. `## Errors in the inputs` names each error by its handle and the files it is about. The run exits `3` until the codes are filed correctly. See [Claim code errors](#claim-code-errors).
 
 **The run verdict reads *not reconciled, for configuration errors*.** `## Errors in the inputs` names each setting the run could not use by its code, such as a misspelt key in `spec-controller.yml`, a runner whose report `balance` cannot find, or a `--not-check` that names no step. The rest of the report is the one you would get without that setting. The run exits `3`, even under `--exit-zero`, until each one is fixed. See [Configuration the run cannot use is named, and the run is not reconciled](#configuration-the-run-cannot-use-is-named-and-the-run-is-not-reconciled).
 

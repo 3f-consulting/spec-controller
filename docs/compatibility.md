@@ -6,7 +6,13 @@ This package is published at a `0.x` version. Under semantic versioning, a `0.x`
 
 At `1.0`, this page will become a promise, written from the mechanisms that reach `1.0`.
 
-**What the tool reads.** `balance` takes three kinds of setting on its command line: the runners of each layer (`--unit`, `--integration`, `--e2e` and `--performance`), the non-checks (`--not-check`) and the deferral tags (`--deferral-tag`). The same settings can live in a settings file, `spec-controller.yml` at the top of the repository or the file `--config` names, whose keys are the flags' long names; a flag on the command line replaces the file's setting of the same name. A layer that no setting names takes the runner `balance` knows and finds in the workflows, at that runner's usual layer. It reads `package.json` only for its `scripts`; a `specController` block in it is not read. It also reads the `--ci-steps` record. [`user-guide.md`](./user-guide.md) says what each one does. Read it for the tool's behaviour: the flags, the report and the exit codes.
+**What the tool reads.** [`user-guide.md`](./user-guide.md) says what each of these does. Read it for the tool's behaviour: the flags, the report and the exit codes.
+
+- **Three kinds of setting**, on `balance`'s command line: the runners of each layer (`--unit`, `--integration`, `--e2e` and `--performance`), the non-checks (`--not-check`) and the deferral tags (`--deferral-tag`).
+- **A settings file**, `spec-controller.yml` at the top of the repository or the file `--config` names. It holds the same settings, keyed by the flags' long names. A flag on the command line replaces the file's setting of the same name.
+- **The workflows.** A layer that no setting names takes the runner `balance` knows and finds in the workflows, at that runner's usual layer.
+- **`package.json`**, for its `scripts` only. A `specController` block in it is not read.
+- **The `--ci-steps` record.**
 
 Two things make a fitness function an evidence obligation: a `@fitness` scenario, and that scenario's claim code as the `id:` of the CI step that runs the check. See *Wiring into CI* in the user guide.
 
