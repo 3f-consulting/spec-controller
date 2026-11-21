@@ -116,6 +116,6 @@ function swallowsIn(commandLine: string, scripts: Scripts, followed: ReadonlySet
   });
 }
 
-const swallowsFailure = (commandLine: string, scripts: Scripts): boolean => commandLine.includes("|| true") || swallowsIn(commandLine, scripts, new Set());
+const swallowsFailure = (commandLine: string, scripts: Scripts): boolean => swallowsIn(commandLine, scripts, new Set());
 
 export const shellAnswers: ShellAnswers = { invokesTheReconciler, invokesAsCommand, swallowsFailure, reportsNamed, defaultReportsOf, knownRunners };
