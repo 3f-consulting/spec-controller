@@ -234,6 +234,8 @@ describe("balance posts a recorded success in a workflow as passed-on-error when
   it.each([
     ["CLM-OBS-173", "eslint . || true, then vitest run on the next line", "passed-on-error", "eslint . || true\nvitest run", {}],
     ["CLM-OBS-175", "pnpm lint, whose script was eslint . || true", "passed-on-error", "pnpm lint", { lint: "eslint . || true" }],
+    ["CLM-OBS-175", "timeout 10m pnpm lint, whose script was eslint . || true", "passed-on-error", "timeout 10m pnpm lint", { lint: "eslint . || true" }],
+    ["CLM-OBS-175", "npx pnpm lint, whose script was eslint . || true", "passed-on-error", "npx pnpm lint", { lint: "eslint . || true" }],
     ["CLM-OBS-176", "eslint . || (echo failed; exit 1)", "passed", "eslint . || (echo failed; exit 1)", {}],
     ["CLM-OBS-177", "eslint . && true", "passed", "eslint . && true", {}],
     ["CLM-OBS-180", 'eslint . || status=$?, then exit "$status"', "passed", 'eslint . || status=$?\nexit "$status"', {}],

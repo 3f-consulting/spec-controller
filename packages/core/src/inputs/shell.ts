@@ -103,10 +103,15 @@ function nodesOf(node: SyntaxNode): SyntaxNode[] {
   return found;
 }
 
+function scriptReached(words: readonly string[], scripts: Scripts): ReturnType<typeof scriptRun> {
+  const rest = handedOn(words);
+  return scriptRun(words, scripts) ?? (rest === undefined ? undefined : scriptReached(rest, scripts));
+}
+
 function swallowsIn(commandLine: string, scripts: Scripts, followed: ReadonlySet<string>): boolean {
   return nodesOf(parse(commandLine)).some((node) => {
     if (swallowsHere(node)) return true;
-    const run = node.type === "Command" ? scriptRun(wordsOf(node), scripts) : undefined;
+    const run = node.type === "Command" ? scriptReached(wordsOf(node), scripts) : undefined;
     return run !== undefined && !followed.has(run.script) && swallowsIn(scripts[run.script]!, scripts, new Set([...followed, run.script]));
   });
 }

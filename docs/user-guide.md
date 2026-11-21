@@ -946,7 +946,7 @@ Both reports name each outcome by its handle.
 |---|---|---|
 | `satisfied` | the evidence asked for arrived, and passed | |
 | `missing` | no evidence that ran answers the obligation | |
-| `failing` | the evidence asked for arrived, and failed | a swallowed red also reads `failing`, given `--ci-steps` |
+| `failing` | the evidence asked for arrived, and failed | a red that `continue-on-error` let through also reads `failing`, given `--ci-steps` |
 | `cannot-fail` | the evidence passed, but its CI step or its job sets `continue-on-error`, its step's command or a script it runs swallows its failure with `\|\| true` or `set +e`, or `balance` cannot read whether it does, so its red might not fail the build | see below |
 | `not-asked-for` | the evidence is of a kind of quality check its claim did not ask for | see [When a row reads `not-asked-for`](#when-a-row-reads-not-asked-for) |
 | `never-ran` | the evidence never reached its assertions | the run is not reconciled, as `unsound`, and the evidence is listed under `## Run integrity` too; under `--written-claims-only`, only when it cites an executable claim |
