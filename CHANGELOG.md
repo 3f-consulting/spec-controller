@@ -2,14 +2,10 @@
 
 Each line says what a change means for someone using spec-controller. A line that changes what an adopter must do (a flag, a settings key, the JSON report's shape, an exit code) starts with **Breaking:** and says what to change. The newest release comes first.
 
-**Not yet released:**
+## 0.1.346 — 2026-11-21 — Easier adoption
 
 - **Breaking: a run with a configuration error is not reconciled, and exits 3**, even under `--exit-zero`. A setting balance cannot use, such as a misspelt key in `spec-controller.yml`, a runner whose report it cannot find, or a non-check naming no step, now turns the run red. Fix each error *Errors in the inputs* names. The JSON report's run verdict can now give the reason `configuration-errors`, and its schema is version 8.
-- What balance does is unchanged: three of the specification's claims (the Summary's deferral line, the JSON schema's version and a missing default settings file) each have a recorded failing run, proving their tests can fail.
-- What balance does is unchanged: spec-controller's own build runs the community lint rule `vitest/expect-expect`, so a test in its packages that calls no assertion reds the build.
-- What balance does is unchanged: the list of outcomes the totals count is checked by the compiler, so an outcome added to balance cannot be left out of the totals.
-- What balance does is unchanged: added to @3f-consulting/spec-controller-core, `runnerReportsOf`, each runner's located evidence report with its layer, and `layersOfReportAt`, the layers a report at a path serves. A library user calling core gets the rule the command line uses.
-- What balance does is unchanged: more of spec-controller's tests reach how it reads a settings file, so its nightly mutation check passes again.
+- **@3f-consulting/spec-controller-core gains two exports.** `runnerReportsOf` gives each runner's located evidence report with its layer, and `layersOfReportAt` gives the layers a report at a path serves, so a library user calling core gets the rule the command line uses.
 
 ## 0.1.338 — 2026-11-20 — Easier adoption
 
