@@ -15,7 +15,7 @@ Feature: Evidence Observations are posted, each to its claim
 
   A recorded success is passed-on-error when:
   - continue-on-error is anything but false on any step with its id, or on that step's job
-  - its step's command, or a script it runs, contains an || or set +e
+  - its step's command, or a script it runs, swallows its own failure with a fallback || true, || : or || exit 0, or with set +e or set +o errexit
   - no workflow has its step
 
   An Evidence Observation that cites one executable claim is posted to that claim. One that cites
