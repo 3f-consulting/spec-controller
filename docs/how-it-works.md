@@ -59,12 +59,12 @@ This matters most when an agent writes the code. An agent makes the mistakes a p
 
 **The limits:**
 
-- **Deliberate is not right.** A change made in both places balances. Review decides whether the change should have been made.
+- **Deliberate is not right.** Removing a behaviour cleanly is one deliberate change in three places: the scenario, its tests and the code they prove. It balances, and review decides whether it should have been made. A partial delete does not balance: a scenario deleted alone leaves its tests citing a claim nobody wrote, and tests deleted alone leave the scenario's proof `missing`. Code left behind, which no test exercises, is what mutation testing and an unused-code check report.
 - **A change inside one check is one entry, and `balance` does not see it.** A row reads the step record: your CI run's own record of whether the step ran and what it reported. It does not read what the tool examined. So a lint step narrowed to match no files still exits 0, and its row reads satisfied.
 - **Delete a scenario but keep its step definitions**, and Cucumber runs nothing and reports nothing. With no result reported, `balance` cannot see it. A check for unused step definitions catches this, and this repository runs one.
 - **No named behaviours, no second entry, no protection.** Code that arrives with no scenario gives `balance` nothing to reconcile. There is no mode that guards CI checks without scenarios: a check that fails already fails its build, so such a guard would be your automated tests again. What `balance` adds is the second entry.
 - **Under `--written-claims-only`, a deferral tag takes its scenario out of the gate.** Tag a scenario `@wip` and the tests citing it land on a phantom claim, which that flag leaves out of the verdict, so even a failing test leaves the build green. Review a deferral tag as you would a deleted test.
-- **Whether a test is a good test is assumed.** A balanced row means the evidence exists and passes, and that a CI check's failure would have failed its build. It does not mean the test checks what its title says, or checks anything at all. A test that asserts nothing is a fitness function's to catch, as the [user guide](./user-guide.md) says, outside `balance`.
+- **Whether a test is a good test is assumed.** A balanced row means the evidence exists and passes, and that a CI check's failure would have failed its build. It does not mean the test checks what its title says, or checks anything at all. A test that asserts nothing is a fitness function's to catch, as the [user guide](./user-guide.md) says, and a weak one is mutation testing's ([Coverage and mutation testing beside it](#coverage-and-mutation-testing-beside-it)).
 
 ## Reading the full report
 
@@ -156,9 +156,11 @@ The report uses these exact terms:
 
 [`ubiquitous-language.md`](./ubiquitous-language.md) has the rest.
 
-## Why not coverage or mutation testing?
+## Coverage and mutation testing beside it
 
-Both answer their own questions well, and both live at the unit layer:
+spec-controller uses maintained tools where they exist, and expects you to do the same. It does not test your tests: mutation testing, coverage, assertion lint and complexity checks have excellent tools already. It fills one gap those tools leave, and reconciles them as it does: each of their CI steps is a fitness function, a claim of yours that `balance` reconciles like any other.
+
+Coverage and mutation testing answer their own questions well, and both live at the unit layer:
 
 | Kind of quality check | Coverage | Mutation testing | `spec-controller` |
 |---|---|---|---|
@@ -170,3 +172,5 @@ Both answer their own questions well, and both live at the unit layer:
 Coverage tells you how much of the application the unit tests reach. Mutation testing tells you whether those tests would notice the application change. Neither knows which behaviours your scenarios name. So neither notices a named behaviour with no proof, or a passing test credited to a scenario that asked for a different kind of evidence. `spec-controller` reconciles all five kinds of quality check in one account.
 
 **For a team already well tested at the unit layer, `spec-controller` finds nothing at that layer that coverage and mutation testing miss.** What it finds is above it: a named behaviour with no passing proof, a test credited to a scenario that asked for a different kind of evidence, and a CI check that cannot fail or never ran. Keep your coverage gate and your mutation threshold. They are inputs here, not rivals.
+
+**Mutation testing is how you hold a weak test.** A test an agent has emptied or weakened still passes, and `balance` assumes a passing test is a valid one. Your mutation gate is what fails it. Run on every push, its CI step is a fitness function `balance` reconciles: remove it, or set it never to fail, and its row goes out of balance. Run on a schedule, as this repository runs its own sweep at 95%, it enforces its threshold in its own run ([user guide](./user-guide.md)).

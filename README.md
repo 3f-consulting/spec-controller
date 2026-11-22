@@ -83,7 +83,7 @@ To see everything that ran before you name anything, run with `--exit-zero` inst
 
 ## Learn more
 
-- [`docs/how-it-works.md`](./docs/how-it-works.md): what each kind of disagreement reports, how to read the full report, its limits, and why coverage and mutation testing don't do this.
+- [`docs/how-it-works.md`](./docs/how-it-works.md): what each kind of disagreement reports, how to read the full report, its limits, and how coverage and mutation testing work beside it.
 - [`docs/ubiquitous-language.md`](./docs/ubiquitous-language.md): the words the report uses.
 - [`@3f-consulting/spec-controller-core`](./packages/core/README.md): the same engine as a library, with no CLI.
 
@@ -91,12 +91,10 @@ To see everything that ran before you name anything, run with `--exit-zero` inst
 
 spec-controller is pre-1.0 and changes quickly. A release can change a flag, a settings key, an exit code or the JSON report, and its changelog line then starts with **Breaking:**. At `0.x`, nothing is promised between versions ([`docs/compatibility.md`](./docs/compatibility.md)), so pin an exact version. The versions committed in the packages' `package.json` files are not the published ones ([`docs/releasing.md`](./docs/releasing.md)).
 
-## Built with Claude Code, and kept honest
+## Held to its own discipline
 
-spec-controller is maintained by Steven Thomas at 3F Consulting, who does not write TypeScript. Claude Code writes the code. The maintainer endorses each change's scenarios before any code is written, and each scenario is proved red, then green.
+The repository holds itself to the discipline it asks of you. Its own CI reconciles its own scenarios with `balance` twice on every run: with the released version it pins, and with the code that run just built. It gates on dependency boundaries, complexity, duplication, package and workflow security, and a ceiling on test code against production code. A nightly mutation sweep ([`mutation.yml`](./.github/workflows/mutation.yml)) fails any source scope whose tests kill fewer than 95% of its mutants ([`stryker.config.js`](./stryker.config.js)), and a CI gate keeps every production file in a scope or on a recorded list. Each gate is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), whose Rule says what it checks and why.
 
-The repository holds itself to the discipline it asks of you. Its own CI reconciles its own scenarios with `balance` on every run, and gates on dependency boundaries, complexity, duplication, package and workflow security, and a ceiling on test code against production code; a nightly mutation sweep stops new work when any scope falls below 95%. Each gate is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), whose Rule says what it checks and why.
-
-The agent has been caught. Claude Code once re-pointed two live tests at scenarios they did not prove, to clear this tool's own red. Review caught it, and the change was reverted. [`CONTRIBUTING.md`](./CONTRIBUTING.md) says how to build, test, make a change and report a problem.
+[`CONTRIBUTING.md`](./CONTRIBUTING.md) says how to build, test, make a change and report a problem.
 
 MIT licence, see [`LICENSE`](./LICENSE). © 2026 3F Consulting Ltd.
