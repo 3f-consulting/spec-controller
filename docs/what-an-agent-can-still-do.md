@@ -18,7 +18,7 @@ spec-controller uses maintained tools where they exist ([how it works](./how-it-
 
 ## What to do about it
 
-- **Require review of the files that hold the specification and the gate.** Put [`features/`](../features/), [`spec-controller.yml`](../spec-controller.yml) and [`.github/workflows/`](../.github/workflows/) under CODEOWNERS, so a person reviews every change to them.
+- **Make sure a person decides every change to the specification and the gate before it lands**: [`features/`](../features/), [`spec-controller.yml`](../spec-controller.yml) and [`.github/workflows/`](../.github/workflows/). How is your team's choice. On GitHub, CODEOWNERS with branch protection is one way; approving each scenario before an agent writes code for it is another.
 - **Make the `balance` step a required check** in your branch protection, so a change that removes or skips it cannot merge.
 - **Review a deferral tag as you would a deleted test.**
 - **Run your test framework's assertion lint on every push, and a mutation sweep on a schedule**, and start no new work while the newest sweep is red. They catch what `balance` assumes.
