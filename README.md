@@ -93,7 +93,7 @@ spec-controller is pre-1.0 and changes quickly. A release can change a flag, a s
 
 ## Held to its own discipline
 
-The repository holds itself to the discipline it asks of you. Its own CI reconciles its own scenarios with `balance` twice on every run: with the released version it pins, and with the code that run just built. It gates on dependency boundaries, complexity, duplication, package and workflow security, and a ceiling on test code against production code. A nightly mutation sweep ([`mutation.yml`](./.github/workflows/mutation.yml)) fails any source scope whose tests kill fewer than 95% of its mutants ([`stryker.config.js`](./stryker.config.js)), and a CI gate keeps every production file in a scope or on a recorded list. Each gate is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), whose Rule says what it checks and why.
+The repository holds itself to the discipline it asks of you. Its own CI reconciles its own scenarios with `balance` twice on every run: with the released version it pins, and with the code that run just built. It gates on dependency boundaries, complexity, duplication, package and workflow security, and a ceiling on test code against production code. A nightly mutation sweep ([`mutation.yml`](./.github/workflows/mutation.yml)) fails any source scope whose tests kill fewer than 95% of its mutants ([`stryker.config.js`](./stryker.config.js)), and a CI gate keeps every production file in a scope or on a recorded list. Each gate CI runs on a push is a scenario in [`features/fitness-functions.feature`](./features/fitness-functions.feature), whose Rule says what it checks and why.
 
 [`CONTRIBUTING.md`](./CONTRIBUTING.md) says how to build, test, make a change and report a problem.
 

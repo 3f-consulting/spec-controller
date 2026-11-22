@@ -12,7 +12,7 @@
 
 spec-controller uses maintained tools where they exist ([how it works](./how-it-works.md#coverage-and-mutation-testing-beside-it)). These are theirs:
 
-- **Empty a test, or weaken its assertion.** `balance` assumes a passing test is a valid one. A lint rule such as `expect-expect` fails a test with no assertion, and mutation testing fails a weak one. Run on every push, the mutation step is a fitness function `balance` reconciles, so removing it, or setting it never to fail, is out of balance.
+- **Empty a test, or weaken its assertion.** `balance` assumes a passing test is a valid one. A lint rule such as `expect-expect` fails a test with no assertion, and mutation testing fails a weak one. A full mutation sweep is too slow for every push, so run it on a schedule, and start no new work while the newest sweep is red ([how it works](./how-it-works.md#coverage-and-mutation-testing-beside-it)).
 - **Delete one of several tests citing a scenario.** The others still answer, so the scenario still balances: `balance` checks that each kind of proof the scenario asks for arrived, not how many tests there were. What the deleted test alone held, mutation testing reports.
 - **Let a failure through in a way `balance` does not read.** It reads `continue-on-error`, a fallback `|| true`, `|| :` or `|| exit 0`, and `set +e` or `set +o errexit`, in a step or a package script it runs. These always swallow a failure. It does not read a pipe without `pipefail`, a `shell:` without `-e`, a shell file the step runs, a reusable workflow or composite action, or a swallow written another way. Reading every `||` as a swallow would turn a legitimate guard red, such as `|| status=$?` followed by `exit "$status"`, and a gate that reds a correct step teaches a team to mark it a non-check, which hides it for good. So `balance` reads the forms that always swallow, names the rest here, and leaves them to review.
 
@@ -21,4 +21,4 @@ spec-controller uses maintained tools where they exist ([how it works](./how-it-
 - **Require review of the files that hold the specification and the gate.** Put [`features/`](../features/), [`spec-controller.yml`](../spec-controller.yml) and [`.github/workflows/`](../.github/workflows/) under CODEOWNERS, so a person reviews every change to them.
 - **Make the `balance` step a required check** in your branch protection, so a change that removes or skips it cannot merge.
 - **Review a deferral tag as you would a deleted test.**
-- **Run your test framework's assertion lint and mutation testing** beside `balance`. They catch what `balance` assumes.
+- **Run your test framework's assertion lint on every push, and a mutation sweep on a schedule**, and start no new work while the newest sweep is red. They catch what `balance` assumes.
