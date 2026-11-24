@@ -45,7 +45,7 @@ Each kind of disagreement has its own outcome, shown below. Every outcome except
 | Delete a scenario but keep its tests or its CI check | they still run and pass, but their evidence lands on a phantom claim (`cites-unknown-claim`) |
 | Cite a scenario from a unit test when its tags ask only for `@e2e` | `not-asked-for`: evidence the scenario never asked for |
 | Delete a CI check step | `missing` on its fitness function's scenario |
-| Let a CI check step or its job run under `continue-on-error: true` | `cannot-fail`: it passes, but its red might not fail the CI run. The run's step record gives the step's own outcome: a red that `continue-on-error` let through reads `failing`, and a green still reads `cannot-fail`. Without the step record, the step reads not recorded, citing no claim, and its scenario reads `missing` |
+| Let a CI check step or its job run under `continue-on-error: true` | `cannot-fail`: it passed, but could not have failed. The run's step record gives the step's own outcome: a red that `continue-on-error` let through reads `failing`, and a green still reads `cannot-fail`. Without the step record, the step reads not recorded, citing no claim, and its scenario reads `missing` |
 | Make a CI check step swallow its own failure, with `\|\| true`, `\|\| :`, `\|\| exit 0`, `set +e` or `set +o errexit` in its command or a package script it runs | `cannot-fail`: the step succeeds whatever the check found, so its green might hide a red |
 | Copy a scenario and keep its claim code | each copy gets its own Claim Reconciliation under that code. Every Quality Check Reconciliation on it (one for each kind of quality check it asks for) reads `duplicate-claim-code`, or `no-quality-check` for a copy that asks for none. No evidence can be credited to either copy |
 | Tag a scenario `@wip` while its tests still cite it | the scenario is put off, so it asks for nothing, and its tests' evidence lands on a phantom claim (`cites-unknown-claim`) |
@@ -151,7 +151,7 @@ The report uses these exact terms:
 - A *Claim Reconciliation* is the evidence reconciled for one claim: one row of the table. A claim is usually a scenario. The Claim Reconciliation sets the evidence the claim asks for, if any (its *Evidence Obligations*), against the results reported for it (its *Evidence Observations*). Each pairing is a *Quality Check Reconciliation*, with its own outcome. The row lists each one that is not `satisfied` as a reconciling item.
 - A *phantom claim* comes from a test that names a scenario which does not exist. The usual cause is a typo or a deleted scenario.
 - The *unnamed claim* takes any test that names no scenario at all, several scenarios, or a code that several scenarios share.
-- A *cannot-fail* check passes, but its red might not fail the CI run: its CI step or job sets `continue-on-error`, its step's command or a script it runs swallows its failure with `|| true` or `set +e`, or `balance` did not read its workflow and so cannot tell whether it does.
+- A *cannot-fail* check passed, but could not have failed: its CI step or job sets `continue-on-error`, its step's command or a script it runs swallows its failure with `|| true` or `set +e`, or `balance` did not read its workflow and so cannot tell whether it does.
 - The *run verdict* is `balanced`, `out-of-balance`, or `not-reconciled`. A `not-reconciled` verdict gives the reason the run could not be relied on: `unsound`, `claim-code-errors`, `configuration-errors` or `nothing-to-reconcile`.
 
 [`ubiquitous-language.md`](./ubiquitous-language.md) has the rest.

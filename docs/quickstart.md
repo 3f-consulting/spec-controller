@@ -278,7 +278,7 @@ The [README's sample report](../README.md) shows every kind of Claim Reconciliat
 - **A phantom claim** receives evidence that cites a code no scenario has. The cause is usually a typo, or the code of a deleted scenario. Each unknown code gets its own phantom claim, named by that code. The sample has one, and its row reads `cites-unknown-claim`.
 - **The unnamed claim** receives evidence that cites no code, several codes, or a code several scenarios share. It also receives each step the step record does not name, and its fitness group shows how many were not recorded.
 
-Watch for a **cannot-fail** check. It is green, but its red might not fail the CI run: its CI step or job sets `continue-on-error` to anything but `false`, or its step's command swallows its failure with `|| true` or `set +e`. `balance` reads it from the step record that `--ci-steps` passes. The step's own outcome answers the row: a red that `continue-on-error` let through reads `failing`, and a green still reads `cannot-fail`.
+Watch for a **cannot-fail** check. It is green, but it could not have failed: its CI step or job sets `continue-on-error` to anything but `false`, or its step's command swallows its failure with `|| true` or `set +e`. `balance` reads it from the step record that `--ci-steps` passes. The step's own outcome answers the row: a red that `continue-on-error` let through reads `failing`, and a green still reads `cannot-fail`.
 
 If your first run lists many checks that cite nothing, read the report's **Step account**. It names each workflow and job, how many steps were read, and what happened to each step.
 

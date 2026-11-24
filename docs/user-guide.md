@@ -965,7 +965,7 @@ Both reports name each outcome by its handle.
 | `satisfied` | the evidence asked for arrived, and passed | |
 | `missing` | no evidence that ran answers the obligation | |
 | `failing` | the evidence asked for arrived, and failed | a red that `continue-on-error` let through also reads `failing`, given `--ci-steps` |
-| `cannot-fail` | the evidence passed, but its CI step or its job sets `continue-on-error`, its step's command or a script it runs swallows its failure with `\|\| true` or `set +e`, or `balance` cannot read whether it does, so its red might not fail the build | see below |
+| `cannot-fail` | the evidence passed, but its CI step or its job sets `continue-on-error`, its step's command or a script it runs swallows its failure with `\|\| true` or `set +e`, or `balance` cannot read whether it does | see below |
 | `not-asked-for` | the evidence is of a kind of quality check its claim did not ask for | see [When a row reads `not-asked-for`](#when-a-row-reads-not-asked-for) |
 | `never-ran` | the evidence never reached its assertions | the run is not reconciled, as `unsound`, and the evidence is listed under `## Run integrity` too; under `--written-claims-only`, only when it cites an executable claim |
 | `no-claim-code` | the claim has no claim code for evidence to cite | |
@@ -980,7 +980,7 @@ A step the step record does not name lands on the unnamed claim as not recorded,
 
 ### Passes that cannot fail
 
-The outcome to watch for is **cannot-fail**. It marks a fitness function that passes, but whose red might not fail the CI run. A green CI run then does not mean that the check passed. A pass reads `cannot-fail` when:
+The outcome to watch for is **cannot-fail**. It marks a fitness function that passed, but could not have failed. A green CI run then does not mean that the check passed. A pass reads `cannot-fail` when:
 
 - its CI step or job sets `continue-on-error` to anything but `false`;
 - its step's command, or a package script it runs, swallows its failure;
